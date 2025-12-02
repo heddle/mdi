@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Adjust these if you prefer a different namespace -->
+    <groupId>edu.cnu</groupId>
+    <artifactId>mdi</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>mdi</name>
+    <description>MDI visualization / demo project</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <junit.version>5.10.2</junit.version>
+    </properties>
+
+<repositories>
+    <repository>
+        <id>jogamp</id>
+        <name>JogAmp Repository</name>
+        <url>https://jogamp.org/deployment/maven</url>
+    </repository>
+</repositories>
+
+    <dependencies>
+
+    <!-- JOGL (core + native bindings) -->
+    <dependency>
+        <groupId>org.jogamp.jogl</groupId>
+        <artifactId>jogl-all-main</artifactId>
+        <version>2.4.0</version>
+    </dependency>
+
+    <dependency>
+        <groupId>org.jogamp.gluegen</groupId>
+        <artifactId>gluegen-rt-main</artifactId>
+        <version>2.4.0</version>
+    </dependency>
+
+    <!-- JUnit 5 -->
+    <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-api</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
+    </dependency>
+
+    <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-engine</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
+    </dependency>
+
+</dependencies>
+
+ <build>
+    <plugins>
+
+        <!-- Java compiler -->
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <version>3.13.0</version>
+            <configuration>
+                <release>17</release>
+            </configuration>
+        </plugin>
+
+        <!-- Enable 'mvn exec:java' -->
+<plugin>
+    <groupId>org.codehaus.mojo</groupId>
+    <artifactId>exec-maven-plugin</artifactId>
+    <version>3.2.0</version>
+
+    <configuration>
+        <mainClass>edu.cnu.mdi.demo.Main</mainClass>
+
+        <!-- This is the key: JOGL requires access to sun.awt.AppContext -->
+        <arguments></arguments>
+        <systemProperties></systemProperties>
+        <cleanupDaemonThreads>false</cleanupDaemonThreads>
+
+        <additionalClasspathElements></additionalClasspathElements>
+
+        <jvmArgs>
+            <!-- Allows JOGL to access sun.awt.* on Java 17+ -->
+            <jvmArg>--add-exports=java.desktop/sun.awt=ALL-UNNAMED</jvmArg>
+            <jvmArg>--add-opens=java.desktop/sun.awt=ALL-UNNAMED</jvmArg>
+        </jvmArgs>
+    </configuration>
+
+    <executions>
+        <execution>
+            <goals>
+                <goal>java</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+        <!-- Allow jar packaging to include a Main-Class later if needed -->
+        <!-- Optional for now -->
+        <!--
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-jar-plugin</artifactId>
+            <version>3.4.1</version>
+            <configuration>
+                <archive>
+                    <manifest>
+                        <mainClass>edu.cnu.mdi.demo.Main</mainClass>
+                    </manifest>
+                </archive>
+            </configuration>
+        </plugin>
+        -->
+
+    </plugins>
+</build>
+
+</project>
