@@ -9,6 +9,8 @@ import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
+import edu.cnu.mdi.graphics.GraphicsUtils;
+
 /**
  * A snippet of text with its own font and relative offset, used for
  * LaTeX-like compound strings. Parsed via backslash control codes.
@@ -69,7 +71,7 @@ public class Snippet {
      * @param angleDegrees rotation angle in degrees
      */
     public void drawSnippet(Graphics g, int xo, int yo, double angleDegrees) {
-        TextPainter.drawRotatedText((Graphics2D) g, text, font,
+        GraphicsUtils.drawRotatedText((Graphics2D) g, text, font,
                 xo, yo, deltaX, deltaY, angleDegrees);
     }
 
