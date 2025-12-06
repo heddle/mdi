@@ -1,6 +1,7 @@
 package edu.cnu.mdi.mapping;
 
 import java.awt.Graphics2D;
+import java.awt.Shape;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.container.IContainer;
@@ -18,6 +19,7 @@ import edu.cnu.mdi.container.IContainer;
  * </p>
  */
 public interface IMapProjection {
+	
 
     // ---------------------------------------------------------------------
     // Transformations
@@ -88,6 +90,32 @@ public interface IMapProjection {
      * @return {@code true} if the point lies on the map, {@code false} otherwise
      */
     boolean isPointOnMap(XY xy);
+    
+    /**
+	 * Convenience method to determine whether a projected Cartesian point
+	 * lies within the valid region of this map projection.
+	 */
+    default boolean isPointOnMap(double x, double y) {
+		return isPointOnMap(new XY(x, y));
+	}
+    
+    /**
+	 * Convenience method to get the LatLon for a given projected x,y point.
+	 * 
+	 * @param x     the projected x coordinate
+	 * @param y     the projected y coordinate
+	 * @param latlon the output LatLon object to populate
+	 * @return true if the point is on the map, false otherwise
+	 */
+    default boolean getLatLon(double x, double y, LatLon latlon) {
+    	XY xy = new XY(x, y);
+    	boolean onMap = isPointOnMap(xy);
+    	if (!onMap) {
+    		return false;
+    	}
+		xyToLatLon(new XY(x, y), latlon);
+		return true;
+    }
 
     /**
      * Draws a line of constant latitude (a parallel) as part of the graticule.
@@ -166,4 +194,38 @@ public interface IMapProjection {
      * @param theme the new theme (must not be {@code null})
      */
     void setTheme(MapTheme theme);
+    
+    
+    /**
+     * Creates a clipping shape in local (container) coordinates representing
+     * the visible map region for this projection.
+     * <p>
+     * The returned shape is suitable for use with
+     * {@link java.awt.Graphics2D#setClip(Shape)} in order to restrict drawing
+     * (e.g., to fill oceans) to the projected map area.
+     * </p>
+     *
+     * @param container the container providing the world-to-local transform
+     * @return a shape in local coordinates representing the visible map area
+     */
+    Shape createClipShape(IContainer container);
+
+    /**
+     * Convenience method to fill the map area with the theme's ocean color
+     * using clipping.
+     *
+     * @param g2        graphics context
+     * @param container container used for coordinate transforms
+     */
+    default void fillOcean(Graphics2D g2, IContainer container) {
+        Shape clip = createClipShape(container);
+        if (clip == null) {
+            return;
+        }
+
+        java.awt.Color oldColor = g2.getColor();
+
+        g2.setColor(getTheme().getOceanColor());
+        g2.fill(clip);           // <-- fill the map shape itself
+        g2.setColor(oldColor);    }
 }

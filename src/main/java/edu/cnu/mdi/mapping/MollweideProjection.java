@@ -3,7 +3,9 @@ package edu.cnu.mdi.mapping;
 import java.awt.BasicStroke;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
@@ -92,13 +94,16 @@ public class MollweideProjection implements IMapProjection {
         double lambda = latLon.lambda();
         double phi    = latLon.phi();
 
-        // Normalize lambda relative to central meridian to [-π, π]
+        // Normalize lambda relative to central meridian into [-π, π]
         double dLambda = lambda - lambda0;
-        dLambda = ((dLambda + Math.PI) % (2 * Math.PI));
-        if (dLambda < 0) {
-            dLambda += 2 * Math.PI;
+
+        // Handle both [-π, π] and [0, 2π] input longitudes robustly
+        while (dLambda <= -Math.PI) {
+            dLambda += 2.0 * Math.PI;
         }
-        dLambda -= Math.PI;
+        while (dLambda > Math.PI) {
+            dLambda -= 2.0 * Math.PI;
+        }
 
         // Solve 2θ + sin(2θ) = π sin φ via Newton-Raphson
         double theta = solveTheta(phi);
@@ -324,5 +329,29 @@ public class MollweideProjection implements IMapProjection {
         }
 
         return theta;
+    }
+    
+    @Override
+    public Shape createClipShape(IContainer container) {
+        Path2D path = new Path2D.Double();
+        Point2D.Double world = new Point2D.Double();
+        Point p = new Point();
+
+        for (int i = 0; i <= NUM_SEGMENTS; i++) {
+            double t = 2.0 * Math.PI * i / NUM_SEGMENTS;
+            double x = A * Math.cos(t);
+            double y = B * Math.sin(t);
+
+            world.setLocation(x, y);
+            container.worldToLocal(p, world);
+
+            if (i == 0) {
+                path.moveTo(p.x, p.y);
+            } else {
+                path.lineTo(p.x, p.y);
+            }
+        }
+        path.closePath();
+        return path;
     }
 }

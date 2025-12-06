@@ -12,118 +12,124 @@
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    <!-- Basic project identification -->
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>edu.cnu</groupId>
-    <artifactId>mdi</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+	<!-- Basic project identification -->
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>edu.cnu</groupId>
+	<artifactId>mdi</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
 
-    <name>mdi</name>
-    <description>MDI visualization and Swing/JOGL demo framework</description>
+	<name>mdi</name>
+	<description>MDI visualization and Swing/JOGL demo framework</description>
 
-    <!-- Build properties such as Java version, encoding, and dependency versions -->
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+	<!-- Build properties such as Java version, encoding, and dependency
+	versions -->
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
 
-        <!-- Centralized JUnit version -->
-        <junit.version>5.10.2</junit.version>
+		<!-- Centralized JUnit version -->
+		<junit.version>5.10.2</junit.version>
 
-        <!-- Version of the Maven Surefire plugin used for running tests -->
-        <maven.surefire.plugin.version>3.3.0</maven.surefire.plugin.version>
-    </properties>
+		<!-- Version of the Maven Surefire plugin used for running tests -->
+		<maven.surefire.plugin.version>3.3.0</maven.surefire.plugin.version>
+	</properties>
 
-    <!-- External repositories for dependencies not in Maven Central -->
-    <repositories>
-        <repository>
-            <id>jogamp</id>
-            <name>JogAmp Repository</name>
-            <url>https://jogamp.org/deployment/maven</url>
-        </repository>
-    </repositories>
+	<!-- External repositories for dependencies not in Maven Central -->
+	<repositories>
+		<repository>
+			<id>jogamp</id>
+			<name>JogAmp Repository</name>
+			<url>https://jogamp.org/deployment/maven</url>
+		</repository>
+	</repositories>
 
-    <!-- Project dependencies: JOGL, GlueGen, JUnit 5 -->
-    <dependencies>
+	<!-- Project dependencies: JOGL, GlueGen, JUnit 5 -->
+	<dependencies>
 
-        <!-- JOGL: OpenGL bindings -->
-        <dependency>
-            <groupId>org.jogamp.jogl</groupId>
-            <artifactId>jogl-all-main</artifactId>
-            <version>2.4.0</version>
-        </dependency>
+		<!-- JOGL: OpenGL bindings -->
+		<dependency>
+			<groupId>org.jogamp.jogl</groupId>
+			<artifactId>jogl-all-main</artifactId>
+			<version>2.4.0</version>
+		</dependency>
 
-        <!-- GlueGen runtime for JOGL -->
-        <dependency>
-            <groupId>org.jogamp.gluegen</groupId>
-            <artifactId>gluegen-rt-main</artifactId>
-            <version>2.4.0</version>
-        </dependency>
+		<!-- GlueGen runtime for JOGL -->
+		<dependency>
+			<groupId>org.jogamp.gluegen</groupId>
+			<artifactId>gluegen-rt-main</artifactId>
+			<version>2.4.0</version>
+		</dependency>
 
-        <!-- JUnit 5 aggregate dependency (API + engine) -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
+		<!-- JUnit 5 aggregate dependency (API + engine) -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.17.0</version>
+		</dependency>
 
-    </dependencies>
+	</dependencies>
 
-    <!-- Build configuration section -->
-    <build>
-        <plugins>
+	<!-- Build configuration section -->
+	<build>
+		<plugins>
 
-            <!-- Java compiler configuration -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
-                <configuration>
-                    <release>17</release>
-                </configuration>
-            </plugin>
+			<!-- Java compiler configuration -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.13.0</version>
+				<configuration>
+					<release>17</release>
+				</configuration>
+			</plugin>
 
-            <!-- Surefire test runner, configured for JUnit 5 -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.surefire.plugin.version}</version>
-                <configuration>
-                    <!-- Forces classpath mode to avoid JPMS issues with JOGL -->
-                    <useModulePath>false</useModulePath>
-                </configuration>
-            </plugin>
+			<!-- Surefire test runner, configured for JUnit 5 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>${maven.surefire.plugin.version}</version>
+				<configuration>
+					<!-- Forces classpath mode to avoid JPMS issues with JOGL -->
+					<useModulePath>false</useModulePath>
+				</configuration>
+			</plugin>
 
-            <!-- exec-maven-plugin for running the demo via 'mvn exec:java' -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.2.0</version>
+			<!-- exec-maven-plugin for running the demo via 'mvn exec:java' -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.2.0</version>
 
-                <configuration>
-                    <!-- Entry point for the application -->
-                    <mainClass>edu.cnu.mdi.demo.Main</mainClass>
+				<configuration>
+					<!-- Entry point for the application -->
+					<mainClass>edu.cnu.mdi.demo.Main</mainClass>
 
-                    <!-- Prevent errors if JOGL threads remain active -->
-                    <cleanupDaemonThreads>false</cleanupDaemonThreads>
-                </configuration>
+					<!-- Prevent errors if JOGL threads remain active -->
+					<cleanupDaemonThreads>false</cleanupDaemonThreads>
+				</configuration>
 
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 
-            <!-- Optional JAR-with-manifest configuration -->
-            <!--
+			<!-- Optional JAR-with-manifest configuration -->
+			<!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -138,7 +144,7 @@
             </plugin>
             -->
 
-        </plugins>
-    </build>
+		</plugins>
+	</build>
 
 </project>

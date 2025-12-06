@@ -4,7 +4,9 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
@@ -333,5 +335,29 @@ public class OrthographicProjection implements IMapProjection {
             throw new IllegalArgumentException("MapTheme must not be null");
         }
         this.theme = theme;
+    }
+    
+    @Override
+    public Shape createClipShape(IContainer container) {
+        Path2D path = new Path2D.Double();
+        Point2D.Double world = new Point2D.Double();
+        Point p = new Point();
+
+        for (int i = 0; i <= NUM_SEGMENTS; i++) {
+            double theta = 2.0 * Math.PI * i / NUM_SEGMENTS;
+            double x = Math.cos(theta);
+            double y = Math.sin(theta);
+
+            world.setLocation(x, y);
+            container.worldToLocal(p, world);
+
+            if (i == 0) {
+                path.moveTo(p.x, p.y);
+            } else {
+                path.lineTo(p.x, p.y);
+            }
+        }
+        path.closePath();
+        return path;
     }
 }

@@ -3,127 +3,172 @@ package edu.cnu.mdi.feedback;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.event.EventListenerList;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.util.TextUtils;
 
-
+/**
+ * Controller for managing mouse-over feedback for a given {@link IContainer}.
+ * <p>
+ * A {@code FeedbackControl} instance coordinates a set of
+ * {@link IFeedbackProvider} listeners. Whenever the mouse moves, each provider
+ * is asked to contribute feedback strings based on the current mouse position
+ * in both screen and world coordinates. If the set of feedback strings has
+ * changed since the last update, the container's {@link FeedbackPane} (if any)
+ * is updated accordingly.
+ * </p>
+ *
+ * <p>
+ * Feedback is suppressed when the Control key is held down during mouse
+ * movement.
+ * </p>
+ */
 public class FeedbackControl {
 
-	// the parent container for which this object controls the feedback
-	private IContainer _container;
+    /**
+     * The parent container that owns this feedback controller.
+     */
+    private final IContainer container;
 
-	// List of feedback providers for the parent container
-	private EventListenerList _listenerList;
+    /**
+     * List of feedback providers for the parent container. Lazily created when
+     * the first provider is added.
+     */
+    private EventListenerList listenerList;
 
-	// the newly acquired feedback strings
-	private Vector<String> _newFeedbackStrings = new Vector<>(50);
+    /**
+     * The newly acquired feedback strings for the current mouse position.
+     */
+    private final List<String> newFeedbackStrings = new ArrayList<>(50);
 
-	// the previous feedback strings
-	private Vector<String> _oldFeedbackStrings = new Vector<>(50);
+    /**
+     * The feedback strings from the previous update. Used to avoid unnecessary
+     * UI updates when the feedback content has not changed.
+     */
+    private final List<String> oldFeedbackStrings = new ArrayList<>(50);
 
-	/**
-	 * Create a feedback controller for a container.
-	 *
-	 * @param container
-	 */
-	public FeedbackControl(IContainer container) {
-		_container = container;
-	}
+    /**
+     * Creates a feedback controller for the specified container.
+     *
+     * @param container the {@link IContainer} whose feedback is being managed;
+     *                  must not be {@code null}
+     */
+    public FeedbackControl(IContainer container) {
+        this.container = container;
+    }
 
-	/**
-	 * Request feedback strings from all providers.
-	 *
-	 * @param pp the screen location of the mouse.
-	 * @param wp the corresponding world points.
-	 */
-	private void requestFeedbackStrings(Point pp, Point2D.Double wp) {
+    /**
+     * Requests feedback strings from all registered {@link IFeedbackProvider}s
+     * for the given mouse position.
+     *
+     * @param pp the screen-space location of the mouse (pixel coordinates)
+     * @param wp the corresponding world-space position
+     */
+    private void requestFeedbackStrings(Point pp, Point2D.Double wp) {
 
-		_newFeedbackStrings.clear();
+        newFeedbackStrings.clear();
 
-		if (_listenerList == null) {
-			return;
-		}
+        if (listenerList == null) {
+            return;
+        }
 
-		// Guaranteed to return a non-null array
-		Object[] listeners = _listenerList.getListenerList();
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
 
-		// This weird loop is the bullet proof way of notifying all listeners.
-		// for (int i = listeners.length - 2; i >= 0; i -= 2) {
-		// order is flipped so it goes in order as added
-		for (int i = 0; i < listeners.length; i += 2) {
-			if (listeners[i] == IFeedbackProvider.class) {
-				((IFeedbackProvider) listeners[i + 1]).getFeedbackStrings(_container, pp, wp, _newFeedbackStrings);
-			}
-		}
-	}
+        // Notify all providers in the order they were added
+        for (int i = 0; i < listeners.length; i += 2) {
+            if (listeners[i] == IFeedbackProvider.class) {
+                ((IFeedbackProvider) listeners[i + 1])
+                        .getFeedbackStrings(container, pp, wp, newFeedbackStrings);
+            }
+        }
+    }
 
-	/**
-	 * Add a Feedback provider.
-	 *
-	 * @param provider the Feedback provider listener to add.
-	 */
-	public void addFeedbackProvider(IFeedbackProvider provider) {
+    /**
+     * Adds a feedback provider to this controller.
+     * <p>
+     * If the provider is already registered, it is first removed so that it is
+     * not stored twice.
+     * </p>
+     *
+     * @param provider the feedback provider listener to add; must not be
+     *                 {@code null}
+     */
+    public void addFeedbackProvider(IFeedbackProvider provider) {
 
-		if (_listenerList == null) {
-			_listenerList = new EventListenerList();
-		}
+        if (listenerList == null) {
+            listenerList = new EventListenerList();
+        }
 
-		// avoid adding duplicates
-		_listenerList.remove(IFeedbackProvider.class, provider);
-		_listenerList.add(IFeedbackProvider.class, provider);
-	}
+        // Avoid duplicates by removing any existing instance first
+        listenerList.remove(IFeedbackProvider.class, provider);
+        listenerList.add(IFeedbackProvider.class, provider);
+    }
 
-	/**
-	 * Remove a Feedback provider.
-	 *
-	 * @param provider the Feedback provider to remove.
-	 */
-	public void removeFeedbackProvider(IFeedbackProvider provider) {
+    /**
+     * Removes a feedback provider from this controller.
+     *
+     * @param provider the feedback provider to remove; if {@code null}, or if
+     *                 there is no listener list yet, this method does nothing
+     */
+    public void removeFeedbackProvider(IFeedbackProvider provider) {
 
-		if ((provider == null) || (_listenerList == null)) {
-			return;
-		}
+        if (provider == null || listenerList == null) {
+            return;
+        }
 
-		_listenerList.remove(IFeedbackProvider.class, provider);
-	}
+        listenerList.remove(IFeedbackProvider.class, provider);
+    }
 
-	/**
-	 * The mouse has moved, so update the feedback
-	 *
-	 * @param mouseEvent the screen location
-	 * @param wp         the corresponding world point.
-	 * @param dragging   <code>true</code> if we are dragging
-	 */
-	public void updateFeedback(MouseEvent mouseEvent, Point2D.Double wp, boolean dragging) {
+    /**
+     * Updates the feedback in response to a mouse movement.
+     * <p>
+     * The controller:
+     * </p>
+     * <ol>
+     *   <li>Skips processing entirely if the Control key is held down.</li>
+     *   <li>Requests fresh feedback strings from all providers.</li>
+     *   <li>Compares the new strings with the previous set; if unchanged, no
+     *       update is performed.</li>
+     *   <li>If changed and a {@link FeedbackPane} is attached to the container,
+     *       updates the pane.</li>
+     * </ol>
+     *
+     * @param mouseEvent the mouse event, used for the screen location and
+     *                   modifier-state checks
+     * @param wp         the corresponding world-space point for the mouse
+     *                   location
+     * @param dragging   {@code true} if the mouse is currently being dragged;
+     *                   currently not used in the logic but reserved for
+     *                   possible future policy changes
+     */
+    public void updateFeedback(MouseEvent mouseEvent, Point2D.Double wp, boolean dragging) {
 
-		// skip feedback if control down
-		if (mouseEvent.isControlDown()) {
-			return;
-		}
+        // Skip feedback if Control is pressed
+        if (mouseEvent.isControlDown()) {
+            return;
+        }
 
-		// get strings from all providers
-		requestFeedbackStrings(mouseEvent.getPoint(), wp);
+        // Get strings from all providers for the current location
+        requestFeedbackStrings(mouseEvent.getPoint(), wp);
 
-		// don't update if same
-		if (TextUtils.equalStringLists(_oldFeedbackStrings, _newFeedbackStrings)) {
-			return;
-		}
+        // Don't update if the feedback is unchanged
+        if (TextUtils.equalStringLists(oldFeedbackStrings, newFeedbackStrings)) {
+            return;
+        }
 
-		// update feedback pane if there is one
-		if (_container.getFeedbackPane() != null) {
-			_container.getFeedbackPane().updateFeedback(_newFeedbackStrings);
-		}
+        // Update feedback pane if there is one
+        if (container.getFeedbackPane() != null) {
+            container.getFeedbackPane().updateFeedback(newFeedbackStrings);
+        }
 
-		// swap old and new
-		Vector<String> temp = _oldFeedbackStrings;
-		_oldFeedbackStrings = _newFeedbackStrings;
-		_newFeedbackStrings = temp;
-		_newFeedbackStrings.clear();
-
-	}
-
+        // Copy new strings into oldStrings for the next comparison
+        oldFeedbackStrings.clear();
+        oldFeedbackStrings.addAll(newFeedbackStrings);
+        newFeedbackStrings.clear();
+    }
 }

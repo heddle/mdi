@@ -153,6 +153,14 @@ public interface IContainer {
 	 * Restore the default world. This gets us back to the original zoom level.
 	 */
 	public void restoreDefaultWorld();
+	
+	/**
+	 * Reset the world system to a new value.
+	 * Resets the default and previous world systems as well.
+	 * @param worldSystem the new world system.
+	 */
+	public void resetWorldSystem(Rectangle2D.Double worldSystem);
+
 
 	/**
 	 * Convenience routine to scale the container.

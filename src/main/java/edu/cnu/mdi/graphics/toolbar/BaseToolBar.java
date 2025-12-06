@@ -28,39 +28,6 @@ import edu.cnu.mdi.util.Bits;
 @SuppressWarnings("serial")
 public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMotionListener {
 
-	public static final long ELLIPSEBUTTON      = 01L;
-	public static final long TEXTBUTTON         = 0L;
-	public static final long RECTANGLEBUTTON    = 04L;
-	public static final long POLYGONBUTTON      = 010L;
-	public static final long LINEBUTTON         = 020L;
-	public static final long RANGEBUTTON        = 040L;
-	public static final long DELETEBUTTON       = 0100L;
-	public static final long TEXTFIELD          = 0200L;
-	public static final long CENTERBUTTON       = 0400L;
-	public static final long CONTROLPANELBUTTON = 01000L; // toggle control panel
-	public static final long RADARCBUTTON       = 02000L;
-	public static final long POLYLINEBUTTON     = 04000L;
-	public static final long MAGNIFYBUTTON      = 010000L;
-	public static final long NOZOOM             = 020000L;
-	public static final long CLONEBUTTON        = 040000L;
-	public static final long PANBUTTON          = 0100000L;
-	public static final long UNDOZOOMBUTTON     = 0100000L;
-	public static final long RECTGRIDBUTTON     = 01000000L;
-
-
-	public static final long DRAWING = ELLIPSEBUTTON + TEXTBUTTON + RECTANGLEBUTTON + POLYGONBUTTON + LINEBUTTON
-			+ RADARCBUTTON + POLYLINEBUTTON;
-
-	public static final long EVERYTHING = 07777777777 & ~NOZOOM;
-	public static final long STANDARD = EVERYTHING & ~CONTROLPANELBUTTON & ~CLONEBUTTON;
-
-	public static final long NODRAWING = EVERYTHING & ~DRAWING;
-
-	// only the text button
-	public static final long TEXTDRAWING = STANDARD & ~DRAWING + TEXTBUTTON & ~RANGEBUTTON;
-
-	// nobuttons!
-	public static final long NOTHING = 017777777777L;
 
 	/**
 	 * Text field used for messages
@@ -142,7 +109,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	 * @param container the container this toolbar controls.
 	 */
 	public BaseToolBar(IContainer container) {
-		this(container, EVERYTHING);
+		this(container, ToolBarBits.EVERYTHING);
 	}
 
 	/**
@@ -156,7 +123,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		_container = container;
 		_container.setToolBar(this);
-		notNothing = bits != NOTHING;
+		notNothing = bits != ToolBarBits.NOTHING;
 		makeButtons(bits);
 
 		Component c = _container.getComponent();
@@ -176,35 +143,35 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	protected void makeButtons(long bits) {
 
 		if (notNothing) {
-			if (!Bits.check(bits, NOZOOM)) {
+			if (!Bits.check(bits, ToolBarBits.NOZOOM)) {
 				_zoomInButton = new ZoomInButton(_container);
 				_zoomOutButton = new ZoomOutButton(_container);
 
-				if (Bits.check(bits, UNDOZOOMBUTTON)) {
+				if (Bits.check(bits, ToolBarBits.UNDOZOOMBUTTON)) {
 					_undoZoomButton = new UndoZoomButton(_container);
 				}
 				_worldButton = new WorldButton(_container);
 				_boxZoomButton = new BoxZoomButton(_container);
 			}
 			_refreshButton = new RefreshButton(_container);
-			if (Bits.check(bits, CENTERBUTTON)) {
+			if (Bits.check(bits, ToolBarBits.CENTERBUTTON)) {
 				_centerButton = new CenterButton(_container);
 			}
 
-			if (Bits.check(bits, PANBUTTON)) {
+			if (Bits.check(bits, ToolBarBits.PANBUTTON)) {
 				_panButton = new PanButton(_container);
 			}
 
-			if (Bits.check(bits, CLONEBUTTON)) {
+			if (Bits.check(bits, ToolBarBits.CLONEBUTTON)) {
 				_cloneButton = new CloneButton(_container);
 			}
 		}
 
-		if (notNothing && Bits.check(bits, RANGEBUTTON)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.RANGEBUTTON)) {
 			_rangeButton = new RangeButton(_container);
 		}
 
-		if (notNothing && Bits.check(bits, MAGNIFYBUTTON)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.MAGNIFYBUTTON)) {
 			_magnifyButton = new MagnifyButton(_container);
 		}
 
@@ -212,41 +179,41 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 		_pointerButton = new PointerButton(_container);
 		// }
 
-		if (notNothing && Bits.check(bits, DELETEBUTTON)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.DELETEBUTTON)) {
 			_deleteButton = new DeleteButton(_container);
 			_deleteButton.setEnabled(false);
 		}
 
-		if (notNothing && Bits.check(bits, CONTROLPANELBUTTON)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.CONTROLPANELBUTTON)) {
 			_cpButton = new ControlPanelButton(_container);
 		}
 
 		// check if drawing tools are requested
-		if (notNothing && Bits.check(bits, TEXTBUTTON)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.TEXTBUTTON)) {
 			_textButton = new TextButton(_container);
 		}
 
-		if (notNothing && Bits.check(bits, ELLIPSEBUTTON)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.ELLIPSEBUTTON)) {
 			_ellipseButton = new EllipseButton(_container);
 		}
 
-		if (notNothing && Bits.check(bits, RECTANGLEBUTTON)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.RECTANGLEBUTTON)) {
 			_rectangleButton = new RectangleButton(_container);
 		}
 
-		if (notNothing && Bits.check(bits, RADARCBUTTON)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.RADARCBUTTON)) {
 			_radarcButton = new RadArcButton(_container);
 		}
 
-		if (notNothing && Bits.check(bits, LINEBUTTON)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.LINEBUTTON)) {
 			_lineButton = new LineButton(_container);
 		}
 
-		if (notNothing && Bits.check(bits, POLYGONBUTTON)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.POLYGONBUTTON)) {
 			_polygonButton = new PolygonButton(_container);
 		}
 
-		if (notNothing && Bits.check(bits, POLYLINEBUTTON)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.POLYLINEBUTTON)) {
 			_polylineButton = new PolylineButton(_container);
 		}
 
@@ -284,7 +251,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 
 		// add the text field?
 
-		if (notNothing && Bits.check(bits, TEXTFIELD)) {
+		if (notNothing && Bits.check(bits, ToolBarBits.TEXTFIELD)) {
 
 			_textField = new JTextField(" ");
 

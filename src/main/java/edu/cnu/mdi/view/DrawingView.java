@@ -11,6 +11,7 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
+import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
 import edu.cnu.mdi.properties.PropertySupport;
 
 /**
@@ -48,7 +49,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 		DrawingView view = null;
 
 		// set to a fraction of screen
-		Dimension d = GraphicsUtils.screenFraction(0.5);
+		Dimension d = GraphicsUtils.screenFraction(0.4);
 
 		int width = d.width;
 		int height = d.height;
@@ -57,9 +58,13 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 		view = new DrawingView(PropertySupport.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, width, height),
 				PropertySupport.WIDTH, width, // container width, not total view width
 				PropertySupport.HEIGHT, height, // container height, not total view width
-				PropertySupport.TOOLBAR, true, PropertySupport.TOOLBARBITS, BaseToolBar.EVERYTHING,
-				PropertySupport.VISIBLE, true, PropertySupport.PROPNAME, "DRAWING", PropertySupport.BACKGROUND, Color.white, PropertySupport.TITLE,
-				" Drawing View ", PropertySupport.STANDARDVIEWDECORATIONS, true,
+				PropertySupport.TOOLBAR, true, 
+				PropertySupport.TOOLBARBITS, ToolBarBits.EVERYTHING,
+				PropertySupport.VISIBLE, true, 
+				PropertySupport.PROPNAME, "DRAWING", 
+				PropertySupport.BACKGROUND, Color.white, 
+				PropertySupport.TITLE, " Drawing View ", 
+				PropertySupport.STANDARDVIEWDECORATIONS, true,
 				PropertySupport.CONTAINERTYPE, "drawing");
 
 		view.pack();

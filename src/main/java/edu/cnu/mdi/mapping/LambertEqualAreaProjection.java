@@ -3,7 +3,9 @@ package edu.cnu.mdi.mapping;
 import java.awt.BasicStroke;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
@@ -327,5 +329,29 @@ public class LambertEqualAreaProjection implements IMapProjection {
             throw new IllegalArgumentException("MapTheme must not be null");
         }
         this.theme = theme;
+    }
+    
+    @Override
+    public Shape createClipShape(IContainer container) {
+        Path2D path = new Path2D.Double();
+        Point2D.Double world = new Point2D.Double();
+        Point p = new Point();
+
+        for (int i = 0; i <= NUM_SEGMENTS; i++) {
+            double theta = 2.0 * Math.PI * i / NUM_SEGMENTS;
+            double x = R_MAX * Math.cos(theta);
+            double y = R_MAX * Math.sin(theta);
+
+            world.setLocation(x, y);
+            container.worldToLocal(p, world);
+
+            if (i == 0) {
+                path.moveTo(p.x, p.y);
+            } else {
+                path.lineTo(p.x, p.y);
+            }
+        }
+        path.closePath();
+        return path;
     }
 }

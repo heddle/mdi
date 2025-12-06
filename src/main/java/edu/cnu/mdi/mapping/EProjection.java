@@ -1,5 +1,7 @@
 package edu.cnu.mdi.mapping;
 
+import edu.cnu.mdi.component.EnumComboBox;
+
 /**
  * Enumeration of supported map projection types.
  * <p>
@@ -39,5 +41,22 @@ public enum EProjection {
     @Override
     public String toString() {
         return displayName;
+    }
+    /**
+	 * Creates an EnumComboBox for selecting EProjection values.
+	 *
+	 * @return a new EnumComboBox configured for EProjection
+	 */
+    public static EnumComboBox<EProjection> createComboBox() {
+		return new EnumComboBox<>(EProjection.class, null, EProjection::projectionLabel);
+	}
+    
+    public static String projectionLabel(EProjection p) {
+        return switch (p) {
+            case MERCATOR -> "Mercator";
+            case ORTHOGRAPHIC -> "Orthographic";
+            case MOLLWEIDE -> "Mollweide";
+            case LAMBERT_EQUAL_AREA -> "Lambert Equal-Area";
+        };
     }
 }

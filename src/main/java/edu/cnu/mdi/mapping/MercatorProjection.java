@@ -4,7 +4,9 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
@@ -223,5 +225,37 @@ public class MercatorProjection implements IMapProjection {
             throw new IllegalArgumentException("MapTheme must not be null");
         }
         this.theme = theme;
+    }
+    
+    @Override
+    public Shape createClipShape(IContainer container) {
+        Rectangle2D.Double r = getXYBounds();
+
+        Point2D.Double world = new Point2D.Double();
+        Point p = new Point();
+        Path2D path = new Path2D.Double();
+
+        // lower-left
+        world.setLocation(r.x, r.y);
+        container.worldToLocal(p, world);
+        path.moveTo(p.x, p.y);
+
+        // lower-right
+        world.setLocation(r.x + r.width, r.y);
+        container.worldToLocal(p, world);
+        path.lineTo(p.x, p.y);
+
+        // upper-right
+        world.setLocation(r.x + r.width, r.y + r.height);
+        container.worldToLocal(p, world);
+        path.lineTo(p.x, p.y);
+
+        // upper-left
+        world.setLocation(r.x, r.y + r.height);
+        container.worldToLocal(p, world);
+        path.lineTo(p.x, p.y);
+
+        path.closePath();
+        return path;
     }
 }

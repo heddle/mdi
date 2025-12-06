@@ -36,6 +36,7 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.desktop.Desktop;
 import edu.cnu.mdi.format.DoubleFormat;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
+import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
 import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
 
@@ -298,7 +299,7 @@ public class BaseView extends JInternalFrame
             if (addToolBar) {
                 long bits = PropertySupport.getToolbarBits(properties);
                 if (bits == Long.MIN_VALUE) {
-                    bits = BaseToolBar.EVERYTHING;
+                    bits = ToolBarBits.EVERYTHING;
                 }
                 BaseToolBar toolBar = new BaseToolBar(container, bits);
                 add(toolBar, BorderLayout.NORTH);

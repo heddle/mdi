@@ -3,9 +3,14 @@ package edu.cnu.mdi.app;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.io.IOException;
+import java.util.List;
 
+import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
 import edu.cnu.mdi.log.Log;
+import edu.cnu.mdi.mapping.GeoJsonCountryLoader;
 import edu.cnu.mdi.mapping.MapView2D;
+import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
 import edu.cnu.mdi.mdi3D.item3D.Axes3D;
 import edu.cnu.mdi.mdi3D.item3D.Cube;
 import edu.cnu.mdi.mdi3D.item3D.Cylinder;
@@ -75,27 +80,16 @@ public class DemoApp extends BaseMDIApplication {
 		// drawing view
 		DrawingView drawingView = DrawingView.createDrawingView();
 		drawingView.setVisible(true);
-		
-		//map view
-		MapView2D mapView = new MapView2D(PropertySupport.TITLE, "Sample 3D View", 
-				PropertySupport.LEFT, 300,
-				PropertySupport.TOP, 500,
-				PropertySupport.WIDTH, 400,
-				PropertySupport.HEIGHT, 400,
-				PropertySupport.BACKGROUND, X11Colors.getX11Color("alice blue"));
 
 		// sample 3D view
-		/**
-		 * Create a basic 3D view
-		 *
-		 * @param title
-		 * @param angleX
-		 * @param angleY
-		 * @param angleZ
-		 * @param xDist
-		 * @param yDist
-		 * @param zDist
-		 */
+		PlainView3D view3D = create3DView();
+
+		// map view
+		MapView2D mapView = createMapView();
+	}
+
+	// create the sample 3D view
+	private PlainView3D create3DView() {
 		final float xymax = 600f;
 		final float zmax = 600f;
 		final float zmin = -100f;
@@ -107,18 +101,12 @@ public class DemoApp extends BaseMDIApplication {
 		final float thetay = 45f;
 		final float thetaz = 45f;
 
-		PlainView3D view3D = new PlainView3D(PropertySupport.TITLE, "Sample 3D View", 
-				PropertySupport.ANGLE_X, thetax,
-				PropertySupport.ANGLE_Y, thetay, 
-				PropertySupport.ANGLE_Z, thetaz, 
-				PropertySupport.DIST_X, xdist,
-				PropertySupport.DIST_X, ydist, 
-				PropertySupport.DIST_X, zdist,
-				PropertySupport.LEFT, 800,
+		PlainView3D view3D = new PlainView3D(PropertySupport.TITLE, "Sample 3D View", PropertySupport.ANGLE_X, thetax,
+				PropertySupport.ANGLE_Y, thetay, PropertySupport.ANGLE_Z, thetaz, PropertySupport.DIST_X, xdist,
+				PropertySupport.DIST_X, ydist, PropertySupport.DIST_X, zdist, PropertySupport.LEFT, 800,
 				PropertySupport.TOP, 600,
 
-				PropertySupport.WIDTH, 400,
-				PropertySupport.HEIGHT, 400) {
+				PropertySupport.WIDTH, 400, PropertySupport.HEIGHT, 400) {
 			@Override
 			protected Panel3D make3DPanel(float angleX, float angleY, float angleZ, float xDist, float yDist,
 					float zDist) {
@@ -184,8 +172,34 @@ public class DemoApp extends BaseMDIApplication {
 			}
 
 		};
+		return view3D;
 	}
 
+	// create the demo map view
+	private MapView2D createMapView() {
+		
+		//load a small set of countries just for demo purposes
+		try {
+			List<CountryFeature> countries = GeoJsonCountryLoader.loadFromResource("/geo/countries.geojson");
+			MapView2D.setCountries(countries);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+
+		long toolbarBits = ToolBarBits.CENTERBUTTON;
+
+		MapView2D mapView = new MapView2D(PropertySupport.TITLE, "Sample 2D Map View", 
+				PropertySupport.LEFT, 300,
+				PropertySupport.TOP, 300, 
+				PropertySupport.WIDTH, 700, 
+				PropertySupport.HEIGHT, 500,
+				PropertySupport.BACKGROUND, X11Colors.getX11Color("alice blue"), 
+				PropertySupport.TOOLBARBITS,
+				toolbarBits);
+		
+		return mapView;
+	}
 
 	/**
 	 * Main program used for testing only.
@@ -193,26 +207,9 @@ public class DemoApp extends BaseMDIApplication {
 	 * Command line arguments:</br>
 	 * -p [dir] dir is the optional default directory for the file manager
 	 *
-	 * @param arg the command line arguments.
+	 * @param arg the command line arguments (ignored).
 	 */
 	public static void main(String[] arg) {
-
-		if ((arg != null) && (arg.length > 0)) {
-			int len = arg.length;
-			int lm1 = len - 1;
-			boolean done = false;
-			int i = 0;
-			while (!done) {
-				if (arg[i].equalsIgnoreCase("-p")) {
-					if (i < lm1) {
-						i++;
-						FileUtils.setDefaultDir(arg[i]);
-					}
-				}
-				i++;
-				done = (i >= lm1);
-			}
-		}
 
 		final DemoApp frame = getInstance();
 
@@ -225,6 +222,6 @@ public class DemoApp extends BaseMDIApplication {
 			}
 
 		});
-		Log.getInstance().warning("DemoApp is ready.");
+		Log.getInstance().info("DemoApp is ready.");
 	}
 }

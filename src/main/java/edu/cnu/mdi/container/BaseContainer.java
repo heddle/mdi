@@ -161,11 +161,9 @@ public class BaseContainer extends JComponent
 	 */
 	public BaseContainer(BaseView view, Rectangle2D.Double worldSystem) {
 		_view = view;
-		_worldSystem = worldSystem;
 		_feedbackControl = new FeedbackControl(this);
 
-		_defaultWorldSystem = copy(worldSystem);
-		_previousWorldSystem = copy(worldSystem);
+		resetWorldSystem(worldSystem);
 
 		// create the annotation list. (not added to userlist hash)
 		_annotationList = new ItemList(this, "Annotations");
@@ -184,6 +182,18 @@ public class BaseContainer extends JComponent
 		addMouseListener(this);
 		addMouseMotionListener(this);
 
+	}
+	
+	/**
+	 * Reset the world system to a new value.
+	 * Resets the default and previous world systems as well.
+	 * @param worldSystem the new world system.
+	 */
+	public void resetWorldSystem(Rectangle2D.Double worldSystem) {
+		_worldSystem = worldSystem;
+		_defaultWorldSystem = copy(worldSystem);
+		_previousWorldSystem = copy(worldSystem);
+		setDirty(true);
 	}
 
 	/**
