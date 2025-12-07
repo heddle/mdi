@@ -904,21 +904,6 @@ public class BaseView extends JInternalFrame
     // ========================================================================
 
     /**
-     * Creates a clone of this view.
-     * <p>
-     * The base implementation returns {@code null}. Subclasses should override
-     * to construct a new instance of the same view type with appropriate
-     * configuration copied from the original instance.
-     * </p>
-     *
-     * @return a cloned {@code BaseView}, or {@code null} if cloning is not
-     *         supported.
-     */
-    public BaseView cloneView() {
-        return null;
-    }
-
-    /**
      * Refreshes the view by refreshing its container, if present, provided that
      * the view is currently visible.
      */

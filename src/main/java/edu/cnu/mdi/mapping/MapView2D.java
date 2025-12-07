@@ -176,7 +176,7 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 		switch (eprojection) {
 		case MOLLWEIDE:
 			xlim = 2.9;
-			ylim = 1.45;
+			ylim = 2.9;
 			break;
 		case MERCATOR:
 			xlim = 1.1*Math.PI;

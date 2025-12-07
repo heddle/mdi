@@ -34,9 +34,6 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	 */
 	private JTextField _textField;
 
-	// the clone button
-	private CloneButton _cloneButton;
-
 	// Zoom int by a fixed percentage
 	private ZoomInButton _zoomInButton;
 
@@ -161,10 +158,6 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 			if (Bits.check(bits, ToolBarBits.PANBUTTON)) {
 				_panButton = new PanButton(_container);
 			}
-
-			if (Bits.check(bits, ToolBarBits.CLONEBUTTON)) {
-				_cloneButton = new CloneButton(_container);
-			}
 		}
 
 		if (notNothing && Bits.check(bits, ToolBarBits.RANGEBUTTON)) {
@@ -243,11 +236,6 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 		add(_polylineButton);
 		add(_textButton);
 		add(_deleteButton);
-
-		if (_cloneButton != null) {
-			add(Box.createHorizontalStrut(8));
-		}
-		add(_cloneButton);
 
 		// add the text field?
 
@@ -510,15 +498,6 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	 */
 	public WorldButton getWorldButton() {
 		return _worldButton;
-	}
-
-	/**
-	 * Get the toolbar's clone button.
-	 *
-	 * @return the toolbar's zoom-in button.
-	 */
-	public CloneButton getCloneButton() {
-		return _cloneButton;
 	}
 
 	/**

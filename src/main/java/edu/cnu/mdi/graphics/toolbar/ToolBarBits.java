@@ -15,10 +15,8 @@ public class ToolBarBits {
 	public static final long POLYLINEBUTTON     = 04000L;
 	public static final long MAGNIFYBUTTON      = 010000L;
 	public static final long NOZOOM             = 020000L;
-	public static final long CLONEBUTTON        = 040000L;
-	public static final long PANBUTTON          = 0100000L;
+	public static final long PANBUTTON          = 040000L;
 	public static final long UNDOZOOMBUTTON     = 0100000L;
-	public static final long RECTGRIDBUTTON     = 01000000L;
 
 	// used to eliminate some basic buttons
 
@@ -26,7 +24,7 @@ public class ToolBarBits {
 			+ RADARCBUTTON + POLYLINEBUTTON;
 
 	public static final long EVERYTHING = 07777777777 & ~NOZOOM;
-	public static final long STANDARD = EVERYTHING & ~CONTROLPANELBUTTON & ~CLONEBUTTON;
+	public static final long STANDARD = EVERYTHING & ~CONTROLPANELBUTTON;
 
 	public static final long NODRAWING = EVERYTHING & ~DRAWING;
 

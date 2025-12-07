@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
@@ -76,8 +77,6 @@ public class CountryFeatureRenderer {
 			return;
 		}
 
-		AffineTransform worldToScreen = createWorldToScreenTransform(xyBounds, width, height);
-
 		Stroke oldStroke = g2.getStroke();
 		Color oldColor = g2.getColor();
 
@@ -89,7 +88,7 @@ public class CountryFeatureRenderer {
 		}
 
 		for (GeoJsonCountryLoader.CountryFeature feature : countryFeatures) {
-			drawCountryFeature(g2, feature, worldToScreen, landColor, borderColor, borderStroke);
+			drawCountryFeature(g2, container, feature, landColor, borderColor, borderStroke);
 		}
 
 		g2.setStroke(oldStroke);
@@ -120,8 +119,8 @@ public class CountryFeatureRenderer {
 		return at;
 	}
 
-	private void drawCountryFeature(Graphics2D g2, GeoJsonCountryLoader.CountryFeature feature,
-			AffineTransform worldToScreen, Color landColor, Color borderColor, Stroke borderStroke) {
+	private void drawCountryFeature(Graphics2D g2, IContainer container, GeoJsonCountryLoader.CountryFeature feature,
+			Color landColor, Color borderColor, Stroke borderStroke) {
 
 		for (List<Point2D.Double> ring : feature.getPolygons()) {
 			if (ring.isEmpty()) {
@@ -130,6 +129,7 @@ public class CountryFeatureRenderer {
 
 			Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO);
 			boolean hasPoint = false;
+			Point screenPoint = new Point();
 
 			for (Point2D.Double lonLatDeg : ring) {
 				double lonDeg = lonLatDeg.x;
@@ -146,10 +146,8 @@ public class CountryFeatureRenderer {
 					continue; // skip points off the map (e.g., far side of Lambert)
 				}
 
-				Point2D.Double worldPoint = new Point2D.Double(xy.x(), xy.y());
-				Point2D.Double screenPoint = new Point2D.Double();
-				worldToScreen.transform(worldPoint, screenPoint);
-
+				container.worldToLocal(screenPoint, xy.x(), xy.y());
+	
 				if (!hasPoint) {
 					path.moveTo(screenPoint.x, screenPoint.y);
 					hasPoint = true;

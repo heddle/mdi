@@ -187,7 +187,7 @@ public class DemoApp extends BaseMDIApplication {
 		}
 
 
-		long toolbarBits = ToolBarBits.CENTERBUTTON;
+		long toolbarBits = ToolBarBits.CENTERBUTTON | ToolBarBits.PANBUTTON;
 
 		MapView2D mapView = new MapView2D(PropertySupport.TITLE, "Sample 2D Map View", 
 				PropertySupport.LEFT, 300,
