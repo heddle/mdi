@@ -939,7 +939,7 @@ public class BaseView extends JInternalFrame
 
     @Override
     public void mouseExited(MouseEvent e) {
-        // no-op by default; subclasses may override
+        MagnifyWindow.closeMagnifyWindow();
     }
 
     // ========================================================================

@@ -41,9 +41,7 @@ public class DemoApp extends BaseMDIApplication {
 	/**
 	 * Constructor (private--used to create singleton)
 	 *
-	 * @param keyVals an optional variable length list of attributes in type-value
-	 *                pairs. For example, AttributeType.NAME, "my application",
-	 *                AttributeType.CENTER, true, etc.
+	 * @param keyVals an optional variable length list of key-value pairs
 	 */
 	private DemoApp(Object... keyVals) {
 		super(keyVals);
@@ -55,15 +53,17 @@ public class DemoApp extends BaseMDIApplication {
 	 * @return the singleton (the main application frame.)(
 	 */
 	public static DemoApp getInstance() {
-		if (instance == null) {
-			instance = new DemoApp(PropertySupport.TITLE, "Demo Application of Generic bCNU Views",
-					PropertySupport.BACKGROUNDIMAGE, "images/mdilogo.png", PropertySupport.FRACTION, 0.8);
+	    if (instance == null) {
+	        instance = new DemoApp(
+	                PropertySupport.TITLE, "Demo Application of MDI Views",
+	                PropertySupport.BACKGROUNDIMAGE, "images/mdilogo.png",
+	                PropertySupport.FRACTION, 0.8);
 
-			instance.addInitialViews();
-		}
-		return instance;
+	        // build internal views before sizing the outer frame
+	        instance.addInitialViews();
+	    }
+	    return instance;
 	}
-
 	/**
 	 * Add the initial views to the desktop.
 	 */
@@ -82,10 +82,10 @@ public class DemoApp extends BaseMDIApplication {
 		drawingView.setVisible(true);
 
 		// sample 3D view
-		PlainView3D view3D = create3DView();
+		create3DView();
 
 		// map view
-		MapView2D mapView = createMapView();
+		createMapView();
 	}
 
 	// create the sample 3D view
@@ -187,7 +187,7 @@ public class DemoApp extends BaseMDIApplication {
 		}
 
 
-		long toolbarBits = ToolBarBits.CENTERBUTTON | ToolBarBits.PANBUTTON;
+		long toolbarBits = ToolBarBits.CENTERBUTTON | ToolBarBits.PANBUTTON | ToolBarBits.MAGNIFYBUTTON;
 
 		MapView2D mapView = new MapView2D(PropertySupport.TITLE, "Sample 2D Map View", 
 				PropertySupport.LEFT, 300,
@@ -211,17 +211,10 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	public static void main(String[] arg) {
 
-		final DemoApp frame = getInstance();
-
-		// now make the frame visible, in the AWT thread
-		EventQueue.invokeLater(new Runnable() {
-
-			@Override
-			public void run() {
-				frame.setVisible(true);
-			}
-
-		});
-		Log.getInstance().info("DemoApp is ready.");
+	    EventQueue.invokeLater(() -> {
+	        DemoApp frame = DemoApp.getInstance();
+	        frame.setVisible(true);
+	        Log.getInstance().info("DemoApp is ready.");
+	    });
 	}
 }

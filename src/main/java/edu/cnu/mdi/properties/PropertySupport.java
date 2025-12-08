@@ -401,7 +401,8 @@ public class PropertySupport {
 	 * @return a (screen) fraction, on error return Double.NaN.
 	 */
 	public static double getFraction(Properties props) {
-		return getDouble(props, FRACTION, Double.NaN);
+		double fraction = getDouble(props, FRACTION, Double.NaN);
+		return fraction;
 	}
 
 	/**

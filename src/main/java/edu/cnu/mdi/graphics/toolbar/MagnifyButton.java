@@ -41,6 +41,7 @@ public class MagnifyButton extends ToolBarToggleButton {
 	 */
 	@Override
 	public void mouseExited(MouseEvent mouseEvent) {
+		System.out.println("MagnifyButton.mouseExited");
 		MagnifyWindow.closeMagnifyWindow();
 	}
 

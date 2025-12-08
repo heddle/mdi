@@ -163,6 +163,11 @@ public class CommonToolBar extends JToolBar {
 	 */
 	public void resetDefaultSelection() {
 
+		JToggleButton activeButton = getActiveButton();
+		if (activeButton != null) {
+			activeButton.setSelected(false);
+		}
+
 		if (_defaultToggleButton != null) {
 			_defaultToggleButton.doClick();
 		}

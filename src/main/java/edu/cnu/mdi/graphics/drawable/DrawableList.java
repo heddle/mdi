@@ -370,7 +370,6 @@ public class DrawableList extends ArrayList<IDrawable> implements IDrawable {
 	/*
 	 * (non-Javadoc)
 	 *
-	 * @see cnuphys.bCNU.drawable.IDrawable#prepareForRemoval()
 	 */
 	@Override
 	public void prepareForRemoval() {

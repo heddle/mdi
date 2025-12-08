@@ -16,120 +16,178 @@ import edu.cnu.mdi.format.DateString;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.ui.colors.X11Colors;
 
-
+/**
+ * A {@link JScrollPane} that owns a non-editable {@link JTextPane} using a
+ * {@link StyledDocument} and a collection of convenience styles for
+ * terminal / status-like output.
+ * <p>
+ * This class is also written to behave well under the Nimbus look &amp; feel:
+ * the scroll pane and its viewport are opaque and painted with the configured
+ * background color, while the embedded {@code JTextPane} is non-opaque with a
+ * transparent background. This avoids Nimbus painting only behind the text
+ * while leaving the rest of the area white.
+ * </p>
+ *
+ * <p>
+ * Typical usage:
+ * </p>
+ *
+ * <pre>
+ * TextPaneScrollPane pane = new TextPaneScrollPane("Feedback", Color.BLACK);
+ * pane.append("Hello world\n", TextPaneScrollPane.CYAN_TERMINAL);
+ * </pre>
+ */
 @SuppressWarnings("serial")
 public class TextPaneScrollPane extends JScrollPane {
 
-	private static final Color transparent = new Color(0, 0, 0, 0);
+	/** Fully transparent color used for text pane backgrounds. */
+	private static final Color TRANSPARENT = new Color(0, 0, 0, 0);
 
-	// blue monospaced
-	public static SimpleAttributeSet BLUE_M_10_B = createStyle(Color.blue, X11Colors.getX11Color("Alice Blue"),
-			"monospaced", 10, false, true);
+	// ------------------------------------------------------------------------
+	// Common style definitions
+	// ------------------------------------------------------------------------
 
-	// red terminal
-	public static SimpleAttributeSet RED_TERMINAL = createStyle(Color.red, transparent, "monospaced", 11, false, true);
+	/** Small blue monospaced style on a light blue background. */
+	public static final SimpleAttributeSet BLUE_M_10_B = createStyle(Color.blue,
+			X11Colors.getX11Color("Alice Blue"), "monospaced", 10, false, true);
 
-	// yellow terminal
-	public static SimpleAttributeSet YELLOW_TERMINAL = createStyle(Color.yellow, transparent, "monospaced", 11, false,
+	/** Red monospaced terminal style on a transparent background. */
+	public static final SimpleAttributeSet RED_TERMINAL = createStyle(Color.red, TRANSPARENT, "monospaced", 11, false,
 			true);
 
-	// cyan terminal
-	public static SimpleAttributeSet CYAN_TERMINAL = createStyle(Color.cyan, transparent, "monospaced", 11, false,
-			true);
+	/** Yellow monospaced terminal style on a transparent background. */
+	public static final SimpleAttributeSet YELLOW_TERMINAL = createStyle(Color.yellow, TRANSPARENT, "monospaced", 11,
+			false, true);
 
-	// blue terminal
-	public static SimpleAttributeSet BLUE_TERMINAL = createStyle(Color.blue, "monospaced", 12, false,
-			true);
+	/** Cyan monospaced terminal style on a transparent background. */
+	public static final SimpleAttributeSet CYAN_TERMINAL = createStyle(Color.cyan, TRANSPARENT, "monospaced", 11,
+			false, true);
 
+	/** Blue monospaced terminal style. */
+	public static final SimpleAttributeSet BLUE_TERMINAL = createStyle(Color.blue, "monospaced", 12, false, true);
 
-	// green terminal
-	public static SimpleAttributeSet GREEN_TERMINAL = createStyle(X11Colors.getX11Color("Dark Green"), transparent,
-			"monospaced", 11, false, true);
+	/** Green monospaced terminal style on a transparent background. */
+	public static final SimpleAttributeSet GREEN_TERMINAL = createStyle(X11Colors.getX11Color("Dark Green"),
+			TRANSPARENT, "monospaced", 11, false, true);
 
-	// blue bold sans serif
-	public static SimpleAttributeSet BLUE_SS_12_B = createStyle(Color.blue, X11Colors.getX11Color("Alice Blue"),
-			"sansserif", 12, false, true);
+	/** Blue bold sans-serif on a light background. */
+	public static final SimpleAttributeSet BLUE_SS_12_B = createStyle(Color.blue,
+			X11Colors.getX11Color("Alice Blue"), "sansserif", 12, false, true);
 
-	// blue plain sans serif
-	public static SimpleAttributeSet BLUE_SS_12_P = createStyle(Color.blue,"sansserif", 12, false, false);
+	/** Blue plain sans-serif. */
+	public static final SimpleAttributeSet BLUE_SS_12_P = createStyle(Color.blue, "sansserif", 12, false, false);
 
-
-	// green sans serif
-	public static SimpleAttributeSet GREEN_SS_12_B = createStyle(X11Colors.getX11Color("Dark Green"),
+	/** Dark green bold sans-serif on a wheat background. */
+	public static final SimpleAttributeSet GREEN_SS_12_B = createStyle(X11Colors.getX11Color("Dark Green"),
 			X11Colors.getX11Color("wheat"), "sansserif", 12, false, true);
 
-	// red sans serif
-	public static SimpleAttributeSet RED_SS_12_P = createStyle(Color.red, "sansserif", 12, false, false);
+	/** Red plain sans-serif. */
+	public static final SimpleAttributeSet RED_SS_12_P = createStyle(Color.red, "sansserif", 12, false, false);
 
-	public static SimpleAttributeSet GREEN_SS_12_P = createStyle(X11Colors.getX11Color("Dark Green"),
+	/** Dark green plain sans-serif on a wheat background. */
+	public static final SimpleAttributeSet GREEN_SS_12_P = createStyle(X11Colors.getX11Color("Dark Green"),
 			X11Colors.getX11Color("wheat"), "sansserif", 12, false, false);
 
-	public static SimpleAttributeSet BLACK_SS_12_P = createStyle(Color.black, "sansserif", 12, false, false);
-	public static SimpleAttributeSet BLUE_SS_10_B = createStyle(Color.blue, X11Colors.getX11Color("Alice Blue"),
-			"sansserif", 10, false, true);
+	/** Black plain sans-serif. */
+	public static final SimpleAttributeSet BLACK_SS_12_P = createStyle(Color.black, "sansserif", 12, false, false);
 
-	public static SimpleAttributeSet RED_SS_10_P = createStyle(Color.red, "sansserif", 10, false, false);
+	/** Small blue bold sans-serif on a light background. */
+	public static final SimpleAttributeSet BLUE_SS_10_B = createStyle(Color.blue,
+			X11Colors.getX11Color("Alice Blue"), "sansserif", 10, false, true);
 
-	public static SimpleAttributeSet GREEN_SS_10_P = createStyle(X11Colors.getX11Color("Dark Green"), Color.yellow,
-			"sansserif", 10, false, false);
+	/** Small red plain sans-serif. */
+	public static final SimpleAttributeSet RED_SS_10_P = createStyle(Color.red, "sansserif", 10, false, false);
 
-	public static SimpleAttributeSet BLACK_SS_10_P = createStyle(Color.black, "sansserif", 10, false, false);
+	/** Small green plain sans-serif on a yellow background. */
+	public static final SimpleAttributeSet GREEN_SS_10_P = createStyle(X11Colors.getX11Color("Dark Green"),
+			Color.yellow, "sansserif", 10, false, false);
 
-	/**
-	 * The text area that will be on this scroll pane.
-	 */
+	/** Small black plain sans-serif. */
+	public static final SimpleAttributeSet BLACK_SS_10_P = createStyle(Color.black, "sansserif", 10, false, false);
+
+	// ------------------------------------------------------------------------
+	// Instance fields
+	// ------------------------------------------------------------------------
+
+	/** The non-editable text pane hosted by this scroll pane. */
 	protected JTextPane textPane;
 
+	/** The styled document backing the text pane. */
 	protected StyledDocument document;
 
+	/** Default style used when no explicit style is supplied. */
 	protected SimpleAttributeSet defaultStyle = BLACK_SS_12_P;
 
+	// ------------------------------------------------------------------------
+	// Constructors
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Creates a new {@code TextPaneScrollPane} with a white background and no
+	 * border label.
+	 */
 	public TextPaneScrollPane() {
 		this(null, Color.white);
 	}
 
-	public TextPaneScrollPane(String label) {
-		this(label, Color.white);
-	}
-
-
 	/**
-	 * Constructor will also create the text pane itself.
+	 * Creates a new {@code TextPaneScrollPane} with no border label.
+	 *
+	 * @param bgColor the background color to use; if {@code null}, white is used
 	 */
 	public TextPaneScrollPane(Color bgColor) {
 		this(null, bgColor);
 	}
 
 	/**
-	 * Constructor will also create the text pane itself.
+	 * Creates a new {@code TextPaneScrollPane}, optionally with a labeled border.
 	 *
-	 * @param label if not null, will use for a border.
+	 * @param label   optional border label; if {@code null}, no labeled border is
+	 *                installed
+	 * @param bgColor the background color to use; if {@code null}, white is used
 	 */
 	public TextPaneScrollPane(String label, Color bgColor) {
 		super();
-		if (label != null) {
-			this.setBorder(new CommonBorder(label));
+
+		if (bgColor == null) {
+			bgColor = Color.white;
 		}
 
+		if (label != null) {
+			setBorder(new CommonBorder(label));
+		}
 
 		createTextPane();
-		textPane.setBackground(bgColor);
-		getViewport().add(textPane);
 
-		getViewport().setBackground(bgColor);
+		// Nimbus-friendly background behavior:
+		// - The scroll pane and viewport are opaque and painted with bgColor.
+		// - The text pane is transparent so the bgColor shows everywhere.
+		setOpaque(true);
 		setBackground(bgColor);
+
+		getViewport().setOpaque(true);
+		getViewport().setBackground(bgColor);
+
+		textPane.setOpaque(false);
+		textPane.setBackground(TRANSPARENT);
+
+		getViewport().add(textPane);
 	}
 
+	// ------------------------------------------------------------------------
+	// Style creation helpers
+	// ------------------------------------------------------------------------
 
 	/**
-	 * Create a style, not underlined, no with default spacing.
+	 * Creates a style with the given characteristics and a default white background
+	 * and spacing.
 	 *
-	 * @param fg         the foreground color.
-	 * @param fontFamily the font family to use,
-	 * @param fontSize   the font size to use,
-	 * @param italic     if <code>true</code>, use italic.
-	 * @param bold       if <code>true</code>, make bold.
-	 * @return the style.
+	 * @param fg         the foreground color
+	 * @param fontFamily the font family to use
+	 * @param fontSize   the font size to use
+	 * @param italic     {@code true} for italic text
+	 * @param bold       {@code true} for bold text
+	 * @return the created style
 	 */
 	public static SimpleAttributeSet createStyle(Color fg, String fontFamily, int fontSize, boolean italic,
 			boolean bold) {
@@ -137,15 +195,16 @@ public class TextPaneScrollPane extends JScrollPane {
 	}
 
 	/**
-	 * Create a style, not underlined with default spacing.
+	 * Creates a style with the given foreground and background colors and default
+	 * spacing.
 	 *
-	 * @param fg         the foreground color.
-	 * @param bg         the background color.
-	 * @param fontFamily the font family to use,
-	 * @param fontSize   the font size to use,
-	 * @param italic     if <code>true</code>, use italic.
-	 * @param bold       if <code>true</code>, make bold.
-	 * @return the style.
+	 * @param fg         the foreground color
+	 * @param bg         the background color
+	 * @param fontFamily the font family to use
+	 * @param fontSize   the font size to use
+	 * @param italic     {@code true} for italic text
+	 * @param bold       {@code true} for bold text
+	 * @return the created style
 	 */
 	public static SimpleAttributeSet createStyle(Color fg, Color bg, String fontFamily, int fontSize, boolean italic,
 			boolean bold) {
@@ -153,18 +212,18 @@ public class TextPaneScrollPane extends JScrollPane {
 	}
 
 	/**
-	 * Create a style
+	 * Creates a fully specified style.
 	 *
-	 * @param fg         the foreground color.
-	 * @param bg         the background color.
-	 * @param fontFamily the font family to use,
-	 * @param fontSize   the font size to use,
-	 * @param italic     if <code>true</code>, use italic.
-	 * @param bold       if <code>true</code>, make bold.
-	 * @param underline  if <code>true</code>, underline.
-	 * @param spaceAbove space above.
-	 * @param spaceBelow space below.
-	 * @return the style.
+	 * @param fg         the foreground color
+	 * @param bg         the background color
+	 * @param fontFamily the font family to use
+	 * @param fontSize   the font size to use
+	 * @param italic     {@code true} for italic text
+	 * @param bold       {@code true} for bold text
+	 * @param underline  {@code true} to underline
+	 * @param spaceAbove additional space above the paragraph, in points
+	 * @param spaceBelow additional space below the paragraph, in points
+	 * @return the created style
 	 */
 	public static SimpleAttributeSet createStyle(Color fg, Color bg, String fontFamily, int fontSize, boolean italic,
 			boolean bold, boolean underline, int spaceAbove, int spaceBelow) {
@@ -181,8 +240,12 @@ public class TextPaneScrollPane extends JScrollPane {
 		return style;
 	}
 
+	// ------------------------------------------------------------------------
+	// Internal setup
+	// ------------------------------------------------------------------------
+
 	/**
-	 * Create a text pane that will support styled text.
+	 * Creates the backing {@link StyledDocument} and {@link JTextPane}.
 	 */
 	private void createTextPane() {
 		StyleContext context = new StyleContext();
@@ -191,8 +254,12 @@ public class TextPaneScrollPane extends JScrollPane {
 		textPane.setEditable(false);
 	}
 
+	// ------------------------------------------------------------------------
+	// Public API
+	// ------------------------------------------------------------------------
+
 	/**
-	 * Refresh the text pane.
+	 * Forces a repaint of the underlying text pane.
 	 */
 	public void refresh() {
 		if (textPane != null) {
@@ -201,61 +268,72 @@ public class TextPaneScrollPane extends JScrollPane {
 	}
 
 	/**
-	 * Append a message to the underlying text area.
+	 * Appends plain text using the current {@link #defaultStyle}.
 	 *
-	 * @param text the message to append.
+	 * @param text the text to append; {@code null} is ignored
 	 */
-
 	public void append(String text) {
 		append(text, defaultStyle);
 	}
 
 	/**
-	 * Append some text with a specific style.
+	 * Appends text using a specific style.
 	 *
-	 * @param text  the text to append.
-	 * @param style the style to use, can be one of the class constants such as
-	 *              BOLD_RED.
+	 * @param text  the text to append; {@code null} is ignored
+	 * @param style the style to use (for example {@link #CYAN_TERMINAL})
 	 */
 	public void append(String text, AttributeSet style) {
 		append(text, style, false);
 	}
 
 	/**
-	 * Append some text with a specific style.
+	 * Appends text using a specific style and optional timestamp.
 	 *
-	 * @param text      the text to append.
-	 * @param style     the style to use, can be one of the class constants such as
-	 *                  BOLD_RED.
-	 * @param writeTime if <code>true</code> writes out a time stamp.
+	 * @param text      the text to append; {@code null} is ignored
+	 * @param style     the style to use
+	 * @param writeTime {@code true} to prepend a timestamp using
+	 *                  {@link #BLUE_M_10_B}
 	 */
 	public void append(final String text, final AttributeSet style, final boolean writeTime) {
-
 		baseAppend(text, style, writeTime);
-		// if (SwingUtilities.isEventDispatchThread()) {
-		// baseAppend(text, style, writeTime);
-		// }
-		// else {
-		// Runnable doRun = new Runnable() {
-		// @Override
-		// public void run() {
-		// baseAppend(text, style, writeTime);
-		// }
-		// };
-		//
-		// SwingUtilities.invokeLater(doRun);
-		// }
 	}
 
-	// SwingUtilities.isEventDispatchThread()
+	/**
+	 * Clears all text and resets the caret position to the beginning.
+	 */
+	public void clear() {
+		if (textPane == null) {
+			return;
+		}
+		textPane.setText(null);
+		textPane.setCaretPosition(0);
+	}
 
 	/**
-	 * Append some text with a specific style.
+	 * Returns the current default style used by {@link #append(String)}.
 	 *
-	 * @param text      the text to append.
-	 * @param style     the style to use, can be one of the class constants such as
-	 *                  BOLD_RED.
-	 * @param writeTime if <code>true</code> writes out a time stamp.
+	 * @return the default style
+	 */
+	public SimpleAttributeSet getDefaultStyle() {
+		return defaultStyle;
+	}
+
+	/**
+	 * Sets the default style used by {@link #append(String)}.
+	 *
+	 * @param defaultStyle the new default style
+	 */
+	public void setDefaultStyle(SimpleAttributeSet defaultStyle) {
+		this.defaultStyle = defaultStyle;
+	}
+
+	// ------------------------------------------------------------------------
+	// Internal helpers
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Internal implementation of append that performs the actual document
+	 * insertion and caret update.
 	 */
 	private void baseAppend(final String text, final AttributeSet style, final boolean writeTime) {
 		if ((text == null) || (document == null)) {
@@ -274,13 +352,13 @@ public class TextPaneScrollPane extends JScrollPane {
 		try {
 			textPane.setCaretPosition(Math.max(0, document.getLength() - 1));
 		} catch (Exception e) {
-			// System.err.println("TextPaneScrollPane exception " +
-			// e.getMessage());
+			// ignore; caret position is best-effort
 		}
 	}
 
 	/**
-	 * Write the date string in a small blue font.
+	 * Writes a timestamp using {@link DateString#dateStringSS()} with a small blue
+	 * monospaced style followed by two spaces.
 	 */
 	private void writeTime() {
 		String s = DateString.dateStringSS();
@@ -291,36 +369,5 @@ public class TextPaneScrollPane extends JScrollPane {
 			Log.getInstance().exception(e);
 			e.printStackTrace();
 		}
-	}
-
-	/**
-	 * Clear all the text.
-	 *
-	 */
-	public void clear() {
-		if (textPane == null) {
-			return;
-		}
-
-		textPane.setText(null);
-		textPane.setCaretPosition(0);
-	}
-
-	/**
-	 * Get the current default style.
-	 *
-	 * @return the current default style.
-	 */
-	public SimpleAttributeSet getDefaultStyle() {
-		return defaultStyle;
-	}
-
-	/**
-	 * Set the default style.
-	 *
-	 * @param defaultStyle the new default style
-	 */
-	public void setDefaultStyle(SimpleAttributeSet defaultStyle) {
-		this.defaultStyle = defaultStyle;
 	}
 }

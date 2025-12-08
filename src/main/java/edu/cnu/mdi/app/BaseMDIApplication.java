@@ -57,6 +57,9 @@ public class BaseMDIApplication extends JFrame {
 			System.err.println("Singleton violation in BaseMDI Application");
 			System.exit(1);
 		}
+		
+		//s
+		edu.cnu.mdi.util.Environment.setLookAndFeel();
 
 		_properties = PropertySupport.fromKeyValues(keyVals);
 
@@ -78,7 +81,7 @@ public class BaseMDIApplication extends JFrame {
 		Color background = PropertySupport.getBackground(_properties);
 		String backgroundImage = PropertySupport.getBackgroundImage(_properties);
 		String title = PropertySupport.getTitle(_properties);
-		boolean maximize = PropertySupport.getMaximizable(_properties);
+		boolean maximize = PropertySupport.getMaximize(_properties);
 		double screenFraction = PropertySupport.getFraction(_properties);
 		int width = PropertySupport.getWidth(_properties);
 		int height = PropertySupport.getHeight(_properties);

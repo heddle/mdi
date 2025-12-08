@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriter;
 import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
 
 /**
  * Environment information and simple application preferences for the mdi
@@ -71,10 +72,6 @@ public final class Environment {
     // dragging flag (used to let worker threads know about GUI drag operations)
     private volatile boolean dragging;
 
-    // screen information
-    private final float resolutionScaleFactor;
-    private final int dotsPerInch;
-
     // common Swing panel background
     private static Color commonPanelBackgroundColor;
 
@@ -90,19 +87,6 @@ public final class Environment {
         tempDirectory = getSystemProperty("java.io.tmpdir");
         classPath = getSystemProperty("java.class.path");
 
-        // screen information
-        int dpi = 96;
-        float scaleFactor = 1.0f;
-        try {
-            dpi = Toolkit.getDefaultToolkit().getScreenResolution();
-            double dpcm = dpi / 2.54;
-            // 42.91 was empirically chosen in the original bCNU code
-            scaleFactor = (float) (dpcm / 42.91);
-        } catch (Exception e) {
-            LOGGER.log(Level.WARNING, "Unable to determine screen resolution.", e);
-        }
-        dotsPerInch = dpi;
-        resolutionScaleFactor = scaleFactor;
 
         // any PNG image writers?
         ImageWriter writer = null;
@@ -224,33 +208,6 @@ public final class Environment {
     // Screen information / scaling
     // ------------------------------------------------------------------------
 
-    /**
-     * For scaling UI-related quantities such as font sizes. Logical sizes can
-     * be multiplied by this factor to adapt to high-DPI displays.
-     *
-     * @return the resolution scale factor
-     */
-    public float getResolutionScaleFactor() {
-        return resolutionScaleFactor;
-    }
-
-    /**
-     * Returns the dots per inch (DPI) for the primary display.
-     *
-     * @return screen DPI
-     */
-    public int getDotsPerInch() {
-        return dotsPerInch;
-    }
-
-    /**
-     * Returns the dots per centimetre (DPCM) for the primary display.
-     *
-     * @return screen DPCM
-     */
-    public double getDotsPerCentimeter() {
-        return dotsPerInch / 2.54;
-    }
 
     /**
      * Returns the display scale factor for the default screen device based on
@@ -594,13 +551,6 @@ public final class Environment {
             sb.append("  Class Path Token [").append(i).append("] = ").append(tokens[i]).append('\n');
         }
 
-        sb.append("Dots per Inch: ").append(dotsPerInch).append('\n');
-        sb.append("Dots per Centimeter: ")
-          .append(String.format(Locale.US, "%.2f", getDotsPerCentimeter()))
-          .append('\n');
-        sb.append("Resolution Scale Factor: ")
-          .append(String.format(Locale.US, "%.2f", resolutionScaleFactor))
-          .append('\n');
         sb.append("PNG Writer: ").append(pngWriter == null ? "none" : pngWriter).append('\n');
 
         sb.append("Monitors:\n");
@@ -656,50 +606,31 @@ public final class Environment {
     // Look & Feel helpers
     // ------------------------------------------------------------------------
 
-    /**
-     * Initialize the Swing look &amp; feel. This first tries to install the
-     * system look &amp; feel, and falls back to the cross-platform look
-     * &amp; feel on failure.
-     */
-    public static void setLookAndFeel() {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            LOGGER.info("Set Look and Feel: " + UIManager.getLookAndFeel());
-        } catch (Exception first) {
-            LOGGER.log(Level.FINE, "System Look and Feel failed, falling back to cross platform.", first);
-            try {
-                UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-                LOGGER.info("Set Look and Feel: " + UIManager.getLookAndFeel());
-            } catch (Exception second) {
-                LOGGER.log(Level.WARNING, "Unable to set any preferred Look and Feel.", second);
-            }
-        }
-    }
+	/**
+	 * Initialize the Swing look &amp; feel.
+	 */
+	public static void setLookAndFeel() {
+		try {
+			for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+				if ("Nimbus".equals(info.getName())) {
+					UIManager.setLookAndFeel(info.getClassName());
+					return;
+				}
+			}
+			System.err.println("Nimbus LAF not found; using default.");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 
-    /**
-     * Logs the installed Swing look &amp; feels and the system / cross-platform
-     * defaults to {@code System.out}.
-     */
-    public static void listLookAndFeels() {
-        var lookAndFeels = UIManager.getInstalledLookAndFeels();
-        System.out.println("Installed Look & Feels:");
-        for (var info : lookAndFeels) {
-            System.out.println("  " + info.getName() + " : " + info.getClassName());
-        }
-
-        System.out.println("System Look and Feel: " + UIManager.getSystemLookAndFeelClassName());
-        System.out.println("Cross Platform Look and Feel: " + UIManager.getCrossPlatformLookAndFeelClassName());
-    }
-
-    /**
-     * Simple test harness that prints the current environment and installed
-     * look &amp; feels.
-     */
-    public static void main(String[] args) {
-        Environment env = Environment.getInstance();
-        System.out.println(env);
-        listLookAndFeels();
-        System.out.println("Done.");
+	/**
+	 * Simple test harness that prints the current environment and installed look
+	 * &amp; feels.
+	 */
+	public static void main(String[] args) {
+		Environment env = Environment.getInstance();
+		System.out.println(env);
+         System.out.println("Done.");
     }
 
     /**
