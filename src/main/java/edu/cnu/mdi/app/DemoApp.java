@@ -8,6 +8,7 @@ import java.util.List;
 
 import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
 import edu.cnu.mdi.log.Log;
+import edu.cnu.mdi.mapping.GeoJsonCityLoader;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader;
 import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
@@ -185,7 +186,14 @@ public class DemoApp extends BaseMDIApplication {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
+		
+		// try loading cities as well
+		try {
+			List<GeoJsonCityLoader.CityFeature> cities = GeoJsonCityLoader.loadFromResource("/geo/cities.geojson");
+			MapView2D.setCities(cities);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		long toolbarBits = ToolBarBits.CENTERBUTTON | ToolBarBits.PANBUTTON | ToolBarBits.MAGNIFYBUTTON;
 
