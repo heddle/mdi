@@ -28,21 +28,6 @@ public final class ProjectionFactory {
         // not instantiable
     }
 
-    /**
-     * Creates a projection with the given type, using a default theme and
-     * default center (when applicable).
-     * <p>
-     * For projections that require a center (e.g., orthographic, Lambert
-     * equal-area), the default is (λ = 0, φ = 0).
-     * </p>
-     *
-     * @param type the projection type
-     * @return a new {@link IMapProjection} instance
-     * @throws IllegalArgumentException if the type is unsupported or {@code null}
-     */
-    public static IMapProjection create(EProjection type) {
-        return create(type, MapTheme.light(), null);
-    }
 
     /**
      * Creates a projection with the given type and theme, using a default
@@ -100,7 +85,7 @@ public final class ProjectionFactory {
                 if (center != null) {
                     return new OrthographicProjection(center.lambda(), center.phi(), theme);
                 }
-                return new OrthographicProjection(0.0, 0.0, theme);
+                return new OrthographicProjection(0.0, Math.toRadians(50), theme);
 
             case MOLLWEIDE:
                 // Mollweide uses the central meridian; if center provided, use its λ.

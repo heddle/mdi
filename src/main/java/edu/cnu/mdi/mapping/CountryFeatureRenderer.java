@@ -39,8 +39,6 @@ public class CountryFeatureRenderer {
     /** Projection used to convert lon/lat into world XY coordinates. */
     private final IMapProjection projection;
 
-    /** Visual theme used for land fill and border styling. */
-    private final MapTheme theme;
 
     /** Cache of projected country polygons in world (XY) coordinates. */
     private final CountryShapeCache shapeCache;
@@ -61,7 +59,6 @@ public class CountryFeatureRenderer {
                                   IMapProjection projection) {
         this.countryFeatures = Objects.requireNonNull(countryFeatures, "countryFeatures");
         this.projection = Objects.requireNonNull(projection, "projection");
-        this.theme = this.projection.getTheme();
         this.shapeCache = new CountryShapeCache(countryFeatures);
     }
 
@@ -141,9 +138,9 @@ public class CountryFeatureRenderer {
         Stroke oldStroke = g2.getStroke();
         Color oldColor = g2.getColor();
 
-        Color landColor = theme.getLandColor();
-        Color borderColor = theme.getBorderColor();
-        Stroke borderStroke = theme.getBorderStroke();
+        Color landColor = projection.getTheme().getLandColor();
+        Color borderColor = projection.getTheme().getBorderColor();
+        Stroke borderStroke = projection.getTheme().getBorderStroke();
         if (borderStroke == null) {
             borderStroke = new BasicStroke(0.5f);
         }

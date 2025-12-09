@@ -194,8 +194,7 @@ public interface IMapProjection {
      * @param theme the new theme (must not be {@code null})
      */
     void setTheme(MapTheme theme);
-    
-    
+      
     /**
      * Creates a clipping shape in local (container) coordinates representing
      * the visible map region for this projection.

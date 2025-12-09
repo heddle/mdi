@@ -39,6 +39,7 @@ import edu.cnu.mdi.item.YouAreHereItem;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.util.Point2DSupport;
 import edu.cnu.mdi.view.BaseView;
+import edu.cnu.mdi.view.ViewRecenterer;
 
 
 /**
@@ -53,6 +54,7 @@ import edu.cnu.mdi.view.BaseView;
 public class BaseContainer extends JComponent
 		implements IContainer, MouseListener, MouseMotionListener, MouseWheelListener, IDrawableListener {
 	
+    
 	/**
 	 * A collection of item list. This is the container's model.
 	 */
@@ -423,14 +425,19 @@ public class BaseContainer extends JComponent
 	/**
 	 * {@inheritDoc}
      */
-	@Override
-	public void recenter(Point pp) {
-		Point2D.Double wp = new Point2D.Double();
-		localToWorld(pp, wp);
-		recenter(_worldSystem, wp);
-		setDirty(true);
-		refresh();
-	}
+    @Override
+    public void recenter(Point pp) {
+    	
+		if ((_view != null) && (_view instanceof ViewRecenterer)) {
+			((ViewRecenterer) _view).recenterView(pp);
+			return;
+		}
+        Point2D.Double wp = new Point2D.Double();
+        localToWorld(pp, wp);
+        recenter(_worldSystem, wp);
+        setDirty(true);
+        refresh();
+    }
 
 	/**
 	 * {@inheritDoc}
@@ -1274,6 +1281,4 @@ public class BaseContainer extends JComponent
 		return image;
 
 	}
-
-
 }

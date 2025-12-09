@@ -103,6 +103,12 @@ public class BaseView extends JInternalFrame
      * {@link Desktop#getInstance()}.
      */
     private final JDesktopPane desktop;
+    
+    /**
+	 * Optional recenterer used to recenter the view on a specific point.
+	 * For examples, map views need careful recentering based on projection
+	 */
+    private ViewRecenterer recenterer;
 
     /**
      * The container used by this view, if any. Some views (such as a log view)
@@ -999,5 +1005,21 @@ public class BaseView extends JInternalFrame
         Rectangle parentBounds = getParent().getBounds();
 
         return parentBounds.intersects(frameBounds);
+    }
+    
+    /**
+	 * Sets the ViewRecenterer associated with this view.
+	 * 
+    public void setViewRecenterer(ViewRecenterer recenterer) {
+		this.recenterer = recenterer;
+	}
+    
+    /**
+	 * Returns the ViewRecenterer associated with this view.
+	 * 
+	 * @return the ViewRecenterer
+	 */
+    public ViewRecenterer getViewRecenterer() {
+    	return this.recenterer;
     }
 }

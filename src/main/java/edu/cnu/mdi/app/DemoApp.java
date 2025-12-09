@@ -200,9 +200,8 @@ public class DemoApp extends BaseMDIApplication {
 		MapView2D mapView = new MapView2D(PropertySupport.TITLE, "Sample 2D Map View", 
 				PropertySupport.LEFT, 300,
 				PropertySupport.TOP, 300, 
-				PropertySupport.WIDTH, 700, 
+				PropertySupport.WIDTH, 800, 
 				PropertySupport.HEIGHT, 500,
-				PropertySupport.BACKGROUND, X11Colors.getX11Color("alice blue"), 
 				PropertySupport.TOOLBARBITS,
 				toolbarBits);
 		
