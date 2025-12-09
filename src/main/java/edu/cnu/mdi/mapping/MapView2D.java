@@ -8,6 +8,7 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D.Double;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 
@@ -53,7 +54,7 @@ import edu.cnu.mdi.view.ViewRecenterer;
  * </p>
  */
 @SuppressWarnings("serial")
-public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotionListener, ViewRecenterer {
+public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotionListener {
 
 	// share country boundaries across all map views
 	private static List<CountryFeature> _countries;
@@ -86,7 +87,7 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	private CityPointRenderer _cityRenderer;
 
 	// workspace and strings for feedback
-	private LatLon _latLon = new LatLon();
+	private Point2D.Double _latLon = new Point2D.Double();
 	private static String _latPrefix = "$yellow$Lat (" + UnicodeSupport.SMALL_PHI + ")";
 	private static String _lonPrefix = "$yellow$Lon (" + UnicodeSupport.SMALL_LAMBDA + ")";
 	private static String _deg = UnicodeSupport.DEGREE;
@@ -382,31 +383,27 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 		return _projection;
 	}
 
-	/**
-	 * Set the map projection using the given enum value. This recreates
-	 * the projection, graticule renderer, country renderer, and city
-	 * renderer, and also resets the world coordinate system.
-	 *
-	 * @param projection the desired {@link EProjection}.
-	 */
+	
 	public void setProjection(EProjection projection) {
-	    _projection = ProjectionFactory.create(projection, _currentTheme);
-	    _gratRenderer = new GraticuleRenderer(_projection);
 
-	    // Use the projection's true XY bounds so container world == projection XY
-	    Rectangle2D.Double xyBounds = _projection.getXYBounds();
-	    getContainer().resetWorldSystem(xyBounds);
+		_projection = ProjectionFactory.create(projection, _currentTheme);
+		_gratRenderer = new GraticuleRenderer(_projection);
 
-	    _countryRenderer = new CountryFeatureRenderer(_countries, _projection);
-	    _countryRenderer.invalidateCache();
+		getContainer().resetWorldSystem(getWorldSystem(_projection.getProjection()));
+
+		_countryRenderer = new CountryFeatureRenderer(_countries, _projection);
+		_countryRenderer.invalidateCache();
 
 	    _cityRenderer = new CityPointRenderer(_cities, _projection);
 	    _cityRenderer.setPointRadius(1.5);
 	    _cityRenderer.setMinPopulation(MAX_POP_SLIDER_VALUE);
 	    _cityRenderer.setDrawLabels(true);
 
-	    refresh();
+		refresh();
+
 	}
+
+
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
@@ -424,27 +421,33 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	 * @param eprojection the projection enum.
 	 * @return the world bounds as a rectangle in projection coordinates.
 	 */
-	protected Rectangle2D.Double getWorldSystem(EProjection eprojection) {
+	private Rectangle2D.Double getWorldSystem(EProjection eprojection) {
 
-		double worldLim;
+		double xLim;
+		double yLim;
 
 		switch (eprojection) {
 		case MOLLWEIDE:
-			worldLim = 2.9;
+			xLim = 2.9;
+			yLim = xLim;
 			break;
 		case MERCATOR:
-			worldLim = 1.1 * Math.PI;
+			xLim = 1.1 * Math.PI;
+			yLim = xLim;
 			break;
 		case ORTHOGRAPHIC:
-			worldLim = 1.1;
+			xLim = 1.1;
+			yLim = xLim;
 			break;
 		case LAMBERT_EQUAL_AREA:
-			worldLim = Math.PI / 2;
+			xLim = 1.5*Math.PI / 2;
+			yLim = xLim;
 			break;
 		default:
-			worldLim = 1.1;
+			xLim = 1.1;
+			yLim = xLim;
 		}
-		return new Rectangle2D.Double(-worldLim, -worldLim, 2 * worldLim, 2 * worldLim);
+		return new Rectangle2D.Double(-xLim, -yLim, 2 * xLim, 2 * yLim);
 	}
 
 	/**
@@ -465,7 +468,7 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	@Override
 	public void getFeedbackStrings(IContainer container, Point pp, Double wp, List<String> feedbackStrings) {
 
-		boolean onMap = _projection.getLatLon(wp.x, wp.y, _latLon);
+		boolean onMap = _projection.isPointOnMap(wp);
 
 		String numCountryStr = String.format("Countries loaded: %d", (_countries != null) ? _countries.size() : 0);
 		String numCityStr = String.format("Cities loaded: %d", (_cities != null) ? _cities.size() : 0);
@@ -479,8 +482,11 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 		feedbackStrings.add(worldStr);
 
 		if (onMap) {
-			String latStr = String.format("%s %.2f%s", _latPrefix, _latLon.phiDeg(), _deg);
-			String lonStr = String.format("%s %.2f%s", _lonPrefix, _latLon.lambdaDeg(), _deg);
+			 _projection.latLonFromXY(_latLon, wp);
+			double dLon = Math.toDegrees(_latLon.x);
+			double dLat = Math.toDegrees(_latLon.y);
+			String latStr = String.format("%s %.2f%s", _latPrefix, dLat, _deg);
+			String lonStr = String.format("%s %.2f%s", _lonPrefix, dLon, _deg);
 			feedbackStrings.add(latStr);
 			feedbackStrings.add(lonStr);
 
@@ -522,9 +528,4 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 		_cities = cities;
 	}
 
-
-	@Override
-	public void recenterView(Point pp) {
-		System.out.println("Recentering view to point: " + pp);
-	}
 }

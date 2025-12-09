@@ -2,6 +2,7 @@ package edu.cnu.mdi.mapping;
 
 import java.awt.Graphics2D;
 import java.awt.Shape;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.container.IContainer;
@@ -11,210 +12,181 @@ import edu.cnu.mdi.container.IContainer;
  * <p>
  * Conventions:
  * <ul>
- *   <li>Geographic coordinates are represented by {@link LatLon} using
- *       lambda (longitude) and phi (latitude), in radians.</li>
- *   <li>Projected coordinates are represented by {@link XY}.</li>
- *   <li>Visual styling is controlled via a {@link MapTheme} instance.</li>
+ *   <li>Geographic coordinates are always in radians.</li>
+ *   <li>A geographic point is passed as a {@link java.awt.geom.Point2D.Double}
+ *       where {@code x = λ} (longitude, in radians) and
+ *       {@code y = φ} (latitude, in radians).</li>
+ *   <li>Projected (map) coordinates are also represented by
+ *       {@link java.awt.geom.Point2D.Double} and are referred to as "world"
+ *       or "projection-space" coordinates. The {@link IContainer} is
+ *       responsible for converting world coordinates to device coordinates
+ *       (pixels).</li>
  * </ul>
- * </p>
  */
 public interface IMapProjection {
-	
 
     // ---------------------------------------------------------------------
     // Transformations
     // ---------------------------------------------------------------------
 
     /**
-     * Converts a geographic location (latitude/longitude) to projected
-     * Cartesian coordinates.
+     * Forward projection from geographic coordinates (λ, φ) to projection-space
+     * coordinates (x, y).
      *
-     * @param latLon the geographic location (λ, φ), in radians
-     * @param xy     the output projected point to be written
+     * @param latLon geographic point (in radians). {@code x = λ}, {@code y = φ}
+     * @param xy     output projection point; must not be {@code null}
      */
-    void latLonToXY(LatLon latLon, XY xy);
+    void latLonToXY(Point2D.Double latLon, Point2D.Double xy);
 
     /**
-     * Converts a projected Cartesian point to a geographic location
-     * (latitude/longitude).
+     * Inverse projection from projection-space coordinates (x, y) back to
+     * geographic coordinates (λ, φ).
      *
-     * @param xy     the projected Cartesian point
-     * @param latLon the output geographic location (λ, φ), in radians
+     * @param latLon output geographic point (in radians).
+     *               {@code x = λ}, {@code y = φ}; must not be {@code null}
+     * @param xy     input projection point
      */
-    void xyToLatLon(XY xy, LatLon latLon);
-
-    /**
-     * Convenience method that converts a geographic location to a new
-     * projected Cartesian point.
-     *
-     * @param latLon the geographic location (λ, φ), in radians
-     * @return a new {@link XY} containing the projected coordinates
-     */
-    default XY latLonToXY(LatLon latLon) {
-        XY xy = new XY();
-        latLonToXY(latLon, xy);
-        return xy;
-    }
-
-    /**
-     * Convenience method that converts a projected Cartesian point to a new
-     * geographic location.
-     *
-     * @param xy the projected Cartesian point
-     * @return a new {@link LatLon} containing the geographic location
-     */
-    default LatLon xyToLatLon(XY xy) {
-        LatLon latLon = new LatLon();
-        xyToLatLon(xy, latLon);
-        return latLon;
-    }
+    void latLonFromXY(Point2D.Double latLon, Point2D.Double xy);
 
     // ---------------------------------------------------------------------
-    // Drawing
+    // Drawing support
     // ---------------------------------------------------------------------
 
     /**
-     * Draws the outline of the map supported by this projection into the given
-     * container using the provided graphics context and current {@link MapTheme}.
+     * Draw the outline of the map supported by this projection using the
+     * provided graphics context and container. Implementations typically:
+     * <ol>
+     *   <li>Construct a {@link java.awt.geom.Path2D} in world coordinates
+     *       describing the boundary of the valid projected domain.</li>
+     *   <li>Transform those points to screen space using the container's
+     *       world-to-local transform.</li>
+     *   <li>Stroke the resulting path using colors and strokes from the
+     *       current {@link MapTheme}.</li>
+     * </ol>
      *
-     * @param g2        the {@link Graphics2D} context to draw into
-     * @param container the drawing container
+     * @param g2        graphics context to draw into
+     * @param container container providing world-to-local transforms
      */
     void drawMapOutline(Graphics2D g2, IContainer container);
 
     /**
-     * Determines whether a projected Cartesian point lies within the valid
-     * region of this map projection.
+     * Test whether a projection-space point lies within the valid domain of
+     * this projection.
      *
-     * @param xy the projected Cartesian point to test
-     * @return {@code true} if the point lies on the map, {@code false} otherwise
+     * @param xy the projection-space point
+     * @return {@code true} if the point is on the map, {@code false} otherwise
      */
-    boolean isPointOnMap(XY xy);
-    
-    /**
-	 * Convenience method to determine whether a projected Cartesian point
-	 * lies within the valid region of this map projection.
-	 */
-    default boolean isPointOnMap(double x, double y) {
-		return isPointOnMap(new XY(x, y));
-	}
-    
-    /**
-	 * Convenience method to get the LatLon for a given projected x,y point.
-	 * 
-	 * @param x     the projected x coordinate
-	 * @param y     the projected y coordinate
-	 * @param latlon the output LatLon object to populate
-	 * @return true if the point is on the map, false otherwise
-	 */
-    default boolean getLatLon(double x, double y, LatLon latlon) {
-    	XY xy = new XY(x, y);
-    	boolean onMap = isPointOnMap(xy);
-    	if (!onMap) {
-    		return false;
-    	}
-		xyToLatLon(new XY(x, y), latlon);
-		return true;
-    }
+    boolean isPointOnMap(Point2D.Double xy);
 
     /**
-     * Draws a line of constant latitude (a parallel) as part of the graticule.
-     * The current {@link MapTheme} should be used to choose color and stroke.
+     * Draw a line of constant latitude (a parallel) in this projection.
+     * Implementations typically approximate the parallel by sampling in
+     * longitude, projecting each sample, and connecting them with a polyline.
      *
-     * @param g2        the {@link Graphics2D} context to draw into
-     * @param container the drawing container
-     * @param latitude  the latitude of the line in radians (typically in [-π/2, π/2])
+     * @param g2        graphics context
+     * @param container container providing world-to-local transforms
+     * @param latitude  latitude φ in radians (usually in [-π/2, π/2])
      */
     void drawLatitudeLine(Graphics2D g2, IContainer container, double latitude);
 
     /**
-     * Draws a line of constant longitude (a meridian) as part of the graticule.
-     * The current {@link MapTheme} should be used to choose color and stroke.
+     * Draw a line of constant longitude (a meridian) in this projection.
+     * Implementations typically approximate the meridian by sampling in
+     * latitude, projecting each sample, and connecting them with a polyline.
      *
-     * @param g2        the {@link Graphics2D} context to draw into
-     * @param container the drawing container
-     * @param longitude the longitude of the line in radians, typically in [-π, π]
+     * @param g2        graphics context
+     * @param container container providing world-to-local transforms
+     * @param longitude longitude λ in radians (usually in [-π, π])
      */
     void drawLongitudeLine(Graphics2D g2, IContainer container, double longitude);
 
     /**
-     * Determines whether a given geographic location is visible in this
-     * projection.
+     * Test whether a geographic location is visible in this projection.
+     * <ul>
+     *   <li>Global projections (e.g. Mercator, Mollweide) usually return
+     *       {@code true} for all valid lat/lon values.</li>
+     *   <li>Hemispherical projections (e.g. orthographic) typically return
+     *       {@code true} only for locations on the visible hemisphere.</li>
+     * </ul>
      *
-     * @param latLon the geographic location to test (λ, φ), in radians
-     * @return {@code true} if the point is visible in this projection;
-     *         {@code false} otherwise
+     * @param latLon geographic point in radians; {@code x = λ}, {@code y = φ}
+     * @return {@code true} if the point is visible, {@code false} otherwise
      */
-    boolean isPointVisible(LatLon latLon);
+    boolean isPointVisible(Point2D.Double latLon);
 
     // ---------------------------------------------------------------------
-    // Projection metadata
+    // Metadata & theme
     // ---------------------------------------------------------------------
 
     /**
-     * Returns the projection type for this implementation.
+     * Projection type enum for this implementation.
      *
-     * @return the projection enum value
+     * @return the corresponding {@link EProjection} value
      */
     EProjection getProjection();
 
     /**
-     * Returns a human-readable name for this projection.
+     * Human-readable name for this projection. The default implementation
+     * delegates to {@link EProjection#getName()} if available, otherwise
+     * falls back to the simple class name.
      *
-     * @return the name of the projection
+     * @return projection name suitable for UI labels
      */
     default String name() {
         EProjection projection = getProjection();
-        return (projection != null) ? projection.getName() : getClass().getSimpleName();
+        return (projection != null) ? projection.getName()
+                                    : getClass().getSimpleName();
     }
 
     /**
-     * Returns the bounding rectangle in projected XY space that this projection
-     * covers.
+     * Bounding box of the projection-space domain, in world coordinates.
+     * This rectangle is typically used by containers to build a world-to-screen
+     * transform.
      *
-     * @return the XY bounding rectangle of the projection
+     * @return a rectangle describing the min/max x and y in projection space
      */
     Rectangle2D.Double getXYBounds();
 
-    // ---------------------------------------------------------------------
-    // Theme handling
-    // ---------------------------------------------------------------------
-
     /**
-     * Returns the {@link MapTheme} currently used by this projection.
+     * Get the current {@link MapTheme}. Implementations should never return
+     * {@code null} once initialized.
      *
      * @return the active map theme
      */
     MapTheme getTheme();
 
     /**
-     * Sets the {@link MapTheme} used by this projection for choosing colors and
-     * stroke widths during rendering.
+     * Set the {@link MapTheme} used by this projection for outlines and
+     * graticule drawing.
      *
-     * @param theme the new theme (must not be {@code null})
+     * @param theme non-{@code null} map theme
+     * @throws IllegalArgumentException if {@code theme} is {@code null}
      */
     void setTheme(MapTheme theme);
-      
+
     /**
-     * Creates a clipping shape in local (container) coordinates representing
-     * the visible map region for this projection.
-     * <p>
-     * The returned shape is suitable for use with
-     * {@link java.awt.Graphics2D#setClip(Shape)} in order to restrict drawing
-     * (e.g., to fill oceans) to the projected map area.
-     * </p>
+     * Create a clip shape in <em>device coordinates</em> corresponding to
+     * the map's valid domain. This is typically used to:
+     * <ul>
+     *   <li>Clip land/ocean rendering to the map region.</li>
+     *   <li>Fill the ocean background via {@link #fillOcean(Graphics2D, IContainer)}.</li>
+     * </ul>
      *
-     * @param container the container providing the world-to-local transform
-     * @return a shape in local coordinates representing the visible map area
+     * @param container container providing the world-to-local transform
+     * @return a device-space {@link Shape}, or {@code null} if no clip is defined
      */
     Shape createClipShape(IContainer container);
 
+    // ---------------------------------------------------------------------
+    // Default helpers
+    // ---------------------------------------------------------------------
+
     /**
-     * Convenience method to fill the map area with the theme's ocean color
-     * using clipping.
+     * Convenience helper that fills the map domain with the ocean color from
+     * the current {@link MapTheme}.
      *
      * @param g2        graphics context
-     * @param container container used for coordinate transforms
+     * @param container container providing world-to-local transforms
      */
     default void fillOcean(Graphics2D g2, IContainer container) {
         Shape clip = createClipShape(container);
@@ -223,8 +195,29 @@ public interface IMapProjection {
         }
 
         java.awt.Color oldColor = g2.getColor();
-
         g2.setColor(getTheme().getOceanColor());
-        g2.fill(clip);           // <-- fill the map shape itself
-        g2.setColor(oldColor);    }
+        g2.fill(clip);
+        g2.setColor(oldColor);
+    }
+
+    /**
+     * Wrap a longitude value to the canonical range [-π, π).
+     *
+     * @param lon longitude in radians
+     * @return wrapped longitude in [-π, π)
+     */
+    default double wrapLongitude(double lon) {
+        return lon - (2.0 * Math.PI) * Math.floor((lon + Math.PI) / (2.0 * Math.PI));
+    }
+
+    /**
+     * Wrap a latitude value to the range [-π/2, π/2]. This is mainly useful
+     * for helper code; most projections should clamp, not wrap, latitude.
+     *
+     * @param lat latitude in radians
+     * @return wrapped latitude in [-π/2, π/2]
+     */
+    default double wrapLatitude(double lat) {
+        return lat - Math.PI * Math.floor((lat + Math.PI / 2.0) / Math.PI);
+    }
 }

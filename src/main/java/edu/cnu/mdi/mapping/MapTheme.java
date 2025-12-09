@@ -25,6 +25,7 @@ public final class MapTheme {
     private final Color outlineColor;
     private final Color graticuleColor;
     private final Color labelColor;
+    private final Color cityColor;
 
     /** Color used to draw political borders (country outlines). */
     private final Color borderColor;
@@ -46,6 +47,7 @@ public final class MapTheme {
         this.outlineColor = b.outlineColor;
         this.graticuleColor = b.graticuleColor;
         this.labelColor = b.labelColor;
+        this.cityColor = b.cityColor;
 
         this.borderColor = b.borderColor;
         this.borderStroke = b.borderStroke;
@@ -76,6 +78,9 @@ public final class MapTheme {
 
     /** Returns the political border color. */
     public Color getBorderColor() { return borderColor; }
+    
+    /** Returns the city point color. */
+    public Color getCityColor() { return cityColor; }
 
     /** Returns the stroke used to draw political borders. */
     public Stroke getBorderStroke() { return borderStroke; }
@@ -89,6 +94,7 @@ public final class MapTheme {
                 .backgroundColor(backgroundColor)
                 .oceanColor(oceanColor)
                 .landColor(landColor)
+                .cityColor(cityColor)
                 .outlineColor(outlineColor)
                 .graticuleColor(graticuleColor)
                 .labelColor(labelColor)
@@ -107,6 +113,7 @@ public final class MapTheme {
                 .backgroundColor(new Color(0xF0F0F0))
                 .oceanColor(new Color(0xCDE8FF))
                 .landColor(new Color(0xE3F2D9))
+                .cityColor(Color.RED)
                 .outlineColor(new Color(0x505050))
                 .graticuleColor(new Color(0xB0B0B0))
                 .labelColor(Color.DARK_GRAY)
@@ -122,6 +129,7 @@ public final class MapTheme {
                 .backgroundColor(new Color(0x20232A))
                 .oceanColor(new Color(0x273746))
                 .landColor(new Color(0x34495E))
+                .cityColor(Color.cyan)
                 .outlineColor(new Color(0xECF0F1))
                 .graticuleColor(new Color(0x7F8C8D))
                 .labelColor(new Color(0xECF0F1))
@@ -137,6 +145,7 @@ public final class MapTheme {
                 .backgroundColor(new Color(0xE9F2FF))
                 .oceanColor(new Color(0x90CAF9))
                 .landColor(new Color(0xE8F5E9))
+                .cityColor(new Color(0x0D47A1))
                 .outlineColor(new Color(0x1E88E5))
                 .graticuleColor(new Color(0x64B5F6))
                 .labelColor(new Color(0x0D47A1))
@@ -159,6 +168,7 @@ public final class MapTheme {
         private Color outlineColor = Color.DARK_GRAY;
         private Color graticuleColor = Color.LIGHT_GRAY;
         private Color labelColor = Color.BLACK;
+        private Color cityColor = Color.RED;
 
         private Color borderColor = Color.BLACK; // NEW DEFAULT
         private Stroke borderStroke = new BasicStroke(0.7f); // NEW DEFAULT
@@ -169,6 +179,7 @@ public final class MapTheme {
         public Builder backgroundColor(Color c) { this.backgroundColor = c; return this; }
         public Builder oceanColor(Color c) { this.oceanColor = c; return this; }
         public Builder landColor(Color c) { this.landColor = c; return this; }
+        public Builder cityColor(Color c) { this.cityColor = c; return this; }
         public Builder outlineColor(Color c) { this.outlineColor = c; return this; }
         public Builder graticuleColor(Color c) { this.graticuleColor = c; return this; }
         public Builder labelColor(Color c) { this.labelColor = c; return this; }

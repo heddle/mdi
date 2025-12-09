@@ -6,311 +6,274 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
 
 import edu.cnu.mdi.container.IContainer;
 
 /**
- * Orthographic map projection (spherical Earth).
+ * Orthographic azimuthal projection (spherical Earth).
  * <p>
- * Displays the hemisphere centered at (lambda0, phi0) as a perspective
- * projection onto a plane. The Earth is modeled as a unit sphere, so
- * projected coordinates (x, y) lie within the unit disk:
- * x^2 + y^2 <= 1.
- * </p>
+ * Displays the hemisphere centered at (λ₀, φ₀) as a perspective projection
+ * onto a plane. Earth is modeled as a unit sphere so the projected domain is
+ * the unit disk:
+ * <pre>
+ *     x = R cos φ sin(λ - λ₀)
+ *     y = R (cos φ₀ sin φ - sin φ₀ cos φ cos(λ - λ₀))
+ * </pre>
+ * with {@code x^2 + y^2 ≤ R^2}.
  */
 public class OrthographicProjection implements IMapProjection {
 
-    /** Default sampling resolution for graticule polylines. */
+    /** Number of segments used for boundary and graticule approximations. */
     private static final int NUM_SEGMENTS = 180;
 
-    /** Center longitude λ₀ in radians. */
-    private double lambda0;
+    /** Central longitude and latitude (in radians). */
+    private final double centerLon;
+    private final double centerLat;
 
-    /** Center latitude φ₀ in radians. */
-    private double phi0;
+    /** Sphere radius in projection space. */
+    private static final double R = 1.0;
 
-    /** Precomputed sines and cosines for the center. */
-    private double sinPhi0;
-    private double cosPhi0;
+    private static final double MAX_LAT = Math.toRadians(89.999);
+    private static final double MIN_LAT = -MAX_LAT;
 
-    /** Active theme used for rendering. */
+    /** Theme for outline drawing. */
     private MapTheme theme;
 
     /**
-     * Creates an orthographic projection centered on (λ₀ = 0, φ₀ = 0)
-     * using the default light theme.
-     */
-    public OrthographicProjection() {
-        this(0.0, 0.0, MapTheme.light());
-    }
-
-    /**
-     * Creates an orthographic projection centered on the given
-     * latitude/longitude using the default light theme.
+     * Create a new orthographic projection centered at the given geographic
+     * location on a unit sphere.
      *
-     * @param center center of projection
+     * @param centerLon central longitude λ₀ in radians
+     * @param centerLat central latitude  φ₀ in radians
      */
-    public OrthographicProjection(LatLon center) {
-        this(center.lambda(), center.phi(), MapTheme.light());
-    }
-
-    /**
-     * Creates an orthographic projection centered at (lambda0, phi0)
-     * using the specified theme.
-     *
-     * @param lambda0 center longitude in radians
-     * @param phi0    center latitude in radians
-     * @param theme   map theme (must not be {@code null})
-     */
-    public OrthographicProjection(double lambda0, double phi0, MapTheme theme) {
-        setCenter(lambda0, phi0);
-        setTheme(theme);
-    }
-
-    /**
-     * Sets the center of the projection.
-     *
-     * @param lambda0 center longitude in radians
-     * @param phi0    center latitude in radians
-     */
-    public final void setCenter(double lambda0, double phi0) {
-        this.lambda0 = lambda0;
-        this.phi0 = phi0;
-        this.sinPhi0 = Math.sin(phi0);
-        this.cosPhi0 = Math.cos(phi0);
-    }
-
-    /**
-     * Returns the center of the projection.
-     *
-     * @return a {@link LatLon} representing the projection center
-     */
-    public LatLon getCenter() {
-        return new LatLon(lambda0, phi0);
+    public OrthographicProjection(double centerLon, double centerLat) {
+        this.centerLon = centerLon;
+        this.centerLat = centerLat;
     }
 
     @Override
-    public void latLonToXY(LatLon latLon, XY xy) {
-        double lambda = latLon.lambda();
-        double phi    = latLon.phi();
+    public void latLonToXY(Point2D.Double latLon, Point2D.Double xy) {
+        double lon = latLon.x;
+        double lat = latLon.y;
 
-        double sinPhi = Math.sin(phi);
-        double cosPhi = Math.cos(phi);
-        double dLambda = lambda - lambda0;
+        // Clamp latitude slightly away from the poles for numerical stability
+        lat = Math.max(MIN_LAT, Math.min(MAX_LAT, lat));
 
-        double cosDLambda = Math.cos(dLambda);
-        double sinDLambda = Math.sin(dLambda);
+        double deltaLon = lon - centerLon;
 
-        // Visible hemisphere test (dot product >= 0)
-        double cosC = sinPhi0 * sinPhi + cosPhi0 * cosPhi * cosDLambda;
-        if (cosC < 0.0) {
-            // Point is on the far side; you may choose to set NaN or
-            // leave as-is. Here we project anyway; caller should use
-            // isPointVisible for visibility decisions.
+        double cosLat = Math.cos(lat);
+        double sinLat = Math.sin(lat);
+        double cosDeltaLon = Math.cos(deltaLon);
+        double sinDeltaLon = Math.sin(deltaLon);
+
+        double cosLat0 = Math.cos(centerLat);
+        double sinLat0 = Math.sin(centerLat);
+
+        double x = R * cosLat * sinDeltaLon;
+        double y = R * (cosLat0 * sinLat - sinLat0 * cosLat * cosDeltaLon);
+
+        // z is used to test visibility: dot product with view direction
+        double z = sinLat0 * sinLat + cosLat0 * cosLat * cosDeltaLon;
+
+        if (z <= 0.0) {
+            // Point is on the far hemisphere; mark as not visible
+            xy.setLocation(Double.NaN, Double.NaN);
+        } else {
+            xy.setLocation(x, y);
         }
-
-        double x = cosPhi * sinDLambda;
-        double y = cosPhi0 * sinPhi - sinPhi0 * cosPhi * cosDLambda;
-
-        xy.set(x, y);
     }
 
     @Override
-    public void xyToLatLon(XY xy, LatLon latLon) {
-        double x = xy.x();
-        double y = xy.y();
+    public void latLonFromXY(Point2D.Double latLon, Point2D.Double xy) {
+        double x = xy.x;
+        double y = xy.y;
 
         double rho2 = x * x + y * y;
-        if (rho2 > 1.0) {
-            // Outside projection disk; result undefined.
-            // We still compute but caller should check isPointOnMap.
-        }
-
-        double rho = Math.sqrt(rho2);
-        double c = Math.asin(Math.min(1.0, rho)); // central angle
-
-        if (rho == 0.0) {
-            // Center point maps to projection center
-            latLon.set(lambda0, phi0);
+        if (rho2 > R * R) {
+            // Outside unit disk: no valid inverse; mark as NaN
+            latLon.setLocation(Double.NaN, Double.NaN);
             return;
         }
 
+        double rho = Math.sqrt(rho2);
+        if (rho == 0.0) {
+            // Center of the projection
+            latLon.x = centerLon;
+            latLon.y = centerLat;
+            return;
+        }
+
+        double c = Math.asin(rho / R);
         double sinC = Math.sin(c);
         double cosC = Math.cos(c);
 
-        double phi = Math.asin(
-                cosC * sinPhi0 + (y * sinC * cosPhi0 / rho)
-        );
+        double cosLat0 = Math.cos(centerLat);
+        double sinLat0 = Math.sin(centerLat);
 
-        double lambda = lambda0 + Math.atan2(
-                x * sinC,
-                rho * cosPhi0 * cosC - y * sinPhi0 * sinC
-        );
+        double phi = Math.asin(cosC * sinLat0 + (y * sinC * cosLat0) / rho);
+        double lambda = centerLon + Math.atan2(x * sinC,
+                                               rho * cosLat0 * cosC - y * sinLat0 * sinC);
 
-        latLon.set(lambda, phi);
+        latLon.x = wrapLongitude(lambda);
+        latLon.y = phi;
     }
 
     @Override
     public void drawMapOutline(Graphics2D g2, IContainer container) {
-        // The visible Earth is a unit circle in projection space:
-        // x^2 + y^2 = 1
+        // Boundary is the unit circle x^2 + y^2 = R^2
+        Path2D path = new Path2D.Double();
+        Point2D.Double world = new Point2D.Double();
+        Point screen = new Point();
+
+        for (int i = 0; i <= NUM_SEGMENTS; i++) {
+            double theta = 2.0 * Math.PI * i / NUM_SEGMENTS;
+            double x = R * Math.cos(theta);
+            double y = R * Math.sin(theta);
+
+            world.setLocation(x, y);
+            container.worldToLocal(screen, world);
+
+            if (i == 0) {
+                path.moveTo(screen.x, screen.y);
+            } else {
+                path.lineTo(screen.x, screen.y);
+            }
+        }
+        path.closePath();
 
         Color oldColor = g2.getColor();
         Stroke oldStroke = g2.getStroke();
 
         g2.setColor(theme.getOutlineColor());
         g2.setStroke(new BasicStroke(theme.getOutlineStrokeWidth()));
-
-        Point2D.Double world = new Point2D.Double();
-        Point prev = new Point();
-        Point first = new Point();
-
-        // Approximate the circle with a polyline
-        int n = NUM_SEGMENTS;
-        for (int i = 0; i <= n; i++) {
-            double theta = (2.0 * Math.PI * i) / n;
-            double x = Math.cos(theta);
-            double y = Math.sin(theta);
-
-            world.setLocation(x, y);
-            Point p = new Point();
-            container.worldToLocal(p, world);
-
-            if (i == 0) {
-                first.setLocation(p);
-                prev.setLocation(p);
-            } else {
-                g2.drawLine(prev.x, prev.y, p.x, p.y);
-                prev.setLocation(p);
-            }
-        }
+        g2.draw(path);
 
         g2.setColor(oldColor);
         g2.setStroke(oldStroke);
     }
 
     @Override
-    public boolean isPointOnMap(XY xy) {
-        double x = xy.x();
-        double y = xy.y();
-        return x * x + y * y <= 1.0 + 1e-9; // small epsilon
+    public boolean isPointOnMap(Point2D.Double xy) {
+        double x = xy.x;
+        double y = xy.y;
+        return x * x + y * y <= R * R + 1e-9;
     }
 
     @Override
     public void drawLatitudeLine(Graphics2D g2, IContainer container, double latitude) {
-        // We draw a polyline by sampling longitude.
-        // Only points on the near hemisphere are drawn.
+        double lat = Math.max(MIN_LAT, Math.min(MAX_LAT, latitude));
 
-        Color oldColor = g2.getColor();
-        Stroke oldStroke = g2.getStroke();
+        GeneralPath path = new GeneralPath();
+        Point2D.Double latLon = new Point2D.Double();
+        Point2D.Double xy = new Point2D.Double();
+        Point screen = new Point();
 
-        g2.setColor(theme.getGraticuleColor());
-        g2.setStroke(new BasicStroke(theme.getGraticuleStrokeWidth()));
+        latLon.y = lat;
 
-        LatLon latLon = new LatLon();
-        XY xy = new XY();
-        Point2D.Double world = new Point2D.Double();
-        Point prevPoint = null;
+        int numPoints = NUM_SEGMENTS;
+        double step = 2.0 * Math.PI / numPoints;
 
-        double lonMin = -Math.PI;
-        double lonMax =  Math.PI;
-
-        for (int i = 0; i <= NUM_SEGMENTS; i++) {
-            double t = (double) i / NUM_SEGMENTS;
-            double lambda = lonMin + t * (lonMax - lonMin);
-
-            latLon.set(lambda, latitude);
+        for (int i = 0; i <= numPoints; i++) {
+            double lon = -Math.PI + i * step;
+            latLon.x = lon;
 
             if (!isPointVisible(latLon)) {
-                // Break the line when we go to far side
-                prevPoint = null;
                 continue;
             }
 
             latLonToXY(latLon, xy);
-            if (!isPointOnMap(xy)) {
-                prevPoint = null;
+            if (Double.isNaN(xy.x) || Double.isNaN(xy.y)) {
                 continue;
             }
 
-            world.setLocation(xy.x(), xy.y());
-            Point p = new Point();
-            container.worldToLocal(p, world);
+            container.worldToLocal(screen, xy);
 
-            if (prevPoint != null) {
-                g2.drawLine(prevPoint.x, prevPoint.y, p.x, p.y);
+            if (path.getCurrentPoint() == null) {
+                path.moveTo(screen.x, screen.y);
+            } else {
+                path.lineTo(screen.x, screen.y);
             }
-            prevPoint = p;
         }
 
+        Color oldColor = g2.getColor();
+        g2.setColor(Color.LIGHT_GRAY);
+        g2.draw(path);
         g2.setColor(oldColor);
-        g2.setStroke(oldStroke);
     }
 
     @Override
     public void drawLongitudeLine(Graphics2D g2, IContainer container, double longitude) {
-        // Sample latitude from -π/2 to +π/2.
-        Color oldColor = g2.getColor();
-        Stroke oldStroke = g2.getStroke();
+        double lon = wrapLongitude(longitude);
 
-        g2.setColor(theme.getGraticuleColor());
-        g2.setStroke(new BasicStroke(theme.getGraticuleStrokeWidth()));
+        GeneralPath path = new GeneralPath();
+        Point2D.Double latLon = new Point2D.Double();
+        Point2D.Double xy = new Point2D.Double();
+        Point screen = new Point();
 
-        LatLon latLon = new LatLon();
-        XY xy = new XY();
-        Point2D.Double world = new Point2D.Double();
-        Point prevPoint = null;
+        latLon.x = lon;
 
-        double latMin = -Math.PI / 2.0;
-        double latMax =  Math.PI / 2.0;
+        // Determine visible latitude range for this central latitude
+        List<double[]> ranges = getVisibleLatitudeRanges(centerLat);
 
-        for (int i = 0; i <= NUM_SEGMENTS; i++) {
-            double t = (double) i / NUM_SEGMENTS;
-            double phi = latMin + t * (latMax - latMin);
+        int numPoints = NUM_SEGMENTS;
 
-            latLon.set(longitude, phi);
+        for (double[] range : ranges) {
+            double latMin = range[0];
+            double latMax = range[1];
 
-            if (!isPointVisible(latLon)) {
-                prevPoint = null;
-                continue;
+            for (int i = 0; i <= numPoints; i++) {
+                double t = (double) i / numPoints;
+                double lat = latMin + t * (latMax - latMin);
+                latLon.y = lat;
+
+                if (!isPointVisible(latLon)) {
+                    continue;
+                }
+
+                latLonToXY(latLon, xy);
+                if (Double.isNaN(xy.x) || Double.isNaN(xy.y)) {
+                    continue;
+                }
+
+                container.worldToLocal(screen, xy);
+
+                if (path.getCurrentPoint() == null) {
+                    path.moveTo(screen.x, screen.y);
+                } else {
+                    path.lineTo(screen.x, screen.y);
+                }
             }
-
-            latLonToXY(latLon, xy);
-            if (!isPointOnMap(xy)) {
-                prevPoint = null;
-                continue;
-            }
-
-            world.setLocation(xy.x(), xy.y());
-            Point p = new Point();
-            container.worldToLocal(p, world);
-
-            if (prevPoint != null) {
-                g2.drawLine(prevPoint.x, prevPoint.y, p.x, p.y);
-            }
-            prevPoint = p;
         }
 
+        Color oldColor = g2.getColor();
+        g2.setColor(Color.LIGHT_GRAY);
+        g2.draw(path);
         g2.setColor(oldColor);
-        g2.setStroke(oldStroke);
     }
 
     @Override
-    public boolean isPointVisible(LatLon latLon) {
-        // Visible if central angle <= 90°, i.e. cos(c) >= 0
-        double lambda = latLon.lambda();
-        double phi    = latLon.phi();
+    public boolean isPointVisible(Point2D.Double latLon) {
+        double lon = latLon.x;
+        double lat = latLon.y;
 
-        double sinPhi = Math.sin(phi);
-        double cosPhi = Math.cos(phi);
-        double dLambda = lambda - lambda0;
-        double cosDLambda = Math.cos(dLambda);
+        double deltaLon = lon - centerLon;
 
-        double cosC = sinPhi0 * sinPhi + cosPhi0 * cosPhi * cosDLambda;
-        return cosC >= 0.0;
+        double cosLat = Math.cos(lat);
+        double sinLat = Math.sin(lat);
+        double cosDeltaLon = Math.cos(deltaLon);
+
+        double cosLat0 = Math.cos(centerLat);
+        double sinLat0 = Math.sin(centerLat);
+
+        // z = dot(viewDirection, surface normal)
+        double z = sinLat0 * sinLat + cosLat0 * cosLat * cosDeltaLon;
+        return z > 0.0;
     }
 
     @Override
@@ -320,8 +283,8 @@ public class OrthographicProjection implements IMapProjection {
 
     @Override
     public Rectangle2D.Double getXYBounds() {
-        // Projection is the unit disk; extents are [-1, 1] in both x and y.
-        return new Rectangle2D.Double(-1.0, -1.0, 2.0, 2.0);
+        // Projection is the unit disk centered at (0, 0)
+        return new Rectangle2D.Double(-R, -R, 2.0 * R, 2.0 * R);
     }
 
     @Override
@@ -336,28 +299,49 @@ public class OrthographicProjection implements IMapProjection {
         }
         this.theme = theme;
     }
-    
+
     @Override
     public Shape createClipShape(IContainer container) {
         Path2D path = new Path2D.Double();
         Point2D.Double world = new Point2D.Double();
-        Point p = new Point();
+        Point screen = new Point();
 
         for (int i = 0; i <= NUM_SEGMENTS; i++) {
             double theta = 2.0 * Math.PI * i / NUM_SEGMENTS;
-            double x = Math.cos(theta);
-            double y = Math.sin(theta);
+            double x = R * Math.cos(theta);
+            double y = R * Math.sin(theta);
 
             world.setLocation(x, y);
-            container.worldToLocal(p, world);
+            container.worldToLocal(screen, world);
 
             if (i == 0) {
-                path.moveTo(p.x, p.y);
+                path.moveTo(screen.x, screen.y);
             } else {
-                path.lineTo(p.x, p.y);
+                path.lineTo(screen.x, screen.y);
             }
         }
         path.closePath();
         return path;
+    }
+
+    /**
+     * Compute the visible latitude range(s) for a given central latitude.
+     * For the orthographic projection the visible band is simply
+     * {@code [centerLat - π/2, centerLat + π/2]} intersected with
+     * {@code [-π/2, π/2]}.
+     *
+     * @param centerLat central latitude in radians
+     * @return list containing one [minLat, maxLat] segment
+     */
+    private List<double[]> getVisibleLatitudeRanges(double centerLat) {
+        double minLat = centerLat - Math.PI / 2.0;
+        double maxLat = centerLat + Math.PI / 2.0;
+
+        minLat = Math.max(minLat, -Math.PI / 2.0);
+        maxLat = Math.min(maxLat, Math.PI / 2.0);
+
+        List<double[]> ranges = new ArrayList<>();
+        ranges.add(new double[] { minLat, maxLat });
+        return ranges;
     }
 }

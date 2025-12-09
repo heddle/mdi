@@ -14,14 +14,16 @@ import edu.cnu.mdi.container.IContainer;
 /**
  * Cache of projected country shapes in world (projection XY) coordinates.
  * <p>
- * This cache is intended to support both rendering and hit-testing for
- * mouseover feedback. The expensive work of converting from geographic
- * longitude/latitude to projected XY polygons is done once, and the
- * resulting {@link Path2D} shapes are reused across frames.
+ * Given a list of {@link GeoJsonCountryLoader.CountryFeature} objects defined
+ * in geographic coordinates (lon/lat in degrees), this class builds and caches
+ * a list of {@link CountryShape} instances that represent each country's
+ * polygon in projection (XY) space.
+ * </p>
  * <p>
- * The cache is <strong>projection-dependent</strong>: changing to a
- * different {@link IMapProjection} (or changing its parameters) requires
- * invalidating and rebuilding the cache.
+ * The cache is keyed by {@link IMapProjection} instance; if the projection
+ * changes, clients must call {@link #invalidate()} so that a subsequent
+ * access will rebuild the cache with the new projection.
+ * </p>
  */
 public final class CountryShapeCache {
 
@@ -63,7 +65,7 @@ public final class CountryShapeCache {
     private List<CountryShape> cachedShapes = Collections.emptyList();
     private boolean cacheDirty = true;
 
-    // Optional: remember which projection the cache was built for
+    // Remember which projection the cache was built for
     private IMapProjection lastProjection;
 
     /**
@@ -77,7 +79,8 @@ public final class CountryShapeCache {
 
     /**
      * Mark the cache as out-of-date. The next call to
-     * {@link #getShapes(IMapProjection)} or {@link #pickCountry(Point, IContainer, IMapProjection)}
+     * {@link #getShapes(IMapProjection)} or
+     * {@link #pickCountry(Point, IContainer, IMapProjection)}
      * will rebuild the cache for the given projection.
      */
     public void invalidate() {
@@ -151,8 +154,8 @@ public final class CountryShapeCache {
     private void rebuildCache(IMapProjection projection) {
         List<CountryShape> shapes = new ArrayList<>(countryFeatures.size());
 
-        LatLon ll = new LatLon();
-        XY xy = new XY();
+        Point2D.Double latLon = new Point2D.Double();
+        Point2D.Double xy = new Point2D.Double();
 
         for (GeoJsonCountryLoader.CountryFeature feature : countryFeatures) {
 
@@ -174,15 +177,15 @@ public final class CountryShapeCache {
                     double latRad = Math.toRadians(latDeg);
 
                     // lambda = longitude, phi = latitude
-                    ll.set(lonRad, latRad);
+                    latLon.setLocation(lonRad, latRad);
 
-                    projection.latLonToXY(ll, xy);
+                    projection.latLonToXY(latLon, xy);
                     if (!projection.isPointOnMap(xy)) {
                         continue;
                     }
 
-                    double x = xy.x();
-                    double y = xy.y();
+                    double x = xy.x;
+                    double y = xy.y;
 
                     if (!ringHasPoint) {
                         worldPath.moveTo(x, y);

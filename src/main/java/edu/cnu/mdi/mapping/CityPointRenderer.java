@@ -22,11 +22,20 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * {@link MapTheme}, and {@link IContainer}.
  * <p>
  * The renderer uses the projection's {@link IMapProjection#getXYBounds()}
- * to construct a world-to-screen transform in the same style as
- * {@link CountryFeatureRenderer}, so both layers line up.
+ * to construct a world-to-screen transform via the container, so that
+ * multiple layers (countries, graticule, cities) line up.
+ * </p>
  * <p>
- * Cities can be filtered by population and by {@code scalerank}, and labels
- * can be further restricted by a separate {@code maxLabelScalerank}.
+ * Conventions:
+ * <ul>
+ *   <li>Input city coordinates are in degrees (lon/lat) as provided by
+ *       {@link GeoJsonCityLoader.CityFeature}.</li>
+ *   <li>They are converted to radians and stored in a {@link Point2D.Double}
+ *       with {@code x = λ} (longitude) and {@code y = φ} (latitude).</li>
+ *   <li>Projection-space coordinates are likewise represented as
+ *       {@code Point2D.Double} in the projection's XY plane.</li>
+ * </ul>
+ * </p>
  */
 public class CityPointRenderer {
 
@@ -37,19 +46,24 @@ public class CityPointRenderer {
     private boolean drawLabels = true;
     private boolean useAntialias = true;
 
-    /** Minimum population to draw; <= 0 means no population filter. */
+    /** Minimum population to draw; &lt;= 0 means no population filter. */
     private long minPopulation = 0L;
 
-    /** Maximum scalerank to draw; negative means no scalerank filter. If
-     * set to 0 only the most important cities are drawn */
+    /**
+     * Maximum scalerank to draw; negative means no scalerank filter.
+     * If set to 0 only the most important cities are drawn.
+     */
     private int maxScalerank = -1;
 
     /**
-     * Maximum scalerank to draw a label for. Negative means labels are not
-     * restricted by scalerank (beyond whatever {@link #maxScalerank} enforces).
+     * Maximum scalerank to draw a label for. Negative means labels are
+     * not restricted by scalerank (beyond whatever {@link #maxScalerank}
+     * enforces).
      * <p>
-     * By default this is set to a modest value (e.g. 5), so only relatively
-     * important cities receive labels, even if smaller towns still get dots.
+     * By default this is set to a modest value, so only relatively
+     * important cities receive labels, even if smaller towns still
+     * get dots.
+     * </p>
      */
     private int maxLabelScalerank = 1;
 
@@ -87,7 +101,7 @@ public class CityPointRenderer {
         this.useAntialias = useAntialias;
     }
 
-    /** Only draw cities with population >= {@code minPopulation}. */
+    /** Set the minimum population for a city to be drawn; &lt;= 0 disables. */
     public void setMinPopulation(long minPopulation) {
         this.minPopulation = minPopulation;
     }
@@ -121,10 +135,20 @@ public class CityPointRenderer {
     }
 
     /**
+     * Set the font used for city labels.
+     *
+     * @param font label font; if {@code null}, a default will be used
+     */
+    public void setLabelFont(Font font) {
+        this.labelFont = (font != null) ? font : Fonts.smallFont;
+    }
+
+    /**
      * Render all cities that pass the current filters.
      *
      * @param g2        graphics context
-     * @param container container providing the drawing surface size
+     * @param container container providing the drawing surface and coordinate
+     *                  transforms
      */
     public void render(Graphics2D g2, IContainer container) {
         Objects.requireNonNull(g2, "g2");
@@ -154,8 +178,8 @@ public class CityPointRenderer {
 
         g2.setFont(labelFont);
         MapTheme theme = projection.getTheme();
-        Color pointColor = theme.getBorderColor() != null
-                ? theme.getBorderColor()
+        Color pointColor = theme.getCityColor() != null
+                ? theme.getCityColor()
                 : theme.getLabelColor();
         Color labelColor = theme.getLabelColor() != null
                 ? theme.getLabelColor()
@@ -167,7 +191,8 @@ public class CityPointRenderer {
         Ellipse2D.Double marker = new Ellipse2D.Double();
 
         Point screen = new Point();
-        LatLon ll = new LatLon();
+        Point2D.Double latLon = new Point2D.Double();
+        Point2D.Double xy = new Point2D.Double();
 
         for (GeoJsonCityLoader.CityFeature city : cities) {
 
@@ -179,18 +204,19 @@ public class CityPointRenderer {
             double latRad = Math.toRadians(city.getLatDeg());
 
             // lambda = longitude, phi = latitude
-            ll.set(lonRad, latRad);
+            latLon.setLocation(lonRad, latRad);
 
-            if (!projection.isPointVisible(ll)) {
+            if (!projection.isPointVisible(latLon)) {
                 continue;
             }
 
-            XY xy = projection.latLonToXY(ll);
-            if (xy == null || !projection.isPointOnMap(xy)) {
+            projection.latLonToXY(latLon, xy);
+            if (!projection.isPointOnMap(xy)) {
                 continue;
             }
 
-            container.worldToLocal(screen, xy.x(), xy.y());
+            container.worldToLocal(screen, xy);
+
             double cx = screen.x;
             double cy = screen.y;
 
@@ -257,8 +283,8 @@ public class CityPointRenderer {
      *
      * @param mouseLocal mouse position in local coordinates
      * @param container  drawing container
-     * @return closest city within a small picking radius, or null if none
-     *         are close enough.
+     * @return closest city within a small picking radius, or {@code null} if
+     *         none are close enough.
      */
     public GeoJsonCityLoader.CityFeature pickCity(Point mouseLocal,
                                                   IContainer container) {
@@ -275,7 +301,8 @@ public class CityPointRenderer {
         GeoJsonCityLoader.CityFeature best = null;
         double bestDistSq = Double.MAX_VALUE;
 
-        LatLon ll = new LatLon();
+        Point2D.Double latLon = new Point2D.Double();
+        Point2D.Double xy = new Point2D.Double();
 
         for (GeoJsonCityLoader.CityFeature city : cities) {
 
@@ -286,19 +313,19 @@ public class CityPointRenderer {
             double lonRad = Math.toRadians(city.getLonDeg());
             double latRad = Math.toRadians(city.getLatDeg());
 
-            ll.set(lonRad, latRad);
+            latLon.setLocation(lonRad, latRad);
 
-            if (!projection.isPointVisible(ll)) {
+            if (!projection.isPointVisible(latLon)) {
                 continue;
             }
 
-            XY xy = projection.latLonToXY(ll);
-            if (xy == null || !projection.isPointOnMap(xy)) {
+            projection.latLonToXY(latLon, xy);
+            if (!projection.isPointOnMap(xy)) {
                 continue;
             }
 
             // World (projection plane) coordinate
-            world.setLocation(xy.x(), xy.y());
+            world.setLocation(xy.x, xy.y);
 
             // Map to screen via container (respects zoom/pan)
             container.worldToLocal(screen, world);
