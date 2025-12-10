@@ -39,7 +39,6 @@ public class CountryFeatureRenderer {
     /** Projection used to convert lon/lat into world XY coordinates. */
     private final IMapProjection projection;
 
-
     /** Cache of projected country polygons in world (XY) coordinates. */
     private final CountryShapeCache shapeCache;
 
@@ -180,11 +179,18 @@ public class CountryFeatureRenderer {
             return;
         }
 
-        // Build a screen-space path from the world-space path
+        // Build a screen-space path from the world-space path, while being
+        // careful not to draw across the longitudinal seam. When two
+        // consecutive vertices differ in X by ~2π (in projection space),
+        // the segment is split by starting a new subpath instead of drawing
+        // a line across the map.
         Path2D.Double screenPath = new Path2D.Double(Path2D.WIND_NON_ZERO);
         PathIterator it = worldPath.getPathIterator(null);
         double[] coords = new double[6];
         Point screenPoint = new Point();
+
+        double prevWx = 0.0;
+        boolean havePrev = false;
 
         while (!it.isDone()) {
             int segType = it.currentSegment(coords);
@@ -195,17 +201,43 @@ public class CountryFeatureRenderer {
                     double wy = coords[1];
                     container.worldToLocal(screenPoint, wx, wy);
                     screenPath.moveTo(screenPoint.x, screenPoint.y);
+
+                    prevWx = wx;
+                    havePrev = true;
                     break;
                 }
                 case PathIterator.SEG_LINETO: {
                     double wx = coords[0];
                     double wy = coords[1];
+
+                    // Detect a jump across the wrap-around in projected X.
+                    // The Mercator projection always has x in [-π, π]; when
+                    // crossing the seam, adjacent vertices will differ by
+                    // about 2π in X. In that case, start a new subpath
+                    // instead of drawing across the whole map.
+                    boolean splitSegment = false;
+                    if (havePrev) {
+                        double dx = wx - prevWx;
+                        if (dx > Math.PI || dx < -Math.PI) {
+                            splitSegment = true;
+                        }
+                    }
+
                     container.worldToLocal(screenPoint, wx, wy);
-                    screenPath.lineTo(screenPoint.x, screenPoint.y);
+                    if (splitSegment) {
+                        screenPath.moveTo(screenPoint.x, screenPoint.y);
+                    } else {
+                        screenPath.lineTo(screenPoint.x, screenPoint.y);
+                    }
+
+                    prevWx = wx;
+                    havePrev = true;
                     break;
                 }
                 case PathIterator.SEG_CLOSE: {
                     screenPath.closePath();
+                    // After closing, we don't strictly need prevWx/prevWy,
+                    // but leaving them as-is is harmless.
                     break;
                 }
                 default:

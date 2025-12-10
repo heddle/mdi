@@ -45,7 +45,7 @@ public class MercatorProjection implements IMapProjection {
      * projection X as {@code x = wrap(λ - λ₀)}, so λ₀ is the longitude that
      * appears at x = 0 in projection space.
      */
-    private double centralLongitude = Math.toRadians(-70);
+    private double centralLongitude = 0;
 
     /**
      * Create a Mercator projection with the given theme.

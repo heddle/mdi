@@ -37,12 +37,33 @@ public class MapContainer extends BaseContainer {
 	 */
 	@Override
 	public void recenter(Point pp) {
-		System.out.println("Recentering to pixel point: " + pp);
+		
+		IMapProjection mp = getMapView2D().getProjection();
+		EProjection proj = mp.getProjection();
 		Point2D.Double wp = new Point2D.Double();
+		Point2D.Double ll = new Point2D.Double();
 		localToWorld(pp, wp);
-		recenter(_worldSystem, wp);
-		setDirty(true);
-		refresh();
+		mp.latLonFromXY(ll, wp);
+
+		switch (proj) {
+		case MERCATOR:
+			((MercatorProjection)mp).setCentralLongitude(ll.x);
+			getMapView2D().invalidate();
+			setDirty(true);
+			refresh();
+			break;
+			
+		case MOLLWEIDE:
+			break;
+			
+		case ORTHOGRAPHIC:
+			break;
+			
+		case LAMBERT_EQUAL_AREA:
+			break;
+		}
+		
+
 	}
 
 	/**
@@ -51,6 +72,10 @@ public class MapContainer extends BaseContainer {
 	private void recenter(Rectangle2D.Double wr, Point2D.Double newCenter) {
 		wr.x = newCenter.x - wr.width / 2.0;
 		wr.y = newCenter.y - wr.height / 2.0;
+	}
+	
+	private MapView2D getMapView2D() {
+		return (MapView2D) getView();
 	}
 
 }
