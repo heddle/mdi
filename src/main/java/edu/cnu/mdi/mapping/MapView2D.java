@@ -11,6 +11,7 @@ import java.awt.geom.Point2D.Double;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
+import java.util.Properties;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -33,9 +34,10 @@ import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.text.UnicodeSupport;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
+import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.view.BaseView;
-import edu.cnu.mdi.view.ViewRecenterer;
+
 
 /**
  * A two-dimensional map view that renders world maps using different
@@ -527,5 +529,6 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	public static void setCities(List<GeoJsonCityLoader.CityFeature> cities) {
 		_cities = cities;
 	}
+		
 
 }
