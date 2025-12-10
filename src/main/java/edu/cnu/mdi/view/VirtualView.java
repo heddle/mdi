@@ -78,7 +78,7 @@ public class VirtualView extends BaseView
 	 * @param keyVals variable set of arguments.
 	 */
 	private VirtualView(Object... keyVals) {
-		super(keyVals);
+		super(PropertySupport.fromKeyValues(keyVals));
 		ViewManager.getInstance().addViewListener(this);
 
 		_parent = (JFrame) SwingUtilities.getWindowAncestor(this);

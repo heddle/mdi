@@ -207,8 +207,14 @@ public interface IMapProjection {
      * @return wrapped longitude in [-π, π)
      */
     default double wrapLongitude(double lon) {
-        return lon - (2.0 * Math.PI) * Math.floor((lon + Math.PI) / (2.0 * Math.PI));
-    }
+		while (lon <= -Math.PI) {
+			lon += 2 * Math.PI;
+		}
+		while (lon > Math.PI) {
+			lon -= 2 * Math.PI;
+		}
+		return lon;
+	}
 
     /**
      * Wrap a latitude value to the range [-π/2, π/2]. This is mainly useful

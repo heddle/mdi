@@ -12,12 +12,12 @@ import edu.cnu.mdi.container.IContainer;
 public class UndoZoomButton extends ToolBarButton {
 
 	/**
-	 * Create the button used for undoing the previous zoom.
+	 * Create the button used for undoing the previous zoom (or recenter).
 	 *
 	 * @param container the owner container.
 	 */
 	public UndoZoomButton(IContainer container) {
-		super(container, "images/undo_zoom.gif", "Undo previous zoom");
+		super(container, "images/undo_zoom.gif", "Undo");
 	}
 
 	/**

@@ -368,7 +368,7 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 				_gratRenderer.render(g, container);
 
 				// 4. Draw land polygons, labels, etc...
-				_countryRenderer.render(g, container);
+			//	_countryRenderer.render(g, container);
 				_cityRenderer.render(g, container);
 			}
 		};

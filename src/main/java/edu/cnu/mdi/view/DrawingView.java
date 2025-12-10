@@ -7,6 +7,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 
+import edu.cnu.mdi.container.DrawingContainer;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.graphics.GraphicsUtils;
@@ -29,7 +30,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 	 * @param keyVals variable set of arguments.
 	 */
 	private DrawingView(Object... keyVals) {
-		super(keyVals);
+		super(PropertySupport.fromKeyValues(keyVals));
 		addItems();
 		getContainer().getFeedbackControl().addFeedbackProvider(this);
 	}
@@ -65,7 +66,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 				PropertySupport.BACKGROUND, Color.white, 
 				PropertySupport.TITLE, " Drawing View ", 
 				PropertySupport.STANDARDVIEWDECORATIONS, true,
-				PropertySupport.CONTAINERTYPE, "drawing");
+				PropertySupport.CONTAINERCLASS, DrawingContainer.class);
 
 		view.pack();
 		return view;

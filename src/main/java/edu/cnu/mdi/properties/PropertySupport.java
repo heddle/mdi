@@ -25,7 +25,7 @@ public class PropertySupport {
 	public static final String CLOSABLE = "CLOSABLE";
 	public static final String COMPONENT = "COMPONENT";
 	public static final String CONTAINER = "CONTAINER";
-	public static final String CONTAINERTYPE = "CONTAINERTYPE";
+	public static final String CONTAINERCLASS = "CONTAINERCLASS";
 	public static final String DRAGGABLE = "DRAGGABLE";
 	public static final String FILLCOLOR = "FILLCOLOR";
 	public static final String FONT = "FONT";
@@ -383,15 +383,6 @@ public class PropertySupport {
 			return null;
 		}
 		return (IContainer) val;
-	}
-
-	/**
-	 * Get a container type from the properties
-	 * @param props the properties
-	 * @return a container type, on error return null
-	 */
-	public static String getContainerType(Properties props) {
-		return getString(props, CONTAINERTYPE, null);
 	}
 
 	/**

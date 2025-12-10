@@ -14,13 +14,12 @@ import edu.cnu.mdi.item.PolygonItem;
 import edu.cnu.mdi.item.PolylineItem;
 import edu.cnu.mdi.item.RadArcItem;
 import edu.cnu.mdi.item.RectangleItem;
-import edu.cnu.mdi.view.BaseView;
 
 
 public class DrawingContainer extends BaseContainer {
 
-	public DrawingContainer(BaseView view, Double worldSystem) {
-		super(view, worldSystem);
+	public DrawingContainer(Double worldSystem) {
+		super(worldSystem);
 	}
 
 	/**

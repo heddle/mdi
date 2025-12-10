@@ -12,6 +12,7 @@ import edu.cnu.mdi.mapping.GeoJsonCityLoader;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader;
 import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
+import edu.cnu.mdi.mapping.MapContainer;
 import edu.cnu.mdi.mdi3D.item3D.Axes3D;
 import edu.cnu.mdi.mdi3D.item3D.Cube;
 import edu.cnu.mdi.mdi3D.item3D.Cylinder;
@@ -202,8 +203,8 @@ public class DemoApp extends BaseMDIApplication {
 				PropertySupport.TOP, 300, 
 				PropertySupport.WIDTH, 800, 
 				PropertySupport.HEIGHT, 500,
-				PropertySupport.TOOLBARBITS,
-				toolbarBits);
+				PropertySupport.CONTAINERCLASS, MapContainer.class,
+				PropertySupport.TOOLBARBITS, toolbarBits);
 		
 		return mapView;
 	}

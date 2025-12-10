@@ -39,6 +39,13 @@ public class MercatorProjection implements IMapProjection {
 
     /** Active theme used for rendering. */
     private MapTheme theme;
+    
+    /**
+     * Central longitude (λ₀) in radians. Longitude values are mapped to
+     * projection X as {@code x = wrap(λ - λ₀)}, so λ₀ is the longitude that
+     * appears at x = 0 in projection space.
+     */
+    private double centralLongitude = Math.toRadians(-70);
 
     /**
      * Create a Mercator projection with the given theme.
@@ -55,6 +62,28 @@ public class MercatorProjection implements IMapProjection {
     private static double mercatorY(double latitude) {
         return Math.log(Math.tan((Math.PI / 4.0) + (latitude / 2.0)));
     }
+    
+    /**
+     * Get the central longitude λ₀ (in radians).
+     *
+     * @return the central longitude in radians
+     */
+    public double getCentralLongitude() {
+        return centralLongitude;
+    }
+
+    /**
+     * Set the central longitude λ₀ (in radians).
+     * <p>
+     * The value is normalized using {@code wrapLongitude} so that it lies
+     * within the conventional range (-π, π].
+     *
+     * @param centralLongitude the desired central longitude in radians
+     */
+    public void setCentralLongitude(double centralLongitude) {
+        // Use the same normalization helper used elsewhere
+        this.centralLongitude = wrapLongitude(centralLongitude);
+    }
 
     @Override
     public void latLonToXY(Point2D.Double latLon, Point2D.Double xy) {
@@ -64,13 +93,13 @@ public class MercatorProjection implements IMapProjection {
         // Clamp latitude to avoid undefined values at poles
         lat = Math.max(-MAX_LAT, Math.min(MAX_LAT, lat));
 
-        xy.x = lon;
+        xy.x = wrapLongitude(lon - centralLongitude); // λ
         xy.y = mercatorY(lat);
     }
 
     @Override
     public void latLonFromXY(Point2D.Double latLon, Point2D.Double xy) {
-        double x = xy.x;
+        double x = wrapLongitude(xy.x + centralLongitude);
         double y = xy.y;
 
         latLon.x = x; // λ

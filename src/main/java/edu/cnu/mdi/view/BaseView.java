@@ -31,7 +31,6 @@ import javax.swing.WindowConstants;
 
 import edu.cnu.mdi.component.MagnifyWindow;
 import edu.cnu.mdi.container.BaseContainer;
-import edu.cnu.mdi.container.DrawingContainer;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.desktop.Desktop;
 import edu.cnu.mdi.format.DoubleFormat;
@@ -166,10 +165,7 @@ public class BaseView extends JInternalFrame
      *     <li>Margin keys such as {@link PropertySupport#LEFTMARGIN}</li>
      * </ul>
      *
-     * @param keyVals an optional variable-length list of property name–value pairs.
-     *                The number of arguments must be even (name, value,
-     *                name, value, ...). If the length is odd, an error is
-     *                reported to {@code System.err}.
+     * @param properties Used to set up view size, etc.
      */
     public BaseView(Properties props) {
 
@@ -236,30 +232,24 @@ public class BaseView extends JInternalFrame
             // view includes a container
             setLocation(left, top);
 
-            // container provided or default
-            container = PropertySupport.getContainer(properties);
-            if (container == null) {
-                String contType = PropertySupport.getContainerType(properties);
-                if ((contType != null) && contType.equalsIgnoreCase("drawing")) {
-                    container = new DrawingContainer(this, worldSystem);
-                } else {
-                    container = new BaseContainer(this, worldSystem);
-                }
-            } else {
-                container.setView(this);
-            }
+         // Create or reuse the container for this view
+            container = resolveContainer(properties, worldSystem);
 
+            // Every container must know which view it lives on
+            container.setView(this);
+
+            // Configure margins for containers that support them
             if (container instanceof BaseContainer) {
                 int lmargin = PropertySupport.getLeftMargin(properties);
                 int tmargin = PropertySupport.getTopMargin(properties);
                 int rmargin = PropertySupport.getRightMargin(properties);
                 int bmargin = PropertySupport.getBottomMargin(properties);
+
                 container.setLeftMargin(lmargin);
                 container.setTopMargin(tmargin);
                 container.setRightMargin(rmargin);
                 container.setBottomMargin(bmargin);
             }
-
             // optional scroll pane
             if (scrollable && (container.getComponent() != null)) {
                 scrollPane = new JScrollPane(container.getComponent());
@@ -337,6 +327,91 @@ public class BaseView extends JInternalFrame
 
         addComponentListener(this);
     }
+    
+    
+    /**
+     * Resolve (create or reuse) the {@link IContainer} instance that will be
+     * hosted by this view.
+     * <p>
+     * The default implementation honors the following (in order of precedence):
+     * </p>
+     * <ol>
+     *   <li>An explicit {@link IContainer} instance supplied under the
+     *       {@code "container"} key in the key–value constructor arguments.</li>
+     *   <li>A {@code Class<? extends IContainer>} supplied under the
+     *       {@code "containerClass"} key. The class must define a constructor
+     *       taking a {@link java.awt.geom.Rectangle2D.Double}.</li>
+     *   <li>A legacy {@code "containerType"} string property.</li>
+     *   <li>A default {@link BaseContainer}.</li>
+     * </ol>
+     * <p>
+     * Subclasses may override this method to plug in custom container selection
+     * and creation logic while still benefiting from the base implementation.
+     * </p>
+     *
+     * @param properties  the view properties derived from the key–value list
+     * @param worldSystem the initial world coordinate system; never {@code null}
+     *                    when this method is called from the constructor
+     * @return a non-{@code null} container instance
+     */
+    protected IContainer resolveContainer(Properties properties, Rectangle2D.Double worldSystem) {
+
+        // 1. Explicit container instance provided in keyVals
+        IContainer fromProps = PropertySupport.getContainer(properties);
+        if (fromProps != null) {
+            return fromProps;
+        }
+
+        // 2. Class-based container supplied via "containerClass" in keyVals
+        Object containerClassObj = properties.get(PropertySupport.CONTAINERCLASS);
+        if (containerClassObj instanceof Class<?>) {
+            Class<?> rawClass = (Class<?>) containerClassObj;
+            if (IContainer.class.isAssignableFrom(rawClass)) {
+                @SuppressWarnings("unchecked")
+                Class<? extends IContainer> containerClass =
+                        (Class<? extends IContainer>) rawClass;
+
+                return instantiateContainer(containerClass, worldSystem);
+            }
+        }
+
+
+        // 3. Final fallback: basic world container
+        return new BaseContainer(worldSystem);
+    }
+
+    /**
+     * Instantiate a container class using a standard constructor signature.
+     * <p>
+     * The class must define a constructor taking a single
+     * {@link java.awt.geom.Rectangle2D.Double} parameter:
+     * </p>
+     *
+     * <pre>
+     * public MyContainer(Rectangle2D.Double worldSystem) { ... }
+     * </pre>
+     *
+     * @param containerClass the container implementation class
+     * @param worldSystem    the world coordinate system to pass into the
+     *                       constructor
+     * @return a new container instance
+     * @throws IllegalArgumentException if instantiation fails
+     */
+    protected IContainer instantiateContainer(Class<? extends IContainer> containerClass,
+                                              Rectangle2D.Double worldSystem) {
+
+        try {
+            return containerClass
+                    .getConstructor(Rectangle2D.Double.class)
+                    .newInstance(worldSystem);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(
+                    "Failed to instantiate container class " + containerClass.getName()
+                            + ". Expected a constructor (Rectangle2D.Double).",
+                    e);
+        }
+    }
+
 
     // ========================================================================
     // Basic accessors
