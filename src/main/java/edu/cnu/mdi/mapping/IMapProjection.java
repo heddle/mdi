@@ -226,4 +226,17 @@ public interface IMapProjection {
     default double wrapLatitude(double lat) {
         return lat - Math.PI * Math.floor((lat + Math.PI / 2.0) / Math.PI);
     }
+    
+    /**
+     * Test to see if the line between two longitudes crosses the
+     * seam (the line at the central longitude). This is a test
+     * for the dreaded wrapping problem.
+     * @param lon1 one longitude in radians
+     * @param lon2 the other longitude in radians
+     * @return {@code true} if the line between the two longitudes
+     * 	   crosses the seam; {@code false} otherwise
+     */
+    default boolean crossesSeam(double lon1, double lon2) {
+    	return false;
+    }
 }

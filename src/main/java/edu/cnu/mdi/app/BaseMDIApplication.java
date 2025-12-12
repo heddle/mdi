@@ -4,6 +4,8 @@ package edu.cnu.mdi.app;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Frame;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.Properties;
@@ -58,7 +60,7 @@ public class BaseMDIApplication extends JFrame {
 			System.exit(1);
 		}
 		
-		//s
+		//set the look and feel
 		edu.cnu.mdi.util.Environment.setLookAndFeel();
 
 		_properties = PropertySupport.fromKeyValues(keyVals);
@@ -134,6 +136,42 @@ public class BaseMDIApplication extends JFrame {
 	public static BaseMDIApplication getApplication() {
 		return instance;
 	}
+	
+	/**
+	 * Prepare for use of a virtual desktop by adding a component listener to
+	 * monitor frame changes.
+	 */
+	protected void prepareForVirtualDesktop() {
+		ComponentListener cl = new ComponentListener() {
+
+			@Override
+			public void componentHidden(ComponentEvent ce) {
+			}
+
+			@Override
+			public void componentMoved(ComponentEvent ce) {
+				placeViewsOnVirtualDesktop();
+			}
+
+			@Override
+			public void componentResized(ComponentEvent ce) {
+				placeViewsOnVirtualDesktop();
+			}
+
+			@Override
+			public void componentShown(ComponentEvent ce) {
+				placeViewsOnVirtualDesktop();
+			}
+
+		};
+
+		addComponentListener(cl);
+	}
+	
+	protected void placeViewsOnVirtualDesktop() {
+		// override in subclass if needed
+	}
+	
 
 
 }

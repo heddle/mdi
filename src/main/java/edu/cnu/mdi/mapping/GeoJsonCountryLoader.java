@@ -140,6 +140,23 @@ public final class GeoJsonCountryLoader {
         }
         return result;
     }
+    
+    /**
+     * Wrap a longitude value to the canonical range [-π, π).
+     *
+     * @param lon longitude in radians
+     * @return wrapped longitude in [-π, π)
+     */
+    private static double wrapLongitude(double lon) {
+		while (lon <= -Math.PI) {
+			lon += 2 * Math.PI;
+		}
+		while (lon > Math.PI) {
+			lon -= 2 * Math.PI;
+		}
+		return lon;
+	}
+
 
     private static CountryFeature parseFeature(JsonNode featureNode) {
         JsonNode properties = featureNode.path("properties");
@@ -181,8 +198,11 @@ public final class GeoJsonCountryLoader {
             List<Point2D.Double> ring = new ArrayList<>();
             for (JsonNode coordNode : ringNode) {
                 if (coordNode.isArray() && coordNode.size() >= 2) {
-                    double lon = coordNode.get(0).asDouble();
-                    double lat = coordNode.get(1).asDouble();
+                	
+                	//convert to radians
+                    double lon = Math.toRadians(coordNode.get(0).asDouble());
+                    double lat = Math.toRadians(coordNode.get(1).asDouble());
+                    lon = wrapLongitude(lon);
                     ring.add(new Point2D.Double(lon, lat));
                 }
             }

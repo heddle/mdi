@@ -653,6 +653,21 @@ public class WorldGraphicsUtils {
 	}
 
 	/**
+	 * Draw a world polygon with solid style.
+	 *
+	 * @param g            the graphics context.
+	 * @param container    the container on which it is rendered.
+	 * @param worldPolygon the world polygon being drawn.
+	 * @param fillColor    the fill color (can be <code>null</code>).
+	 * @param lineColor    the line color (can be <code>null</code>).
+	 * @param lineWidth    the line width in pixels.
+	 */
+	public static void drawWorldPolygon(Graphics g, IContainer container, WorldPolygon worldPolygon, Color fillColor,
+			Color lineColor, float lineWidth) {
+		drawWorldPolygon(g, container, worldPolygon, fillColor, lineColor, lineWidth, LineStyle.SOLID);
+	}
+	
+	/**
 	 * Draw a world polygon.
 	 *
 	 * @param g            the graphics context.

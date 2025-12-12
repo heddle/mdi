@@ -47,6 +47,7 @@ public class EllipseButton extends ToolBarToggleButton implements IRubberbanded 
 
 		AItem item = dc.createEllipseItem(container.getAnnotationList(), b);
 		if (item != null) {
+			item.setRightClickable(true);
 			item.setDraggable(true);
 			item.setRotatable(true);
 			item.setResizable(true);

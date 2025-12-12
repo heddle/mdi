@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.io.IOException;
 import java.util.List;
 
+import edu.cnu.mdi.desktop.Desktop;
 import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.mapping.GeoJsonCityLoader;
@@ -21,12 +22,11 @@ import edu.cnu.mdi.mdi3D.item3D.Triangle3D;
 import edu.cnu.mdi.mdi3D.panel.Panel3D;
 import edu.cnu.mdi.mdi3D.view3D.PlainView3D;
 import edu.cnu.mdi.properties.PropertySupport;
-import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.util.Environment;
-import edu.cnu.mdi.util.FileUtils;
 import edu.cnu.mdi.view.DrawingView;
 import edu.cnu.mdi.view.LogView;
 import edu.cnu.mdi.view.ViewManager;
+import edu.cnu.mdi.view.VirtualView;
 
 /**
  * Demonstrates and tests the generic views
@@ -38,7 +38,22 @@ import edu.cnu.mdi.view.ViewManager;
 public class DemoApp extends BaseMDIApplication {
 
 	// the singleton
-	private static DemoApp instance;
+	private static DemoApp INSTANCE;
+	
+	// to demo virtual desktop
+	private VirtualView _virtualView;
+	
+	// used for one time inits
+	private int _firstTime = 0;
+	
+	// demo a 3D view
+	private PlainView3D _view3D;
+
+	//demo a drawing view
+	private DrawingView _drawingView;
+	
+	//demo a map view
+	private MapView2D _mapView;
 
 	/**
 	 * Constructor (private--used to create singleton)
@@ -47,6 +62,9 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	private DemoApp(Object... keyVals) {
 		super(keyVals);
+		
+		//will demo virtual desktop capabilities
+		prepareForVirtualDesktop();
 	}
 
 	/**
@@ -55,17 +73,43 @@ public class DemoApp extends BaseMDIApplication {
 	 * @return the singleton (the main application frame.)(
 	 */
 	public static DemoApp getInstance() {
-	    if (instance == null) {
-	        instance = new DemoApp(
+	    if (INSTANCE == null) {
+	        INSTANCE = new DemoApp(
 	                PropertySupport.TITLE, "Demo Application of MDI Views",
 	                PropertySupport.BACKGROUNDIMAGE, "images/mdilogo.png",
 	                PropertySupport.FRACTION, 0.8);
 
 	        // build internal views before sizing the outer frame
-	        instance.addInitialViews();
+	        INSTANCE.addInitialViews();
+			INSTANCE.placeViewsOnVirtualDesktop();
+
 	    }
-	    return instance;
+	    return INSTANCE;
 	}
+	
+	// arrange the views on the virtual desktop
+	protected void placeViewsOnVirtualDesktop() {
+		if (_firstTime == 1) {
+			// rearrange some views in virtual space
+			_virtualView.reconfigure();
+			restoreDefaultViewLocations();
+
+			// now load configuration
+			Desktop.getInstance().loadConfigurationFile();
+			Desktop.getInstance().configureViews();
+		}
+		_firstTime++;
+	}
+	/**
+	 * Restore the default locations of the initial views. 
+	 * on the virtual desktop.
+	 */
+	private void restoreDefaultViewLocations() {
+		_virtualView.moveToStart(_mapView, 0, VirtualView.CENTER);
+		_virtualView.moveToStart(_view3D, 1, VirtualView.CENTER);
+		_virtualView.moveToStart(_drawingView, 0, VirtualView.UPPERLEFT);
+	}
+
 	/**
 	 * Add the initial views to the desktop.
 	 */
@@ -79,15 +123,19 @@ public class DemoApp extends BaseMDIApplication {
 		// log some environment info
 		Log.getInstance().info(Environment.getInstance().toString());
 
-		// drawing view
-		DrawingView drawingView = DrawingView.createDrawingView();
-		drawingView.setVisible(true);
+		_drawingView = DrawingView.createDrawingView();
 
 		// sample 3D view
-		create3DView();
+		_view3D = create3DView();
 
 		// map view
-		createMapView();
+		_mapView = createMapView();
+		
+		// add an optional virtual view with a number of cells
+		int numVVCell = 5;
+		_virtualView = VirtualView.createVirtualView(numVVCell);
+		_virtualView.toFront();
+
 	}
 
 	// create the sample 3D view
@@ -196,11 +244,11 @@ public class DemoApp extends BaseMDIApplication {
 			e.printStackTrace();
 		}
 
-		long toolbarBits = ToolBarBits.CENTERBUTTON | ToolBarBits.PANBUTTON | ToolBarBits.MAGNIFYBUTTON;
+		long toolbarBits = ToolBarBits.CENTERBUTTON | ToolBarBits.MAGNIFYBUTTON;
 
 		MapView2D mapView = new MapView2D(PropertySupport.TITLE, "Sample 2D Map View", 
 				PropertySupport.LEFT, 300,
-				PropertySupport.TOP, 300, 
+				PropertySupport.TOP, 200, 
 				PropertySupport.WIDTH, 800, 
 				PropertySupport.HEIGHT, 500,
 				PropertySupport.CONTAINERCLASS, MapContainer.class,

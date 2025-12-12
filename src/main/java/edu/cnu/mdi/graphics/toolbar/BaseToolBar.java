@@ -90,9 +90,6 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	// delete selected items
 	private DeleteButton _deleteButton;
 
-	// toggle control panel
-	private ControlPanelButton _cpButton;
-
 	// the owner container
 	private IContainer _container;
 
@@ -176,10 +173,6 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 			_deleteButton.setEnabled(false);
 		}
 
-		if (notNothing && Bits.check(bits, ToolBarBits.CONTROLPANELBUTTON)) {
-			_cpButton = new ControlPanelButton(_container);
-		}
-
 		// check if drawing tools are requested
 		if (notNothing && Bits.check(bits, ToolBarBits.TEXTBUTTON)) {
 			_textButton = new TextButton(_container);
@@ -216,7 +209,6 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 			setDefaultToggleButton(_pointerButton);
 		}
 
-		add(_cpButton, false); // false to prevent it joining button group
 		add(_boxZoomButton);
 		add(_zoomInButton);
 		add(_zoomOutButton);
@@ -371,15 +363,6 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	 */
 	public DeleteButton getDeleteButton() {
 		return _deleteButton;
-	}
-
-	/**
-	 * Get the toolbar's control panel button.
-	 *
-	 * @return the toolbar's control panel button.
-	 */
-	public ControlPanelButton getControlPanelButton() {
-		return _cpButton;
 	}
 
 	/**

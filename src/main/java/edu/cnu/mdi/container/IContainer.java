@@ -452,5 +452,8 @@ public interface IContainer {
 	 */
 	public void setBottomMargin(int bMargin);
 
+	public boolean isStandardPanning();
+	
+	public void setStandardPanning(boolean standardPanning);
 
 }

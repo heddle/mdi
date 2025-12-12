@@ -244,7 +244,7 @@ public class VirtualView extends BaseView
 		}
 
 		// create the view
-		view = new VirtualView(PropertySupport.WORLDSYSTEM, world, PropertySupport.LEFT, 0, PropertySupport.TOP, 0,
+		view = new VirtualView(PropertySupport.WORLDSYSTEM, world, 
 				PropertySupport.WIDTH, width, PropertySupport.HEIGHT, height, PropertySupport.TOOLBAR, false,
 				PropertySupport.VISIBLE, true, PropertySupport.BACKGROUND, Color.white, PropertySupport.TITLE, VVTITLE,
 				PropertySupport.STANDARDVIEWDECORATIONS, false, PropertySupport.ICONIFIABLE, false,
@@ -252,10 +252,10 @@ public class VirtualView extends BaseView
 				PropertySupport.CLOSABLE, false);
 
 		view._offsets = new Point[_numcol];
-		// view.pack();
 
 		Insets insets = view.getInsets();
 		view.setSize(width, height + insets.top);
+		view.setLocation(0, 0);
 		return view;
 	}
 

@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *   <li>{@code type}: "FeatureCollection"</li>
  *   <li>{@code features}: array of features</li>
  *   <li>Each feature has a {@code Point} geometry with coordinates
- *       {@code [lon, lat]} in degrees</li>
+ *       {@code [lon, lat]} in radians</li>
  *   <li>Properties such as (names may vary in case):
  *       <ul>
  *         <li>{@code NAME} / {@code name} – city name</li>
@@ -50,8 +50,8 @@ public final class GeoJsonCityLoader {
 
         private final String name;
         private final String countryName;
-        private final double lonDeg;
-        private final double latDeg;
+        private final double longitude;
+        private final double latitude;
         private final long population;
         private final int scalerank;
 
@@ -60,21 +60,21 @@ public final class GeoJsonCityLoader {
          *
          * @param name        display name of the city (may be null)
          * @param countryName name of the country (may be null)
-         * @param lonDeg      longitude in degrees (east positive)
-         * @param latDeg      latitude in degrees (north positive)
+         * @param longitide      longitude in radians (east positive)
+         * @param latitude      latitude in radians (north positive)
          * @param population  population estimate (may be -1 if unknown)
          * @param scalerank   importance rank (0 = largest cities, larger = less important; -1 if unknown)
          */
         public CityFeature(String name,
                            String countryName,
-                           double lonDeg,
-                           double latDeg,
+                           double longitude,
+                           double latitude,
                            long population,
                            int scalerank) {
             this.name = name;
             this.countryName = countryName;
-            this.lonDeg = lonDeg;
-            this.latDeg = latDeg;
+            this.longitude = longitude;
+            this.latitude = latitude;
             this.population = population;
             this.scalerank = scalerank;
         }
@@ -89,14 +89,14 @@ public final class GeoJsonCityLoader {
             return countryName;
         }
 
-        /** Longitude in degrees (east positive). */
-        public double getLonDeg() {
-            return lonDeg;
+        /** Longitude in radians (east positive). */
+        public double getLongitude() {
+            return longitude;
         }
 
-        /** Latitude in degrees (north positive). */
-        public double getLatDeg() {
-            return latDeg;
+        /** Latitude in radians (north positive). */
+        public double getLatitude() {
+            return latitude;
         }
 
         /** Population estimate (or -1 if not provided). */
@@ -117,8 +117,8 @@ public final class GeoJsonCityLoader {
             return "CityFeature[" +
                     "name=" + name +
                     ", country=" + countryName +
-                    ", lonDeg=" + lonDeg +
-                    ", latDeg=" + latDeg +
+                    ", lonDeg=" + Math.toDegrees(longitude) +
+                    ", latDeg=" + Math.toDegrees(latitude) +
                     ", pop=" + population +
                     ", scalerank=" + scalerank +
                     ']';
@@ -199,8 +199,10 @@ public final class GeoJsonCityLoader {
             return null;
         }
 
-        double lonDeg = coords.get(0).asDouble();
-        double latDeg = coords.get(1).asDouble();
+        //json file had degrees. Convert to radians.
+        double lon = Math.toRadians(coords.get(0).asDouble());
+        double lat = Math.toRadians(coords.get(1).asDouble());
+        lon = wrapLongitude(lon);
 
         JsonNode props = featureNode.path("properties");
 
@@ -219,8 +221,25 @@ public final class GeoJsonCityLoader {
         int scalerank = intFrom(props, -1,
                 "SCALERANK", "scalerank", "ScaleRank");
 
-        return new CityFeature(name, countryName, lonDeg, latDeg, population, scalerank);
+        return new CityFeature(name, countryName, lon, lat, population, scalerank);
     }
+    
+    /**
+     * Wrap a longitude value to the canonical range [-π, π).
+     *
+     * @param lon longitude in radians
+     * @return wrapped longitude in [-π, π)
+     */
+    private static double wrapLongitude(double lon) {
+		while (lon <= -Math.PI) {
+			lon += 2 * Math.PI;
+		}
+		while (lon > Math.PI) {
+			lon -= 2 * Math.PI;
+		}
+		return lon;
+	}
+
 
     /**
      * Return the first non-empty text value among the given fields, or null

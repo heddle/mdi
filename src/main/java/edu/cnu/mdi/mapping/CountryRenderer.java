@@ -1,19 +1,18 @@
 package edu.cnu.mdi.mapping;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.RenderingHints;
-import java.awt.Stroke;
+import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.graphics.style.LineStyle;
+import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
+import edu.cnu.mdi.graphics.world.WorldPolygon;
 
 /**
  * Renders a collection of {@link GeoJsonCountryLoader.CountryFeature} instances
@@ -27,11 +26,11 @@ import edu.cnu.mdi.container.IContainer;
  * automatically respected.
  * </p>
  * <p>
- * The same cached shapes are also used for hit-testing, enabling efficient
+ * The same cached polygons are also used for hit-testing, enabling efficient
  * mouseover feedback (e.g., "which country is under the mouse?").
  * </p>
  */
-public class CountryFeatureRenderer {
+public class CountryRenderer {
 
     /** Original country features as loaded from GeoJSON. */
     private final List<GeoJsonCountryLoader.CountryFeature> countryFeatures;
@@ -39,13 +38,14 @@ public class CountryFeatureRenderer {
     /** Projection used to convert lon/lat into world XY coordinates. */
     private final IMapProjection projection;
 
-    /** Cache of projected country polygons in world (XY) coordinates. */
-    private final CountryShapeCache shapeCache;
 
     // Rendering flags
     private boolean fillLand = true;
     private boolean drawBorders = true;
     private boolean useAntialias = true;
+    
+	private List<CountryCache> _countryCache = new ArrayList<>();
+
 
     /**
      * Construct a new renderer for the given country features and projection.
@@ -54,11 +54,10 @@ public class CountryFeatureRenderer {
      * @param countryFeatures the country features to render
      * @param projection      the map projection to use for rendering
      */
-    public CountryFeatureRenderer(List<GeoJsonCountryLoader.CountryFeature> countryFeatures,
+    public CountryRenderer(List<GeoJsonCountryLoader.CountryFeature> countryFeatures,
                                   IMapProjection projection) {
         this.countryFeatures = Objects.requireNonNull(countryFeatures, "countryFeatures");
         this.projection = Objects.requireNonNull(projection, "projection");
-        this.shapeCache = new CountryShapeCache(countryFeatures);
     }
 
     /**
@@ -91,18 +90,6 @@ public class CountryFeatureRenderer {
         this.useAntialias = useAntialias;
     }
 
-    /**
-     * Invalidate the cached country shapes, forcing the next render or
-     * hit-test to rebuild the cache for the current projection.
-     * <p>
-     * Call this whenever the projection's geometry changes in a way that
-     * affects the projected coordinates (for example, if the projection
-     * type changes, or parameters such as the central meridian are updated).
-     * </p>
-     */
-    public void invalidateCache() {
-        shapeCache.invalidate();
-    }
 
     /**
      * Render all configured country features onto the given graphics context
@@ -114,6 +101,8 @@ public class CountryFeatureRenderer {
     public void render(Graphics2D g2, IContainer container) {
         Objects.requireNonNull(g2, "g2");
         Objects.requireNonNull(container, "container");
+        
+        _countryCache.clear();
 
         Component comp = container.getComponent();
         int width = comp.getWidth();
@@ -125,7 +114,7 @@ public class CountryFeatureRenderer {
         Object oldAA = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
         if (useAntialias) {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                RenderingHints.VALUE_ANTIALIAS_ON);
+                    RenderingHints.VALUE_ANTIALIAS_ON);
         }
 
         Rectangle2D xyBounds = projection.getXYBounds();
@@ -137,23 +126,23 @@ public class CountryFeatureRenderer {
         Stroke oldStroke = g2.getStroke();
         Color oldColor = g2.getColor();
 
-        Color landColor = projection.getTheme().getLandColor();
-        Color borderColor = projection.getTheme().getBorderColor();
+        Color landColor = fillLand ? projection.getTheme().getLandColor() : null;
+        Color borderColor = drawBorders ? projection.getTheme().getBorderColor() : null;
         Stroke borderStroke = projection.getTheme().getBorderStroke();
         if (borderStroke == null) {
             borderStroke = new BasicStroke(0.5f);
         }
 
-        // Use cached world-space shapes, and map to screen for drawing
-        List<CountryShapeCache.CountryShape> shapes = shapeCache.getShapes(projection);
-        for (CountryShapeCache.CountryShape shape : shapes) {
-            drawCountryShape(g2, container, shape, landColor, borderColor, borderStroke);
+        for (GeoJsonCountryLoader.CountryFeature country : countryFeatures) {
+            drawCountryShape(g2, container, country,
+                    landColor, borderColor, borderStroke);
         }
 
         g2.setStroke(oldStroke);
         g2.setColor(oldColor);
         resetAntialias(g2, oldAA);
     }
+
 
     /**
      * Draw a single cached country shape. The shape is stored in world
@@ -162,107 +151,72 @@ public class CountryFeatureRenderer {
      *
      * @param g2           graphics context
      * @param container    container providing world-to-local transform
-     * @param shape        cached world-space country shape
+     * @param country      the country to draw
      * @param landColor    fill color for land
      * @param borderColor  stroke color for borders
      * @param borderStroke stroke used for borders
      */
     private void drawCountryShape(Graphics2D g2,
                                   IContainer container,
-                                  CountryShapeCache.CountryShape shape,
+                                  GeoJsonCountryLoader.CountryFeature country,
                                   Color landColor,
                                   Color borderColor,
                                   Stroke borderStroke) {
 
-        Path2D.Double worldPath = shape.getWorldPath();
-        if (worldPath == null) {
-            return;
-        }
+		EProjection proj = projection.getProjection();
 
-        // Build a screen-space path from the world-space path, while being
-        // careful not to draw across the longitudinal seam. When two
-        // consecutive vertices differ in X by ~2π (in projection space),
-        // the segment is split by starting a new subpath instead of drawing
-        // a line across the map.
-        Path2D.Double screenPath = new Path2D.Double(Path2D.WIND_NON_ZERO);
-        PathIterator it = worldPath.getPathIterator(null);
-        double[] coords = new double[6];
-        Point screenPoint = new Point();
+		for (List<Point2D.Double> ll : country.getPolygons()) {
 
-        double prevWx = 0.0;
-        boolean havePrev = false;
+			if ((proj == EProjection.MERCATOR) || (proj == EProjection.MOLLWEIDE)) {
+				// skip antarctica
+				if (country.getAdminName().toLowerCase().startsWith("antarc")) {
+					continue;
+				}
+			}
 
-        while (!it.isDone()) {
-            int segType = it.currentSegment(coords);
+			WorldPolygon oneSide = new WorldPolygon();
+			WorldPolygon otherSide = new WorldPolygon();
+			WorldPolygon currentPoly = oneSide;
+			boolean first = true;
+			double prevLon = 0;
 
-            switch (segType) {
-                case PathIterator.SEG_MOVETO: {
-                    double wx = coords[0];
-                    double wy = coords[1];
-                    container.worldToLocal(screenPoint, wx, wy);
-                    screenPath.moveTo(screenPoint.x, screenPoint.y);
+			for (Point2D.Double lonLat : ll) {
 
-                    prevWx = wx;
-                    havePrev = true;
-                    break;
-                }
-                case PathIterator.SEG_LINETO: {
-                    double wx = coords[0];
-                    double wy = coords[1];
+				if (projection.isPointVisible(lonLat)) {
 
-                    // Detect a jump across the wrap-around in projected X.
-                    // The Mercator projection always has x in [-π, π]; when
-                    // crossing the seam, adjacent vertices will differ by
-                    // about 2π in X. In that case, start a new subpath
-                    // instead of drawing across the whole map.
-                    boolean splitSegment = false;
-                    if (havePrev) {
-                        double dx = wx - prevWx;
-                        if (dx > Math.PI || dx < -Math.PI) {
-                            splitSegment = true;
-                        }
-                    }
+					Point2D.Double xy = new Point2D.Double();
+					projection.latLonToXY(lonLat, xy);
 
-                    container.worldToLocal(screenPoint, wx, wy);
-                    if (splitSegment) {
-                        screenPath.moveTo(screenPoint.x, screenPoint.y);
-                    } else {
-                        screenPath.lineTo(screenPoint.x, screenPoint.y);
-                    }
+					if (first) {
+						first = false;
+					}
 
-                    prevWx = wx;
-                    havePrev = true;
-                    break;
-                }
-                case PathIterator.SEG_CLOSE: {
-                    screenPath.closePath();
-                    // After closing, we don't strictly need prevWx/prevWy,
-                    // but leaving them as-is is harmless.
-                    break;
-                }
-                default:
-                    // worldPath only uses move/line/close; other types are not expected
-                    break;
-            }
+					else {
+						if (projection.crossesSeam(lonLat.x, prevLon)) {
+							// switch sides
+							if (currentPoly == oneSide) {
+								currentPoly = otherSide;
+							} else {
+								currentPoly = oneSide;
+							}
+						}
+					}
+					currentPoly.addPoint(xy.x, xy.y);
+					prevLon = lonLat.x;
+				}
 
-            it.next();
-        }
+			}
 
-        if (screenPath.getBounds2D().isEmpty()) {
-            return;
-        }
+			if (oneSide.npoints > 2) {
+				WorldGraphicsUtils.drawWorldPolygon(g2, container, oneSide, landColor, borderColor, 0.5f);
+			}
+			if (otherSide.npoints > 2) {
+				WorldGraphicsUtils.drawWorldPolygon(g2, container, otherSide, landColor, borderColor, 0.5f);
+			}
 
-        if (fillLand && landColor != null) {
-            g2.setColor(landColor);
-            g2.fill(screenPath);
-        }
-
-        if (drawBorders && borderColor != null) {
-            g2.setColor(borderColor);
-            g2.setStroke(borderStroke);
-            g2.draw(screenPath);
-        }
-    }
+			_countryCache.add(new CountryCache(country, oneSide, otherSide));
+		}
+	}
 
     /**
      * Perform a hit-test on the cached country shapes to determine which
@@ -278,7 +232,15 @@ public class CountryFeatureRenderer {
                                                            IContainer container) {
         Objects.requireNonNull(mouseLocal, "mouseLocal");
         Objects.requireNonNull(container, "container");
-        return shapeCache.pickCountry(mouseLocal, container, projection);
+		Point2D.Double worldPt = new Point2D.Double();
+		container.localToWorld(mouseLocal, worldPt);
+      
+        for (CountryCache cc : _countryCache) {
+			if (cc.contains(worldPt, container)) {
+				return cc.country;
+			}
+        }
+        return null;
     }
 
     /**
@@ -292,4 +254,30 @@ public class CountryFeatureRenderer {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAA);
         }
     }
+
+    class CountryCache {
+    	GeoJsonCountryLoader.CountryFeature country;
+    	WorldPolygon oneSide;
+    	WorldPolygon otherSide;
+    	public CountryCache(GeoJsonCountryLoader.CountryFeature country, WorldPolygon oneSide, WorldPolygon otherSide) {
+    		this.country = country;
+			this.oneSide = oneSide;
+			this.otherSide = otherSide;
+    	}
+    	
+    	public boolean contains(Point2D.Double worldPt, IContainer container) {
+			if (oneSide.npoints > 2) {
+				if (oneSide.contains(worldPt.x, worldPt.y)) {
+					return true;
+				}
+			}
+			if (otherSide.npoints > 2) {
+				if (otherSide.contains(worldPt.x, worldPt.y)) {
+					return true;
+				}
+			}
+			return false;
+		}
+    }
+
 }

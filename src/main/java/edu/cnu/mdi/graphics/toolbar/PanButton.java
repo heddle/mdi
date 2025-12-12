@@ -58,7 +58,7 @@ public class PanButton extends ToolBarToggleButton {
 	 * @param mouseEvent the new current location.
 	 * @param container  the container.
 	 */
-	public void update(MouseEvent mouseEvent, IContainer container) {
+	private void update(MouseEvent mouseEvent, IContainer container) {
 
 		// obtain the change since the last pan.
 		int delx = mouseEvent.getX() - pan_x;
@@ -68,21 +68,25 @@ public class PanButton extends ToolBarToggleButton {
 
 			pan_x = mouseEvent.getX();
 			pan_y = mouseEvent.getY();
+			boolean standardPanning = container.isStandardPanning();
 
-			int total_dx = mouseEvent.getX() - startx;
-			int total_dy = mouseEvent.getY() - starty;
+			if (standardPanning) {
+				int total_dx = standardPanning ? mouseEvent.getX() - startx : 0;
+				int total_dy = standardPanning ? mouseEvent.getY() - starty : 0;
 
-			Graphics gg = image.getGraphics();
-			gg.setColor(container.getComponent().getBackground());
-			gg.fillRect(0, 0, image.getWidth(), image.getHeight());
-			gg.drawImage(baseimage, total_dx, total_dy, container.getComponent());
-			gg.dispose();
+				Graphics gg = image.getGraphics();
+				gg.setColor(container.getComponent().getBackground());
+				gg.fillRect(0, 0, image.getWidth(), image.getHeight());
+				gg.drawImage(baseimage, total_dx, total_dy, container.getComponent());
+				gg.dispose();
 
-			Graphics g = container.getComponent().getGraphics();
+				Graphics g = container.getComponent().getGraphics();
 
-			g.drawImage(image, 0, 0, container.getComponent());
+				g.drawImage(image, 0, 0, container.getComponent());
 
-			g.dispose();
+				g.dispose();
+			}
+
 		}
 	}
 

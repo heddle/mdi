@@ -5,13 +5,13 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D.Double;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
-import java.util.Properties;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -25,7 +25,6 @@ import javax.swing.JRadioButton;
 import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.component.EnumComboBox;
 import edu.cnu.mdi.component.RangeSlider;
-import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
@@ -34,7 +33,6 @@ import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.text.UnicodeSupport;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
-import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.view.BaseView;
 
@@ -70,7 +68,8 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	//current map theme
 	private MapTheme _darkTheme = MapTheme.dark();
 	private MapTheme _lightTheme = MapTheme.light();
-	private MapTheme _currentTheme = _darkTheme;
+	private MapTheme _blueTheme = MapTheme.blue();
+	private MapTheme _currentTheme = _lightTheme;
 
 	// the map projection
 	private IMapProjection _projection;
@@ -83,7 +82,7 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	private JPanel _controlPanel;
 
 	// country renderer
-	private CountryFeatureRenderer _countryRenderer;
+	private CountryRenderer countryRenderer;
 
 	// city renderer
 	private CityPointRenderer _cityRenderer;
@@ -99,6 +98,7 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	private JCheckBox _showCityNamesCheckBox;
 	private JRadioButton _lightThemeButton;
 	private JRadioButton _darkThemeButton;
+	private JRadioButton _blueThemeButton;
 
 	// default side panel width (control panel + feedback)
 	private static final int SIDE_PANEL_WIDTH = 220;
@@ -160,6 +160,16 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 
 		add(sidePanel, BorderLayout.EAST);
 	}
+	
+	private JRadioButton createThemeButton(String label, ButtonGroup bg, ActionListener al, boolean selected) {
+		JRadioButton themeButton = new JRadioButton();
+		themeButton.setSelected(selected);
+		themeButton.setFont(Fonts.mediumFont);
+		themeButton.setText(label);
+		bg.add(themeButton);
+		themeButton.addActionListener(al);
+		return themeButton;
+	}
 
 	/**
 	 * Create the control panel placed above the feedback pane on the east side.
@@ -217,37 +227,32 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 		JLabel themeLabel = new JLabel("Theme");
 		themeLabel.setFont(Fonts.mediumFont);
 
-		_lightThemeButton = new JRadioButton("Light");
-		_lightThemeButton.setFont(Fonts.mediumFont);
-
-		_darkThemeButton = new JRadioButton("Dark");
-		_darkThemeButton.setFont(Fonts.mediumFont);
 
 		ButtonGroup themeGroup = new ButtonGroup();
 		themeGroup.add(_lightThemeButton);
 		themeGroup.add(_darkThemeButton);
-
-		boolean isDark = (_currentTheme == _darkTheme);
-		_darkThemeButton.setSelected(isDark);
-		_lightThemeButton.setSelected(!isDark);
-
-		_lightThemeButton.addActionListener(e -> {
+		themeGroup.add(_blueThemeButton);
+		
+		ActionListener themeListener = e -> {
 			if (_lightThemeButton.isSelected()) {
 				_currentTheme = _lightTheme;
-				updateTheme();
-			}
-		});
-		_darkThemeButton.addActionListener(e -> {
-			if (_darkThemeButton.isSelected()) {
+			} else if (_darkThemeButton.isSelected()) {
 				_currentTheme = _darkTheme;
-				updateTheme();
+			} else if (_blueThemeButton.isSelected()) {
+				_currentTheme = _blueTheme;
 			}
-		});
+			updateTheme();
+		};
+
+		_lightThemeButton = createThemeButton("Light", themeGroup, themeListener, true);
+		_darkThemeButton = createThemeButton("Dark", themeGroup, themeListener, false);
+		_blueThemeButton = createThemeButton("Blue", themeGroup, themeListener, false);
 
 		panel.add(themeLabel);
 		panel.add(Box.createVerticalStrut(4));
 		panel.add(_lightThemeButton);
 		panel.add(_darkThemeButton);
+		panel.add(_blueThemeButton);
 		panel.add(Box.createVerticalStrut(8));
 
 		return panel;
@@ -280,8 +285,6 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 
 	/**
 	 * Update whether city names (labels) are drawn.
-	 *
-	 * @param showNames {@code true} to show city names, {@code false} to hide.
 	 */
 	private void updateCityLabelVisibility() {
 		if (_cityRenderer != null) {
@@ -368,7 +371,8 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 				_gratRenderer.render(g, container);
 
 				// 4. Draw land polygons, labels, etc...
-				_countryRenderer.render(g, container);
+	//			countryFeatureRenderer.render(g, container);
+				countryRenderer.render(g, container);
 				_cityRenderer.render(g, container);
 			}
 		};
@@ -393,8 +397,7 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 
 		getContainer().resetWorldSystem(getWorldSystem(_projection.getProjection()));
 
-		_countryRenderer = new CountryFeatureRenderer(_countries, _projection);
-		_countryRenderer.invalidateCache();
+		countryRenderer = new CountryRenderer(_countries, _projection);
 
 	    _cityRenderer = new CityPointRenderer(_cities, _projection);
 	    _cityRenderer.setPointRadius(1.5);
@@ -406,9 +409,6 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	}
 
 	public void invalidate() {
-		if (_countryRenderer != null) {
-			_countryRenderer.invalidateCache();
-		}
 	}
 
 
@@ -498,7 +498,7 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 			feedbackStrings.add(lonStr);
 
 			// on a country?
-			GeoJsonCountryLoader.CountryFeature countryHit = _countryRenderer.pickCountry(pp, container);
+			GeoJsonCountryLoader.CountryFeature countryHit = countryRenderer.pickCountry(pp, container);
 			if (countryHit != null) {
 				String countryStr = String.format("%s (%s)", countryHit.getAdminName(),
 						countryHit.getIsoA3());

@@ -48,7 +48,7 @@ public class MollweideProjection implements IMapProjection {
     private static final double MIN_LAT = -MAX_LAT;
 
     /** Central meridian λ₀ in radians. */
-    private double lambda0;
+    private double lambda0 = Math.toRadians(-70);
 
     /** Active theme. */
     private MapTheme theme;
@@ -56,23 +56,14 @@ public class MollweideProjection implements IMapProjection {
     /** Number of segments for approximating curves. */
     private static final int NUM_SEGMENTS = 360;
 
-    /**
-     * Creates a Mollweide projection with λ₀ = 0 and the given theme.
-     *
-     * @param theme map theme; must not be {@code null}
-     */
-    public MollweideProjection(MapTheme theme) {
-        this(0.0, theme);
-    }
-
+ 
     /**
      * Creates a Mollweide projection with the given central meridian and theme.
      *
      * @param lambda0 central meridian in radians
      * @param theme   map theme; must not be {@code null}
      */
-    public MollweideProjection(double lambda0, MapTheme theme) {
-        this.lambda0 = lambda0;
+    public MollweideProjection(MapTheme theme) {
         setTheme(theme);
     }
 
@@ -108,6 +99,53 @@ public class MollweideProjection implements IMapProjection {
 
         return theta;
     }
+  
+    
+    /**
+     * Get the central longitude λ₀ (in radians).
+     *
+     * @return the central longitude in radians
+     */
+    public double getCentralLongitude() {
+        return lambda0;
+    }
+
+    /**
+     * Set the central longitude λ₀ (in radians).
+     * <p>
+     * The value is normalized using {@code wrapLongitude} so that it lies
+     * within the conventional range (-π, π].
+     *
+     * @param centralLongitude the desired central longitude in radians
+     */
+    public void setCentralLongitude(double centralLongitude) {
+        // Use the same normalization helper used elsewhere
+        this.lambda0 = wrapLongitude(centralLongitude);
+    }
+    
+    /**
+     * Test to see if the line between two longitudes crosses the
+     * seam (the line at the central longitude). This is a test
+     * for the dreaded wrapping problem.
+     * @param lon1 one longitude in radians
+     * @param lon2 the other longitude in radians
+     * @return {@code true} if the line between the two longitudes
+     * 	   crosses the seam; {@code false} otherwise
+     */
+    @Override
+    public boolean crossesSeam(double lon1, double lon2) {
+		double d1 = lon1 - lambda0;
+		double d2 = lon2 - lambda0;
+		
+		d1 = wrapLongitude(d1);
+		d2 = wrapLongitude(d2);
+
+
+//		return (d1 * d2 < 0) && (Math.abs(d1 - d2) > Math.PI);
+		return Math.abs(d1 - d2) > Math.PI;
+    	
+    }
+
 
     @Override
     public void latLonToXY(Point2D.Double latLon, Point2D.Double xy) {
@@ -117,7 +155,7 @@ public class MollweideProjection implements IMapProjection {
         lat = Math.max(MIN_LAT, Math.min(MAX_LAT, lat));
 
         double theta = solveTheta(lat);
-        double dLambda = lon - lambda0;
+        double dLambda = wrapLongitude(lon - lambda0); // <-- critical
 
         xy.x = 2.0 * SQRT2 * R * dLambda * Math.cos(theta) / Math.PI;
         xy.y = SQRT2 * R * Math.sin(theta);

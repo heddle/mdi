@@ -85,7 +85,6 @@ public final class ProjectionFactory {
         switch (type) {
 
             case MERCATOR: {
-                // Current Mercator implementation does not take a center.
                 return new MercatorProjection(theme);
             }
 
@@ -103,12 +102,7 @@ public final class ProjectionFactory {
             }
 
             case MOLLWEIDE: {
-                // Mollweide uses central meridian (λ0). Lat center is irrelevant.
-                double lambda0 = 0.0;
-                if (center != null) {
-                    lambda0 = center.x;
-                }
-                return new MollweideProjection(lambda0, theme);
+                return new MollweideProjection(theme);
             }
 
             case LAMBERT_EQUAL_AREA: {

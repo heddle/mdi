@@ -28,9 +28,9 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * <p>
  * Conventions:
  * <ul>
- *   <li>Input city coordinates are in degrees (lon/lat) as provided by
+ *   <li>Input city coordinates are in radians (lon/lat) as provided by
  *       {@link GeoJsonCityLoader.CityFeature}.</li>
- *   <li>They are converted to radians and stored in a {@link Point2D.Double}
+ *   <li>They are stored in a {@link Point2D.Double}
  *       with {@code x = λ} (longitude) and {@code y = φ} (latitude).</li>
  *   <li>Projection-space coordinates are likewise represented as
  *       {@code Point2D.Double} in the projection's XY plane.</li>
@@ -200,10 +200,9 @@ public class CityPointRenderer {
                 continue;
             }
 
-            double lonRad = Math.toRadians(city.getLonDeg());
-            double latRad = Math.toRadians(city.getLatDeg());
+            double lonRad = city.getLongitude();
+            double latRad = city.getLatitude();
 
-            // lambda = longitude, phi = latitude
             latLon.setLocation(lonRad, latRad);
 
             if (!projection.isPointVisible(latLon)) {
@@ -310,8 +309,8 @@ public class CityPointRenderer {
                 continue;
             }
 
-            double lonRad = Math.toRadians(city.getLonDeg());
-            double latRad = Math.toRadians(city.getLatDeg());
+            double lonRad = city.getLongitude();
+            double latRad = city.getLatitude();
 
             latLon.setLocation(lonRad, latRad);
 

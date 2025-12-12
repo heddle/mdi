@@ -8,10 +8,12 @@ import java.awt.geom.Rectangle2D.Double;
 
 import edu.cnu.mdi.container.BaseContainer;
 
+@SuppressWarnings("serial")
 public class MapContainer extends BaseContainer {
 	
 	public MapContainer(Double worldSystem) {
 		super(worldSystem);
+		setStandardPanning(false);
 	}
 
 
@@ -48,21 +50,24 @@ public class MapContainer extends BaseContainer {
 		switch (proj) {
 		case MERCATOR:
 			((MercatorProjection)mp).setCentralLongitude(ll.x);
-			getMapView2D().invalidate();
-			setDirty(true);
-			refresh();
 			break;
 			
 		case MOLLWEIDE:
+			((MollweideProjection)mp).setCentralLongitude(ll.x);
 			break;
 			
 		case ORTHOGRAPHIC:
+			((OrthographicProjection)mp).setCenter(ll.x, ll.y);
 			break;
 			
 		case LAMBERT_EQUAL_AREA:
+			((LambertEqualAreaProjection)mp).setCenter(ll.x, ll.y);
 			break;
 		}
 		
+		getMapView2D().invalidate();
+		setDirty(true);
+		refresh();
 
 	}
 

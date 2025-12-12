@@ -26,15 +26,15 @@ import edu.cnu.mdi.container.IContainer;
 public class MercatorProjection implements IMapProjection {
 
     /** Maximum latitude (in radians) to avoid infinite Y at the poles. */
-    private static final double MAX_LAT_DEG = 85.0;
-    private static final double MAX_LAT = Math.toRadians(MAX_LAT_DEG);
+    private static final double MAX_LAT = Math.toRadians(89.0);
+    private static final double MIN_LAT = Math.toRadians(-89.0);
 
     /** Longitudinal extent (whole world). */
     private static final double MIN_LON = -Math.PI;
     private static final double MAX_LON = Math.PI;
 
     /** Y extents corresponding to ±MAX_LAT. */
-    private static final double MIN_Y = mercatorY(-MAX_LAT);
+    private static final double MIN_Y = mercatorY(MIN_LAT);
     private static final double MAX_Y = mercatorY(MAX_LAT);
 
     /** Active theme used for rendering. */
@@ -45,7 +45,7 @@ public class MercatorProjection implements IMapProjection {
      * projection X as {@code x = wrap(λ - λ₀)}, so λ₀ is the longitude that
      * appears at x = 0 in projection space.
      */
-    private double centralLongitude = 0;
+    private double lambda0 = Math.toRadians(-70);
 
     /**
      * Create a Mercator projection with the given theme.
@@ -69,7 +69,7 @@ public class MercatorProjection implements IMapProjection {
      * @return the central longitude in radians
      */
     public double getCentralLongitude() {
-        return centralLongitude;
+        return lambda0;
     }
 
     /**
@@ -82,7 +82,30 @@ public class MercatorProjection implements IMapProjection {
      */
     public void setCentralLongitude(double centralLongitude) {
         // Use the same normalization helper used elsewhere
-        this.centralLongitude = wrapLongitude(centralLongitude);
+        this.lambda0 = wrapLongitude(centralLongitude);
+    }
+    
+    /**
+     * Test to see if the line between two longitudes crosses the
+     * seam (the line at the central longitude). This is a test
+     * for the dreaded wrapping problem.
+     * @param lon1 one longitude in radians
+     * @param lon2 the other longitude in radians
+     * @return {@code true} if the line between the two longitudes
+     * 	   crosses the seam; {@code false} otherwise
+     */
+    @Override
+    public boolean crossesSeam(double lon1, double lon2) {
+		double d1 = lon1 - lambda0;
+		double d2 = lon2 - lambda0;
+		
+		d1 = wrapLongitude(d1);
+		d2 = wrapLongitude(d2);
+
+
+//		return (d1 * d2 < 0) && (Math.abs(d1 - d2) > Math.PI);
+		return Math.abs(d1 - d2) > Math.PI;
+    	
     }
 
     @Override
@@ -91,15 +114,15 @@ public class MercatorProjection implements IMapProjection {
         double lat = latLon.y;
 
         // Clamp latitude to avoid undefined values at poles
-        lat = Math.max(-MAX_LAT, Math.min(MAX_LAT, lat));
+        lat = Math.max(MIN_LAT, Math.min(MAX_LAT, lat));
 
-        xy.x = wrapLongitude(lon - centralLongitude); // λ
+        xy.x = wrapLongitude(lon - lambda0); // λ
         xy.y = mercatorY(lat);
     }
 
     @Override
     public void latLonFromXY(Point2D.Double latLon, Point2D.Double xy) {
-        double x = wrapLongitude(xy.x + centralLongitude);
+        double x = wrapLongitude(xy.x + lambda0);
         double y = xy.y;
 
         latLon.x = x; // λ
@@ -157,7 +180,7 @@ public class MercatorProjection implements IMapProjection {
     @Override
     public void drawLatitudeLine(Graphics2D g2, IContainer container, double latitude) {
         // Clamp to allowed range
-        double lat = Math.max(-MAX_LAT, Math.min(MAX_LAT, latitude));
+        double lat = Math.max(MIN_LAT, Math.min(MAX_LAT, latitude));
 
         int numSegments = 360;
         double dLon = (MAX_LON - MIN_LON) / numSegments;
@@ -194,7 +217,7 @@ public class MercatorProjection implements IMapProjection {
         double lon = wrapLongitude(longitude);
 
         int numSegments = 360;
-        double dLat = (2.0 * MAX_LAT) / numSegments;
+        double dLat = (MAX_LAT-MIN_LAT) / numSegments;
 
         Path2D path = new Path2D.Double();
         Point2D.Double latLon = new Point2D.Double();
@@ -204,7 +227,7 @@ public class MercatorProjection implements IMapProjection {
         latLon.x = lon;
 
         for (int i = 0; i <= numSegments; i++) {
-            double lat = -MAX_LAT + i * dLat;
+            double lat = MIN_LAT + i * dLat;
             latLon.y = lat;
 
             latLonToXY(latLon, xy);
@@ -226,7 +249,7 @@ public class MercatorProjection implements IMapProjection {
     @Override
     public boolean isPointVisible(Point2D.Double latLon) {
         double lat = latLon.y;
-        return lat >= -MAX_LAT && lat <= MAX_LAT;
+        return lat >= MIN_LAT && lat <= MAX_LAT;
     }
 
     @Override

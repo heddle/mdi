@@ -33,8 +33,8 @@ public class OrthographicProjection implements IMapProjection {
     private static final int NUM_SEGMENTS = 180;
 
     /** Central longitude and latitude (in radians). */
-    private final double centerLon;
-    private final double centerLat;
+    private double centerLon;
+    private double centerLat;
 
     /** Sphere radius in projection space. */
     private static final double R = 1.0;
@@ -55,6 +55,17 @@ public class OrthographicProjection implements IMapProjection {
     public OrthographicProjection(double centerLon, double centerLat) {
         this.centerLon = centerLon;
         this.centerLat = centerLat;
+    }
+
+    /**
+     * Set the center of the projection.
+     *
+     * @param centerLon central longitude λ₀ in radians
+     * @param centerLat central latitude  φ₀ in radians
+     */
+    public void setCenter(double centerLon, double centerLat) {
+        this.centerLat = centerLat;
+        this.centerLon = centerLon;
     }
 
     @Override

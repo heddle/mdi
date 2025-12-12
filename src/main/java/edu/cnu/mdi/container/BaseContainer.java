@@ -1275,4 +1275,16 @@ public class BaseContainer extends JComponent
 		return image;
 
 	}
+	
+	private boolean _standardPanning = true;
+
+	@Override
+	public boolean isStandardPanning() {		// TODO Auto-generated method stub
+		return _standardPanning;
+	}
+
+	@Override
+	public void setStandardPanning(boolean standardPanning) {
+		_standardPanning = standardPanning;
+	}
 }

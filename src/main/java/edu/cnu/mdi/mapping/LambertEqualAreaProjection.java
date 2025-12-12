@@ -68,10 +68,10 @@ public class LambertEqualAreaProjection implements IMapProjection {
     private static final int NUM_SEGMENTS = 360;
 
     /** Center longitude λ₀ (radians). */
-    private final double centerLon;
+    private double centerLon;
 
     /** Center latitude φ₀ (radians). */
-    private final double centerLat;
+    private double centerLat;
 
     /** Theme used for drawing. May be {@code null} until set by client code. */
     private MapTheme theme;
@@ -125,6 +125,17 @@ public class LambertEqualAreaProjection implements IMapProjection {
      */
     public LambertEqualAreaProjection(MapTheme theme) {
         this(0.0, 0.0, theme);
+    }
+
+    /**
+     * Set the center of the projection.
+     *
+     * @param centerLon central longitude λ₀ in radians
+     * @param centerLat central latitude  φ₀ in radians
+     */
+    public void setCenter(double centerLon, double centerLat) {
+        this.centerLat = centerLat;
+        this.centerLon = centerLon;
     }
 
     @Override
