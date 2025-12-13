@@ -5,12 +5,9 @@ import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
@@ -20,6 +17,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
 
 import javax.swing.JComponent;
 
@@ -30,8 +28,7 @@ import edu.cnu.mdi.graphics.drawable.DrawableChangeType;
 import edu.cnu.mdi.graphics.drawable.DrawableList;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.drawable.IDrawableListener;
-import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
-import edu.cnu.mdi.graphics.toolbar.ToolBarToggleButton;
+import edu.cnu.mdi.graphics.toolbar.IContainerToolBar;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.ItemList;
@@ -51,9 +48,9 @@ import edu.cnu.mdi.view.BaseView;
 
 @SuppressWarnings("serial")
 public class BaseContainer extends JComponent
-		implements IContainer, MouseListener, MouseMotionListener, MouseWheelListener, IDrawableListener {
-	
-    
+implements IContainer, MouseWheelListener, IDrawableListener {
+
+
 	/**
 	 * A collection of item list. This is the container's model.
 	 */
@@ -67,7 +64,7 @@ public class BaseContainer extends JComponent
 	/**
 	 * Each container may or may not have a tool bar.
 	 */
-	protected BaseToolBar _toolBar;
+	protected IContainerToolBar _toolBar;
 
 	/**
 	 * The optional feedback pane.
@@ -180,16 +177,14 @@ public class BaseContainer extends JComponent
 		};
 
 		addComponentListener(componentAdapter);
-		addMouseListener(this);
-		addMouseMotionListener(this);
-
 	}
-	
+
 	/**
 	 * Reset the world system to a new value.
 	 * Resets the default and previous world systems as well.
 	 * @param worldSystem the new world system.
 	 */
+	@Override
 	public void resetWorldSystem(Rectangle2D.Double worldSystem) {
 		_worldSystem = worldSystem;
 		_defaultWorldSystem = copy(worldSystem);
@@ -217,7 +212,6 @@ public class BaseContainer extends JComponent
 		g.setClip(0, 0, b.width, b.height);
 	}
 
-	
 	/**
 	 * Override the paint command. Draw all the lists.
 	 *
@@ -225,12 +219,12 @@ public class BaseContainer extends JComponent
 	 */
 	@Override
 	public void paintComponent(Graphics g) {
-		
+
 		if ((_view != null) && !_view.isViewVisible()) {
 			return;
 		}
-		
-	    super.paintComponent(g);	
+
+	    super.paintComponent(g);
 
 		clipBounds(g);
 
@@ -624,13 +618,31 @@ public class BaseContainer extends JComponent
 	 * {@inheritDoc}
      */
 	@Override
-	public void deleteSelectedItems(IContainer container) {
+	public void deleteSelectedItems() {
 		if (_itemLists != null) {
 			for (IDrawable drawable : _itemLists) {
 				ItemList itemList = (ItemList) drawable;
-				itemList.deleteSelectedItems(container);
+				itemList.deleteSelectedItems(this);
 			}
 		}
+	}
+	
+	/**
+	 * Get all selected items, across all item lists.
+	 *
+	 * @param container the container they lived on.
+	 */
+	public List<AItem> getSelectedItems() {
+		ArrayList<AItem> selectedItems = new ArrayList<>();
+
+		if (_itemLists != null) {
+			for (IDrawable drawable : _itemLists) {
+				ItemList itemList = (ItemList) drawable;
+				selectedItems.addAll(itemList.getSelectedItems());
+			}
+		}
+
+		return selectedItems;
 	}
 
 	/**
@@ -665,8 +677,8 @@ public class BaseContainer extends JComponent
 	 * @return this container's tool bar, or <code>null</code>.
 	 */
 	@Override
-	public BaseToolBar getToolBar() {
-		return _toolBar;
+	public IContainerToolBar getToolBar() {
+	    return _toolBar;
 	}
 
 	/**
@@ -675,95 +687,8 @@ public class BaseContainer extends JComponent
 	 * @param toolBar the new toolbar.
 	 */
 	@Override
-	public void setToolBar(BaseToolBar toolBar) {
-		_toolBar = toolBar;
-	}
-
-	/**
-	 * The mouse has been clicked.
-	 *
-	 * @param mouseEvent the causal event.
-	 */
-	@Override
-	public void mouseClicked(MouseEvent mouseEvent) {
-
-		if (!isEnabled()) {
-			Toolkit.getDefaultToolkit().beep();
-			return;
-		}
-	}
-
-	/**
-	 * The mouse has entered the container.
-	 *
-	 * @param mouseEvent the causal event.
-	 */
-	@Override
-	public void mouseEntered(MouseEvent mouseEvent) {
-		_currentMousePoint = mouseEvent.getPoint();
-
-		ToolBarToggleButton mtb = getActiveButton();
-		if (mtb != null) {
-			setCursor(mtb.canvasCursor());
-		}
-	}
-
-	/**
-	 * The mouse has exited the container.
-	 *
-	 * @param mouseEvent the causal event.
-	 */
-	@Override
-	public void mouseExited(MouseEvent mouseEvent) {
-		_currentMousePoint = null;
-	}
-
-	/**
-	 * The mouse was pressed in the container.
-	 *
-	 * @param mouseEvent the causal event.
-	 */
-	@Override
-	public void mousePressed(MouseEvent mouseEvent) {
-	}
-
-	/**
-	 * The mouse was released in the container.
-	 *
-	 * @param mouseEvent the causal event.
-	 */
-	@Override
-	public void mouseReleased(MouseEvent mouseEvent) {
-		if (_toolBar != null) {
-			_toolBar.checkButtonState();
-		}
-	}
-
-	/**
-	 * The mouse was dragged in the container.
-	 *
-	 * @param mouseEvent the causal event.
-	 */
-	@Override
-	public void mouseDragged(MouseEvent mouseEvent) {
-		if (!isEnabled()) {
-			return;
-		}
-		locationUpdate(mouseEvent, true);
-	}
-
-	/**
-	 * The mouse has moved in the container.
-	 *
-	 * @param mouseEvent the causal event.
-	 */
-	@Override
-	public void mouseMoved(MouseEvent mouseEvent) {
-		if (!isEnabled()) {
-			return;
-		}
-		_currentMousePoint = mouseEvent.getPoint();
-		locationUpdate(mouseEvent, false);
+	public void setToolBar(IContainerToolBar toolBar) {
+	    _toolBar = toolBar;
 	}
 
 	/**
@@ -791,20 +716,6 @@ public class BaseContainer extends JComponent
 		return _currentMousePoint;
 	}
 
-	/**
-	 * Get the active button on the toolbar, if there is a toolbar.
-	 *
-	 * @return the active toggle button.
-	 */
-	@Override
-	public ToolBarToggleButton getActiveButton() {
-		BaseToolBar tb = getToolBar();
-		if (tb == null) {
-			return null;
-		} else {
-			return tb.getActiveButton();
-		}
-	}
 
 	/**
 	 * Convenience method to update the location string in the toolbar.
@@ -814,33 +725,19 @@ public class BaseContainer extends JComponent
 	 */
 	@Override
 	public void locationUpdate(MouseEvent mouseEvent, boolean dragging) {
+	    _lastLocationMouseEvent = mouseEvent;
 
-		_lastLocationMouseEvent = mouseEvent;
-		ToolBarToggleButton mtb = getActiveButton();
-		Point2D.Double wp = null;
-		wp = getLocation(mouseEvent);
+	    Point2D.Double wp = getLocation(mouseEvent);
 
-		if (mtb == null) {
-			if (_feedbackControl != null) {
-				_feedbackControl.updateFeedback(mouseEvent, wp, dragging);
-			}
-			return;
-		}
+	    // Update toolbar text (if present)
+	    if (_toolBar != null) {
+	        _toolBar.setText(Point2DSupport.toString(wp));
+	    }
 
-		if (mtb == _toolBar.getPointerButton()) { // pointer active
-			getToolBar().setText(Point2DSupport.toString(wp));
-			if (_feedbackControl != null) {
-				_feedbackControl.updateFeedback(mouseEvent, wp, dragging);
-			}
-		} else if (mtb == _toolBar.getPanButton()) { // pan active
-			// do nothing
-		} else { // default case
-			wp = getLocation(mouseEvent);
-			getToolBar().setText(Point2DSupport.toString(wp));
-			if (_feedbackControl != null) {
-				_feedbackControl.updateFeedback(mouseEvent, wp, dragging);
-			}
-		}
+	    // Update feedback (if present)
+	    if (_feedbackControl != null) {
+	        _feedbackControl.updateFeedback(mouseEvent, wp, dragging);
+	    }
 	}
 
 	/**
@@ -880,8 +777,13 @@ public class BaseContainer extends JComponent
 		case ADDED:
 			break;
 
+		case SELECTED:
 		case DESELECTED:
-			break;
+		case LISTCLEARED:
+		    if (_toolBar != null) {
+		        _toolBar.updateButtonState();
+		    }
+		    break;
 
 		case DOUBLECLICKED:
 			break;
@@ -907,13 +809,7 @@ public class BaseContainer extends JComponent
 		case ROTATED:
 			break;
 
-		case SELECTED:
-			break;
-
 		case SHOWN:
-			break;
-
-		case LISTCLEARED:
 			break;
 
 		case LISTHIDDEN:
@@ -1254,14 +1150,6 @@ public class BaseContainer extends JComponent
 		return new Rectangle2D.Double(wr.x, wr.y, wr.width, wr.height);
 	}
 
-	/**
-	 * The active toolbar button changed.
-	 *
-	 * @param activeButton the new active button.
-	 */
-	@Override
-	public void activeToolBarButtonChanged(ToolBarToggleButton activeButton) {
-	}
 
 	/**
 	 * Get the background image.
@@ -1275,7 +1163,7 @@ public class BaseContainer extends JComponent
 		return image;
 
 	}
-	
+
 	private boolean _standardPanning = true;
 
 	@Override

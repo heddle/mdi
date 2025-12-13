@@ -1,33 +1,19 @@
 package edu.cnu.mdi.graphics.toolbar;
 
-import java.awt.event.ActionEvent;
-
-import edu.cnu.mdi.container.IContainer;
-
 /**
- * @author heddle
- *
+ * One-shot toolbar action that undoes the last zoom operation.
  */
 @SuppressWarnings("serial")
-public class UndoZoomButton extends ToolBarButton {
+public class UndoZoomButton extends ToolActionButton {
 
-	/**
-	 * Create the button used for undoing the previous zoom (or recenter).
-	 *
-	 * @param container the owner container.
-	 */
-	public UndoZoomButton(IContainer container) {
-		super(container, "images/undo_zoom.gif", "Undo");
-	}
+    public UndoZoomButton(ToolContext ctx) {
+        super(ctx, "images/undo_zoom.gif", "Undo zoom");
+    }
 
-	/**
-	 * This is what I do if I am pressed
-	 *
-	 * @param e The causal event.
-	 */
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		container.undoLastZoom();
-		container.getToolBar().resetDefaultSelection();
-	}
+    @Override
+    protected void perform(ToolContext ctx) {
+        if (ctx.container() != null) {
+            ctx.container().undoLastZoom();
+        }
+    }
 }

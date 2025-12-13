@@ -1,36 +1,19 @@
 package edu.cnu.mdi.graphics.toolbar;
 
-import java.awt.event.ActionEvent;
-
-import edu.cnu.mdi.container.IContainer;
-
 /**
- * Refresh button just causes the container to be repainted.
- *
- * @author heddle
- *
+ * One-shot toolbar action that refreshes the container.
  */
 @SuppressWarnings("serial")
-public class RefreshButton extends ToolBarButton {
+public class RefreshButton extends ToolActionButton {
 
-	/**
-	 * Create the Refresh button.
-	 *
-	 * @param container the container this button applies to.
-	 */
-	public RefreshButton(IContainer container) {
-		super(container, "images/refresh.gif", "Refresh");
-	}
+    public RefreshButton(ToolContext ctx) {
+        super(ctx, "images/refresh.gif", "Refresh");
+    }
 
-	/**
-	 * This is what I do if I am pressed
-	 *
-	 * @param e The causal event.
-	 */
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		container.refresh();
-		container.getToolBar().resetDefaultSelection();
-	}
-
+    @Override
+    protected void perform(ToolContext ctx) {
+        if (ctx.container() != null) {
+            ctx.container().refresh();
+        }
+    }
 }

@@ -1,35 +1,27 @@
 package edu.cnu.mdi.graphics.toolbar;
 
-import java.awt.event.ActionEvent;
-
-import edu.cnu.mdi.container.IContainer;
-
 /**
- * Zoom out by a fixed amount.
- *
- * @author heddle
- *
+ * One-shot toolbar action that zooms out by scaling the world system.
  */
 @SuppressWarnings("serial")
-public class ZoomOutButton extends ToolBarButton {
+public class ZoomOutButton extends ToolActionButton {
 
-	/**
-	 * Create the zoom-out button, which zooms out by a fixed amount.
-	 *
-	 * @param container the container this button acts upon.
-	 */
-	public ZoomOutButton(IContainer container) {
-		super(container, "images/zoom_out.gif", "Zoom out");
-	}
+    /** Typical zoom out factor (> 1 zooms out). */
+    private final double factor;
 
-	/**
-	 * This is what I do if I am pressed
-	 *
-	 * @param e the causal event.
-	 */
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		container.scale(1.0 / IContainer.FIXED_ZOOM_FACTOR);
-		container.getToolBar().resetDefaultSelection();
-	}
+    public ZoomOutButton(ToolContext ctx) {
+        this(ctx, 1.25);
+    }
+
+    public ZoomOutButton(ToolContext ctx, double factor) {
+        super(ctx, "images/zoom_out.gif", "Zoom out");
+        this.factor = factor;
+    }
+
+    @Override
+    protected void perform(ToolContext ctx) {
+        if (ctx.container() != null) {
+            ctx.container().scale(factor);
+        }
+    }
 }

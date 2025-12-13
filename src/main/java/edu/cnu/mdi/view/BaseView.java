@@ -862,19 +862,7 @@ public class BaseView extends JInternalFrame
     // Toolbar helpers
     // ========================================================================
 
-    /**
-     * Returns the view's toolbar, if one exists.
-     *
-     * @return the {@link BaseToolBar} associated with this view, or {@code null}
-     *         if no toolbar exists.
-     */
-    public BaseToolBar getToolBar() {
-        if (getContainer() != null) {
-            return getContainer().getToolBar();
-        }
-        return null;
-    }
-
+ 
     // ========================================================================
     // Magnification support
     // ========================================================================

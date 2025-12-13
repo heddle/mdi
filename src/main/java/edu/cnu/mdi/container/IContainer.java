@@ -9,12 +9,12 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.List;
 
 import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
-import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
-import edu.cnu.mdi.graphics.toolbar.ToolBarToggleButton;
+import edu.cnu.mdi.graphics.toolbar.IContainerToolBar;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.ItemList;
@@ -220,7 +220,14 @@ public interface IContainer {
 	 *
 	 * @param container the container they lived on.
 	 */
-	public void deleteSelectedItems(IContainer container);
+	public void deleteSelectedItems();
+
+	/**
+	 * Get all selected items, across all item lists.
+	 *
+	 * @param container the container they lived on.
+	 */
+	public List<AItem> getSelectedItems();
 
 	/**
 	 * Select or deselect all items, across all item lists.
@@ -241,32 +248,18 @@ public interface IContainer {
 
 
 	/**
-	 * Get this container's tool bar.
+	 * Get this container's tool bar interface.
 	 *
 	 * @return this container's tool bar, or <code>null</code>.
 	 */
-	public BaseToolBar getToolBar();
+	public IContainerToolBar getToolBar();
 
 	/**
 	 * Set this container's tool bar.
 	 *
-	 * @param toolBar the new toolbar.
+	 * @param toolBar the new toolbar interface.
 	 */
-	public void setToolBar(BaseToolBar toolBar);
-
-	/**
-	 * The active toolbar button changed.
-	 *
-	 * @param activeButton the new active button.
-	 */
-	public void activeToolBarButtonChanged(ToolBarToggleButton activeButton);
-
-	/**
-	 * Get the active button on the toolbar, if there is a toolbar.
-	 *
-	 * @return the active toggle button.
-	 */
-	public ToolBarToggleButton getActiveButton();
+	public void setToolBar(IContainerToolBar toolBar);
 
 	/**
 	 * Convenience method to update the location string in the toolbar.

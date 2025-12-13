@@ -1,35 +1,59 @@
 package edu.cnu.mdi.graphics.toolbar;
 
-import java.awt.event.ActionEvent;
-
 import edu.cnu.mdi.container.IContainer;
 
 /**
+ * One-shot toolbar button that deletes all currently selected items
+ * from the active container.
+ * <p>
+ * This is the tool-framework replacement for the legacy {@code DeleteButton}.
+ * It does not participate in tool selection; it simply performs an action
+ * via {@link ToolContext}.
+ * </p>
+ * <p>
+ * After deletion, this button:
+ * </p>
+ * <ul>
+ *   <li>resets the active tool back to the default tool (typically pointer)</li>
+ *   <li>updates toolbar enable/disable state (e.g. delete enabled)</li>
+ *   <li>refreshes the container</li>
+ * </ul>
+ *
  * @author heddle
  */
 @SuppressWarnings("serial")
-public class DeleteButton extends ToolBarButton {
+public class DeleteButton extends ToolActionButton {
 
-	/**
-	 * Create the button used to delete items on the container.
-	 *
-	 * @param container the owner container.
-	 */
-	public DeleteButton(IContainer container) {
-		super(container, "images/delete.gif", "Delete selected items");
-	}
+    /**
+     * Create a delete action button.
+     *
+     * @param ctx the tool context (must not be null)
+     */
+    public DeleteButton(ToolContext ctx) {
+        super(ctx, "images/delete.gif", "Delete selected items");
+    }
 
-	/**
-	 * This is what I do if I am pressed, i.e. delete all selected items.
-	 *
-	 * @param e The causal event.
-	 */
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		container.deleteSelectedItems(container);
-		container.getToolBar().resetDefaultSelection();
-		container.getToolBar().checkButtonState();
-		container.refresh();
-	}
+    @Override
+    protected void perform(ToolContext ctx) {
+        if (ctx == null) {
+            return;
+        }
 
+        IContainer c = ctx.container();
+        if (c == null) {
+            return;
+        }
+
+        c.deleteSelectedItems();
+
+        // Return UI to a sane default state.
+        ctx.resetToDefaultTool();
+
+        // Keep toolbar widgets (like delete enabled state) in sync.
+        if (c.getToolBar() != null) {
+            c.getToolBar().updateButtonState();
+        }
+
+        c.refresh();
+    }
 }

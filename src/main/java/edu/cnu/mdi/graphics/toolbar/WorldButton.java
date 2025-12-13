@@ -1,36 +1,19 @@
 package edu.cnu.mdi.graphics.toolbar;
 
-import java.awt.event.ActionEvent;
-
-import edu.cnu.mdi.container.IContainer;
-
 /**
- * The world button restores the original zoom level.
- *
- * @author heddle
- *
+ * One-shot toolbar action that restores the container's default world system.
  */
 @SuppressWarnings("serial")
-public class WorldButton extends ToolBarButton {
+public class WorldButton extends ToolActionButton {
 
-	/**
-	 * Create the worlds button, which zooms bact to the original extent.
-	 *
-	 * @param container the container this button acts upon.
-	 */
-	public WorldButton(IContainer container) {
-		super(container, "images/world.gif", "restore original zoom");
-	}
+    public WorldButton(ToolContext ctx) {
+        super(ctx, "images/world.gif", "Restore default world");
+    }
 
-	/**
-	 * This is what I do if I am pressed
-	 *
-	 * @param e The causal event.
-	 */
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		container.restoreDefaultWorld();
-		container.refresh();
-		container.getToolBar().resetDefaultSelection();
-	}
+    @Override
+    protected void perform(ToolContext ctx) {
+        if (ctx.container() != null) {
+            ctx.container().restoreDefaultWorld();
+        }
+    }
 }

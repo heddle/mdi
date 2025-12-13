@@ -11,9 +11,9 @@ import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.mapping.GeoJsonCityLoader;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader;
-import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
 import edu.cnu.mdi.mapping.MapContainer;
+import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.mdi3D.item3D.Axes3D;
 import edu.cnu.mdi.mdi3D.item3D.Cube;
 import edu.cnu.mdi.mdi3D.item3D.Cylinder;
@@ -29,248 +29,332 @@ import edu.cnu.mdi.view.ViewManager;
 import edu.cnu.mdi.view.VirtualView;
 
 /**
- * Demonstrates and tests the generic views
- *
- * @author heddle
- *
+ * Demo application for the MDI framework.
+ * <p>
+ * This class is intentionally "example-first": it demonstrates how a typical
+ * application:
+ * <ol>
+ *   <li>Creates the main application frame ({@link BaseMDIApplication})</li>
+ *   <li>Creates a few internal views (2D map, 3D, drawing, log)</li>
+ *   <li>Optionally enables a {@link VirtualView} to simulate a virtual desktop</li>
+ *   <li>Applies default view placement, then applies any persisted layout/config</li>
+ * </ol>
+ * <p>
+ * The "virtual desktop" logic is driven by {@link BaseMDIApplication}'s virtual
+ * desktop lifecycle hooks:
+ * <ul>
+ *   <li>{@link #onVirtualDesktopReady()} runs once after the frame is showing</li>
+ *   <li>{@link #onVirtualDesktopRelayout()} runs (debounced) after resizes/moves</li>
+ * </ul>
  */
 @SuppressWarnings("serial")
 public class DemoApp extends BaseMDIApplication {
 
-	// the singleton
-	private static DemoApp INSTANCE;
-	
-	// to demo virtual desktop
-	private VirtualView _virtualView;
-	
-	// used for one time inits
-	private int _firstTime = 0;
-	
-	// demo a 3D view
-	private PlainView3D _view3D;
+    /** Singleton instance of the demo app. */
+    private static DemoApp INSTANCE;
 
-	//demo a drawing view
-	private DrawingView _drawingView;
-	
-	//demo a map view
-	private MapView2D _mapView;
+    // -------------------------------------------------------------------------
+    // Optional virtual desktop support
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Constructor (private--used to create singleton)
-	 *
-	 * @param keyVals an optional variable length list of key-value pairs
-	 */
-	private DemoApp(Object... keyVals) {
-		super(keyVals);
-		
-		//will demo virtual desktop capabilities
-		prepareForVirtualDesktop();
-	}
+    /** Virtual desktop view (optional). */
+    private VirtualView virtualView;
 
-	/**
-	 * Public access to the singleton.
-	 *
-	 * @return the singleton (the main application frame.)(
-	 */
-	public static DemoApp getInstance() {
-	    if (INSTANCE == null) {
-	        INSTANCE = new DemoApp(
-	                PropertySupport.TITLE, "Demo Application of MDI Views",
-	                PropertySupport.BACKGROUNDIMAGE, "images/mdilogo.png",
-	                PropertySupport.FRACTION, 0.8);
+    /** If true, install the VirtualView and place views into columns. */
+    private final boolean enableVirtualDesktop = true;
 
-	        // build internal views before sizing the outer frame
-	        INSTANCE.addInitialViews();
-			INSTANCE.placeViewsOnVirtualDesktop();
+    /** Number of "columns"/cells in the virtual desktop. */
+    private final int virtualDesktopCols = 5;
 
-	    }
-	    return INSTANCE;
-	}
-	
-	// arrange the views on the virtual desktop
-	protected void placeViewsOnVirtualDesktop() {
-		if (_firstTime == 1) {
-			// rearrange some views in virtual space
-			_virtualView.reconfigure();
-			restoreDefaultViewLocations();
+    // -------------------------------------------------------------------------
+    // Sample views used by the demo
+    // -------------------------------------------------------------------------
 
-			// now load configuration
-			Desktop.getInstance().loadConfigurationFile();
-			Desktop.getInstance().configureViews();
-		}
-		_firstTime++;
-	}
-	/**
-	 * Restore the default locations of the initial views. 
-	 * on the virtual desktop.
-	 */
-	private void restoreDefaultViewLocations() {
-		_virtualView.moveToStart(_mapView, 0, VirtualView.CENTER);
-		_virtualView.moveToStart(_view3D, 1, VirtualView.CENTER);
-		_virtualView.moveToStart(_drawingView, 0, VirtualView.UPPERLEFT);
-	}
+    private PlainView3D view3D;
+    private DrawingView drawingView;
+    private MapView2D mapView;
+    private LogView logView;
 
-	/**
-	 * Add the initial views to the desktop.
-	 */
-	private void addInitialViews() {
+    /**
+     * Private constructor: use {@link #getInstance()}.
+     *
+     * @param keyVals optional key-value pairs passed to {@link BaseMDIApplication}
+     */
+    private DemoApp(Object... keyVals) {
+        super(keyVals);
 
-		// add logview
-		LogView logView = new LogView();
-		logView.setVisible(false);
-		ViewManager.getInstance().getViewMenu().addSeparator();
+        // Enable the framework-managed virtual desktop lifecycle (one-shot ready + debounced relayout).
+        prepareForVirtualDesktop();
 
-		// log some environment info
-		Log.getInstance().info(Environment.getInstance().toString());
+        // Log environment information early.
+        Log.getInstance().info(Environment.getInstance().toString());
 
-		_drawingView = DrawingView.createDrawingView();
+        // Create internal views. (Do not depend on the outer frame being visible here.)
+        addInitialViews();
 
-		// sample 3D view
-		_view3D = create3DView();
+        // Optionally create the virtual desktop overview.
+        // Note: VirtualView now resolves its parent frame lazily in addNotify().
+        if (enableVirtualDesktop) {
+            virtualView = VirtualView.createVirtualView(virtualDesktopCols);
+            virtualView.toFront();
+        }
+    }
 
-		// map view
-		_mapView = createMapView();
-		
-		// add an optional virtual view with a number of cells
-		int numVVCell = 5;
-		_virtualView = VirtualView.createVirtualView(numVVCell);
-		_virtualView.toFront();
+    /**
+     * Public access to the singleton.
+     *
+     * @return the singleton main application frame
+     */
+    public static DemoApp getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new DemoApp(
+                    PropertySupport.TITLE, "Demo Application of MDI Views",
+                    PropertySupport.BACKGROUNDIMAGE, "images/mdilogo.png",
+                    PropertySupport.FRACTION, 0.8
+            );
+        }
+        return INSTANCE;
+    }
 
-	}
+    /**
+     * Create and register the initial set of views shown in the demo.
+     * <p>
+     * This method only builds views; it should not depend on the outer frame
+     * being shown or on final geometry.
+     */
+    private void addInitialViews() {
 
-	// create the sample 3D view
-	private PlainView3D create3DView() {
-		final float xymax = 600f;
-		final float zmax = 600f;
-		final float zmin = -100f;
-		final float xdist = 0f;
-		final float ydist = 0f;
-		final float zdist = -2.75f * xymax;
+        // Log view is useful but not always visible.
+        logView = new LogView();
+        logView.setVisible(false);
+        ViewManager.getInstance().getViewMenu().addSeparator();
 
-		final float thetax = 45f;
-		final float thetay = 45f;
-		final float thetaz = 45f;
+        // Drawing view
+        drawingView = DrawingView.createDrawingView();
 
-		PlainView3D view3D = new PlainView3D(PropertySupport.TITLE, "Sample 3D View", PropertySupport.ANGLE_X, thetax,
-				PropertySupport.ANGLE_Y, thetay, PropertySupport.ANGLE_Z, thetaz, PropertySupport.DIST_X, xdist,
-				PropertySupport.DIST_X, ydist, PropertySupport.DIST_X, zdist, PropertySupport.LEFT, 800,
-				PropertySupport.TOP, 600,
+        // 3D view
+        view3D = create3DView();
 
-				PropertySupport.WIDTH, 400, PropertySupport.HEIGHT, 400) {
-			@Override
-			protected Panel3D make3DPanel(float angleX, float angleY, float angleZ, float xDist, float yDist,
-					float zDist) {
-				return new Panel3D(thetax, thetay, thetaz, xdist, ydist, zdist) {
-					@Override
-					public void createInitialItems() {
-						// coordinate axes
+        // Map view (also loads demo geojson)
+        mapView = createMapView();
+    }
 
-						Axes3D axes = new Axes3D(this, -xymax, xymax, -xymax, xymax, zmin, zmax, null, Color.darkGray,
-								1f, 7, 7, 8, Color.black, Color.blue, new Font("SansSerif", Font.PLAIN, 11), 0);
-						addItem(axes);
+    /**
+     * Runs once after the outer frame is showing and Swing layout has stabilized.
+     * <p>
+     * This is the correct place to:
+     * <ul>
+     *   <li>reconfigure the {@link VirtualView} based on the real frame size</li>
+     *   <li>apply the demo's default view placement</li>
+     *   <li>then load/apply any persisted layout (which may override defaults)</li>
+     * </ul>
+     */
+    @Override
+    protected void onVirtualDesktopReady() {
 
-						// add some triangles
+        // If virtual desktop is enabled, apply the demo defaults first.
+        if (virtualView != null) {
+            virtualView.reconfigure();
+            restoreDefaultViewLocations();
+        }
 
-						// addItem(new Triangle3D(this,
-						// 0f, 0f, 0f, 100f, 0f, -100f, 50f, 100, 100f, new Color(255,
-						// 0, 0, 64), 2f, true));
+        // Apply persisted configuration last, so saved layouts override demo defaults.
+        Desktop.getInstance().loadConfigurationFile();
+        Desktop.getInstance().configureViews();
 
-						addItem(new Triangle3D(this, 500f, 0f, -200f, -500f, 500f, 0f, 0f, -100f, 500f,
-								new Color(255, 0, 0, 64), 1f, true));
+        Log.getInstance().info("DemoApp is ready.");
+    }
 
-						addItem(new Triangle3D(this, 0f, 500f, 0f, -300f, -500f, 500f, 0f, -100f, 500f,
-								new Color(0, 0, 255, 64), 2f, true));
+    /**
+     * Runs after the outer frame is resized or moved (debounced).
+     * <p>
+     * Keep this lightweight. Reconfiguring the virtual desktop updates its world
+     * sizing and refreshes the thumbnail items.
+     */
+    @Override
+    protected void onVirtualDesktopRelayout() {
+        if (virtualView != null) {
+            virtualView.reconfigure();
+        }
+    }
 
-						addItem(new Triangle3D(this, 0f, 0f, 500f, 0f, -400f, -500f, 500f, -100f, 500f,
-								new Color(0, 255, 0, 64), 2f, true));
+    /**
+     * Places the demo views into a reasonable "default" arrangement on the
+     * virtual desktop.
+     * <p>
+     * If a user has a saved configuration, {@link Desktop#configureViews()}
+     * will typically override these positions.
+     */
+    private void restoreDefaultViewLocations() {
+        // Column 0: map centered; drawing upper-left
+        virtualView.moveToStart(mapView, 0, VirtualView.CENTER);
+        virtualView.moveToStart(drawingView, 0, VirtualView.UPPERLEFT);
 
-						addItem(new Cylinder(this, 0f, 0f, 0f, 300f, 300f, 300f, 50f, new Color(0, 255, 255, 128)));
+        // Column 1: 3D centered
+        virtualView.moveToStart(view3D, 1, VirtualView.CENTER);
+        
+        //column 2: log view upper left
+        virtualView.moveToStart(logView, 2, VirtualView.UPPERLEFT);
+    }
 
-						addItem(new Cube(this, 0f, 0f, 0f, 600, new Color(0, 0, 255, 32), true));
+    // -------------------------------------------------------------------------
+    // Demo view creation helpers
+    // -------------------------------------------------------------------------
 
-						// point set test
-						int numPnt = 100;
-						Color color = Color.orange;
-						float pntSize = 10;
-						float coords[] = new float[3 * numPnt];
-						for (int i = 0; i < numPnt; i++) {
-							int j = i * 3;
-							float x = (float) (-xymax + 2 * xymax * Math.random());
-							float y = (float) (-xymax + 2 * xymax * Math.random());
-							float z = (float) (zmin + (zmax - zmin) * Math.random());
-							coords[j] = x;
-							coords[j + 1] = y;
-							coords[j + 2] = z;
-						}
-						addItem(new PointSet3D(this, coords, color, pntSize, true));
+    /**
+     * Create a sample 3D view with a few items to demonstrate rendering.
+     *
+     * @return a new {@link PlainView3D}
+     */
+    private PlainView3D create3DView() {
+        final float xymax = 600f;
+        final float zmax = 600f;
+        final float zmin = -100f;
+        final float xdist = 0f;
+        final float ydist = 0f;
+        final float zdist = -2.75f * xymax;
 
-					}
+        final float thetax = 45f;
+        final float thetay = 45f;
+        final float thetaz = 45f;
 
-					/**
-					 * This gets the z step used by the mouse and key adapters, to see how fast we
-					 * move in or in in response to mouse wheel or up/down arrows. It should be
-					 * overridden to give something sensible. like the scale/100;
-					 *
-					 * @return the z step (changes to zDist) for moving in and out
-					 */
-					@Override
-					public float getZStep() {
-						return (zmax - zmin) / 50f;
-					}
+        PlainView3D view3D = new PlainView3D(
+                PropertySupport.TITLE, "Sample 3D View",
+                PropertySupport.ANGLE_X, thetax,
+                PropertySupport.ANGLE_Y, thetay,
+                PropertySupport.ANGLE_Z, thetaz,
+                PropertySupport.DIST_X, xdist,
+                PropertySupport.DIST_Y, ydist,
+                PropertySupport.DIST_Z, zdist,
+                PropertySupport.LEFT, 800,
+                PropertySupport.TOP, 600,
+                PropertySupport.WIDTH, 400,
+                PropertySupport.HEIGHT, 400) {
 
-				};
-			}
+            @Override
+            protected Panel3D make3DPanel(float angleX, float angleY, float angleZ,
+                                          float xDist, float yDist, float zDist) {
 
-		};
-		return view3D;
-	}
+                return new Panel3D(thetax, thetay, thetaz, xdist, ydist, zdist) {
 
-	// create the demo map view
-	private MapView2D createMapView() {
-		
-		//load a small set of countries just for demo purposes
-		try {
-			List<CountryFeature> countries = GeoJsonCountryLoader.loadFromResource("/geo/countries.geojson");
-			MapView2D.setCountries(countries);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		// try loading cities as well
-		try {
-			List<GeoJsonCityLoader.CityFeature> cities = GeoJsonCityLoader.loadFromResource("/geo/cities.geojson");
-			MapView2D.setCities(cities);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+                    @Override
+                    public void createInitialItems() {
 
-		long toolbarBits = ToolBarBits.CENTERBUTTON | ToolBarBits.MAGNIFYBUTTON;
+                        // Coordinate axes
+                        Axes3D axes = new Axes3D(this,
+                                -xymax, xymax, -xymax, xymax, zmin, zmax,
+                                null, Color.darkGray, 1f,
+                                7, 7, 8,
+                                Color.black, Color.blue,
+                                new Font("SansSerif", Font.PLAIN, 11), 0);
+                        addItem(axes);
 
-		MapView2D mapView = new MapView2D(PropertySupport.TITLE, "Sample 2D Map View", 
-				PropertySupport.LEFT, 300,
-				PropertySupport.TOP, 200, 
-				PropertySupport.WIDTH, 800, 
-				PropertySupport.HEIGHT, 500,
-				PropertySupport.CONTAINERCLASS, MapContainer.class,
-				PropertySupport.TOOLBARBITS, toolbarBits);
-		
-		return mapView;
-	}
+                        // Some triangles
+                        addItem(new Triangle3D(this,
+                                500f, 0f, -200f,
+                                -500f, 500f, 0f,
+                                0f, -100f, 500f,
+                                new Color(255, 0, 0, 64), 1f, true));
 
-	/**
-	 * Main program used for testing only.
-	 * <p>
-	 * Command line arguments:</br>
-	 * -p [dir] dir is the optional default directory for the file manager
-	 *
-	 * @param arg the command line arguments (ignored).
-	 */
-	public static void main(String[] arg) {
+                        addItem(new Triangle3D(this,
+                                0f, 500f, 0f,
+                                -300f, -500f, 500f,
+                                0f, -100f, 500f,
+                                new Color(0, 0, 255, 64), 2f, true));
 
-	    EventQueue.invokeLater(() -> {
-	        DemoApp frame = DemoApp.getInstance();
-	        frame.setVisible(true);
-	        Log.getInstance().info("DemoApp is ready.");
-	    });
-	}
+                        addItem(new Triangle3D(this,
+                                0f, 0f, 500f,
+                                0f, -400f, -500f,
+                                500f, -100f, 500f,
+                                new Color(0, 255, 0, 64), 2f, true));
+
+                        addItem(new Cylinder(this,
+                                0f, 0f, 0f,
+                                300f, 300f, 300f,
+                                50f, new Color(0, 255, 255, 128)));
+
+                        addItem(new Cube(this,
+                                0f, 0f, 0f,
+                                600, new Color(0, 0, 255, 32), true));
+
+                        // Point set test
+                        int numPnt = 100;
+                        Color color = Color.orange;
+                        float pntSize = 10;
+                        float[] coords = new float[3 * numPnt];
+
+                        for (int i = 0; i < numPnt; i++) {
+                            int j = i * 3;
+                            float x = (float) (-xymax + 2 * xymax * Math.random());
+                            float y = (float) (-xymax + 2 * xymax * Math.random());
+                            float z = (float) (zmin + (zmax - zmin) * Math.random());
+                            coords[j] = x;
+                            coords[j + 1] = y;
+                            coords[j + 2] = z;
+                        }
+
+                        addItem(new PointSet3D(this, coords, color, pntSize, true));
+                    }
+
+                    @Override
+                    public float getZStep() {
+                        // Step size for zooming in/out.
+                        return (zmax - zmin) / 50f;
+                    }
+                };
+            }
+        };
+
+        return view3D;
+    }
+
+    /**
+     * Create the demo map view and load small GeoJSON datasets from resources.
+     *
+     * @return a new {@link MapView2D}
+     */
+    private MapView2D createMapView() {
+
+        // Load a small set of countries just for demo purposes.
+        try {
+            List<CountryFeature> countries =
+                    GeoJsonCountryLoader.loadFromResource("/geo/countries.geojson");
+            MapView2D.setCountries(countries);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // Load cities as well (optional).
+        try {
+            List<GeoJsonCityLoader.CityFeature> cities =
+                    GeoJsonCityLoader.loadFromResource("/geo/cities.geojson");
+            MapView2D.setCities(cities);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        long toolbarBits = ToolBarBits.CENTERBUTTON | ToolBarBits.MAGNIFYBUTTON;
+
+        return new MapView2D(
+                PropertySupport.TITLE, "Sample 2D Map View",
+                PropertySupport.LEFT, 300,
+                PropertySupport.TOP, 200,
+                PropertySupport.WIDTH, 800,
+                PropertySupport.HEIGHT, 500,
+                PropertySupport.CONTAINERCLASS, MapContainer.class,
+                PropertySupport.TOOLBARBITS, toolbarBits
+        );
+    }
+
+    /**
+     * Entry point for the demo.
+     *
+     * @param args ignored
+     */
+    public static void main(String[] args) {
+        EventQueue.invokeLater(() -> {
+            DemoApp frame = DemoApp.getInstance();
+            frame.setVisible(true);
+        });
+    }
 }

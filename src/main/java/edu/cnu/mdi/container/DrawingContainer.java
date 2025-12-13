@@ -16,7 +16,8 @@ import edu.cnu.mdi.item.RadArcItem;
 import edu.cnu.mdi.item.RectangleItem;
 
 
-public class DrawingContainer extends BaseContainer {
+@SuppressWarnings("serial")
+public class DrawingContainer extends BaseContainer implements IAnnotationSupport {
 
 	public DrawingContainer(Double worldSystem) {
 		super(worldSystem);

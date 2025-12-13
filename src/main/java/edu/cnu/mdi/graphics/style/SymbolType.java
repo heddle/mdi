@@ -1,62 +1,54 @@
 package edu.cnu.mdi.graphics.style;
 
-import java.util.EnumMap;
-
-import edu.cnu.mdi.component.EnumComboBox;
-
 public enum SymbolType {
-	NOSYMBOL, SQUARE, CIRCLE, CROSS, UPTRIANGLE, DOWNTRIANGLE, X, DAVID, DIAMOND, STAR;
+    NOSYMBOL("No Symbol"),
+    SQUARE("Square"),
+    CIRCLE("Circle"),
+    CROSS("Cross"),
+    UPTRIANGLE("Up Triangle"),
+    DOWNTRIANGLE("Down Triangle"),
+    X("X"),
+    DAVID("David"),
+    DIAMOND("Diamond"),
+    STAR("Star");
 
-	/**
-	 * A map for the names of the symbols
-	 */
-	public static EnumMap<SymbolType, String> names = new EnumMap<>(SymbolType.class);
+    private final String displayName;
 
-	static {
-		names.put(SQUARE, "Square");
-		names.put(CIRCLE, "Circle");
-		names.put(CROSS, "Cross");
-		names.put(DOWNTRIANGLE, "Down Triangle");
-		names.put(UPTRIANGLE, "Up Triangle");
-		names.put(X, "X");
-		names.put(DAVID, "David");
-		names.put(DIAMOND, "Diamond");
-		names.put(NOSYMBOL, "No Symbol");
-	}
+    SymbolType(String displayName) {
+        this.displayName = displayName;
+    }
 
-	/**
-	 * Get the nice name of the enum.
-	 *
-	 * @return the nice name, for combo boxes, menus, etc.
-	 */
-	public String getName() {
-		return names.get(this);
-	}
+    /**
+     * Get the nice name of the enum (for combo boxes, menus, etc.).
+     *
+     * @return the display name.
+     */
+    public String getName() {
+        return displayName;
+    }
 
-	/**
-	 * Returns the enum value from the name.
-	 *
-	 * @param name the name to match.
-	 * @return the <code>SymbolType</code> that corresponds to the name. Returns
-	 *         <code>null</code> if no match is found. Note it will check (case
-	 *         insensitive) both the map and the <code>name()</code> result, thus
-	 *         "Up Triangle" or "UPTRIANGLE" or "dUpTrIaNgLe" will return the
-	 *         <code>UPTRIANGLE</code> value.
-	 */
-	public static SymbolType getValue(String name) {
-		if (name == null) {
-			return null;
-		}
+    /**
+     * Returns the enum value from a name.
+     * Accepts either display name (case-insensitive) or enum constant name().
+     *
+     * @param name the name to match.
+     * @return the corresponding SymbolType, or null if none matches.
+     */
+    public static SymbolType getValue(String name) {
+        if (name == null) {
+            return null;
+        }
+        for (SymbolType val : values()) {
+            if (name.equalsIgnoreCase(val.displayName) || name.equalsIgnoreCase(val.name())) {
+                return val;
+            }
+        }
+        return null;
+    }
 
-		for (SymbolType val : values()) {
-			// check the nice name
-			// check the base name
-			if (name.equalsIgnoreCase(val.toString()) || name.equalsIgnoreCase(val.name())) {
-				return val;
-			}
-		}
-		return null;
-	}
-
-
+    @Override
+    public String toString() {
+        // Optional, but convenient if someone drops SymbolType into a default renderer.
+        return displayName;
+    }
 }

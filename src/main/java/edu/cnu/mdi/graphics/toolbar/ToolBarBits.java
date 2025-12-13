@@ -1,35 +1,50 @@
 package edu.cnu.mdi.graphics.toolbar;
 
-public class ToolBarBits {
-	public static final long ELLIPSEBUTTON      = 01;
-	public static final long TEXTBUTTON         = 02;
-	public static final long RECTANGLEBUTTON    = 04;
-	public static final long POLYGONBUTTON      = 010L;
-	public static final long LINEBUTTON         = 020L;
-	public static final long RANGEBUTTON        = 040L;
-	public static final long DELETEBUTTON       = 0100L;
-	public static final long TEXTFIELD          = 0200L;
-	public static final long CENTERBUTTON       = 0400L;
-	public static final long UNDOZOOMBUTTON     = 01000L;
-	public static final long RADARCBUTTON       = 02000L;
-	public static final long POLYLINEBUTTON     = 04000L;
-	public static final long MAGNIFYBUTTON      = 010000L;
-	public static final long NOZOOM             = 020000L;
-	public static final long PANBUTTON          = 040000L;
+/**
+ * Bit flags controlling which tools/widgets appear on a {@link BaseToolBar}.
+ * <p>
+ * Values are written in octal to match the legacy code style.
+ * </p>
+ */
+public final class ToolBarBits {
 
-	// used to eliminate some basic buttons
+    private ToolBarBits() {}
 
-	public static final long DRAWING = ELLIPSEBUTTON + TEXTBUTTON + RECTANGLEBUTTON + POLYGONBUTTON + LINEBUTTON
-			+ RADARCBUTTON + POLYLINEBUTTON;
+    public static final long ELLIPSEBUTTON      = 01L;
+    public static final long TEXTBUTTON         = 02L;
+    public static final long RECTANGLEBUTTON    = 04L;
+    public static final long POLYGONBUTTON      = 010L;
+    public static final long LINEBUTTON         = 020L;
+    public static final long RANGEBUTTON        = 040L;
+    public static final long DELETEBUTTON       = 0100L;
+    public static final long TEXTFIELD          = 0200L;
+    public static final long CENTERBUTTON       = 0400L;
+    public static final long UNDOZOOMBUTTON     = 01000L;
+    public static final long RADARCBUTTON       = 02000L;
+    public static final long POLYLINEBUTTON     = 04000L;
+    public static final long MAGNIFYBUTTON      = 010000L;
+    public static final long NOZOOM             = 020000L;
+    public static final long PANBUTTON          = 040000L;
+    public static final long STYLEBUTTON        = 0100000L;
 
-	public static final long EVERYTHING = 07777777777 & ~NOZOOM;
-	public static final long STANDARD = EVERYTHING;
+    /** All drawing-shape tools. */
+    public static final long DRAWING =
+            STYLEBUTTON | ELLIPSEBUTTON | TEXTBUTTON | RECTANGLEBUTTON | POLYGONBUTTON | LINEBUTTON | RADARCBUTTON | POLYLINEBUTTON;
 
-	public static final long NODRAWING = EVERYTHING & ~DRAWING;
+    /** "Everything" means all known bits except the NOZOOM suppressor. */
+    public static final long EVERYTHING = (STYLEBUTTON | ELLIPSEBUTTON | TEXTBUTTON | RECTANGLEBUTTON | POLYGONBUTTON | LINEBUTTON
+            | RANGEBUTTON | DELETEBUTTON | TEXTFIELD | CENTERBUTTON | UNDOZOOMBUTTON | RADARCBUTTON | POLYLINEBUTTON
+            | MAGNIFYBUTTON | PANBUTTON);
 
-	// only the text button
-	public static final long TEXTDRAWING = STANDARD & ~DRAWING + TEXTBUTTON & ~RANGEBUTTON;
+    /** Default set (same as everything in your current intent). */
+    public static final long STANDARD = EVERYTHING;
 
-	// nobuttons!
-	public static final long NOTHING = 01777777777777777777777L;
+    /** Everything except drawing tools. */
+    public static final long NODRAWING = EVERYTHING & ~DRAWING;
+
+    /** Only the text drawing tool (plus whatever non-drawing widgets you keep in STANDARD). */
+    public static final long TEXTDRAWING = (STANDARD & ~DRAWING) | TEXTBUTTON;
+
+    /** No tools/widgets. */
+    public static final long NOTHING = 0L;
 }

@@ -176,11 +176,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	// reference rotation angle in degrees.
 	private double _azimuth = 0.0;
 
-	/**
-	 * The name of the item.
-	 */
-	protected String _name = "no name";
-
 	// used for select points
 	private static final Color _selectFill = Color.white;
 
@@ -560,6 +555,13 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		return _style;
 	}
 
+	public IStyled getStyleSafe() {
+	    if (_style == null) {
+	        _style = new Styled();
+	    }
+	    return _style;
+	}
+
 	/**
 	 * Set the drawing style for this item.
 	 *
@@ -569,24 +571,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		this._style = style;
 	}
 
-	/**
-	 * Set the name of the item.
-	 *
-	 * @param name the name of the item.
-	 */
-	public void setName(String name) {
-		_name = name;
-	}
-
-	/**
-	 * Return the name of the item.
-	 *
-	 * @return the name of the item.
-	 */
-	@Override
-	public String getName() {
-		return _name;
-	}
 
 	/**
 	 * Equality check.

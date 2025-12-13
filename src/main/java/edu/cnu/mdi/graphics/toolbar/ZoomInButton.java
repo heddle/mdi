@@ -1,35 +1,27 @@
 package edu.cnu.mdi.graphics.toolbar;
 
-import java.awt.event.ActionEvent;
-
-import edu.cnu.mdi.container.IContainer;
-
 /**
- * A a zoom-in button.
- *
- * @author heddle
- *
+ * One-shot toolbar action that zooms in by scaling the world system.
  */
 @SuppressWarnings("serial")
-public class ZoomInButton extends ToolBarButton {
+public class ZoomInButton extends ToolActionButton {
 
-	/**
-	 * Create the zoom-in button, which zooms in by a fixed amount.
-	 *
-	 * @param container the container this button acts upon.
-	 */
-	public ZoomInButton(IContainer container) {
-		super(container, "images/zoom_in.gif", "Zoom in");
-	}
+    /** Typical zoom in factor (< 1 zooms in). */
+    private final double factor;
 
-	/**
-	 * This is what I do if I am pressed
-	 *
-	 * @param e The causal event.
-	 */
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		container.scale(IContainer.FIXED_ZOOM_FACTOR);
-		container.getToolBar().resetDefaultSelection();
-	}
+    public ZoomInButton(ToolContext ctx) {
+        this(ctx, 0.8);
+    }
+
+    public ZoomInButton(ToolContext ctx, double factor) {
+        super(ctx, "images/zoom_in.gif", "Zoom in");
+        this.factor = factor;
+    }
+
+    @Override
+    protected void perform(ToolContext ctx) {
+        if (ctx.container() != null) {
+            ctx.container().scale(factor);
+        }
+    }
 }

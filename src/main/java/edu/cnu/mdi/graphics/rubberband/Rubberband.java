@@ -577,6 +577,57 @@ public final class Rubberband {
 			return p;
 		}
 	}
+	
+	/**
+	 * Cancel the current rubber-band gesture (if any) without notifying the
+	 * {@link IRubberbanded} callback.
+	 * <p>
+	 * Use this when the active tool changes or an operation is aborted and you
+	 * need the rubberband to remove its temporary listeners and clean up, but you
+	 * do <em>not</em> want to treat the gesture as "completed".
+	 * </p>
+	 * <p>
+	 * This is intentionally different from {@link #endRubberbanding(Point)}, which
+	 * ends normally and notifies the callback.
+	 * </p>
+	 */
+	public void cancel() {
+
+	    // If we never started, still ensure we detach listeners.
+	    // (They are installed in setComponent().)
+	    detachListeners();
+
+	    // Reset state
+	    _image = null;
+	    _backgroundImage = null;
+	    _poly = null;
+	    _tempPoly = null;
+
+	    _active = false;
+	    _started = false;
+	    _firstXorDraw = true;
+
+	    // Optionally keep start/current, but it's harmless to leave them.
+	    // _startPt.setLocation(0, 0);
+	    // _currentPt.setLocation(0, 0);
+	}
+
+	/**
+	 * Remove the temporary mouse listeners installed by this rubberband.
+	 * Safe to call multiple times.
+	 */
+	private void detachListeners() {
+	    if (_component == null) {
+	        return;
+	    }
+	    if (_mouseAdapter != null) {
+	        _component.removeMouseListener(_mouseAdapter);
+	    }
+	    if (_mouseMotionAdapter != null) {
+	        _component.removeMouseMotionListener(_mouseMotionAdapter);
+	    }
+	}
+
 
 	/**
 	 * Return a rectangle that gives the final bounds of the rubber band.

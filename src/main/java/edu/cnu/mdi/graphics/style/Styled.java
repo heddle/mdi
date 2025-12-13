@@ -61,6 +61,21 @@ public class Styled implements IStyled {
 
 	}
 
+	/** Copy ctor. */
+    public Styled(IStyled other) {
+        if (other == null) return;
+        _fillColor = other.getFillColor();
+        _lineColor = other.getLineColor();
+        _lineStyle = other.getLineStyle();
+        _lineWidth = other.getLineWidth();
+        _symbolType = other.getSymbolType();
+        _symbolSize = other.getSymbolSize();
+    }
+
+    public Styled copy() {
+        return new Styled(this);
+    }	
+	
 	@Override
 	public Color getFillColor() {
 		return _fillColor;

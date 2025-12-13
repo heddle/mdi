@@ -144,7 +144,7 @@ public final class MapTheme {
         return new Builder()
                 .backgroundColor(new Color(0xE9F2FF))
                 .oceanColor(new Color(0x90CAF9))
-                .landColor(new Color(0xE8F5E9))
+                .landColor(new Color(0xD8E5E9))
                 .cityColor(new Color(0x0D47A1))
                 .outlineColor(new Color(0x1E88E5))
                 .graticuleColor(new Color(0x64B5F6))

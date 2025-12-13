@@ -2,6 +2,7 @@ package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -9,704 +10,532 @@ import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JTextField;
 
-import edu.cnu.mdi.component.MagnifyWindow;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.Bits;
 
-
 /**
- * @author heddle
+ * Standard toolbar for an {@link IContainer} that manages a mutually exclusive
+ * set of interaction tools (pan, pointer, zoom-box, magnify, draw shapes, etc.)
+ * and routes mouse events from the container's canvas to the currently active tool.
+ * <p>
+ * Popup triggers are handled centrally on both press and release (platform dependent)
+ * using {@link PopupTriggerSupport}. Popup events are not forwarded to tools.
+ * </p>
  *
+ * @author heddle
  */
 @SuppressWarnings("serial")
-public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMotionListener {
+public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMotionListener, IContainerToolBar {
 
+    /** The container being controlled by this toolbar. */
+    private final IContainer container;
 
+    /** Context passed to all tools. */
+    private final ToolContext toolContext;
+
+    /** Controller that registers tools and tracks the active tool. */
+    private final ToolController toolController;
+
+    /** Optional status text field shown on the toolbar. */
+    private JTextField textField;
+
+    /** Temporary override tool used for gestures like middle-click box zoom. */
+    private ITool temporarilyOverriddenTool;
+
+    /** Tool id -> toggle button map (keeps UI synced with controller). */
+    private final Map<String, ToolToggleButton> toolButtons = new LinkedHashMap<>();
+
+    /** Convenience reference for delete button (so we can enable/disable it). */
+    private ToolActionButton deleteButton;
+
+    /** Convenience reference for style button (so we can enable/disable it). */
+    private ToolActionButton styleButton;
+
+    /**
+     * Create a toolbar with the full default tool set.
+     *
+     * @param container the container this toolbar controls (must not be null).
+     */
+    public BaseToolBar(IContainer container) {
+        this(container, ToolBarBits.EVERYTHING);
+    }
+
+    /**
+     * Create a toolbar using a bit mask to control which tools/widgets are added.
+     *
+     * @param container the container this toolbar controls (must not be null).
+     * @param bits      bit mask controlling which tools/widgets are added.
+     */
+    public BaseToolBar(IContainer container, long bits) {
+        super("ToolBar");
+        this.container = Objects.requireNonNull(container, "container must not be null");
+        this.container.setToolBar(this);
+
+        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+
+        this.toolContext = new ToolContext(this.container, this);
+        this.toolController = new ToolController(toolContext);
+
+        // Keep Swing toggle selection synchronized with ToolController selection.
+        hookControllerSelectionToButtons();
+
+        buildToolsAndButtons(bits);
+        attachMouseRouting();
+
+        setBorder(BorderFactory.createEtchedBorder());
+        setFloatable(false);
+
+        // Ensure a default tool is active at startup.
+        resetDefaultSelection();
+    }
+
+    public ToolController getToolController() {
+        return toolController;
+    }
+
+    public ToolContext getToolContext() {
+        return toolContext;
+    }
+
+    public IContainer getContainer() {
+        return container;
+    }
+
+    /**
+     * Attach mouse listeners to the container canvas so this toolbar can route events.
+     */
+    private void attachMouseRouting() {
+        Component c = container.getComponent();
+        if (c != null) {
+            c.addMouseListener(this);
+            c.addMouseMotionListener(this);
+        }
+    }
+
+    /**
+     * Bridge ToolController selection changes -> Swing toggle selected state.
+     */
+    private void hookControllerSelectionToButtons() {
+        toolController.addSelectionListener(activeTool -> {
+            for (ToolToggleButton b : toolButtons.values()) {
+                boolean shouldBeSelected =
+                        (activeTool != null) && b.toolId().equals(activeTool.id());
+
+                if (b.isSelected() != shouldBeSelected) {
+                    b.setSelectedProgrammatically(shouldBeSelected);
+                }
+            }
+            updateButtonState();
+        });
+    }
+
+    /**
+     * Build/register tools and create their buttons.
+     */
+    protected void buildToolsAndButtons(long bits) {
+
+        ITool pointer   = createPointerTool(); // REQUIRED default tool
+        ITool boxZoom   = (!Bits.check(bits, ToolBarBits.NOZOOM)) ? createBoxZoomTool() : null;
+
+        ITool pan       = Bits.check(bits, ToolBarBits.PANBUTTON)      ? createPanTool()      : null;
+        ITool magnify   = Bits.check(bits, ToolBarBits.MAGNIFYBUTTON)  ? createMagnifyTool()  : null;
+        ITool ellipse   = Bits.check(bits, ToolBarBits.ELLIPSEBUTTON)  ? new EllipseTool()    : null;
+        ITool center    = Bits.check(bits, ToolBarBits.CENTERBUTTON)   ? createCenterTool()   : null;
+        ITool line      = Bits.check(bits, ToolBarBits.LINEBUTTON)     ? new LineTool()       : null;
+        ITool polygon   = Bits.check(bits, ToolBarBits.POLYGONBUTTON)  ? new PolygonTool()    : null;
+        ITool polyline  = Bits.check(bits, ToolBarBits.POLYLINEBUTTON) ? new PolylineTool()   : null;
+        ITool rectangle = Bits.check(bits, ToolBarBits.RECTANGLEBUTTON)? new RectangleTool()  : null;
+        ITool radArc    = Bits.check(bits, ToolBarBits.RADARCBUTTON)   ? new RadArcTool()     : null;
+        ITool range = Bits.check(bits, ToolBarBits.RANGEBUTTON) ? new RangeTool() : null;
+        ITool text = Bits.check(bits, ToolBarBits.TEXTBUTTON) ? new TextTool() : null;
+
+        // Register tools
+        register(pointer);
+        register(boxZoom);
+        register(pan);
+        register(magnify);
+        register(center);
+        register(line);
+        register(rectangle);
+        register(ellipse);
+        register(polygon);
+        register(polyline);
+        register(radArc);
+        register(text);
+  		register(range);
+		
+        // Default tool: pointer.
+        toolController.setDefaultTool(pointer.id());
+
+        // Buttons (order is respected)
+        addToolButton(pointer, "images/pointer.gif", pointer.toolTip());
+
+        if (boxZoom != null) {
+            addToolButton(boxZoom, "images/box_zoom.gif", boxZoom.toolTip());
+        }
+        if (pan != null) {
+            addToolButton(pan, "images/pan.gif", pan.toolTip());
+        }
+        if (magnify != null) {
+            addToolButton(magnify, "images/magnify.png", magnify.toolTip());
+        }
+         if (center != null) {
+            addToolButton(center, "images/center.gif", center.toolTip());
+        }
+        if (line != null) {
+            addToolButton(line, "images/line.gif", line.toolTip());
+        }
+     	if (rectangle != null) {
+    	    addToolButton(rectangle, "images/rectangle.gif", rectangle.toolTip());
+    	}
+        if (ellipse != null) {
+ 			addToolButton(ellipse, "images/ellipse.gif", ellipse.toolTip());
+ 		}
+        if (polygon != null) {
+            addToolButton(polygon, "images/polygon.gif", polygon.toolTip());
+        }      
+    	if (polyline != null) {
+			addToolButton(polyline, "images/polyline.gif", polyline.toolTip());
+		}
+		if (radArc != null) {
+			addToolButton(radArc, "images/radarc.gif", radArc.toolTip());
+		}
+		if (range != null) {
+			addToolButton(range, "images/range.gif", range.toolTip());
+		}
+		if (text != null) {
+			addToolButton(text, "images/text.gif", text.toolTip());
+		}
+		if (Bits.check(bits, ToolBarBits.UNDOZOOMBUTTON)) {
+		    addActionButton(new UndoZoomButton(toolContext));
+		}
+
+		
+		addActionButton(new WorldButton(toolContext));   // if you have a bit for it, gate it
+		addActionButton(new ZoomInButton(toolContext));
+		addActionButton(new ZoomOutButton(toolContext));
+		addActionButton(new RefreshButton(toolContext));
+		
+		if (Bits.check(bits, ToolBarBits.STYLEBUTTON)) {
+			styleButton = new EditStyleButton(toolContext);
+			styleButton.setEnabled(false); // initially disabled
+		    addActionButton(styleButton);
+		}
+		
+		if (Bits.check(bits, ToolBarBits.DELETEBUTTON)) {
+			deleteButton = new DeleteButton(toolContext);
+			deleteButton.setEnabled(false); // initially disabled
+		    addActionButton(deleteButton);
+		}
+
+        
+        if (Bits.check(bits, ToolBarBits.TEXTFIELD)) {
+            createStatusTextField();
+            add(textField);
+        }
+    }
+    
+    protected void addActionButton(ToolActionButton b) {
+        if (b != null) {
+            add(b, false);
+        }
+    }
+
+    
 	/**
-	 * Text field used for messages
+	 * Register a tool with the controller (if non-null).
 	 */
-	private JTextField _textField;
 
-	// Zoom int by a fixed percentage
-	private ZoomInButton _zoomInButton;
+    private void register(ITool tool) {
+        if (tool != null) {
+            toolController.register(tool);
+        }
+    }
+    /**
+     * Create and add a toggle button for a tool and register it for UI sync.
+     *
+     * @return the created button, or null.
+     */
+    protected ToolToggleButton addToolButton(ITool tool, String iconFile, String tooltip) {
+        if (tool == null) {
+            return null;
+        }
 
-	// Zoom out by a fixed percentage
-	private ZoomOutButton _zoomOutButton;
+        ToolToggleButton b = new ToolToggleButton(toolController, tool.id(), iconFile, tooltip, 24, 24);
+        add(b, true);
 
-	// undo last zoom
-	private UndoZoomButton _undoZoomButton;
+        toolButtons.put(tool.id(), b);
 
-	// refresh the container
-	private RefreshButton _refreshButton;
+        // Make the UI default toggle match the controller default tool.
+        if ("pointer".equals(tool.id())) {
+            setDefaultToggleButton(b);
+        }
 
-	// zoom to whole world
-	private WorldButton _worldButton;
+        return b;
+    }
 
-	// default pointer tool
-	private PointerButton _pointerButton;
+    protected void createStatusTextField() {
+        textField = new JTextField(" ");
+        textField.setFont(Fonts.commonFont(Font.PLAIN, 11));
+        textField.setEditable(false);
+        textField.setBackground(Color.black);
+        textField.setForeground(Color.cyan);
 
-	// rubber-band zoom
-	private BoxZoomButton _boxZoomButton;
+        FontMetrics fm = getFontMetrics(textField.getFont());
+        Dimension d = textField.getPreferredSize();
+        d.width = fm.stringWidth(" ( 9999.99999 , 9999.99999 ) XXXXXXXXXXX");
+        textField.setPreferredSize(d);
+        textField.setMaximumSize(d);
+    }
 
-	// magnifying glass
-	private MagnifyButton _magnifyButton;
+    public void setText(String text) {
+        if (textField != null) {
+            textField.setText((text == null) ? "" : text);
+        }
+    }
 
-	// center the view
-	private CenterButton _centerButton;
+    public JTextField getTextField() {
+        return textField;
+    }
 
-	// create an ellipse
-	private EllipseButton _ellipseButton;
+    public ITool getActiveTool() {
+        return toolController.getActive();
+    }
 
-	// add text to the view
-	private TextButton _textButton;
+    @Override
+    public void resetDefaultSelection() {
+        super.resetDefaultSelection();
+        toolController.resetToDefault();
+    }
 
-	// pan the view
-	private PanButton _panButton;
+    protected boolean isCanvasEnabled() {
+        Component c = container.getComponent();
+        return (c != null) && c.isEnabled();
+    }
 
-	// create a polygon
-	private PolygonButton _polygonButton;
+    private ITool activeToolOrNull() {
+        return (temporarilyOverriddenTool != null) ? temporarilyOverriddenTool : toolController.getActive();
+    }
 
-	// create a polygon
-	private PolylineButton _polylineButton;
+    // ============================================================
+    // Mouse routing with popup integration
+    // ============================================================
 
-	// range (u r here) button
-	private RangeButton _rangeButton;
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        if (!isCanvasEnabled()) {
+            Toolkit.getDefaultToolkit().beep();
+            return;
+        }
 
-	// draw a world rectangle
-	private RectangleButton _rectangleButton;
+        // Popups are handled on press/release; if one slips through, ignore.
+        if (PopupTriggerSupport.isPopupTrigger(e)) {
+            return;
+        }
 
-	// draw a world rad arc
-	private RadArcButton _radarcButton;
+        ITool tool = activeToolOrNull();
+        if (tool == null) {
+            return;
+        }
 
-	// draw a world line
-	private LineButton _lineButton;
+        boolean mb1 = (e.getButton() == MouseEvent.BUTTON1) && !e.isControlDown();
+        if (!mb1) {
+            return;
+        }
 
-	// delete selected items
-	private DeleteButton _deleteButton;
+        if (e.getClickCount() == 1) {
+            tool.mouseClicked(toolContext, e);
+        } else {
+            tool.mouseDoubleClicked(toolContext, e);
+        }
+    }
 
-	// the owner container
-	private IContainer _container;
 
-	// are there ANY bits set
-	private boolean notNothing;
-
-	/**
-	 * Create a toolbar with all the buttons.
-	 *
-	 * @param container the container this toolbar controls.
-	 */
-	public BaseToolBar(IContainer container) {
-		this(container, ToolBarBits.EVERYTHING);
-	}
-
-	/**
-	 * Create a tool bar.
-	 *
-	 * @param container the container this toolbar controls.
-	 * @param bits      controls which tools are added.
-	 */
-	public BaseToolBar(IContainer container, long bits) {
-		// box layout needed for user component to work
-		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-		_container = container;
-		_container.setToolBar(this);
-		notNothing = bits != ToolBarBits.NOTHING;
-		makeButtons(bits);
-
-		Component c = _container.getComponent();
-		if (c != null) {
-			c.addMouseListener(this);
-			c.addMouseMotionListener(this);
+	@Override
+	public void mouseExited(MouseEvent e) {
+		ITool tool = activeToolOrNull();
+		if (tool != null) {
+			tool.mouseExited(toolContext, e);
 		}
-		setBorder(BorderFactory.createEtchedBorder());
-		setFloatable(false);
-	}
-
-	/**
-	 * Makes all the buttons.
-	 *
-	 * @param bits Bitwise test of which annotation buttons to add.
-	 */
-	protected void makeButtons(long bits) {
-
-		if (notNothing) {
-			if (!Bits.check(bits, ToolBarBits.NOZOOM)) {
-				_zoomInButton = new ZoomInButton(_container);
-				_zoomOutButton = new ZoomOutButton(_container);
-
-				if (Bits.check(bits, ToolBarBits.UNDOZOOMBUTTON)) {
-					_undoZoomButton = new UndoZoomButton(_container);
-				}
-				_worldButton = new WorldButton(_container);
-				_boxZoomButton = new BoxZoomButton(_container);
-			}
-			_refreshButton = new RefreshButton(_container);
-			if (Bits.check(bits, ToolBarBits.CENTERBUTTON)) {
-				_centerButton = new CenterButton(_container);
-			}
-
-			if (Bits.check(bits, ToolBarBits.PANBUTTON)) {
-				_panButton = new PanButton(_container);
-			}
-		}
-
-		if (notNothing && Bits.check(bits, ToolBarBits.RANGEBUTTON)) {
-			_rangeButton = new RangeButton(_container);
-		}
-
-		if (notNothing && Bits.check(bits, ToolBarBits.MAGNIFYBUTTON)) {
-			_magnifyButton = new MagnifyButton(_container);
-		}
-
-		// if (Bits.check(bits, POINTERBUTTON)) {
-		_pointerButton = new PointerButton(_container);
-		// }
-
-		if (notNothing && Bits.check(bits, ToolBarBits.DELETEBUTTON)) {
-			_deleteButton = new DeleteButton(_container);
-			_deleteButton.setEnabled(false);
-		}
-
-		// check if drawing tools are requested
-		if (notNothing && Bits.check(bits, ToolBarBits.TEXTBUTTON)) {
-			_textButton = new TextButton(_container);
-		}
-
-		if (notNothing && Bits.check(bits, ToolBarBits.ELLIPSEBUTTON)) {
-			_ellipseButton = new EllipseButton(_container);
-		}
-
-		if (notNothing && Bits.check(bits, ToolBarBits.RECTANGLEBUTTON)) {
-			_rectangleButton = new RectangleButton(_container);
-		}
-
-		if (notNothing && Bits.check(bits, ToolBarBits.RADARCBUTTON)) {
-			_radarcButton = new RadArcButton(_container);
-		}
-
-		if (notNothing && Bits.check(bits, ToolBarBits.LINEBUTTON)) {
-			_lineButton = new LineButton(_container);
-		}
-
-		if (notNothing && Bits.check(bits, ToolBarBits.POLYGONBUTTON)) {
-			_polygonButton = new PolygonButton(_container);
-		}
-
-		if (notNothing && Bits.check(bits, ToolBarBits.POLYLINEBUTTON)) {
-			_polylineButton = new PolylineButton(_container);
-		}
-
-		// add the pointer button and make it the default
-		add(_pointerButton);
-
-		if (_pointerButton != null) {
-			setDefaultToggleButton(_pointerButton);
-		}
-
-		add(_boxZoomButton);
-		add(_zoomInButton);
-		add(_zoomOutButton);
-		add(_undoZoomButton);
-		add(_panButton);
-		add(_magnifyButton);
-		add(_centerButton);
-		add(_worldButton);
-		add(_rangeButton);
-		add(_refreshButton);
-		add(_rectangleButton);
-		add(_radarcButton);
-		add(_lineButton);
-		add(_ellipseButton);
-		add(_polygonButton);
-		add(_polylineButton);
-		add(_textButton);
-		add(_deleteButton);
-
-		// add the text field?
-
-		if (notNothing && Bits.check(bits, ToolBarBits.TEXTFIELD)) {
-
-			_textField = new JTextField(" ");
-
-			_textField.setFont(Fonts.commonFont(Font.PLAIN, 11));
-			_textField.setEditable(false);
-			_textField.setBackground(Color.black);
-			_textField.setForeground(Color.cyan);
-
-			FontMetrics fm = getFontMetrics(_textField.getFont());
-			Dimension d = _textField.getPreferredSize();
-			d.width = fm.stringWidth(" ( 9999.99999 , 9999.99999 ) XXXXXXXXXXX");
-			_textField.setPreferredSize(d);
-			_textField.setMaximumSize(d);
-
-			add(_textField);
-		}
-
-
-		enableDrawingButtons(true);
-
-		// set the default button to on
-		if (getDefaultToggleButton() != null) {
-			resetDefaultSelection();
-	//		getDefaultToggleButton().setSelected(true);
-		}
-
+		Component canvas = container.getComponent();
+		if (canvas != null)
+			canvas.setCursor(Cursor.getDefaultCursor());
 	}
 
 	@Override
-	public Component add(Component c) {
-		if (c == null) {
-			return null;
-		}
-		return super.add(c);
+	public void mouseEntered(MouseEvent e) {
+	    ITool tool = activeToolOrNull();
+	    if (tool != null) {
+	        toolController.applyCursorNow();
+	        tool.mouseEntered(toolContext, e);
+	    }
+	    container.locationUpdate(e, false);
 	}
 
-	/**
-	 * Sets the text in the text field widget.
-	 *
-	 * @param text the new text.
-	 */
-	public void setText(String text) {
-		if (_textField == null) {
-			return;
-		}
-
-		if (text == null) {
-			_textField.setText("");
-		} else {
-			_textField.setText(text);
-		}
-	}
-
-	/**
-	 * Enable/disable the drawing buttons
-	 *
-	 * @param enabled the desired stated.
-	 */
-	public void enableDrawingButtons(boolean enabled) {
-		if (_ellipseButton != null) {
-			_ellipseButton.setEnabled(enabled);
-		}
-		if (_rectangleButton != null) {
-			_rectangleButton.setEnabled(enabled);
-		}
-		if (_radarcButton != null) {
-			_radarcButton.setEnabled(enabled);
-		}
-		if (_lineButton != null) {
-			_lineButton.setEnabled(enabled);
-		}
-		if (_polygonButton != null) {
-			_polygonButton.setEnabled(enabled);
-		}
-		if (_polylineButton != null) {
-			_polylineButton.setEnabled(enabled);
-		}
-		if (_textButton != null) {
-			_textButton.setEnabled(enabled);
-		}
-	}
-
-	/**
-	 * Reset the default toggle button selection
-	 */
 	@Override
-	public void resetDefaultSelection() {
-		super.resetDefaultSelection();
-		ToolBarToggleButton defaultButton = (ToolBarToggleButton) getDefaultToggleButton();
+	public void mousePressed(MouseEvent e) {
+	    if (!isCanvasEnabled()) {
+	        return;
+	    }
 
-		if (defaultButton != null) {
-			defaultButton.setSelected(true);
-			_container.getComponent().setCursor(defaultButton.canvasCursor());
-	//		defaultButton.requestFocus();
+	    if (PopupTriggerSupport.isPopupTrigger(e)) {
+	        PopupTriggerSupport.showPopup(container, e);
+	        return;
+	    }
+
+	    if (e.getButton() == MouseEvent.BUTTON2) {
+	        ITool boxZoom = toolController.get("boxZoom");
+	        if (boxZoom != null) {
+	            temporarilyOverriddenTool = boxZoom;
+	        }
+	    }
+
+	    ITool tool = activeToolOrNull();
+	    if (tool != null) {
+	        tool.mousePressed(toolContext, e);
+	    }
+
+	    // Update immediately so click location shows up right away
+	    container.locationUpdate(e, false);
+	}
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        if (!isCanvasEnabled()) {
+            temporarilyOverriddenTool = null;
+            return;
+        }
+
+        // Popup trigger can be on release (macOS).
+        if (PopupTriggerSupport.isPopupTrigger(e)) {
+            temporarilyOverriddenTool = null;
+            PopupTriggerSupport.showPopup(container, e);
+            return;
+        }
+
+        ITool tool = activeToolOrNull();
+        if (tool != null) {
+            tool.mouseReleased(toolContext, e);
+        }
+
+        temporarilyOverriddenTool = null;
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        if (!isCanvasEnabled()) {
+            return;
+        }
+
+        ITool tool = activeToolOrNull();
+        if (tool != null) {
+            tool.mouseDragged(toolContext, e);
+        }
+
+        // KEEP FEEDBACK ALIVE while dragging
+        container.locationUpdate(e, true);
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        ITool tool = activeToolOrNull();
+        if (tool != null) {
+            tool.mouseMoved(toolContext, e);
+        }
+
+        // KEEP FEEDBACK ALIVE while moving
+        container.locationUpdate(e, false);
+    }
+
+    /**
+     * Update enable/disable state for toolbar widgets whose availability depends on
+     * container state (typically selection).
+     */
+    public void updateButtonState() {
+        boolean anySelected = container.anySelectedItems();
+        if (deleteButton != null) {
+            deleteButton.setEnabled(anySelected);
+        }
+        if (styleButton != null) {
+			styleButton.setEnabled(anySelected);
 		}
+    }
+    
+
+    // ============================================================
+    // Factory hooks for creating tools
+    // ============================================================
+
+	protected ITool createPointerTool() {
+		return new PointerTool();
+	}
+
+    protected ITool createBoxZoomTool() {
+    	return new BoxZoomTool();
+    }
+    
+    protected ITool createCenterTool() {
+    	return new CenterTool();
+    }
+
+    protected ITool createPanTool() {
+        return new PanTool(new PreviewImagePanBehavior());
+    }
+
+	protected ITool createMagnifyTool() {
+		return new MagnifyTool();
 	}
 
 	/**
-	 * Get the button used for a box (rubberband) zoom.
+	 * Register a tool with this toolbar's controller.
 	 *
-	 * @return the button used for a box (rubberband) zoom.
+	 * @param tool the tool to register (ignored if null)
+	 * @return this toolbar (for chaining)
 	 */
-	public BoxZoomButton getBoxZoomButton() {
-		return _boxZoomButton;
+	public BaseToolBar addTool(ITool tool) {
+	    if (tool != null) {
+	        toolController.register(tool);
+	    }
+	    return this;
 	}
 
 	/**
-	 * Get the button used for magnification.
+	 * Register a tool and add a toggle button for it.
+	 * <p>
+	 * This is the main convenience method for applications extending the toolbar.
+	 * </p>
 	 *
-	 * @return the button used for magnification.
+	 * @param tool     the tool to register (ignored if null)
+	 * @param iconFile icon resource path
+	 * @param tooltip  tooltip text
+	 * @return the created toggle button, or null if tool was null
 	 */
-	public MagnifyButton getMagnifyButton() {
-		return _magnifyButton;
+	public ToolToggleButton addTool(ITool tool, String iconFile, String tooltip) {
+	    if (tool == null) {
+	        return null;
+	    }
+	    toolController.register(tool);
+	    return addToolButton(tool, iconFile, tooltip); // your existing method
 	}
 
-
 	/**
-	 * Get the button used for recentering.
+	 * Add a one-shot action button.
 	 *
-	 * @return the button used for recentering.
+	 * @param button the button (ignored if null)
+	 * @return this toolbar (for chaining)
 	 */
-	public CenterButton getCenterButton() {
-		return _centerButton;
-	}
-
-	/**
-	 * Get the toolbar's delete button.
-	 *
-	 * @return the toolbar's delete button.
-	 */
-	public DeleteButton getDeleteButton() {
-		return _deleteButton;
-	}
-
-	/**
-	 * Get the toolbar's ellipse button.
-	 *
-	 * @return the toolbar's ellipse button.
-	 */
-	public EllipseButton getEllipseButton() {
-		return _ellipseButton;
-	}
-
-	/**
-	 * Get the toolbar's pan button.
-	 *
-	 * @return the toolbar's pan button.
-	 */
-	public PanButton getPanButton() {
-		return _panButton;
-	}
-
-	/**
-	 * Get the toolbar's point button.
-	 *
-	 * @return the toolbar's pointer button.
-	 */
-	public PointerButton getPointerButton() {
-		return _pointerButton;
-	}
-
-	/**
-	 * Get the toolbar's polygon button.
-	 *
-	 * @return the toolbar's polygon button.
-	 */
-	public PolygonButton getPolygonButton() {
-		return _polygonButton;
-	}
-
-	/**
-	 * Get the toolbar's polyline button.
-	 *
-	 * @return the toolbar's polyline button.
-	 */
-	public PolylineButton getPolylineButton() {
-		return _polylineButton;
-	}
-
-	/**
-	 * Get the toolbar's range button.
-	 *
-	 * @return the toolbar's range button.
-	 */
-	public RangeButton getRangeButton() {
-		return _rangeButton;
-	}
-
-	/**
-	 * Get the toolbar's rectangle button.
-	 *
-	 * @return the toolbar's rectangle button.
-	 */
-	public RectangleButton getRectangleButton() {
-		return _rectangleButton;
-	}
-
-	/**
-	 * Get the toolbar's radarc button.
-	 *
-	 * @return the toolbar's radarc button.
-	 */
-	public RadArcButton getRadArcButton() {
-		return _radarcButton;
-	}
-
-	/**
-	 * Get the toolbar's line button.
-	 *
-	 * @return the toolbar's line button.
-	 */
-	public LineButton getLineButton() {
-		return _lineButton;
-	}
-
-	/**
-	 * Get the toolbar's refresh button.
-	 *
-	 * @return the toolbar's refresh button.
-	 */
-	public RefreshButton getRefreshButton() {
-		return _refreshButton;
-	}
-
-	/**
-	 * Get the toolbar's text button.
-	 *
-	 * @return the toolbar's text button.
-	 */
-	public TextButton getTextButton() {
-		return _textButton;
-	}
-
-	/**
-	 * Get the toolbar's undozoom button.
-	 *
-	 * @return the toolbar's undozoom button.
-	 */
-	public UndoZoomButton getUndoZoomButton() {
-		return _undoZoomButton;
-	}
-
-	/**
-	 * Get the toolbar's world (default world zoom) button.
-	 *
-	 * @return the toolbar's world button.
-	 */
-	public WorldButton getWorldButton() {
-		return _worldButton;
-	}
-
-	/**
-	 * Get the toolbar's zoom-in button.
-	 *
-	 * @return the toolbar's zoom-in button.
-	 */
-	public ZoomInButton getZoomInButton() {
-		return _zoomInButton;
-	}
-
-	/**
-	 * Get the toolbar's zoom-out button.
-	 *
-	 * @return the toolbar's zoom-out button.
-	 */
-	public ZoomOutButton getZoomOutButton() {
-		return _zoomOutButton;
-	}
-
-	/**
-	 * The mouse was clicked. Note that the order the events will come is PRESSED,
-	 * RELEASED, CLICKED. And a CLICKED will happen only if the mouse was not moved
-	 * between press and release.
-	 *
-	 * @param mouseEvent the causal event.
-	 */
-	@Override
-	public void mouseClicked(MouseEvent mouseEvent) {
-
-		if (!_container.getComponent().isEnabled()) {
-			Toolkit.getDefaultToolkit().beep();
-			return;
-		}
-
-		ToolBarToggleButton mtb = getActiveButton();
-		if (mtb == null) {
-			return;
-		}
-
-		boolean mb1 = (mouseEvent.getButton() == MouseEvent.BUTTON1) && !mouseEvent.isControlDown();
-		boolean mb3 = (mouseEvent.getButton() == MouseEvent.BUTTON3)
-				|| ((mouseEvent.getButton() == MouseEvent.BUTTON1) && mouseEvent.isControlDown());
-
-		if (mb1) {
-			if (mouseEvent.getClickCount() == 1) { // single click
-				mtb.mouseClicked(mouseEvent);
-			} else { // double (or more) clicks
-				mtb.mouseDoubleClicked(mouseEvent);
-			}
-		} else if (mb3) {
-			// mtb.mouseButton3Click(mouseEvent);
-		}
-
-	}
-
-	/**
-	 * The mouse has entered the container.
-	 *
-	 * @param mouseEvent the causal event.
-	 */
-	@Override
-	public void mouseEntered(MouseEvent mouseEvent) {
-
-		ToolBarToggleButton mtb = getActiveButton();
-		if (mtb != null) {
-			_container.getComponent().setCursor(mtb.canvasCursor());
-			mtb.mouseEntered(mouseEvent);
-		}
-	}
-
-	/**
-	 * The mouse has exited the container.
-	 *
-	 * @param mouseEvent the causal event.
-	 */
-	@Override
-	public void mouseExited(MouseEvent mouseEvent) {
-		ToolBarToggleButton mtb = getActiveButton();
-
-		if (mtb == null) {
-			return;
-		}
-
-		mtb.mouseExited(mouseEvent);
-	}
-
-	/**
-	 * The mouse was pressed. Note that the order the events will come is PRESSED,
-	 * RELEASED, CLICKED. And a CLICKED will happen only if the mouse was not moved
-	 * between press and release.
-	 *
-	 * @param me the causal event.
-	 */
-	@Override
-	public void mousePressed(MouseEvent me) {
-
-		if (!_container.getComponent().isEnabled()) {
-			return;
-		}
-
-		ToolBarToggleButton mtb = getActiveButton();
-
-		if (mtb == null) {
-			return;
-		}
-
-		switch (me.getClickCount()) {
-		case 1:
-
-			// hack, if mouse button 2
-			if (mtb == _pointerButton) {
-				if ((_boxZoomButton != null) && (me.getButton() == MouseEvent.BUTTON2)) {
-					mtb = _boxZoomButton;
-				}
-			}
-
-			mtb.mousePressed(me);
-			break;
-		}
-
-	}
-
-	/**
-	 * The mouse was clicked. Note that the order the events will come is PRESSED,
-	 * RELEASED, CLICKED. And a CLICKED will happen only if the mouse was not moved
-	 * between press and release. Also, the RELEASED will come even if the mouse was
-	 * dragged off the container.
-	 *
-	 * @param me the causal event.
-	 */
-	@Override
-	public void mouseReleased(MouseEvent me) {
-		if (!_container.getComponent().isEnabled()) {
-			return;
-		}
-
-		ToolBarToggleButton mtb = getActiveButton();
-
-		if (mtb == null) {
-			return;
-		}
-
-		// hack, if mouse button 2 treat as box zoom
-		if (mtb == _pointerButton) {
-			if (me.getButton() == MouseEvent.BUTTON2) {
-				mtb = _boxZoomButton;
-			}
-		}
-
-		mtb.mouseReleased(me);
-
-	}
-
-	/**
-	 *
-	 * @param mouseEvent the causal event.
-	 */
-	@Override
-	public void mouseDragged(MouseEvent mouseEvent) {
-		if (!_container.getComponent().isEnabled()) {
-			return;
-		}
-
-		ToolBarToggleButton mtb = getActiveButton();
-
-		if (mtb == null) {
-			return;
-		}
-
-		mtb.mouseDragged(mouseEvent);
-	}
-
-	/**
-	 * The mouse has moved. Note will not come here if mouse button pressed, will go
-	 * to DRAG instead.
-	 *
-	 * @param me the causal event.
-	 */
-	@Override
-	public void mouseMoved(MouseEvent me) {
-		ToolBarToggleButton mtb = getActiveButton();
-
-		if (mtb == null) {
-			return;
-		}
-
-		mtb.mouseMoved(me);
-	}
-
-	/**
-	 * Convenience routine to get the active button.
-	 *
-	 * @return the active toggle button.
-	 */
-	@Override
-	public ToolBarToggleButton getActiveButton() {
-		return (ToolBarToggleButton) super.getActiveButton();
-	}
-
-	/**
-	 * Called after each item event to give the toolbar a chance to reflect the
-	 * correct state.
-	 */
-	public void checkButtonState() {
-		if (_deleteButton != null) {
-			_deleteButton.setEnabled(_container.anySelectedItems());
-		}
-	}
-	/**
-	 * @return the _textField
-	 */
-	public JTextField getTextField() {
-		return _textField;
-	}
-
-	/**
-	 * The active toggle button has changed
-	 */
-	@Override
-	protected void activeToggleButtonChanged() {
-		if (getActiveButton() != _magnifyButton) {
-			MagnifyWindow.closeMagnifyWindow();
-		}
-		if (_container != null) {
-			_container.activeToolBarButtonChanged(getActiveButton());
-		}
+	public BaseToolBar addAction(ToolActionButton button) {
+	    addActionButton(button); // your existing method
+	    return this;
 	}
 
 }

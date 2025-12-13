@@ -22,6 +22,7 @@ import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
+import edu.cnu.mdi.graphics.toolbar.IContainerToolBar;
 import edu.cnu.mdi.view.BaseView;
 
 /**
@@ -309,25 +310,21 @@ public class MagnifyWindow extends JWindow {
 	 */
 	public static void closeMagnifyWindow() {
 
-		if (_magnifyWindow == null) {
-			return;
-		}
+	    if (_magnifyWindow == null) {
+	        return;
+	    }
 
-		if (_magnifyWindow.isVisible()) {
-			_magnifyWindow.setVisible(false);
+	    if (_magnifyWindow.isVisible()) {
+	        _magnifyWindow.setVisible(false);
 
-			if (_sourceContainer != null) {
-
-				BaseView view = (BaseView) _sourceContainer.getView();
-				if (view != null) {
-					BaseToolBar tb = view.getToolBar();
-					if (tb != null) {
-						tb.resetDefaultSelection();
-					}
-				}
-				_sourceContainer = null;
-			}
-		}
+	        if (_sourceContainer != null) {
+	            IContainerToolBar tb = _sourceContainer.getToolBar();
+	            if (tb != null) {
+	                tb.resetDefaultSelection();
+	            }
+	            _sourceContainer = null;
+	        }
+	    }
 	}
 
 	/**
