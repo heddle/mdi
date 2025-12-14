@@ -351,14 +351,8 @@ public class PointerTool implements ITool, IRubberbanded {
         }
      // inside PointerTool.mouseDoubleClicked(...)
         AItem item = ctx.container().getItemAtPoint(e.getPoint());
-        if (item != null) {
-            // edit the clicked item’s style
-            Styled edited = StyleEditorDialog.edit(ctx.container().getComponent(), item.getStyleSafe(), false);
-            if (edited != null) {
-                item.setStyle(edited);
-                item.setDirty(true);
-                ctx.container().refresh();
-            }
+        if (item != null && item.isEnabled() && item.isDoubleClickable()) {
+        	item.doubleClicked(e);
             return;
         }
     }

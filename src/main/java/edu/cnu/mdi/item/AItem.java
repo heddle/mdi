@@ -82,7 +82,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	protected Point2D.Double _focus;
 
 	/**
-	 * What layer the item is on.
+	 * What list (layer) the item is on.
 	 */
 	protected ItemList _itemList;
 
@@ -123,6 +123,11 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * Controls whether the item can be rotated.
 	 */
 	protected boolean _rotatable = false;
+	
+	/**
+	 * Controls whether the item responds to a double click.
+	 */
+	protected boolean _doubleClickable = false;
 
 	/**
 	 * Controls whether the item responds to a righjt click.
@@ -186,7 +191,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	private static final Color _selectLine = Color.black;
 
 	/**
-	 * Create an item on a specific layer.
+	 * Create an item on a specific list (layer).
 	 *
 	 * @param itemList the list it is on.
 	 */
@@ -307,7 +312,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be dragged.
 	 */
 	public boolean isDraggable() {
-		if (_locked || !isLayerEnabled()) {
+		if (_locked || !isListEnabled()) {
 			return false;
 		}
 
@@ -350,7 +355,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be resized.
 	 */
 	public boolean isResizable() {
-		if (_locked || !isLayerEnabled()) {
+		if (_locked || !isListEnabled()) {
 			return false;
 		}
 		return _resizable;
@@ -371,7 +376,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be rotated.
 	 */
 	public boolean isRotatable() {
-		if (_locked || !isLayerEnabled()) {
+		if (_locked || !isListEnabled()) {
 			return false;
 		}
 		return _rotatable;
@@ -384,6 +389,27 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 */
 	public void setRotatable(boolean rotatable) {
 		_rotatable = rotatable;
+	}
+	
+	/**
+	 * Check whether the item can be double clicked.
+	 *
+	 * @return <code>true</code> if the item can be double clicked.
+	 */
+	public boolean isDoubleClickable() {
+		if (_locked || !isListEnabled()) {
+			return false;
+		}
+		return _doubleClickable;
+	}
+	
+	/**
+	 * Set whether the item can be double clicked.
+	 *
+	 * @param doubleClickable if <code>true</code>, the item can be double clicked.
+	 */
+	public void setDoubleClickable(boolean doubleClickable) {
+		_doubleClickable = doubleClickable;
 	}
 
 	/**
@@ -482,7 +508,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 *         ro
 	 */
 	public boolean isTrackable() {
-		if (_locked || !_enabled || !isLayerEnabled()) {
+		if (_locked || !_enabled || !isListEnabled()) {
 			return false;
 		}
 
@@ -1118,13 +1144,13 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	}
 
 	/**
-	 * Convenience check to see whether the item's layer is enabled. If it is not,
+	 * Convenience check to see whether the item's list (layer) is enabled. If it is not,
 	 * you should not be able to select this item (independent of item's local
 	 * selectability)
 	 *
-	 * @return <code>true</code> if the item's layer is enabled.
+	 * @return <code>true</code> if the item's list is enabled.
 	 */
-	public boolean isLayerEnabled() {
+	public boolean isListEnabled() {
 		if (_itemList == null) {
 			return false;
 		}
