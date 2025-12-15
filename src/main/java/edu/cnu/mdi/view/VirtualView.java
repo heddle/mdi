@@ -18,6 +18,8 @@ import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
@@ -55,6 +57,13 @@ import edu.cnu.mdi.util.Environment;
 @SuppressWarnings("serial")
 public class VirtualView extends BaseView
         implements InternalFrameListener, IViewListener, MouseMotionListener, MouseListener {
+
+	// ------------------------------------------------------------------------
+	// Static/constant data
+	// ------------------------------------------------------------------------
+
+	/** Map of views to their component listeners (for geometry tracking). */
+	private final Map<BaseView, ComponentListener> viewComponentListeners = new HashMap<>();
 
     /** Margin used when constraining view placement inside a column. */
     private static final int _SLOP = 10;
@@ -555,6 +564,11 @@ public class VirtualView extends BaseView
             }
 
             _views.remove(view);
+            
+            ComponentListener cl = viewComponentListeners.remove(view);
+            if (cl != null) {
+                view.removeComponentListener(cl);
+            }
         }
     }
 
@@ -603,6 +617,7 @@ public class VirtualView extends BaseView
             }
         };
 
+        viewComponentListeners.put(view, cl);
         view.addComponentListener(cl);
     }
 

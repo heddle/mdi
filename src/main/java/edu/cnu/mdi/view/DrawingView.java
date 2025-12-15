@@ -64,7 +64,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 				PropertySupport.VISIBLE, true, 
 				PropertySupport.PROPNAME, "DRAWING", 
 				PropertySupport.BACKGROUND, Color.white, 
-				PropertySupport.TITLE, " Drawing View ", 
+				PropertySupport.TITLE, "Drawing View ", 
 				PropertySupport.STANDARDVIEWDECORATIONS, true,
 				PropertySupport.CONTAINERCLASS, DrawingContainer.class);
 

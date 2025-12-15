@@ -341,7 +341,6 @@ public class BaseView extends JInternalFrame
      *   <li>A {@code Class<? extends IContainer>} supplied under the
      *       {@code "containerClass"} key. The class must define a constructor
      *       taking a {@link java.awt.geom.Rectangle2D.Double}.</li>
-     *   <li>A legacy {@code "containerType"} string property.</li>
      *   <li>A default {@link BaseContainer}.</li>
      * </ol>
      * <p>
