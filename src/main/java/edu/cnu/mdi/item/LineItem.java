@@ -186,6 +186,7 @@ public class LineItem extends AItem {
     /**
      * Update the item's focus point (midpoint of the segment).
      */
+    @Override
     protected void updateFocus() {
         if (_line == null) {
             _focus = new Point2D.Double(0, 0);
@@ -216,6 +217,7 @@ public class LineItem extends AItem {
      * Pick tolerance in pixels for hit-testing.
      * Kept as a method so subclasses/themes can override if desired.
      */
+    @Override
     protected double getPickTolerancePx(IContainer container) {
         return DEFAULT_PICK_TOLERANCE_PX;
     }

@@ -958,7 +958,7 @@ public class WorldGraphicsUtils {
 	 */
 	public static ArrayList<Point2D.Double> getPoints(Path2D path) {
 		ArrayList<Point2D.Double> pointList = new ArrayList<>();
-		double[] coords = new double[2];
+		double[] coords = new double[6];
 		int numSubPaths = 0;
 		for (PathIterator pi = path.getPathIterator(null); !pi.isDone(); pi.next()) {
 			switch (pi.currentSegment(coords)) {
@@ -1014,75 +1014,45 @@ public class WorldGraphicsUtils {
 		return null;
 	}
 
+
 	/**
-	 * Convert a world path to a pixel polygon
+	 * Convert a path to a polygon.
 	 *
-	 * @param container the container being rendered
-	 * @param path      the path being converted
-	 * @return the pixel polygon
+	 * @param container the container on which it is rendered.
+	 * @param path      the path in question
+	 * @return the polygon corresponding to the path
 	 */
-	public static Polygon XpathToPolygon(IContainer container, Path2D.Double path) {
-		if (path == null) {
-			return null;
-		}
-
-		Polygon poly = null;
-		PathIterator pi = path.getPathIterator(null);
-
-		double coords[] = new double[6];
-		while (!pi.isDone()) {
-			int type = pi.currentSegment(coords);
-			switch (type) {
-			case PathIterator.SEG_MOVETO:
-			case PathIterator.SEG_LINETO:
-				if (poly == null) {
-					poly = new Polygon();
-				}
-				Point p = new Point();
-				container.worldToLocal(p, coords[0], coords[1]);
-				poly.addPoint(p.x, p.y);
-				break;
-
-			}
-			pi.next();
-		}
-
-		return poly;
-	}
-
 	public static Polygon pathToPolygon(IContainer container, Path2D.Double path) {
-	    if (path == null) {
+	    if (container == null || path == null) {
 	        return null;
 	    }
 
-	    // Estimate size if possible
-	    int estimatedSize = path.getCurrentPoint() != null ? (int) path.getCurrentPoint().distance(0, 0) : 100;
-	    int[] xpoints = new int[estimatedSize+1];
-	    int[] ypoints = new int[estimatedSize+1];
-	    int pointCount = 0;
+	    int n = neededCapacity(path);
+	    if (n <= 0) {
+	        return null;
+	    }
 
-	    Point reusablePoint = new Point();
+	    int[] x = new int[n];
+	    int[] y = new int[n];
+	    int count = 0;
+
+	    Point pp = new Point();
 	    PathIterator pi = path.getPathIterator(null);
 	    double[] coords = new double[6];
 
 	    while (!pi.isDone()) {
 	        int type = pi.currentSegment(coords);
 	        if (type == PathIterator.SEG_MOVETO || type == PathIterator.SEG_LINETO) {
-	            container.worldToLocal(reusablePoint, coords[0], coords[1]);
-	            if (pointCount >= xpoints.length) {
-	                // Grow arrays if needed
-	                xpoints = java.util.Arrays.copyOf(xpoints, xpoints.length * 2);
-	                ypoints = java.util.Arrays.copyOf(ypoints, ypoints.length * 2);
-	            }
-	            xpoints[pointCount] = reusablePoint.x;
-	            ypoints[pointCount] = reusablePoint.y;
-	            pointCount++;
+	            container.worldToLocal(pp, coords[0], coords[1]);
+	            x[count] = pp.x;
+	            y[count] = pp.y;
+	            count++;
 	        }
+	        // TODO: curves (SEG_QUADTO / SEG_CUBICTO) if/when you support them
 	        pi.next();
 	    }
 
-	    // Create the Polygon from collected points
-	    return new Polygon(xpoints, ypoints, pointCount);
+	    return (count > 0) ? new Polygon(x, y, count) : null;
 	}
 
 
@@ -1667,6 +1637,10 @@ public class WorldGraphicsUtils {
 
 	        // Calculate projection scalar (t)
 	        double segmentLengthSquared = dx * dx + dy * dy;
+	        if (segmentLengthSquared < 1.0e-20) {
+	            return new Point2D.Double(p1.x, p1.y);
+	        }
+	        
 	        double t = (dxWp * dx + dyWp * dy) / segmentLengthSquared;
 
 	        // Clamp t to [0, 1] to stay on the segment
@@ -1707,5 +1681,112 @@ public class WorldGraphicsUtils {
 		double pixdist = Math.sqrt(p1.x * p1.x + p1.y * p1.y);
 		return pixdist / dist;
 	}
+	
+	/**
+	 * Hit-test a polyline-like {@link Path2D} by checking whether {@code wp} lies within
+	 * {@code tolWorld} of any line segment in the path.
+	 * <p>
+	 * This is intended for paths composed of {@code MOVETO}/{@code LINETO} segments
+	 * (no curves). {@code SEG_CLOSE} is treated as a segment from the current point
+	 * back to the most recent move-to point.
+	 * </p>
+	 *
+	 * @param path     the path to test (world coordinates)
+	 * @param wp       the world point being tested
+	 * @param tolWorld the tolerance distance in world units (must be >= 0)
+	 * @return {@code true} if the point is within tolerance of any segment
+	 */
+	public static boolean isPointNearPath(Path2D.Double path, Point2D.Double wp, double tolWorld) {
+
+	    if (path == null || wp == null || tolWorld < 0) {
+	        return false;
+	    }
+
+	    final double tol2 = tolWorld * tolWorld;
+
+	    PathIterator pi = path.getPathIterator(null);
+	    double[] c = new double[6];
+
+	    Point2D.Double last = null;
+	    Point2D.Double subpathStart = null;
+
+	    while (!pi.isDone()) {
+	        int type = pi.currentSegment(c);
+
+	        switch (type) {
+	        case PathIterator.SEG_MOVETO:
+	            last = new Point2D.Double(c[0], c[1]);
+	            subpathStart = last;
+	            // Also allow "near vertex" picking:
+	            if (last.distanceSq(wp) <= tol2) {
+	                return true;
+	            }
+	            break;
+
+	        case PathIterator.SEG_LINETO: {
+	            Point2D.Double cur = new Point2D.Double(c[0], c[1]);
+	            if (last != null) {
+	                if (distanceSqPointToSegment(last, cur, wp) <= tol2) {
+	                    return true;
+	                }
+	            } else {
+	                // Degenerate: no prior point; treat as point
+	                if (cur.distanceSq(wp) <= tol2) {
+	                    return true;
+	                }
+	            }
+	            last = cur;
+	            break;
+	        }
+
+	        case PathIterator.SEG_CLOSE:
+	            if (last != null && subpathStart != null) {
+	                if (distanceSqPointToSegment(last, subpathStart, wp) <= tol2) {
+	                    return true;
+	                }
+	                last = subpathStart;
+	            }
+	            break;
+
+	        default:
+	            throw new IllegalArgumentException("Path contains curves; isPointNearPath only supports line segments.");
+	        }
+
+	        pi.next();
+	    }
+
+	    return false;
+	}
+
+	/**
+	 * Squared distance from point {@code p} to segment {@code a->b}.
+	 */
+	private static double distanceSqPointToSegment(Point2D.Double a, Point2D.Double b, Point2D.Double p) {
+
+	    double dx = b.x - a.x;
+	    double dy = b.y - a.y;
+
+	    double len2 = dx * dx + dy * dy;
+	    if (len2 < 1.0e-20) {
+	        // Segment is essentially a point
+	        return a.distanceSq(p);
+	    }
+
+	    double t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+	    if (t <= 0.0) {
+	        return a.distanceSq(p);
+	    }
+	    if (t >= 1.0) {
+	        return b.distanceSq(p);
+	    }
+
+	    double cx = a.x + t * dx;
+	    double cy = a.y + t * dy;
+
+	    double ddx = p.x - cx;
+	    double ddy = p.y - cy;
+	    return ddx * ddx + ddy * ddy;
+	}
+
 
 }

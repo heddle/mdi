@@ -1,6 +1,3 @@
-/**
- *
- */
 package edu.cnu.mdi.item;
 
 import java.awt.Point;
@@ -12,165 +9,88 @@ import edu.cnu.mdi.util.Point2DSupport;
 
 public class RadArcItem extends PolygonItem {
 
-	// used for resizing
-	private int lastQuadrant = 0;
-	private double extra;
+    private Point2D.Double _center;
+    private Point2D.Double _leg;      // endpoint of first radius leg (defines radius + direction)
+    private double _arcAngle;         // signed, degrees
 
-	/**
-	 * Create a radius-arc (pie shape) item.
-	 *
-	 * @param itemList the list this item is on.
-	 * @param wpc      the center of the arc
-	 * @param wp1      the point at the end of the first leg. Thus wpc->wp1
-	 *                 determine the radius.
-	 * @param arcAngle the opening angle COUNTERCLOCKWISE in degrees.
-	 */
-	public RadArcItem(ItemList itemList, Point2D.Double wpc, Point2D.Double wp1, double arcAngle) {
-		super(itemList, WorldGraphicsUtils.getRadArcPoints(wpc, wp1, arcAngle));
-		setAzimuth(Point2DSupport.azimuth(wpc, wp1) - arcAngle / 2);
-		_focus = wpc;
-	}
+    public RadArcItem(ItemList itemList, Point2D.Double wpc, Point2D.Double wp1, double arcAngle) {
+        super(itemList, null);
+        _center = (Point2D.Double) wpc.clone();
+        _leg = (Point2D.Double) wp1.clone();
+        _arcAngle = arcAngle;
+        rebuildPath();
+    }
 
-	/**
-	 * Reshape the item based on the modification. Keep in mind that if control or
-	 * shift was pressed, the item will scale rather than coming here.
-	 */
+    private void rebuildPath() {
+        _path = WorldGraphicsUtils.worldPolygonToPath(WorldGraphicsUtils.getRadArcPoints(_center, _leg, _arcAngle));
+        setFocus(_center);
+        setAzimuth(Point2DSupport.azimuth(_center, _leg) - _arcAngle / 2.0);
+    }
 
-	@Override
-	protected void reshape() {
-		if ((_lastDrawnPolygon != null) && (_lastDrawnPolygon.npoints > 1)) {
+    @Override
+    protected void updateFocus() {
+        setFocus(_center);
+    }
 
-			int n = _lastDrawnPolygon.npoints;
-			int x[] = _lastDrawnPolygon.xpoints;
-			int y[] = _lastDrawnPolygon.ypoints;
+    @Override
+    protected void reshape() {
+        if (_modification == null) return;
 
-			System.err.println("Index: " + _modification.getSelectIndex());
+        int idx = _modification.getSelectIndex(); // 0=leg handle, 1=arc-end handle (matches your selection points)
+        Point2D.Double wp = _modification.getCurrentWorldPoint();
+        if (wp == null) return;
 
-			Point2D.Double wp1 = _modification.getCurrentWorldPoint();
-			Point p0 = new Point(x[0], y[0]);
-			Point p2;
-			if (_modification.getSelectIndex() == 1) {
-				p2 = new Point(x[1], y[1]);
-				_modification.setSelectIndex(0);
-			} else {
-				p2 = new Point(x[n - 1], y[n - 1]);
-			}
+        if (idx == 0) {
+            // Dragging the first leg endpoint: change radius and direction
+            _leg = (Point2D.Double) wp.clone();
+        } else {
+            // Dragging arc end: change arc angle, keeping the first leg fixed
+            Point2D.Double v1 = Point2DSupport.pointDelta(_center, _leg);
+            Point2D.Double v2 = Point2DSupport.pointDelta(_center, wp);
 
-			Point2D.Double wp0 = new Point2D.Double();
-			Point2D.Double wp2 = new Point2D.Double();
-			getContainer().localToWorld(p0, wp0);
-			getContainer().localToWorld(p2, wp2);
+            double dot = v1.x * v2.x + v1.y * v2.y;
+            double cross = Point2DSupport.cross(v1, v2);
+            _arcAngle = Math.toDegrees(Math.atan2(cross, dot)); // signed (-180,180]
+            // If you want allow >180 sweeps, keep your unwrap logic from earlier here.
+        }
 
-			Point2D.Double v1 = Point2DSupport.pointDelta(wp0, wp1);
-			Point2D.Double v2 = Point2DSupport.pointDelta(wp0, wp2);
+        rebuildPath();
+    }
 
-			double arcAngle = Point2DSupport.angleBetween(v1, v2);
+    @Override
+    public Point[] getSelectionPoints(IContainer container) {
+        if (_path == null || container == null) {
+            return null;
+        }
 
-			double cross = Point2DSupport.cross(v1, v2);
-			int quadrant;
+        Point2D.Double[] wp = WorldGraphicsUtils.pathToWorldPolygon(_path);
+        if (wp == null || wp.length < 3) {
+            return null;
+        }
 
-			if (arcAngle < 90.0) {
-				if (cross > 0.0) {
-					quadrant = 1;
-				} else {
-					quadrant = 4;
-					arcAngle = -arcAngle;
-				}
-			} else {
-				if (cross > 0.0) {
-					quadrant = 2;
-				} else {
-					quadrant = 3;
-					arcAngle = -arcAngle;
-				}
-			}
+        // Two handles: first leg endpoint and last arc endpoint
+        Point[] pp = new Point[2];
+        pp[0] = new Point(); container.worldToLocal(pp[0], wp[1]);
+        pp[1] = new Point(); container.worldToLocal(pp[1], wp[wp.length - 1]);
+        return pp;
+    }
 
-			if ((lastQuadrant == 2) && (quadrant == 3)) {
-				extra += 360;
-			}
-			if ((lastQuadrant == 3) && (quadrant == 2)) {
-				extra -= 360;
-			}
-			arcAngle += extra;
-			while (arcAngle > 360.0) {
-				arcAngle -= 360.0;
-			}
-			while (arcAngle < -360.0) {
-				arcAngle += 360.0;
-			}
+    @Override
+    public Point getRotatePoint(IContainer container) {
+        if (!isRotatable() || _path == null || container == null) {
+            return null;
+        }
 
-			lastQuadrant = quadrant;
+        Point2D.Double[] wp = WorldGraphicsUtils.pathToWorldPolygon(_path);
+        if (wp == null || wp.length < 3) {
+            return null;
+        }
 
-			System.out.println("arcAngle: " + arcAngle + "  quadrant: " + quadrant);
+        int mid = 1 + (wp.length - 2) / 2; // roughly halfway along the arc boundary
+        Point p = new Point();
+        container.worldToLocal(p, wp[mid]);
+        return p;
+    }
 
-			_path = WorldGraphicsUtils
-					.worldPolygonToPath(WorldGraphicsUtils.getRadArcPoints(wp0, wp1, arcAngle));
-			updateFocus();
-
-		}
-	}
-
-	/**
-	 * A modification such as a drag, resize or rotate has ended.
-	 */
-	@Override
-	public void stopModification() {
-		super.stopModification();
-		lastQuadrant = 0;
-		extra = 0.0;
-	}
-
-	/**
-	 * Obtain the selection points used to indicate this item is selected.
-	 *
-	 * @return the selection points used to indicate this item is selected.
-	 */
-	@Override
-	public Point[] getSelectionPoints(IContainer container) {
-		// if the item cached a last drawn polygon lets use it--it better be
-		// right!
-
-		if ((_lastDrawnPolygon != null) && (_lastDrawnPolygon.npoints > 1)) {
-			Point pp[] = new Point[2];
-
-			int n = _lastDrawnPolygon.npoints;
-			int x[] = _lastDrawnPolygon.xpoints;
-			int y[] = _lastDrawnPolygon.ypoints;
-			pp[0] = new Point(x[1], y[1]);
-			pp[1] = new Point(x[n - 1], y[n - 1]);
-			return pp;
-		}
-
-		return null;
-	}
-
-	/**
-	 * Get the rotation point
-	 *
-	 * @param container the container bing rendered
-	 * @return the rotation point where rotations are initiated
-	 */
-	@Override
-	public Point getRotatePoint(IContainer container) {
-		if (!isRotatable()) {
-			return null;
-		}
-
-		if ((_lastDrawnPolygon != null) && (_lastDrawnPolygon.npoints > 1)) {
-			int n = 1 + _lastDrawnPolygon.npoints / 2;
-			int x[] = _lastDrawnPolygon.xpoints;
-			int y[] = _lastDrawnPolygon.ypoints;
-			return new Point(x[n], y[n]);
-		}
-
-		return null;
-	}
-
-	// called by the modify method to tell the item to update its focus.
-	// (because the item was dragged.) The default method is the path centroid.
-	@Override
-	protected void updateFocus() {
-		_focus = WorldGraphicsUtils.getPathPointAt(0, _path);
-	}
 
 }

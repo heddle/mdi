@@ -5,12 +5,11 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -21,270 +20,390 @@ import edu.cnu.mdi.graphics.text.Snippet;
 import edu.cnu.mdi.graphics.text.UnicodeSupport;
 import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 import edu.cnu.mdi.ui.fonts.Fonts;
-import edu.cnu.mdi.util.TextUtils;
 
-
+/**
+ * A drawable item that renders text with a rectangular background/border.
+ * <p>
+ * Key invariants:
+ * <ul>
+ *   <li>{@link #_focus} is the <b>center</b> of the text box.</li>
+ *   <li>When the item is being modified (drag/resize/rotate), we do <b>not</b>
+ *       rebuild the path from font metrics. We rely on the affine transforms in
+ *       {@link PathBasedItem#modify()} so the rectangle and handles stay
+ *       lockstep with the mouse.</li>
+ *   <li>The text baseline point is tracked as a {@link #_secondaryPoints}
+ *       entry so it transforms together with the rectangle.</li>
+ *   <li>When the modification ends, we “snap” back to a clean metrics-derived
+ *       rectangle for stable serialization and consistent redraw.</li>
+ * </ul>
+ * </p>
+ */
 public class TextItem extends RectangleItem {
 
-	// makes the bounds bigger than the text by a bit
-	private static final int MARGIN = 4;
+    /** Pixel margin around text bounds. */
+    private static final int MARGIN = 4;
 
-	// twice the margin
-	private static final int MARGIN2 = 2 * MARGIN;
+    /** Twice the margin. */
+    private static final int MARGIN2 = 2 * MARGIN;
 
-	// default font
-	private static final Font _defaultFont = Fonts.commonFont(Font.PLAIN, 12);
+    /** Default font. */
+    private static final Font DEFAULT_FONT = Fonts.commonFont(Font.PLAIN, 12);
 
-	// font for rendering
-	private Font _font = _defaultFont;
+    /** Font used to render the text. */
+    private Font _font = DEFAULT_FONT;
 
-	// text being rendered
-	private String _text;
+    /** The text to render. */
+    private String _text;
 
-	// text foreground
-	private Color _textColor = Color.black;
+    /** Text foreground color. */
+    private Color _textColor = Color.black;
 
-	/**
-	 *
-	 * @param itemList  the list which will hold the item.
-	 * @param location  the location of the lower left
-	 * @param font      the font to use.
-	 * @param text      the text to display.
-	 * @param textColor the text foreground color.
-	 * @param fillColor the text background color.
-	 * @param lineColor the border color
-	 */
-	public TextItem(ItemList itemList, Point2D.Double location, Font font, String text, Color textColor,
-			Color fillColor, Color lineColor) {
-		super(itemList, new Rectangle2D.Double(location.x, location.y, 1, 1));
-		setFont(font);
-		setText(text);
-		_textColor = textColor;
-		_style.setFillColor(fillColor);
-		_style.setLineColor(lineColor);
 
-		_focus = location;
-		_resizePolicy = ResizePolicy.SCALEONLY;
-	}
+    /** Font size at the moment a modification begins (used for smooth scaling). */
+    private int _startFontSize = -1;
 
-	/**
-	 * Custom drawer for the text item.
-	 *
-	 * @param g         the graphics context.
-	 * @param container the graphical container being rendered.
-	 */
-	@Override
-	public void drawItem(Graphics2D g, IContainer container) {
+    /**
+     * Create a text item.
+     *
+     * @param itemList  the list which will hold the item
+     * @param location  world location of the text baseline start (left/baseline) used to seed initial focus
+     * @param font      font to use (null -> default)
+     * @param text      text to display
+     * @param textColor text foreground (null -> black)
+     * @param fillColor background fill (may be null)
+     * @param lineColor border color (may be null)
+     */
+    public TextItem(ItemList itemList,
+                    Point2D.Double location,
+                    Font font,
+                    String text,
+                    Color textColor,
+                    Color fillColor,
+                    Color lineColor) {
 
-		Point2D.Double oldFocus = _focus;
-		setPath(getPoints(container));
-		_focus = oldFocus;
-		super.drawItem(g, container);
+        // Temporary rectangle; real geometry is computed from metrics + focus.
+        super(itemList, new Rectangle2D.Double(location.x, location.y, 1, 1));
 
-		if (_text == null) {
-			return;
-		}
+        setFont(font);
+        setText(text);
 
-		Point p = getFocusPoint(container);
-		g.setColor((_textColor != null) ? _textColor : Color.black);
+        _textColor = (textColor != null) ? textColor : Color.black;
+        _style.setFillColor(fillColor);
+        _style.setLineColor(lineColor);
 
-		GraphicsUtils.drawSnippets(g, p.x, p.y, _font, _text, container.getComponent(), getAzimuth());
-		g.setFont(_font);
-	}
+        // Seed focus at the baseline point; first draw will recenter correctly.
+        _focus = new Point2D.Double(location.x, location.y);
 
-	/**
-	 * Get the size of the text, including an invisible border of thickness MARGIN
-	 * all around.
-	 *
-	 * @return the size of the text, including an invisible border of thickness
-	 *         MARGIN all around.
-	 */
-	public static Dimension sizeText(Component component, Font font, String text) {
-		if (text == null) {
-			return null;
-		}
+        // Text boxes should scale uniformly.
+        _resizePolicy = ResizePolicy.SCALEONLY;
 
-		int width = 0;
-		int height = 0;
-		ArrayList<Snippet> snippets = Snippet.getSnippets(font, text, component);
-		for (Snippet s : snippets) {
-			Dimension size = s.size(component);
-			width = Math.max(width, s.getDeltaX() + size.width);
-			height = Math.max(height, s.getDeltaY() + size.height);
-		}
+        setResizable(true);
+        setRotatable(true);
+        setDraggable(true);
 
-		return new Dimension(width + MARGIN2, height + MARGIN2);
-	}
+        // Track baseline as a secondary point so it transforms with the path.
+        _secondaryPoints = new Point2D.Double[] { new Point2D.Double(location.x, location.y) };
+    }
 
-	/**
-	 * @return the font
-	 */
-	public Font getFont() {
-		return _font;
-	}
+    /**
+     * Called only when a modification starts; we capture the starting font size
+     * so scaling uses the same reference throughout the drag.
+     *
+     * @param itemModification the modification record
+     */
+    @Override
+    public void setModificationItem(ItemModification itemModification) {
+        super.setModificationItem(itemModification);
+        _startFontSize = (_font != null) ? _font.getSize() : -1;
 
-	/**
-	 * @param font the font to set
-	 */
-	public void setFont(Font font) {
-		_font = font;
-		if (_font == null) {
-			_font = _defaultFont;
-		}
-	}
+        // Ensure we have a clean geometry before transforms begin.
+        if (_path == null && itemModification != null) {
+            rebuildGeometry(itemModification.getContainer());
+        }
+    }
 
-	/**
-	 * @return the text
-	 */
-	public String getText() {
-		return _text;
-	}
+    /**
+     * Draw rectangle then draw text.
+     */
+    @Override
+    public void drawItem(Graphics2D g, IContainer container) {
 
-	/**
-	 * @param text the text to set
-	 */
-	public void setText(String text) {
-		_text = UnicodeSupport.specialCharReplace(text);
-		_text = text;
-	}
 
-	/**
-	 * Get the text foreground color
-	 *
-	 * @return the text foreground color
-	 */
-	public Color getTextColor() {
-		return _textColor;
-	}
+        // IMPORTANT:
+        // If we are actively modifying, do NOT rebuild from metrics (causes “faster than mouse”).
+        // Let PathBasedItem.modify() keep _path and _secondaryPoints in sync with the mouse.
+        if (_modification == null) {
+            rebuildGeometry(container);
+        }
 
-	/**
-	 * Set the text foreground color
-	 *
-	 * @param textForeground the text foreground color to set
-	 */
-	public void setTextColor(Color textForeground) {
-		_textColor = textForeground;
-	}
+        // Draw the rectangle via PathBasedItem rendering.
+        super.drawItem(g, container);
 
-	/**
-	 * Get the rotation point
-	 *
-	 * @param container the container bing rendered
-	 * @return the rotation point where rotations are initiated
-	 */
-	@Override
-	public Point getRotatePoint(IContainer container) {
-		if (!isRotatable()) {
-			return null;
-		}
+        if (_text == null || container == null) {
+            return;
+        }
 
-		if (_lastDrawnPolygon != null) {
-			int x = (_lastDrawnPolygon.xpoints[1] + _lastDrawnPolygon.xpoints[2]) / 2;
-			int y = (_lastDrawnPolygon.ypoints[1] + _lastDrawnPolygon.ypoints[2]) / 2;
-			return new Point(x, y);
-		}
-		return null;
-	}
+        // Baseline is stored in secondary point #0 (kept in sync during transforms).
+        Point2D.Double baselineWorld = (_secondaryPoints != null && _secondaryPoints.length > 0)
+                ? _secondaryPoints[0]
+                : _focus;
 
-	// get the world rectangle bounds
-	private static Rectangle2D.Double getWorldRectangle(IContainer container, Point2D.Double location, Font font,
-			String text) {
+        Point pBase = new Point();
+        container.worldToLocal(pBase, baselineWorld);
 
-		Dimension size = sizeText(container.getComponent(), font, text);
-		FontMetrics fm = container.getComponent().getFontMetrics(font);
-		Point p = new Point();
-		container.worldToLocal(p, location);
-		Rectangle r = new Rectangle(p.x - MARGIN, p.y - fm.getAscent() - MARGIN, size.width, size.height);
-		Rectangle2D.Double wr = new Rectangle2D.Double();
-		container.localToWorld(r, wr);
-		return wr;
-	}
+        g.setColor((_textColor != null) ? _textColor : Color.black);
 
-	// get the corners
-	private Point2D.Double[] getPoints(IContainer container) {
-		// step one: get unrotated worlds rect
-		Rectangle2D.Double wr = getWorldRectangle(container, _focus, _font, _text);
+        // Delegate rotation direction convention to your existing snippet renderer.
+        GraphicsUtils.drawSnippets(g, pBase.x, pBase.y, _font, _text, container.getComponent(), getAzimuth());
+    }
 
-		// step two: get rectangle points
-		Point2D.Double points[] = WorldGraphicsUtils.getPoints(wr);
+    /**
+     * Selection points are the 4 rectangle corners, computed from the current path.
+     */
+    @Override
+    public Point[] getSelectionPoints(IContainer container) {
+        if (container == null) {
+            return null;
+        }
+        if (_path == null && _modification == null) {
+            rebuildGeometry(container);
+        }
+        if (_path == null) {
+            return null;
+        }
 
-		// rotate ?
-		if (Math.abs(getAzimuth()) > 0.001) {
-			AffineTransform at = AffineTransform.getRotateInstance(Math.toRadians(-getAzimuth()), _focus.x, _focus.y);
-			for (Point2D.Double wp : points) {
-				at.transform(wp, wp);
-			}
-		}
-		return points;
-	}
+        Polygon poly = WorldGraphicsUtils.pathToPolygon(container, _path);
+        if (poly == null || poly.npoints < 4) {
+            return null;
+        }
 
-	@Override
-	public void stopModification() {
-		_path = WorldGraphicsUtils.worldPolygonToPath(getPoints(getContainer()));
-		super.stopModification();
-	}
+        Point[] pts = new Point[4];
+        for (int i = 0; i < 4; i++) {
+            pts[i] = new Point(poly.xpoints[i], poly.ypoints[i]);
+        }
+        return pts;
+    }
 
-	/**
-	 * Simple scaling of the object.
-	 */
-	@Override
-	protected void scale() {
-		_path = (Path2D.Double) (_modification.getStartPath().clone());
-		Point2D.Double startPoint = _modification.getStartWorldPoint();
-		Point2D.Double currentPoint = _modification.getCurrentWorldPoint();
+    /**
+     * Use {@link PathBasedItem}'s rotate handle logic (outward from focus along azimuth).
+     */
+    @Override
+    public Point getRotatePoint(IContainer container) {
+        if (_path == null && container != null && _modification == null) {
+            rebuildGeometry(container);
+        }
+        return super.getRotatePoint(container);
+    }
 
-		Point2D.Double center = WorldGraphicsUtils.getCentroid(_path);
+    /**
+     * Scale-only resizing:
+     * <ul>
+     *   <li>Let {@link PathBasedItem#scale()} do the geometric affine scale of the path and secondary point.</li>
+     *   <li>Adjust the font size smoothly from the stored start font size using the same scale factor.</li>
+     * </ul>
+     * This keeps the rectangle/handles locked to the mouse (path drives geometry),
+     * while the text size tracks the drag without rebuilding the box mid-drag.
+     */
+    @Override
+    protected void scale() {
+        if (_modification == null) {
+            return;
+        }
 
-		Point2D.Double startFocus = _modification.getStartFocus();
-		double oldFocusDx = center.x - startFocus.x;
-		double oldFocusDy = center.y - startFocus.y;
+        // Compute scale factor exactly as PathBasedItem does (relative to focus).
+        if (_focus == null) {
+            updateFocus();
+            if (_focus == null) {
+                return;
+            }
+        }
 
-		double scale = currentPoint.distance(center) / startPoint.distance(center);
-		AffineTransform at = AffineTransform.getTranslateInstance(center.x, center.y);
-		at.concatenate(AffineTransform.getScaleInstance(scale, scale));
-		at.concatenate(AffineTransform.getTranslateInstance(-center.x, -center.y));
-		_path.transform(at);
+        Point2D.Double startPoint = _modification.getStartWorldPoint();
+        Point2D.Double currentPoint = _modification.getCurrentWorldPoint();
 
-		_focus.x = center.x - scale * oldFocusDx;
-		_focus.y = center.y - scale * oldFocusDy;
+        double denom = startPoint.distance(_focus);
+        if (denom < 1.0e-12) {
+            return;
+        }
 
-		// updateFocus();
+        double s = currentPoint.distance(_focus) / denom;
 
-		// change font size?
+        // 1) Geometrically scale the path and secondary point lockstep with mouse.
+        super.scale(); // uses _modification startPath + secondaryPath -> keeps handles “attached”
 
-		if (this._lastDrawnPolygon != null) {
-			int x0 = _lastDrawnPolygon.xpoints[0];
-			int x1 = _lastDrawnPolygon.xpoints[1];
-			int x2 = _lastDrawnPolygon.xpoints[2];
+        // 2) Update font size proportionally (but do NOT rebuild geometry mid-drag).
+        if (_startFontSize <= 0) {
+            _startFontSize = (_font != null) ? _font.getSize() : 12;
+        }
 
-			int y0 = _lastDrawnPolygon.ypoints[0];
-			int y1 = _lastDrawnPolygon.ypoints[1];
-			int y2 = _lastDrawnPolygon.ypoints[2];
+        int newSize = (int) Math.round(_startFontSize * s);
+        newSize = Math.max(2, Math.min(newSize, 256));
+        _font = new Font(_font.getFontName(), _font.getStyle(), newSize);
+    }
 
-			double delx = x2 - x1;
-			double dely = y2 - y1;
-			int w = (int) Math.sqrt(delx * delx + dely * dely);
+    /**
+     * When a modification ends, snap geometry back to a clean rectangle derived from metrics.
+     * This prevents tiny transform noise from accumulating across many edits.
+     */
+    @Override
+    public void stopModification() {
+        super.stopModification();
+        _startFontSize = -1;
 
-			delx = x1 - x0;
-			dely = y1 - y0;
+        if (getContainer() != null) {
+            rebuildGeometry(getContainer());
+        }
+    }
 
-			// get present size requirement
-			Dimension size = sizeText(getContainer().getComponent(), _font, _text);
+    /**
+     * Rebuild rectangle path and baseline point from current focus/font/text/azimuth.
+     * <p>
+     * This is called only when NOT actively modifying, so it cannot cause
+     * “mouse drift” during a drag.
+     * </p>
+     *
+     * @param container the rendering container
+     */
+    private void rebuildGeometry(IContainer container) {
+        if (container == null || container.getComponent() == null || _focus == null || _text == null) {
+            return;
+        }
 
-			if (size.width > w) {
-				while (size.width > w) {
-					_font = TextUtils.nextSmallerFont(_font, 1);
-					size = sizeText(getContainer().getComponent(), _font, _text);
-				}
-			} else if (size.width < w) {
-				while (size.width <= w) {
-					_font = TextUtils.nextBiggerFont(_font, 1);
-					size = sizeText(getContainer().getComponent(), _font, _text);
-				}
-				_font = TextUtils.nextSmallerFont(_font, 1);
-			}
+        Component comp = container.getComponent();
+        FontMetrics fm = comp.getFontMetrics(_font);
 
-		}
-	}
+        Dimension size = sizeText(comp, _font, _text);
+        if (size == null) {
+            return;
+        }
 
+        // Center in pixels from world focus.
+        Point pCenter = new Point();
+        container.worldToLocal(pCenter, _focus);
+
+        // Unrotated rectangle in pixels centered at focus.
+        int rectX = pCenter.x - size.width / 2;
+        int rectY = pCenter.y - size.height / 2;
+
+        Rectangle rectPix = new Rectangle(rectX, rectY, size.width, size.height);
+
+        // Baseline (left/baseline) in pixels for the *unrotated* rectangle.
+        int baseX = rectX + MARGIN;
+        int baseY = rectY + MARGIN + fm.getAscent();
+
+        // Convert rectangle corners to world (unrotated).
+        Point2D.Double[] corners = new Point2D.Double[4];
+        for (int i = 0; i < 4; i++) {
+            corners[i] = new Point2D.Double();
+        }
+
+        Point p0 = new Point(rectPix.x, rectPix.y);
+        Point p1 = new Point(rectPix.x, rectPix.y + rectPix.height);
+        Point p2 = new Point(rectPix.x + rectPix.width, rectPix.y + rectPix.height);
+        Point p3 = new Point(rectPix.x + rectPix.width, rectPix.y);
+
+        container.localToWorld(p0, corners[0]);
+        container.localToWorld(p1, corners[1]);
+        container.localToWorld(p2, corners[2]);
+        container.localToWorld(p3, corners[3]);
+
+        // Baseline to world (unrotated).
+        Point pBase = new Point(baseX, baseY);
+        if (_secondaryPoints == null || _secondaryPoints.length < 1) {
+            _secondaryPoints = new Point2D.Double[] { new Point2D.Double() };
+        }
+        container.localToWorld(pBase, _secondaryPoints[0]);
+
+        // Rotate corners and baseline about focus to match your framework azimuth convention.
+        double az = getAzimuth();
+        if (Math.abs(az) > 1.0e-6) {
+            AffineTransform at = AffineTransform.getRotateInstance(Math.toRadians(-az), _focus.x, _focus.y);
+            for (Point2D.Double wp : corners) {
+                at.transform(wp, wp);
+            }
+            at.transform(_secondaryPoints[0], _secondaryPoints[0]);
+        }
+
+        _path = WorldGraphicsUtils.worldPolygonToPath(corners);
+
+        // Ensure focus stays exactly centered.
+        updateFocus();
+    }
+
+    /**
+     * Computes the pixel size of the rendered text including margin.
+     *
+     * @param component the component used for font metrics/snippet layout
+     * @param font      the font
+     * @param text      the text
+     * @return the pixel size including margins, or null
+     */
+    public static Dimension sizeText(Component component, Font font, String text) {
+        if (text == null || component == null || font == null) {
+            return null;
+        }
+
+        int width = 0;
+        int height = 0;
+        ArrayList<Snippet> snippets = Snippet.getSnippets(font, text, component);
+        for (Snippet s : snippets) {
+            Dimension sz = s.size(component);
+            width = Math.max(width, s.getDeltaX() + sz.width);
+            height = Math.max(height, s.getDeltaY() + sz.height);
+        }
+
+        return new Dimension(width + MARGIN2, height + MARGIN2);
+    }
+
+    /** @return the font used for rendering (never null) */
+    public Font getFont() {
+        return _font;
+    }
+
+    /**
+     * Set the rendering font.
+     *
+     * @param font the font (null -> default)
+     */
+    public void setFont(Font font) {
+        _font = (font != null) ? font : DEFAULT_FONT;
+    }
+
+    /** @return the text being rendered */
+    public String getText() {
+        return _text;
+    }
+
+    /**
+     * Set the text being rendered.
+     *
+     * @param text the text (may be null)
+     */
+    public void setText(String text) {
+        _text = (text != null) ? UnicodeSupport.specialCharReplace(text) : null;
+    }
+
+    /** @return the text foreground color */
+    public Color getTextColor() {
+        return _textColor;
+    }
+
+    /**
+     * Set the text foreground color.
+     *
+     * @param textForeground the new text foreground color
+     */
+    public void setTextColor(Color textForeground) {
+        _textColor = textForeground;
+    }
+
+    /**
+     * Update focus to be the rectangle center (centroid of the box path).
+     */
+    @Override
+    protected void updateFocus() {
+        if (_path != null) {
+            _focus = WorldGraphicsUtils.getCentroid(_path);
+        }
+    }
 }

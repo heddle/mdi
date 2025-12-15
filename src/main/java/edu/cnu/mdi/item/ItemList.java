@@ -62,29 +62,23 @@ public class ItemList extends DrawableList {
 	 * @param container
 	 */
 	public void clearAllItems(IContainer container) {
+	    synchronized (this) {
 
-		synchronized (this) {
+	        ArrayList<AItem> allItems = getAllItems();
+	        if (allItems == null) {
+	            clear();
+	            return;
+	        }
 
-			ArrayList<AItem> allItems = getAllItems();
-			if (allItems == null) {
-				return;
-			}
+	        for (AItem item : allItems) {
+	            if (item.isDeletable()) {
+	                deleteInternal(item, container);
+	            }
+	        }
+	    }
 
-			for (AItem item : allItems) {
-				if (item.isDeletable() && (container != null)) {
-
-					container.getFeedbackControl().removeFeedbackProvider(item);
-					remove(item);
-
-					// did I delete the reference item?
-					if (item == container.getYouAreHereItem()) {
-						container.setYouAreHereItem(null);
-					}
-				}
-			}
-		}
-
-		clear();
+	    // Do NOT call clear() here: it would remove any remaining non-deletable items
+	    // without detaching feedback, and it also emits LISTCLEARED which can be misleading.
 	}
 
 	/**
@@ -96,30 +90,20 @@ public class ItemList extends DrawableList {
 	 */
 	public void deleteSelectedItems(IContainer container) {
 
-		// if the list is not visible, do nothing.
-		if (!isVisible()) {
-			return;
-		}
+	    if (!isVisible()) {
+	        return;
+	    }
 
-		synchronized (this) {
-			ArrayList<AItem> selitems = getSelectedItems();
-			if (selitems != null) {
-				for (AItem item : selitems) {
-					if (item.isDeletable()) {
-
-						if (container != null) {
-							container.getFeedbackControl().removeFeedbackProvider(item);
-						}
-						remove(item);
-
-						// did I delete the reference item?
-						if ((container != null) && (item == container.getYouAreHereItem())) {
-							container.setYouAreHereItem(null);
-						}
-					}
-				}
-			}
-		}
+	    synchronized (this) {
+	        ArrayList<AItem> selitems = getSelectedItems();
+	        if (selitems != null) {
+	            for (AItem item : selitems) {
+	                if (item.isDeletable()) {
+	                    deleteInternal(item, container);
+	                }
+	            }
+	        }
+	    }
 	}
 
 	/**
@@ -129,9 +113,33 @@ public class ItemList extends DrawableList {
 	 * @param item the item to remove
 	 */
 	public void deleteItem(AItem item) {
-		item.getContainer().getFeedbackControl().removeFeedbackProvider(item);
-		remove(item);
+	    synchronized (this) {
+	        deleteInternal(item, (item != null) ? item.getContainer() : _container);
+	    }
 	}
+	
+	/**
+	 * Detach an item from container-managed services (feedback, reference items),
+	 * then remove it from this list. Note that {@link DrawableList#remove(IDrawable)}
+	 * will call {@code item.prepareForRemoval()} automatically.
+	 */
+	private void deleteInternal(AItem item, IContainer container) {
+	    if (item == null) {
+	        return;
+	    }
+
+	    IContainer c = (container != null) ? container : _container;
+	    if (c != null) {
+	        c.getFeedbackControl().removeFeedbackProvider(item);
+
+	        if (item == c.getYouAreHereItem()) {
+	            c.setYouAreHereItem(null);
+	        }
+	    }
+
+	    remove(item); // calls prepareForRemoval() + notifies REMOVED
+	}
+
 
 	/**
 	 * Find the topmost item, if any, at the point, probably a mouse location.
@@ -361,4 +369,7 @@ public class ItemList extends DrawableList {
 	public IContainer getContainer() {
 		return _container;
 	}
+	
+
+
 }

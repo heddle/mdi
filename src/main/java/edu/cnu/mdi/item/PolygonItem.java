@@ -4,25 +4,30 @@ import java.awt.geom.Point2D;
 
 import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 
+/**
+ * A closed, filled/stroked polygon defined in world coordinates.
+ * <p>
+ * The polygon geometry is stored as a world-coordinate {@link java.awt.geom.Path2D}.
+ * Selection/reshape modifies vertices of that path.
+ * </p>
+ */
 public class PolygonItem extends PathBasedItem {
 
 	/**
-	 * Create a world polygon item
+	 * Create a world polygon item.
 	 *
-	 * @param itemList  the list this item is on.
-	 * @param points the points of the polygon
+	 * @param itemList the list this item is on.
+	 * @param points   the points of the polygon (world coordinates).
 	 */
-	public PolygonItem(ItemList itemList, Point2D.Double points[]) {
+	public PolygonItem(ItemList itemList, Point2D.Double[] points) {
 		super(itemList);
-
-		// set the path
 		if (points != null) {
 			setPath(points);
 		}
 	}
 
 	/**
-	 * Create a world polygon item
+	 * Create an empty world polygon item (path may be set later).
 	 *
 	 * @param itemList the list this item is on.
 	 */
@@ -33,25 +38,42 @@ public class PolygonItem extends PathBasedItem {
 	/**
 	 * Set the path from a world polygon.
 	 *
-	 * @param points the points of the polygon.
+	 * @param points the points of the polygon (world coordinates).
 	 */
-	public void setPath(Point2D.Double points[]) {
+	public void setPath(Point2D.Double[] points) {
 		_path = WorldGraphicsUtils.worldPolygonToPath(points);
-		_focus = WorldGraphicsUtils.getCentroid(_path);
+		geometryChanged(); // updates focus + marks dirty
+	}
+
+	@Override
+	protected void updateFocus() {
+		_focus = (_path == null) ? null : WorldGraphicsUtils.getCentroid(_path);
 	}
 
 	/**
-	 * Reshape the polygon based on the modification. Not much we can do to a
-	 * polygon except move the selected point. Keep in mind that if control or shift
-	 * was pressed, the polygon will scale rather than coming here.
+	 * Reshape the polygon by moving the selected vertex to the current world point.
+	 * <p>
+	 * If Ctrl/Shift is held, scaling logic happens elsewhere (so this method is not used).
+	 * </p>
 	 */
 	@Override
 	protected void reshape() {
+		if (_path == null || _modification == null) {
+			return;
+		}
+
 		int index = _modification.getSelectIndex();
 		Point2D.Double[] wpoly = WorldGraphicsUtils.pathToWorldPolygon(_path);
-		Point2D.Double wp = _modification.getCurrentWorldPoint();
-		wpoly[index] = wp;
+		if (wpoly == null || index < 0 || index >= wpoly.length) {
+			return;
+		}
+
+		wpoly[index] = _modification.getCurrentWorldPoint();
 		setPath(wpoly);
 	}
 
+	@Override
+	protected boolean isClosedPath() {
+		return true;
+	}
 }

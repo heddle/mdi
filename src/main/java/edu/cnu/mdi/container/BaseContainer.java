@@ -312,16 +312,26 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void removeItemList(ItemList itemList) {
-		if (itemList != null) {
-			_itemLists.remove(itemList);
-			// also remove from hash
-			if (_userItemLists.contains(itemList)) {
-				_userItemLists.remove(itemList.getName());
-			}
-		}
+	    if (itemList == null) {
+	        return;
+	    }
+	    
+	    if (itemList == _annotationList || itemList == _glassList) {
+	        return;
+	    }
+
+
+	    // Stop receiving events from this list
+	    itemList.removeDrawableListener(this);
+
+	    // Remove from the drawable collection
+	    _itemLists.remove(itemList);
+
+	    // Remove from user list map (safe even if not present)
+	    _userItemLists.remove(itemList.getName());
 	}
 
 

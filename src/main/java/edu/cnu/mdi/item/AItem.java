@@ -139,7 +139,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * A locked item cannot be dragged, rotated, resized, or deleted--regardless of
 	 * the values of those flags.
 	 */
-	protected boolean _locked = true;
+	protected boolean _locked = false;
 
 	/**
 	 * Controls whether the item can be resized.
@@ -654,7 +654,23 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return the box around the item.
 	 */
 	public Rectangle getBounds(IContainer container) {
-		return null;
+	    Rectangle2D.Double wr = getWorldBounds();
+	    if (wr == null || wr.isEmpty()) {
+	        return null;
+	    }
+	    Rectangle r = new Rectangle();
+	    container.worldToLocal(r, wr);
+	    return r;
+	}
+	
+	/**
+	 * Get the pick tolerance in pixels.
+	 *
+	 * @param container the container being rendered
+	 * @return the pick tolerance in pixels.
+	 */
+	protected double getPickTolerancePx(IContainer container) {
+	    return 6.0;
 	}
 
 	/**
@@ -668,6 +684,10 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * A modification such as a drag, resize or rotate has begun.
 	 */
 	public void startModification() {
+		
+		if (_modification == null) {
+			return;
+		}
 
 		IContainer container = _modification.getContainer();
 		Point smp = _modification.getStartMousePoint();
@@ -698,6 +718,11 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * A modification such as a drag, resize or rotate has ended.
 	 */
 	public void stopModification() {
+		
+		if (_modification == null) {
+			return;
+		}
+		
 		switch (_modification.getType()) {
 		case DRAG:
 			_itemList.notifyDrawableChangeListeners(this, DrawableChangeType.MOVED);
@@ -734,6 +759,26 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	public void setFocus(Point2D.Double wp) {
 		_focus = wp;
 	}
+
+    /**
+     * Update the focus point after a geometry change.
+     * <p>
+     * Default implementation does nothing. Subclasses may override (e.g. LineItem
+     * uses midpoint; polygonal items might use centroid).
+     * </p>
+     */
+    protected void updateFocus() {
+        // default: no-op
+    }
+
+    /**
+     * Convenience hook for subclasses: call this after changing geometry.
+     * Marks the item dirty and updates focus.
+     */
+    protected final void geometryChanged() {
+        updateFocus();
+        setDirty(true);
+    }
 
 	/**
 	 * This gets the screen (pixel) version focus of the item. Fot pointlike items
@@ -1035,7 +1080,8 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 
 	    // Iterate over a shallow copy to prevent concurrency issues
 	    for (IDrawable drawable : new ArrayList<>(_children)) {
-	        if (drawable instanceof AItem item) {
+	        if (drawable instanceof AItem) {
+	            AItem item = (AItem) drawable;
 	            ItemList itemList = item.getItemList();
 	            if (itemList != null) {
 	                itemList.remove(item);
@@ -1051,20 +1097,23 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 */
 	@Override
 	public void prepareForRemoval() {
-		// tell my parent I am no longer its child
-		if (_parent != null) {
-			_parent.removeChild(this);
 
-			_focus = null;
-			_lastDrawnPolygon = null;
-			_itemList = null;
-			_path = null;
-			_secondaryPoints = null;
-			_style = null;
-		}
+	    // tell my parent I am no longer its child
+	    if (_parent != null) {
+	        _parent.removeChild(this);
+	    }
 
-		// remove my children
-		deleteAllChildren();
+	    // remove my children
+	    deleteAllChildren();
+
+	    // clear references (always)
+	    _focus = null;
+	    _lastDrawnPolygon = null;
+	    _path = null;
+	    _secondaryPoints = null;
+	    _style = null;
+	    _modification = null;
+	    _itemList = null;
 	}
 
 	/**
@@ -1157,4 +1206,5 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		return _itemList.isEnabled();
 	}
 
+	
 }

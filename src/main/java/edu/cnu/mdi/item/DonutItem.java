@@ -6,52 +6,44 @@ import java.awt.geom.Point2D;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 
-
 public class DonutItem extends PolygonItem {
 
-	/**
-	 * Create a donut item.
-	 *
-	 * @param itemList       the item list
-	 * @param wpc         the center of the arc
-	 * @param radiusInner the inner radius
-	 * @param radiusOuter the outer radius
-	 * @param startAngle  the startAngle in degrees measured like the usual polar
-	 *                    angle theta
-	 * @param arcAngle    the opening angle COUNTERCLOCKWISE in degrees.
-	 */
-	public DonutItem(ItemList itemList, Point2D.Double wpc, double radiusInner, double radiusOuter, double startAngle,
-			double arcAngle) {
-		super(itemList, WorldGraphicsUtils.getDonutPoints(wpc, radiusInner, radiusOuter, startAngle, arcAngle));
-		setAzimuth(90 - startAngle - arcAngle / 2);
-		// System.err.println("AZIMUTH: " + (90 - startAngle - arcAngle/2));
-		_focus = wpc;
-	}
+    public DonutItem(ItemList itemList,
+                     Point2D.Double wpc,
+                     double radiusInner,
+                     double radiusOuter,
+                     double startAngle,
+                     double arcAngle) {
 
-	/**
-	 * Obtain the selection points used to indicate this item is selected.
-	 *
-	 * @return the selection points used to indicate this item is selected.
-	 */
-	@Override
-	public Point[] getSelectionPoints(IContainer container) {
-		// if the item cached a last drawn polygon lets use it--it better be
-		// right!
+        super(itemList, WorldGraphicsUtils.getDonutPoints(wpc, radiusInner, radiusOuter, startAngle, arcAngle));
+        setAzimuth(90 - startAngle - arcAngle / 2.0);
+        setFocus(wpc);
+    }
 
-		if ((_lastDrawnPolygon != null) && (_lastDrawnPolygon.npoints > 1)) {
-			Point pp[] = new Point[4];
+    @Override
+    public Point[] getSelectionPoints(IContainer container) {
+        if (_path == null || container == null) {
+            return null;
+        }
 
-			int n = _lastDrawnPolygon.npoints;
-			int n2 = n / 2;
-			int x[] = _lastDrawnPolygon.xpoints;
-			int y[] = _lastDrawnPolygon.ypoints;
-			pp[0] = new Point(x[0], y[0]);
-			pp[1] = new Point(x[n2 - 1], y[n2 - 1]);
-			pp[2] = new Point(x[n2], y[n2]);
-			pp[3] = new Point(x[n - 1], y[n - 1]);
-			return pp;
-		}
-		return null;
-	}
+        Point2D.Double[] wp = WorldGraphicsUtils.pathToWorldPolygon(_path);
+        if (wp == null || wp.length < 4) {
+            return null;
+        }
 
+        int n = wp.length;
+        // Donut is NOT closed by duplicating the first point, so no "drop last" here.
+
+        int n2 = n / 2;
+        if (n2 < 2) {
+            return null;
+        }
+
+        Point[] pp = new Point[4];
+        pp[0] = new Point(); container.worldToLocal(pp[0], wp[0]);        // inner start
+        pp[1] = new Point(); container.worldToLocal(pp[1], wp[n2 - 1]);   // inner end
+        pp[2] = new Point(); container.worldToLocal(pp[2], wp[n2]);       // outer end
+        pp[3] = new Point(); container.worldToLocal(pp[3], wp[n - 1]);    // outer start
+        return pp;
+    }
 }
