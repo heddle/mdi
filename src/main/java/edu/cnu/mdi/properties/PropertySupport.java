@@ -58,7 +58,6 @@ public class PropertySupport {
 	public static final String TOPMARGIN = "TOPMARGIN";
 	public static final String USERDATA = "USERDATA";
 	public static final String VISIBLE = "VISIBLE";
-	public static final String VVPANEL = "VVPANEL";
 	public static final String VVLOCATION = "VVLOCATION";
 	public static final String WIDTH = "WIDTH";
 	public static final String WORLDSYSTEM = "WORLDSYSTEM";
@@ -551,17 +550,6 @@ public class PropertySupport {
 	 */
 	public static int getHeight(Properties props) {
 		return getInt(props, HEIGHT, Integer.MIN_VALUE);
-	}
-
-	/**
-	 * Get the virtual view panel from the properties
-	 *
-	 * @param props the properties
-	 * @return the virtual view panel. On error return Integer.MIN_VALUE (-2^31 =
-	 *         -2147483648)
-	 */
-	public static int getVVPanel(Properties props) {
-		return getInt(props, VVPANEL, Integer.MIN_VALUE);
 	}
 
 	/**

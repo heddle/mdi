@@ -32,15 +32,18 @@ public final class ToolBarBits {
             STYLEBUTTON | ELLIPSEBUTTON | TEXTBUTTON | RECTANGLEBUTTON | POLYGONBUTTON | LINEBUTTON | RADARCBUTTON | POLYLINEBUTTON;
 
     /** "Everything" means all known bits except the NOZOOM suppressor. */
-    public static final long EVERYTHING = (STYLEBUTTON | ELLIPSEBUTTON | TEXTBUTTON | RECTANGLEBUTTON | POLYGONBUTTON | LINEBUTTON
+    public static final long EVERYTHING = STYLEBUTTON | ELLIPSEBUTTON | TEXTBUTTON | RECTANGLEBUTTON | POLYGONBUTTON | LINEBUTTON
             | RANGEBUTTON | DELETEBUTTON | TEXTFIELD | CENTERBUTTON | UNDOZOOMBUTTON | RADARCBUTTON | POLYLINEBUTTON
-            | MAGNIFYBUTTON | PANBUTTON);
+            | MAGNIFYBUTTON | PANBUTTON;
 
     /** Default set (same as everything in your current intent). */
     public static final long STANDARD = EVERYTHING;
 
     /** Everything except drawing tools. */
     public static final long NODRAWING = EVERYTHING & ~DRAWING;
+    
+    /** All tools except the range tool. */
+    public static final long EVERYTHINGNORANGE = EVERYTHING & ~RANGEBUTTON;
 
     /** Only the text drawing tool (plus whatever non-drawing widgets you keep in STANDARD). */
     public static final long TEXTDRAWING = (STANDARD & ~DRAWING) | TEXTBUTTON;
