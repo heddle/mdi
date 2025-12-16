@@ -3,6 +3,7 @@ package edu.cnu.mdi.app;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.util.List;
 
@@ -22,6 +23,7 @@ import edu.cnu.mdi.mdi3D.item3D.Triangle3D;
 import edu.cnu.mdi.mdi3D.panel.Panel3D;
 import edu.cnu.mdi.mdi3D.view3D.PlainView3D;
 import edu.cnu.mdi.properties.PropertySupport;
+import edu.cnu.mdi.sim.demo.network.NetworkLayoutDemoView;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.view.DrawingView;
 import edu.cnu.mdi.view.LogView;
@@ -74,6 +76,7 @@ public class DemoApp extends BaseMDIApplication {
     private DrawingView drawingView;
     private MapView2D mapView;
     private LogView logView;
+    private NetworkLayoutDemoView networkLayoutDemoView;
 
     /**
      * Private constructor: use {@link #getInstance()}.
@@ -137,6 +140,9 @@ public class DemoApp extends BaseMDIApplication {
 
         // Map view (also loads demo geojson)
         mapView = createMapView();
+        
+        // Network layout demo view
+        networkLayoutDemoView = createNetworkLayoutDemoView();
     }
 
     /**
@@ -195,6 +201,10 @@ public class DemoApp extends BaseMDIApplication {
         
         //column 2: log view upper left
         virtualView.moveToStart(logView, 2, VirtualView.UPPERLEFT);
+        
+        // Column 3: network layout demo centered
+        virtualView.moveToStart(networkLayoutDemoView, 3, VirtualView.CENTER);
+        networkLayoutDemoView.setVisible(true);
     }
 
     // -------------------------------------------------------------------------
@@ -307,6 +317,20 @@ public class DemoApp extends BaseMDIApplication {
 
         return view3D;
     }
+    
+    /**
+	 * Create the network layout demo view.
+	 */
+    NetworkLayoutDemoView createNetworkLayoutDemoView() {
+		NetworkLayoutDemoView view = new NetworkLayoutDemoView(
+				PropertySupport.TITLE, "Network Layout Demo View",
+				PropertySupport.WIDTH, 800,
+				PropertySupport.HEIGHT, 400,
+				PropertySupport.VISIBLE, false,
+				PropertySupport.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, 1, 1)
+		);
+		return view;
+	}
 
     /**
      * Create the demo map view and load small GeoJSON datasets from resources.
@@ -337,8 +361,6 @@ public class DemoApp extends BaseMDIApplication {
 
         return new MapView2D(
                 PropertySupport.TITLE, "Sample 2D Map View",
-                PropertySupport.LEFT, 300,
-                PropertySupport.TOP, 200,
                 PropertySupport.WIDTH, 800,
                 PropertySupport.HEIGHT, 500,
                 PropertySupport.CONTAINERCLASS, MapContainer.class,

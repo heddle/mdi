@@ -1,0 +1,82 @@
+package edu.cnu.mdi.splot.model;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+/**
+ * Describes the fit model configuration used to produce a {@link FitResult}.
+ * This makes fit results reproducible and self-describing.
+ *
+ * Examples:
+ * <ul>
+ *   <li>Polynomial degree N</li>
+ *   <li>Gaussian with parameter names ["A","mu","sigma"]</li>
+ *   <li>Custom model with user-provided identifier</li>
+ * </ul>
+ */
+public final class FitSpec {
+
+    private final FitModelType modelType;
+    private final String modelId; // optional extra identifier; useful for CUSTOM or variants
+    private final List<String> parameterNames;
+    private final int polynomialDegree; // meaningful for POLYNOMIAL; otherwise -1
+
+    private FitSpec(FitModelType modelType, String modelId, List<String> parameterNames, int polynomialDegree) {
+        this.modelType = Objects.requireNonNull(modelType, "modelType");
+        this.modelId = Objects.requireNonNull(modelId, "modelId");
+        this.parameterNames = Collections.unmodifiableList(Objects.requireNonNull(parameterNames, "parameterNames"));
+        this.polynomialDegree = polynomialDegree;
+    }
+
+    public static FitSpec gaussian() {
+        return new FitSpec(FitModelType.GAUSSIAN, "gaussian",
+                List.of("A", "mu", "sigma"), -1);
+    }
+
+    public static FitSpec harmonic() {
+        return new FitSpec(FitModelType.HARMONIC, "harmonic",
+                List.of("A", "omega", "phi"), -1);
+    }
+
+    public static FitSpec polynomial(int degree) {
+        if (degree < 0) {
+            throw new IllegalArgumentException("degree must be >= 0");
+        }
+        // Names: a0..aN
+        String[] names = new String[degree + 1];
+        for (int i = 0; i <= degree; i++) {
+            names[i] = "a" + i;
+        }
+        return new FitSpec(FitModelType.POLYNOMIAL, "poly-" + degree, List.of(names), degree);
+    }
+
+    public static FitSpec custom(String modelId, List<String> parameterNames) {
+        return new FitSpec(FitModelType.CUSTOM,
+                (modelId == null) ? "custom" : modelId,
+                (parameterNames == null) ? List.of() : parameterNames,
+                -1);
+    }
+
+    public FitModelType getModelType() {
+        return modelType;
+    }
+
+    public String getModelId() {
+        return modelId;
+    }
+
+    public List<String> getParameterNames() {
+        return parameterNames;
+    }
+
+    public int getPolynomialDegree() {
+        return polynomialDegree;
+    }
+
+    @Override
+    public String toString() {
+        return "FitSpec[type=" + modelType + ", id=" + modelId + ", params=" + parameterNames + "]";
+    }
+}
+

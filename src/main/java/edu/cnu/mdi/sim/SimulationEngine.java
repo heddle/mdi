@@ -106,6 +106,21 @@ public final class SimulationEngine {
         simThread.setDaemon(true);
         simThread.start();
     }
+    
+    /**
+     * Get the simulation instance being executed by this engine.
+     * <p>
+     * This is primarily useful for owners (e.g., views/controllers) that need access to
+     * simulation-specific state for rendering or inspection. The returned object is the
+     * same instance passed into {@link #SimulationEngine(Simulation, SimulationEngineConfig)}.
+     * </p>
+     *
+     * @return the simulation instance (never null)
+     */
+    public Simulation getSimulation() {
+        return simulation;
+    }
+
 
     /**
      * Request that the engine begin or continue running.
