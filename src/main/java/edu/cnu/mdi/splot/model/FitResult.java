@@ -1,21 +1,13 @@
 package edu.cnu.mdi.splot.model;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.DoubleUnaryOperator;
 
 /**
- * Result of a curve fit. Contains:
- * <ul>
- *   <li>{@link FitSpec} describing the model</li>
- *   <li>final fit parameters</li>
- *   <li>an evaluator function f(x) usable by renderers</li>
- *   <li>the fit domain (xMin..xMax) used when fitting (important for drawing)</li>
- *   <li>optional diagnostics (chi2, covariance-derived errors, etc.)</li>
- * </ul>
- *
- * This is graphics-free and does not depend on Apache Commons Math types,
- * but it is designed to be populated from Commons Math fitting outputs.
+ * Result of a curve fit (model-layer; graphics-free).
  */
 public final class FitResult {
 
@@ -26,16 +18,6 @@ public final class FitResult {
     private final double xMax;
     private final FitDiagnostics diagnostics;
 
-    /**
-     * Create a fit result.
-     *
-     * @param spec model spec (non-null)
-     * @param parameters parameter vector (non-null; defensively copied)
-     * @param evaluator function f(x) that evaluates the fit (non-null)
-     * @param xMin minimum x used for the fit (may be -Inf if unknown)
-     * @param xMax maximum x used for the fit (may be +Inf if unknown)
-     * @param diagnostics optional diagnostics (may be null)
-     */
     public FitResult(FitSpec spec,
                      double[] parameters,
                      DoubleUnaryOperator evaluator,
@@ -55,34 +37,108 @@ public final class FitResult {
         return spec;
     }
 
-    /** @return defensive copy of parameter vector */
     public double[] getParameters() {
         return parameters.clone();
     }
 
-    /** @return evaluator function f(x) */
+    public int getParameterCount() {
+        return parameters.length;
+    }
+
     public DoubleUnaryOperator getEvaluator() {
         return evaluator;
     }
 
-    /** @return min x used when fitting (or -Inf if unknown) */
     public double getXMin() {
         return xMin;
     }
 
-    /** @return max x used when fitting (or +Inf if unknown) */
     public double getXMax() {
         return xMax;
     }
 
-    /** @return optional diagnostics; may be null */
     public FitDiagnostics getDiagnostics() {
         return diagnostics;
     }
 
-    /** Convenience. */
     public double f(double x) {
         return evaluator.applyAsDouble(x);
+    }
+
+    public double getParameter(int index) {
+        return parameters[index];
+    }
+
+    public double getParameter(String name) {
+        Objects.requireNonNull(name, "name");
+        List<String> names = spec.getParameterNames();
+        if (names == null || names.isEmpty()) {
+            throw new IllegalArgumentException("FitSpec has no parameter names");
+        }
+        for (int i = 0; i < names.size() && i < parameters.length; i++) {
+            if (name.equals(names.get(i))) {
+                return parameters[i];
+            }
+        }
+        throw new IllegalArgumentException("Unknown parameter: " + name);
+    }
+
+    public String formatSummaryOneLine() {
+        String model = spec.getModelName();
+        StringBuilder sb = new StringBuilder();
+        sb.append((model == null || model.isEmpty()) ? "Fit" : model);
+
+        List<String> names = spec.getParameterNames();
+        if (names == null || names.isEmpty()) {
+            sb.append(": ").append(Arrays.toString(parameters));
+            return sb.toString();
+        }
+
+        sb.append(": ");
+        for (int i = 0; i < names.size() && i < parameters.length; i++) {
+            if (i > 0) sb.append(", ");
+            sb.append(names.get(i)).append("=").append(FitText.formatNumber(parameters[i]));
+        }
+        return sb.toString();
+    }
+
+    public List<String> summaryLines() {
+        List<String> lines = new ArrayList<>();
+        String model = spec.getModelName();
+        lines.add((model == null || model.isEmpty()) ? "Fit" : model);
+
+        List<String> names = spec.getParameterNames();
+        double[] errs = (diagnostics == null) ? null : diagnostics.getParameterErrorsOrNull();
+
+        if (names == null || names.isEmpty()) {
+            lines.add("params: " + Arrays.toString(parameters));
+        } else {
+            for (int i = 0; i < names.size() && i < parameters.length; i++) {
+                String v = FitText.formatNumber(parameters[i]);
+                if (errs != null && i < errs.length && Double.isFinite(errs[i]) && errs[i] >= 0) {
+                    String e = FitText.formatNumber(errs[i]);
+                    lines.add(names.get(i) + " = " + v + " ± " + e);
+                } else {
+                    lines.add(names.get(i) + " = " + v);
+                }
+            }
+        }
+
+        if (diagnostics != null && diagnostics.hasChi2()) {
+            String chi = FitText.formatNumber(diagnostics.getChi2());
+            if (diagnostics.getNdof() > 0) {
+                lines.add("χ²/ndf = " + FitText.formatNumber(diagnostics.getChi2() / diagnostics.getNdof())
+                        + "   (χ²=" + chi + ", ndf=" + diagnostics.getNdof() + ")");
+            } else {
+                lines.add("χ² = " + chi);
+            }
+        }
+
+        if (Double.isFinite(xMin) || Double.isFinite(xMax)) {
+            lines.add("fit range: [" + FitText.formatNumber(xMin) + ", " + FitText.formatNumber(xMax) + "]");
+        }
+
+        return lines;
     }
 
     @Override

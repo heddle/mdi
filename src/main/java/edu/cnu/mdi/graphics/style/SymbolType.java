@@ -8,7 +8,7 @@ public enum SymbolType {
     UPTRIANGLE("Up Triangle"),
     DOWNTRIANGLE("Down Triangle"),
     X("X"),
-    DAVID("David"),
+    BOWTIE("Bow Tie"),
     DIAMOND("Diamond"),
     STAR("Star");
 

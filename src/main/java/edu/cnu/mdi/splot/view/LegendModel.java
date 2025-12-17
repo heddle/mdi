@@ -2,20 +2,20 @@ package edu.cnu.mdi.splot.view;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-import edu.cnu.mdi.splot.model.FitDiagnostics;
+import edu.cnu.mdi.splot.model.CurveSnapshot;
 import edu.cnu.mdi.splot.model.FitResult;
 import edu.cnu.mdi.splot.model.MutableCurve;
 import edu.cnu.mdi.splot.model.Plot2D;
 
 /**
- * Builds a legend model from a {@link Plot2D}.
- * <p>
- * The renderer can use this to draw a legend without coupling itself to plot internals.
- * </p>
+ * Legend view-model: one entry per curve.
  */
-public class LegendModel {
+public final class LegendModel {
 
     private final List<LegendEntry> entries;
 
@@ -28,29 +28,47 @@ public class LegendModel {
     }
 
     /**
-     * Build a default legend model: one entry per curve. If a fit exists,
-     * include a compact summary line.
+     * Build legend entries with glyph paint.
+     *
+     * Fit detail rule:
+     * - show fit detail lines ONLY if there is exactly one distinct FitResult across the plot.
      */
-    public static LegendModel fromPlot(Plot2D plot) {
-        List<LegendEntry> list = new ArrayList<>();
+    public static LegendModel fromPlot(Plot2D plot, CurvePaintProvider paintProvider) {
+        Objects.requireNonNull(plot, "plot");
+        Objects.requireNonNull(paintProvider, "paintProvider");
+
+        // Count distinct FitResult instances (identity is fine; FitResult is immutable)
+        Map<FitResult, Boolean> distinct = new IdentityHashMap<>();
         for (MutableCurve c : plot.getCurves()) {
-            FitResult fit = c.getFitResult();
-            String summary = (fit == null) ? c.getName() : (c.getName() + " — " + summarizeFit(fit));
-            list.add(new LegendEntry(c.getName(), fit, summary));
+            FitResult fr = c.getFitResult();
+            if (fr != null) distinct.put(fr, Boolean.TRUE);
+        }
+
+        List<LegendEntry> list = new ArrayList<>();
+
+        Map<FitResult, Boolean> printed = new IdentityHashMap<>();
+        for (MutableCurve c : plot.getCurves()) {
+            CurveSnapshot snap = c.snapshot();
+            CurvePaint paint = paintProvider.paintFor(snap);
+            FitResult fit = snap.getFitResult();
+
+            List<String> details = new ArrayList<>();
+
+            if (fit != null) {
+                boolean alreadyPrinted = printed.containsKey(fit);
+
+                boolean looksLikeFitCurve =
+                        paint.getDrawMode() == CurveDrawMode.LINES ||
+                        paint.getDrawMode() == CurveDrawMode.LINES_AND_POINTS;
+
+                if (!alreadyPrinted && looksLikeFitCurve) {
+                    details.addAll(FitSummaryFormatter.defaultLines(fit));
+                    printed.put(fit, Boolean.TRUE);
+                }
+            }
+
+            list.add(new LegendEntry(c.getName(), paint, fit, details));
         }
         return new LegendModel(list);
-    }
-
-    private static String summarizeFit(FitResult fit) {
-        String model = fit.getSpec().getModelId();
-        FitDiagnostics d = fit.getDiagnostics();
-        if (d != null && !Double.isNaN(d.getReducedChi2())) {
-            return model + ", χ²ᵣ=" + format3(d.getReducedChi2());
-        }
-        return model;
-    }
-
-    private static String format3(double v) {
-        return String.format("%.3g", v);
     }
 }

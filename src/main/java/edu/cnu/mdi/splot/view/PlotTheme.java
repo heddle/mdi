@@ -113,7 +113,7 @@ public class PlotTheme {
     public Font getTitleFont() { return titleFont; }
     public PlotTheme setTitleFont(Font titleFont) { this.titleFont = titleFont; return this; }
 
-    public Font getAxisFont() { return axisFont; }
+    public Font getAxisLabelFont() { return axisFont; }
     public PlotTheme setAxisFont(Font axisFont) { this.axisFont = axisFont; return this; }
 
     public Font getLegendFont() { return legendFont; }

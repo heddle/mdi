@@ -94,7 +94,7 @@ public class SymbolDraw {
 			drawDownTriangle(g, x, y, s2, lineColor, fillColor);
 			break;
 
-		case DAVID:
+		case BOWTIE:
 			drawDavid(g, x, y, s2, lineColor, fillColor);
 			break;
 

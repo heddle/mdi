@@ -109,16 +109,13 @@ public class SPlotCanvas extends JComponent implements MouseListener, MouseMotio
     }
 
     private void updateTransforms() {
-        Rectangle2D.Double view = plot.getViewBounds();
+        Rectangle2D.Double view = renderer.getEffectiveViewBounds(plot);
         if (view == null || !(view.width > 0) || !(view.height > 0)) {
             localToWorld = null;
             worldToLocal = null;
             return;
         }
 
-        // Map pixel -> world:
-        // worldX = view.x + (px - ax) * (view.width / aw)
-        // worldY = view.maxY - (py - ay) * (view.height / ah)
         double scaleX = view.width / activeBounds.width;
         double scaleY = view.height / activeBounds.height;
 
@@ -164,14 +161,14 @@ public class SPlotCanvas extends JComponent implements MouseListener, MouseMotio
 
     /** Zoom about center by a factor (e.g., 0.85 zoom-in, 1/0.85 zoom-out). */
     public void scale(double factor) {
-        Rectangle2D.Double v = plot.getViewBounds();
+    	Rectangle2D.Double v = renderer.getEffectiveViewBounds(plot);
         double cx = v.getCenterX();
         double cy = v.getCenterY();
         double w = v.width * factor;
         double h = v.height * factor;
 
         plot.setBoundsPolicy(BoundsPolicy.MANUAL);
-        plot.setManualViewBounds(new Rectangle2D.Double(cx - w / 2, cy - h / 2, w, h));
+        plot.setViewBounds(new Rectangle2D.Double(cx - w / 2, cy - h / 2, w, h));
         repaint();
     }
 
@@ -180,9 +177,9 @@ public class SPlotCanvas extends JComponent implements MouseListener, MouseMotio
         Point2D.Double wp = new Point2D.Double();
         localToWorld(click, wp);
 
-        Rectangle2D.Double v = plot.getViewBounds();
+        Rectangle2D.Double v = renderer.getEffectiveViewBounds(plot);
         plot.setBoundsPolicy(BoundsPolicy.MANUAL);
-        plot.setManualViewBounds(new Rectangle2D.Double(wp.x - v.width / 2, wp.y - v.height / 2, v.width, v.height));
+        plot.setViewBounds(new Rectangle2D.Double(wp.x - v.width / 2, wp.y - v.height / 2, v.width, v.height));
         repaint();
     }
 
@@ -190,24 +187,52 @@ public class SPlotCanvas extends JComponent implements MouseListener, MouseMotio
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        if (!inActiveBounds(e.getPoint())) {
+        if (!inActiveBounds(e.getPoint()) || localToWorld == null) {
             locationString = " ";
             return;
         }
-        if (localToWorld == null) return;
 
         Point2D.Double wp = new Point2D.Double();
         localToWorld(e.getPoint(), wp);
 
-        // Keep it simple; you can add curve-specific status later
-        locationString = String.format("(x, y) = (%7.3g, %7.3g)", wp.x, wp.y);
+        // Base coordinates
+        String base = String.format("(x, y) = (%7.3g, %7.3g)", wp.x, wp.y);
+
+        // Try curve hit-test
+        HoverInfo h = renderer.hitTest(plot, e.getPoint(), 8);
+
+        if (h != null) {
+            if (h.fit != null) {
+                locationString = base + "   " + h.curveName + "   " +
+                        h.fit.formatSummaryOneLine();
+            } else {
+                locationString = base + "   " + h.curveName +
+                        String.format("  [%.3g, %.3g]", h.x, h.y);
+            }
+        } else {
+            locationString = base;
+        }
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
         if (mode == Mode.POINTER) {
-            // legend drag prime
-        	renderer.beginLegendDrag(e.getPoint(), legendPlacement);
+
+            // Right-click → fit details
+            if (e.isPopupTrigger() || e.getButton() == MouseEvent.BUTTON3) {
+                HoverInfo h = renderer.hitTest(plot, e.getPoint(), 8);
+                if (h != null && h.fit != null) {
+                    new FitResultDialog(
+                            (javax.swing.JFrame)
+                                    javax.swing.SwingUtilities.getWindowAncestor(this),
+                            h.fit
+                    ).setVisible(true);
+                    return;
+                }
+            }
+
+            // Legend drag prime
+            renderer.beginLegendDrag(e.getPoint(), legendPlacement);
         }
         else if (mode == Mode.BOX_ZOOM) {
             rubberbandStart = e.getPoint();
@@ -244,7 +269,7 @@ public class SPlotCanvas extends JComponent implements MouseListener, MouseMotio
                 Rectangle2D.Double worldRect = localToWorld(clipped);
 
                 plot.setBoundsPolicy(BoundsPolicy.MANUAL);
-                plot.setManualViewBounds(worldRect);
+                plot.setViewBounds(worldRect);
             }
             rubberband = null;
             rubberbandStart = null;

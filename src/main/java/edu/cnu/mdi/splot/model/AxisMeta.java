@@ -9,10 +9,10 @@ import java.util.Objects;
 public final class AxisMeta {
 
     /** Axis label (e.g., "Energy"). */
-    private final String label;
+    private String label;
 
     /** Unit string (e.g., "GeV"), or empty if unitless. */
-    private final String unit;
+    private String unit;
 
     /**
      * Create axis metadata.
@@ -29,16 +29,34 @@ public final class AxisMeta {
     public String getLabel() {
         return label;
     }
+    
+    /**
+	 * Set the axis label.
+	 *
+	 * @param label new label (may be null, which sets it to empty)
+	 */
+    public void setLabel(String label) {
+		this.label = (label == null) ? "" : label;
+	}
 
     /** @return the unit string (non-null; may be empty) */
     public String getUnit() {
-        return unit;
-    }
+		return unit;
+	}
+
+    /**
+	 * Set the unit string.
+	 *
+	 * @param unit new unit string (may be null, which sets it to empty)
+	 */
+	public void setUnit(String unit) {
+		this.unit = (unit == null) ? "" : unit;
+	}
 
     /**
      * @return a display label such as "Energy (GeV)" if unit is present, otherwise "Energy".
      */
-    public String getDisplayLabel() {
+    public String getFullLabel() {
         if (unit.isEmpty()) {
             return label;
         }

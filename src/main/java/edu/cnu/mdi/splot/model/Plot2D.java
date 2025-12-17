@@ -95,7 +95,7 @@ public class Plot2D implements CurveListener {
     /**
      * Set manual view bounds (used only when boundsPolicy == MANUAL).
      */
-    public void setManualViewBounds(Rectangle2D.Double bounds) {
+    public void setViewBounds(Rectangle2D.Double bounds) {
         this.manualViewBounds = (Rectangle2D.Double) Objects.requireNonNull(bounds, "bounds").clone();
         firePlotChanged(ChangeType.VIEW_BOUNDS_CHANGED);
     }

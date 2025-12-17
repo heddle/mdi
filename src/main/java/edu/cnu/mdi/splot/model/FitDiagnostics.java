@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 /**
  * Optional diagnostics produced by a fitter: goodness-of-fit and parameter uncertainty.
- * This is model-layer information useful for display/export, independent of graphics.
+ * Model-layer information useful for display/export, independent of graphics.
  */
 public final class FitDiagnostics {
 
@@ -30,6 +30,11 @@ public final class FitDiagnostics {
         return chi2;
     }
 
+    /** Alias used by FitResult summary code. */
+    public int getNdof() {
+        return dof;
+    }
+
     public int getDof() {
         return dof;
     }
@@ -41,6 +46,15 @@ public final class FitDiagnostics {
     /** @return a defensive copy of parameter standard errors, or null if unavailable */
     public double[] getParameterStdErr() {
         return (parameterStdErr == null) ? null : parameterStdErr.clone();
+    }
+
+    /** Alias used by FitResult summary code. */
+    public double[] getParameterErrorsOrNull() {
+        return (parameterStdErr == null) ? null : parameterStdErr.clone();
+    }
+
+    public boolean hasChi2() {
+        return Double.isFinite(chi2);
     }
 
     @Override
