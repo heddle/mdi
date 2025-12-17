@@ -50,7 +50,13 @@
 
 	<!-- Project dependencies: JOGL, GlueGen, JUnit 5 -->
 	<dependencies>
-
+	    <!-- Apache Commons Math -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-math3</artifactId>
+			<version>3.6.1</version>
+		</dependency>
+		
 		<!-- JOGL: OpenGL bindings -->
 		<dependency>
 			<groupId>org.jogamp.jogl</groupId>
