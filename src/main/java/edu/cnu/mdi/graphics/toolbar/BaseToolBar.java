@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Toolkit;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -15,7 +16,9 @@ import java.util.Map;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JTextField;
 
 import edu.cnu.mdi.container.IContainer;
@@ -46,7 +49,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
     private final ToolController toolController;
 
     /** Optional status text field shown on the toolbar. */
-    private JTextField textField;
+    private JTextField statusLine;
 
     /** Temporary override tool used for gestures like middle-click box zoom. */
     private ITool temporarilyOverriddenTool;
@@ -98,16 +101,21 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
         resetDefaultSelection();
     }
 
+    /**
+	 * Get the tool controller for this toolbar.
+	 * @return the tool controller.
+	 */
     public ToolController getToolController() {
         return toolController;
     }
 
+    /**
+	 * Get the tool context passed to all tools.
+	 *
+	 * @return the tool context.
+	 */
     public ToolContext getToolContext() {
         return toolContext;
-    }
-
-    public IContainer getContainer() {
-        return container;
     }
 
     /**
@@ -139,6 +147,14 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
     }
 
     /**
+	 * Add a spacer of the given width to the toolbar.
+	 * @param width the empty space width in pixels.
+	 */
+    public void addToolBarSpacer(int width) {
+		add(Box.createHorizontalStrut(width));
+	}
+    
+    /**
      * Build/register tools and create their buttons.
      */
     protected void buildToolsAndButtons(long bits) {
@@ -155,8 +171,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
         ITool polyline  = Bits.check(bits, ToolBarBits.POLYLINEBUTTON) ? new PolylineTool()   : null;
         ITool rectangle = Bits.check(bits, ToolBarBits.RECTANGLEBUTTON)? new RectangleTool()  : null;
         ITool radArc    = Bits.check(bits, ToolBarBits.RADARCBUTTON)   ? new RadArcTool()     : null;
-        ITool range = Bits.check(bits, ToolBarBits.RANGEBUTTON) ? new RangeTool() : null;
-        ITool text = Bits.check(bits, ToolBarBits.TEXTBUTTON) ? new TextTool() : null;
+        ITool text      = Bits.check(bits, ToolBarBits.TEXTBUTTON)     ? new TextTool() : null;
 
         // Register tools
         register(pointer);
@@ -171,8 +186,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
         register(polyline);
         register(radArc);
         register(text);
-  		register(range);
-		
+ 		
         // Default tool: pointer.
         toolController.setDefaultTool(pointer.id());
 
@@ -209,9 +223,6 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 		if (radArc != null) {
 			addToolButton(radArc, "images/radarc.gif", radArc.toolTip());
 		}
-		if (range != null) {
-			addToolButton(range, "images/range.gif", range.toolTip());
-		}
 		if (text != null) {
 			addToolButton(text, "images/text.gif", text.toolTip());
 		}
@@ -232,15 +243,16 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 		}
 		
 		if (Bits.check(bits, ToolBarBits.DELETEBUTTON)) {
+			//common practice to add some space before delete
+			addToolBarSpacer(8);
 			deleteButton = new DeleteButton(toolContext);
 			deleteButton.setEnabled(false); // initially disabled
 		    addActionButton(deleteButton);
 		}
 
-        
-        if (Bits.check(bits, ToolBarBits.TEXTFIELD)) {
+        if (Bits.check(bits, ToolBarBits.STATUSFIELD)) {
             createStatusTextField();
-            add(textField);
+            add(statusLine);
         }
     }
     
@@ -249,8 +261,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
             add(b, false);
         }
     }
-
-    
+        
 	/**
 	 * Register a tool with the controller (if non-null).
 	 */
@@ -283,28 +294,36 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
         return b;
     }
 
+    /**
+	 * Create the status text field shown on the toolbar.
+	 */
     protected void createStatusTextField() {
-        textField = new JTextField(" ");
-        textField.setFont(Fonts.commonFont(Font.PLAIN, 11));
-        textField.setEditable(false);
-        textField.setBackground(Color.black);
-        textField.setForeground(Color.cyan);
+        statusLine = new JTextField(" ");
+        statusLine.setFont(Fonts.commonFont(Font.PLAIN, 11));
+        statusLine.setEditable(false);
+        statusLine.setBackground(Color.black);
+        statusLine.setForeground(Color.cyan);
 
-        FontMetrics fm = getFontMetrics(textField.getFont());
-        Dimension d = textField.getPreferredSize();
+        FontMetrics fm = getFontMetrics(statusLine.getFont());
+        Dimension d = statusLine.getPreferredSize();
         d.width = fm.stringWidth(" ( 9999.99999 , 9999.99999 ) XXXXXXXXXXX");
-        textField.setPreferredSize(d);
-        textField.setMaximumSize(d);
+        statusLine.setPreferredSize(d);
+        statusLine.setMaximumSize(d);
     }
 
+    /**
+	 * Set the text shown in the toolbar status text field (if any).
+	 *
+	 * @param text the text to show (null shows empty string).
+	 */
     public void setText(String text) {
-        if (textField != null) {
-            textField.setText((text == null) ? "" : text);
+        if (statusLine != null) {
+            statusLine.setText((text == null) ? "" : text);
         }
     }
 
     public JTextField getTextField() {
-        return textField;
+        return statusLine;
     }
 
     public ITool getActiveTool() {
@@ -507,6 +526,24 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	    }
 	    return this;
 	}
+	
+	@Override
+	public ToolToggleButton addToolToggle(ITool tool, String iconFile, String tooltip) {
+	    return addTool(tool, iconFile, tooltip); // uses your existing convenience
+	}
+
+	@Override
+	public IContainerToolBar addOneShot(ToolActionButton button) {
+	    addAction(button); // uses your existing convenience
+	    return this;
+	}
+
+	@Override
+	public IContainerToolBar spacer(int px) {
+	    addToolBarSpacer(px);
+	    return this;
+	}
+
 
 	/**
 	 * Register a tool and add a toggle button for it.
@@ -534,6 +571,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	 * @return this toolbar (for chaining)
 	 */
 	public BaseToolBar addAction(ToolActionButton button) {
+		button.setToolContext(toolContext);
 	    addActionButton(button); // your existing method
 	    return this;
 	}

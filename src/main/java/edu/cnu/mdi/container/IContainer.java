@@ -17,8 +17,7 @@ import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.toolbar.IContainerToolBar;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
 import edu.cnu.mdi.item.AItem;
-import edu.cnu.mdi.item.ItemList;
-import edu.cnu.mdi.item.YouAreHereItem;
+import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.view.BaseView;
 
 /**
@@ -34,43 +33,36 @@ public interface IContainer {
 	public static final double FIXED_ZOOM_FACTOR = 0.85;
 
 	/**
-	 * Add an itemlist for containing items rendered on this container..
+	 * Add a z layer for containing items rendered on this container..
 	 *
-	 * @param name the name of the list. If one with that name already
-	 *             exists, it is returned.
+	 * @param name the name of the layer. If one with that name already
+	 * exists, it is returned.
 	 */
-	public ItemList addItemList(String name);
+	public Layer addLayer(String name);
 
 	/**
-	 * Add an item list to this container.
+	 * Get the annotation layer for this container.
 	 *
-	 * @param list the list to add.
+	 * @return the annotation layer for this container. All drawing tools draw on the
+	 *         annotation layer, which is kept on top.
 	 */
-	public void addItemList(ItemList list);
+	public Layer getAnnotationLayer();
 
 	/**
-	 * Get the annotation list for this obtainer.
+	 * Gets an z layer by name. Do not use for the annotation list-- for that use
+	 * getAnnotationLayer().
 	 *
-	 * @return the annotation list for this container. All drawing tools draw on the
-	 *         annotation list, which is kept on top.
+	 * @param name the name of the layer.
+	 * @return the z layer, or <code>null</code>.
 	 */
-	public ItemList getAnnotationList();
+	public Layer getLayerByName(String name);
 
 	/**
-	 * Gets an item list by name. Do not use for the annotation list-- for that use
-	 * getAnnotationList().
+	 * Remove a z layer rendered on this container.
 	 *
-	 * @param name the name of the item list.
-	 * @return the item list, or <code>null</code>.
+	 * @param layer the layer to remove
 	 */
-	public ItemList getItemList(String name);
-
-	/**
-	 * Remove an item list rendered on this container.
-	 *
-	 * @param list the list to remove
-	 */
-	public void removeItemList(ItemList list);
+	public void removeItemList(Layer layer);
 
 	/**
 	 * This converts a screen or pixel point to a world point.
@@ -310,29 +302,6 @@ public interface IContainer {
 	 * @return the object that controls the container's feedback.
 	 */
 	public FeedbackControl getFeedbackControl();
-
-	/**
-	 * Get the optional YouAreHereItem
-	 *
-	 * @return the youAreHereItem
-	 */
-	public YouAreHereItem getYouAreHereItem();
-
-	/**
-	 * Set the optional YouAreHereItem.
-	 *
-	 * @param youAreHereItem the youAreHereItem to set
-	 */
-	public void setYouAreHereItem(YouAreHereItem youAreHereItem);
-
-	/**
-	 * This is sometimes used as needed (i.e., not created until requested). That
-	 * will generally make it the topmost view--so it is good for things like a
-	 * reference point (YouAreHereItem).
-	 *
-	 * @return the glass list.
-	 */
-	public ItemList getGlassList();
 
 	/**
 	 * Convenience method for setting the dirty flag for all items on all item lists.

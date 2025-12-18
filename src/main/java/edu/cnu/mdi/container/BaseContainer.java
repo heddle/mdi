@@ -16,8 +16,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.JComponent;
 
@@ -31,16 +31,15 @@ import edu.cnu.mdi.graphics.drawable.IDrawableListener;
 import edu.cnu.mdi.graphics.toolbar.IContainerToolBar;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
 import edu.cnu.mdi.item.AItem;
-import edu.cnu.mdi.item.ItemList;
-import edu.cnu.mdi.item.YouAreHereItem;
+import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.util.Point2DSupport;
 import edu.cnu.mdi.view.BaseView;
 
 
 /**
- * This the primary basic container. It contains a list of ItemList objects
- * list of items.)
+ * This the primary basic container. It contains a list of z layers each of which
+ * contain a list of items.)
  *
  * @author heddle
  *
@@ -50,11 +49,10 @@ import edu.cnu.mdi.view.BaseView;
 public class BaseContainer extends JComponent
 implements IContainer, MouseWheelListener, IDrawableListener {
 
-
 	/**
-	 * A collection of item list. This is the container's model.
+	 * A collection of z layers containing items. This is the container's model.
 	 */
-	protected DrawableList _itemLists = new DrawableList("ItemLists");
+	protected DrawableList _layers = new DrawableList("Layers");
 
 	/**
 	 * Keeps track of current mouse position
@@ -67,20 +65,22 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	protected IContainerToolBar _toolBar;
 
 	/**
-	 * The optional feedback pane.
+	 * The optional feedback(mouse over) pane.
 	 */
 	protected FeedbackPane _feedbackPane;
 
-	// location of last mouse event
+	/**
+	 * The last mouse event used to update location.
+	 */
 	protected MouseEvent _lastLocationMouseEvent;
 
 	/**
-	 * This optional drawable is called after the lists are drawn.
+	 * This optional drawable is called after all the z layers are drawn.
 	 */
 	protected IDrawable _afterDraw;
 
 	/**
-	 * This optional drawable is called before the lists are drawn.
+	 * This optional drawable is called before all the z layers are drawn.
 	 */
 	protected IDrawable _beforeDraw;
 
@@ -94,11 +94,8 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	 */
 	protected BaseView _view;
 
-	// used for things like a YouAreHereItem reference point
-	private ItemList _glassList;
-
 	/**
-	 * The world coordinate system,
+	 * The world coordinate system. This a viewport based on world coordinates.
 	 */
 	protected Rectangle2D.Double _worldSystem;
 
@@ -113,23 +110,15 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	protected Rectangle2D.Double _previousWorldSystem;
 
 	/**
-	 * The annotation list. Every container has one.
+	 * The annotation layer. Every container has one.
 	 */
-	protected ItemList _annotationList;
-
-	// A map of lists added by users.
-	private Hashtable<String, ItemList> _userItemLists = new Hashtable<>(47);
+	protected Layer _annotationLayer;
 
 	/**
 	 * Controls the feedback for the container. You can add and remove feedback
 	 * providers to this object.
 	 */
 	protected FeedbackControl _feedbackControl;
-
-	/**
-	 * Optional anchor item.
-	 */
-	protected YouAreHereItem _youAreHereItem;
 
 	// for world to local transformations (and vice versa)
 
@@ -163,10 +152,11 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 
 		resetWorldSystem(worldSystem);
 
-		// create the annotation list. (not added to userlist hash)
-		_annotationList = new ItemList(this, "Annotations");
-		addItemList(_annotationList);
+		// create the annotation list.
+		_annotationLayer = new Layer(this, "Annotations");
+		addLayer(_annotationLayer);
 
+		// listen for resize events
 		ComponentAdapter componentAdapter = new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent ce) {
@@ -199,10 +189,9 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	 * @param sContainer the source container
 	 */
 	public void shareModel(BaseContainer sContainer) {
-		_itemLists = sContainer._itemLists;
+		_layers = sContainer._layers;
 		_afterDraw = sContainer._afterDraw;
 		_beforeDraw = sContainer._beforeDraw;
-		_userItemLists = sContainer._userItemLists;
 		setBackground(sContainer.getBackground());
 		setForeground(sContainer.getForeground());
 	}
@@ -245,8 +234,8 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 		}
 
 		// draw the lists
-		if (_itemLists != null) {
-			_itemLists.draw(g, this);
+		if (_layers != null) {
+			_layers.draw(g, this);
 		}
 
 		// any post lists drawing?
@@ -254,84 +243,78 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 			_afterDraw.draw(g, this);
 		}
 
+		//always clean after drawing
 		setDirty(false);
-
 	}
+	
 
 	/**
 	 * {@inheritDoc}
      */
 	@Override
-	public ItemList addItemList(String name) {
-		if (name == null) {
-			return null;
-		}
-		ItemList itemList = _userItemLists.get(name);
-		if (itemList != null) {
-			Log.getInstance().warning("Asked to add an ItemList: " + name + " which already exists.");
+	public Layer addLayer(String name) {
+		Objects.requireNonNull(name, "Layer name cannot be null");
+
+		Layer layer = getLayerByName(name);
+		if (layer != null) {
+			Log.getInstance().warning("Asked to add a Layer: " + name + " which already exists.");
 		} else {
-			itemList = new ItemList(this, name);
-			_userItemLists.put(name, itemList);
-			addItemList(itemList);
+			layer = new Layer(this, name);
+			_layers.add(layer);
+			_layers.addDrawableListener(this);
 		}
-		return itemList;
+		return layer;
+	}
+	
+	/**
+	 * {@inheritDoc}
+     */
+	private void addLayer(Layer layer) {
+		_layers.add(layer);
+		_layers.addDrawableListener(this);
 	}
 
 	/**
 	 * {@inheritDoc}
      */
 	@Override
-	public void addItemList(ItemList itemList) {
-
-		_itemLists.add(itemList);
-		if (itemList != _annotationList) {
-			_itemLists.sendToFront(_annotationList);
-		}
-		itemList.addDrawableListener(this);
+	public Layer getAnnotationLayer() {
+		return _annotationLayer;
 	}
 
 	/**
 	 * {@inheritDoc}
      */
 	@Override
-	public ItemList getAnnotationList() {
-		return _annotationList;
-	}
-
-	/**
-	 * {@inheritDoc}
-     */
-	@Override
-	public ItemList getItemList(String name) {
-		ItemList itemList = _userItemLists.get(name);
-		if (itemList == null) {
-			Log.getInstance().warning("Requested nonexistent item list: " + name);
-		}
-		return itemList;
+	public Layer getLayerByName(String name) {
+		Objects.requireNonNull(name, "Layer name cannot be null");
+	    for (IDrawable drawable : _layers) {
+	        Layer layer = (Layer) drawable;
+	        if (layer.getName().equals(name)) {
+	            return layer;
+	        }
+	    }
+	    return null;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void removeItemList(ItemList itemList) {
-	    if (itemList == null) {
-	        return;
-	    }
+	public void removeItemList(Layer layer) {
+		Objects.requireNonNull(layer, "layer cannot be null");
 	    
-	    if (itemList == _annotationList || itemList == _glassList) {
+	    // Cannot remove annotation list
+	    if (layer == _annotationLayer) {
 	        return;
 	    }
 
 
 	    // Stop receiving events from this list
-	    itemList.removeDrawableListener(this);
+	    layer.removeDrawableListener(this);
 
-	    // Remove from the drawable collection
-	    _itemLists.remove(itemList);
-
-	    // Remove from user list map (safe even if not present)
-	    _userItemLists.remove(itemList.getName());
+	    // Remove from the layers collection
+	    _layers.remove(layer);
 	}
 
 
@@ -545,8 +528,8 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 
 		setAffineTransforms();
 
-		if (_itemLists != null) {
-			for (IDrawable list : _itemLists) {
+		if (_layers != null) {
+			for (IDrawable list : _layers) {
 				list.setDirty(dirty);
 			}
 		}
@@ -560,13 +543,13 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	 */
 	@Override
 	public AItem getItemAtPoint(Point pp) {
-		if (_itemLists == null) {
+		if (_layers == null) {
 			return null;
 		}
 
-		for (int i = _itemLists.size() - 1; i >= 0; i--) {
-			ItemList itemList = ((ItemList) _itemLists.get(i));
-			AItem item = itemList.getItemAtPoint(this, pp);
+		for (int i = _layers.size() - 1; i >= 0; i--) {
+			Layer layer = ((Layer) _layers.get(i));
+			AItem item = layer.getItemAtPoint(this, pp);
 			if (item != null) {
 				return item;
 			}
@@ -585,8 +568,8 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 		}
 
 		ArrayList<AItem> items = new ArrayList<>(25);
-		for (IDrawable drawable : _itemLists) {
-			((ItemList) drawable).addEnclosedItems(this, items, rect);
+		for (IDrawable drawable : _layers) {
+			((Layer) drawable).addEnclosedItems(this, items, rect);
 		}
 		return items;
 	}
@@ -598,10 +581,10 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	public ArrayList<AItem> getItemsAtPoint(Point lp) {
 		ArrayList<AItem> items = new ArrayList<>(25);
 
-		if (_itemLists != null) {
-			for (int i = _itemLists.size() - 1; i >= 0; i--) {
-				ItemList itemList = ((ItemList) _itemLists.get(i));
-				itemList.addItemsAtPoint(items, this, lp);
+		if (_layers != null) {
+			for (int i = _layers.size() - 1; i >= 0; i--) {
+				Layer layer = ((Layer) _layers.get(i));
+				layer.addItemsAtPoint(items, this, lp);
 			}
 		}
 
@@ -613,10 +596,10 @@ implements IContainer, MouseWheelListener, IDrawableListener {
      */
 	@Override
 	public boolean anySelectedItems() {
-		if (_itemLists != null) {
-			for (IDrawable drawable : _itemLists) {
-				ItemList itemList = (ItemList) drawable;
-				if (itemList.anySelected()) {
+		if (_layers != null) {
+			for (IDrawable drawable : _layers) {
+				Layer layer = (Layer) drawable;
+				if (layer.anySelected()) {
 					return true;
 				}
 			}
@@ -629,10 +612,10 @@ implements IContainer, MouseWheelListener, IDrawableListener {
      */
 	@Override
 	public void deleteSelectedItems() {
-		if (_itemLists != null) {
-			for (IDrawable drawable : _itemLists) {
-				ItemList itemList = (ItemList) drawable;
-				itemList.deleteSelectedItems(this);
+		if (_layers != null) {
+			for (IDrawable drawable : _layers) {
+				Layer layer = (Layer) drawable;
+				layer.deleteSelectedItems(this);
 			}
 		}
 	}
@@ -645,10 +628,10 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	public List<AItem> getSelectedItems() {
 		ArrayList<AItem> selectedItems = new ArrayList<>();
 
-		if (_itemLists != null) {
-			for (IDrawable drawable : _itemLists) {
-				ItemList itemList = (ItemList) drawable;
-				selectedItems.addAll(itemList.getSelectedItems());
+		if (_layers != null) {
+			for (IDrawable drawable : _layers) {
+				Layer layer = (Layer) drawable;
+				selectedItems.addAll(layer.getSelectedItems());
 			}
 		}
 
@@ -660,10 +643,10 @@ implements IContainer, MouseWheelListener, IDrawableListener {
      */
 	@Override
 	public void selectAllItems(boolean select) {
-		if (_itemLists != null) {
-			for (IDrawable drawable : _itemLists) {
-				ItemList itemList = (ItemList) drawable;
-				itemList.selectAllItems(select);
+		if (_layers != null) {
+			for (IDrawable drawable : _layers) {
+				Layer layer = (Layer) drawable;
+				layer.selectAllItems(select);
 			}
 		}
 	}
@@ -774,7 +757,7 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	/**
 	 * An item has changed.
 	 *
-	 * @param list     the ItemList it was on
+	 * @param list     the list it was on (probably a z Layer).
 	 * @param drawable the drawable (item) that changed.
 	 * @param type     the type of the change.
 	 */
@@ -808,9 +791,6 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 			break;
 
 		case REMOVED:
-			if (item == _youAreHereItem) {
-				_youAreHereItem = null;
-			}
 			break;
 
 		case RESIZED:
@@ -866,41 +846,6 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 		return _feedbackControl;
 	}
 
-	/**
-	 * Get the optional YouAreHereItem
-	 *
-	 * @return the youAreHereItem
-	 */
-	@Override
-	public YouAreHereItem getYouAreHereItem() {
-		return _youAreHereItem;
-	}
-
-	/**
-	 * Set the optional YouAreHereItem.
-	 *
-	 * @param youAreHereItem the youAreHereItem to set
-	 */
-	@Override
-	public void setYouAreHereItem(YouAreHereItem youAreHereItem) {
-		_youAreHereItem = youAreHereItem;
-	}
-
-	/**
-	 * This is sometimes used as needed (i.e., not created until requested). That
-	 * will generally make it the topmost view--so it is good for things like a
-	 * reference point (YouAreHereItem).
-	 *
-	 * @return the glass list.
-	 */
-	@Override
-	public ItemList getGlassList() {
-		if (_glassList == null) {
-			_glassList = new ItemList(this, "Glass List");
-			_itemLists.add(_glassList);
-		}
-		return _glassList;
-	}
 
 	/**
 	 * Get the underlying component, which is me.

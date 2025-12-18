@@ -42,7 +42,8 @@ public class LineTool extends AbstractLineRubberbandTool {
     @Override
     protected void createFromLine(IContainer owner, Point p0, Point p1) {
         if (owner instanceof DrawingContainer dc) {
-            AItem item = dc.createLineItem(owner.getAnnotationList(), p0, p1);
+            // Create the item and place it on the annotation layer.
+            AItem item = dc.createLineItem(owner.getAnnotationLayer(), p0, p1);
             if (item != null) {
                 item.setRightClickable(true);
                 item.setDraggable(true);

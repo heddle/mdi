@@ -10,7 +10,7 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
-import edu.cnu.mdi.item.ItemList;
+import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.util.Environment;
 
 /**
@@ -75,7 +75,7 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
      * @param bounds  rubber-band bounds in screen pixels (never null)
      * @return the created item, or null if none was created
      */
-    protected abstract AItem createItem(IAnnotationSupport creator, ItemList list, Rectangle bounds);
+    protected abstract AItem createItem(IAnnotationSupport creator, Layer list, Rectangle bounds);
 
     /**
      * Hook for subclasses to configure the newly created item (drag/resize/etc).
@@ -169,8 +169,9 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
                 return;
             }
 
-            ItemList list = c.getAnnotationList();
-            AItem item = createItem(cap, list, bounds);
+            // Create the item and place it on the annotation layer.
+            Layer layer = c.getAnnotationLayer();
+            AItem item = createItem(cap, layer, bounds);
 
             if (item != null) {
                 configureItem(item);

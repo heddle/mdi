@@ -31,14 +31,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 	 */
 	private DrawingView(Object... keyVals) {
 		super(PropertySupport.fromKeyValues(keyVals));
-		addItems();
 		getContainer().getFeedbackControl().addFeedbackProvider(this);
-	}
-
-	/**
-	 * This adds the detector items.
-	 */
-	private void addItems() {
 	}
 
 	/**
@@ -60,7 +53,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 				PropertySupport.WIDTH, width, // container width, not total view width
 				PropertySupport.HEIGHT, height, // container height, not total view width
 				PropertySupport.TOOLBAR, true, 
-				PropertySupport.TOOLBARBITS, ToolBarBits.EVERYTHINGNORANGE,
+				PropertySupport.TOOLBARBITS, ToolBarBits.EVERYTHING,
 				PropertySupport.VISIBLE, true, 
 				PropertySupport.PROPNAME, "DRAWING", 
 				PropertySupport.BACKGROUND, Color.white, 

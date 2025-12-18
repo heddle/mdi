@@ -379,7 +379,7 @@ public class PointerTool implements ITool, IRubberbanded {
             if (enclosed != null) {
                 for (AItem item : enclosed) {
                     if (item != null && !item.isLocked()) {
-                        item.getItemList().selectItem(item, true);
+                        item.getLayer().selectItem(item, true);
                     }
                 }
             }
@@ -416,7 +416,7 @@ public class PointerTool implements ITool, IRubberbanded {
         }
 
         // Select the clicked item.
-        item.getItemList().selectItem(item, true);
+        item.getLayer().selectItem(item, true);
 
         requestButtonStateUpdate();
         owner.setDirty(true);

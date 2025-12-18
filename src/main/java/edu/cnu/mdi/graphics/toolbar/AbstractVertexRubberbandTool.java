@@ -10,7 +10,7 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
-import edu.cnu.mdi.item.ItemList;
+import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.util.Environment;
 
 /**
@@ -68,7 +68,7 @@ public abstract class AbstractVertexRubberbandTool implements ITool, IRubberband
      * @param vertices the collected vertices (never null; length >= {@link #minVertices})
      * @return the created item, or null
      */
-    protected abstract AItem createItem(IAnnotationSupport creator, ItemList list, Point[] vertices);
+    protected abstract AItem createItem(IAnnotationSupport creator, Layer list, Point[] vertices);
 
     /** Hook for subclasses to configure the created item (draggable/resizable/etc). */
     protected void configureItem(AItem item) {
@@ -146,8 +146,9 @@ public abstract class AbstractVertexRubberbandTool implements ITool, IRubberband
                 return;
             }
 
-            ItemList list = c.getAnnotationList();
-            AItem item = createItem(cap, list, vertices);
+            // Create the item and place it on the annotation layer.
+            Layer layer = c.getAnnotationLayer();
+            AItem item = createItem(cap, layer, vertices);
 
             if (item != null) {
                 configureItem(item);

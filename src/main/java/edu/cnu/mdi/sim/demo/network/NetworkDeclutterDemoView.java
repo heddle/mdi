@@ -22,7 +22,7 @@ import edu.cnu.mdi.sim.ui.SimulationView;
  * </p>
  */
 @SuppressWarnings("serial")
-public class NetworkLayoutDemoView extends SimulationView {
+public class NetworkDeclutterDemoView extends SimulationView {
 
     /** Model used by this view (world coords). */
     private final NetworkModel model;
@@ -41,7 +41,7 @@ public class NetworkLayoutDemoView extends SimulationView {
 	 * 
 	 * @param keyVals variable set of arguments.
 	 */
-    public NetworkLayoutDemoView(Object... keyVals) {
+    public NetworkDeclutterDemoView(Object... keyVals) {
         // Java 21: must call super(...) first. We build the simulation via a static helper.
         super(createSimulation(), new SimulationEngineConfig(33, 250, 20, false), true, keyVals);
 

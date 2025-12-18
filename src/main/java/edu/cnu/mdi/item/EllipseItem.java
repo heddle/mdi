@@ -14,8 +14,8 @@ public class EllipseItem extends PolygonItem {
     private double _azimuth;
     private Point2D.Double _center;
 
-    public EllipseItem(ItemList itemList, double w, double h, double azimuth, Point2D.Double center) {
-        super(itemList, null);
+    public EllipseItem(Layer layer, double w, double h, double azimuth, Point2D.Double center) {
+        super(layer, null);
         _w = w;
         _h = h;
         _azimuth = azimuth;

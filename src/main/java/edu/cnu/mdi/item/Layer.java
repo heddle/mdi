@@ -11,7 +11,7 @@ import edu.cnu.mdi.graphics.drawable.IDrawable;
 
 
 @SuppressWarnings("serial")
-public class ItemList extends DrawableList {
+public class Layer extends DrawableList {
 
 	// the owner container
 	protected IContainer _container;
@@ -21,7 +21,7 @@ public class ItemList extends DrawableList {
 	 *
 	 * @param name the name of the list.
 	 */
-	public ItemList(IContainer container, String name) {
+	public Layer(IContainer container, String name) {
 		super(name);
 		_container = container;
 	}
@@ -131,10 +131,6 @@ public class ItemList extends DrawableList {
 	    IContainer c = (container != null) ? container : _container;
 	    if (c != null) {
 	        c.getFeedbackControl().removeFeedbackProvider(item);
-
-	        if (item == c.getYouAreHereItem()) {
-	            c.setYouAreHereItem(null);
-	        }
 	    }
 
 	    remove(item); // calls prepareForRemoval() + notifies REMOVED
@@ -369,7 +365,5 @@ public class ItemList extends DrawableList {
 	public IContainer getContainer() {
 		return _container;
 	}
-	
-
 
 }

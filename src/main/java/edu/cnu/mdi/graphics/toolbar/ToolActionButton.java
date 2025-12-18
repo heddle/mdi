@@ -24,12 +24,12 @@ import edu.cnu.mdi.graphics.ImageManager;
  * @author heddle
  */
 @SuppressWarnings("serial")
-public abstract class ToolActionButton extends JButton {
+public abstract class ToolActionButton extends JButton implements ToolContextAware {
 
     /** Preferred size for toolbar buttons. */
     private static final Dimension PREFERRED_SIZE = new Dimension(24, 24);
 
-    private final ToolContext ctx;
+    private ToolContext ctx;
 
     /**
      * Create a new action button.
@@ -39,15 +39,34 @@ public abstract class ToolActionButton extends JButton {
      * @param toolTip      tooltip text.
      */
     public ToolActionButton(ToolContext ctx, String imageFile, String toolTip) {
+        this(imageFile, toolTip);
         this.ctx = java.util.Objects.requireNonNull(ctx, "ctx");
+    }
+    
+    protected ToolActionButton(String imageFile, String toolTip) {
         setFocusPainted(false);
         setBorderPainted(false);
         setToolTipText(toolTip);
 
-        ImageIcon icon = ImageManager.getInstance().loadImageIcon(imageFile);
+        ImageIcon icon = ImageManager.getInstance().loadImageIcon(imageFile, 16, 16);
         setIcon(icon);
 
-        addActionListener(e -> perform(this.ctx));
+        // Works with injection: ctx will be set by BaseToolBar before the user can click.
+        addActionListener(e -> {
+            if (ctx != null) {
+                perform(ctx);
+            }
+        });
+    }
+    
+    @Override
+    public final void setToolContext(ToolContext toolContext) {
+        this.ctx = toolContext;
+        onToolContextAvailable(); // hook for subclasses
+    }
+
+    protected void onToolContextAvailable() {
+        // default no-op
     }
 
     /**

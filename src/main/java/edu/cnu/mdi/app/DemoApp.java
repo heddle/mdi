@@ -23,12 +23,14 @@ import edu.cnu.mdi.mdi3D.item3D.Triangle3D;
 import edu.cnu.mdi.mdi3D.panel.Panel3D;
 import edu.cnu.mdi.mdi3D.view3D.PlainView3D;
 import edu.cnu.mdi.properties.PropertySupport;
-import edu.cnu.mdi.sim.demo.network.NetworkLayoutDemoView;
+import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
+import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.view.DrawingView;
 import edu.cnu.mdi.view.LogView;
 import edu.cnu.mdi.view.ViewManager;
 import edu.cnu.mdi.view.VirtualView;
+import edu.cnu.mdi.view.demo.NetworkLayoutDemoView;
 
 /**
  * Demo application for the MDI framework.
@@ -69,13 +71,15 @@ public class DemoApp extends BaseMDIApplication {
     private final int virtualDesktopCols = 5;
 
     // -------------------------------------------------------------------------
-    // Sample views used by the demo
+    // Sample views used by the demo. None are meant to be completely realistic.
+    // or functional, except for the LogView.
     // -------------------------------------------------------------------------
 
     private PlainView3D view3D;
     private DrawingView drawingView;
     private MapView2D mapView;
     private LogView logView;
+    private NetworkDeclutterDemoView networkDeclutterDemoView;
     private NetworkLayoutDemoView networkLayoutDemoView;
 
     /**
@@ -141,8 +145,13 @@ public class DemoApp extends BaseMDIApplication {
         // Map view (also loads demo geojson)
         mapView = createMapView();
         
+        // Network declutter demo view
+        networkDeclutterDemoView = createNetworkDeclutterDemoView();
+        
         // Network layout demo view
         networkLayoutDemoView = createNetworkLayoutDemoView();
+        
+        
     }
 
     /**
@@ -193,18 +202,23 @@ public class DemoApp extends BaseMDIApplication {
      */
     private void restoreDefaultViewLocations() {
         // Column 0: map centered; drawing upper-left
-        virtualView.moveToStart(mapView, 0, VirtualView.CENTER);
-        virtualView.moveToStart(drawingView, 0, VirtualView.UPPERLEFT);
+        virtualView.moveTo(mapView, 0, VirtualView.CENTER);
+        virtualView.moveTo(drawingView, 0, VirtualView.UPPERLEFT);
 
         // Column 1: 3D centered
-        virtualView.moveToStart(view3D, 1, VirtualView.CENTER);
+        virtualView.moveTo(view3D, 1, VirtualView.CENTER);
         
         //column 2: log view upper left
-        virtualView.moveToStart(logView, 2, VirtualView.UPPERLEFT);
+        virtualView.moveTo(logView, 2, VirtualView.UPPERLEFT);
         
-        // Column 3: network layout demo centered
-        virtualView.moveToStart(networkLayoutDemoView, 3, VirtualView.CENTER);
+        // Column 3: network declutter demo centered
+        virtualView.moveTo(networkDeclutterDemoView, 3, VirtualView.CENTER);
+        networkDeclutterDemoView.setVisible(true);
+        
+        // Column 4: network layout demo lower left
+        virtualView.moveTo(networkLayoutDemoView, 4, VirtualView.BOTTOMLEFT);
         networkLayoutDemoView.setVisible(true);
+
     }
 
     // -------------------------------------------------------------------------
@@ -319,18 +333,37 @@ public class DemoApp extends BaseMDIApplication {
     }
     
     /**
-	 * Create the network layout demo view.
+	 * Create the network declutter demo view.
 	 */
-    NetworkLayoutDemoView createNetworkLayoutDemoView() {
-		NetworkLayoutDemoView view = new NetworkLayoutDemoView(
-				PropertySupport.TITLE, "Network Layout Demo View",
+    NetworkDeclutterDemoView createNetworkDeclutterDemoView() {
+		NetworkDeclutterDemoView view = new NetworkDeclutterDemoView(
+				PropertySupport.TITLE, "Network Declutter Demo View",
 				PropertySupport.WIDTH, 800,
 				PropertySupport.HEIGHT, 400,
 				PropertySupport.VISIBLE, false,
+				PropertySupport.BACKGROUND, Color.white,
 				PropertySupport.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, 1, 1)
 		);
 		return view;
 	}
+    
+    /**
+ 	 * Create the network layout demo view.
+ 	 */
+     NetworkLayoutDemoView createNetworkLayoutDemoView() {
+    	 NetworkLayoutDemoView view = new NetworkLayoutDemoView(
+ 				PropertySupport.WIDTH, 800, // container width, not total view width
+ 				PropertySupport.HEIGHT, 600, // container height, not total view width
+ 				PropertySupport.TOOLBAR, true, 
+ 				PropertySupport.TOOLBARBITS, ToolBarBits.DEFAULTS,
+ 				PropertySupport.VISIBLE, true, 
+ 				PropertySupport.PROPNAME, "NETWORKLAYOUTDEMO", 
+ 				PropertySupport.BACKGROUND, X11Colors.getX11Color("alice blue"), 
+ 				PropertySupport.TITLE, "Network Layout Demo View "
+ 		);
+ 		return view;
+ 	}
+
 
     /**
      * Create the demo map view and load small GeoJSON datasets from resources.
@@ -374,9 +407,9 @@ public class DemoApp extends BaseMDIApplication {
      * @param args ignored
      */
     public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            DemoApp frame = DemoApp.getInstance();
-            frame.setVisible(true);
+       EventQueue.invokeLater(() -> {
+             DemoApp frame = DemoApp.getInstance();
+             frame.setVisible(true);
         });
     }
 }

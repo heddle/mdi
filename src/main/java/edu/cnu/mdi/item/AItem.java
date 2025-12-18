@@ -72,7 +72,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	protected Line2D.Double _line;
 
 	/**
-	 * Optionaly secondary points (such as internal points)
+	 * Optionally secondary points (such as internal points)
 	 */
 	protected Point2D.Double _secondaryPoints[];
 
@@ -82,9 +82,9 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	protected Point2D.Double _focus;
 
 	/**
-	 * What list (layer) the item is on.
+	 * What Z-layer the item is on.
 	 */
-	protected ItemList _itemList;
+	protected Layer _layer;
 
 	/**
 	 * The parent of this item.
@@ -190,16 +190,16 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	// used for select points
 	private static final Color _selectLine = Color.black;
 
-	/**
-	 * Create an item on a specific list (layer).
-	 *
-	 * @param itemList the list it is on.
-	 */
-	public AItem(ItemList itemList) {
-		_itemList = itemList;
-		_itemList.add(this);
 
-		_itemList.getContainer().getFeedbackControl().addFeedbackProvider(this);
+	/**
+	 * Create an item on a specific layer.
+	 * @param layer the z layer it is on.
+	 */
+	public AItem(Layer layer) {
+		_layer = layer;
+		_layer.add(this);
+
+		_layer.getContainer().getFeedbackControl().addFeedbackProvider(this);
 
 	}
 
@@ -312,7 +312,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be dragged.
 	 */
 	public boolean isDraggable() {
-		if (_locked || !isListEnabled()) {
+		if (_locked || !isLayerEnabled()) {
 			return false;
 		}
 
@@ -355,7 +355,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be resized.
 	 */
 	public boolean isResizable() {
-		if (_locked || !isListEnabled()) {
+		if (_locked || !isLayerEnabled()) {
 			return false;
 		}
 		return _resizable;
@@ -376,7 +376,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be rotated.
 	 */
 	public boolean isRotatable() {
-		if (_locked || !isListEnabled()) {
+		if (_locked || !isLayerEnabled()) {
 			return false;
 		}
 		return _rotatable;
@@ -397,7 +397,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be double clicked.
 	 */
 	public boolean isDoubleClickable() {
-		if (_locked || !isListEnabled()) {
+		if (_locked || !isLayerEnabled()) {
 			return false;
 		}
 		return _doubleClickable;
@@ -448,7 +448,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 */
 	public void setSelected(boolean selected) {
 		_selected = selected;
-		_itemList.getContainer().refresh();
+		_layer.getContainer().refresh();
 	}
 
 	/**
@@ -508,7 +508,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 *         ro
 	 */
 	public boolean isTrackable() {
-		if (_locked || !_enabled || !isListEnabled()) {
+		if (_locked || !_enabled || !isLayerEnabled()) {
 			return false;
 		}
 
@@ -725,15 +725,15 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		
 		switch (_modification.getType()) {
 		case DRAG:
-			_itemList.notifyDrawableChangeListeners(this, DrawableChangeType.MOVED);
+			_layer.notifyDrawableChangeListeners(this, DrawableChangeType.MOVED);
 			break;
 
 		case ROTATE:
-			_itemList.notifyDrawableChangeListeners(this, DrawableChangeType.ROTATED);
+			_layer.notifyDrawableChangeListeners(this, DrawableChangeType.ROTATED);
 			break;
 
 		case RESIZE:
-			_itemList.notifyDrawableChangeListeners(this, DrawableChangeType.RESIZED);
+			_layer.notifyDrawableChangeListeners(this, DrawableChangeType.RESIZED);
 			break;
 		}
 		_modification = null;
@@ -849,12 +849,12 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	}
 
 	/**
-	 * Get the list this item is on.
+	 * Get the layer this item is on.
 	 *
-	 * @return the list this item is on.
+	 * @return the layer this item is on.
 	 */
-	public ItemList getItemList() {
-		return _itemList;
+	public Layer getLayer() {
+		return _layer;
 	}
 
 	/**
@@ -983,14 +983,13 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		cbitem.addItemListener(il);
 		menu.add(cbitem);
 
-
 		return menu;
 	}
 
 	/**
 	 * Get the reference rotation angle in degrees.
 	 *
-	 * @return the azimuth
+	 * @return the azimuth in degrees, used to rotate the item.
 	 */
 	public double getAzimuth() {
 		return _azimuth;
@@ -1003,6 +1002,8 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 */
 	public void setAzimuth(double azimuth) {
 		_azimuth = azimuth;
+		
+		// keep it between -180 and +180
 		while (_azimuth > 180.0) {
 			_azimuth -= 360.0;
 		}
@@ -1082,9 +1083,9 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	    for (IDrawable drawable : new ArrayList<>(_children)) {
 	        if (drawable instanceof AItem) {
 	            AItem item = (AItem) drawable;
-	            ItemList itemList = item.getItemList();
-	            if (itemList != null) {
-	                itemList.remove(item);
+	            Layer layer = item.getLayer();
+	            if (layer != null) {
+	                layer.remove(item);
 	            }
 	        }
 	    }
@@ -1113,7 +1114,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	    _secondaryPoints = null;
 	    _style = null;
 	    _modification = null;
-	    _itemList = null;
+	    _layer = null;
 	}
 
 	/**
@@ -1168,7 +1169,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return the container this item lives on.
 	 */
 	public IContainer getContainer() {
-		return getItemList().getContainer();
+		return getLayer().getContainer();
 	}
 
 	/**
@@ -1193,17 +1194,17 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	}
 
 	/**
-	 * Convenience check to see whether the item's list (layer) is enabled. If it is not,
+	 * Convenience check to see whether the item's Z layer is enabled. If it is not,
 	 * you should not be able to select this item (independent of item's local
 	 * selectability)
 	 *
-	 * @return <code>true</code> if the item's list is enabled.
+	 * @return <code>true</code> if the item's layer is enabled.
 	 */
-	public boolean isListEnabled() {
-		if (_itemList == null) {
+	public boolean isLayerEnabled() {
+		if (_layer == null) {
 			return false;
 		}
-		return _itemList.isEnabled();
+		return _layer.isEnabled();
 	}
 
 	

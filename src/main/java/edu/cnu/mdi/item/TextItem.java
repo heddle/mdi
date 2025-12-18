@@ -65,7 +65,7 @@ public class TextItem extends RectangleItem {
     /**
      * Create a text item.
      *
-     * @param itemList  the list which will hold the item
+     * @param layer  the z layer which will hold the item
      * @param location  world location of the text baseline start (left/baseline) used to seed initial focus
      * @param font      font to use (null -> default)
      * @param text      text to display
@@ -73,7 +73,7 @@ public class TextItem extends RectangleItem {
      * @param fillColor background fill (may be null)
      * @param lineColor border color (may be null)
      */
-    public TextItem(ItemList itemList,
+    public TextItem(Layer layer,
                     Point2D.Double location,
                     Font font,
                     String text,
@@ -82,7 +82,7 @@ public class TextItem extends RectangleItem {
                     Color lineColor) {
 
         // Temporary rectangle; real geometry is computed from metrics + focus.
-        super(itemList, new Rectangle2D.Double(location.x, location.y, 1, 1));
+        super(layer, new Rectangle2D.Double(location.x, location.y, 1, 1));
 
         setFont(font);
         setText(text);

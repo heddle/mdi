@@ -13,8 +13,8 @@ public class RadArcItem extends PolygonItem {
     private Point2D.Double _leg;      // endpoint of first radius leg (defines radius + direction)
     private double _arcAngle;         // signed, degrees
 
-    public RadArcItem(ItemList itemList, Point2D.Double wpc, Point2D.Double wp1, double arcAngle) {
-        super(itemList, null);
+    public RadArcItem(Layer layer, Point2D.Double wpc, Point2D.Double wp1, double arcAngle) {
+        super(layer, null);
         _center = (Point2D.Double) wpc.clone();
         _leg = (Point2D.Double) wp1.clone();
         _arcAngle = arcAngle;

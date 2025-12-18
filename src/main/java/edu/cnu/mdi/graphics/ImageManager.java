@@ -4,11 +4,18 @@ import java.awt.Component;
 import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Hashtable;
 
 import javax.swing.ImageIcon;
+
+import org.apache.batik.transcoder.TranscoderException;
+import org.apache.batik.transcoder.TranscoderInput;
+import org.apache.batik.transcoder.TranscoderOutput;
+import org.apache.batik.transcoder.image.ImageTranscoder;
 
 import edu.cnu.mdi.log.Log;
 
@@ -197,6 +204,130 @@ public final class ImageManager {
 
 		return icon;
 	}
+
+	/**
+	 * Loads an SVG {@link ImageIcon} from the class path or file system, scaling
+	 * it to the specified width and height.
+	 *
+	 * @param imageFileName the SVG image file name; may be a path in the file
+	 *                      system or relative to the class path
+	 * @param width         the desired icon width
+	 * @param height        the desired icon height
+	 * @return the loaded and scaled {@link ImageIcon}, or {@code null} if loading
+	 *         failed
+	 */
+	public ImageIcon loadImageIcon(String imageFileName, int width, int height) {
+	    if (imageFileName == null) {
+	        Log.getInstance().warning("Requested ImageIcon with null file name.");
+	        return null;
+	    }
+
+	    boolean isSvg = imageFileName.toLowerCase().endsWith(".svg");
+	    String cacheKey = isSvg ? (imageFileName + "@" + width + "x" + height) : imageFileName;
+
+	    ImageIcon cached = _iconCache.get(cacheKey);
+	    if (cached != null) {
+	        return cached;
+	    }
+
+	    // SVG path
+	    if (isSvg) {
+	        ImageIcon icon = loadSvgIcon(imageFileName, width, height);
+	        if (icon != null) {
+	            _iconCache.put(cacheKey, icon);
+	            Log.getInstance().info("SVG ImageIcon loaded and cached: " + cacheKey);
+	        }
+	        return icon;
+	    }
+
+	    // Fallback to existing raster logic:
+	    ImageIcon icon = loadImageIcon(imageFileName);
+	    if (icon != null) {
+	        // loadImageIcon(imageFileName) already caches by imageFileName in your current code
+	        // so nothing extra needed here
+	        return icon;
+	    }
+	    return null;
+	}
+	
+	private ImageIcon loadSvgIcon(String imageFileName, int width, int height) {
+	    // 1) Try file system
+	    File file = new File(imageFileName);
+	    if (file.exists() && file.canRead()) {
+	        try (InputStream in = java.nio.file.Files.newInputStream(file.toPath())) {
+	            BufferedImage img = renderSvgToBufferedImage(in, width, height);
+	            if (img != null) {
+	                return new ImageIcon(img);
+	            }
+	        } catch (Exception e) {
+	            Log.getInstance().exception(e);
+	            Log.getInstance().warning("Failed to load SVG from file system: " + file.getAbsolutePath());
+	        }
+	    }
+
+	    // 2) Try classpath
+	    URL url = getClass().getClassLoader().getResource(imageFileName);
+	    if (url == null) {
+	        Log.getInstance().warning("SVG resource not found on classpath: " + imageFileName);
+	        return null;
+	    }
+
+	    try (InputStream in = url.openStream()) {
+	        BufferedImage img = renderSvgToBufferedImage(in, width, height);
+	        if (img != null) {
+	            return new ImageIcon(img);
+	        }
+	    } catch (Exception e) {
+	        Log.getInstance().exception(e);
+	        Log.getInstance().warning("Failed to load SVG from classpath: " + url);
+	    }
+
+	    return null;
+	}
+	
+	private static BufferedImage renderSvgToBufferedImage(InputStream svgStream, int width, int height)
+	        throws TranscoderException {
+
+	    if (svgStream == null) {
+	        return null;
+	    }
+	    if (width <= 0 || height <= 0) {
+	        throw new IllegalArgumentException("SVG render size must be > 0.");
+	    }
+
+	    TranscoderInput input = new TranscoderInput(svgStream);
+
+	    // Batik needs a custom ImageTranscoder to capture the BufferedImage
+	    class BufferedImageTranscoder extends ImageTranscoder {
+	        private BufferedImage image;
+
+	        @Override
+	        public BufferedImage createImage(int w, int h) {
+	            return new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+	        }
+
+	        @Override
+	        public void writeImage(BufferedImage img, TranscoderOutput out) {
+	            this.image = img;
+	        }
+
+	        BufferedImage getImage() {
+	            return image;
+	        }
+	    }
+
+	    BufferedImageTranscoder t = new BufferedImageTranscoder();
+	    t.addTranscodingHint(ImageTranscoder.KEY_WIDTH,  (float) width);
+	    t.addTranscodingHint(ImageTranscoder.KEY_HEIGHT, (float) height);
+
+	    // Optional: help with crisp small icons
+	    // t.addTranscodingHint(ImageTranscoder.KEY_AOI, new Rectangle2D.Float(0,0,width,height));
+
+	    t.transcode(input, null);
+	    return t.getImage();
+	}
+
+
 
 	/**
 	 * Loads an {@link Image} from the provided {@link URL}.

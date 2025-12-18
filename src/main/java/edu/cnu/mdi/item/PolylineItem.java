@@ -1,8 +1,6 @@
 package edu.cnu.mdi.item;
 
-import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.geom.Point2D;
 
 import edu.cnu.mdi.container.IContainer;
@@ -14,11 +12,11 @@ public class PolylineItem extends PathBasedItem {
 	/**
 	 * Create a world polyline item
 	 *
-	 * @param itemList  the list this item is on.
+	 * @param layer  the z layer this item is on.
 	 * @param points the points of the polygon
 	 */
-	public PolylineItem(ItemList itemList, Point2D.Double points[]) {
-		super(itemList);
+	public PolylineItem(Layer layer, Point2D.Double points[]) {
+		super(layer);
 
 		// get the path
 		_path = WorldGraphicsUtils.worldPolygonToPath(points);
@@ -38,10 +36,10 @@ public class PolylineItem extends PathBasedItem {
 		_lastDrawnPolygon = WorldGraphicsUtils.drawPath2D(g, container, _path, _style, false);
 
 	}
-	
+
 	@Override
 	protected boolean isClosedPath() {
-		return false; 
+		return false;
 	}
 
 	/**

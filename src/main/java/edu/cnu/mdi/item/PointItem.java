@@ -39,21 +39,21 @@ public class PointItem extends AItem {
 	/**
 	 * Constructor for a basic point item.
 	 *
-	 * @param itemList the list this item is on.
+	 * @param layer the z layer this item is on.
 	 */
-	public PointItem(ItemList itemList) {
-		super(itemList);
+	public PointItem(Layer layer) {
+		super(layer);
 		_focus = new Point2D.Double(Double.NaN, Double.NaN);
 	}
 
 	/**
 	 * Constructor for a basic point item.
 	 *
-	 * @param itemList the list this item is on.
+	 * @param layer the z layer this item is on.
 	 * @param icon  an icon to draw at the point
 	 */
-	public PointItem(ItemList itemList, ImageIcon icon) {
-		super(itemList);
+	public PointItem(Layer layer, ImageIcon icon) {
+		super(layer);
 		_imageIcon = icon;
 		_focus = new Point2D.Double(Double.NaN, Double.NaN);
 	}
@@ -61,11 +61,11 @@ public class PointItem extends AItem {
 	/**
 	 * Constructor for a basic point item.
 	 *
-	 * @param itemList    the list this item is on.
+	 * @param layer    the z layer this item is on.
 	 * @param location the location for the point.
 	 */
-	public PointItem(ItemList itemList, Point2D.Double location) {
-		super(itemList);
+	public PointItem(Layer layer, Point2D.Double location) {
+		super(layer);
 		_focus = new Point2D.Double(location.x, location.y);
 	}
 

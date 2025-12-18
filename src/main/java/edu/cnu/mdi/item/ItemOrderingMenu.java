@@ -96,7 +96,7 @@ public class ItemOrderingMenu extends JMenu implements ActionListener {
 
 		if (insertItemName) {
 			itemName = item.getName();
-			layerName = item.getItemList().getName();
+			layerName = item.getLayer().getName();
 		}
 
 		String o1 = "";
@@ -129,7 +129,7 @@ public class ItemOrderingMenu extends JMenu implements ActionListener {
 			return;
 		}
 
-		ItemList list = hotItem.getItemList();
+		Layer list = hotItem.getLayer();
 
 		Object source = e.getSource();
 		if (source == menuItems[BRINGTOFRONT]) {

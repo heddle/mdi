@@ -75,8 +75,9 @@ public class TextTool implements ITool {
         Point2D.Double wp = new Point2D.Double();
         ctx.container().localToWorld(mouseEvent.getPoint(), wp);
 
+        // Create the item and place it on the annotation layer.
         TextItem item = new TextItem(
-                ctx.container().getAnnotationList(),
+                ctx.container().getAnnotationLayer(),
                 wp,
                 font,
                 resultString,

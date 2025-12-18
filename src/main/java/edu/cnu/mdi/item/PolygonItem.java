@@ -16,11 +16,11 @@ public class PolygonItem extends PathBasedItem {
 	/**
 	 * Create a world polygon item.
 	 *
-	 * @param itemList the list this item is on.
+	 * @param layer the z layer this item is on.
 	 * @param points   the points of the polygon (world coordinates).
 	 */
-	public PolygonItem(ItemList itemList, Point2D.Double[] points) {
-		super(itemList);
+	public PolygonItem(Layer layer, Point2D.Double[] points) {
+		super(layer);
 		if (points != null) {
 			setPath(points);
 		}
@@ -29,10 +29,10 @@ public class PolygonItem extends PathBasedItem {
 	/**
 	 * Create an empty world polygon item (path may be set later).
 	 *
-	 * @param itemList the list this item is on.
+	 * @param layer the z layer this item is on.
 	 */
-	public PolygonItem(ItemList itemList) {
-		super(itemList);
+	public PolygonItem(Layer layer) {
+		super(layer);
 	}
 
 	/**

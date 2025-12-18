@@ -4,7 +4,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 
 import edu.cnu.mdi.item.AItem;
-import edu.cnu.mdi.item.ItemList;
+import edu.cnu.mdi.item.Layer;
 /**
  * This interface provides annotation support methods for containers.
  * 
@@ -12,10 +12,10 @@ import edu.cnu.mdi.item.ItemList;
  *
  */
 public interface IAnnotationSupport {
-    AItem createEllipseItem(ItemList list, Rectangle bounds);
-    AItem createRectangleItem(ItemList list, Rectangle bounds);
-    AItem createLineItem(ItemList list, Point p0, Point p1);
-    AItem createPolygonItem(ItemList list, Point[] pts);
-    AItem createPolylineItem(ItemList list, Point[] pts);
-    AItem createRadArcItem(ItemList list, Point pc, Point p1, double arcAngle);
+    AItem createEllipseItem(Layer list, Rectangle bounds);
+    AItem createRectangleItem(Layer list, Rectangle bounds);
+    AItem createLineItem(Layer list, Point p0, Point p1);
+    AItem createPolygonItem(Layer list, Point[] pts);
+    AItem createPolylineItem(Layer list, Point[] pts);
+    AItem createRadArcItem(Layer list, Point pc, Point p1, double arcAngle);
 }

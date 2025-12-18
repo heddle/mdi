@@ -12,11 +12,11 @@ public class RectangleItem extends PolygonItem {
     /**
      * Create a world rectangle object.
      *
-     * @param itemList the list this item is on.
+     * @param layer the z layer this item is on.
      * @param wr       the initial bounds of the item.
      */
-    public RectangleItem(ItemList itemList, Rectangle2D.Double wr) {
-        super(itemList, WorldGraphicsUtils.getPoints(wr));
+    public RectangleItem(Layer layer, Rectangle2D.Double wr) {
+        super(layer, WorldGraphicsUtils.getPoints(wr));
     }
 
     /**

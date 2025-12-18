@@ -525,7 +525,7 @@ public class VirtualView extends BaseView
             BaseView view = (BaseView) source;
             if (view.getVirtualItem() != null) {
                 view.getVirtualItem().setVisible(true);
-                getContainer().getAnnotationList().sendToFront(view.getVirtualItem());
+                getContainer().getAnnotationLayer().sendToFront(view.getVirtualItem());
                 view.getVirtualItem().getStyle().setFillColor(_vwfillActive);
                 view.getVirtualItem().getStyle().setLineColor(Color.white);
             }
@@ -560,7 +560,7 @@ public class VirtualView extends BaseView
             view.removeInternalFrameListener(this);
 
             if (view.getVirtualItem() != null) {
-                getContainer().getAnnotationList().remove(view.getVirtualItem());
+                getContainer().getAnnotationLayer().remove(view.getVirtualItem());
             }
 
             _views.remove(view);
@@ -768,31 +768,6 @@ public class VirtualView extends BaseView
         return new Point2D.Double(_currentCol * dx, 0);
     }
 
-    /**
-     * Move a view to the center of a specific virtual cell.
-     *
-     * @param view the view to move
-     * @param col  the target column
-     */
-    public void moveTo(BaseView view, int col) {
-        if (view == null) {
-            return;
-        }
-        moveTo(view, col, 0, 0);
-    }
-
-    /**
-     * Move a view to the starting location for that view, within a specific column,
-     * using a placement constraint.
-     *
-     * @param view       the view to move
-     * @param col        the target column
-     * @param constraint placement constraint constant (e.g. {@link #UPPERLEFT})
-     */
-    public void moveToStart(BaseView view, int col, int constraint) {
-        Point start = view.getStartingLocation();
-        moveTo(view, col, start.x, start.y, constraint);
-    }
 
     /**
      * Move a view to a specific virtual cell, by applying an offset relative to the current column.
@@ -802,7 +777,7 @@ public class VirtualView extends BaseView
      * @param dh   additional horizontal offset (pixels)
      * @param dv   additional vertical offset (pixels)
      */
-    public void moveTo(BaseView view, int col, int dh, int dv) {
+    public void moveTo(BaseView view, int col) {
 
         if (view == null) {
             return;
@@ -835,7 +810,7 @@ public class VirtualView extends BaseView
         int delx = xc - (bounds.x + bounds.width / 2);
         int dely = (yc - 40) - (bounds.y + bounds.height / 2);
 
-        view.offset(delx + dh, dely + dv);
+        view.offset(delx, dely);
     }
 
     /**
@@ -863,87 +838,7 @@ public class VirtualView extends BaseView
         return col;
     }
 
-    /**
-     * Shift a view so that it appears within the currently visible column.
-     *
-     * @param view the view
-     */
-    public void moveToCurrentColumn(BaseView view) {
-
-        int col = getViewColumn(view);
-        if (col == _currentCol) {
-            return;
-        }
-
-        Rectangle2D.Double world = getContainer().getWorldSystem();
-        double dx = world.width / _numcol;
-
-        Rectangle bounds = view.getBounds();
-        double dh = bounds.x - (col - _currentCol) * dx - _SLOP;
-        double dv = bounds.y - _SLOP;
-
-        moveTo(view, _currentCol, (int) dh, (int) dv, UPPERLEFT);
-    }
-
-    /**
-     * Move a view to a specific virtual cell, optionally resizing it to fit within the cell.
-     *
-     * @param view the view to move
-     * @param col  the target column
-     * @param fit  if {@code true}, resize the view to fit within the cell with a margin
-     */
-    public void moveTo(BaseView view, int col, boolean fit) {
-
-        if (view == null) {
-            return;
-        }
-
-        if (!fit) {
-            moveTo(view, col, 0, 0);
-            return;
-        }
-
-        col = Math.max(0, Math.min(col, (_numcol - 1)));
-
-        boolean managed = false;
-        for (BaseView bv : _views) {
-            if (bv == view) {
-                managed = true;
-                break;
-            }
-        }
-        if (!managed) {
-            return;
-        }
-
-        Rectangle2D.Double world = getContainer().getWorldSystem();
-        double dx = world.width / _numcol;
-        double dy = world.height;
-
-        double x = (col - _currentCol) * dx;
-
-        int margin = 40;
-
-        int left = (int) (x + margin);
-        int top = margin;
-        int w = (int) (dx - 3 * margin);
-        int h = (int) (dy - 3 * margin);
-
-        Rectangle bounds = view.getBounds();
-        bounds.setFrame(left, top, w, h);
-        view.setBounds(bounds);
-    }
-
-    /**
-     * Move a view to a specific column, using a placement constraint.
-     *
-     * @param view       the view to move
-     * @param col        the target column
-     * @param constraint placement constraint constant (e.g. {@link #UPPERLEFT})
-     */
-    public void moveTo(BaseView view, int col, int constraint) {
-        moveTo(view, col, 0, 0, constraint);
-    }
+ 
 
     /**
      * Get the currently visible column index.
@@ -963,7 +858,7 @@ public class VirtualView extends BaseView
      * @param delv       additional vertical offset (pixels)
      * @param constraint placement constraint constant
      */
-    public void moveTo(BaseView view, int col, int delh, int delv, int constraint) {
+    public void moveTo(BaseView view, int col, int constraint) {
 
         if (constraint == CENTER) {
             moveTo(view, col);
@@ -1037,7 +932,7 @@ public class VirtualView extends BaseView
             dv = -20;
         }
 
-        view.offset(dh + delh, dv + delv);
+        view.offset(dh, dv);
     }
 
     /**

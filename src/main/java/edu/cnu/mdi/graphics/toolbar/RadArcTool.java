@@ -6,7 +6,7 @@ import java.awt.Point;
 import edu.cnu.mdi.container.IAnnotationSupport;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
-import edu.cnu.mdi.item.ItemList;
+import edu.cnu.mdi.item.Layer;
 
 /**
  * Tool that creates a {@link edu.cnu.mdi.item.RadArcItem} by rubber-banding a
@@ -61,7 +61,7 @@ public class RadArcTool extends AbstractVertexRubberbandTool {
     }
 
     @Override
-    protected AItem createItem(IAnnotationSupport owner, ItemList list, Point[] pp) {
+    protected AItem createItem(IAnnotationSupport owner, Layer list, Point[] pp) {
 
         // Defensive (base guarantees length>=3, but RADARC expects exactly 3)
         if (pp == null || pp.length != 3) {

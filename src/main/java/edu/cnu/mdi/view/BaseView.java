@@ -417,15 +417,6 @@ public class BaseView extends JInternalFrame
     // ========================================================================
 
     /**
-     * Returns the initial upper-left location of this view at creation time.
-     *
-     * @return the starting location of the view.
-     */
-    public Point getStartingLocation() {
-        return startingLocation;
-    }
-
-    /**
      * Returns the insets of this internal frame, slightly reducing the bottom
      * inset to avoid unwanted extra space.
      *

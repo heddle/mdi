@@ -6,7 +6,7 @@ import java.awt.Point;
 import edu.cnu.mdi.container.IAnnotationSupport;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
-import edu.cnu.mdi.item.ItemList;
+import edu.cnu.mdi.item.Layer;
 
 /**
  * Tool that creates a polyline item by vertex rubber-banding.
@@ -57,7 +57,7 @@ public class PolylineTool extends AbstractVertexRubberbandTool {
     }
 
     @Override
-    protected AItem createItem(IAnnotationSupport owner, ItemList list, Point[] vertices) {
+    protected AItem createItem(IAnnotationSupport owner, Layer list, Point[] vertices) {
         return owner.createPolylineItem(list, vertices);
     }
 

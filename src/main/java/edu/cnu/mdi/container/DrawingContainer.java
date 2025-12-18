@@ -8,7 +8,7 @@ import java.awt.geom.Rectangle2D.Double;
 
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.EllipseItem;
-import edu.cnu.mdi.item.ItemList;
+import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.item.LineItem;
 import edu.cnu.mdi.item.PolygonItem;
 import edu.cnu.mdi.item.PolylineItem;
@@ -26,11 +26,11 @@ public class DrawingContainer extends BaseContainer implements IAnnotationSuppor
 	/**
 	 * From a given screen rectangle, create an ellipse item.
 	 *
-	 * @param itemList the list to put the item on
+	 * @param layer the z layer to put the item on
 	 * @param rect  the bounding screen rectangle, probably from rubber banding.
 	 * @return the new item
 	 */
-	public AItem createEllipseItem(ItemList itemList, Rectangle rect) {
+	public AItem createEllipseItem(Layer layer, Rectangle rect) {
 		int l = rect.x;
 		int t = rect.y;
 		int r = l + rect.width;
@@ -58,66 +58,66 @@ public class DrawingContainer extends BaseContainer implements IAnnotationSuppor
 		Point2D.Double center = new Point2D.Double();
 		localToWorld(pc, center);
 
-		return new EllipseItem(itemList, width, height, 0.0, center);
+		return new EllipseItem(layer, width, height, 0.0, center);
 	}
 
 	/**
 	 * From a given screen rectangle, create a rectangle item.
 	 *
-	 * @param itemList the list to put the item on
+	 * @param layer the z layer to put the item on
 	 * @param b     the screen rectangle, probably from rubber banding.
 	 * @return the new item
 	 */
-	public AItem createRectangleItem(ItemList itemList, Rectangle b) {
+	public AItem createRectangleItem(Layer layer, Rectangle b) {
 		Rectangle2D.Double wr = new Rectangle2D.Double();
 		localToWorld(b, wr);
-		return new RectangleItem(itemList, wr);
+		return new RectangleItem(layer, wr);
 	}
 
 	/**
 	 * From two given screen points, create a line item
 	 *
-	 * @param itemList the list to put the item on
+	 * @param layer the z layer to put the item on
 	 * @param p0    one screen point, probably from rubber banding.
 	 * @param p1    another screen point, probably from rubber banding.
 	 * @return the new item
 	 */
-	public AItem createLineItem(ItemList itemList, Point p0, Point p1) {
+	public AItem createLineItem(Layer layer, Point p0, Point p1) {
 		Point2D.Double wp0 = new Point2D.Double();
 		Point2D.Double wp1 = new Point2D.Double();
 		localToWorld(p0, wp0);
 		localToWorld(p1, wp1);
-		return new LineItem(itemList, wp0, wp1);
+		return new LineItem(layer, wp0, wp1);
 	}
 
 	/**
 	 * Create a radarc item from the given parameters, probably obtained by
 	 * rubberbanding.
 	 *
-	 * @param itemList the list to put the item on
+	 * @param layer the z layer to put the item on
 	 * @param pc       the center of the arc
 	 * @param p1       the point at the end of the first leg. Thus pc->p1 determine
 	 *                 the radius.
 	 * @param arcAngle the opening angle COUNTERCLOCKWISE in degrees.
 	 * @return the new item
 	 */
-	public AItem createRadArcItem(ItemList itemList, Point pc, Point p1, double arcAngle) {
+	public AItem createRadArcItem(Layer layer, Point pc, Point p1, double arcAngle) {
 		Point2D.Double wpc = new Point2D.Double();
 		Point2D.Double wp1 = new Point2D.Double();
 		localToWorld(pc, wpc);
 		localToWorld(p1, wp1);
-		return new RadArcItem(itemList, wpc, wp1, arcAngle);
+		return new RadArcItem(layer, wpc, wp1, arcAngle);
 		// return new ArcItem(layer, wpc, wp1, arcAngle);
 	}
 
 	/**
 	 * From a given screen polygon, create a polygon item.
 	 *
-	 * @param itemList the list to put the item on
+	 * @param layer the z layer to put the item on
 	 * @param pp    the screen polygon, probably from rubber banding.
 	 * @return the new item
 	 */
-	public AItem createPolygonItem(ItemList itemList, Point pp[]) {
+	public AItem createPolygonItem(Layer layer, Point pp[]) {
 		if ((pp == null) || (pp.length < 3)) {
 			return null;
 		}
@@ -127,17 +127,17 @@ public class DrawingContainer extends BaseContainer implements IAnnotationSuppor
 			localToWorld(pp[index], wp[index]);
 		}
 
-		return new PolygonItem(itemList, wp);
+		return new PolygonItem(layer, wp);
 	}
 
 	/**
 	 * From a given screen polygon, create a polyline item.
 	 *
-	 * @param itemList the list to put the item on
+	 * @param layer the z layer to put the item on
 	 * @param pp    the screen polyline, probably from rubber banding.
 	 * @return the new item
 	 */
-	public AItem createPolylineItem(ItemList itemList, Point pp[]) {
+	public AItem createPolylineItem(Layer layer, Point pp[]) {
 		if ((pp == null) || (pp.length < 3)) {
 			return null;
 		}
@@ -148,7 +148,7 @@ public class DrawingContainer extends BaseContainer implements IAnnotationSuppor
 			localToWorld(pp[index], wp[index]);
 		}
 
-		AItem item = new PolylineItem(itemList, wp);
+		AItem item = new PolylineItem(layer, wp);
 
 		return item;
 	}

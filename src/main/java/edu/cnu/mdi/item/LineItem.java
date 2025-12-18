@@ -32,12 +32,12 @@ public class LineItem extends AItem {
     /**
      * Create a world line item.
      *
-     * @param itemList the list this item is on (and which supplies the container)
+     * @param layer the z layer this item is on (and which supplies the container)
      * @param wp0      start of the line (world coordinates)
      * @param wp1      end of the line (world coordinates)
      */
-    public LineItem(ItemList itemList, Point2D.Double wp0, Point2D.Double wp1) {
-        super(itemList);
+    public LineItem(Layer layer, Point2D.Double wp0, Point2D.Double wp1) {
+        super(layer);
 
         // Keep geometry non-null so callers don't have to null-check.
         _line = new Line2D.Double(wp0, wp1);
