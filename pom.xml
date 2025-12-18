@@ -48,15 +48,27 @@
 		</repository>
 	</repositories>
 
-	<!-- Project dependencies: JOGL, GlueGen, JUnit 5 -->
+	<!-- Project dependencies: JOGL, GlueGen, JUnit 5, Commons Math, Batik -->
 	<dependencies>
-	    <!-- Apache Commons Math -->
+		<!-- Apache Batik for svg -->
+		<dependency>
+			<groupId>org.apache.xmlgraphics</groupId>
+			<artifactId>batik-transcoder</artifactId>
+			<version>1.19</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.xmlgraphics</groupId>
+			<artifactId>batik-codec</artifactId>
+			<version>1.19</version>
+		</dependency>
+
+		<!-- Apache Commons Math -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
 			<version>3.6.1</version>
 		</dependency>
-		
+
 		<!-- JOGL: OpenGL bindings -->
 		<dependency>
 			<groupId>org.jogamp.jogl</groupId>
