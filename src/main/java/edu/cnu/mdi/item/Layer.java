@@ -24,6 +24,7 @@ public class Layer extends DrawableList {
 	public Layer(IContainer container, String name) {
 		super(name);
 		_container = container;
+		_container.addLayer(this);
 	}
 
 	/**
@@ -250,15 +251,11 @@ public class Layer extends DrawableList {
 	 */
 	public ArrayList<AItem> getAllItems() {
 
-		ArrayList<AItem> allitems = null;
+		ArrayList<AItem> allitems = new ArrayList<>();
 
 		synchronized (this) {
 			for (IDrawable drawable : this) {
-				if (allitems == null) {
-					allitems = new ArrayList<>(25);
-				}
 				allitems.add((AItem) drawable);
-
 			}
 		}
 		return allitems;

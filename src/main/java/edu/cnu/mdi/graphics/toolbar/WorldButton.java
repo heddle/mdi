@@ -7,7 +7,7 @@ package edu.cnu.mdi.graphics.toolbar;
 public class WorldButton extends ToolActionButton {
 
     public WorldButton(ToolContext ctx) {
-        super(ctx, "images/world.gif", "Restore default world");
+        super(ctx, "images/svg/reset_zoom.svg", "Restore default zoom");
     }
 
     @Override

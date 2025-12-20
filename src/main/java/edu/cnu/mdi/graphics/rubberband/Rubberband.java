@@ -37,7 +37,7 @@ public final class Rubberband {
 	 * Enum of possible rubber banding polices.
 	 */
 	public static enum Policy {
-		RECTANGLE, RECTANGLE_PRESERVE_ASPECT, POLYGON, POLYLINE, OVAL, LINE, RADARC, XONLY
+		RECTANGLE, RECTANGLE_PRESERVE_ASPECT, POLYGON, POLYLINE, OVAL, LINE, RADARC, XONLY, TWO_CLICK_LINE
 	}
 
 	// The default fill color. Should be fairly transparent.
@@ -73,10 +73,7 @@ public final class Rubberband {
 	// Make sure we only start once
 	private boolean _started = false;
 
-	// used for xormode
-	private boolean _firstXorDraw = true;
-
-	// used for component image (not used in xormode)
+	// used for component image
 	private BufferedImage _backgroundImage;
 	private BufferedImage _image;
 
@@ -138,38 +135,44 @@ public final class Rubberband {
 		_mouseAdapter = new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent event) {
-				if (isActive()) {
-					if (polyMode()) {
-						if (_tempPoly == null) {
-							startRubberbanding(event.getPoint());
-						} else {
-							if (event.getClickCount() == 2) {
-								endRubberbanding(event.getPoint());
-							} else {
-								addPoint(_tempPoly, event.getX(), event.getY());
-							}
-						}
-					} else if (radArcMode()) {
-						if (_tempPoly == null) {
-							startRubberbanding(event.getPoint());
-						} else {
-							addPoint(_tempPoly, event.getX(), event.getY());
-							if (_tempPoly.npoints == 3) {
-								endRubberbanding(event.getPoint());
-							}
-						}
-					} else if (lineMode()) {
-						if (_tempPoly == null) {
-							startRubberbanding(event.getPoint());
-						} else {
-							addPoint(_tempPoly, event.getX(), event.getY());
-							if (_tempPoly.npoints == 2) {
-								endRubberbanding(event.getPoint());
-							}
-						}
-					} else { // rects and ovals by dragging
+				
+				if (!isActive()) {
+					return;
+				}
+				if (twoClickLineMode()) {
+			        return;
+			    }
+				
+				if (polyMode()) {
+					if (_tempPoly == null) {
 						startRubberbanding(event.getPoint());
+					} else {
+						if (event.getClickCount() == 2) {
+							endRubberbanding(event.getPoint());
+						} else {
+							addPoint(_tempPoly, event.getX(), event.getY());
+						}
 					}
+				} else if (radArcMode()) {
+					if (_tempPoly == null) {
+						startRubberbanding(event.getPoint());
+					} else {
+						addPoint(_tempPoly, event.getX(), event.getY());
+						if (_tempPoly.npoints == 3) {
+							endRubberbanding(event.getPoint());
+						}
+					}
+				} else if (lineMode()) {
+					if (_tempPoly == null) {
+						startRubberbanding(event.getPoint());
+					} else {
+						addPoint(_tempPoly, event.getX(), event.getY());
+						if (_tempPoly.npoints == 2) {
+							endRubberbanding(event.getPoint());
+						}
+					}
+				} else { // rects and ovals by dragging
+					startRubberbanding(event.getPoint());
 				}
 			}
 
@@ -266,7 +269,7 @@ public final class Rubberband {
 	 * @return <code>true</code> if we are in line mode.
 	 */
 	private boolean lineMode() {
-		return (_policy == Policy.LINE);
+	    return (_policy == Policy.LINE) || (_policy == Policy.TWO_CLICK_LINE);
 	}
 
 	/**
@@ -299,6 +302,7 @@ public final class Rubberband {
 			GraphicsUtils.drawHighlightedRectangle(g, rect, _highlightColor1, _highlightColor2);
 			break;
 
+		case TWO_CLICK_LINE:
 		case LINE:
 			GraphicsUtils.drawHighlightedLine(g, _startPt.x, _startPt.y, _currentPt.x, _currentPt.y,
 					_highlightColor1, _highlightColor2);
@@ -511,7 +515,6 @@ public final class Rubberband {
 		_tempPoly = null;
 		_active = false;
 		_started = false;
-		_firstXorDraw = true;
 		_component.removeMouseListener(_mouseAdapter);
 		_component.removeMouseMotionListener(_mouseMotionAdapter);
 
@@ -605,7 +608,6 @@ public final class Rubberband {
 
 	    _active = false;
 	    _started = false;
-	    _firstXorDraw = true;
 
 	    // Optionally keep start/current, but it's harmless to leave them.
 	    // _startPt.setLocation(0, 0);
@@ -689,4 +691,9 @@ public final class Rubberband {
 	public Point getCurrentPt() {
 		return _currentPt;
 	}
+	
+	private boolean twoClickLineMode() {
+	    return (_policy == Policy.TWO_CLICK_LINE);
+	}
+
 }

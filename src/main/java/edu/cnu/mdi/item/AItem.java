@@ -128,7 +128,12 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * Controls whether the item responds to a double click.
 	 */
 	protected boolean _doubleClickable = false;
-
+	
+	/**
+	 * Controls whether the item can be connected to other items.
+	 */
+	protected boolean _connectable = false;
+	
 	/**
 	 * Controls whether the item responds to a righjt click.
 	 */
@@ -411,7 +416,29 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	public void setDoubleClickable(boolean doubleClickable) {
 		_doubleClickable = doubleClickable;
 	}
+	
+	/**
+	 * Check whether the item can be connected to other items.
+	 *
+	 * @return <code>true</code> if the item can be connected to other items.
+	 */
+	public boolean isConnectable() {
+		if (_locked || !isLayerEnabled()) {
+			return false;
+		}
+		return _connectable;
+	}
 
+	/**
+	 * Set whether the item can be connected to other items.
+	 *
+	 * @param connectable if <code>true</code>, the item can be connected to other
+	 *                    items.
+	 */
+	public void setConnectable(boolean connectable) {
+		_connectable = connectable;
+	}
+	
 	/**
 	 * Check whether the item is locked, which takes precedence over other flags. A
 	 * locked item cannot be dragged, rotated, resized, or deleted--regardless of
@@ -1206,6 +1233,53 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		}
 		return _layer.isEnabled();
 	}
+	
+	/**
+     * Translate this item by the given delta in <b>world</b> coordinates.
+     * <p>
+     * This is the programmatic equivalent of a drag gesture. It moves the
+     * underlying {@link #_path} by applying a world-space translation transform.
+     * If this item maintains secondary geometry (e.g., helper points used for
+     * selection handles), those are translated consistently.
+     * </p>
+     *
+     * @param dx world-space delta x
+     * @param dy world-space delta y
+     */
+    public abstract void translateWorld(double dx, double dy);
 
+
+    /**
+	 * Translate this item by the given delta in <b>local</b> (pixel) coordinates.
+	 * <p>
+	 * This is the programmatic equivalent of a drag gesture. It converts the
+	 * provided local-space deltas into world-space deltas, then calls
+	 * {@link #translateWorld(double, double)} to perform the actual translation.
+	 * </p>
+	 *
+	 * @param dx local-space delta x
+	 * @param dy local-space delta y
+	 */
+    public void translateLocal(int dx, int dy) {
+    	
+    	if (dx == 0 && dy == 0) {
+			return;
+		}
+    	
+		IContainer container = getContainer();
+		if (container == null) {
+			return;
+		}
+		// convert local deltas to world deltas
+        Point2D.Double w0 = new Point2D.Double();
+        Point2D.Double w1 = new Point2D.Double();
+        container.localToWorld(new Point(0, 0), w0);
+        container.localToWorld(new Point(dx, dy), w1);
+
+        double dxWorld = w1.x - w0.x;
+        double dyWorld = w1.y - w0.y;
+
+		translateWorld(dxWorld, dyWorld);
+    }
 	
 }

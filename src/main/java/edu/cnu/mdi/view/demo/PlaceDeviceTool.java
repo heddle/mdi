@@ -1,16 +1,26 @@
 package edu.cnu.mdi.view.demo;
 
 import java.awt.Cursor;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 
+import edu.cnu.mdi.container.BaseContainer;
+import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.toolbar.ITool;
 import edu.cnu.mdi.graphics.toolbar.ToolContext;
+import edu.cnu.mdi.item.Layer;
 
 public class PlaceDeviceTool implements ITool {
 	
+	// The device symbol to place
     private  EDeviceSymbol symbol;
+    
+    private Layer deviceLayer;
+    
 
-    public PlaceDeviceTool(EDeviceSymbol symbol) {
+    public PlaceDeviceTool(Layer deviceLayer, EDeviceSymbol symbol) {
+    	this.deviceLayer = deviceLayer;
         this.symbol = java.util.Objects.requireNonNull(symbol);
     }
     
@@ -19,14 +29,16 @@ public class PlaceDeviceTool implements ITool {
         return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
     }
 
-    @Override
-    public void mouseClicked(ToolContext ctx, MouseEvent e) {
-        // Convert click to world coords if needed (depends on your ctx API)
-        // Point2D world = ctx.container().localToWorld(e.getPoint());
+	@Override
+	public void mouseClicked(ToolContext ctx, MouseEvent e) {
+		java.util.Objects.requireNonNull(ctx, "ctx");
+		if (e.getButton() == MouseEvent.BUTTON1) {
+			IContainer container = ctx.container();
+			DeviceItem.createDeviceItem(deviceLayer, e.getPoint(), symbol);
+			container.refresh();
+		}
 
-        // Create + add your item at click location
-        // ctx.container().addItem(new DeviceItem(symbol, world));
-    }
+	}
 
 	@Override
 	public String id() {

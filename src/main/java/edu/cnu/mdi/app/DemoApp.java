@@ -356,7 +356,7 @@ public class DemoApp extends BaseMDIApplication {
  				PropertySupport.HEIGHT, 600, // container height, not total view width
  				PropertySupport.TOOLBAR, true, 
  				PropertySupport.TOOLBARBITS, ToolBarBits.DEFAULTS,
- 				PropertySupport.VISIBLE, true, 
+ 				PropertySupport.VISIBLE, false, 
  				PropertySupport.PROPNAME, "NETWORKLAYOUTDEMO", 
  				PropertySupport.BACKGROUND, X11Colors.getX11Color("alice blue"), 
  				PropertySupport.TITLE, "Network Layout Demo View "

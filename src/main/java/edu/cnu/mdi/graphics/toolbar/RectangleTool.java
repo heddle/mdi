@@ -56,8 +56,8 @@ public class RectangleTool extends AbstractRubberbandTool {
     }
 
     @Override
-    protected AItem createItem(IAnnotationSupport owner, Layer list, Rectangle bounds) {
-        return owner.createRectangleItem(list, bounds);
+    protected AItem createItem(IAnnotationSupport owner, Layer layer, Rectangle bounds) {
+        return owner.createRectangleItem(layer, bounds);
     }
 
     @Override

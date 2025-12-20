@@ -35,10 +35,9 @@ public interface IContainer {
 	/**
 	 * Add a z layer for containing items rendered on this container..
 	 *
-	 * @param name the name of the layer. If one with that name already
-	 * exists, it is returned.
+	 * @param layer the layer to add.
 	 */
-	public Layer addLayer(String name);
+	public void addLayer(Layer layer);
 
 	/**
 	 * Get the annotation layer for this container.

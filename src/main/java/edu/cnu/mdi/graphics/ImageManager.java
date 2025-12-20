@@ -63,19 +63,18 @@ public final class ImageManager {
 	 * A memory-only cache for {@link Image} objects, keyed by their source
 	 * {@link URL}.
 	 */
-	private final Hashtable<URL, Image> _imageCache = new Hashtable<>(137);
+	private final Hashtable<URL, Image> _imageCache = new Hashtable<>();
 
 	/**
 	 * A memory-only cache for {@link ImageIcon} objects, keyed by the image path
 	 * (relative to either the file system or the class path).
 	 */
-	private final Hashtable<String, ImageIcon> _iconCache = new Hashtable<>(193);
+	private final Hashtable<String, ImageIcon> _iconCache = new Hashtable<>();
 
 	/**
 	 * Private constructor for the singleton instance.
 	 */
 	private ImageManager() {
-		// no-op
 	}
 
 	/**

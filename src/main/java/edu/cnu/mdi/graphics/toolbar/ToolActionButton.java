@@ -48,7 +48,7 @@ public abstract class ToolActionButton extends JButton implements ToolContextAwa
         setBorderPainted(false);
         setToolTipText(toolTip);
 
-        ImageIcon icon = ImageManager.getInstance().loadImageIcon(imageFile, 16, 16);
+        ImageIcon icon = ImageManager.getInstance().loadImageIcon(imageFile, 20, 20);
         setIcon(icon);
 
         // Works with injection: ctx will be set by BaseToolBar before the user can click.

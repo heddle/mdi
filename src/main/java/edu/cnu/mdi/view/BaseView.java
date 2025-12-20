@@ -18,6 +18,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyVetoException;
+import java.util.List;
 import java.util.Properties;
 
 import javax.swing.JComponent;
@@ -33,6 +34,9 @@ import edu.cnu.mdi.component.MagnifyWindow;
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.desktop.Desktop;
+import edu.cnu.mdi.feedback.FeedbackControl;
+import edu.cnu.mdi.feedback.FeedbackPane;
+import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.format.DoubleFormat;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
@@ -64,7 +68,7 @@ import edu.cnu.mdi.ui.menu.ViewPopupMenu;
  */
 @SuppressWarnings("serial")
 public class BaseView extends JInternalFrame
-        implements FocusListener, MouseListener, ComponentListener {
+        implements FocusListener, MouseListener, ComponentListener, IFeedbackProvider {
 
     /**
      * Name used as a prefix for reading and writing persistent properties for this
@@ -492,6 +496,27 @@ public class BaseView extends JInternalFrame
     public IContainer getContainer() {
         return container;
     }
+    
+    /**
+	 * Initializes the feedback pane for this view and registers this view
+	 * as a feedback provider. Uses default colors and font size.
+	 * 
+	 * @return the created feedback pane
+	 */
+    protected FeedbackPane initFeedback() {
+    	return initFeedback(Color.cyan, Color.black, 9);
+	}
+    
+    protected FeedbackPane initFeedback(Color fg, Color bg, int fontSize) {
+		FeedbackControl fbc = getContainer().getFeedbackControl();
+		fbc.addFeedbackProvider(this);
+
+		FeedbackPane fbp = new FeedbackPane(fg, bg, fontSize);
+		fbp.setBorder(null);
+		getContainer().setFeedbackPane(fbp);
+		return fbp;
+    }
+
 
     /**
      * Returns the name of this view. The base implementation returns the
@@ -530,17 +555,6 @@ public class BaseView extends JInternalFrame
      */
     public boolean rightClicked(MouseEvent mouseEvent) {
         return false;
-    }
-
-    /**
-     * Called when a "control panel" toggle button is pressed for this view.
-     * <p>
-     * The base implementation simply logs to {@code System.err}. Subclasses
-     * should override to show or hide a view-specific control panel.
-     * </p>
-     */
-    public void controlPanelButtonHit() {
-        System.err.println("Control Panel Button Hit");
     }
 
     // ========================================================================
@@ -1054,5 +1068,11 @@ public class BaseView extends JInternalFrame
 
         return parentBounds.intersects(frameBounds);
     }
+
+	@Override
+	public void getFeedbackStrings(IContainer container, Point pp, java.awt.geom.Point2D.Double wp,
+			List<String> feedbackStrings) {
+		// no op
+	}
 
 }

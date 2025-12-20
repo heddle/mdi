@@ -248,28 +248,14 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	}
 	
 
-	/**
-	 * {@inheritDoc}
-     */
-	@Override
-	public Layer addLayer(String name) {
-		Objects.requireNonNull(name, "Layer name cannot be null");
-
-		Layer layer = getLayerByName(name);
-		if (layer != null) {
-			Log.getInstance().warning("Asked to add a Layer: " + name + " which already exists.");
-		} else {
-			layer = new Layer(this, name);
-			_layers.add(layer);
-			_layers.addDrawableListener(this);
-		}
-		return layer;
-	}
 	
 	/**
 	 * {@inheritDoc}
      */
-	private void addLayer(Layer layer) {
+	@Override
+	public void addLayer(Layer layer) {
+		Objects.requireNonNull(layer, "layer");
+		_layers.remove(layer); // in case already there
 		_layers.add(layer);
 		_layers.addDrawableListener(this);
 	}
@@ -764,7 +750,11 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	@Override
 	public void drawableChanged(DrawableList list, IDrawable drawable, DrawableChangeType type) {
 
-		AItem item = (drawable == null) ? null : (AItem) drawable;
+		AItem item = null;
+		
+		if ((drawable != null) && drawable instanceof AItem) {
+			item = (AItem) drawable;
+		}
 
 		switch (type) {
 		case ADDED:

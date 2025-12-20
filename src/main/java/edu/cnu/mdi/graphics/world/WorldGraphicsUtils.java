@@ -1192,41 +1192,6 @@ public class WorldGraphicsUtils {
 		return points;
 	}
 
-	/**
-	 * Get donut points given some defining data
-	 *
-	 * @param wpc         the center of the donut
-	 * @param radiusInner the inner radius
-	 * @param radiusOuter the outer radius
-	 * @param startAngle  the startAngle in degrees measured like the usual polar
-	 *                    angle theta
-	 * @param arcAngle    the opening angle COUNTERCLOCKWISE in degrees.
-	 * @return the world point array simulating the radarc
-	 */
-	public static Point2D.Double[] getDonutPoints(Point2D.Double wpc, double radiusInner, double radiusOuter,
-			double startAngle, double arcAngle) {
-
-		double theta = Math.toRadians(startAngle);
-		double dTheta = Math.toRadians(arcAngle);
-		double del = dTheta / (NUMCIRCSTEP - 1);
-
-		Point2D.Double wp[] = new Point2D.Double[2 * NUMCIRCSTEP];
-
-		for (int i = 0; i < NUMCIRCSTEP; i++) {
-			int j = 2 * NUMCIRCSTEP - 1 - i;
-			double ang = theta + i * del;
-			double cos = Math.cos(ang);
-			double sin = Math.sin(ang);
-			double x1 = wpc.x + radiusInner * cos;
-			double y1 = wpc.y + radiusInner * sin;
-			double x2 = wpc.x + radiusOuter * cos;
-			double y2 = wpc.y + radiusOuter * sin;
-			wp[i] = new Point2D.Double(x1, y1);
-			wp[j] = new Point2D.Double(x2, y2);
-		}
-
-		return wp;
-	}
 
 	/**
 	 * Get radarc points given some defining data

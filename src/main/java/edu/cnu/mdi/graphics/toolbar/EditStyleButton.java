@@ -7,6 +7,7 @@ import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
 import edu.cnu.mdi.item.AItem;
 
+@SuppressWarnings("serial")
 public class EditStyleButton extends ToolActionButton {
 
     public EditStyleButton(ToolContext ctx) {
@@ -17,8 +18,7 @@ public class EditStyleButton extends ToolActionButton {
 	protected void perform(ToolContext ctx) {
 		var c = ctx.container();
 		
-		List<AItem> selected = c.getSelectedItems(); // if you don’t have this, use
-															// getAnnotationList().getSelectedItems() + other lists
+		List<AItem> selected = c.getSelectedItems(); 
 
 		if (selected == null || selected.isEmpty()) {
 			java.awt.Toolkit.getDefaultToolkit().beep();

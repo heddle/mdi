@@ -53,8 +53,8 @@ public class NetworkDeclutterDemoView extends SimulationView {
         this.sim.setEngine(getSimulationEngine());
 
         // Load icons
-        serverIcon = ImageManager.getInstance().loadImageIcon("images/folder.gif");
-		clientIcon = ImageManager.getInstance().loadImageIcon("images/file.gif");
+        serverIcon = ImageManager.getInstance().loadImageIcon("images/svg/server.svg", 32, 32);
+		clientIcon = ImageManager.getInstance().loadImageIcon("images/svg/workstation.svg", 32, 32);
 		iconRadiusPx = clientIcon.getIconWidth() / 2; // assuming square icons of same size
 
 		setAfterDraw();

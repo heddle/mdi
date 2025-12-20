@@ -39,16 +39,13 @@ import edu.cnu.mdi.ui.colors.X11Colors;
  */
 @SuppressWarnings("serial")
 public class FeedbackPane extends TextPaneScrollPane {
+	
+	// background color
+	private Color bg;
+	
+	// default font size
+	private int fontSize;
 
-    /**
-     * Default font size for feedback text.
-     */
-    private static final int DEFAULT_FONT_SIZE = 10;
-
-    /**
-     * Background color for the feedback pane.
-     */
-    private static final Color DEFAULT_BACKGROUND = Color.black;
 
     /**
      * Cache of styles keyed by lower-case X11 color names.
@@ -62,27 +59,33 @@ public class FeedbackPane extends TextPaneScrollPane {
     /**
      * Default style: cyan text, black background, SansSerif, bold, non-italic.
      */
-    public static final SimpleAttributeSet DEFAULT_STYLE =
-            createStyle(Color.cyan, DEFAULT_BACKGROUND, "SansSerif", DEFAULT_FONT_SIZE, false, true);
+    private SimpleAttributeSet DEFAULT_STYLE;
 
     /**
      * Small monospaced style: cyan text, black background, monospaced font,
      * small size, bold, non-italic.
      */
-    public static final SimpleAttributeSet SMALL_MONO_STYLE =
-            createStyle(Color.cyan, DEFAULT_BACKGROUND, "Monospaced", 6, false, true);
+    private SimpleAttributeSet SMALL_MONO_STYLE;
 
     /**
-     * Constructs a {@code FeedbackPane} with an etched and line border and a
+     * Constructs a {@code FeedbackPane}  a
      * dark background suitable for overlay-style feedback.
+     * Uses 9 pt font size.
      */
     public FeedbackPane() {
-        super(DEFAULT_BACKGROUND);
-
-        Border etchedBorder = BorderFactory.createEtchedBorder();
-        Border lineBorder = BorderFactory.createLineBorder(Color.black, 2);
-        setBorder(BorderFactory.createCompoundBorder(etchedBorder, lineBorder));
+        this(Color.cyan, Color.black, 9);
     }
+    
+    public FeedbackPane(Color fg, Color bg, int fontSize) {
+		super(bg);
+		this.bg = bg;
+		this.fontSize = fontSize;
+		
+		DEFAULT_STYLE = createStyle(fg, bg, "SansSerif", fontSize, false, true);
+		
+		int smallFontSize = Math.max(6, fontSize - 3);
+		SMALL_MONO_STYLE = createStyle(fg, bg, "Monospaced", smallFontSize, false, true);
+	}
 
     /**
      * Ensures the message text ends with a newline so that appended messages
@@ -146,8 +149,8 @@ public class FeedbackPane extends TextPaneScrollPane {
                 if (style == null) {
                     Color color = X11Colors.getX11Color(x11ColorName);
                     if (color != null) {
-                        style = createStyle(color, DEFAULT_BACKGROUND, "SansSerif",
-                                            DEFAULT_FONT_SIZE, false, true);
+                        style = createStyle(color, bg, "SansSerif",
+                                            fontSize, false, true);
                         styleCache.put(x11ColorName, style);
                     }
                 }

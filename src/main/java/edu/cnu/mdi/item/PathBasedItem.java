@@ -378,4 +378,44 @@ public class PathBasedItem extends AItem {
         container.worldToLocal(pp, wp);
         return new Rectangle(pp.x - 8, pp.y - 8, 16, 16);
     }
+    
+    /**
+     * Translate this item by the given delta in <b>world</b> coordinates.
+     * <p>
+     * This is the programmatic equivalent of a drag gesture. It moves the
+     * underlying {@link #_path} by applying a world-space translation transform.
+     * If this item maintains secondary geometry (e.g., helper points used for
+     * selection handles), those are translated consistently.
+     * </p>
+     *
+     * @param dx world-space delta x
+     * @param dy world-space delta y
+     */
+    @Override
+    public void translateWorld(double dx, double dy) {
+
+        if (_path == null) {
+            return;
+        }
+
+        if (Math.abs(dx) < 1.0e-12 && Math.abs(dy) < 1.0e-12) {
+            return;
+        }
+
+        // Translate the primary path in world space.
+        AffineTransform at = AffineTransform.getTranslateInstance(dx, dy);
+        _path.transform(at);
+
+        // Keep any secondary points in sync (mirrors your DRAG logic in modify()).
+        if (_secondaryPoints != null) {
+            Path2D.Double path2 = (Path2D.Double) _path.clone();
+            // _path is already translated; path2 now represents the updated geometry.
+            // Convert to polygon storage used by selection handles.
+            WorldGraphicsUtils.pathToWorldPolygon(path2, _secondaryPoints);
+        }
+
+        // Recompute focus, invalidate caches, etc.
+        geometryChanged();
+    }
+
 }

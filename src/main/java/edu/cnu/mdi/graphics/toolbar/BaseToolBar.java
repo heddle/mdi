@@ -194,7 +194,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
         addToolButton(pointer, "images/pointer.gif", pointer.toolTip());
 
         if (boxZoom != null) {
-            addToolButton(boxZoom, "images/box_zoom.gif", boxZoom.toolTip());
+            addToolButton(boxZoom, "images/svg/box_zoom.svg", boxZoom.toolTip());
         }
         if (pan != null) {
             addToolButton(pan, "images/pan.gif", pan.toolTip());
@@ -203,7 +203,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
             addToolButton(magnify, "images/magnify.png", magnify.toolTip());
         }
          if (center != null) {
-            addToolButton(center, "images/center.gif", center.toolTip());
+            addToolButton(center, "images/svg/center.svg", center.toolTip());
         }
         if (line != null) {
             addToolButton(line, "images/line.gif", line.toolTip());

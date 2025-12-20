@@ -284,5 +284,43 @@ public class PointItem extends AItem {
 	public void setAlignmentV(int yAlignment) {
 		this._yAlignment = yAlignment;
 	}
+	
+	/**
+	 * Translate this point by the given delta in <b>world</b> coordinates.
+	 * <p>
+	 * A {@link PointItem} is fully defined by its world-space focus point, so
+	 * translating the item is equivalent to translating the focus. This method
+	 * intentionally does not touch icon alignment; alignment is applied only when
+	 * computing pixel bounds and drawing.
+	 * </p>
+	 *
+	 * @param dx world-space delta x
+	 * @param dy world-space delta y
+	 */
+	public void translateWorld(double dx, double dy) {
+
+	    if (_focus == null) {
+	        _focus = new Point2D.Double(Double.NaN, Double.NaN);
+	    }
+
+	    // If not yet placed, treat as no-op.
+	    if (Double.isNaN(_focus.x) || Double.isNaN(_focus.y)) {
+	        return;
+	    }
+
+	    if (Math.abs(dx) < 1.0e-12 && Math.abs(dy) < 1.0e-12) {
+	        return;
+	    }
+
+	    _focus.x += dx;
+	    _focus.y += dy;
+
+	    // PointItem doesn't maintain a Path2D, but it does participate in selection,
+	    // caching, and redraw logic. Mark dirty so any cached draw info is invalidated.
+	    setDirty(true);
+	}
+	
+	
+
 
 }

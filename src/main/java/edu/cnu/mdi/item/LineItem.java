@@ -221,4 +221,36 @@ public class LineItem extends AItem {
     protected double getPickTolerancePx(IContainer container) {
         return DEFAULT_PICK_TOLERANCE_PX;
     }
+    
+    /**
+     * Translate this line by the given delta in <b>world</b> coordinates.
+     * <p>
+     * This is the programmatic equivalent of a drag operation: both endpoints
+     * of the line are shifted by the same world-space delta, and the focus
+     * (midpoint) is recomputed.
+     * </p>
+     *
+     * @param dx world-space delta x
+     * @param dy world-space delta y
+     */
+    @Override
+    public void translateWorld(double dx, double dy) {
+
+        if (_line == null) {
+            return;
+        }
+
+        if (Math.abs(dx) < 1.0e-12 && Math.abs(dy) < 1.0e-12) {
+            return;
+        }
+
+        _line.x1 += dx;
+        _line.y1 += dy;
+        _line.x2 += dx;
+        _line.y2 += dy;
+
+        updateFocus();   // midpoint of the segment
+        setDirty(true);  // invalidate cached bounds / redraw state
+    }
+
 }

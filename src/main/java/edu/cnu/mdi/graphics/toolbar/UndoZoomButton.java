@@ -7,7 +7,7 @@ package edu.cnu.mdi.graphics.toolbar;
 public class UndoZoomButton extends ToolActionButton {
 
     public UndoZoomButton(ToolContext ctx) {
-        super(ctx, "images/undo_zoom.gif", "Undo zoom");
+        super(ctx, "images/svg/undo_zoom.svg", "Undo zoom");
     }
 
     @Override

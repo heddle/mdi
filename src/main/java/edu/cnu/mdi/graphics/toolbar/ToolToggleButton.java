@@ -52,7 +52,7 @@ public class ToolToggleButton extends JToggleButton {
 		setToolTipText(tooltip);
 
 		if (iconFile != null) {
-			ImageIcon icon = ImageManager.getInstance().loadImageIcon(iconFile, 16, 16);
+			ImageIcon icon = ImageManager.getInstance().loadImageIcon(iconFile, 20, 20);
 			if (icon != null) {
 				setIcon(icon);
 			} else {

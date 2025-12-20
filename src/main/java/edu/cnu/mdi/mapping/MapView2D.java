@@ -1,33 +1,21 @@
 package edu.cnu.mdi.mapping;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.awt.geom.Point2D.Double;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.SwingConstants;
 
 import edu.cnu.mdi.component.CommonBorder;
-import edu.cnu.mdi.component.EnumComboBox;
-import edu.cnu.mdi.component.RangeSlider;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
@@ -36,7 +24,6 @@ import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.text.UnicodeSupport;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
-import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.view.BaseView;
 
 /**
@@ -56,7 +43,7 @@ import edu.cnu.mdi.view.BaseView;
  * </p>
  */
 @SuppressWarnings("serial")
-public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotionListener {
+public class MapView2D extends BaseView implements MouseMotionListener {
 
 	// share country boundaries across all map views
 	private static List<CountryFeature> _countries;
@@ -64,27 +51,16 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	// share cities across all map views
 	private static List<GeoJsonCityLoader.CityFeature> _cities;
 
-	// whether labels are shown
-	private boolean _showNames = true;
-
-	// current map theme
-	private MapTheme _darkTheme = MapTheme.dark();
-	private MapTheme _lightTheme = MapTheme.light();
-	private MapTheme _blueTheme = MapTheme.blue();
-	private MapTheme _currentTheme = _lightTheme;
 
 	// the map projection
 	private IMapProjection _projection;
 	private GraticuleRenderer _gratRenderer;
 
-	// feedback pane
-	private FeedbackPane _feedbackPane;
-
 	// control panel (projection / city / theme controls)
-	private JPanel _controlPanel;
+	private MapControlPanel _controlPanel;
 
 	// country renderer
-	private CountryRenderer countryRenderer;
+	private CountryRenderer _countryRenderer;
 
 	// city renderer
 	private CityPointRenderer _cityRenderer;
@@ -95,12 +71,6 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	private static String _lonPrefix = "$yellow$Lon (" + UnicodeSupport.SMALL_LAMBDA + ")";
 	private static String _deg = UnicodeSupport.DEGREE;
 
-	// UI controls that we may want to reference later
-	private RangeSlider _minPopSlider;
-	private JCheckBox _showCityNamesCheckBox;
-	private JRadioButton _lightThemeButton;
-	private JRadioButton _darkThemeButton;
-	private JRadioButton _blueThemeButton;
 
 	// default side panel width (control panel + feedback)
 	private static final int SIDE_PANEL_WIDTH = 220;
@@ -116,6 +86,9 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	 */
 	public MapView2D(Object... keyVals) {
 		super(keyVals);
+
+		// create the control panel
+		_controlPanel = new MapControlPanel(this);
 
 		// default to Mercator projection
 		setProjection(EProjection.MERCATOR);
@@ -137,204 +110,22 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	 * side of the view.
 	 */
 	private void initSidePanel() {
-		// feedback control and provider
-		FeedbackControl fbc = getContainer().getFeedbackControl();
-		fbc.addFeedbackProvider(this);
-
-		_feedbackPane = new FeedbackPane();
-		getContainer().setFeedbackPane(_feedbackPane);
-
-		// create the control panel
-		_controlPanel = createControlPanel();
+		// feedback control and provider (use default coloring)
+		FeedbackPane fbp = initFeedback();
 
 		// container panel holding control panel (NORTH) and feedback (CENTER)
 		JPanel sidePanel = new JPanel(new BorderLayout());
 
 		// ensure a consistent preferred width for the whole side strip
-		Dimension feedbackPref = _feedbackPane.getPreferredSize();
-		_feedbackPane.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, feedbackPref.height));
+		Dimension feedbackPref = fbp.getPreferredSize();
+		fbp.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, feedbackPref.height));
 		_controlPanel.setMaximumSize(new Dimension(SIDE_PANEL_WIDTH, Integer.MAX_VALUE));
 
 		sidePanel.add(_controlPanel, BorderLayout.NORTH);
-		sidePanel.add(_feedbackPane, BorderLayout.CENTER);
+		sidePanel.add(fbp, BorderLayout.CENTER);
 		sidePanel.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, getHeight()));
 
 		add(sidePanel, BorderLayout.EAST);
-	}
-
-	private JRadioButton createThemeButton(String label, ButtonGroup bg, ActionListener al, boolean selected) {
-		JRadioButton themeButton = new JRadioButton();
-		themeButton.setSelected(selected);
-		themeButton.setFont(Fonts.mediumFont);
-		themeButton.setText(label);
-		bg.add(themeButton);
-		themeButton.addActionListener(al);
-		return themeButton;
-	}
-
-	/**
-	 * Create the control panel placed above the feedback pane on the east side.
-	 * <p>
-	 * The control panel contains:
-	 * </p>
-	 * <ul>
-	 * <li>A projection combo box (moved from the toolbar).</li>
-	 * <li>A toggle (checkbox) for showing/hiding city names.</li>
-	 * <li>A slider for minimum city population (0 to 1,000,000).</li>
-	 * <li>A light vs. dark theme radio button group.</li>
-	 * </ul>
-	 * <p>
-	 * Labels use {@link Fonts#mediumFont}. The panel background uses the default UI
-	 * manager background (no explicit background is set).
-	 * </p>
-	 *
-	 * @return the newly created control panel.
-	 */
-	private JPanel createControlPanel() {
-		JPanel panel = new JPanel();
-		panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-		panel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
-
-		// 1. Projection selector
-		JLabel projLabel = new JLabel("Projection");
-		projLabel.setFont(Fonts.mediumFont);
-		leftAlign(projLabel);
-
-		EnumComboBox<EProjection> projCombo = createProjectionComboBox();
-		leftAlign(projCombo);
-
-		panel.add(projLabel);
-		panel.add(Box.createVerticalStrut(4));
-		panel.add(projCombo);
-		panel.add(Box.createVerticalStrut(12));
-
-		// 2. Show city names checkbox
-		_showCityNamesCheckBox = new JCheckBox("Show city names", true);
-		_showCityNamesCheckBox.setFont(Fonts.mediumFont);
-		_showCityNamesCheckBox.setHorizontalAlignment(SwingConstants.LEFT);
-		leftAlign(_showCityNamesCheckBox);
-		panel.add(_showCityNamesCheckBox);
-		panel.add(Box.createVerticalStrut(12));
-
-		// 3. Minimum population slider
-		createMinPopRangeSlider();
-		leftAlign(_minPopSlider);
-		panel.add(_minPopSlider);
-		panel.add(Box.createVerticalStrut(12));
-
-		// 4. Theme radio buttons (light / dark / blue)
-
-		ButtonGroup themeGroup = new ButtonGroup();
-		ActionListener themeListener = e -> {
-			if (_lightThemeButton.isSelected()) {
-				_currentTheme = _lightTheme;
-			} else if (_darkThemeButton.isSelected()) {
-				_currentTheme = _darkTheme;
-			} else if (_blueThemeButton.isSelected()) {
-				_currentTheme = _blueTheme;
-			}
-			updateTheme();
-		};
-
-		_lightThemeButton = createThemeButton("Light", themeGroup, themeListener, true);
-		_darkThemeButton = createThemeButton("Dark", themeGroup, themeListener, false);
-		_blueThemeButton = createThemeButton("Blue", themeGroup, themeListener, false);
-
-		leftAlign(_lightThemeButton);
-		leftAlign(_darkThemeButton);
-		leftAlign(_blueThemeButton);
-		
-		JPanel subPanel = new JPanel();
-		subPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-
-		subPanel.add(_lightThemeButton);
-		subPanel.add(_darkThemeButton);
-		subPanel.add(_blueThemeButton);
-		subPanel.add(Box.createVerticalStrut(8));
-		subPanel.setBorder(new CommonBorder("Map Theme"));
-		panel.add(subPanel);
-
-		return panel;
-	}
-
-	/** Force BoxLayout children to left-align instead of centering. */
-	private static void leftAlign(JComponent c) {
-		c.setAlignmentX(Component.LEFT_ALIGNMENT);
-	}
-
-	// Create the minimum population range slider
-	private void createMinPopRangeSlider() {
-		_minPopSlider = new RangeSlider(0, MAX_POP_SLIDER_VALUE, MAX_POP_SLIDER_VALUE / 2, true);
-		_minPopSlider.setOnChange(this::updateMinPopulationFilter);
-		_minPopSlider.setBorder(new CommonBorder("Minimum Population"));
-	}
-
-	/**
-	 * Create the projection combo box for selecting an {@link EProjection}. The
-	 * combo box is wired so that selecting a projection automatically updates the
-	 * view.
-	 *
-	 * @return a configured {@link EnumComboBox} of {@link EProjection}.
-	 */
-	private EnumComboBox<EProjection> createProjectionComboBox() {
-		EnumComboBox<EProjection> combo = EProjection.createComboBox();
-
-		combo.addActionListener(e -> {
-			EProjection selected = combo.getSelectedEnum();
-			setProjection(selected);
-		});
-
-		return combo;
-	}
-
-	/**
-	 * Update whether city names (labels) are drawn.
-	 */
-	private void updateCityLabelVisibility() {
-		if (_cityRenderer != null) {
-			// Adjust to match your CityPointRenderer API
-			_cityRenderer.setDrawLabels(_showNames);
-			refresh();
-		}
-	}
-
-	/**
-	 * Update the minimum population filter for displayed cities and refresh the
-	 * view. The population value is provided directly by the slider.
-	 *
-	 * @param pop minimum population (inclusive) for city display.
-	 */
-	private void updateMinPopulationFilter(int pop) {
-		if (_cityRenderer != null) {
-			long minPop = pop;
-			_cityRenderer.setMinPopulation(minPop);
-			refresh();
-		}
-	}
-
-	/**
-	 * Format a population value for display in the control panel.
-	 *
-	 * @param pop the population as an integer.
-	 * @return a human-readable formatted string, e.g. "≥ 1,000,000".
-	 */
-	private String formatPopulationLabel(int pop) {
-		return String.format("≥ %,d", pop);
-	}
-
-	/**
-	 * Update the map theme to light or dark and refresh the display.
-	 *
-	 */
-	private void updateTheme() {
-		System.out.println("Updating theme");
-		if (_projection != null) {
-			_projection.setTheme(_currentTheme);
-			refresh();
-		}
 	}
 
 	/**
@@ -379,7 +170,7 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 
 				// 4. Draw land polygons, labels, etc...
 				// countryFeatureRenderer.render(g, container);
-				countryRenderer.render(g, container);
+				_countryRenderer.render(g, container);
 				_cityRenderer.render(g, container);
 			}
 		};
@@ -396,14 +187,20 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 		return _projection;
 	}
 
+	/**
+	 * Set the current map projection, updating the world coordinate system,
+	 * graticule renderer, country renderer, and city renderer accordingly.
+	 *
+	 * @param projection the new {@link EProjection} to set.
+	 */
 	public void setProjection(EProjection projection) {
 
-		_projection = ProjectionFactory.create(projection, _currentTheme);
+		_projection = ProjectionFactory.create(projection, _controlPanel.getCurrentTheme());
 		_gratRenderer = new GraticuleRenderer(_projection);
 
 		getContainer().resetWorldSystem(getWorldSystem(_projection.getProjection()));
 
-		countryRenderer = new CountryRenderer(_countries, _projection);
+		_countryRenderer = new CountryRenderer(_countries, _projection);
 
 		_cityRenderer = new CityPointRenderer(_cities, _projection);
 		_cityRenderer.setPointRadius(1.5);
@@ -412,9 +209,6 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 
 		refresh();
 
-	}
-
-	public void invalidate() {
 	}
 
 	@Override
@@ -503,7 +297,7 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 			feedbackStrings.add(lonStr);
 
 			// on a country?
-			GeoJsonCountryLoader.CountryFeature countryHit = countryRenderer.pickCountry(pp, container);
+			GeoJsonCountryLoader.CountryFeature countryHit = _countryRenderer.pickCountry(pp, container);
 			if (countryHit != null) {
 				String countryStr = String.format("%s (%s)", countryHit.getAdminName(), countryHit.getIsoA3());
 				feedbackStrings.add(countryStr);
@@ -537,5 +331,33 @@ public class MapView2D extends BaseView implements IFeedbackProvider, MouseMotio
 	public static void setCities(List<GeoJsonCityLoader.CityFeature> cities) {
 		_cities = cities;
 	}
+
+	/**
+	 * Get the country renderer.
+	 *
+	 * @return the country renderer
+	 */
+	public CountryRenderer getCountryRenderer() {
+		return _countryRenderer;
+	}
+
+	/**
+	 * Get the city renderer.
+	 *
+	 * @return the city renderer
+	 */
+	protected CityPointRenderer getCityRenderer() {
+		return _cityRenderer;
+	}
+
+	/**
+	 * Get the map projection.
+	 *
+	 * @return the current map projection
+	 */
+	protected IMapProjection getMapProjection() {
+		return _projection;
+	}
+
 
 }
