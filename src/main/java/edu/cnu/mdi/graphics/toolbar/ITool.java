@@ -1,6 +1,7 @@
 package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Cursor;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 /**
@@ -160,4 +161,15 @@ public interface ITool {
 	default Cursor cursor(ToolContext ctx) {
 		return Cursor.getDefaultCursor();
 	}
+	
+	/**
+	 * Called when a key is pressed while this tool is active.
+	 *
+	 * @param ctx the tool context (never null).
+	 * @param e   the key event (never null).
+	 */
+	default void keyPressed(ToolContext ctx, KeyEvent e) {
+        // no-op
+    }
+	
 }

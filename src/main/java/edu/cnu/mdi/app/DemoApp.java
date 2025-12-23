@@ -202,8 +202,8 @@ public class DemoApp extends BaseMDIApplication {
      */
     private void restoreDefaultViewLocations() {
         // Column 0: map centered; drawing upper-left
-        virtualView.moveTo(mapView, 0, VirtualView.CENTER);
-        virtualView.moveTo(drawingView, 0, VirtualView.UPPERLEFT);
+        virtualView.moveTo(mapView, 0, VirtualView.BOTTOMRIGHT);
+        virtualView.moveTo(drawingView, 0, VirtualView.TOPCENTER);
 
         // Column 1: 3D centered
         virtualView.moveTo(view3D, 1, VirtualView.CENTER);
@@ -216,7 +216,7 @@ public class DemoApp extends BaseMDIApplication {
         networkDeclutterDemoView.setVisible(true);
         
         // Column 4: network layout demo lower left
-        virtualView.moveTo(networkLayoutDemoView, 4, VirtualView.BOTTOMLEFT);
+        virtualView.moveTo(networkLayoutDemoView, 4, 0, -50, VirtualView.BOTTOMLEFT);
         networkLayoutDemoView.setVisible(true);
 
     }
@@ -250,10 +250,10 @@ public class DemoApp extends BaseMDIApplication {
                 PropertySupport.DIST_X, xdist,
                 PropertySupport.DIST_Y, ydist,
                 PropertySupport.DIST_Z, zdist,
-                PropertySupport.LEFT, 800,
-                PropertySupport.TOP, 600,
-                PropertySupport.WIDTH, 400,
-                PropertySupport.HEIGHT, 400) {
+                PropertySupport.LEFT, 0,
+                PropertySupport.TOP, 0,
+                PropertySupport.FRACTION, 0.75,
+                PropertySupport.ASPECT, 1.25) {
 
             @Override
             protected Panel3D make3DPanel(float angleX, float angleY, float angleZ,
@@ -338,8 +338,9 @@ public class DemoApp extends BaseMDIApplication {
     NetworkDeclutterDemoView createNetworkDeclutterDemoView() {
 		NetworkDeclutterDemoView view = new NetworkDeclutterDemoView(
 				PropertySupport.TITLE, "Network Declutter Demo View",
-				PropertySupport.WIDTH, 800,
-				PropertySupport.HEIGHT, 400,
+				PropertySupport.PROPNAME, "NETWORKDECLUTTERDEMO",
+				PropertySupport.FRACTION, 0.8,
+				PropertySupport.ASPECT, 1.2,
 				PropertySupport.VISIBLE, false,
 				PropertySupport.BACKGROUND, Color.white,
 				PropertySupport.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, 1, 1)
@@ -352,10 +353,9 @@ public class DemoApp extends BaseMDIApplication {
  	 */
      NetworkLayoutDemoView createNetworkLayoutDemoView() {
     	 NetworkLayoutDemoView view = new NetworkLayoutDemoView(
- 				PropertySupport.WIDTH, 800, // container width, not total view width
- 				PropertySupport.HEIGHT, 600, // container height, not total view width
- 				PropertySupport.TOOLBAR, true, 
- 				PropertySupport.TOOLBARBITS, ToolBarBits.DEFAULTS,
+    			PropertySupport.FRACTION, 0.8,
+    			PropertySupport.ASPECT, 1.2,
+		    	PropertySupport.TOOLBARBITS, ToolBarBits.DEFAULTS | ToolBarBits.CONNECTORBUTTON,
  				PropertySupport.VISIBLE, false, 
  				PropertySupport.PROPNAME, "NETWORKLAYOUTDEMO", 
  				PropertySupport.BACKGROUND, X11Colors.getX11Color("alice blue"), 
@@ -394,8 +394,9 @@ public class DemoApp extends BaseMDIApplication {
 
         return new MapView2D(
                 PropertySupport.TITLE, "Sample 2D Map View",
-                PropertySupport.WIDTH, 800,
-                PropertySupport.HEIGHT, 500,
+                PropertySupport.PROPNAME, "MAPVIEW2D",
+                PropertySupport.FRACTION, 0.6,
+                PropertySupport.ASPECT, 1.25,
                 PropertySupport.CONTAINERCLASS, MapContainer.class,
                 PropertySupport.TOOLBARBITS, toolbarBits
         );

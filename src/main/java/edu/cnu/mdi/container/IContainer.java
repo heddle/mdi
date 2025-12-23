@@ -46,10 +46,18 @@ public interface IContainer {
 	 *         annotation layer, which is kept on top.
 	 */
 	public Layer getAnnotationLayer();
+	
+	/**
+	 * Get the connection layer for this container.
+	 *
+	 * @return the connection layer for this container. Connection items are drawn
+	 *         on first, i.e. connections are under other items.
+	 */
+	public Layer getConnectionLayer();
 
 	/**
-	 * Gets an z layer by name. Do not use for the annotation list-- for that use
-	 * getAnnotationLayer().
+	 * Gets an z layer by name. Do not use for the annotation layer or 
+	 * connection layer-- for that use getAnnotationLayer() or getConnectionLayer().
 	 *
 	 * @param name the name of the layer.
 	 * @return the z layer, or <code>null</code>.

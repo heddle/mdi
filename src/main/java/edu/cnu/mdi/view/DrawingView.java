@@ -52,7 +52,6 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 		view = new DrawingView(PropertySupport.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, width, height),
 				PropertySupport.WIDTH, width, // container width, not total view width
 				PropertySupport.HEIGHT, height, // container height, not total view width
-				PropertySupport.TOOLBAR, true, 
 				PropertySupport.TOOLBARBITS, ToolBarBits.DRAWING,
 				PropertySupport.VISIBLE, true, 
 				PropertySupport.PROPNAME, "DRAWING", 

@@ -25,6 +25,7 @@ public final class ToolBarBits {
     public static final long MAGNIFYBUTTON      = 010000L;
     public static final long NOZOOM             = 020000L;
     public static final long PANBUTTON          = 040000L;
+    public static final long CONNECTORBUTTON    = 0100000L;
 
 
     /** "Everything" means all known bits except the NOZOOM suppressor. */

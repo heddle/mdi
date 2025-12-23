@@ -1,6 +1,7 @@
 package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Cursor;
+import java.awt.event.KeyEvent;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -136,6 +137,17 @@ public class ToolController {
         ctx.canvas().setCursor((c != null) ? c : Cursor.getDefaultCursor());
     }
 
+    /**
+	 * Forward key press events to the active tool.
+	 *
+	 * @param e the key event (never null).
+	 */
+    public void keyPressed(KeyEvent e) {
+        ITool tool = getActive();
+        if (tool != null) {
+            tool.keyPressed(ctx, e);
+        }
+    }
 
     /**
      * Reset tool selection to the configured default tool, if any.

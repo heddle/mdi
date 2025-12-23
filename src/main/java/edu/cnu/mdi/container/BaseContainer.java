@@ -46,8 +46,7 @@ import edu.cnu.mdi.view.BaseView;
  */
 
 @SuppressWarnings("serial")
-public class BaseContainer extends JComponent
-implements IContainer, MouseWheelListener, IDrawableListener {
+public class BaseContainer extends JComponent implements IContainer, MouseWheelListener, IDrawableListener {
 
 	/**
 	 * A collection of z layers containing items. This is the container's model.
@@ -110,16 +109,23 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	protected Rectangle2D.Double _previousWorldSystem;
 
 	/**
-	 * The annotation layer. Every container has one.
+	 * The annotation layer. Every container has one. It is always
+	 * on top, i.e. it is drawn last.
 	 */
 	protected Layer _annotationLayer;
+	
+	/**
+	 * The connection layer. Every container has one. It is always
+	 * on the bottom, i.e. it is drawn first.
+	 */
+	protected Layer _connectionLayer;
 
 	/**
 	 * Controls the feedback for the container. You can add and remove feedback
 	 * providers to this object.
 	 */
 	protected FeedbackControl _feedbackControl;
-
+	
 	// for world to local transformations (and vice versa)
 
 	private int _lMargin = 0;
@@ -151,10 +157,12 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 		_feedbackControl = new FeedbackControl(this);
 
 		resetWorldSystem(worldSystem);
+		
+		//create the connection layer
+		_connectionLayer = new Layer(this, "Connections");
 
-		// create the annotation list.
+		// create the annotation layer.
 		_annotationLayer = new Layer(this, "Annotations");
-		addLayer(_annotationLayer);
 
 		// listen for resize events
 		ComponentAdapter componentAdapter = new ComponentAdapter() {
@@ -189,6 +197,8 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	 * @param sContainer the source container
 	 */
 	public void shareModel(BaseContainer sContainer) {
+		_annotationLayer = sContainer._annotationLayer;
+		_connectionLayer = sContainer._connectionLayer;
 		_layers = sContainer._layers;
 		_afterDraw = sContainer._afterDraw;
 		_beforeDraw = sContainer._beforeDraw;
@@ -227,6 +237,11 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 		// normal drawing
 		g.setColor(getBackground());
 		g.fillRect(0, 0, b.width, b.height);
+		
+		//draw the connection layer first
+		if (_connectionLayer != null) {
+			_connectionLayer.draw(g, this);
+		}
 
 		// any before lists drawing?
 		if (_beforeDraw != null) {
@@ -242,6 +257,11 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 		if (_afterDraw != null) {
 			_afterDraw.draw(g, this);
 		}
+		
+		//draw the annotation layer last
+		if (_annotationLayer != null) {
+			_annotationLayer.draw(g, this);
+		}
 
 		//always clean after drawing
 		setDirty(false);
@@ -255,6 +275,16 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	@Override
 	public void addLayer(Layer layer) {
 		Objects.requireNonNull(layer, "layer");
+		if (layer == _annotationLayer) {
+			Log.getInstance().info("Adding annotation layer. Should not happen this way");
+			return;
+		}
+		
+		if (layer == _connectionLayer) {
+			Log.getInstance().info("Adding connection layer. Should not happen this way");
+			return;
+		}
+		
 		_layers.remove(layer); // in case already there
 		_layers.add(layer);
 		_layers.addDrawableListener(this);
@@ -268,6 +298,14 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 		return _annotationLayer;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Layer getConnectionLayer() {
+		return _connectionLayer;
+	}
+	
 	/**
 	 * {@inheritDoc}
      */
@@ -290,8 +328,8 @@ implements IContainer, MouseWheelListener, IDrawableListener {
 	public void removeItemList(Layer layer) {
 		Objects.requireNonNull(layer, "layer cannot be null");
 	    
-	    // Cannot remove annotation list
-	    if (layer == _annotationLayer) {
+	    // Cannot remove annotation layer or connection layer
+	    if ((layer == _annotationLayer) || (layer == _connectionLayer)) {
 	        return;
 	    }
 

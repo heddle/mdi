@@ -49,10 +49,8 @@ public class DeviceItem extends RectangleItem {
 	    Rectangle pxBounds = getBounds(container);
 
 	    if (icon != null) {
-	        int w = icon.getIconWidth();
-	        int h = icon.getIconHeight();
-	        int x = pxBounds.x + (pxBounds.width - w) / 2;
-	        int y = pxBounds.y + (pxBounds.height - h) / 2;
+	        int x = pxBounds.x + (pxBounds.width - DEVICESIZE) / 2;
+	        int y = pxBounds.y + (pxBounds.height - DEVICESIZE) / 2;
 
 	        // Paint the Icon directly (works for FlatSVGIcon, ImageIcon, etc.)
 	        // Prefer a real component as the paint context.

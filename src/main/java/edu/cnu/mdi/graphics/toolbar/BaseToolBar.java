@@ -164,6 +164,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
         ITool ellipse   = Bits.check(bits, ToolBarBits.ELLIPSEBUTTON)  ? new EllipseTool()    : null;
         ITool center    = Bits.check(bits, ToolBarBits.CENTERBUTTON)   ? createCenterTool()   : null;
         ITool line      = Bits.check(bits, ToolBarBits.LINEBUTTON)     ? new LineTool()       : null;
+        ITool connector = Bits.check(bits, ToolBarBits.CONNECTORBUTTON)? new ConnectorTool()  : null;
         ITool polygon   = Bits.check(bits, ToolBarBits.POLYGONBUTTON)  ? new PolygonTool()    : null;
         ITool polyline  = Bits.check(bits, ToolBarBits.POLYLINEBUTTON) ? new PolylineTool()   : null;
         ITool rectangle = Bits.check(bits, ToolBarBits.RECTANGLEBUTTON)? new RectangleTool()  : null;
@@ -183,6 +184,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
         register(polyline);
         register(radArc);
         register(text);
+        register(connector);
 
         // Default tool: pointer.
         toolController.setDefaultTool(pointer.id());
@@ -219,6 +221,9 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 		}
 		if (radArc != null) {
 			addToolButton(radArc, "images/svg/radarc.svg", radArc.toolTip());
+		}
+		if (connector != null) {
+			addToolButton(connector, "images/svg/connect.svg", connector.toolTip());
 		}
 		if (text != null) {
 			addToolButton(text, "images/svg/text.svg", text.toolTip());

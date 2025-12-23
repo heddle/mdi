@@ -17,6 +17,7 @@ import edu.cnu.mdi.util.Environment;
 
 public class PropertySupport {
 
+	public static final String ASPECT = "ASPECT";
 	public static final String BACKGROUND = "BACKGROUND";
 	public static final String BACKGROUNDIMAGE = "BACKGROUNDIMAGE";
 	public static final String BOTTOMMARGIN = "BOTTOMMARGIN";
@@ -49,7 +50,6 @@ public class PropertySupport {
 	public static final String SYMBOLSIZE = "SYMBOLSIZE";
 	public static final String TEXTCOLOR = "TEXTCOLOR";
 	public static final String TITLE = "TITLE";
-	public static final String TOOLBAR = "TOOLBAR";
 	public static final String TOOLBARBITS = "TOOLBARBITS";
 	public static final String TOP = "TOP";
 	public static final String TOPMARGIN = "TOPMARGIN";
@@ -234,16 +234,6 @@ public class PropertySupport {
 	}
 
 	/**
-	 * Get the "use toolbar" boolean flag.
-	 *
-	 * @param props the properties
-	 * @return the toolbar flag. On error, return true.
-	 */
-	public static boolean getToolbar(Properties props) {
-		return getBoolean(props, TOOLBAR, false);
-	}
-
-	/**
 	 * Get the tool bar bits.
 	 *
 	 * @param props the properties
@@ -379,14 +369,23 @@ public class PropertySupport {
 	}
 
 	/**
-	 * Get a (screen) fraction from the properties
+	 * Get a fraction (maybe of screen, maybe of app) from the properties
 	 *
 	 * @param props the properties
-	 * @return a (screen) fraction, on error return Double.NaN.
+	 * @return a (screen) fraction, by default return Double.NaN.
 	 */
 	public static double getFraction(Properties props) {
-		double fraction = getDouble(props, FRACTION, Double.NaN);
-		return fraction;
+		return getDouble(props, FRACTION, Double.NaN);
+	}
+	
+	/**
+	 * Get an aspect ratio from the properties
+	 *
+	 * @param props the properties
+	 * @return an aspect ratio used (optionally) to size views
+	 */
+	public static double getAspectRatio(Properties props) {
+		return getDouble(props, ASPECT, 1);
 	}
 
 	/**

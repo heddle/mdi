@@ -413,7 +413,6 @@ public class VirtualView extends BaseView
                 PropertySupport.WORLDSYSTEM, world,
                 PropertySupport.WIDTH, width,
                 PropertySupport.HEIGHT, height,
-                PropertySupport.TOOLBAR, false,
                 PropertySupport.VISIBLE, true,
                 PropertySupport.BACKGROUND, Color.white,
                 PropertySupport.TITLE, VVTITLE,
@@ -848,6 +847,10 @@ public class VirtualView extends BaseView
     public int getCurrentColumn() {
         return _currentCol;
     }
+    
+    public void moveTo(BaseView view, int col, int constraint) {
+		moveTo(view, col, 0, 0, constraint);
+	}
 
     /**
      * Move a view to a specific column, applying extra offsets and a placement constraint.
@@ -858,7 +861,7 @@ public class VirtualView extends BaseView
      * @param delv       additional vertical offset (pixels)
      * @param constraint placement constraint constant
      */
-    public void moveTo(BaseView view, int col, int constraint) {
+    public void moveTo(BaseView view, int col, int delh, int delv, int constraint) {
 
         if (constraint == CENTER) {
             moveTo(view, col);
@@ -932,7 +935,7 @@ public class VirtualView extends BaseView
             dv = -20;
         }
 
-        view.offset(dh, dv);
+        view.offset(dh + delh, dv + delv);
     }
 
     /**

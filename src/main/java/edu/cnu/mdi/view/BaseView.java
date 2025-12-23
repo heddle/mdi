@@ -30,6 +30,7 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
+import edu.cnu.mdi.app.BaseMDIApplication;
 import edu.cnu.mdi.component.MagnifyWindow;
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.IContainer;
@@ -212,6 +213,22 @@ public class BaseView extends JInternalFrame
         int top = PropertySupport.getTop(properties);
         int width = PropertySupport.getWidth(properties);
         int height = PropertySupport.getHeight(properties);
+        
+        //use app fraction and aspect? If use them
+        double fraction = PropertySupport.getFraction(properties);
+        if (Double.isFinite(fraction) && (fraction > 0.0) && (fraction < 1.0)) {
+			BaseMDIApplication app = BaseMDIApplication.getApplication();
+			if (app != null) {
+				Dimension appSize = app.getSize();
+				double aspect = PropertySupport.getAspectRatio(properties);
+				height = (int) (fraction * appSize.height);
+				width = (int) (height * aspect);
+			}
+		
+		}
+        
+        width = Math.max(100, width);
+        height = Math.max(100, height);
 
         if (left < 1) {
             left = LASTLEFT;
@@ -290,7 +307,7 @@ public class BaseView extends JInternalFrame
             }
 
             // optional toolbar
-            boolean addToolBar = PropertySupport.getToolbar(properties);
+            boolean addToolBar = (PropertySupport.getToolbarBits(properties) > 0);
             if (addToolBar) {
                 long bits = PropertySupport.getToolbarBits(properties);
                 if (bits == Long.MIN_VALUE) {
