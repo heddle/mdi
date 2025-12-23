@@ -11,7 +11,7 @@ import edu.cnu.mdi.item.AItem;
 public class EditStyleButton extends ToolActionButton {
 
     public EditStyleButton(ToolContext ctx) {
-        super(ctx, "images/colorwheel.png", "Edit style of selected items");
+        super(ctx, "images/svg/colorwheel.svg", "Edit style of selected items");
 	}
 
 	@Override

@@ -8,7 +8,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Double;
 import java.util.List;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.ImageManager;
@@ -22,14 +22,14 @@ public class DeviceItem extends RectangleItem {
 	// The device symbol represented by this item
 	private EDeviceSymbol symbol;
 
-	private ImageIcon icon;
+	private Icon icon;
 
 	public DeviceItem(Layer layer, Double wr, EDeviceSymbol symbol) {
 		super(layer, wr);
 		this.symbol = symbol;
 
 		//get the icon for the device
-		icon = ImageManager.getInstance().loadImageIcon(symbol.iconPath, DEVICESIZE, DEVICESIZE); //ensure image manager is initialized
+		icon = ImageManager.getInstance().loadUiIcon(symbol.iconPath, DEVICESIZE, DEVICESIZE); //ensure image manager is initialized
 
 		// configure the device item
 		setRightClickable(true);
@@ -42,21 +42,28 @@ public class DeviceItem extends RectangleItem {
 	}
 
 	/**
-	 * Draw the device icon centered in the item's bounds
+	 * Draw the device icon centered in the item's bounds.
 	 */
 	@Override
 	public void drawItem(Graphics2D g2, IContainer container) {
-		Rectangle pxBounds = getBounds(container);
-		if (icon != null) {
-			int w = icon.getIconWidth();
-			int h = icon.getIconHeight();
-			int x = pxBounds.x + (pxBounds.width - w) / 2;
-			int y = pxBounds.y + (pxBounds.height - h) / 2;
-			g2.drawImage(icon.getImage(), x, y, null);
-		} else {
-			super.drawItem(g2, container);
-		}
+	    Rectangle pxBounds = getBounds(container);
+
+	    if (icon != null) {
+	        int w = icon.getIconWidth();
+	        int h = icon.getIconHeight();
+	        int x = pxBounds.x + (pxBounds.width - w) / 2;
+	        int y = pxBounds.y + (pxBounds.height - h) / 2;
+
+	        // Paint the Icon directly (works for FlatSVGIcon, ImageIcon, etc.)
+	        // Prefer a real component as the paint context.
+	        java.awt.Component c = (container != null) ? container.getComponent() : null;
+	        icon.paintIcon(c, g2, x, y);
+	        return;
+	    }
+
+	    super.drawItem(g2, container);
 	}
+
 /**
  * Create a device item centered at given point in local container coordinates
  * @param layer the z layer to add the device to

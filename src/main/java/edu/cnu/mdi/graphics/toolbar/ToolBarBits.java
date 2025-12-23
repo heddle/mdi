@@ -26,9 +26,6 @@ public final class ToolBarBits {
     public static final long NOZOOM             = 020000L;
     public static final long PANBUTTON          = 040000L;
 
-    /** All drawing-shape tools. */
-    public static final long DRAWING =
-            STYLEBUTTON | ELLIPSEBUTTON | TEXTBUTTON | RECTANGLEBUTTON | POLYGONBUTTON | LINEBUTTON | RADARCBUTTON | POLYLINEBUTTON;
 
     /** "Everything" means all known bits except the NOZOOM suppressor. */
     public static final long EVERYTHING = STYLEBUTTON | ELLIPSEBUTTON | TEXTBUTTON | RECTANGLEBUTTON | POLYGONBUTTON | LINEBUTTON
@@ -36,6 +33,10 @@ public final class ToolBarBits {
             | MAGNIFYBUTTON | PANBUTTON;
     
     public static final long DEFAULTS = DELETEBUTTON | CENTERBUTTON | UNDOZOOMBUTTON | PANBUTTON;
+
+    /** All drawing-shape tools. */
+    public static final long DRAWING =
+            EVERYTHING & ~MAGNIFYBUTTON;;
 
     /** Default set (same as everything in your current intent). */
     public static final long STANDARD = EVERYTHING;

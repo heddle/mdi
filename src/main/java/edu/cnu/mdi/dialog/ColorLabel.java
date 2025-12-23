@@ -5,155 +5,265 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.JColorChooser;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
- * @author heddle
+ * A clickable color swatch + label that allows choosing a color (optionally with alpha).
+ * <p>
+ * - If the color is {@code null}, a red X is drawn to indicate "no color".
+ * - Clicking opens a standard Swing {@link JColorChooser} dialog.
+ * - An optional alpha slider enables transparency.
+ * - A "None" button allows setting the color to {@code null}.
+ * </p>
+ *
+ * @author heddle (refactor)
  */
 @SuppressWarnings("serial")
 public class ColorLabel extends JComponent {
 
-	// the current color
-	private Color _currentColor;
+    /** Current color; {@code null} means "no color". */
+    private Color currentColor;
 
-	// the listener for color changes
-	private IColorChangeListener _colorChangeListener;
+    /** Listener for color changes (may be null). */
+    private IColorChangeListener colorChangeListener;
 
-	// the prompt label
-	private String _prompt;
+    /** Prompt text displayed to the right of swatch. */
+    private String prompt;
 
-	// preferred total width for the label
-	private int _desiredWidth = -1;
+    /** Preferred total width for the label (<= 0 means compute). */
+    private int desiredWidth = -1;
 
-	// the size of the color box
-	private int _rectSize = 12;
+    /** Size of the color box. */
+    private int rectSize = 12;
 
-	// used for sizing
-	private Dimension _size;
+    /** Cached preferred size. */
+    private Dimension size;
 
-	private Font _font;
+    /** Optional font override for the prompt. */
+    private Font fontOverride;
 
-	/**
-	 * Create a clickable color label.
-	 *
-	 * @param colorChangeListener the listener for color changes.
-	 * @param intitialColor       the intial color.
-	 * @param prompt              the prompt string.
-	 */
-	public ColorLabel(IColorChangeListener colorChangeListener, Color intitialColor, String prompt) {
-		this(colorChangeListener, intitialColor, prompt, -1);
-	}
+    /** Whether to allow selecting alpha (transparency). */
+    private boolean allowAlpha = true;
 
-	/**
-	 * Create an inert color label.
-	 *
-	 * @param color  the color.
-	 * @param prompt the prompt string.
-	 */
-	public ColorLabel(Color color, Font font, String prompt) {
+    /** Whether to allow selecting "None" (null color). */
+    private boolean allowNone = true;
 
-		_currentColor = color;
-		_font = font;
-		_prompt = prompt;
+    /**
+     * Create a clickable color label.
+     *
+     * @param colorChangeListener listener for color changes (nullable)
+     * @param initialColor initial color (nullable)
+     * @param prompt prompt string
+     */
+    public ColorLabel(IColorChangeListener colorChangeListener, Color initialColor, String prompt) {
+        this(colorChangeListener, initialColor, prompt, -1);
+    }
 
-		FontMetrics fm = this.getFontMetrics(_font);
-		int sw = fm.stringWidth(prompt);
-		_size = new Dimension(sw + _rectSize + 10, 18);
-	}
+    /**
+     * Create a clickable color label.
+     *
+     * @param colorChangeListener listener for color changes (nullable)
+     * @param initialColor initial color (nullable)
+     * @param prompt prompt string
+     * @param desiredWidth if positive, sets preferred total width
+     */
+    public ColorLabel(IColorChangeListener colorChangeListener, Color initialColor, String prompt, int desiredWidth) {
+        this.colorChangeListener = colorChangeListener;
+        this.currentColor = initialColor;
+        this.prompt = prompt;
+        this.desiredWidth = desiredWidth;
 
-	/**
-	 * Create a clickable color label.
-	 *
-	 * @param colorChangeListener the listener for color changes.
-	 * @param intitialColor       the initial color.
-	 * @param prompt              the prompt string.
-	 * @param desiredWidth        if positive the desired total width.
-	 */
-	public ColorLabel(IColorChangeListener colorChangeListener, Color intitialColor, String prompt, int desiredWidth) {
-		_colorChangeListener = colorChangeListener;
-		_currentColor = intitialColor;
-		_prompt = prompt;
-		_desiredWidth = desiredWidth;
+        if (this.desiredWidth > 10) {
+            this.size = new Dimension(this.desiredWidth, 18);
+        }
 
-		MouseAdapter ma = new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showChooserDialog();
+            }
+        });
+    }
 
-				ColorDialog cd = new ColorDialog(_currentColor, true, true);
+    /**
+     * Create an inert (non-clickable) color label. (Kept for compatibility.)
+     *
+     * @param color color (nullable)
+     * @param font font override (nullable)
+     * @param prompt prompt string
+     */
+    public ColorLabel(Color color, Font font, String prompt) {
+        this.currentColor = color;
+        this.fontOverride = font;
+        this.prompt = prompt;
 
-				cd.setVisible(true);
+        Font f = (fontOverride != null) ? fontOverride : getFont();
+        FontMetrics fm = getFontMetrics(f);
+        int sw = fm.stringWidth(prompt);
+        this.size = new Dimension(sw + rectSize + 10, 18);
+    }
 
-				if (cd.answer == DialogUtils.OK_RESPONSE) {
-					setColor(cd.getColor());
-					repaint();
-				}
+    /**
+     * Configure whether alpha selection is allowed.
+     */
+    public ColorLabel setAllowAlpha(boolean allowAlpha) {
+        this.allowAlpha = allowAlpha;
+        return this;
+    }
 
-			}
-		};
+    /**
+     * Configure whether "None" (null) is allowed.
+     */
+    public ColorLabel setAllowNone(boolean allowNone) {
+        this.allowNone = allowNone;
+        return this;
+    }
 
-		// given a reasonable size?
-		if (_desiredWidth > 10) {
-			_size = new Dimension(_desiredWidth, 18);
-		}
+    private void showChooserDialog() {
+        Window owner = SwingUtilities.getWindowAncestor(this);
 
-		addMouseListener(ma);
-	}
+        // Start from currentColor, or default to opaque white for chooser UI.
+        Color start = (currentColor != null) ? currentColor : Color.white;
+        int startAlpha = (currentColor != null) ? currentColor.getAlpha() : 255;
 
-	@Override
-	public void paintComponent(Graphics g) {
-		FontMetrics fm = getFontMetrics(getFont());
-		g.setFont(getFont());
+        JColorChooser chooser = new JColorChooser(new Color(start.getRed(), start.getGreen(), start.getBlue()));
 
-		if (_currentColor == null) {
-			g.setColor(Color.red);
-			g.drawLine(4, 4, _rectSize, _rectSize);
-			g.drawLine(4, _rectSize, _rectSize, 4);
-		} else {
-			g.setColor(_currentColor);
-			g.fillRect(2, 2, _rectSize, _rectSize);
-		}
-		g.setColor(Color.black);
-		g.drawRect(2, 2, _rectSize, _rectSize);
-		g.setColor(Color.black);
+        // Alpha controls (optional)
+        JSlider alphaSlider = new JSlider(0, 255, startAlpha);
+        JLabel alphaLabel = new JLabel("Alpha: " + startAlpha, SwingConstants.LEFT);
 
-		if (_font != null) {
-			g.setFont(_font);
-		}
-		g.drawString(_prompt, _rectSize + 6, fm.getHeight() - 4);
-	}
+        if (allowAlpha) {
+            alphaSlider.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    alphaLabel.setText("Alpha: " + alphaSlider.getValue());
+                }
+            });
+        }
 
-	@Override
-	public Dimension getPreferredSize() {
-		if (_size == null) {
-			return super.getPreferredSize();
-		}
-		return _size;
-	}
+        // Dialog content
+        JPanel content = new JPanel(new java.awt.BorderLayout(8, 8));
+        content.add(chooser, java.awt.BorderLayout.CENTER);
 
-	/**
-	 * Return the current color.
-	 *
-	 * @return the current color.
-	 */
-	public Color getColor() {
-		return _currentColor;
-	}
+        if (allowAlpha) {
+            Box alphaBox = Box.createVerticalBox();
+            alphaBox.setBorder(BorderFactory.createTitledBorder("Transparency"));
+            alphaBox.add(alphaLabel);
+            alphaBox.add(alphaSlider);
+            content.add(alphaBox, java.awt.BorderLayout.SOUTH);
+        }
 
-	/**
-	 * Set the new color.
-	 *
-	 * @param newColor the new color index.
-	 */
-	public void setColor(Color newColor) {
-		setBackground(newColor);
-		if (_colorChangeListener != null) {
-			_colorChangeListener.colorChanged(this, newColor);
-		}
-		_currentColor = newColor;
-		repaint();
-	}
+        // Buttons
+        final JDialog dialog = new JDialog(owner, "Choose Color");
+        dialog.setModal(true);
+        dialog.getContentPane().setLayout(new java.awt.BorderLayout());
 
+        dialog.getContentPane().add(content, java.awt.BorderLayout.CENTER);
+
+        JPanel buttons = new JPanel();
+
+        if (allowNone) {
+            JButton noneBtn = new JButton("None");
+            noneBtn.addActionListener(ae -> {
+                setColor(null);
+                dialog.dispose();
+            });
+            buttons.add(noneBtn);
+        }
+
+        JButton okBtn = new JButton("OK");
+        okBtn.addActionListener(ae -> {
+            Color rgb = chooser.getColor();
+            if (rgb == null) {
+                // Very unlikely, but keep behavior safe.
+                setColor(null);
+            } else if (allowAlpha) {
+                int a = alphaSlider.getValue();
+                setColor(new Color(rgb.getRed(), rgb.getGreen(), rgb.getBlue(), a));
+            } else {
+                setColor(rgb);
+            }
+            dialog.dispose();
+        });
+
+        JButton cancelBtn = new JButton("Cancel");
+        cancelBtn.addActionListener(ae -> dialog.dispose());
+
+        buttons.add(okBtn);
+        buttons.add(cancelBtn);
+
+        dialog.getContentPane().add(buttons, java.awt.BorderLayout.SOUTH);
+        dialog.pack();
+        DialogUtils.centerDialog(dialog);
+        dialog.setVisible(true);
+    }
+
+    @Override
+    public void paintComponent(Graphics g) {
+        Font f = (fontOverride != null) ? fontOverride : getFont();
+        g.setFont(f);
+
+        FontMetrics fm = getFontMetrics(f);
+
+        // swatch
+        if (currentColor == null) {
+            g.setColor(Color.red);
+            g.drawLine(4, 4, rectSize, rectSize);
+            g.drawLine(4, rectSize, rectSize, 4);
+        } else {
+            g.setColor(currentColor);
+            g.fillRect(2, 2, rectSize, rectSize);
+        }
+        g.setColor(Color.black);
+        g.drawRect(2, 2, rectSize, rectSize);
+
+        // prompt
+        g.drawString(prompt, rectSize + 6, fm.getHeight() - 4);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        if (size != null) {
+            return size;
+        }
+        return super.getPreferredSize();
+    }
+
+    /** Return the current color (nullable). */
+    public Color getColor() {
+        return currentColor;
+    }
+
+    /**
+     * Set a new color (nullable). Notifies listener and repaints.
+     *
+     * @param newColor the new color, or null for none
+     */
+    public void setColor(Color newColor) {
+        // Keep background in sync for potential LAF painting / tooltips
+        setBackground(newColor);
+
+        this.currentColor = newColor;
+
+        if (colorChangeListener != null) {
+            colorChangeListener.colorChanged(this, newColor);
+        }
+        repaint();
+    }
 }

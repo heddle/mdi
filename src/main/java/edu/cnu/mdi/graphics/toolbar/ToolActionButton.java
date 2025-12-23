@@ -3,6 +3,7 @@ package edu.cnu.mdi.graphics.toolbar;
 import java.awt.Cursor;
 import java.awt.Dimension;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
@@ -48,7 +49,7 @@ public abstract class ToolActionButton extends JButton implements ToolContextAwa
         setBorderPainted(false);
         setToolTipText(toolTip);
 
-        ImageIcon icon = ImageManager.getInstance().loadImageIcon(imageFile, 20, 20);
+        Icon icon = ImageManager.getInstance().loadUiIcon(imageFile, 20, 20);
         setIcon(icon);
 
         // Works with injection: ctx will be set by BaseToolBar before the user can click.

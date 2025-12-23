@@ -242,8 +242,7 @@ public class FileUtils {
 			if (file.exists()) {
 				int answer = JOptionPane.showConfirmDialog(null,
 						filename + "  already exists. Do you want to overwrite it?", "Overwite Existing File?",
-						JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
-						ImageManager.getDialogIcon());
+						JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
 				if (answer == JFileChooser.APPROVE_OPTION) {
 					return file;

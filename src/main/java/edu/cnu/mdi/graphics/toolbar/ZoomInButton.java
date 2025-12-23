@@ -14,7 +14,7 @@ public class ZoomInButton extends ToolActionButton {
     }
 
     public ZoomInButton(ToolContext ctx, double factor) {
-        super(ctx, "images/zoom_in.gif", "Zoom in");
+        super(ctx, "images/svg/zoom_in.svg", "Zoom in");
         this.factor = factor;
     }
 

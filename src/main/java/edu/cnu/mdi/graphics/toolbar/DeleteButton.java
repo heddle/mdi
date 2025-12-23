@@ -30,7 +30,7 @@ public class DeleteButton extends ToolActionButton {
      * @param ctx the tool context (must not be null)
      */
     public DeleteButton(ToolContext ctx) {
-        super(ctx, "images/delete.gif", "Delete selected items");
+        super(ctx, "images/svg/delete.svg", "Delete selected items");
     }
 
     @Override

@@ -1,11 +1,9 @@
 package edu.cnu.mdi.util;
 
-import java.awt.Color;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.FileInputStream;
@@ -69,12 +67,6 @@ public final class Environment {
     // preferences
     private final Properties properties;
 
-    // dragging flag (used to let worker threads know about GUI drag operations)
-    private volatile boolean dragging;
-
-    // common Swing panel background
-    private static Color commonPanelBackgroundColor;
-
     /**
      * Private constructor for the singleton. Gathers system information and
      * attempts to load any previously stored preferences.
@@ -111,9 +103,6 @@ public final class Environment {
             }
         }
 
-        if (commonPanelBackgroundColor == null) {
-            commonPanelBackgroundColor = UIManager.getColor("Panel.background");
-        }
     }
 
     // ------------------------------------------------------------------------
@@ -419,49 +408,6 @@ public final class Environment {
         }
     }
 
-    // ------------------------------------------------------------------------
-    // Dragging flag
-    // ------------------------------------------------------------------------
-
-    /**
-     * Returns {@code true} while an interactive drag operation is in progress.
-     * Long-running background tasks may choose to suspend UI updates while
-     * dragging is active.
-     */
-    public boolean isDragging() {
-        return dragging;
-    }
-
-    /**
-     * Sets the dragging flag.
-     *
-     * @param dragging {@code true} when an interactive drag operation is in
-     *                 progress
-     */
-    public void setDragging(boolean dragging) {
-        this.dragging = dragging;
-    }
-
-    // ------------------------------------------------------------------------
-    // Panel background
-    // ------------------------------------------------------------------------
-
-    /**
-     * Returns a "common" Swing panel background color used by mdi. By default,
-     * this is initialized from {@code UIManager.getColor("Panel.background")}.
-     */
-    public static Color getCommonPanelBackground() {
-        return commonPanelBackgroundColor;
-    }
-
-    /**
-     * Overrides the common panel background color used by mdi.
-     *
-     * @param color new background color, may be {@code null}
-     */
-    public static void setCommonPanelBackground(Color color) {
-        commonPanelBackgroundColor = color;
-    }
 
     // ------------------------------------------------------------------------
     // Utility methods
@@ -607,23 +553,6 @@ public final class Environment {
     // ------------------------------------------------------------------------
 
 	/**
-	 * Initialize the Swing look &amp; feel.
-	 */
-	public static void setLookAndFeel() {
-		try {
-			for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
-					UIManager.setLookAndFeel(info.getClassName());
-					return;
-				}
-			}
-			System.err.println("Nimbus LAF not found; using default.");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
 	 * Simple test harness that prints the current environment and installed look
 	 * &amp; feels.
 	 */
@@ -641,6 +570,6 @@ public final class Environment {
     protected Object clone() throws CloneNotSupportedException {
         throw new CloneNotSupportedException();
     }
-    
-    
+
+
 }

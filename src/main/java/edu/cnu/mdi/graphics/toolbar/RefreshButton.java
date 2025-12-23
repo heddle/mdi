@@ -7,7 +7,7 @@ package edu.cnu.mdi.graphics.toolbar;
 public class RefreshButton extends ToolActionButton {
 
     public RefreshButton(ToolContext ctx) {
-        super(ctx, "images/refresh.gif", "Refresh");
+        super(ctx, "images/svg/refresh.svg", "Refresh the view");
     }
 
     @Override

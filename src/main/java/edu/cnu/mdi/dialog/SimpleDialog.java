@@ -21,8 +21,6 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
 
-import edu.cnu.mdi.graphics.ImageManager;
-
 /**
  * A simple dialog template. The dialog is given a Border layout, and component
  * creators for the different directions are called. They should be overridden
@@ -50,11 +48,6 @@ public class SimpleDialog extends JDialog implements ActionListener {
 	// convenient access to south button panel (if exists)
 	protected JPanel buttonPanel;
 
-	//a user object that cab be used in the creation methods
-	protected Object userObject1;
-
-	//a user object that cab be used in the creation methods
-	protected Object userObject2;
 
 	/**
 	 * Create a SimpleDialog
@@ -64,24 +57,9 @@ public class SimpleDialog extends JDialog implements ActionListener {
 	 * @param closeout a set of closeout labels
 	 */
 	public SimpleDialog(String title, boolean modal, String... closeout) {
-		this(title, null, null, modal, closeout);
-	}
-
-	/**
-	 * Create a SimpleDialog
-	 *
-	 * @param title    the title of the dialog
-	 * @param modal    if <code>true</code> the dialog is modal
-	 * @param userObj  the user object
-	 * @param closeout a set of closeout labels
-	 */
-	public SimpleDialog(String title, Object userObj1, Object userObj2, boolean modal, String... closeout) {
 		super();
-		userObject1 = userObj1;
-		userObject2 = userObj2;
 		setTitle(title);
 		setModal(modal);
-		setIconImage(ImageManager.getDialogIcon().getImage());
 		_closeout = closeout;
 
 		// close is like a close

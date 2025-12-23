@@ -18,6 +18,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
@@ -58,7 +59,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	protected static final int RPSIZE2 = RPSIZE / 2;
 
 	// icon for rotation
-	protected static ImageIcon rotateIcon = ImageManager.getInstance().loadImageIcon("images/rotate.png");
+	protected static Icon rotateIcon = ImageManager.getInstance().loadUiIcon("images/svg/rotate.svg", 16);
 
 	/**
 	 * The path is used by some items (not point or line based items). NOTE: it is
@@ -273,8 +274,8 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 				g.setColor(_rotateFill);
 				g.fillOval(rp.x - RPSIZE2, rp.y - RPSIZE2, RPSIZE, RPSIZE);
 
-				g.drawImage(rotateIcon.getImage(), rp.x - rotateIcon.getIconHeight() / 2 + 1,
-						rp.y - rotateIcon.getIconHeight() / 2 + 1, container.getComponent());
+				rotateIcon.paintIcon(container.getComponent(), g, rp.x - rotateIcon.getIconHeight() / 2,
+						rp.y - rotateIcon.getIconHeight() / 2);
 			}
 		}
 

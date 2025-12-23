@@ -17,7 +17,7 @@ import edu.cnu.mdi.ui.fonts.Fonts;
 public class CommonBorder extends TitledBorder {
 
 	public Border etched = BorderFactory.createEtchedBorder();
-	private static Font _font = Fonts.commonFont(Font.PLAIN, 10);
+	private static Font _font = Fonts.smallFont;
 
 	public CommonBorder() {
 		super(BorderFactory.createEtchedBorder());

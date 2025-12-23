@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,6 +12,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
@@ -28,342 +28,314 @@ import javax.swing.event.ListSelectionListener;
 import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
-
 /**
- * A dialog for a label and a font.
+ * Dialog for entering a text label and selecting its font style/size and colors.
+ * <p>
+ * FlatLaf-compatible: this dialog no longer offers font-family selection. The
+ * family is derived from the current LookAndFeel's base font (typically
+ * {@link Fonts#defaultFont}) via the input font.
+ * </p>
+ *
+ * Typical use: TextTool / text annotation creation.
  *
  * @author heddle
- *
  */
 @SuppressWarnings("serial")
 public class LabelDialog extends JDialog implements ListSelectionListener, ItemListener {
 
-	/**
-	 * The last selected family, used for default in null constructor.
-	 */
-	private static Font lastFont = Fonts.commonFont(Font.PLAIN, 14);
+    /**
+     * Last selected font (size/style), used as the default in the null constructor.
+     * <p>
+     * Note: family is not user-selectable; it is preserved from this font.
+     * </p>
+     */
+    private static Font lastFont = Fonts.defaultFont;
 
-	// italics checkbox
-	JCheckBox italicCb;
+    // italics checkbox
+    private JCheckBox italicCb;
 
-	// bold checkbox
-	JCheckBox boldCb;
+    // bold checkbox
+    private JCheckBox boldCb;
 
-	// sample display text
-	protected String displayText = "Sample Text 123";
+    // sample display text
+    protected String displayText = "Sample Text 123";
 
-	/**
-	 * The font family name list
-	 */
-	private JList fontFamilyList;
+    /**
+     * Font size list.
+     */
+    private JList<String> fontSizeList;
 
-	/**
-	 * The font size list
-	 */
-	private JList fontSizeList;
+    /**
+     * The return font.
+     */
+    private Font returnFont;
 
-	/**
-	 * The return font.
-	 */
-	private Font returnFont;
+    /**
+     * The input font (determines the font family we keep).
+     */
+    private final Font inputFont;
 
-	/**
-	 * The input font
-	 */
-	private final Font inputFont;
+    // text foreground color
+    private ColorLabel _textForeground;
 
-	// text foreground color
-	private ColorLabel _textForeground;
+    // text background color
+    private ColorLabel _textBackground;
 
-	// text background color
-	private ColorLabel _textBackground;
+    // possible font sizes
+    private final String[] fontSizes = {
+            " 8 ", " 10 ", " 11 ", " 12 ", " 14 ", " 16 ", " 18 ",
+            " 20 ", " 24 ", " 30 ", " 36 ", " 40 ", " 48 ", " 60 ", " 72 "
+    };
 
-	// possible font sizes
-	private String fontSizes[] = { " 8 ", " 10 ", " 11 ", " 12 ", " 14 ", " 16 ", " 18 ", " 20 ", " 24 ", " 30 ",
-			" 36 ", " 40 ", " 48 ", " 60 ", " 72 " };
+    /**
+     * Display area.
+     */
+    private JLabel previewArea;
 
-	/**
-	 * The display area. Use a JLabel as the AWT label doesn't always honor
-	 * setFont() in a timely fashion :-)
-	 */
-	private JLabel previewArea;
+    /**
+     * Text entry field.
+     */
+    private JTextField textField;
 
-	/**
-	 * The text field
-	 */
-	private JTextField textField;
+    /**
+     * Result string (null if cancelled).
+     */
+    private String resultString = null;
 
-	/**
-	 * The result string.
-	 */
-	private String resultString = null;
+    /**
+     * Null constructor uses the last font.
+     */
+    public LabelDialog() {
+        this(lastFont);
+    }
 
-	/**
-	 * Null constructor will use the last font.
-	 */
-	public LabelDialog() {
-		this(lastFont);
-	}
+    /**
+     * Construct the dialog using an input font as the base.
+     * The font family is taken from {@code inFont} and is not user-selectable.
+     */
+    public LabelDialog(Font inFont) {
+        setTitle("String Parameters");
+        setModal(true);
 
-	/**
-	 * Construct a FontChooser -- Sets title and gets array of fonts on the system.
-	 * Builds a GUI to let the user choose one font at one size.
-	 */
-	public LabelDialog(Font inFont) {
-		setTitle("String Parameters");
-		setModal(true);
-		inputFont = inFont;
+        // Defensive: ensure we always have a sane base font.
+        inputFont = (inFont != null) ? inFont : Fonts.defaultFont;
 
-		// add the components
+        Container cp = getContentPane();
 
-		Container cp = getContentPane();
+        JPanel top = new JPanel(new FlowLayout());
 
-		JPanel top = new JPanel();
-		top.setLayout(new FlowLayout());
+        // Create and add the scroll list (size only)
+        createScrollLists(top);
 
-		// create and add the scroll lists
-		createScrollLists(top);
+        JPanel subPanel = new JPanel(new BorderLayout(2, 2));
+        subPanel.add(top, BorderLayout.CENTER);
+        subPanel.add(createTextAndColorBox(), BorderLayout.NORTH);
 
-		JPanel subPanel = new JPanel(new BorderLayout(2, 2));
-		subPanel.add(top, BorderLayout.CENTER);
+        cp.add(subPanel, BorderLayout.NORTH);
 
-		subPanel.add(createTextAndColorBox(), BorderLayout.NORTH);
+        // Add the checkboxes for bold and italics
+        top.add(createCheckBoxPanel());
 
-		cp.add(subPanel, BorderLayout.NORTH);
+        // Create the preview area and place it in the center
+        previewArea = new JLabel(displayText, SwingConstants.CENTER);
+        previewArea.setSize(200, 50);
+        cp.add(previewArea, BorderLayout.CENTER);
 
-		// add the checkboxes for bold and italics
-		top.add(createCheckBoxPanel());
+        // Add the button panel in the south
+        cp.add(createButtonPanel(), BorderLayout.SOUTH);
 
-		// create the preview area and place it in the center
-		previewArea = new JLabel(displayText, SwingConstants.CENTER);
-		previewArea.setSize(200, 50);
-		cp.add(previewArea, BorderLayout.CENTER);
+        // Initialize controls from input font
+        initFromInputFont();
 
-		// add the button panel in the south
-		cp.add(createButtonPanel(), BorderLayout.SOUTH);
-		previewFont(); // ensure view is up to date!
+        previewFont(); // ensure view is up to date!
+        pack();
+        DialogUtils.centerDialog(this);
+    }
 
-		pack();
-		DialogUtils.centerDialog(this);
-	}
+    /**
+     * Initialize UI controls (size, bold, italic) based on the input font.
+     */
+    private void initFromInputFont() {
+        if (boldCb != null) {
+            boldCb.setSelected(inputFont.isBold());
+        }
+        if (italicCb != null) {
+            italicCb.setSelected(inputFont.isItalic());
+        }
+        if (fontSizeList != null) {
+            fontSizeList.setSelectedValue(" " + inputFont.getSize() + " ", true);
+        }
+    }
 
-	/**
-	 * Create the panel that holds the checkboxes for bold and italic.
-	 *
-	 * @return the panel that holds the checkboxes for bold and italic.
-	 */
-	private JPanel createCheckBoxPanel() {
-		JPanel checkBoxPanel = new JPanel();
+    /**
+     * Create the panel that holds the checkboxes for bold and italic.
+     */
+    private JPanel createCheckBoxPanel() {
+        JPanel checkBoxPanel = new JPanel(new GridLayout(0, 1));
 
-		boldCb = new JCheckBox("Bold", false);
-		italicCb = new JCheckBox("Italic", false);
-		boldCb.addItemListener(this);
-		italicCb.addItemListener(this);
+        boldCb = new JCheckBox("Bold", false);
+        italicCb = new JCheckBox("Italic", false);
+        boldCb.addItemListener(this);
+        italicCb.addItemListener(this);
 
-		checkBoxPanel.setLayout(new GridLayout(0, 1));
-		checkBoxPanel.add(boldCb);
-		checkBoxPanel.add(italicCb);
-		return checkBoxPanel;
-	}
+        checkBoxPanel.add(boldCb);
+        checkBoxPanel.add(italicCb);
+        return checkBoxPanel;
+    }
 
-	/**
-	 * Create the font scroll lists *family and size) and add them to the given
-	 * panel.
-	 *
-	 * @param panel the panel to hold the lists.
-	 */
-	public void createScrollLists(JPanel panel) {
-		// create the list of font families
-		fontFamilyList = createFontList();
-		JScrollPane scrollPane1 = new JScrollPane(fontFamilyList);
-		fontFamilyList.setSelectedValue(inputFont.getFamily(), true);
-		fontFamilyList.addListSelectionListener(this);
+    /**
+     * Create the scroll lists (size only) and add them to the given panel.
+     */
+    private void createScrollLists(JPanel panel) {
+        fontSizeList = new JList<>(fontSizes);
+        fontSizeList.setVisibleRowCount(8);
+        JScrollPane scrollPane = new JScrollPane(fontSizeList);
+        fontSizeList.addListSelectionListener(this);
 
-		// /create the list of sizes
-		fontSizeList = new JList(fontSizes);
-		fontSizeList.setVisibleRowCount(8);
-		JScrollPane scrollPane2 = new JScrollPane(fontSizeList);
-		fontSizeList.setSelectedValue(" " + inputFont.getSize() + " ", true);
-		fontSizeList.addListSelectionListener(this);
+        panel.add(scrollPane);
+    }
 
-		panel.add(scrollPane1);
-		panel.add(scrollPane2);
-	}
+    /**
+     * Create the text entry field.
+     */
+    private void createTextEntryField() {
+        textField = new JTextField();
+        textField.setBorder(new CommonBorder("Enter the text"));
+    }
 
-	/**
-	 * Create the text entry field
-	 *
-	 * @return the text entry field
-	 */
-	private void createTextEntryField() {
-		textField = new JTextField();
-		textField.setBorder(new CommonBorder("Enter the text"));
-	}
+    /**
+     * Create a box that contains the color labels.
+     */
+    private Box createTextAndColorBox() {
+        Box box = Box.createVerticalBox();
 
-	/**
-	 * Create a box that contains the color labels.
-	 *
-	 * @return a box that contains the color labels.
-	 */
-	private Box createTextAndColorBox() {
-		Box box = Box.createVerticalBox();
+        createTextEntryField();
+        box.add(textField);
+        box.add(Box.createVerticalStrut(8));
 
-		createTextEntryField();
-		box.add(textField);
-		box.add(Box.createVerticalStrut(8));
+        JPanel subbox = new JPanel();
+        subbox.setLayout(new BoxLayout(subbox, BoxLayout.Y_AXIS));
 
-		JPanel subbox = new JPanel();
-		subbox.setLayout(new VerticalFlowLayout());
-		_textForeground = new ColorLabel(null, Color.black, "Foreground", 200);
-		subbox.add(_textForeground);
-		subbox.add(Box.createVerticalStrut(8));
+        _textForeground = new ColorLabel(null, Color.black, "Foreground", 200);
+        subbox.add(_textForeground);
+        subbox.add(Box.createVerticalStrut(8));
 
-		_textBackground = new ColorLabel(null, null, "Background", 200);
-		subbox.add(_textBackground);
-		subbox.setBorder(new CommonBorder("Colors"));
+        _textBackground = new ColorLabel(null, null, "Background", 200);
+        subbox.add(_textBackground);
 
-		box.add(subbox);
-		box.add(Box.createVerticalStrut(8));
+        subbox.setBorder(new CommonBorder("Colors"));
+        box.add(subbox);
+        box.add(Box.createVerticalStrut(8));
 
-		return box;
-	}
+        return box;
+    }
 
-	/**
-	 * Create the button panel.
-	 *
-	 * @return the button panel.
-	 */
-	private JPanel createButtonPanel() {
-		JPanel panel = new JPanel();
+    /**
+     * Create the button panel.
+     */
+    private JPanel createButtonPanel() {
+        JPanel panel = new JPanel();
 
-		// OK Button
-		JButton okButton = new JButton(" OK ");
-		panel.add(okButton);
-		okButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				previewFont();
-				lastFont = new Font(returnFont.getFamily(), returnFont.getStyle(), returnFont.getSize());
-				dispose();
-				resultString = textField.getText();
-				setVisible(false);
-			}
-		});
+        // OK Button
+        JButton okButton = new JButton(" OK ");
+        panel.add(okButton);
+        okButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                previewFont();
+                // Preserve the family from returnFont; that's the LAF-consistent family.
+                lastFont = returnFont;
+                resultString = textField.getText();
+                dispose();
+                setVisible(false);
+            }
+        });
 
-		// Cancel button
-		JButton canButton = new JButton("Cancel");
-		panel.add(canButton);
-		canButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				returnFont = inputFont;
-				resultString = null;
-				dispose();
-				setVisible(false);
-			}
-		});
-		return panel;
-	}
+        // Cancel button
+        JButton canButton = new JButton("Cancel");
+        panel.add(canButton);
+        canButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                returnFont = inputFont;
+                resultString = null;
+                dispose();
+                setVisible(false);
+            }
+        });
 
-	/**
-	 * Create the font list.
-	 *
-	 * @return the font family selection list.
-	 */
-	private JList createFontList() {
+        return panel;
+    }
 
-		String[] fontList = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+    /**
+     * Build and apply the preview/return font based on the selected size and style.
+     * <p>
+     * Font family is preserved from {@link #inputFont} (FlatLaf-consistent).
+     * </p>
+     */
+    protected void previewFont() {
+        String resultSizeName = (String) fontSizeList.getSelectedValue();
+        if (resultSizeName == null) {
+            resultSizeName = " " + inputFont.getSize() + " ";
+        }
+        int resultSize = Integer.parseInt(resultSizeName.trim());
 
-		JList list = new JList(fontList);
+        int style = Font.PLAIN;
+        if (boldCb.isSelected()) {
+            style |= Font.BOLD;
+        }
+        if (italicCb.isSelected()) {
+            style |= Font.ITALIC;
+        }
 
-		list.setVisibleRowCount(8);
-		return list;
-	}
+        // Preserve family from input font; this keeps typography consistent with FlatLaf.
+        String family = inputFont.getFamily();
+        returnFont = new Font(family, style, resultSize);
 
-	/**
-	 * Called from the action handlers to get the font info, build a font, and set
-	 * it.
-	 */
-	protected void previewFont() {
-		String resultName = (String) (fontFamilyList.getSelectedValue());
-		String resultSizeName = (String) (fontSizeList.getSelectedValue());
-		int resultSize = Integer.parseInt(resultSizeName.trim());
+        previewArea.setFont(returnFont);
+        pack();
+    }
 
-		boolean isBold = boldCb.isSelected();
-		boolean isItalic = italicCb.isSelected();
+    /** Retrieve the selected font. */
+    public Font getSelectedFont() {
+        return returnFont;
+    }
 
-		int attrs = Font.PLAIN;
-		if (isBold) {
-			attrs = Font.BOLD;
-		}
-		if (isItalic) {
-			attrs |= Font.ITALIC;
-		}
-		returnFont = new Font(resultName, attrs, resultSize);
-		previewArea.setFont(returnFont);
-		pack(); // ensure Dialog is big enough.
-	}
+    /**
+     * Gets the result string, which will be null if cancelled.
+     */
+    public String getText() {
+        return resultString;
+    }
 
-	/** Retrieve the selected font */
-	public Font getSelectedFont() {
-		return returnFont;
-	}
+    /**
+     * List selection changed (size).
+     */
+    @Override
+    public void valueChanged(ListSelectionEvent lse) {
+        previewFont();
+    }
 
-	/**
-	 * Gets the result string, which will be null if cancelled.
-	 *
-	 * @return the result string.
-	 */
-	public String getText() {
-		return resultString;
-	}
+    /**
+     * Checkbox changed (bold/italic).
+     */
+    @Override
+    public void itemStateChanged(ItemEvent ise) {
+        previewFont();
+    }
 
-	/**
-	 * One of the list's was selected. Redo the preview.
-	 *
-	 * @param lse the list selection event.
-	 */
-	@Override
-	public void valueChanged(ListSelectionEvent lse) {
-		previewFont();
-	}
+    /**
+     * Get the text foreground.
+     */
+    public Color getTextForeground() {
+        return _textForeground.getColor();
+    }
 
-	/**
-	 * One of check boxes was selected.
-	 *
-	 * @param ise the state changed event.
-	 */
-	@Override
-	public void itemStateChanged(ItemEvent ise) {
-		previewFont();
-	}
+    /**
+     * Get the text background.
+     */
+    public Color getTextBackground() {
+        return _textBackground.getColor();
+    }
 
-	/**
-	 * Get the text foreground
-	 *
-	 * @return the text foreground
-	 */
-	public Color getTextForeground() {
-		return _textForeground.getColor();
-	}
-
-	/**
-	 * Get the text background
-	 *
-	 * @return the text background
-	 */
-	public Color getTextBackground() {
-		return _textBackground.getColor();
-	}
-
-	/**
-	 * Main program for testing.
-	 *
-	 * @param args
-	 */
-	public static void main(String args[]) {
-		LabelDialog ld = new LabelDialog();
-		ld.setVisible(true);
-
-	}
 }

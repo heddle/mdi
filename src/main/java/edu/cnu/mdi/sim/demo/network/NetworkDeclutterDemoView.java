@@ -7,6 +7,7 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.util.Random;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 import edu.cnu.mdi.container.IContainer;
@@ -31,8 +32,8 @@ public class NetworkDeclutterDemoView extends SimulationView {
     private final NetworkDeclutterSimulation sim;
 
     // Icons for servers and clients
-    private final ImageIcon serverIcon;
-    private final ImageIcon clientIcon;
+    private final Icon serverIcon;
+    private final Icon clientIcon;
     private int iconRadiusPx;
 
 
@@ -53,8 +54,8 @@ public class NetworkDeclutterDemoView extends SimulationView {
         this.sim.setEngine(getSimulationEngine());
 
         // Load icons
-        serverIcon = ImageManager.getInstance().loadImageIcon("images/svg/server.svg", 32, 32);
-		clientIcon = ImageManager.getInstance().loadImageIcon("images/svg/workstation.svg", 32, 32);
+        serverIcon = ImageManager.getInstance().loadUiIcon("images/svg/server.svg", 32, 32);
+		clientIcon = ImageManager.getInstance().loadUiIcon("images/svg/workstation.svg", 32, 32);
 		iconRadiusPx = clientIcon.getIconWidth() / 2; // assuming square icons of same size
 
 		setAfterDraw();
@@ -109,9 +110,9 @@ public class NetworkDeclutterDemoView extends SimulationView {
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				Point pp = new Point();
 				for (NetworkModel.Node n : model.nodes) {
-					ImageIcon icon = (n.type == NetworkModel.NodeType.SERVER) ? serverIcon : clientIcon;
+					Icon icon = (n.type == NetworkModel.NodeType.SERVER) ? serverIcon : clientIcon;
 					getContainer().worldToLocal(pp, n.x, n.y);
-					g2.drawImage(icon.getImage(), pp.x - iconRadiusPx, pp.y - iconRadiusPx, getContainer().getComponent());
+					icon.paintIcon(getContainer().getComponent(), g2, pp.x - iconRadiusPx, pp.y - iconRadiusPx);
 				}
 			}
 		});

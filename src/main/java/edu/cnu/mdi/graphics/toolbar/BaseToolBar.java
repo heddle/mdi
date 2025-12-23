@@ -4,10 +4,8 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Toolkit;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -18,7 +16,6 @@ import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JTextField;
 
 import edu.cnu.mdi.container.IContainer;
@@ -153,7 +150,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
     public void addToolBarSpacer(int width) {
 		add(Box.createHorizontalStrut(width));
 	}
-    
+
     /**
      * Build/register tools and create their buttons.
      */
@@ -186,62 +183,62 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
         register(polyline);
         register(radArc);
         register(text);
- 		
+
         // Default tool: pointer.
         toolController.setDefaultTool(pointer.id());
 
         // Buttons (order is respected)
-        addToolButton(pointer, "images/pointer.gif", pointer.toolTip());
+        addToolButton(pointer, "images/svg/pointer.svg", pointer.toolTip());
 
         if (boxZoom != null) {
             addToolButton(boxZoom, "images/svg/box_zoom.svg", boxZoom.toolTip());
         }
         if (pan != null) {
-            addToolButton(pan, "images/pan.gif", pan.toolTip());
+            addToolButton(pan, "images/svg/pan.svg", pan.toolTip());
         }
         if (magnify != null) {
-            addToolButton(magnify, "images/magnify.png", magnify.toolTip());
+            addToolButton(magnify, "images/svg/magnify.svg", magnify.toolTip());
         }
          if (center != null) {
             addToolButton(center, "images/svg/center.svg", center.toolTip());
         }
         if (line != null) {
-            addToolButton(line, "images/line.gif", line.toolTip());
+            addToolButton(line, "images/svg/line.svg", line.toolTip());
         }
      	if (rectangle != null) {
-    	    addToolButton(rectangle, "images/rectangle.gif", rectangle.toolTip());
+    	    addToolButton(rectangle, "images/svg/rectangle.svg", rectangle.toolTip());
     	}
         if (ellipse != null) {
- 			addToolButton(ellipse, "images/ellipse.gif", ellipse.toolTip());
+ 			addToolButton(ellipse, "images/svg/ellipse.svg", ellipse.toolTip());
  		}
         if (polygon != null) {
-            addToolButton(polygon, "images/polygon.gif", polygon.toolTip());
-        }      
+            addToolButton(polygon, "images/svg/polygon.svg", polygon.toolTip());
+        }
     	if (polyline != null) {
-			addToolButton(polyline, "images/polyline.gif", polyline.toolTip());
+			addToolButton(polyline, "images/svg/polyline.svg", polyline.toolTip());
 		}
 		if (radArc != null) {
-			addToolButton(radArc, "images/radarc.gif", radArc.toolTip());
+			addToolButton(radArc, "images/svg/radarc.svg", radArc.toolTip());
 		}
 		if (text != null) {
-			addToolButton(text, "images/text.gif", text.toolTip());
+			addToolButton(text, "images/svg/text.svg", text.toolTip());
 		}
 		if (Bits.check(bits, ToolBarBits.UNDOZOOMBUTTON)) {
 		    addActionButton(new UndoZoomButton(toolContext));
 		}
 
-		
+
 		addActionButton(new WorldButton(toolContext));   // if you have a bit for it, gate it
 		addActionButton(new ZoomInButton(toolContext));
 		addActionButton(new ZoomOutButton(toolContext));
 		addActionButton(new RefreshButton(toolContext));
-		
+
 		if (Bits.check(bits, ToolBarBits.STYLEBUTTON)) {
 			styleButton = new EditStyleButton(toolContext);
 			styleButton.setEnabled(false); // initially disabled
 		    addActionButton(styleButton);
 		}
-		
+
 		if (Bits.check(bits, ToolBarBits.DELETEBUTTON)) {
 			//common practice to add some space before delete
 			addToolBarSpacer(8);
@@ -255,13 +252,13 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
             add(statusLine);
         }
     }
-    
+
     protected void addActionButton(ToolActionButton b) {
         if (b != null) {
             add(b, false);
         }
     }
-        
+
 	/**
 	 * Register a tool with the controller (if non-null).
 	 */
@@ -299,7 +296,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	 */
     protected void createStatusTextField() {
         statusLine = new JTextField(" ");
-        statusLine.setFont(Fonts.commonFont(Font.PLAIN, 11));
+        statusLine.setFont(Fonts.tweenFont);
         statusLine.setEditable(false);
         statusLine.setBackground(Color.black);
         statusLine.setForeground(Color.cyan);
@@ -316,7 +313,8 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	 *
 	 * @param text the text to show (null shows empty string).
 	 */
-    public void setText(String text) {
+    @Override
+	public void setText(String text) {
         if (statusLine != null) {
             statusLine.setText((text == null) ? "" : text);
         }
@@ -386,8 +384,9 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 			tool.mouseExited(toolContext, e);
 		}
 		Component canvas = container.getComponent();
-		if (canvas != null)
+		if (canvas != null) {
 			canvas.setCursor(Cursor.getDefaultCursor());
+		}
 	}
 
 	@Override
@@ -479,7 +478,8 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
      * Update enable/disable state for toolbar widgets whose availability depends on
      * container state (typically selection).
      */
-    public void updateButtonState() {
+    @Override
+	public void updateButtonState() {
         boolean anySelected = container.anySelectedItems();
         if (deleteButton != null) {
             deleteButton.setEnabled(anySelected);
@@ -488,7 +488,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 			styleButton.setEnabled(anySelected);
 		}
     }
-    
+
 
     // ============================================================
     // Factory hooks for creating tools
@@ -501,7 +501,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
     protected ITool createBoxZoomTool() {
     	return new BoxZoomTool();
     }
-    
+
     protected ITool createCenterTool() {
     	return new CenterTool();
     }
@@ -526,7 +526,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	    }
 	    return this;
 	}
-	
+
 	@Override
 	public ToolToggleButton addToolToggle(ITool tool, String iconFile, String tooltip) {
 	    return addTool(tool, iconFile, tooltip); // uses your existing convenience

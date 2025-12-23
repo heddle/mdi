@@ -106,6 +106,9 @@ public class CommonToolBar extends JToolBar {
      */
     public CommonToolBar(String name, int orientation) {
         super(name, orientation);
+        setFloatable(false);
+        putClientProperty("JToolBar.isRollover", true);
+
     }
 
     /**

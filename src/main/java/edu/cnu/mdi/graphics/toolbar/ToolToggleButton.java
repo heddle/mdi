@@ -2,6 +2,7 @@ package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Dimension;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 
@@ -52,7 +53,7 @@ public class ToolToggleButton extends JToggleButton {
 		setToolTipText(tooltip);
 
 		if (iconFile != null) {
-			ImageIcon icon = ImageManager.getInstance().loadImageIcon(iconFile, 20, 20);
+			Icon icon = ImageManager.getInstance().loadUiIcon(iconFile, 20, 20);
 			if (icon != null) {
 				setIcon(icon);
 			} else {

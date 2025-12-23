@@ -15,10 +15,16 @@ import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.UIManager;
+
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import com.formdev.flatlaf.FlatLightLaf;
 
 import edu.cnu.mdi.desktop.Desktop;
 import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.swing.WindowPlacement;
+import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.ui.menu.FileMenu;
 import edu.cnu.mdi.ui.menu.MenuManager;
 import edu.cnu.mdi.ui.menu.OptionMenu;
@@ -77,9 +83,9 @@ public class BaseMDIApplication extends JFrame {
             System.exit(1);
         }
 
-        // Set Look & Feel early
-        edu.cnu.mdi.util.Environment.setLookAndFeel();
-
+        // Initialize FlatLaf LookAndFeel
+        UIInit();
+                
         _properties = PropertySupport.fromKeyValues(keyVals);
 
         // --------------------------------------------------------------------
@@ -144,6 +150,16 @@ public class BaseMDIApplication extends JFrame {
 
         instance = this;
     }
+    
+    //initialize the FlatLaf UI
+	private void UIInit() {
+		FlatIntelliJLaf.setup();
+		UIManager.put("Component.focusWidth", 1);
+		UIManager.put("Component.arc", 6);
+		UIManager.put("Button.arc", 6);
+		UIManager.put("TabbedPane.showTabSeparators", true);
+		Fonts.refresh();
+	}
 
     /**
      * @return the singleton application frame

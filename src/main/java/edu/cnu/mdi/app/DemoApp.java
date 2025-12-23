@@ -408,6 +408,7 @@ public class DemoApp extends BaseMDIApplication {
      */
     public static void main(String[] args) {
        EventQueue.invokeLater(() -> {
+    	     
              DemoApp frame = DemoApp.getInstance();
              frame.setVisible(true);
         });

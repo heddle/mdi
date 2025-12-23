@@ -298,11 +298,7 @@ public class BaseView extends JInternalFrame
                 }
                 BaseToolBar toolBar = new BaseToolBar(container, bits);
                 add(toolBar, BorderLayout.NORTH);
-            } else {
-                // "hack": create a non-visible toolbar so that the pointer tool is
-                // initialized and available.
-                new BaseToolBar(container, 1);
-            }
+            } 
 
             pack();
         } else {

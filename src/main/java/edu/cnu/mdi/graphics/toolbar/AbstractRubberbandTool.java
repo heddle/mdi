@@ -11,7 +11,6 @@ import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
-import edu.cnu.mdi.util.Environment;
 
 /**
  * Base class for tools that create an {@link AItem} using a {@link Rubberband}
@@ -134,8 +133,6 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
             controller = safeController(ctx);
         }
 
-        Environment.getInstance().setDragging(true);
-
         Rubberband.Policy policy = Objects.requireNonNull(rubberbandPolicy(), "rubberbandPolicy");
         rubberband = new Rubberband(owner, this, policy);
         rubberband.setActive(true);
@@ -186,7 +183,6 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
             c.refresh();
 
         } finally {
-            Environment.getInstance().setDragging(false);
         }
     }
 
@@ -196,7 +192,6 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
         owner = null;
         creator = null;
         controller = null;
-        Environment.getInstance().setDragging(false);
     }
 
     protected final void cancelRubberband() {

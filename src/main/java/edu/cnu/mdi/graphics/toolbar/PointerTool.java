@@ -11,11 +11,8 @@ import javax.swing.SwingUtilities;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
-import edu.cnu.mdi.graphics.style.Styled;
-import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.ItemModification;
-import edu.cnu.mdi.util.Environment;
 
 /**
  * Default "pointer" tool used for selection and direct manipulation of items.
@@ -158,7 +155,6 @@ public class PointerTool implements ITool, IRubberbanded {
             owner = null;
             activeCtx = null;
             reset();
-            Environment.getInstance().setDragging(false);
         }
     }
 
@@ -175,17 +171,11 @@ public class PointerTool implements ITool, IRubberbanded {
         if (owner == null) {
             owner = ctx.container();
         }
-        if (owner == null) {
-            return;
-        }
+        
 
         // Popups handled centrally by BaseToolBar.
-        if (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e)) {
-            return;
-        }
-
         // If a rubber-band is already active, ignore new presses.
-        if (rubberband != null) {
+        if ((owner == null) || e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e) || (rubberband != null)) {
             return;
         }
 
@@ -224,8 +214,6 @@ public class PointerTool implements ITool, IRubberbanded {
      * @param e mouse press event.
      */
     private void startRubberbandSelection(MouseEvent e) {
-        Environment.getInstance().setDragging(true);
-
         rubberband = new Rubberband(owner, this, Rubberband.Policy.RECTANGLE);
         rubberband.setActive(true);
         rubberband.startRubberbanding(e.getPoint());
@@ -244,8 +232,6 @@ public class PointerTool implements ITool, IRubberbanded {
     @Override
     public void mouseDragged(ToolContext ctx, MouseEvent e) {
 
-        Environment.getInstance().setDragging(true);
-
         // Rubberband handles its own drag events.
         if (rubberband != null) {
             return;
@@ -254,12 +240,8 @@ public class PointerTool implements ITool, IRubberbanded {
         if (owner == null) {
             owner = ctx.container();
         }
-        if (owner == null) {
-            return;
-        }
-
         // Ignore drags outside the component bounds.
-        if (owner.getComponent() != null && !owner.getComponent().getBounds().contains(e.getPoint())) {
+        if ((owner == null) || (owner.getComponent() != null && !owner.getComponent().getBounds().contains(e.getPoint()))) {
             return;
         }
 
@@ -331,7 +313,6 @@ public class PointerTool implements ITool, IRubberbanded {
             }
         } finally {
             reset();
-            Environment.getInstance().setDragging(false);
         }
     }
 
@@ -388,7 +369,6 @@ public class PointerTool implements ITool, IRubberbanded {
             owner.refresh();
 
         } finally {
-            Environment.getInstance().setDragging(false);
         }
     }
 
@@ -401,12 +381,8 @@ public class PointerTool implements ITool, IRubberbanded {
     private void selectItemsFromClick(AItem item, MouseEvent e) {
 
         // Only left-click participates in selection changes.
-        if (!SwingUtilities.isLeftMouseButton(e)) {
-            return;
-        }
-
         // Clicking a locked or already-selected item: do nothing.
-        if (item.isLocked() || item.isSelected()) {
+        if (!SwingUtilities.isLeftMouseButton(e) || item.isLocked() || item.isSelected()) {
             return;
         }
 

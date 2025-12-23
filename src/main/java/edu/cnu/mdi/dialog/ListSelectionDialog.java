@@ -23,8 +23,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
-import edu.cnu.mdi.graphics.ImageManager;
-
 /**
  * Simple dialog for selection from a list
  *
@@ -91,8 +89,6 @@ public class ListSelectionDialog<T> extends JDialog implements ActionListener {
 
 		_jList = new JList<>(_listModel);
 		_jList.setSelectionMode(selectionMode);
-
-		setIconImage(ImageManager.getDialogIcon().getImage());
 
 		// add components
 		createSouthComponent(OKSTR, CANCELSTR);

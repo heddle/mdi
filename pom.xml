@@ -83,6 +83,21 @@
 			<version>2.4.0</version>
 		</dependency>
 
+        <!-- FlatLaf Look and Feel for Swing -->
+		<dependency>
+			<groupId>com.formdev</groupId>
+			<artifactId>flatlaf</artifactId>
+			<version>3.5.4</version>
+		</dependency>
+
+        <!-- FlatLaf extras -->
+		<dependency>
+			<groupId>com.formdev</groupId>
+			<artifactId>flatlaf-extras</artifactId>
+			<version>3.5.4</version>
+		</dependency>
+
+
 		<!-- JUnit 5 aggregate dependency (API + engine) -->
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>

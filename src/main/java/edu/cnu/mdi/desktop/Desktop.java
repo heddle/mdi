@@ -330,8 +330,7 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 		if (file.exists()) {
 			int answer = JOptionPane.showConfirmDialog(null,
 					file.getAbsolutePath() + "  already exists.\nDo you want to overwrite it?",
-					"Overwite Existing File?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
-					ImageManager.getDialogIcon());
+					"Overwite Existing File?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
 			if (answer != JFileChooser.APPROVE_OPTION) {
 				return;
@@ -376,8 +375,7 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 
 		if (file.exists()) {
 			int answer = JOptionPane.showConfirmDialog(null, "Confim delete operation (this can not be undone).",
-					"Delete Configuration?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,
-					ImageManager.getDialogIcon());
+					"Delete Configuration?", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
 			if (answer != JFileChooser.APPROVE_OPTION) {
 				return;

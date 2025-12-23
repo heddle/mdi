@@ -106,8 +106,6 @@ public class BoxZoomTool implements ITool, IRubberbanded {
         owner = c;
         cancelling = false;
 
-        Environment.getInstance().setDragging(true);
-
         rubberband = new Rubberband(owner, this, policy);
         rubberband.setHighlightColor1(Color.gray);
         rubberband.setHighlightColor2(Color.green);
@@ -197,7 +195,6 @@ public class BoxZoomTool implements ITool, IRubberbanded {
             rubberband = null;
             owner = null;
             cancelling = false;
-            Environment.getInstance().setDragging(false);
-        }
+         }
     }
 }

@@ -68,8 +68,6 @@ public abstract class AbstractLineRubberbandTool implements ITool, IRubberbanded
 
         controller = safeController(ctx);
 
-        Environment.getInstance().setDragging(true);
-
         Rubberband.Policy policy = Objects.requireNonNull(rubberbandPolicy(), "rubberbandPolicy");
         rubberband = new Rubberband(owner, this, policy);
         rubberband.setActive(true);
@@ -101,7 +99,6 @@ public abstract class AbstractLineRubberbandTool implements ITool, IRubberbanded
             c.refresh();
 
         } finally {
-            Environment.getInstance().setDragging(false);
         }
     }
 
@@ -110,8 +107,7 @@ public abstract class AbstractLineRubberbandTool implements ITool, IRubberbanded
         cancelRubberband();
         owner = null;
         controller = null;
-        Environment.getInstance().setDragging(false);
-    }
+     }
 
     protected final void cancelRubberband() {
         Rubberband rb = rubberband;

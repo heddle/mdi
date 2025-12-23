@@ -11,7 +11,6 @@ import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
-import edu.cnu.mdi.util.Environment;
 
 /**
  * Base class for tools that create an {@link AItem} from a multi-vertex
@@ -113,8 +112,6 @@ public abstract class AbstractVertexRubberbandTool implements ITool, IRubberband
             controller = safeController(ctx);
         }
 
-        Environment.getInstance().setDragging(true);
-
         Rubberband.Policy policy = Objects.requireNonNull(rubberbandPolicy(), "rubberbandPolicy");
         rubberband = new Rubberband(owner, this, policy);
         rubberband.setActive(true);
@@ -163,7 +160,6 @@ public abstract class AbstractVertexRubberbandTool implements ITool, IRubberband
             c.refresh();
 
         } finally {
-            Environment.getInstance().setDragging(false);
         }
     }
 
@@ -173,7 +169,6 @@ public abstract class AbstractVertexRubberbandTool implements ITool, IRubberband
         owner = null;
         creator = null;
         controller = null;
-        Environment.getInstance().setDragging(false);
     }
 
     /** Cancel the rubberband interaction (if any). */

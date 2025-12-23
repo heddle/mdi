@@ -14,7 +14,7 @@ public class ZoomOutButton extends ToolActionButton {
     }
 
     public ZoomOutButton(ToolContext ctx, double factor) {
-        super(ctx, "images/zoom_out.gif", "Zoom out");
+        super(ctx, "images/svg/zoom_out.svg", "Zoom out");
         this.factor = factor;
     }
 

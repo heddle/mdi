@@ -46,11 +46,9 @@ public class TextItem extends RectangleItem {
     /** Twice the margin. */
     private static final int MARGIN2 = 2 * MARGIN;
 
-    /** Default font. */
-    private static final Font DEFAULT_FONT = Fonts.commonFont(Font.PLAIN, 12);
 
     /** Font used to render the text. */
-    private Font _font = DEFAULT_FONT;
+    private Font _font = Fonts.defaultFont;
 
     /** The text to render. */
     private String _text;
@@ -366,7 +364,7 @@ public class TextItem extends RectangleItem {
      * @param font the font (null -> default)
      */
     public void setFont(Font font) {
-        _font = (font != null) ? font : DEFAULT_FONT;
+        _font = (font != null) ? font : Fonts.defaultFont;
     }
 
     /** @return the text being rendered */

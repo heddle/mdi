@@ -1,7 +1,6 @@
 package edu.cnu.mdi.properties;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.util.Enumeration;
@@ -13,7 +12,6 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.ui.colors.X11Colors;
-import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.Environment;
 
 
@@ -28,7 +26,6 @@ public class PropertySupport {
 	public static final String CONTAINERCLASS = "CONTAINERCLASS";
 	public static final String DRAGGABLE = "DRAGGABLE";
 	public static final String FILLCOLOR = "FILLCOLOR";
-	public static final String FONT = "FONT";
 	public static final String FRACTION = "FRACTION";
 	public static final String HEIGHT = "HEIGHT";
 	public static final String ICONIFIABLE = "ICONIFIABLE";
@@ -61,7 +58,7 @@ public class PropertySupport {
 	public static final String VVLOCATION = "VVLOCATION";
 	public static final String WIDTH = "WIDTH";
 	public static final String WORLDSYSTEM = "WORLDSYSTEM";
-	
+
 	//properties for 3D views
 	public static final String ANGLE_X = "ANGLEX";
 	public static final String ANGLE_Y = "ANGLEY";
@@ -79,9 +76,6 @@ public class PropertySupport {
 
 	// default text color black
 	public static Color defaultTextColor = Color.black;
-
-	// default font
-	public static final Font defaultFont = Fonts.commonFont(Font.PLAIN, 12);
 
 	// default data directory
 	public static String defaultDataDir = Environment.getInstance().getCurrentWorkingDirectory() + File.separator
@@ -246,7 +240,7 @@ public class PropertySupport {
 	 * @return the toolbar flag. On error, return true.
 	 */
 	public static boolean getToolbar(Properties props) {
-		return getBoolean(props, TOOLBAR, true);
+		return getBoolean(props, TOOLBAR, false);
 	}
 
 	/**
@@ -405,19 +399,6 @@ public class PropertySupport {
 		return getJComponent(props, SPLITWESTCOMPONENT);
 	}
 
-	/**
-	 * Get a font from the properties
-	 *
-	 * @param props the properties
-	 * @return a Font, on error return _defaultFont
-	 */
-	public static Font getFont(Properties props) {
-		Object val = props.get(FONT);
-		if ((val == null) || !(val instanceof Font)) {
-			return defaultFont;
-		}
-		return (Font) val;
-	}
 
 	/**
 	 * Get a symbol from the properties
@@ -673,7 +654,7 @@ public class PropertySupport {
 		return defaultValue;
 
 	}
-	
+
 	/**
 	 * Get a long from properties. Tries to handle both a String (e.g., "67") and
 	 * Long value.
