@@ -1,5 +1,199 @@
 package edu.cnu.mdi.graphics.connection;
 
-public class ConnectionManager {
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.Set;
 
+import edu.cnu.mdi.graphics.drawable.DrawableChangeType;
+import edu.cnu.mdi.graphics.drawable.DrawableList;
+import edu.cnu.mdi.graphics.drawable.IDrawable;
+import edu.cnu.mdi.graphics.drawable.IDrawableListener;
+import edu.cnu.mdi.item.AItem;
+import edu.cnu.mdi.item.ConnectorItem;
+import edu.cnu.mdi.item.Layer;
+
+/**
+ * Manages {@link ConnectorItem} objects and enforces connection rules.
+ * <p>
+ * This manager listens to drawable list change events so it can:
+ * </p>
+ * <ul>
+ *   <li>cache connectors when they are added</li>
+ *   <li>remove connectors when an endpoint item is removed</li>
+ * </ul>
+ *
+ * <p>
+ * Duplicate connections are prevented: at most one connector may exist between
+ * two endpoint items (in either direction).
+ * </p>
+ */
+public class ConnectionManager implements IDrawableListener {
+
+    /** All known connectors currently present in any observed list(s). */
+    private final Set<ConnectorItem> connectors = new HashSet<>();
+
+    /**
+     * Determine whether two items can be connected.
+     *
+     * Rules:
+     * <ul>
+     *   <li>neither item is null</li>
+     *   <li>items are not the same instance</li>
+     *   <li>both items are connectable</li>
+     *   <li>no existing connector already connects them (either direction)</li>
+     * </ul>
+     *
+     * @param item1 first endpoint
+     * @param item2 second endpoint
+     * @return true if a new connection is allowed
+     */
+    public boolean canConnect(AItem item1, AItem item2) {
+        if (item1 == null || item2 == null) return false;
+        if (item1 == item2) return false;
+
+        if (!item1.isConnectable() || !item2.isConnectable()) return false;
+
+        return !hasConnection(item1, item2);
+    }
+
+    /**
+     * Create and register a new {@link ConnectorItem} if allowed.
+     * <p>
+     * Note: the created item will also be discovered via ADDED events if the
+     * layer/list notifies listeners; we still add to our cache immediately so
+     * callers can rely on the returned item.
+     * </p>
+     *
+     * @param layer layer to place the connector on (recommended: a connection layer)
+     * @param item1 first endpoint
+     * @param item2 second endpoint
+     * @return the created connector, or null if connection is not allowed
+     */
+    public ConnectorItem connect(Layer layer, AItem item1, AItem item2) {
+        Objects.requireNonNull(layer, "layer");
+        if (!canConnect(item1, item2)) return null;
+
+        ConnectorItem ci = new ConnectorItem(layer, item1, item2);
+        connectors.add(ci);
+        return ci;
+    }
+
+    /**
+     * Check whether a connection already exists between the two items.
+     * (Direction does not matter.)
+     */
+    public boolean hasConnection(AItem item1, AItem item2) {
+        if (item1 == null || item2 == null) return false;
+
+        for (ConnectorItem c : connectors) {
+            if (connects(c, item1, item2)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return an unmodifiable snapshot of known connectors.
+     */
+    public Set<ConnectorItem> getConnectors() {
+        return Collections.unmodifiableSet(new HashSet<>(connectors));
+    }
+
+    /**
+     * Drawable list change callback.
+     */
+    @Override
+    public void drawableChanged(DrawableList list, IDrawable drawable, DrawableChangeType type) {
+
+        if (type == null) return;
+
+        switch (type) {
+            case ADDED:
+                if (drawable instanceof ConnectorItem) {
+                    connectors.add((ConnectorItem) drawable);
+                }
+                break;
+
+            case REMOVED:
+                // If a connector was removed, drop it from our cache.
+                if (drawable instanceof ConnectorItem) {
+                    connectors.remove((ConnectorItem) drawable);
+                    break;
+                }
+
+                // If an endpoint item was removed, remove all connectors that touch it.
+                if (drawable instanceof AItem) {
+                    removeConnectionsForEndpoint((AItem) drawable);
+                }
+                break;
+
+            case LISTCLEARED:
+                // Defensive: list cleared means connectors in that list are gone.
+                // We can't reliably know which ones from only this event, so we purge all.
+                connectors.clear();
+                break;
+
+            default:
+                // ignore other changes
+                break;
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // Internals
+    // ------------------------------------------------------------------------
+
+    private void removeConnectionsForEndpoint(AItem endpoint) {
+        if (endpoint == null) return;
+
+        for (Iterator<ConnectorItem> it = connectors.iterator(); it.hasNext();) {
+            ConnectorItem c = it.next();
+
+            AItem a = safeStart(c);
+            AItem b = safeEnd(c);
+
+            if (a == endpoint || b == endpoint) {
+                it.remove();
+
+                // Remove the connector item from its layer, if it still has one.
+                Layer layer = c.getLayer();
+                if (layer != null) {
+                    layer.remove(c);
+                }
+            }
+        }
+    }
+
+    private static boolean connects(ConnectorItem c, AItem i1, AItem i2) {
+        AItem a = safeStart(c);
+        AItem b = safeEnd(c);
+        if (a == null || b == null) return false;
+
+        return (a == i1 && b == i2) || (a == i2 && b == i1);
+    }
+
+    /**
+     * These accessors assume you add public endpoint getters to ConnectorItem.
+     * If you haven't yet, add:
+     *   public AItem getStartItem() { return startItem; }
+     *   public AItem getEndItem()   { return endItem; }
+     */
+    private static AItem safeStart(ConnectorItem c) {
+        try {
+            return c.getStartItem();
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
+
+    private static AItem safeEnd(ConnectorItem c) {
+        try {
+            return c.getEndItem();
+        } catch (RuntimeException ex) {
+            return null;
+        }
+    }
 }
