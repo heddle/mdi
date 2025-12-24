@@ -1,5 +1,7 @@
 package edu.cnu.mdi.graphics.toolbar;
 
+import edu.cnu.mdi.graphics.rubberband.Rubberband;
+
 /**
  * Minimal toolbar contract exposed to containers and non-UI helpers.
  * Keeps containers ignorant of Swing button classes and concrete toolbar types.
@@ -41,4 +43,9 @@ public interface IContainerToolBar {
     default IContainerToolBar spacer(int px) {
         return this;
     }
+    /**
+	 * Set the rubber-band policy for box-zoom gestures.
+	 * @param policy the desired policy
+	 */
+    public void setBoxZoomRubberbandPolicy(Rubberband.Policy policy);
 }

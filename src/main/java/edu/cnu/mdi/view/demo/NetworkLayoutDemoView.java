@@ -108,6 +108,7 @@ public class NetworkLayoutDemoView extends BaseView {
 		feedbackStrings.add(coordStrPx);
 		feedbackStrings.add(coordStr);
 		feedbackStrings.add(deviceCountStr);
+		feedbackStrings.add("$orange$Zoom Level: " + String.format("%.2f%%", container.approximateZoomFactor()));
 
 	}
 	

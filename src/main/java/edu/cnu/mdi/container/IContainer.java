@@ -424,5 +424,12 @@ public interface IContainer {
 	public boolean isStandardPanning();
 	
 	public void setStandardPanning(boolean standardPanning);
+	
+	/**
+	 * Get the approximate zoom factor based on the current and default world systems.
+	 * 
+	 * @return the approximate zoom factor
+	 */
+	public double approximateZoomFactor();
 
 }

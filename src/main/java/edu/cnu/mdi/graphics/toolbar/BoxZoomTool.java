@@ -9,6 +9,7 @@ import java.util.Objects;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
+import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.util.Environment;
 
 /**
@@ -166,12 +167,27 @@ public class BoxZoomTool implements ITool, IRubberbanded {
     }
 
     /**
-     * Set the rubber-band policy used by this tool.
+     * Set the rubber-band policy used by this tool. 
+     * Legal policies from {@link Rubberband.Policy} are
+     * <ul>
+     * <li>{@link Rubberband.Policy#RECTANGLE}</li>
+     * <li>{@link Rubberband.Policy#RECTANGLE_PRESERVE_ASPECT}
+     * <li>{@link Rubberband.Policy#SQUARE}</li>
+     * <li>{@link Rubberband.Policy#XONLY}</li>
+     * </ul>
+     * 
+     * 
      *
      * @param policy the new policy (must not be null).
      */
     public void setPolicy(Rubberband.Policy policy) {
-        this.policy = Objects.requireNonNull(policy, "policy must not be null");
+    	Objects.requireNonNull(policy, "policy must not be null");
+		if ((policy == Rubberband.Policy.RECTANGLE) || (policy == Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT) || (policy == Rubberband.Policy.XONLY) || (policy == Rubberband.Policy.XONLY)) {
+			this.policy = policy;
+		}
+		else {
+			Log.getInstance().warning("BoxZoomTool: Invalid rubberband policy");
+		}
     }
 
     /**

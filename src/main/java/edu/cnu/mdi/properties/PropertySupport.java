@@ -9,6 +9,7 @@ import java.util.Properties;
 import javax.swing.JComponent;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.ui.colors.X11Colors;
@@ -21,6 +22,7 @@ public class PropertySupport {
 	public static final String BACKGROUND = "BACKGROUND";
 	public static final String BACKGROUNDIMAGE = "BACKGROUNDIMAGE";
 	public static final String BOTTOMMARGIN = "BOTTOMMARGIN";
+	public static final String BOXZOOMRBPOLICY = "BOXZOOMRBPOLICY";
 	public static final String CLOSABLE = "CLOSABLE";
 	public static final String COMPONENT = "COMPONENT";
 	public static final String CONTAINER = "CONTAINER";
@@ -142,6 +144,8 @@ public class PropertySupport {
 		}
 		return o;
 	}
+	
+	
 
 	/**
 	 * Get the full path of an image file to be used as a background image.
@@ -603,6 +607,19 @@ public class PropertySupport {
 		return null;
 	}
 
+	/**
+	 * Get the box-zoom rubberband policy from properties.
+	 *
+	 * @param props the properties
+	 * @return the rubberband policy. On error return null.
+	 */
+	public static Rubberband.Policy getBoxZoomRubberbandPolicy(Properties props) {
+		Object val = props.get(BOXZOOMRBPOLICY);
+		if ((val != null) && (val instanceof Rubberband.Policy)) {
+			return (Rubberband.Policy) val;
+		}
+		return null;
+	}
 	/**
 	 * Get a String from properties.
 	 *

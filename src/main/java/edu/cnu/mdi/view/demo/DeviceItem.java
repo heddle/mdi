@@ -6,7 +6,9 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Double;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.Icon;
 
@@ -22,14 +24,19 @@ public class DeviceItem extends RectangleItem {
 	// The device symbol represented by this item
 	private EDeviceSymbol symbol;
 
-	private Icon icon;
+	
+	// instance number for this device
+	private int instanceNumber;
+	
+	// map to keep track of device counts by symbol
+	private static final Map<EDeviceSymbol, Integer> countMap = new HashMap<>();
 
 	public DeviceItem(Layer layer, Double wr, EDeviceSymbol symbol) {
 		super(layer, wr);
 		this.symbol = symbol;
+		incrementMapCount(symbol);
+		this.instanceNumber = getMapCount(symbol);
 
-		//get the icon for the device
-		icon = ImageManager.getInstance().loadUiIcon(symbol.iconPath, DEVICESIZE, DEVICESIZE); //ensure image manager is initialized
 
 		// configure the device item
 		setRightClickable(true);
@@ -40,6 +47,17 @@ public class DeviceItem extends RectangleItem {
 		setLocked(false);
 		setConnectable(true);
 	}
+	
+	// Increment the count for the given device symbol in the map
+	private void incrementMapCount(EDeviceSymbol symbol) {
+		int count = getMapCount(symbol);
+		countMap.put(symbol, count + 1);
+	}
+	
+	// Get the count for the given device symbol from the map
+	private int getMapCount(EDeviceSymbol symbol) {
+		return countMap.getOrDefault(symbol, 0);
+	}
 
 	/**
 	 * Draw the device icon centered in the item's bounds.
@@ -47,10 +65,16 @@ public class DeviceItem extends RectangleItem {
 	@Override
 	public void drawItem(Graphics2D g2, IContainer container) {
 	    Rectangle pxBounds = getBounds(container);
+	    
+	    //calculate icon size (and item bounds) based on approximate  zoom factor
+
+		int size = (int) Math.round(DEVICESIZE*container.approximateZoomFactor());
+		//get the icon for the device
+		Icon icon = ImageManager.getInstance().loadUiIcon(symbol.iconPath, size, size); //ensure image manager is initialized
 
 	    if (icon != null) {
-	        int x = pxBounds.x + (pxBounds.width - DEVICESIZE) / 2;
-	        int y = pxBounds.y + (pxBounds.height - DEVICESIZE) / 2;
+	        int x = pxBounds.x + (pxBounds.width - size) / 2;
+	        int y = pxBounds.y + (pxBounds.height - size) / 2;
 
 	        // Paint the Icon directly (works for FlatSVGIcon, ImageIcon, etc.)
 	        // Prefer a real component as the paint context.
@@ -85,6 +109,14 @@ public class DeviceItem extends RectangleItem {
 	}
 	
 	/**
+	 * Get display name for this device item.
+	 * @return display name
+	 */
+	public String getDisplayName() {
+		return symbol + " (" + instanceNumber + ")";
+	}
+	
+	/**
 	 * Add any appropriate feedback.
 	 *
 	 * @param container       the Base container.
@@ -101,7 +133,7 @@ public class DeviceItem extends RectangleItem {
 		}
 
 		// add device type feedback in yellow (to show how)
-		feedbackStrings.add("$yellow$Device: " + symbol);
+		feedbackStrings.add("$yellow$" + getDisplayName());
 
 	}
 

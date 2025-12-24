@@ -52,9 +52,6 @@ public final class ImageManager {
     /** Singleton instance. */
     private static volatile ImageManager instance;
 
-    /** Lazy dialog icon cache. */
-    private static volatile Icon dialogIcon;
-
     /** Cache of original raster images (unscaled) keyed by resource path. */
     private final ConcurrentHashMap<String, BufferedImage> rasterCache = new ConcurrentHashMap<>();
 

@@ -23,7 +23,7 @@ public final class ToolBarBits {
     public static final long RADARCBUTTON       = 02000L;
     public static final long POLYLINEBUTTON     = 04000L;
     public static final long MAGNIFYBUTTON      = 010000L;
-    public static final long NOZOOM             = 020000L;
+    public static final long BOXZOOMBUTTON      = 020000L;
     public static final long PANBUTTON          = 040000L;
     public static final long CONNECTORBUTTON    = 0100000L;
 
@@ -31,9 +31,9 @@ public final class ToolBarBits {
     /** "Everything" means all known bits except the NOZOOM suppressor. */
     public static final long EVERYTHING = STYLEBUTTON | ELLIPSEBUTTON | TEXTBUTTON | RECTANGLEBUTTON | POLYGONBUTTON | LINEBUTTON
             | DELETEBUTTON | STATUSFIELD | CENTERBUTTON | UNDOZOOMBUTTON | RADARCBUTTON | POLYLINEBUTTON
-            | MAGNIFYBUTTON | PANBUTTON;
+            | MAGNIFYBUTTON | PANBUTTON | BOXZOOMBUTTON;
     
-    public static final long DEFAULTS = DELETEBUTTON | CENTERBUTTON | UNDOZOOMBUTTON | PANBUTTON;
+    public static final long DEFAULTS = BOXZOOMBUTTON | DELETEBUTTON | CENTERBUTTON | UNDOZOOMBUTTON | PANBUTTON;
 
     /** All drawing-shape tools. */
     public static final long DRAWING =

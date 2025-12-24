@@ -6,6 +6,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.graphics.connection.ConnectionManager;
 import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
@@ -162,10 +163,9 @@ public class ConnectorTool implements ITool, IRubberbanded {
 	public void doneRubberbanding() {
 		// If we got here, ConnectorTool requested endRubberbanding() (second valid
 		// click).
-		System.out.println("successful connection first=" + first + " second = " + second);
 		Layer connLayer = owner.getConnectionLayer(); // your new layer
-		System.out.println("creating connection");
-		new ConnectorItem(connLayer, first, second);
+
+		ConnectionManager.getInstance().connect(connLayer, first, second);
 		owner.refresh();
 
 		resetAfterSuccess();

@@ -19,6 +19,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JTextField;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.Bits;
 
@@ -59,15 +60,12 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 
     /** Convenience reference for style button (so we can enable/disable it). */
     private ToolActionButton styleButton;
+    
+    /** Convenience reference for box zoom tool. It is cached
+     * so that the boxZoom rubberband policy can be changed from the
+     * default of Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT */
+    private ITool boxZoom;
 
-    /**
-     * Create a toolbar with the full default tool set.
-     *
-     * @param container the container this toolbar controls (must not be null).
-     */
-    public BaseToolBar(IContainer container) {
-        this(container, ToolBarBits.EVERYTHING);
-    }
 
     /**
      * Create a toolbar using a bit mask to control which tools/widgets are added.
@@ -157,8 +155,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
     protected void buildToolsAndButtons(long bits) {
 
         ITool pointer   = createPointerTool(); // REQUIRED default tool
-        ITool boxZoom   = (!Bits.check(bits, ToolBarBits.NOZOOM)) ? createBoxZoomTool() : null;
-
+        boxZoom         = Bits.check(bits, ToolBarBits.BOXZOOMBUTTON)        ? createBoxZoomTool() : null;
         ITool pan       = Bits.check(bits, ToolBarBits.PANBUTTON)      ? createPanTool()      : null;
         ITool magnify   = Bits.check(bits, ToolBarBits.MAGNIFYBUTTON)  ? createMagnifyTool()  : null;
         ITool ellipse   = Bits.check(bits, ToolBarBits.ELLIPSEBUTTON)  ? new EllipseTool()    : null;
@@ -232,8 +229,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 		    addActionButton(new UndoZoomButton(toolContext));
 		}
 
-
-		addActionButton(new WorldButton(toolContext));   // if you have a bit for it, gate it
+		addActionButton(new WorldButton(toolContext)); 
 		addActionButton(new ZoomInButton(toolContext));
 		addActionButton(new ZoomOutButton(toolContext));
 		addActionButton(new RefreshButton(toolContext));
@@ -257,6 +253,17 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
             add(statusLine);
         }
     }
+    
+    /**
+     * Set the rubberband policy for the box zoom tool.
+     * @param policy the rubberband policy to set.
+     */
+    @Override
+    public void setBoxZoomRubberbandPolicy(Rubberband.Policy policy) {
+		if (boxZoom != null && boxZoom instanceof BoxZoomTool) {
+			((BoxZoomTool)boxZoom).setPolicy(policy);
+		}
+	}
 
     protected void addActionButton(ToolActionButton b) {
         if (b != null) {

@@ -75,7 +75,8 @@ public class DrawableList extends ArrayList<IDrawable> implements IDrawable {
 		if (_listenerList == null) {
 			_listenerList = new EventListenerList();
 		}
-
+		// avoid adding duplicates
+		removeDrawableListener(drawableListener);
 		_listenerList.add(IDrawableListener.class, drawableListener);
 	}
 
@@ -112,6 +113,8 @@ public class DrawableList extends ArrayList<IDrawable> implements IDrawable {
 
 		// Process the listeners last to first, notifying
 		// those that are interested in this event
+		
+		System.out.println("DrawableList: Notifying listeners of change type " + type + " for drawable: " + drawable);
 		for (int i = listeners.length - 2; i >= 0; i -= 2) {
 			if (listeners[i] == IDrawableListener.class) {
 				((IDrawableListener) listeners[i + 1]).drawableChanged(this, drawable, type);

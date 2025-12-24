@@ -39,6 +39,7 @@ import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.format.DoubleFormat;
+import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
 import edu.cnu.mdi.properties.PropertySupport;
@@ -310,10 +311,13 @@ public class BaseView extends JInternalFrame
             boolean addToolBar = (PropertySupport.getToolbarBits(properties) > 0);
             if (addToolBar) {
                 long bits = PropertySupport.getToolbarBits(properties);
-                if (bits == Long.MIN_VALUE) {
-                    bits = ToolBarBits.EVERYTHING;
-                }
                 BaseToolBar toolBar = new BaseToolBar(container, bits);
+                
+                //change the box zoom rubberband policy?
+                Rubberband.Policy policy = PropertySupport.getBoxZoomRubberbandPolicy(properties);
+                if (policy != null) {
+					toolBar.setBoxZoomRubberbandPolicy(policy);
+				}
                 add(toolBar, BorderLayout.NORTH);
             } 
 

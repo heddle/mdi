@@ -211,6 +211,23 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		g.setClip(0, 0, b.width, b.height);
 	}
 
+	
+	/**
+	 * Get the approximate zoom factor based on the current and default world systems.
+	 * 
+	 * @return the approximate zoom factor. Numbers bigger than 1.0 mean zoomed in, smaller
+	 * than 1.0 mean zoomed out.
+	 */
+	public double approximateZoomFactor() {
+		if (_worldSystem == null || _defaultWorldSystem == null) {
+			return 1.0;
+		}
+		
+		double scaleX = _defaultWorldSystem.width / _worldSystem.width;
+		double scaleY = _defaultWorldSystem.height / _worldSystem.height;
+		
+		return (scaleX + scaleY) / 2.0;
+	}
 	/**
 	 * Override the paint command. Draw all the lists.
 	 *

@@ -15,7 +15,6 @@ import java.awt.image.BufferedImage;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.GraphicsUtils;
 
-
 /**
  * An abstract base class for rubberbands.
  * <p>
@@ -90,7 +89,6 @@ public final class Rubberband {
 	// the container being rendered
 	private IContainer _container;
 
-
 	/**
 	 * Create a Rubberband
 	 *
@@ -135,14 +133,14 @@ public final class Rubberband {
 		_mouseAdapter = new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent event) {
-				
+
 				if (!isActive()) {
 					return;
 				}
 				if (twoClickLineMode()) {
-			        return;
-			    }
-				
+					return;
+				}
+
 				if (polyMode()) {
 					if (_tempPoly == null) {
 						startRubberbanding(event.getPoint());
@@ -269,7 +267,7 @@ public final class Rubberband {
 	 * @return <code>true</code> if we are in line mode.
 	 */
 	private boolean lineMode() {
-	    return (_policy == Policy.LINE) || (_policy == Policy.TWO_CLICK_LINE);
+		return (_policy == Policy.LINE) || (_policy == Policy.TWO_CLICK_LINE);
 	}
 
 	/**
@@ -304,8 +302,8 @@ public final class Rubberband {
 
 		case TWO_CLICK_LINE:
 		case LINE:
-			GraphicsUtils.drawHighlightedLine(g, _startPt.x, _startPt.y, _currentPt.x, _currentPt.y,
-					_highlightColor1, _highlightColor2);
+			GraphicsUtils.drawHighlightedLine(g, _startPt.x, _startPt.y, _currentPt.x, _currentPt.y, _highlightColor1,
+					_highlightColor2);
 			break;
 
 		case OVAL:
@@ -358,11 +356,11 @@ public final class Rubberband {
 
 				g.fillArc(_tempPoly.xpoints[0] - pixrad, _tempPoly.ypoints[0] - pixrad, size, size, startAngle,
 						arcAngle);
-				GraphicsUtils.drawHighlightedArc(g, _tempPoly.xpoints[0] - pixrad, _tempPoly.ypoints[0] - pixrad,
-						size, size, startAngle, arcAngle, _highlightColor1, _highlightColor2);
+				GraphicsUtils.drawHighlightedArc(g, _tempPoly.xpoints[0] - pixrad, _tempPoly.ypoints[0] - pixrad, size,
+						size, startAngle, arcAngle, _highlightColor1, _highlightColor2);
 
-				GraphicsUtils.drawHighlightedLine(g, _tempPoly.xpoints[0], _tempPoly.ypoints[0],
-						_tempPoly.xpoints[1], _tempPoly.ypoints[1], _highlightColor1, _highlightColor2);
+				GraphicsUtils.drawHighlightedLine(g, _tempPoly.xpoints[0], _tempPoly.ypoints[0], _tempPoly.xpoints[1],
+						_tempPoly.ypoints[1], _highlightColor1, _highlightColor2);
 				GraphicsUtils.drawHighlightedLine(g, _tempPoly.xpoints[0], _tempPoly.ypoints[0], (int) x2, (int) y2,
 						_highlightColor1, _highlightColor2);
 			}
@@ -473,7 +471,6 @@ public final class Rubberband {
 	 */
 	private void setCurrent(Point newCurrentPoint) {
 
-
 		_currentPt.setLocation(newCurrentPoint);
 		if (_image == null) {
 			return;
@@ -580,14 +577,14 @@ public final class Rubberband {
 			return p;
 		}
 	}
-	
+
 	/**
 	 * Cancel the current rubber-band gesture (if any) without notifying the
 	 * {@link IRubberbanded} callback.
 	 * <p>
-	 * Use this when the active tool changes or an operation is aborted and you
-	 * need the rubberband to remove its temporary listeners and clean up, but you
-	 * do <em>not</em> want to treat the gesture as "completed".
+	 * Use this when the active tool changes or an operation is aborted and you need
+	 * the rubberband to remove its temporary listeners and clean up, but you do
+	 * <em>not</em> want to treat the gesture as "completed".
 	 * </p>
 	 * <p>
 	 * This is intentionally different from {@link #endRubberbanding(Point)}, which
@@ -596,40 +593,39 @@ public final class Rubberband {
 	 */
 	public void cancel() {
 
-	    // If we never started, still ensure we detach listeners.
-	    // (They are installed in setComponent().)
-	    detachListeners();
+		// If we never started, still ensure we detach listeners.
+		// (They are installed in setComponent().)
+		detachListeners();
 
-	    // Reset state
-	    _image = null;
-	    _backgroundImage = null;
-	    _poly = null;
-	    _tempPoly = null;
+		// Reset state
+		_image = null;
+		_backgroundImage = null;
+		_poly = null;
+		_tempPoly = null;
 
-	    _active = false;
-	    _started = false;
+		_active = false;
+		_started = false;
 
-	    // Optionally keep start/current, but it's harmless to leave them.
-	    // _startPt.setLocation(0, 0);
-	    // _currentPt.setLocation(0, 0);
+		// Optionally keep start/current, but it's harmless to leave them.
+		// _startPt.setLocation(0, 0);
+		// _currentPt.setLocation(0, 0);
 	}
 
 	/**
-	 * Remove the temporary mouse listeners installed by this rubberband.
-	 * Safe to call multiple times.
+	 * Remove the temporary mouse listeners installed by this rubberband. Safe to
+	 * call multiple times.
 	 */
 	private void detachListeners() {
-	    if (_component == null) {
-	        return;
-	    }
-	    if (_mouseAdapter != null) {
-	        _component.removeMouseListener(_mouseAdapter);
-	    }
-	    if (_mouseMotionAdapter != null) {
-	        _component.removeMouseMotionListener(_mouseMotionAdapter);
-	    }
+		if (_component == null) {
+			return;
+		}
+		if (_mouseAdapter != null) {
+			_component.removeMouseListener(_mouseAdapter);
+		}
+		if (_mouseMotionAdapter != null) {
+			_component.removeMouseMotionListener(_mouseMotionAdapter);
+		}
 	}
-
 
 	/**
 	 * Return a rectangle that gives the final bounds of the rubber band.
@@ -691,9 +687,9 @@ public final class Rubberband {
 	public Point getCurrentPt() {
 		return _currentPt;
 	}
-	
+
 	private boolean twoClickLineMode() {
-	    return (_policy == Policy.TWO_CLICK_LINE);
+		return (_policy == Policy.TWO_CLICK_LINE);
 	}
 
 }

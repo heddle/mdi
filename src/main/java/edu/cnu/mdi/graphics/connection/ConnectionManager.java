@@ -31,9 +31,31 @@ import edu.cnu.mdi.item.Layer;
  */
 public class ConnectionManager implements IDrawableListener {
 
+	/** Singleton instance. */
+	private static volatile ConnectionManager instance = null;	
+	
     /** All known connectors currently present in any observed list(s). */
     private final Set<ConnectorItem> connectors = new HashSet<>();
 
+    // singleton constructor
+	private ConnectionManager() {
+	    // private singleton constructor
+	}
+
+	/**
+	 * Get the singleton instance.
+	 * @return the connection manager
+	 */
+	public static ConnectionManager getInstance() {
+		if (instance == null) {
+			synchronized (ConnectionManager.class) {
+				if (instance == null) {
+					instance = new ConnectionManager();
+				}
+			}
+		}
+		return instance;
+	}
     /**
      * Determine whether two items can be connected.
      *
@@ -52,7 +74,7 @@ public class ConnectionManager implements IDrawableListener {
     public boolean canConnect(AItem item1, AItem item2) {
         if (item1 == null || item2 == null) return false;
         if (item1 == item2) return false;
-
+        if (item1.getContainer() != item2.getContainer()) return false;
         if (!item1.isConnectable() || !item2.isConnectable()) return false;
 
         return !hasConnection(item1, item2);
@@ -72,10 +94,12 @@ public class ConnectionManager implements IDrawableListener {
      * @return the created connector, or null if connection is not allowed
      */
     public ConnectorItem connect(Layer layer, AItem item1, AItem item2) {
-        Objects.requireNonNull(layer, "layer");
+ 
+    	Objects.requireNonNull(layer, "layer");
         if (!canConnect(item1, item2)) return null;
 
         ConnectorItem ci = new ConnectorItem(layer, item1, item2);
+        layer.addDrawableListener(instance);
         connectors.add(ci);
         return ci;
     }
@@ -118,6 +142,7 @@ public class ConnectionManager implements IDrawableListener {
                 break;
 
             case REMOVED:
+            	System.out.println("ConnectionManager: REMOVED event for drawable: " + drawable);
                 // If a connector was removed, drop it from our cache.
                 if (drawable instanceof ConnectorItem) {
                     connectors.remove((ConnectorItem) drawable);
@@ -167,6 +192,7 @@ public class ConnectionManager implements IDrawableListener {
         }
     }
 
+    // Check whether connector c connects the two given items (either direction).
     private static boolean connects(ConnectorItem c, AItem i1, AItem i2) {
         AItem a = safeStart(c);
         AItem b = safeEnd(c);

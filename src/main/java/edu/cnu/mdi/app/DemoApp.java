@@ -339,7 +339,7 @@ public class DemoApp extends BaseMDIApplication {
 		NetworkDeclutterDemoView view = new NetworkDeclutterDemoView(
 				PropertySupport.TITLE, "Network Declutter Demo View",
 				PropertySupport.PROPNAME, "NETWORKDECLUTTERDEMO",
-				PropertySupport.FRACTION, 0.8,
+				PropertySupport.FRACTION, 0.7,
 				PropertySupport.ASPECT, 1.2,
 				PropertySupport.VISIBLE, false,
 				PropertySupport.BACKGROUND, Color.white,
@@ -353,7 +353,7 @@ public class DemoApp extends BaseMDIApplication {
  	 */
      NetworkLayoutDemoView createNetworkLayoutDemoView() {
     	 NetworkLayoutDemoView view = new NetworkLayoutDemoView(
-    			PropertySupport.FRACTION, 0.8,
+    			PropertySupport.FRACTION, 0.7,
     			PropertySupport.ASPECT, 1.2,
 		    	PropertySupport.TOOLBARBITS, ToolBarBits.DEFAULTS | ToolBarBits.CONNECTORBUTTON,
  				PropertySupport.VISIBLE, false, 
@@ -390,13 +390,13 @@ public class DemoApp extends BaseMDIApplication {
             e.printStackTrace();
         }
 
-        long toolbarBits = ToolBarBits.CENTERBUTTON | ToolBarBits.MAGNIFYBUTTON;
+        long toolbarBits = ToolBarBits.BOXZOOMBUTTON | ToolBarBits.CENTERBUTTON | ToolBarBits.MAGNIFYBUTTON;
 
         return new MapView2D(
                 PropertySupport.TITLE, "Sample 2D Map View",
                 PropertySupport.PROPNAME, "MAPVIEW2D",
                 PropertySupport.FRACTION, 0.6,
-                PropertySupport.ASPECT, 1.25,
+                PropertySupport.ASPECT, 1.5,
                 PropertySupport.CONTAINERCLASS, MapContainer.class,
                 PropertySupport.TOOLBARBITS, toolbarBits
         );
