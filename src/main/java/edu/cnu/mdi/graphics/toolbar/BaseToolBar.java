@@ -65,7 +65,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
      * so that the boxZoom rubberband policy can be changed from the
      * default of Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT */
     private ITool boxZoom;
-
+    
 
     /**
      * Create a toolbar using a bit mask to control which tools/widgets are added.
@@ -312,6 +312,10 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
         statusLine.setEditable(false);
         statusLine.setBackground(Color.black);
         statusLine.setForeground(Color.cyan);
+        statusLine.setFocusable(false);            // key fix
+        statusLine.setRequestFocusEnabled(false);  // extra;
+        statusLine.setOpaque(true); 
+
 
         FontMetrics fm = getFontMetrics(statusLine.getFont());
         Dimension d = statusLine.getPreferredSize();
@@ -587,5 +591,29 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	    addActionButton(button); // your existing method
 	    return this;
 	}
+	
+	/**
+	 * @return true if this toolbar was built with a delete button.
+	 */
+	public boolean hasDeleteButton() {
+	    return deleteButton != null;
+	}
+
+	/**
+	 * Invoke the delete action as if the user clicked the toolbar delete button.
+	 * <p>
+	 * This is the preferred way to trigger delete from keyboard shortcuts because it
+	 * preserves the exact same behavior as the toolbar button (reset tool, update state, refresh).
+	 * </p>
+	 */
+	public void invokeDelete() {
+	    // EDT-only in your app; if you want to be defensive:
+	    // if (!SwingUtilities.isEventDispatchThread()) { SwingUtilities.invokeLater(this::invokeDelete); return; }
+
+	    if (deleteButton != null && deleteButton.isEnabled()) {
+	        deleteButton.doClick(); // triggers the same perform() path
+	    }
+	}
+
 
 }

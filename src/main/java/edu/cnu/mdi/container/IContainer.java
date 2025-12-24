@@ -65,13 +65,6 @@ public interface IContainer {
 	public Layer getLayerByName(String name);
 
 	/**
-	 * Remove a z layer rendered on this container.
-	 *
-	 * @param layer the layer to remove
-	 */
-	public void removeItemList(Layer layer);
-
-	/**
 	 * This converts a screen or pixel point to a world point.
 	 *
 	 * @param pp contains the local (screen-pixel) point.

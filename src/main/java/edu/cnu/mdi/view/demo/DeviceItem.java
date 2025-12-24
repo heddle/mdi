@@ -9,11 +9,14 @@ import java.awt.geom.Rectangle2D.Double;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.Icon;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.ImageManager;
+import edu.cnu.mdi.graphics.connection.ConnectionManager;
+import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.item.RectangleItem;
 
@@ -36,6 +39,7 @@ public class DeviceItem extends RectangleItem {
 		this.symbol = symbol;
 		incrementMapCount(symbol);
 		this.instanceNumber = getMapCount(symbol);
+		setDisplayName(symbol + " (" + instanceNumber + ")");
 
 
 		// configure the device item
@@ -107,15 +111,7 @@ public class DeviceItem extends RectangleItem {
 		container.localToWorld(pxBounds, wr);
 		return wr;
 	}
-	
-	/**
-	 * Get display name for this device item.
-	 * @return display name
-	 */
-	public String getDisplayName() {
-		return symbol + " (" + instanceNumber + ")";
-	}
-	
+		
 	/**
 	 * Add any appropriate feedback.
 	 *
@@ -134,6 +130,15 @@ public class DeviceItem extends RectangleItem {
 
 		// add device type feedback in yellow (to show how)
 		feedbackStrings.add("$yellow$" + getDisplayName());
+		
+		//list items connected to this device
+		Set<AItem> connectedItems = ConnectionManager.getInstance().getConnectedItems(this);
+		if (!connectedItems.isEmpty()) {
+			feedbackStrings.add("Connected to:");
+			for (AItem item : connectedItems) {
+				feedbackStrings.add(" - " + item.getDisplayName());
+			}
+		}
 
 	}
 

@@ -25,7 +25,6 @@ import javax.swing.JPopupMenu;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.graphics.ImageManager;
-import edu.cnu.mdi.graphics.drawable.DrawableChangeType;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.Styled;
@@ -65,6 +64,9 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * world coordinate based.
 	 */
 	protected Path2D.Double _path;
+	
+	// optional display name
+	protected String _displayName = null;
 
 	/**
 	 * The line is used by line based items
@@ -133,6 +135,12 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * Controls whether the item can be connected to other items.
 	 */
 	protected boolean _connectable = false;
+	
+	/**
+	 * Controls whether the item can be selected.
+	 */
+	protected boolean _selectable = true;
+
 	
 	/**
 	 * Controls whether the item responds to a righjt click.
@@ -317,7 +325,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be dragged.
 	 */
 	public boolean isDraggable() {
-		if (_locked || !isLayerEnabled()) {
+		if (_locked) {
 			return false;
 		}
 
@@ -360,7 +368,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be resized.
 	 */
 	public boolean isResizable() {
-		if (_locked || !isLayerEnabled()) {
+		if (_locked) {
 			return false;
 		}
 		return _resizable;
@@ -381,7 +389,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be rotated.
 	 */
 	public boolean isRotatable() {
-		if (_locked || !isLayerEnabled()) {
+		if (_locked) {
 			return false;
 		}
 		return _rotatable;
@@ -402,7 +410,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be double clicked.
 	 */
 	public boolean isDoubleClickable() {
-		if (_locked || !isLayerEnabled()) {
+		if (_locked) {
 			return false;
 		}
 		return _doubleClickable;
@@ -423,10 +431,32 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return <code>true</code> if the item can be connected to other items.
 	 */
 	public boolean isConnectable() {
-		if (_locked || !isLayerEnabled()) {
+		if (_locked) {
 			return false;
 		}
 		return _connectable;
+	}
+
+	/**
+	 * Set whether the item is selectable
+	 *
+	 * @param selectable if <code>true</code>, the item can be selected
+	 */
+	public void setSelectable(boolean selectable) {
+		_selectable = selectable;
+	}
+	
+	
+	/**
+	 * Check whether the item can be selected.
+	 *
+	 * @return <code>true</code> if the item can be selected.
+	 */
+	public boolean isSelectable() {
+		if (_locked) {
+			return false;
+		}
+		return _selectable;
 	}
 
 	/**
@@ -438,6 +468,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	public void setConnectable(boolean connectable) {
 		_connectable = connectable;
 	}
+
 	
 	/**
 	 * Check whether the item is locked, which takes precedence over other flags. A
@@ -535,7 +566,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 *         ro
 	 */
 	public boolean isTrackable() {
-		if (_locked || !_enabled || !isLayerEnabled()) {
+		if (_locked || !_enabled) {
 			return false;
 		}
 
@@ -661,7 +692,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @param r         the bounds
 	 * @return <code>true</code> if the bounds (r) completely enclose the item.
 	 */
-	public boolean enclosed(IContainer container, Rectangle r) {
+	public boolean isEnclosed(IContainer container, Rectangle r) {
 
 		if (_lastDrawnPolygon != null) {
 			return r.contains(_lastDrawnPolygon.getBounds());
@@ -752,15 +783,15 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		
 		switch (_modification.getType()) {
 		case DRAG:
-			_layer.notifyDrawableChangeListeners(this, DrawableChangeType.MOVED);
+			_layer.notifyItemChangeListeners(this, ItemChangeType.MOVED);
 			break;
 
 		case ROTATE:
-			_layer.notifyDrawableChangeListeners(this, DrawableChangeType.ROTATED);
+			_layer.notifyItemChangeListeners(this, ItemChangeType.ROTATED);
 			break;
 
 		case RESIZE:
-			_layer.notifyDrawableChangeListeners(this, DrawableChangeType.RESIZED);
+			_layer.notifyItemChangeListeners(this, ItemChangeType.RESIZED);
 			break;
 		}
 		_modification = null;
@@ -1220,19 +1251,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		this._resizePolicy = resizePolicy;
 	}
 
-	/**
-	 * Convenience check to see whether the item's Z layer is enabled. If it is not,
-	 * you should not be able to select this item (independent of item's local
-	 * selectability)
-	 *
-	 * @return <code>true</code> if the item's layer is enabled.
-	 */
-	public boolean isLayerEnabled() {
-		if (_layer == null) {
-			return false;
-		}
-		return _layer.isEnabled();
-	}
 	
 	/**
      * Translate this item by the given delta in <b>world</b> coordinates.
@@ -1280,6 +1298,29 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
         double dyWorld = w1.y - w0.y;
 
 		translateWorld(dxWorld, dyWorld);
+    }
+    
+    /**
+	 * Set the display name of this item.
+	 * <p>
+	 * This name is used in various user interface contexts.
+	 * </p>
+	 * @param name the display name of this item.
+	 */
+    public void setDisplayName(String name) {
+		_displayName = name;
+	}
+    
+    /**
+	 * Get the display name of this item.
+	 * <p>
+	 * If no display name has been set, the class simple name is returned.
+	 * </p>
+	 *
+	 * @return the display name of this item.
+	 */
+    public String getDisplayName() {
+    	return _displayName != null ? _displayName : this.getClass().getSimpleName();
     }
 	
 }

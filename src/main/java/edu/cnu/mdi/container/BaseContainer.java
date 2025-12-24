@@ -2,6 +2,7 @@ package edu.cnu.mdi.container;
 
 import java.awt.Component;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
@@ -24,13 +25,12 @@ import javax.swing.JComponent;
 import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.GraphicsUtils;
-import edu.cnu.mdi.graphics.drawable.DrawableChangeType;
-import edu.cnu.mdi.graphics.drawable.DrawableList;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
-import edu.cnu.mdi.graphics.drawable.IDrawableListener;
 import edu.cnu.mdi.graphics.toolbar.IContainerToolBar;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
 import edu.cnu.mdi.item.AItem;
+import edu.cnu.mdi.item.ItemChangeListener;
+import edu.cnu.mdi.item.ItemChangeType;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.util.Point2DSupport;
@@ -46,12 +46,12 @@ import edu.cnu.mdi.view.BaseView;
  */
 
 @SuppressWarnings("serial")
-public class BaseContainer extends JComponent implements IContainer, MouseWheelListener, IDrawableListener {
+public class BaseContainer extends JComponent implements IContainer, MouseWheelListener, ItemChangeListener {
 
 	/**
 	 * A collection of z layers containing items. This is the container's model.
 	 */
-	protected DrawableList _layers = new DrawableList("Layers");
+	protected List<Layer> _layers = new ArrayList<>();
 
 	/**
 	 * Keeps track of current mouse position
@@ -236,13 +236,15 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	@Override
 	public void paintComponent(Graphics g) {
 
+		Graphics2D g2 = (Graphics2D) g;
+		
 		if ((_view != null) && !_view.isViewVisible()) {
 			return;
 		}
 
-	    super.paintComponent(g);
+	    super.paintComponent(g2);
 
-		clipBounds(g);
+		clipBounds(g2);
 
 		Rectangle b = getBounds();
 
@@ -252,32 +254,32 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		}
 
 		// normal drawing
-		g.setColor(getBackground());
-		g.fillRect(0, 0, b.width, b.height);
+		g2.setColor(getBackground());
+		g2.fillRect(0, 0, b.width, b.height);
 		
 		//draw the connection layer first
 		if (_connectionLayer != null) {
-			_connectionLayer.draw(g, this);
+			_connectionLayer.draw(g2, this);
 		}
 
 		// any before lists drawing?
 		if (_beforeDraw != null) {
-			_beforeDraw.draw(g, this);
+			_beforeDraw.draw(g2, this);
 		}
 
-		// draw the lists
-		if (_layers != null) {
-			_layers.draw(g, this);
+		// draw the user layers
+		for (Layer layer : _layers) {
+			layer.draw((Graphics2D)g2, this);
 		}
 
 		// any post lists drawing?
 		if (_afterDraw != null) {
-			_afterDraw.draw(g, this);
+			_afterDraw.draw(g2, this);
 		}
 		
 		//draw the annotation layer last
 		if (_annotationLayer != null) {
-			_annotationLayer.draw(g, this);
+			_annotationLayer.draw(g2, this);
 		}
 
 		//always clean after drawing
@@ -304,7 +306,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		
 		_layers.remove(layer); // in case already there
 		_layers.add(layer);
-		_layers.addDrawableListener(this);
 	}
 
 	/**
@@ -329,35 +330,13 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	@Override
 	public Layer getLayerByName(String name) {
 		Objects.requireNonNull(name, "Layer name cannot be null");
-	    for (IDrawable drawable : _layers) {
-	        Layer layer = (Layer) drawable;
+	    for (Layer layer : _layers) {
 	        if (layer.getName().equals(name)) {
 	            return layer;
 	        }
 	    }
 	    return null;
 	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void removeItemList(Layer layer) {
-		Objects.requireNonNull(layer, "layer cannot be null");
-	    
-	    // Cannot remove annotation layer or connection layer
-	    if ((layer == _annotationLayer) || (layer == _connectionLayer)) {
-	        return;
-	    }
-
-
-	    // Stop receiving events from this list
-	    layer.removeDrawableListener(this);
-
-	    // Remove from the layers collection
-	    _layers.remove(layer);
-	}
-
 
 	/**
 	 * {@inheritDoc}
@@ -570,8 +549,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		setAffineTransforms();
 
 		if (_layers != null) {
-			for (IDrawable list : _layers) {
-				list.setDirty(dirty);
+			for (Layer layer : _layers) {
+				layer.setDirty(dirty);
 			}
 		}
 	}
@@ -608,9 +587,9 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 			return null;
 		}
 
-		ArrayList<AItem> items = new ArrayList<>(25);
-		for (IDrawable drawable : _layers) {
-			((Layer) drawable).addEnclosedItems(this, items, rect);
+		ArrayList<AItem> items = new ArrayList<>();
+		for (Layer layer : _layers) {
+			layer.addEnclosedItems(this, items, rect);
 		}
 		return items;
 	}
@@ -638,8 +617,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	@Override
 	public boolean anySelectedItems() {
 		if (_layers != null) {
-			for (IDrawable drawable : _layers) {
-				Layer layer = (Layer) drawable;
+			for (Layer layer : _layers) {
 				if (layer.anySelected()) {
 					return true;
 				}
@@ -654,8 +632,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	@Override
 	public void deleteSelectedItems() {
 		if (_layers != null) {
-			for (IDrawable drawable : _layers) {
-				Layer layer = (Layer) drawable;
+			for (Layer layer : _layers) {
 				layer.deleteSelectedItems(this);
 			}
 		}
@@ -670,8 +647,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		ArrayList<AItem> selectedItems = new ArrayList<>();
 
 		if (_layers != null) {
-			for (IDrawable drawable : _layers) {
-				Layer layer = (Layer) drawable;
+			for (Layer layer : _layers) {
 				selectedItems.addAll(layer.getSelectedItems());
 			}
 		}
@@ -685,8 +661,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	@Override
 	public void selectAllItems(boolean select) {
 		if (_layers != null) {
-			for (IDrawable drawable : _layers) {
-				Layer layer = (Layer) drawable;
+			for (Layer layer : _layers) {
 				layer.selectAllItems(select);
 			}
 		}
@@ -803,13 +778,9 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 * @param type     the type of the change.
 	 */
 	@Override
-	public void drawableChanged(DrawableList list, IDrawable drawable, DrawableChangeType type) {
+	public void itemChanged(Layer layer, AItem item, ItemChangeType type) {
 
-		AItem item = null;
 		
-		if ((drawable != null) && drawable instanceof AItem) {
-			item = (AItem) drawable;
-		}
 
 		switch (type) {
 		case ADDED:
@@ -817,7 +788,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 		case SELECTED:
 		case DESELECTED:
-		case LISTCLEARED:
 		    if (_toolBar != null) {
 		        _toolBar.updateButtonState();
 		    }
@@ -835,7 +805,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		case MOVED:
 			break;
 
-		case REMOVED:
+		case DELETED:
 			break;
 
 		case RESIZED:
@@ -847,11 +817,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		case SHOWN:
 			break;
 
-		case LISTHIDDEN:
-			break;
-
-		case LISTSHOWN:
-			break;
 		}
 
 		// for now, lets not quibble

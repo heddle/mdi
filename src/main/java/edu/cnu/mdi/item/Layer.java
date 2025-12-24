@@ -1,30 +1,104 @@
 package edu.cnu.mdi.item;
 
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 
+import javax.swing.event.EventListenerList;
+
 import edu.cnu.mdi.container.IContainer;
-import edu.cnu.mdi.graphics.drawable.DrawableChangeType;
-import edu.cnu.mdi.graphics.drawable.DrawableList;
-import edu.cnu.mdi.graphics.drawable.IDrawable;
 
 
 @SuppressWarnings("serial")
-public class Layer extends DrawableList {
+public class Layer extends ArrayList<AItem> {
 
 	// the owner container
-	protected IContainer _container;
+	protected IContainer container;
+	
+	// the name of the layer
+    protected String name;
+	
+    // listener list for item change events
+	private EventListenerList listenerList = new EventListenerList();
 
+	// visibility flag for this layer
+	protected boolean _visible = true;
+	
+	// lock flag for this layer
+	protected boolean _locked = true;
+	
 	/**
-	 * Create a list for holding items.
+	 * Create a z layer for holding items.
 	 *
-	 * @param name the name of the list.
+	 * @param name the name of the layer.
 	 */
 	public Layer(IContainer container, String name) {
-		super(name);
-		_container = container;
-		_container.addLayer(this);
+		super();
+		this.name = name;
+		this.container = container;
+		this.container.addLayer(this);
+	}
+	
+
+	/**
+	 * Adds an <code>AItem</code> to this layer.
+	 *
+	 * @param item the <code>AItem</code> to add.
+	 * @return <code>true</code> (as specified by Collection.add(E))
+	 */
+	@Override
+	public boolean add(AItem item) {
+		synchronized (this) {
+			super.add(item);
+			notifyItemChangeListeners(item, ItemChangeType.ADDED);
+		}
+		return true;
+	}
+
+	@Override
+	public boolean remove(Object o) {
+	    if (o instanceof AItem) {
+			synchronized (this) {
+				AItem item = (AItem) o;
+				item.prepareForRemoval();
+				boolean result = super.remove(item);
+				if (result) {
+					notifyItemChangeListeners(item, ItemChangeType.DELETED);
+				}
+
+				return result;
+			}
+	    }
+	    return false;
+	}
+
+	/**
+	 * Removes all items from this layer.
+	 */
+	@Override
+	public void clear() {
+		// no op
+	}
+
+	/**
+	 * Draw all the <code>AItem</code> objects on this layer.
+	 *
+	 * @param g2         the graphics context.
+	 * @param container the graphic container being rendered.
+	 */
+	public void draw(Graphics2D g2, IContainer container) {
+
+		// draw nothing if we are not visible.
+		if (!_visible) {
+			return;
+		}
+
+		synchronized (this) {
+			for (AItem item : this) {
+				item.draw(g2, container);
+			}
+		}
 	}
 
 	/**
@@ -43,7 +117,7 @@ public class Layer extends DrawableList {
 	}
 
 	/**
-	 * Add all the selected items an Items list.
+	 * Add all the selected items to an Items collection.
 	 *
 	 * @param items the list to which we will add all selected items on this
 	 *              layer.
@@ -84,7 +158,7 @@ public class Layer extends DrawableList {
 
 	/**
 	 * Deletes all selected (visible) items. Deleting simply means
-	 * removing them from the list. They will no longer be drawn. Items that are not
+	 * removing them from the layer. They will no longer be drawn. Items that are not
 	 * deletable are not removed.
 	 *
 	 * @param container the container they lived on.
@@ -115,21 +189,20 @@ public class Layer extends DrawableList {
 	 */
 	public void deleteItem(AItem item) {
 	    synchronized (this) {
-	        deleteInternal(item, (item != null) ? item.getContainer() : _container);
+	        deleteInternal(item, (item != null) ? item.getContainer() : container);
 	    }
 	}
 	
 	/**
 	 * Detach an item from container-managed services (feedback, reference items),
-	 * then remove it from this list. Note that {@link DrawableList#remove(IDrawable)}
-	 * will call {@code item.prepareForRemoval()} automatically.
+	 * then remove it from this layer.
 	 */
 	private void deleteInternal(AItem item, IContainer container) {
 	    if (item == null) {
 	        return;
 	    }
 
-	    IContainer c = (container != null) ? container : _container;
+	    IContainer c = (container != null) ? container : container;
 	    if (c != null) {
 	        c.getFeedbackControl().removeFeedbackProvider(item);
 	    }
@@ -198,8 +271,8 @@ public class Layer extends DrawableList {
 
 		int count = 0;
 		synchronized (this) {
-			for (IDrawable drawable : this) {
-				if (((AItem) drawable).isSelected()) {
+			for (AItem item : this) {
+				if (item.isSelected()) {
 					++count;
 				}
 			}
@@ -214,8 +287,8 @@ public class Layer extends DrawableList {
 	 */
 	public boolean anySelected() {
 		synchronized (this) {
-			for (IDrawable drawable : this) {
-				if (((AItem) drawable).isSelected()) {
+			for (AItem item : this) {
+				if (item.isSelected()) {
 					return true;
 				}
 			}
@@ -231,15 +304,12 @@ public class Layer extends DrawableList {
 	 */
 	public ArrayList<AItem> getSelectedItems() {
 
-		ArrayList<AItem> selitems = null;
+		ArrayList<AItem> selitems = new ArrayList<>();
 
 		synchronized (this) {
-			for (IDrawable drawable : this) {
-				if (((AItem) drawable).isSelected() && ((AItem) drawable).isVisible()) {
-					if (selitems == null) {
-						selitems = new ArrayList<>(25);
-					}
-					selitems.add((AItem) drawable);
+			for (AItem item : this) {
+				if (item.isSelected() && item.isVisible()) {
+					selitems.add((AItem) item);
 				}
 			}
 		}
@@ -254,8 +324,8 @@ public class Layer extends DrawableList {
 		ArrayList<AItem> allitems = new ArrayList<>();
 
 		synchronized (this) {
-			for (IDrawable drawable : this) {
-				allitems.add((AItem) drawable);
+			for (AItem item : this) {
+				allitems.add(item);
 			}
 		}
 		return allitems;
@@ -278,18 +348,15 @@ public class Layer extends DrawableList {
 	 *                     null.
 	 */
 	public void selectAllItems(boolean select, AItem excludedItem) {
-		for (IDrawable drawable : this) {
-			if (drawable instanceof AItem) {
-				AItem item = (AItem) drawable;
-				if ((!item.isLocked()) && (item != excludedItem)) {
+		for (AItem item : this) {
+			if ((!item.isLocked()) && (item != excludedItem)) {
 
-					if (select && !item.isSelected()) {
-						item.setSelected(true);
-						notifyDrawableChangeListeners(drawable, DrawableChangeType.SELECTED);
-					} else if (!select && item.isSelected()) {
-						item.setSelected(false);
-						notifyDrawableChangeListeners(drawable, DrawableChangeType.DESELECTED);
-					}
+				if (select && !item.isSelected()) {
+					item.setSelected(true);
+					notifyItemChangeListeners(item, ItemChangeType.SELECTED);
+				} else if (!select && item.isSelected()) {
+					item.setSelected(false);
+					notifyItemChangeListeners(item, ItemChangeType.DESELECTED);
 				}
 			}
 		}
@@ -305,10 +372,10 @@ public class Layer extends DrawableList {
 		if ((item != null) && (!item.isLocked())) {
 			if (select && !item.isSelected()) {
 				item.setSelected(true);
-				notifyDrawableChangeListeners(item, DrawableChangeType.SELECTED);
+				notifyItemChangeListeners(item, ItemChangeType.SELECTED);
 			} else if (!select && item.isSelected()) {
 				item.setSelected(false);
-				notifyDrawableChangeListeners(item, DrawableChangeType.DESELECTED);
+				notifyItemChangeListeners(item, ItemChangeType.DESELECTED);
 			}
 		}
 	}
@@ -339,13 +406,10 @@ public class Layer extends DrawableList {
 
 		synchronized (this) {
 			if (size() > 0) {
-				ArrayList<AItem> encitems = new ArrayList<>(25);
-				for (IDrawable drawable : this) {
-					if (drawable instanceof AItem) {
-						AItem item = (AItem) drawable;
-						if (item.isVisible() && item.enclosed(container, rect)) {
-							encitems.add(item);
-						}
+				ArrayList<AItem> encitems = new ArrayList<>();
+				for (AItem item : this) {
+					if (item.isVisible() && item.isEnclosed(container, rect)) {
+						encitems.add(item);
 					}
 				}
 				return encitems;
@@ -360,7 +424,228 @@ public class Layer extends DrawableList {
 	 * @return the container.
 	 */
 	public IContainer getContainer() {
-		return _container;
+		return container;
+	}
+
+	
+	/**
+	 * Add an <code>ItemChangeListener</code>.
+	 *
+	 * @see ItemChangeListener
+	 * @param itemListener the <code>ItemChangeListener</code> to add.
+	 */
+	public void addItemChangeListener(ItemChangeListener itemListener) {
+		
+		if (itemListener == null) {
+			return;
+		}
+
+		// avoid adding duplicates
+		removeItemChangeListener(itemListener);
+		listenerList.add(ItemChangeListener.class, itemListener);
+	}
+
+	/**
+	 * Remove an <code>ItemChangeListener</code>.
+	 *
+	 * @see ItemChangeListener
+	 * @param itemListener the <code>ItemChangeListener</code> to remove.
+	 */
+	public void removeItemChangeListener(ItemChangeListener itemListener) {
+		
+		if (itemListener == null) {
+			return;
+		}
+
+		listenerList.remove(ItemChangeListener.class, itemListener);
+	}
+
+	/**
+	 * Notify interested parties that an <code>AItem</code> has changed
+	 *
+	 * @param item the <code>AItem</code> in question.
+	 * @param type the type of change, e.g. one of the enum constants in the
+	 *             <code>ItemChangeType</code> class.
+	 */
+	public void notifyItemChangeListeners(AItem item, ItemChangeType type) {
+
+		if (listenerList == null) {
+			System.out.println("Layer: No listeners to notify.");
+			return;
+		}
+
+		// Guaranteed to return a non-null array
+		Object[] listeners = listenerList.getListenerList();
+
+		// Process the listeners last to first, notifying
+		// those that are interested in this event
+
+		for (int i = 0; i < listeners.length; i += 2) {
+			if (listeners[i] == ItemChangeListener.class) {
+				((ItemChangeListener) listeners[i + 1]).itemChanged(this, item, type);
+			}
+		}
+	}
+	
+
+	/**
+	 * Move an item upward in the list which has the effect of sending it
+	 * backward when drawn.
+	 *
+	 * @param item the item to move backward.
+	 */
+	public void sendBackward(AItem item) {
+
+		synchronized (this) {
+			int src = indexOf(item);
+			if (src <= 0) {
+				return;
+			}
+			// use super methods so that notifiers are not called
+			super.remove(item);
+			super.add(src - 1, item);
+		}
+	}
+
+	/**
+	 * Move an item downward in the list which has the effect of sending it
+	 * forward when drawn.
+	 *
+	 * @param item the item to move backward.
+	 */
+	public void sendForward(AItem item) {
+
+		synchronized (this) {
+			int src = indexOf(item);
+			if (src == -1 || src == (size() - 1)) {
+				return;
+			}
+			// use super methods so that notifiers are not called
+			super.remove(item);
+			super.add(src + 1, item);
+		}
+	}
+
+	/**
+	 * Put an <code>AItem</code> at the top of the list, which has the effect of
+	 * sending to the back when drawn.
+	 *
+	 * @param item the <code>AItem</code> to put at the beginning of the
+	 *                 list, which will result in being drawn on the bottom.
+	 */
+	public void sendToBack(AItem item) {
+
+		synchronized (this) {
+			// use super methods so that notifiers are not called
+			super.remove(item);
+			super.add(0, item);
+		}
+	}
+
+	/**
+	 * Put an <code>AItem</code> at the bottom of the list, which has the effect
+	 * of sending to the front when drawn.
+	 *
+	 * @param item the <code>AItem</code> to put at the end of the list,
+	 *                 which will result in being drawn on top.
+	 */
+	public void sendToFront(AItem item) {
+
+		synchronized (this) {
+			// use super methods so that notifiers are not called
+			super.remove(item);
+			super.add(item);
+		}
+	}
+
+	/**
+	 * Check whether this list is marked as visible.
+	 *
+	 * @return <code>true</code> is this list is marked as visible.
+	 */
+	public boolean isVisible() {
+		return _visible;
+	}
+
+	/**
+	 * Sets the visibility flag.
+	 *
+	 * @param visible the new value of the flag.
+	 */
+	public void setVisible(boolean visible) {
+		if (visible == this._visible) {
+			return;
+		}
+		this._visible = visible;
+	}
+
+	/**
+	 * Check whether this list is marked as locked.
+	 *
+	 * @return <code>true</code> is this list is marked as locked.
+	 */
+	public boolean isLocked() {
+		return _locked;
+	}
+
+	/**
+	 * Sets the lock flag.
+	 *
+	 * @param locked the new value of the flag
+	 */
+	public void setLocked(boolean locked) {
+		this._locked = locked;
+	}
+
+	/**
+	 * Set the name for this layer.
+	 *
+	 * @param name the name to set.
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+	
+	/**
+	 * Get the name of this z layer.
+	 *
+	 * @return the name of the layer.
+	 */
+	public String getName() {
+	    return name;
+	}
+
+	/**
+	 * Convenience routine to set the dirty property for all items on this layer. A
+	 * dirty state is a signal that some cached calculations relevant for display
+	 * need to be redone. By careful use of the dirty states, expensive calculations
+	 * can be performed only when needed. The danger is that something that makes
+	 * the items "dirty" gets missed.
+	 *
+	 * @param dirty the value to set for the <code>dirty</code> flag.
+	 */
+	public void setDirty(boolean dirty) {
+
+		synchronized (this) {
+			for (AItem item : this) {
+				item.setDirty(dirty);
+			}
+		}
+	}
+
+
+	/**
+	 * Equality check.
+	 *
+	 * @return <code>true</code> if objects are equal.
+	 */
+	@Override
+	public boolean equals(Object o) {
+
+		if ((o != null) && (o instanceof Layer)) {
+			return (this == o);
+		}
+		return false;
 	}
 
 }

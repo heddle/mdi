@@ -3,6 +3,7 @@ package edu.cnu.mdi.view;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
@@ -320,7 +321,7 @@ public class VirtualView extends BaseView
     private void setBeforeDraw() {
         IDrawable beforeDraw = new DrawableAdapter() {
             @Override
-            public void draw(Graphics g, IContainer container) {
+            public void draw(Graphics2D g, IContainer container) {
                 Rectangle cr = getColRect(_currentCol);
                 g.setColor(_fill);
                 g.fillRect(cr.x + 1, cr.y + 1, cr.width - 1, cr.height - 1);
@@ -339,7 +340,7 @@ public class VirtualView extends BaseView
     private void setAfterDraw() {
         IDrawable afterDraw = new DrawableAdapter() {
             @Override
-            public void draw(Graphics g, IContainer container) {
+            public void draw(Graphics2D g, IContainer container) {
 
                 Rectangle b = container.getComponent().getBounds();
                 Rectangle2D.Double world = getContainer().getWorldSystem();

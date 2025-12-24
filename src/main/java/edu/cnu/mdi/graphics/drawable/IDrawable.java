@@ -25,20 +25,7 @@ public interface IDrawable {
      */
     void draw(Graphics2D g2, IContainer container);
     
-    /**
-     * Render this drawable.
-     *
-     * @param g         the oldD graphics context to draw with. The caller is
-     *                  responsible for restoring any graphics state (transform,
-     *                  clip, composite, etc.) if needed.
-     * @param container the container being rendered into; may be used to
-     *                  query coordinate transforms, world bounds, etc.
-     */
-	default void draw(Graphics g, IContainer container) {
-		draw((Graphics2D) g, container);
-	}
-   
-
+  
     /**
      * Mark this drawable as "dirty".
      * <p>

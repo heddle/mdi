@@ -1,9 +1,7 @@
 package edu.cnu.mdi.mapping;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -15,11 +13,8 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
-import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.container.IContainer;
-import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
-import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.text.UnicodeSupport;
@@ -96,8 +91,7 @@ public class MapView2D extends BaseView implements MouseMotionListener {
 		// set the feedback and side (control + feedback) UI
 		initSidePanel();
 
-		// set the before and after draws
-		setBeforeDraw();
+		// set the after draw
 		setAfterDraw();
 
 		// listen for mouse motion over the view's container
@@ -126,21 +120,6 @@ public class MapView2D extends BaseView implements MouseMotionListener {
 		sidePanel.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, getHeight()));
 
 		add(sidePanel, BorderLayout.EAST);
-	}
-
-	/**
-	 * Set the view's "before draw" operation. This is currently a no-op, but is
-	 * provided for completeness and future extension.
-	 */
-	private void setBeforeDraw() {
-		IDrawable beforeDraw = new DrawableAdapter() {
-			@Override
-			public void draw(Graphics g, IContainer container) {
-				// intentionally empty
-			}
-		};
-
-		getContainer().setBeforeDraw(beforeDraw);
 	}
 
 	/**

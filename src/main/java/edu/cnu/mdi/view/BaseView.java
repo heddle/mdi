@@ -10,10 +10,12 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
+import java.awt.event.ActionEvent;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Rectangle2D;
@@ -21,12 +23,16 @@ import java.beans.PropertyVetoException;
 import java.util.List;
 import java.util.Properties;
 
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
@@ -41,7 +47,6 @@ import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.format.DoubleFormat;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
-import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
 import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
 
@@ -182,7 +187,7 @@ public class BaseView extends JInternalFrame
 
         desktop = Desktop.getInstance();
 
-
+ 
         // --------------------------------------------------------------------
         // Read general view properties
         // --------------------------------------------------------------------
@@ -320,6 +325,8 @@ public class BaseView extends JInternalFrame
 				}
                 add(toolBar, BorderLayout.NORTH);
             } 
+            //key bindings to actions
+            installKeyBindings();
 
             pack();
         } else {
@@ -348,7 +355,6 @@ public class BaseView extends JInternalFrame
 
         addComponentListener(this);
     }
-    
     
     /**
      * Resolve (create or reuse) the {@link IContainer} instance that will be
@@ -503,6 +509,46 @@ public class BaseView extends JInternalFrame
         }
         return false;
     }
+    
+    protected void installKeyBindings() {
+
+    	 // For JInternalFrame, bind on the root pane, not the frame itself.
+        JComponent target = getRootPane();
+        // Put bindings high enough to work anywhere in the view.
+ 
+        InputMap im = target.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = target.getActionMap();
+
+        AbstractAction deleteAction = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("BaseView: delete key pressed");
+
+                if (container == null) {
+                    return;
+                }
+
+                var tb = container.getToolBar();
+                if (tb instanceof edu.cnu.mdi.graphics.toolbar.BaseToolBar baseTb
+                        && baseTb.hasDeleteButton()) {
+                    baseTb.invokeDelete();
+                } else {
+                    container.deleteSelectedItems();
+                    container.refresh();
+                }
+            }
+        };
+
+        am.put("mdi.delete", deleteAction);
+ 
+        // Mac “Delete” key (backspace)
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "mdi.delete");
+
+        // Forward delete (Fn+Delete on many Macs; Delete on PC)
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "mdi.delete");
+        
+    }
+
 
     /**
      * Returns the container associated with this view, if any.
@@ -1091,5 +1137,9 @@ public class BaseView extends JInternalFrame
 			List<String> feedbackStrings) {
 		// no op
 	}
+
+	// In BaseView
+	private static boolean deleteDiagInstalled = false;
+
 
 }

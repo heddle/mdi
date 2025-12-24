@@ -3,6 +3,7 @@ package edu.cnu.mdi.component;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.MouseInfo;
 import java.awt.Point;
@@ -21,9 +22,7 @@ import javax.swing.JWindow;
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
-import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.IContainerToolBar;
-import edu.cnu.mdi.view.BaseView;
 
 /**
  * A floating magnifier window used to display a zoomed-in view of a
@@ -58,7 +57,7 @@ public class MagnifyWindow extends JWindow {
 
 	/** Mouse location in source container coordinates. */
 	private static Point _mouseLocation;
-	
+
 	/** The source container being magnified. */
 	private static BaseContainer _sourceContainer;
 
@@ -100,7 +99,7 @@ public class MagnifyWindow extends JWindow {
 	 * </p>
 	 */
 	private MagnifyWindow() {
-		
+
 		setLayout(new BorderLayout(0, 0));
 		setSize(_WIDTH, _HEIGHT);
 
@@ -110,7 +109,7 @@ public class MagnifyWindow extends JWindow {
 				if (_customDraw == null) {
 					super.paintComponent(g);
 				} else {
-					_customDraw.draw(g, _container);
+					_customDraw.draw((Graphics2D)g, _container);
 				}
 			}
 		};
@@ -177,7 +176,7 @@ public class MagnifyWindow extends JWindow {
 		if (sourceContainer == null || event == null) {
 			return;
 		}
-		
+
 		_sourceContainer = sourceContainer;
 
 		if (_magnifyWindow == null) {
@@ -222,7 +221,7 @@ public class MagnifyWindow extends JWindow {
 			_extraAfterDraw = new DrawableAdapter() {
 
 				@Override
-				public void draw(Graphics g, edu.cnu.mdi.container.IContainer container) {
+				public void draw(Graphics2D g, edu.cnu.mdi.container.IContainer container) {
 					// Delegate to parent's after-draw, if any
 					if (parentAfterDraw != null) {
 						parentAfterDraw.draw(g, _container);

@@ -6,12 +6,10 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 
-import edu.cnu.mdi.graphics.drawable.DrawableChangeType;
-import edu.cnu.mdi.graphics.drawable.DrawableList;
-import edu.cnu.mdi.graphics.drawable.IDrawable;
-import edu.cnu.mdi.graphics.drawable.IDrawableListener;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.ConnectorItem;
+import edu.cnu.mdi.item.ItemChangeListener;
+import edu.cnu.mdi.item.ItemChangeType;
 import edu.cnu.mdi.item.Layer;
 
 /**
@@ -29,7 +27,7 @@ import edu.cnu.mdi.item.Layer;
  * two endpoint items (in either direction).
  * </p>
  */
-public class ConnectionManager implements IDrawableListener {
+public class ConnectionManager implements ItemChangeListener {
 
 	/** Singleton instance. */
 	private static volatile ConnectionManager instance = null;	
@@ -99,7 +97,11 @@ public class ConnectionManager implements IDrawableListener {
         if (!canConnect(item1, item2)) return null;
 
         ConnectorItem ci = new ConnectorItem(layer, item1, item2);
-        layer.addDrawableListener(instance);
+        
+        //dealing with at least two layers here!
+        layer.addItemChangeListener(instance);
+        item1.getLayer().addItemChangeListener(instance);
+        item2.getLayer().addItemChangeListener(instance);
         connectors.add(ci);
         return ci;
     }
@@ -130,37 +132,31 @@ public class ConnectionManager implements IDrawableListener {
      * Drawable list change callback.
      */
     @Override
-    public void drawableChanged(DrawableList list, IDrawable drawable, DrawableChangeType type) {
+    public void itemChanged(Layer layer, AItem item, ItemChangeType type) {
 
         if (type == null) return;
 
         switch (type) {
             case ADDED:
-                if (drawable instanceof ConnectorItem) {
-                    connectors.add((ConnectorItem) drawable);
+                if (item instanceof ConnectorItem) {
+                    connectors.add((ConnectorItem) item);
                 }
                 break;
 
-            case REMOVED:
-            	System.out.println("ConnectionManager: REMOVED event for drawable: " + drawable);
+            case DELETED:
                 // If a connector was removed, drop it from our cache.
-                if (drawable instanceof ConnectorItem) {
-                    connectors.remove((ConnectorItem) drawable);
+                if (item instanceof ConnectorItem) {
+                    connectors.remove((ConnectorItem) item);
                     break;
                 }
 
                 // If an endpoint item was removed, remove all connectors that touch it.
-                if (drawable instanceof AItem) {
-                    removeConnectionsForEndpoint((AItem) drawable);
+                if (item instanceof AItem) {
+                    removeConnectionsForEndpoint(item);
                 }
                 break;
 
-            case LISTCLEARED:
-                // Defensive: list cleared means connectors in that list are gone.
-                // We can't reliably know which ones from only this event, so we purge all.
-                connectors.clear();
-                break;
-
+  
             default:
                 // ignore other changes
                 break;
@@ -191,6 +187,44 @@ public class ConnectionManager implements IDrawableListener {
             }
         }
     }
+    
+    /**
+     * Get all items directly connected to the given item.
+     *
+     * <p>
+     * The returned set contains the opposite endpoint of every
+     * {@link ConnectorItem} that touches the given item.
+     * </p>
+     *
+     * <p>
+     * The returned set is a snapshot and is not backed by the manager.
+     * </p>
+     *
+     * @param item the endpoint item
+     * @return an unmodifiable set of connected items (empty if none)
+     */
+    public Set<AItem> getConnectedItems(AItem item) {
+        if (item == null) {
+            return Collections.emptySet();
+        }
+
+        Set<AItem> results = new HashSet<>();
+
+        for (ConnectorItem c : connectors) {
+            AItem a = safeStart(c);
+            AItem b = safeEnd(c);
+
+            if (a == item && b != null) {
+                results.add(b);
+            }
+            else if (b == item && a != null) {
+                results.add(a);
+            }
+        }
+
+        return Collections.unmodifiableSet(results);
+    }
+
 
     // Check whether connector c connects the two given items (either direction).
     private static boolean connects(ConnectorItem c, AItem i1, AItem i2) {

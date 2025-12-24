@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -189,7 +190,7 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 		}
 
 		if (_afterDraw != null) {
-			_afterDraw.draw(g, null);
+			_afterDraw.draw((Graphics2D)g, null);
 		}
 	}
 
