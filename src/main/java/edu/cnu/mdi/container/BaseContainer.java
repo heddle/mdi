@@ -375,10 +375,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 			_afterDraw.draw(g2, this);
 		}
 
-		//for debugging: draw world box
-		if (this instanceof edu.cnu.mdi.mapping.MapContainer) {
-			System.out.println("Mapping annotation layer size: " + _annotationLayer.size());
-		}
 		// annotation layer last
 		if (_annotationLayer != null) {
 			_annotationLayer.draw(g2, this);
