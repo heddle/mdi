@@ -76,11 +76,6 @@ public class MagnifyWindow extends JWindow {
 	 */
 	private static IDrawable _extraAfterDraw;
 
-	/**
-	 * Optional custom drawing hook supplied by the source container. If non-null,
-	 * this is used instead of simply sharing the source container's model.
-	 */
-	private static IDrawable _customDraw;
 
 	/** Menu used to select the magnification factor. */
 	private static JMenu _magMenu;
@@ -106,11 +101,7 @@ public class MagnifyWindow extends JWindow {
 		_container = new BaseContainer(new Rectangle2D.Double(0, 0, 1, 1)) {
 			@Override
 			public void paintComponent(Graphics g) {
-				if (_customDraw == null) {
-					super.paintComponent(g);
-				} else {
-					_customDraw.draw((Graphics2D)g, _container);
-				}
+				super.paintComponent(g);
 			}
 		};
 
@@ -183,9 +174,6 @@ public class MagnifyWindow extends JWindow {
 			_magnifyWindow = new MagnifyWindow();
 		}
 
-		// Determine whether we use a custom draw hook or a shared model
-		_customDraw = sourceContainer.getMagnificationDraw();
-
 		// Mouse location in source-container coordinates
 		_mouseLocation = new Point(event.getPoint());
 
@@ -213,7 +201,6 @@ public class MagnifyWindow extends JWindow {
 		_container.setWorldSystem(getMagWorld(sourceContainer));
 
 		// Share items or use specialized draw?
-		if (_customDraw == null) {
 			_container.shareModel(sourceContainer);
 
 			final IDrawable parentAfterDraw = sourceContainer.getAfterDraw();
@@ -245,10 +232,6 @@ public class MagnifyWindow extends JWindow {
 			};
 
 			_container.setAfterDraw(_extraAfterDraw);
-		} else {
-			// If using custom draw, we do not need a parent after-draw hook here
-			_container.setAfterDraw(null);
-		}
 
 		_container.setDirty(true);
 		_container.refresh();

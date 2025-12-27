@@ -8,7 +8,6 @@ import java.util.Objects;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
-import edu.cnu.mdi.util.Environment;
 
 /**
  * Base class for tools that use a {@link Rubberband.Policy#LINE}-style gesture

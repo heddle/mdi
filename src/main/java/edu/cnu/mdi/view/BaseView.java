@@ -40,6 +40,7 @@ import edu.cnu.mdi.app.BaseMDIApplication;
 import edu.cnu.mdi.component.MagnifyWindow;
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.container.LayerInspectorDialog;
 import edu.cnu.mdi.desktop.Desktop;
 import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
@@ -175,6 +176,11 @@ public class BaseView extends JInternalFrame
         // Add to desktop.
         if (desktop != null) {
             desktop.add(this, 0);
+        }
+        
+        if ((this.container != null) && this.container instanceof BaseContainer) {
+        	getViewPopupMenu().addSeparator();
+        	getViewPopupMenu().add(LayerInspectorDialog.createMenuItem(this));
         }
 
         // Visibility: schedule after add to desktop to avoid flicker/ordering issues.

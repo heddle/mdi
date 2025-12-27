@@ -390,7 +390,7 @@ public class DemoApp extends BaseMDIApplication {
             e.printStackTrace();
         }
 
-        long toolbarBits = ToolBarBits.BOXZOOMBUTTON | ToolBarBits.CENTERBUTTON | ToolBarBits.MAGNIFYBUTTON;
+        long toolbarBits = ToolBarBits.DRAWING| ToolBarBits.MAGNIFYBUTTON;
 
         return new MapView2D(
                 PropertySupport.TITLE, "Sample 2D Map View",

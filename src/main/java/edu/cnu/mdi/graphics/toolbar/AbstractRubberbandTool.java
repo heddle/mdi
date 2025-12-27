@@ -5,7 +5,6 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
 
-import edu.cnu.mdi.container.IAnnotationSupport;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
@@ -44,10 +43,7 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
     private Rubberband rubberband;
 
     /** Container that owns the current gesture (null when idle). */
-    private IContainer owner;
-
-    /** Creation capability for the current gesture (null when idle). */
-    private IAnnotationSupport creator;
+    private IContainer container;
 
     /** Cached controller so we can reset tool selection from doneRubberbanding(). */
     private ToolController controller;
@@ -69,12 +65,11 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
     /**
      * Create the new item for the given bounds (screen coordinates).
      *
-     * @param creator container annotation-creation capability (never null)
-     * @param list    the annotation list (never null)
+     * @param layer    the annotation layer (never null)
      * @param bounds  rubber-band bounds in screen pixels (never null)
      * @return the created item, or null if none was created
      */
-    protected abstract AItem createItem(IAnnotationSupport creator, Layer list, Rectangle bounds);
+    protected abstract AItem createItem(Layer layer, Rectangle bounds);
 
     /**
      * Hook for subclasses to configure the newly created item (drag/resize/etc).
@@ -114,19 +109,13 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
             return;
         }
 
-        IContainer c = ctx.container();
-        if (!(c instanceof IAnnotationSupport)) {
-            return;
-        }
-
+        container = ctx.container();
         // Ignore if already active.
         if (rubberband != null) {
             return;
         }
 
-        owner = c;
-        creator = (IAnnotationSupport) c;
-
+ 
         // Defensive: if a temporary override tool is activated without onSelected,
         // still obtain the controller here.
         if (controller == null) {
@@ -134,7 +123,7 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
         }
 
         Rubberband.Policy policy = Objects.requireNonNull(rubberbandPolicy(), "rubberbandPolicy");
-        rubberband = new Rubberband(owner, this, policy);
+        rubberband = new Rubberband(container, this, policy);
         rubberband.setActive(true);
         rubberband.startRubberbanding(e.getPoint());
     }
@@ -147,17 +136,13 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
     public final void doneRubberbanding() {
         // Snapshot fields first, then clear instance state.
         final Rubberband rb = this.rubberband;
-        final IContainer c = this.owner;
-        final IAnnotationSupport cap = this.creator;
         final ToolController tc = this.controller;
 
         this.rubberband = null;
-        this.owner = null;
-        this.creator = null;
         this.controller = null;
 
         try {
-            if (rb == null || c == null || cap == null) {
+            if (rb == null) {
                 return;
             }
 
@@ -167,20 +152,20 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
             }
 
             // Create the item and place it on the annotation layer.
-            Layer layer = c.getAnnotationLayer();
-            AItem item = createItem(cap, layer, bounds);
+            Layer layer = container.getAnnotationLayer();
+            AItem item = createItem(layer, bounds);
 
             if (item != null) {
                 configureItem(item);
             }
 
-            c.selectAllItems(false);
+            container.selectAllItems(false);
 
             if (tc != null) {
                 tc.resetToDefault();
             }
 
-            c.refresh();
+            container.refresh();
 
         } finally {
         }
@@ -189,8 +174,6 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
     @Override
     public void onDeselected(ToolContext ctx) {
         cancelRubberband();
-        owner = null;
-        creator = null;
         controller = null;
     }
 

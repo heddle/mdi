@@ -2,14 +2,13 @@ package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Rectangle;
 
-import edu.cnu.mdi.container.IAnnotationSupport;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 
 /**
  * Tool that creates a {@link edu.cnu.mdi.item.RectangleItem} by rubber-banding
- * a rectangle on a {@link DrawingContainer}.
+ * a rectangle on a {@link DrawingToolSupport}.
  * <p>
  * This is the tool-based replacement for the legacy {@code RectangleButton}.
  * Behavior matches legacy:
@@ -56,8 +55,8 @@ public class RectangleTool extends AbstractRubberbandTool {
     }
 
     @Override
-    protected AItem createItem(IAnnotationSupport owner, Layer layer, Rectangle bounds) {
-        return owner.createRectangleItem(layer, bounds);
+    protected AItem createItem(Layer layer, Rectangle bounds) {
+        return DrawingToolSupport.createRectangleItem(layer, bounds);
     }
 
     @Override

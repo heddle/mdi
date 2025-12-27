@@ -3,7 +3,6 @@ package edu.cnu.mdi.graphics.toolbar;
 import java.awt.Cursor;
 import java.awt.Point;
 
-import edu.cnu.mdi.container.IAnnotationSupport;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
@@ -57,8 +56,8 @@ public class PolylineTool extends AbstractVertexRubberbandTool {
     }
 
     @Override
-    protected AItem createItem(IAnnotationSupport owner, Layer list, Point[] vertices) {
-        return owner.createPolylineItem(list, vertices);
+    protected AItem createItem(Layer layer, Point[] vertices) {
+        return DrawingToolSupport.createPolylineItem(layer, vertices);
     }
 
     @Override

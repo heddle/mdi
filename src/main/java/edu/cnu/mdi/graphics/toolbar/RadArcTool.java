@@ -2,15 +2,13 @@ package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Point;
 
-//import edu.cnu.mdi.container.DrawingContainer;
-import edu.cnu.mdi.container.IAnnotationSupport;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 
 /**
  * Tool that creates a {@link edu.cnu.mdi.item.RadArcItem} by rubber-banding a
- * 3-point "radius-arc" gesture on a {@link DrawingContainer}.
+ * 3-point "radius-arc" gesture on a {@link DrawingToolSupport}.
  * <p>
  * This replaces the legacy {@code RadArcButton}. The RADARC rubberband policy
  * yields exactly three screen points:
@@ -61,7 +59,7 @@ public class RadArcTool extends AbstractVertexRubberbandTool {
     }
 
     @Override
-    protected AItem createItem(IAnnotationSupport owner, Layer list, Point[] pp) {
+    protected AItem createItem(Layer layer, Point[] pp) {
 
         // Defensive (base guarantees length>=3, but RADARC expects exactly 3)
         if (pp == null || pp.length != 3) {
@@ -109,7 +107,7 @@ public class RadArcTool extends AbstractVertexRubberbandTool {
             return null;
         }
 
-         return owner.createRadArcItem(list, pp[0], pp[1], arcAngleDeg);
+         return DrawingToolSupport.createRadArcItem(layer, pp[0], pp[1], arcAngleDeg);
     }
 
     @Override

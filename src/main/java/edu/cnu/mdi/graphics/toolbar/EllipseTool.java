@@ -2,7 +2,6 @@ package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Rectangle;
 
-import edu.cnu.mdi.container.IAnnotationSupport;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
@@ -44,8 +43,8 @@ public class EllipseTool extends AbstractRubberbandTool {
     }
 
     @Override
-    protected AItem createItem(IAnnotationSupport owner, Layer list, Rectangle bounds) {
-        return owner.createEllipseItem(list, bounds);
+    protected AItem createItem(Layer layer, Rectangle bounds) {
+        return DrawingToolSupport.createEllipseItem(layer, bounds);
     }
 
     @Override

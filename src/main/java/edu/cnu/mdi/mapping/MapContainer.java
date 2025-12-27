@@ -7,6 +7,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Double;
 
 import edu.cnu.mdi.container.BaseContainer;
+import edu.cnu.mdi.util.Point2DSupport;
 
 @SuppressWarnings("serial")
 public class MapContainer extends BaseContainer {
@@ -73,10 +74,10 @@ public class MapContainer extends BaseContainer {
 
 	/**
 	 * {@inheritDoc}
-     */
-	private void recenter(Rectangle2D.Double wr, Point2D.Double newCenter) {
-		wr.x = newCenter.x - wr.width / 2.0;
-		wr.y = newCenter.y - wr.height / 2.0;
+	 */
+	@Override
+	public String getLocationString(Point2D.Double wp) {
+		return Point2DSupport.toString(wp);
 	}
 	
 	private MapView2D getMapView2D() {

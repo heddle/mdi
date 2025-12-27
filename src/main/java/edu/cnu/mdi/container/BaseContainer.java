@@ -17,6 +17,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,133 +37,144 @@ import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.util.Point2DSupport;
 import edu.cnu.mdi.view.BaseView;
 
-
 /**
- * This the primary basic container. It contains a list of z layers each of which
- * contain a list of items.)
+ * Primary 2D drawing container for MDI.
+ * <p>
+ * A container holds a world-coordinate viewport and a z-stack of {@link Layer}s.
+ * Each layer holds a collection of {@link AItem}s.
+ *
+ * <h2>Layer architecture</h2>
+ * This container defines three standard layers:
+ * <ul>
+ *   <li><b>Connections</b> (protected; drawn first / bottom)</li>
+ *   <li><b>Content</b> (default user layer; typical items go here)</li>
+ *   <li><b>Annotations</b> (protected; drawn last / top)</li>
+ * </ul>
+ *
+ * <h3>Important implementation note</h3>
+ * {@link Layer}'s constructor auto-registers the new layer with the container via
+ * {@link IContainer#addLayer(Layer)}. During this container's constructor, the protected
+ * layer fields are not yet assigned when the first {@code addLayer} calls occur.
+ * <p>
+ * Therefore, after constructing the layers we explicitly remove the protected layers from
+ * {@link #_layers} and re-add the default user layer if needed. This guarantees that:
+ * <ul>
+ *   <li>{@link #_layers} contains only user layers</li>
+ *   <li>protected layers are still drawn and hit-tested in their fixed positions</li>
+ * </ul>
+ *
+ * <h2>Visibility and locking</h2>
+ * Container-wide operations that involve user interaction (hit testing, selection, deletion,
+ * enclosed selection) respect:
+ * <ul>
+ *   <li>{@link Layer#isVisible()} – invisible layers are ignored for hit testing and enclosure</li>
+ *   <li>{@link Layer#isLocked()} – locked layers are treated as non-interactive and ignored</li>
+ * </ul>
  *
  * @author heddle
- *
  */
-
 @SuppressWarnings("serial")
 public class BaseContainer extends JComponent implements IContainer, MouseWheelListener, ItemChangeListener {
 
 	/**
-	 * A collection of z layers containing items. This is the container's model.
+	 * The user-managed z-layers (does NOT include protected layers).
+	 * <p>
+	 * Ordering convention: index 0 is back (drawn earlier), last index is front.
 	 */
 	protected List<Layer> _layers = new ArrayList<>();
 
-	/**
-	 * Keeps track of current mouse position
-	 */
-	private Point _currentMousePoint;
-
-	/**
-	 * Each container may or may not have a tool bar.
-	 */
+	/** Optional toolbar for this container. */
 	protected IContainerToolBar _toolBar;
 
-	/**
-	 * The optional feedback(mouse over) pane.
-	 */
+	/** Optional feedback(mouse-over) pane. */
 	protected FeedbackPane _feedbackPane;
 
-	/**
-	 * The last mouse event used to update location.
-	 */
-	protected MouseEvent _lastLocationMouseEvent;
-
-	/**
-	 * This optional drawable is called after all the z layers are drawn.
-	 */
+	/** Optional drawable invoked after all z layers are drawn. */
 	protected IDrawable _afterDraw;
 
-	/**
-	 * This optional drawable is called before all the z layers are drawn.
-	 */
+	/** Optional drawable invoked before user layers are drawn. */
 	protected IDrawable _beforeDraw;
 
-	/**
-	 * Option drawer for magnification window rather than just simple magnification
-	 */
-	protected IDrawable _magDraw;
-
-	/**
-	 * The view that holds this container (might be null for viewless container).
-	 */
+	/** The view that holds this container (may be null for viewless container). */
 	protected BaseView _view;
 
-	/**
-	 * The world coordinate system. This a viewport based on world coordinates.
-	 */
+	/** World coordinate viewport. */
 	protected Rectangle2D.Double _worldSystem;
 
-	/**
-	 * Original, default world system.
-	 */
+	/** Default/original world system. */
 	protected Rectangle2D.Double _defaultWorldSystem;
 
-	/**
-	 * Previous world system, for undoing the last zoom.
-	 */
+	/** Previous world system (used to undo last zoom). */
 	protected Rectangle2D.Double _previousWorldSystem;
 
 	/**
-	 * The annotation layer. Every container has one. It is always
-	 * on top, i.e. it is drawn last.
+	 * Default user content layer (drawn between connection and annotation layers).
+	 * Most developer-created items go here by default.
+	 */
+	protected Layer _defaultLayer;
+
+	/**
+	 * Annotation layer (protected; always drawn last).
 	 */
 	protected Layer _annotationLayer;
-	
+
 	/**
-	 * The connection layer. Every container has one. It is always
-	 * on the bottom, i.e. it is drawn first.
+	 * Connection layer (protected; always drawn first).
 	 */
 	protected Layer _connectionLayer;
 
 	/**
-	 * Controls the feedback for the container. You can add and remove feedback
-	 * providers to this object.
+	 * Feedback control for mouse-over feedback providers.
 	 */
 	protected FeedbackControl _feedbackControl;
-	
-	// for world to local transformations (and vice versa)
 
+	// World <-> local transforms and insets/margins.
 	private int _lMargin = 0;
 	private int _tMargin = 0;
 	private int _rMargin = 0;
 	private int _bMargin = 0;
+
+	/** Transform local(screen) -> world. */
 	protected AffineTransform localToWorld;
+
+	/** Transform world -> local(screen). */
 	protected AffineTransform worldToLocal;
 
 	/**
-	 * Constructor for a container that does not live in a view. It might live on a
-	 * panel, for example
+	 * Constructor for a container that does not live in a view.
 	 *
-	 * @param worldSystem the default world system.
+	 * @param worldSystem the default world system (viewport)
 	 */
 	public BaseContainer(Rectangle2D.Double worldSystem) {
 		this(null, worldSystem);
 	}
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 *
-	 * @param view        Every container lives on one view. This is the view, which
-	 *                    is an internal frame, that owns this container.
-	 * @param worldSystem the default world system.
+	 * @param view        owning view (may be null)
+	 * @param worldSystem the default world system (viewport)
 	 */
 	public BaseContainer(BaseView view, Rectangle2D.Double worldSystem) {
 		_view = view;
 		_feedbackControl = new FeedbackControl(this);
 
 		resetWorldSystem(worldSystem);
-		
-		//create the connection layer
-		_connectionLayer = new Layer(this, "Connections");
 
-		// create the annotation layer.
+		// Create layers. NOTE: Layer constructor auto-calls container.addLayer(this).
+		_connectionLayer = new Layer(this, "Connections");
+		_defaultLayer = new Layer(this, "Content");
 		_annotationLayer = new Layer(this, "Annotations");
+
+		// IMPORTANT: Because addLayer() was called before the fields were assigned,
+		// the protected layers may have accidentally been added to _layers. Fix it now.
+		_layers.remove(_connectionLayer);
+		_layers.remove(_annotationLayer);
+
+		// Ensure the default layer is present as a user layer (should be, but guarantee it).
+		if (!_layers.contains(_defaultLayer)) {
+			_layers.add(_defaultLayer);
+		}
 
 		// listen for resize events
 		ComponentAdapter componentAdapter = new ComponentAdapter() {
@@ -178,27 +190,19 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * Reset the world system to a new value.
-	 * Resets the default and previous world systems as well.
-	 * @param worldSystem the new world system.
-	 */
-	@Override
-	public void resetWorldSystem(Rectangle2D.Double worldSystem) {
-		_worldSystem = worldSystem;
-		_defaultWorldSystem = copy(worldSystem);
-		_previousWorldSystem = copy(worldSystem);
-		setDirty(true);
-	}
-
-	/**
-	 * Share the model of another view. Note, this is not a copy, either view can
-	 * modify the items. This is primarily used for magnification windows.
+	 * Share the model with another container (used for magnification windows).
+	 * <p>
+	 * This is not a deep copy: layers and items are shared by reference.
 	 *
 	 * @param sContainer the source container
 	 */
 	public void shareModel(BaseContainer sContainer) {
+		if (sContainer == null) {
+			return;
+		}
 		_annotationLayer = sContainer._annotationLayer;
 		_connectionLayer = sContainer._connectionLayer;
+		_defaultLayer = sContainer._defaultLayer;
 		_layers = sContainer._layers;
 		_afterDraw = sContainer._afterDraw;
 		_beforeDraw = sContainer._beforeDraw;
@@ -206,43 +210,135 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		setForeground(sContainer.getForeground());
 	}
 
+	/**
+	 * Get the default user content layer.
+	 * @return the default user content layer (never null after construction)
+	 */
+	@Override
+	public Layer getDefaultLayer() {
+		return _defaultLayer;
+	}
+
+	/**
+	 * Determine whether a layer is one of the protected layers.
+	 *
+	 * @param layer layer to test
+	 * @return true if layer is the connection or annotation layer
+	 */
+	public boolean isProtectedLayer(Layer layer) {
+		return (layer == _connectionLayer) || (layer == _annotationLayer);
+	}
+
+	/**
+	 * Get all layers in draw order (bottom -> top), including protected layers.
+	 * <p>
+	 * Order:
+	 * <ol>
+	 *   <li>Connections</li>
+	 *   <li>User layers</li>
+	 *   <li>Annotations</li>
+	 * </ol>
+	 *
+	 * @return immutable snapshot list in draw order (never null)
+	 */
+	public List<Layer> getAllLayers() {
+		ArrayList<Layer> all = new ArrayList<>(_layers.size() + 2);
+		if (_connectionLayer != null) {
+			all.add(_connectionLayer);
+		}
+		if (_layers != null) {
+			all.addAll(_layers);
+		}
+		if (_annotationLayer != null) {
+			all.add(_annotationLayer);
+		}
+		return Collections.unmodifiableList(all);
+	}
+
+	/**
+	 * Get all layers in hit-test order (top -> bottom), including protected layers.
+	 * <p>
+	 * Order:
+	 * <ol>
+	 *   <li>Annotations</li>
+	 *   <li>User layers (top -> bottom)</li>
+	 *   <li>Connections</li>
+	 * </ol>
+	 *
+	 * @return immutable snapshot list in hit-test order (never null)
+	 */
+	public List<Layer> getAllLayersForHitTesting() {
+		ArrayList<Layer> all = new ArrayList<>(_layers.size() + 2);
+
+		if (_annotationLayer != null) {
+			all.add(_annotationLayer);
+		}
+
+		if (_layers != null) {
+			for (int i = _layers.size() - 1; i >= 0; i--) {
+				all.add(_layers.get(i));
+			}
+		}
+
+		if (_connectionLayer != null) {
+			all.add(_connectionLayer);
+		}
+
+		return Collections.unmodifiableList(all);
+	}
+
+	/**
+	 * Clip graphics context to container bounds.
+	 *
+	 * @param g graphics context
+	 */
 	public void clipBounds(Graphics g) {
 		Rectangle b = getBounds();
 		g.setClip(0, 0, b.width, b.height);
 	}
 
-	
 	/**
 	 * Get the approximate zoom factor based on the current and default world systems.
-	 * 
-	 * @return the approximate zoom factor. Numbers bigger than 1.0 mean zoomed in, smaller
-	 * than 1.0 mean zoomed out.
+	 *
+	 * @return the approximate zoom factor. Numbers > 1 mean zoomed in; < 1 mean zoomed out.
 	 */
+	@Override
 	public double approximateZoomFactor() {
 		if (_worldSystem == null || _defaultWorldSystem == null) {
 			return 1.0;
 		}
-		
+
 		double scaleX = _defaultWorldSystem.width / _worldSystem.width;
 		double scaleY = _defaultWorldSystem.height / _worldSystem.height;
-		
+
 		return (scaleX + scaleY) / 2.0;
 	}
+
 	/**
-	 * Override the paint command. Draw all the lists.
+	 * Override paint command. Draw all layers.
+	 * <p>
+	 * Rendering order:
+	 * <ol>
+	 *   <li>background</li>
+	 *   <li>connection layer</li>
+	 *   <li>before-draw</li>
+	 *   <li>user layers</li>
+	 *   <li>after-draw</li>
+	 *   <li>annotation layer</li>
+	 * </ol>
 	 *
-	 * @param g the graphics context.
+	 * @param g graphics context
 	 */
 	@Override
 	public void paintComponent(Graphics g) {
 
 		Graphics2D g2 = (Graphics2D) g;
-		
+
 		if ((_view != null) && !_view.isViewVisible()) {
 			return;
 		}
 
-	    super.paintComponent(g2);
+		super.paintComponent(g2);
 
 		clipBounds(g2);
 
@@ -253,64 +349,72 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 			return;
 		}
 
-		// normal drawing
+		// background
 		g2.setColor(getBackground());
 		g2.fillRect(0, 0, b.width, b.height);
-		
-		//draw the connection layer first
-		if (_connectionLayer != null) {
-			_connectionLayer.draw(g2, this);
-		}
 
-		// any before lists drawing?
+		// before-draw is drawn before layers, for non-item
+		// drawing such as grids or maps
 		if (_beforeDraw != null) {
 			_beforeDraw.draw(g2, this);
 		}
 
-		// draw the user layers
-		for (Layer layer : _layers) {
-			layer.draw((Graphics2D)g2, this);
+		// connection layer first ) (typically lines between items)
+		if (_connectionLayer != null) {
+			_connectionLayer.draw(g2, this);
 		}
 
-		// any post lists drawing?
+
+		// user layers including the default (content) layer
+		for (Layer layer : _layers) {
+			layer.draw(g2, this);
+		}
+
+		// after-draw is drawn after layers, for overlays
 		if (_afterDraw != null) {
 			_afterDraw.draw(g2, this);
 		}
-		
-		//draw the annotation layer last
+
+		//for debugging: draw world box
+		if (this instanceof edu.cnu.mdi.mapping.MapContainer) {
+			System.out.println("Mapping annotation layer size: " + _annotationLayer.size());
+		}
+		// annotation layer last
 		if (_annotationLayer != null) {
 			_annotationLayer.draw(g2, this);
 		}
 
-		//always clean after drawing
+		// always clean after drawing
 		setDirty(false);
 	}
-	
 
-	
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void addLayer(Layer layer) {
 		Objects.requireNonNull(layer, "layer");
+
+		// During constructor, _connectionLayer/_annotationLayer may not be assigned yet,
+		// so we cannot reliably detect protected layers here. We enforce correctness
+		// after construction by cleaning _layers in the constructor.
 		if (layer == _annotationLayer) {
-			Log.getInstance().info("Adding annotation layer. Should not happen this way");
+			Log.getInstance().info("Adding annotation layer via addLayer. This should not happen.");
 			return;
 		}
-		
+
 		if (layer == _connectionLayer) {
-			Log.getInstance().info("Adding connection layer. Should not happen this way");
+			Log.getInstance().info("Adding connection layer via addLayer. This should not happen.");
 			return;
 		}
-		
+
 		_layers.remove(layer); // in case already there
 		_layers.add(layer);
 	}
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public Layer getAnnotationLayer() {
 		return _annotationLayer;
@@ -323,24 +427,24 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	public Layer getConnectionLayer() {
 		return _connectionLayer;
 	}
-	
+
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public Layer getLayerByName(String name) {
 		Objects.requireNonNull(name, "Layer name cannot be null");
-	    for (Layer layer : _layers) {
-	        if (layer.getName().equals(name)) {
-	            return layer;
-	        }
-	    }
-	    return null;
+		for (Layer layer : _layers) {
+			if (layer.getName().equals(name)) {
+				return layer;
+			}
+		}
+		return null;
 	}
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void localToWorld(Point pp, Point2D.Double wp) {
 		if (localToWorld != null) {
@@ -350,7 +454,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void worldToLocal(Point pp, Point2D.Double wp) {
 		if (worldToLocal != null) {
@@ -364,10 +468,10 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void worldToLocal(Rectangle r, Rectangle.Double wr) {
-		// New version to accommodate world with x decreasing right
+		// accommodates world with x decreasing to the right
 		Point2D.Double wp0 = new Point2D.Double(wr.getMinX(), wr.getMinY());
 		Point2D.Double wp1 = new Point2D.Double(wr.getMaxX(), wr.getMaxY());
 		Point p0 = new Point();
@@ -384,7 +488,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void localToWorld(Rectangle r, Rectangle.Double wr) {
 		Point p0 = new Point(r.x, r.y);
@@ -394,18 +498,17 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		localToWorld(p0, wp0);
 		localToWorld(p1, wp1);
 
-		// New version to accommodate world with x decreasing right
+		// accommodates world with x decreasing to the right
 		double x = wp0.x;
 		double y = wp1.y;
 		double w = wp1.x - wp0.x;
 		double h = wp0.y - wp1.y;
 		wr.setFrame(x, y, w, h);
-
 	}
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void worldToLocal(Point pp, double wx, double wy) {
 		worldToLocal(pp, new Point2D.Double(wx, wy));
@@ -413,7 +516,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void pan(int dh, int dv) {
 
@@ -441,8 +544,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * {@inheritDoc}
-     */
+	 * Recenter a world rectangle about a new center point.
+	 */
 	private void recenter(Rectangle2D.Double wr, Point2D.Double newCenter) {
 		wr.x = newCenter.x - wr.width / 2.0;
 		wr.y = newCenter.y - wr.height / 2.0;
@@ -450,7 +553,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void prepareToZoom() {
 		_previousWorldSystem = copy(_worldSystem);
@@ -458,7 +561,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void restoreDefaultWorld() {
 		_worldSystem = copy(_defaultWorldSystem);
@@ -468,20 +571,29 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
+	@Override
+	public void resetWorldSystem(Rectangle2D.Double worldSystem) {
+		_worldSystem = worldSystem;
+		_defaultWorldSystem = copy(worldSystem);
+		_previousWorldSystem = copy(worldSystem);
+		setDirty(true);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
 	@Override
 	public void refresh() {
 		if ((_view != null) && !_view.isViewVisible()) {
 			return;
 		}
-
 		repaint();
-
 	}
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void scale(double scaleFactor) {
 		prepareToZoom();
@@ -491,8 +603,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * {@inheritDoc}
-     */
+	 * Scale a world rectangle about its center.
+	 */
 	private void scale(Rectangle2D.Double wr, double scale) {
 		double xc = wr.getCenterX();
 		double yc = wr.getCenterY();
@@ -504,7 +616,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void undoLastZoom() {
 		Rectangle2D.Double temp = _worldSystem;
@@ -516,7 +628,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void rubberBanded(Rectangle b) {
 		// if too small, don't zoom
@@ -529,57 +641,48 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * Convenience method for setting the dirty flag for all items on all item lists.
-	 * Things that make a container dirty:
-	 * <ol>
-	 * <li>container was resized
-	 * <li>zooming
-	 * <li>undo zooming
-	 * <li>scaling
-	 * <li>restoring default world
-	 * <li>panning
-	 * <li>recenter
-	 * </ol>
-	 *
-	 * @param dirty the new value of the dirty flag.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void setDirty(boolean dirty) {
 
 		setAffineTransforms();
 
-		if (_layers != null) {
-			for (Layer layer : _layers) {
-				layer.setDirty(dirty);
-			}
+		// mark dirty across ALL layers, including protected layers
+		for (Layer layer : getAllLayers()) {
+			layer.setDirty(dirty);
 		}
 	}
 
 	/**
-	 * Find an item, if any, at the point.
-	 *
-	 * @param pp The pixel point in question.
-	 * @return the topmost satisfying item, or null.
+	 * {@inheritDoc}
+	 * <p>
+	 * Includes protected layers and respects visibility/locking.
 	 */
 	@Override
 	public AItem getItemAtPoint(Point pp) {
-		if (_layers == null) {
+		if (pp == null) {
 			return null;
 		}
 
-		for (int i = _layers.size() - 1; i >= 0; i--) {
-			Layer layer = ((Layer) _layers.get(i));
+		for (Layer layer : getAllLayersForHitTesting()) {
+			if (!layer.isVisible() || layer.isLocked()) {
+				continue;
+			}
 			AItem item = layer.getItemAtPoint(this, pp);
 			if (item != null) {
 				return item;
 			}
 		}
+
 		return null;
 	}
 
 	/**
 	 * {@inheritDoc}
-     */
+	 * <p>
+	 * Includes protected layers and respects visibility/locking.
+	 */
 	@Override
 	public ArrayList<AItem> getEnclosedItems(Rectangle rect) {
 
@@ -588,7 +691,10 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		}
 
 		ArrayList<AItem> items = new ArrayList<>();
-		for (Layer layer : _layers) {
+		for (Layer layer : getAllLayers()) {
+			if (!layer.isVisible() || layer.isLocked()) {
+				continue;
+			}
 			layer.addEnclosedItems(this, items, rect);
 		}
 		return items;
@@ -596,16 +702,22 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 * <p>
+	 * Includes protected layers and returns items in top -> bottom order.
+	 */
 	@Override
 	public ArrayList<AItem> getItemsAtPoint(Point lp) {
 		ArrayList<AItem> items = new ArrayList<>(25);
 
-		if (_layers != null) {
-			for (int i = _layers.size() - 1; i >= 0; i--) {
-				Layer layer = ((Layer) _layers.get(i));
-				layer.addItemsAtPoint(items, this, lp);
+		if (lp == null) {
+			return items;
+		}
+
+		for (Layer layer : getAllLayersForHitTesting()) {
+			if (!layer.isVisible() || layer.isLocked()) {
+				continue;
 			}
+			layer.addItemsAtPoint(items, this, lp);
 		}
 
 		return items;
@@ -613,14 +725,15 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 * <p>
+	 * Includes protected layers. Does not require visibility, so selections on hidden
+	 * layers still count (if your tools allow that state).
+	 */
 	@Override
 	public boolean anySelectedItems() {
-		if (_layers != null) {
-			for (Layer layer : _layers) {
-				if (layer.anySelected()) {
-					return true;
-				}
+		for (Layer layer : getAllLayers()) {
+			if (layer.anySelected()) {
+				return true;
 			}
 		}
 		return false;
@@ -628,28 +741,31 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 * <p>
+	 * Includes protected layers and respects visibility/locking.
+	 */
 	@Override
 	public void deleteSelectedItems() {
-		if (_layers != null) {
-			for (Layer layer : _layers) {
-				layer.deleteSelectedItems(this);
+		for (Layer layer : getAllLayers()) {
+			if (!layer.isVisible() || layer.isLocked()) {
+				continue;
 			}
+			layer.deleteSelectedItems(this);
 		}
 	}
-	
+
 	/**
-	 * Get all selected items, across all item lists.
-	 *
-	 * @param container the container they lived on.
+	 * {@inheritDoc}
+	 * <p>
+	 * Includes protected layers. Uses {@link Layer#getSelectedItems()} which may itself
+	 * honor layer locking depending on your Layer implementation.
 	 */
+	@Override
 	public List<AItem> getSelectedItems() {
 		ArrayList<AItem> selectedItems = new ArrayList<>();
 
-		if (_layers != null) {
-			for (Layer layer : _layers) {
-				selectedItems.addAll(layer.getSelectedItems());
-			}
+		for (Layer layer : getAllLayers()) {
+			selectedItems.addAll(layer.getSelectedItems());
 		}
 
 		return selectedItems;
@@ -657,20 +773,22 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * {@inheritDoc}
-     */
+	 * <p>
+	 * Includes protected layers and respects locking.
+	 */
 	@Override
 	public void selectAllItems(boolean select) {
-		if (_layers != null) {
-			for (Layer layer : _layers) {
-				layer.selectAllItems(select);
+		for (Layer layer : getAllLayers()) {
+			if (layer.isLocked()) {
+				continue;
 			}
+			layer.selectAllItems(select);
 		}
 	}
 
-
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void zoom(final double xmin, final double xmax, final double ymin, final double ymax) {
 		prepareToZoom();
@@ -679,32 +797,27 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		refresh();
 	}
 
-
 	/**
-	 * Get this container's tool bar.
-	 *
-	 * @return this container's tool bar, or <code>null</code>.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public IContainerToolBar getToolBar() {
-	    return _toolBar;
+		return _toolBar;
 	}
 
 	/**
-	 * Set this container's tool bar.
-	 *
-	 * @param toolBar the new toolbar.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void setToolBar(IContainerToolBar toolBar) {
-	    _toolBar = toolBar;
+		_toolBar = toolBar;
 	}
 
 	/**
 	 * Convert the mouse event location to a world point.
 	 *
-	 * @param me the mouse event
-	 * @return the world location of the mouse click
+	 * @param me mouse event
+	 * @return world location, or null
 	 */
 	protected Point2D.Double getLocation(MouseEvent me) {
 		if (me == null) {
@@ -717,53 +830,26 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * Gets the current mouse position.
-	 *
-	 * @return the current mouse position.
-	 */
-	public Point getCurrentMousePoint() {
-		return _currentMousePoint;
-	}
-
-
-	/**
-	 * Convenience method to update the location string in the toolbar.
-	 *
-	 * @param mouseEvent the causal event.
-	 * @param dragging   <code>true</code> if we are dragging
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void locationUpdate(MouseEvent mouseEvent, boolean dragging) {
-	    _lastLocationMouseEvent = mouseEvent;
+		Point2D.Double wp = getLocation(mouseEvent);
 
-	    Point2D.Double wp = getLocation(mouseEvent);
+		// Update toolbar text (if present)
+		if (_toolBar != null) {
+			_toolBar.setText(Point2DSupport.toString(wp));
+		}
 
-	    // Update toolbar text (if present)
-	    if (_toolBar != null) {
-	        _toolBar.setText(Point2DSupport.toString(wp));
-	    }
-
-	    // Update feedback (if present)
-	    if (_feedbackControl != null) {
-	        _feedbackControl.updateFeedback(mouseEvent, wp, dragging);
-	    }
-	}
-
-	/**
-	 * Force a redo of the feedback even though the mouse didn't move. This is
-	 * useful, for example, when control-N'ing events.
-	 */
-	@Override
-	public void redoFeedback() {
-		if (_lastLocationMouseEvent != null) {
-			locationUpdate(_lastLocationMouseEvent, false);
+		// Update feedback (if present)
+		if (_feedbackControl != null) {
+			_feedbackControl.updateFeedback(mouseEvent, wp, dragging);
 		}
 	}
 
+
 	/**
-	 * Get the view (internal frame) that holds this container.
-	 *
-	 * @return the view (internal frame) that holds this container.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public BaseView getView() {
@@ -771,16 +857,18 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * An item has changed.
-	 *
-	 * @param list     the list it was on (probably a z Layer).
-	 * @param drawable the drawable (item) that changed.
-	 * @param type     the type of the change.
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void setView(BaseView view) {
+		_view = view;
+	}
+
+	/**
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void itemChanged(Layer layer, AItem item, ItemChangeType type) {
-
-		
 
 		switch (type) {
 		case ADDED:
@@ -788,16 +876,16 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 		case SELECTED:
 		case DESELECTED:
-		    if (_toolBar != null) {
-		        _toolBar.updateButtonState();
-		    }
-		    break;
+			if (_toolBar != null) {
+				_toolBar.updateButtonState();
+			}
+			break;
 
 		case DOUBLECLICKED:
 			break;
 
 		case HIDDEN:
-				break;
+			break;
 
 		case MODIFIED:
 			break;
@@ -816,19 +904,16 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 		case SHOWN:
 			break;
-
 		}
 
-		// for now, lets not quibble
+		// conservative default: if an item changed, mark it dirty
 		if (item != null) {
 			item.setDirty(true);
 		}
 	}
 
 	/**
-	 * Sets the feedback pane. This is an optional alternative to a HUD.
-	 *
-	 * @param feedbackPane the feedback pane.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void setFeedbackPane(FeedbackPane feedbackPane) {
@@ -836,9 +921,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * Get the optional feedback pane.
-	 *
-	 * @return the feedbackPane
+	 * {@inheritDoc}
 	 */
 	@Override
 	public FeedbackPane getFeedbackPane() {
@@ -846,21 +929,15 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * Return the object that controls the container's feedback. You can and and
-	 * remove feedback providers using this object.
-	 *
-	 * @return the object that controls the container's feedback.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public FeedbackControl getFeedbackControl() {
 		return _feedbackControl;
 	}
 
-
 	/**
-	 * Get the underlying component, which is me.
-	 *
-	 * @return the underlying component, which is me.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public Component getComponent() {
@@ -868,9 +945,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * Set the after-draw drawable for this container.
-	 *
-	 * @param afterDraw the new after-draw drawable.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void setAfterDraw(IDrawable afterDraw) {
@@ -878,18 +953,14 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * get the after drawer
-	 *
-	 * @return the after drawer
+	 * @return after-draw drawable (may be null)
 	 */
 	public IDrawable getAfterDraw() {
 		return _afterDraw;
 	}
 
 	/**
-	 * Set the before-draw drawable.
-	 *
-	 * @param beforeDraw the new before-draw drawable.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void setBeforeDraw(IDrawable beforeDraw) {
@@ -897,51 +968,22 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * get the before drawer
-	 *
-	 * @return the before drawer
+	 * @return before-draw drawable (may be null)
 	 */
 	public IDrawable getBeforeDraw() {
 		return _beforeDraw;
 	}
 
 	/**
-	 * Set the optional magnification drawer
-	 *
-	 * @param mdraw the optional magnification drawer
-	 */
-	public void setMagnificationDraw(IDrawable mdraw) {
-		_magDraw = mdraw;
-	}
-
-	/**
-	 * Get the optional magnification drawer
-	 *
-	 * @return the optional magnification drawer
-	 */
-	public IDrawable getMagnificationDraw() {
-		return _magDraw;
-	}
-
-
-	/**
-	 * Get a location string for a point
-	 *
-	 * @param wp the world point in question
-	 * @return a location string for a point
+	 * {@inheritDoc}
 	 */
 	@Override
 	public String getLocationString(Point2D.Double wp) {
 		return Point2DSupport.toString(wp);
 	}
 
-
 	/**
-	 * Create a Point2D.Double or subclass thereof that is appropriate for this
-	 * container.
-	 *
-	 * @return a Point2D.Double or subclass thereof that is appropriate for this
-	 *         container.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public Point2D.Double getWorldPoint() {
@@ -949,9 +991,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * Get the current world system
-	 *
-	 * @return the world system
+	 * {@inheritDoc}
 	 */
 	@Override
 	public Rectangle2D.Double getWorldSystem() {
@@ -959,16 +999,16 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * Set the world system (does not cause redraw)
-	 *
-	 * @param wr the new world system
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void setWorldSystem(Rectangle2D.Double wr) {
 		_worldSystem = new Rectangle2D.Double(wr.x, wr.y, wr.width, wr.height);
 	}
 
-	// Get the transforms for world to local and vice versa
+	/**
+	 * Compute transforms for world <-> local conversion.
+	 */
 	protected void setAffineTransforms() {
 		Rectangle bounds = getInsetRectangle();
 
@@ -978,8 +1018,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 			return;
 		}
 
-		if ((_worldSystem == null) || (Math.abs(_worldSystem.width) < 1.0e-12)
-				|| (Math.abs(_worldSystem.height) < 1.0e-12)) {
+		if ((_worldSystem == null) || (Math.abs(_worldSystem.width) < 1.0e-12) || (Math.abs(_worldSystem.height) < 1.0e-12)) {
 			localToWorld = null;
 			worldToLocal = null;
 			return;
@@ -1000,10 +1039,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * Convert a pixel based polygon to a world based polygon.
-	 *
-	 * @param polygon      the pixel based polygon
-	 * @param worldPolygon the world based polygon
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void localToWorld(Polygon polygon, WorldPolygon worldPolygon) {
@@ -1017,10 +1053,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * Convert a world based polygon to a pixel based polygon.
-	 *
-	 * @param polygon      the pixel based polygon
-	 * @param worldPolygon the world based polygon
+	 * {@inheritDoc}
 	 */
 	@Override
 	public void worldToLocal(Polygon polygon, WorldPolygon worldPolygon) {
@@ -1031,26 +1064,17 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		}
 	}
 
-	@Override
-	public void setView(BaseView view) {
-		_view = view;
-	}
-
 	/**
-	 * The mouse scroll wheel has been moved.
-	 *
-	 * @param mouseEvent the causal event.
+	 * {@inheritDoc}
+	 * <p>
+	 * Default implementation does nothing; many views bind wheel zoom in the tool layer.
 	 */
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent mouseEvent) {
 	}
 
 	/**
-	 * Obtain the inset rectangle. Insets are the inert region around the
-	 * container's active area. Often there are no insets. Sometimes they are used
-	 * so that text can be written in the inset area, such as for plot view.
-	 *
-	 * @return the inset rectangle.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public Rectangle getInsetRectangle() {
@@ -1065,74 +1089,50 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		int right = b.width - _rMargin;
 		int bottom = b.height - _bMargin;
 
-		Rectangle screenRect = new Rectangle(left, top, right - left, bottom - top);
-		return screenRect;
-
+		return new Rectangle(left, top, right - left, bottom - top);
 	}
 
-	/**
-	 * Set the left margin
-	 *
-	 * @param lMargin the left margin
-	 */
 	@Override
 	public void setLeftMargin(int lMargin) {
 		_lMargin = lMargin;
 	}
 
-	/**
-	 * Set the top margin
-	 *
-	 * @param tMargin the top margin
-	 */
 	@Override
 	public void setTopMargin(int tMargin) {
 		_tMargin = tMargin;
 	}
 
-	/**
-	 * Set the right margin
-	 *
-	 * @param rMargin the right margin
-	 */
 	@Override
 	public void setRightMargin(int rMargin) {
 		_rMargin = rMargin;
 	}
 
-	/**
-	 * Set the bottom margin
-	 *
-	 * @param bMargin the bottom margin
-	 */
 	@Override
 	public void setBottomMargin(int bMargin) {
 		_bMargin = bMargin;
 	}
 
-	// copier
+	/**
+	 * Copy helper.
+	 */
 	private Rectangle2D.Double copy(Rectangle2D.Double wr) {
 		return new Rectangle2D.Double(wr.x, wr.y, wr.width, wr.height);
 	}
 
-
 	/**
-	 * Get the background image.
-	 *
-	 * @return the fully painted background image.
+	 * {@inheritDoc}
 	 */
 	@Override
 	public BufferedImage getImage() {
 		BufferedImage image = GraphicsUtils.getComponentImageBuffer(this);
 		GraphicsUtils.paintComponentOnImage(this, image);
 		return image;
-
 	}
 
 	private boolean _standardPanning = true;
 
 	@Override
-	public boolean isStandardPanning() {		// TODO Auto-generated method stub
+	public boolean isStandardPanning() {
 		return _standardPanning;
 	}
 

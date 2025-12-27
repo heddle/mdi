@@ -54,6 +54,12 @@ public interface IContainer {
 	 *         on first, i.e. connections are under other items.
 	 */
 	public Layer getConnectionLayer();
+	
+	/**
+	 * Get the default user content layer for this container.
+	 * @return the default user content layer (never null after construction)
+	 */
+	public Layer getDefaultLayer();
 
 	/**
 	 * Gets an z layer by name. Do not use for the annotation layer or 
@@ -261,11 +267,6 @@ public interface IContainer {
 	 */
 	public void locationUpdate(MouseEvent mouseEvent, boolean dragging);
 
-	/**
-	 * Force a redo of the feedback even though the mouse didn't move. This is
-	 * useful, for example, when control-N'ing events.
-	 */
-	public void redoFeedback();
 
 	/**
 	 * Get the view (internal frame) that holds this container.

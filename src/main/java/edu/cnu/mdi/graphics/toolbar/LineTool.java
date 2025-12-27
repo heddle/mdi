@@ -3,7 +3,6 @@ package edu.cnu.mdi.graphics.toolbar;
 import java.awt.Cursor;
 import java.awt.Point;
 
-import edu.cnu.mdi.container.DrawingContainer;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
@@ -41,7 +40,7 @@ public class LineTool extends AbstractLineRubberbandTool {
 
     @Override
     protected void createFromLine(IContainer owner, Point p0, Point p1) {
-        if (owner instanceof DrawingContainer dc) {
+        if (owner instanceof DrawingToolSupport dc) {
             // Create the item and place it on the annotation layer.
             AItem item = dc.createLineItem(owner.getAnnotationLayer(), p0, p1);
             if (item != null) {
