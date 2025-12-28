@@ -344,26 +344,6 @@ public interface IContainer {
 	 */
 	public void setBeforeDraw(IDrawable beforeDraw);
 
-
-	/**
-	 * Get a location string for a point
-	 *
-	 * @param wp the world point in question
-	 * @return a location string for a point
-	 */
-	public String getLocationString(Point2D.Double wp);
-
-
-	/**
-	 * Create a Point2D.Double or subclass thereof that is appropriate for this
-	 * container. For example, a map application might return a subclass of
-	 * Point2D.Double that deals with latitude and longitude.
-	 *
-	 * @return a Point2D.Double or subclass thereof that is appropriate for this
-	 *         container.
-	 */
-	public Point2D.Double getWorldPoint();
-
 	/**
 	 * Get the current world system
 	 *

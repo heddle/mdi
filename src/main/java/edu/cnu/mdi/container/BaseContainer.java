@@ -294,7 +294,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 */
 	public void clipBounds(Graphics g) {
 		Rectangle b = getBounds();
-		g.setClip(0, 0, b.width, b.height);
+		g.setClip(b.x, b.y, b.width, b.height);
 	}
 
 	/**
@@ -968,22 +968,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 */
 	public IDrawable getBeforeDraw() {
 		return _beforeDraw;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public String getLocationString(Point2D.Double wp) {
-		return Point2DSupport.toString(wp);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Point2D.Double getWorldPoint() {
-		return new Point2D.Double();
 	}
 
 	/**
