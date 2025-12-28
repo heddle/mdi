@@ -670,11 +670,7 @@ public class BaseView extends JInternalFrame
         final Rectangle2D.Double worldSystem;
 
         final Color background;
-        final int lmargin;
-        final int tmargin;
-        final int rmargin;
-        final int bmargin;
-
+ 
         final JComponent splitWestComponent;
 
         final long toolbarBits;
@@ -695,10 +691,6 @@ public class BaseView extends JInternalFrame
                                int height,
                                Rectangle2D.Double worldSystem,
                                Color background,
-                               int lmargin,
-                               int tmargin,
-                               int rmargin,
-                               int bmargin,
                                JComponent splitWestComponent,
                                long toolbarBits,
                                Rubberband.Policy boxZoomPolicy) {
@@ -717,10 +709,6 @@ public class BaseView extends JInternalFrame
             this.height = height;
             this.worldSystem = worldSystem;
             this.background = background;
-            this.lmargin = lmargin;
-            this.tmargin = tmargin;
-            this.rmargin = rmargin;
-            this.bmargin = bmargin;
             this.splitWestComponent = splitWestComponent;
             this.toolbarBits = toolbarBits;
             this.boxZoomPolicy = boxZoomPolicy;
@@ -774,11 +762,6 @@ public class BaseView extends JInternalFrame
 
             Color background = PropertySupport.getBackground(props);
 
-            int lmargin = PropertySupport.getLeftMargin(props);
-            int tmargin = PropertySupport.getTopMargin(props);
-            int rmargin = PropertySupport.getRightMargin(props);
-            int bmargin = PropertySupport.getBottomMargin(props);
-
             JComponent west = PropertySupport.getSplitWestComponent(props);
 
             long bits = PropertySupport.getToolbarBits(props);
@@ -790,7 +773,6 @@ public class BaseView extends JInternalFrame
                     left, top, width, height,
                     worldSystem,
                     background,
-                    lmargin, tmargin, rmargin, bmargin,
                     west,
                     bits,
                     policy);
@@ -907,13 +889,6 @@ public class BaseView extends JInternalFrame
                 throw new IllegalStateException("ViewContentBuilder requires a container-backed view.");
             }
 
-            // Configure margins if supported.
-            if (container instanceof BaseContainer) {
-                container.setLeftMargin(cfg.lmargin);
-                container.setTopMargin(cfg.tmargin);
-                container.setRightMargin(cfg.rmargin);
-                container.setBottomMargin(cfg.bmargin);
-            }
 
             // Configure background.
             if (cfg.background != null && container.getComponent() != null) {

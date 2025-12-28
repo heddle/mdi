@@ -128,11 +128,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 */
 	protected FeedbackControl _feedbackControl;
 
-	// World <-> local transforms and insets/margins.
-	private int _lMargin = 0;
-	private int _tMargin = 0;
-	private int _rMargin = 0;
-	private int _bMargin = 0;
 
 	/** Transform local(screen) -> world. */
 	protected AffineTransform localToWorld;
@@ -294,7 +289,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 */
 	public void clipBounds(Graphics g) {
 		Rectangle b = getBounds();
-		g.setClip(b.x, b.y, b.width, b.height);
+		g.setClip(0, 0, b.width, b.height);
 	}
 
 	/**
@@ -379,7 +374,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		if (_annotationLayer != null) {
 			_annotationLayer.draw(g2, this);
 		}
-
+		
+	
 		// always clean after drawing
 		setDirty(false);
 	}
@@ -990,7 +986,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 * Compute transforms for world <-> local conversion.
 	 */
 	protected void setAffineTransforms() {
-		Rectangle bounds = getInsetRectangle();
+		Rectangle bounds = getBounds();
+		bounds = new Rectangle(0, 0, bounds.width, bounds.height);
 
 		if ((bounds == null) || (bounds.width < 1) || (bounds.height < 1)) {
 			localToWorld = null;
@@ -1051,45 +1048,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 */
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent mouseEvent) {
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Rectangle getInsetRectangle() {
-		Rectangle b = getComponent().getBounds();
-		if (b == null) {
-			return null;
-		}
-
-		// ignore b.x and b.y as usual
-		int left = _lMargin;
-		int top = _tMargin;
-		int right = b.width - _rMargin;
-		int bottom = b.height - _bMargin;
-
-		return new Rectangle(left, top, right - left, bottom - top);
-	}
-
-	@Override
-	public void setLeftMargin(int lMargin) {
-		_lMargin = lMargin;
-	}
-
-	@Override
-	public void setTopMargin(int tMargin) {
-		_tMargin = tMargin;
-	}
-
-	@Override
-	public void setRightMargin(int rMargin) {
-		_rMargin = rMargin;
-	}
-
-	@Override
-	public void setBottomMargin(int bMargin) {
-		_bMargin = bMargin;
 	}
 
 	/**

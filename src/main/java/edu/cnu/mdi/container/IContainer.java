@@ -358,42 +358,7 @@ public interface IContainer {
 	 */
 	public void setWorldSystem(Rectangle2D.Double wr);
 
-	/**
-	 * Obtain the inset rectangle. Insets are the inert region around the
-	 * container's active area. Often there are no insets. Sometimes they are used
-	 * so that text can be written in the inset area, such as for plot view.
-	 *
-	 * @return the inset rectangle.
-	 */
-	public Rectangle getInsetRectangle();
 
-	/**
-	 * Set the left margin for containers with nonzero insets.
-	 *
-	 * @param lMargin the left margin
-	 */
-	public void setLeftMargin(int lMargin);
-
-	/**
-	 * Set the top margin for containers with nonzero insets.
-	 *
-	 * @param tMargin the top margin
-	 */
-	public void setTopMargin(int tMargin);
-
-	/**
-	 * Set the right margin for containers with nonzero insets.
-	 *
-	 * @param rMargin the right margin
-	 */
-	public void setRightMargin(int rMargin);
-
-	/**
-	 * Set the bottom margin for containers with nonzero insets.
-	 *
-	 * @param bMargin the bottom margin
-	 */
-	public void setBottomMargin(int bMargin);
 
 	public boolean isStandardPanning();
 	

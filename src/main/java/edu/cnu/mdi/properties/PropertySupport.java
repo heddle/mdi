@@ -21,7 +21,6 @@ public class PropertySupport {
 	public static final String ASPECT = "ASPECT";
 	public static final String BACKGROUND = "BACKGROUND";
 	public static final String BACKGROUNDIMAGE = "BACKGROUNDIMAGE";
-	public static final String BOTTOMMARGIN = "BOTTOMMARGIN";
 	public static final String BOXZOOMRBPOLICY = "BOXZOOMRBPOLICY";
 	public static final String CLOSABLE = "CLOSABLE";
 	public static final String COMPONENT = "COMPONENT";
@@ -33,7 +32,6 @@ public class PropertySupport {
 	public static final String HEIGHT = "HEIGHT";
 	public static final String ICONIFIABLE = "ICONIFIABLE";
 	public static final String LEFT = "LEFT";
-	public static final String LEFTMARGIN = "LEFTMARGIN";
 	public static final String LINECOLOR = "LINECOLOR";
 	public static final String LINESTYLE = "LINESTYLE";
 	public static final String LINEWIDTH = "LINEWIDTH";
@@ -43,7 +41,6 @@ public class PropertySupport {
 	public static final String PROPNAME = "PROPNAME";
 	public static final String RADIUS = "RADIUS";
 	public static final String RESIZABLE = "RESIZABLE";
-	public static final String RIGHTMARGIN = "RIGHTMARGIN";
 	public static final String ROTATABLE = "ROTATABLE";
 	public static final String SCROLLABLE = "SCROLLABLE";
 	public static final String SPLITWESTCOMPONENT = "SPLITWESTCOMPONENT";
@@ -54,7 +51,6 @@ public class PropertySupport {
 	public static final String TITLE = "TITLE";
 	public static final String TOOLBARBITS = "TOOLBARBITS";
 	public static final String TOP = "TOP";
-	public static final String TOPMARGIN = "TOPMARGIN";
 	public static final String USERDATA = "USERDATA";
 	public static final String VISIBLE = "VISIBLE";
 	public static final String VVLOCATION = "VVLOCATION";
@@ -155,46 +151,6 @@ public class PropertySupport {
 	 */
 	public static String getBackgroundImage(Properties props) {
 		return getString(props, BACKGROUNDIMAGE, null);
-	}
-
-	/**
-	 * Get the bottom margin in pixels.
-	 *
-	 * @param props the properties
-	 * @return the bottom margin. On error, return 0.
-	 */
-	public static int getBottomMargin(Properties props) {
-		return getInt(props, BOTTOMMARGIN, 0);
-	}
-
-	/**
-	 * Get the top margin in pixels.
-	 *
-	 * @param props the properties
-	 * @return the top margin. On error, return 0.
-	 */
-	public static int getTopMargin(Properties props) {
-		return getInt(props, TOPMARGIN, 0);
-	}
-
-	/**
-	 * Get the left margin in pixels.
-	 *
-	 * @param props the properties
-	 * @return the left margin. On error, return 0.
-	 */
-	public static int getLeftMargin(Properties props) {
-		return getInt(props, LEFTMARGIN, 0);
-	}
-
-	/**
-	 * Get the right margin in pixels.
-	 *
-	 * @param props the properties
-	 * @return the right margin. On error, return 0.
-	 */
-	public static int getRightMargin(Properties props) {
-		return getInt(props, RIGHTMARGIN, 0);
 	}
 
 	/**
