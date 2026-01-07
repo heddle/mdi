@@ -1,0 +1,94 @@
+package edu.cnu.mdi.splot.example;
+
+import java.awt.Color;
+
+import org.apache.commons.math3.special.Erf;
+
+import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
+import edu.cnu.mdi.splot.fit.Evaluator;
+import edu.cnu.mdi.splot.pdata.Curve;
+import edu.cnu.mdi.splot.pdata.FitVectors;
+import edu.cnu.mdi.splot.pdata.PlotData;
+import edu.cnu.mdi.splot.pdata.PlotDataException;
+import edu.cnu.mdi.splot.pdata.PlotDataType;
+import edu.cnu.mdi.splot.plot.HorizontalLine;
+import edu.cnu.mdi.splot.plot.PlotParameters;
+
+@SuppressWarnings("serial")
+public class ErfcTest extends AExample {
+
+	@Override
+	protected PlotData createPlotData() throws PlotDataException {
+	String[] curveNames = {"Erfc Fit" };
+	   return new PlotData(PlotDataType.XYEXYE, curveNames, null);
+	}
+
+	@Override
+	protected String getXAxisLabel() {
+		return "<html>DAC Threshold";
+	}
+
+	@Override
+	protected String getYAxisLabel() {
+		return "<html>Occupancy";
+	}
+
+	@Override
+	protected String getPlotTitle() {
+		return "<html>p4 U1, BCO 128ns, BLR on, low gain, 125 ns, chan 0";
+	}
+
+	@Override
+	public void fillData() {
+		PlotData plotData = canvas.getPlotData();
+		double A = 2.0;
+ 		double x0 = 1.0;
+ 		double sigma = 0.5;
+ 		double B = 0.1;
+ 		int n = 100;
+ 		
+ 		Evaluator erfcEval = (double x) -> {
+ 			double z = (x - x0) / sigma;
+ 			return A * Erf.erfc(z) + B;
+ 		};
+ 		
+ 		FitVectors testData = FitVectors.testData(erfcEval, -4.0, 4.0, n, 3.0, 3.0);
+    	Curve curve = (Curve) plotData.getFirstCurve();
+		
+	   	double e[] = new double[n];
+			for (int i = 0; i < n; i++) {
+				//convert weight to error
+		    	e[i] = 1.0 / Math.sqrt(1.0e-12 + testData.w[i]);		    	
+			}
+		curve.addAll(testData.x, testData.y, e);
+
+ 	}
+
+	@Override
+	public void setParameters() {
+		PlotData plotData = canvas.getPlotData();
+		Curve curve = (Curve) plotData.getFirstCurve();
+		curve.setCurveMethod(CurveDrawingMethod.ERFC);
+		PlotParameters params = canvas.getParameters();
+		params.addPlotLine(new HorizontalLine(canvas, 0));
+		params.addPlotLine(new HorizontalLine(canvas, 1));
+		curve.getStyle().setFillColor(new Color(0, 0, 240, 128));
+		String extra[] = { "Sample annotation string",
+				"Sample annotation string",
+				"This box, like the Legend, is draggable." };
+		params.setExtraStrings(extra);
+	}
+	
+	public static void main(String arg[]) {
+
+		//since the GUI is involved, start things on the event dispatch thread
+		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				ErfcTest example = new ErfcTest();
+				example.setVisible(true);
+			}
+		});
+
+	}
+}
