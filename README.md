@@ -5,32 +5,18 @@ modular scientific and visualization applications.
 It is designed so that each window or tool (a “document”) can run independently
 while sharing a common model, controller, and messaging infrastructure.
 
-This repository currently contains the initial project skeleton and will expand
-as the core functionality is implemented.
-
 ---
 
-## 📁 Project Structure
-
-mdi/
-├── pom.xml
-├── src/
-│ ├── main/
-│ │ ├── java/
-│ │ │ └── edu/cnu/mdi/
-│ │ │ ├── control/
-│ │ │ ├── model/
-│ │ │ ├── vis/
-│ │ │ └── demo/
-│ │ └── resources/
-│ └── test/
-│ └── java/
-└── lib/ (optional — used only for local JARs)
-
-- **model** — Application state, data structures, physics or geometry models  
-- **control** — Controller logic, event routing, UI coordination  
-- **vis** — Visualization components (2D/3D, rendering, panels, views)  
-- **demo** — Simple examples and test windows that exercise the framework  
+# splot
+splot is a Swing-based plotting library. As such, all UI notifications and rendering must occur
+on the Swing Event Dispatch Thread (EDT). Internally, curve updates may invalidate cached fits
+and trigger repaints, so care is taken to preserve this contract. We believe splot is thread-safe and
+that plot added can be added from any thread. Several of the example plots test the thead safety.
+The add and addall methods for the curces extending the abstract ACurve class can be called from any thread.
+If called on the EDT the new data are applied immediately and a single DATA change event is fired.
+If called off the EDT (i.e., on a background worker thread) the data are enqueued into a lock-free
+staging queue, and a coalesced drain pass is scheduled on the EDT. The drain applies data in batches
+and fires one consolidated DATA change event, preventing repaint storms.
 
 ---
 
