@@ -155,10 +155,10 @@ public class FitVectors {
 		return x != null && y != null && x.length == y.length && x.length >= 2
 				&& (w == null || w.length == x.length);
 	}
-	
+
 	/**
 	 * Generate test data (with randomness)for fitting.
-	 * 
+	 *
 	 * @param evaluator the evaluator to generate y values
 	 * @param xStart    starting x value
 	 * @param xEnd      ending x value
@@ -218,5 +218,5 @@ public class FitVectors {
 
 	    return new FitVectors(x, y, w);
 	}
-	
+
 }

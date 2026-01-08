@@ -3,7 +3,6 @@ package edu.cnu.mdi.graphics.toolbar;
 import java.awt.Dimension;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 
 import edu.cnu.mdi.graphics.ImageManager;
@@ -48,7 +47,7 @@ public class ToolToggleButton extends JToggleButton {
 
     	this.toolId = java.util.Objects.requireNonNull(toolId, "toolId");
     	java.util.Objects.requireNonNull(controller, "controller");
-    	
+
         setFocusPainted(false);
 		setToolTipText(tooltip);
 
@@ -61,20 +60,25 @@ public class ToolToggleButton extends JToggleButton {
 			}
 
 		}
-        
+
         Dimension d = new Dimension(w, h);
         setPreferredSize(d);
         setMinimumSize(d);
         setMaximumSize(d);
 
         addActionListener(e -> {
-            if (programmatic) return;
-            if (isSelected()) controller.select(toolId);
-            else controller.resetToDefault();
+            if (programmatic) {
+				return;
+			}
+            if (isSelected()) {
+				controller.select(toolId);
+			} else {
+				controller.resetToDefault();
+			}
         });
 
     }
-    
+
 
     public void setSelectedProgrammatically(boolean selected) {
         programmatic = true;

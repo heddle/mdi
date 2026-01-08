@@ -11,6 +11,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
 
+import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
@@ -18,24 +19,25 @@ import javax.swing.JScrollPane;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import edu.cnu.mdi.component.CommonBorder;
+import edu.cnu.mdi.component.EnumComboBox;
+import edu.cnu.mdi.dialog.IColorChangeListener;
+import edu.cnu.mdi.graphics.style.IStyled;
+import edu.cnu.mdi.graphics.style.LineStyle;
+import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.fit.FitResult;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
-import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
-import edu.cnu.mdi.splot.style.EnumComboBox;
-import edu.cnu.mdi.splot.style.IStyled;
-import edu.cnu.mdi.splot.style.LineStyle;
 import edu.cnu.mdi.splot.style.StyleEditorPanel;
-import edu.cnu.mdi.splot.style.SymbolType;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.Environment;
 
 /**
  * Used to edit parameters for curves on a plot
- * 
+ *
  * @author heddle
  *
  */
@@ -63,7 +65,7 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 
 	/**
 	 * A panel for editing data sets
-	 * 
+	 *
 	 * @param plotCanvas the plot being edited
 	 */
 	public CurveEditorPanel(PlotCanvas plotCanvas) {
@@ -92,6 +94,8 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 			_stylePanel.setStyle(curve.getStyle());
 			_fitPanel.setFit(curve);
 			_fitPanel.fitSpecific(curve.getCurveDrawingMethod());
+
+			syncSelectorsFromCurve(curve);
 		}
 
 		_fitPanel.reconfigure(curve);
@@ -107,7 +111,8 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 		setLayout(new BorderLayout());
 
 		JPanel sp = new JPanel();
-		sp.setLayout(new VerticalFlowLayout());
+		sp.setLayout(new BoxLayout(sp, BoxLayout.Y_AXIS));
+		sp.setAlignmentX(Component.LEFT_ALIGNMENT);
 		addList(sp);
 		addStyle(sp);
 		addFit(sp);
@@ -123,7 +128,7 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 		nPanel.setLayout(new BorderLayout(0, 4));
 
 		Collection<ACurve> curves = _plotCanvas.getPlotData().getCurves();
-		final DefaultListModel<ACurve> model = new DefaultListModel<ACurve>();
+		final DefaultListModel<ACurve> model = new DefaultListModel<>();
 		for (ACurve curve : curves) {
 			model.addElement(curve);
 		}
@@ -157,8 +162,7 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 		if (_curveTable != null) {
 			try {
 				_curveTable.getSelectionModel().setSelectionInterval(0, 0);
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
@@ -192,11 +196,9 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 
 					if (component == _stylePanel.getSymbolColor()) {
 						curve.getStyle().setFillColor(_stylePanel.getSymbolColor().getColor());
-					}
-					else if (component == _stylePanel.getBorderColor()) {
+					} else if (component == _stylePanel.getBorderColor()) {
 						curve.getStyle().setBorderColor(_stylePanel.getBorderColor().getColor());
-					}
-					else if (component == _stylePanel.getFitLineColor()) {
+					} else if (component == _stylePanel.getFitLineColor()) {
 						curve.getStyle().setLineColor(_stylePanel.getFitLineColor().getColor());
 					}
 					_plotCanvas.repaint();
@@ -204,7 +206,7 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 
 			}
 
-		};	
+		};
 
 		if (_stylePanel.getSymbolColor() != null) {
 			_stylePanel.getSymbolColor().setColorListener(iccl);
@@ -243,8 +245,7 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 
 		if (Environment.getInstance().isLinux()) {
 			_textArea.setText("<body style=\"font-size:10px;color:blue\">CNU sPlot</body>");
-		}
-		else {
+		} else {
 			_textArea.setText("<body style=\"font-size:11px;color:blue\">CNU sPlot</body>");
 		}
 		JScrollPane scrollPane = new JScrollPane(_textArea);
@@ -278,39 +279,40 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 
 		Object source = e.getSource();
 		if (source == _stylePanel.getSymbolSelector()) {
-			EnumComboBox ecb = (EnumComboBox) source;
-			SymbolType stype = SymbolType.getValue((String) ecb.getSelectedItem());
+			@SuppressWarnings("unchecked")
+			EnumComboBox<SymbolType> ecb = (EnumComboBox<SymbolType>) source;
+			SymbolType stype = ecb.getSelectedEnum(); // may be null if extraChoiceLabel used
+
 
 			if (curve.getStyle().getSymbolType() != stype) {
 				curve.getStyle().setSymbolType(stype);
 				_plotCanvas.repaint();
 			}
 
-		}
-		else if (source == _stylePanel.getBorderSelector()) {
-			EnumComboBox ecb = (EnumComboBox) source;
-			LineStyle lineStyle = LineStyle.getValue((String) ecb.getSelectedItem());
+		} else if (source == _stylePanel.getBorderSelector()) {
+		    @SuppressWarnings("unchecked")
+		    EnumComboBox<LineStyle> ecb = (EnumComboBox<LineStyle>) source;
+		    LineStyle lineStyle = ecb.getSelectedEnum();
 
-			if (curve.getStyle().getLineStyle() != lineStyle) {
-				curve.getStyle().setLineStyle(lineStyle);
-				_plotCanvas.repaint();
-			}
+		    if (curve.getStyle().getLineStyle() != lineStyle) {
+		        curve.getStyle().setLineStyle(lineStyle);
+		        _plotCanvas.repaint();
+		    }
 
-		}
-		else if (source == _fitPanel.getFitSelector()) {
-			EnumComboBox ecb = (EnumComboBox) source;
-			CurveDrawingMethod fitType = CurveDrawingMethod.getValue((String) ecb.getSelectedItem());
+		} else if (source == _fitPanel.getFitSelector()) {
+		    @SuppressWarnings("unchecked")
+		    EnumComboBox<CurveDrawingMethod> ecb = (EnumComboBox<CurveDrawingMethod>) source;
+		    CurveDrawingMethod fitType = ecb.getSelectedEnum();
 
-			if (curve.getCurveDrawingMethod() != fitType) {
-				curve.setCurveMethod(fitType);
-				_fitPanel.fitSpecific(curve.getCurveDrawingMethod());
+		    if (curve.getCurveDrawingMethod() != fitType) {
+		        curve.setCurveMethod(fitType);
+		        _fitPanel.fitSpecific(curve.getCurveDrawingMethod());
 
-				_fitPanel.reconfigure(curve);
-				validate();
-				_fitPanel.repaint();
-				_plotCanvas.repaint();
-			}
-
+		        _fitPanel.reconfigure(curve);
+		        validate();
+		        _fitPanel.repaint();
+		        _plotCanvas.repaint();
+		    }
 		}
 
 	}
@@ -389,9 +391,37 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 				hd.setDrawStatisticalErrors(statErr);
 				_plotCanvas.repaint();
 			}
-			
+
 		}
 
 	}
+
+	private void syncSelectorsFromCurve(ACurve curve) {
+	    if (curve == null) {
+			return;
+		}
+
+	    // Symbol
+	    if (_stylePanel.getSymbolSelector() != null) {
+	        @SuppressWarnings("unchecked")
+	        EnumComboBox<SymbolType> cb = _stylePanel.getSymbolSelector();
+	        cb.setSelectedItem(curve.getStyle().getSymbolType());
+	    }
+
+	    // Line style
+	    if (_stylePanel.getBorderSelector() != null) {
+	        @SuppressWarnings("unchecked")
+	        EnumComboBox<LineStyle> cb = _stylePanel.getBorderSelector();
+	        cb.setSelectedItem(curve.getStyle().getLineStyle());
+	    }
+
+	    // Fit / drawing method
+	    if (_fitPanel.getFitSelector() != null) {
+	        @SuppressWarnings("unchecked")
+	        EnumComboBox<CurveDrawingMethod> cb = _fitPanel.getFitSelector();
+	        cb.setSelectedItem(curve.getCurveDrawingMethod());
+	    }
+	}
+
 
 }

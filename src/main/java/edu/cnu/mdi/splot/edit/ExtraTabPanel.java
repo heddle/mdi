@@ -11,6 +11,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import edu.cnu.mdi.component.CommonBorder;
+import edu.cnu.mdi.dialog.ColorLabel;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
@@ -106,7 +107,9 @@ public class ExtraTabPanel extends JPanel {
 			for (String s : lines) {
 				if (s != null) {
 					String t = s.trim();
-					if (!t.isEmpty()) cleaned.add(t);
+					if (!t.isEmpty()) {
+						cleaned.add(t);
+					}
 				}
 			}
 			_params.setExtraStrings(cleaned.toArray(new String[0]));

@@ -46,19 +46,19 @@ public class ErfcTest extends AExample {
  		double sigma = 0.5;
  		double B = 0.1;
  		int n = 100;
- 		
+
  		Evaluator erfcEval = (double x) -> {
  			double z = (x - x0) / sigma;
  			return A * Erf.erfc(z) + B;
  		};
- 		
+
  		FitVectors testData = FitVectors.testData(erfcEval, -4.0, 4.0, n, 3.0, 3.0);
     	Curve curve = (Curve) plotData.getFirstCurve();
-		
+
 	   	double e[] = new double[n];
 			for (int i = 0; i < n; i++) {
 				//convert weight to error
-		    	e[i] = 1.0 / Math.sqrt(1.0e-12 + testData.w[i]);		    	
+		    	e[i] = 1.0 / Math.sqrt(1.0e-12 + testData.w[i]);
 			}
 		curve.addAll(testData.x, testData.y, e);
 
@@ -78,7 +78,7 @@ public class ErfcTest extends AExample {
 				"This box, like the Legend, is draggable." };
 		params.setExtraStrings(extra);
 	}
-	
+
 	public static void main(String arg[]) {
 
 		//since the GUI is involved, start things on the event dispatch thread

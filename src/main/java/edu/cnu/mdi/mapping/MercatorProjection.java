@@ -39,7 +39,7 @@ public class MercatorProjection implements IMapProjection {
 
     /** Active theme used for rendering. */
     private MapTheme theme;
-    
+
     /**
      * Central longitude (λ₀) in radians. Longitude values are mapped to
      * projection X as {@code x = wrap(λ - λ₀)}, so λ₀ is the longitude that
@@ -62,7 +62,7 @@ public class MercatorProjection implements IMapProjection {
     private static double mercatorY(double latitude) {
         return Math.log(Math.tan((Math.PI / 4.0) + (latitude / 2.0)));
     }
-    
+
     /**
      * Get the central longitude λ₀ (in radians).
      *
@@ -84,7 +84,7 @@ public class MercatorProjection implements IMapProjection {
         // Use the same normalization helper used elsewhere
         this.lambda0 = wrapLongitude(centralLongitude);
     }
-    
+
     /**
      * Test to see if the line between two longitudes crosses the
      * seam (the line at the central longitude). This is a test
@@ -98,14 +98,14 @@ public class MercatorProjection implements IMapProjection {
     public boolean crossesSeam(double lon1, double lon2) {
 		double d1 = lon1 - lambda0;
 		double d2 = lon2 - lambda0;
-		
+
 		d1 = wrapLongitude(d1);
 		d2 = wrapLongitude(d2);
 
 
 //		return (d1 * d2 < 0) && (Math.abs(d1 - d2) > Math.PI);
 		return Math.abs(d1 - d2) > Math.PI;
-    	
+
     }
 
     @Override

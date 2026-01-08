@@ -50,10 +50,10 @@ public class StraightLine extends AExample {
 	@Override
 	public void setParameters() {
 		PlotData plotData = canvas.getPlotData();
-		
+
 		//symbol fill color
 		plotData.getCurve(0).getStyle().setFillColor(new Color(32, 32, 32, 64));
-		
+
 		//symbol border color
 		Curve curve = (Curve) plotData.getCurve(0);
 		curve.getStyle().setBorderColor(Color.darkGray);

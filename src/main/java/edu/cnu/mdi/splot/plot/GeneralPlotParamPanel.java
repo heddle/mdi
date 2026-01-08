@@ -21,7 +21,7 @@ public class GeneralPlotParamPanel extends APreferencePanel {
 
 	/**
 	 * For editing basic parameters
-	 * 
+	 *
 	 * @param canvas the plot canvas
 	 */
 	public GeneralPlotParamPanel(PlotCanvas canvas) {

@@ -35,7 +35,7 @@ public class CurveTable extends JTable {
 
 	/**
 	 * Create a table for toggling visibility (probably of logical layers)
-	 * 
+	 *
 	 * @param plotCanvas the plot
 	 */
 	public CurveTable(PlotCanvas plotCanvas) {
@@ -70,7 +70,7 @@ public class CurveTable extends JTable {
 
 	/**
 	 * Get the curve data model
-	 * 
+	 *
 	 * @return the curve data model
 	 */
 	public CurveDataModel getCurveModel() {
@@ -164,7 +164,7 @@ public class CurveTable extends JTable {
 
 	/**
 	 * Get the selected curve
-	 * 
+	 *
 	 * @return the selected curve
 	 */
 	public ACurve getSelectedCurve() {
@@ -174,7 +174,7 @@ public class CurveTable extends JTable {
 
 	/**
 	 * Get the scroll pane for this data table
-	 * 
+	 *
 	 * @return the scroll pane for this data table
 	 */
 	public JScrollPane getScrollPane() {

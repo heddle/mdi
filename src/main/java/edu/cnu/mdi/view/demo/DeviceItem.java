@@ -1,6 +1,6 @@
 package edu.cnu.mdi.view.demo;
 
-import java.awt.Graphics2D;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -23,14 +23,14 @@ import edu.cnu.mdi.item.RectangleItem;
 public class DeviceItem extends RectangleItem {
 	// icon size in pixels
 	public static final int DEVICESIZE = 48;
-	
+
 	// The device symbol represented by this item
 	private EDeviceSymbol symbol;
 
-	
+
 	// instance number for this device
 	private int instanceNumber;
-	
+
 	// map to keep track of device counts by symbol
 	private static final Map<EDeviceSymbol, Integer> countMap = new HashMap<>();
 
@@ -51,13 +51,13 @@ public class DeviceItem extends RectangleItem {
 		setLocked(false);
 		setConnectable(true);
 	}
-	
+
 	// Increment the count for the given device symbol in the map
 	private void incrementMapCount(EDeviceSymbol symbol) {
 		int count = getMapCount(symbol);
 		countMap.put(symbol, count + 1);
 	}
-	
+
 	// Get the count for the given device symbol from the map
 	private int getMapCount(EDeviceSymbol symbol) {
 		return countMap.getOrDefault(symbol, 0);
@@ -67,9 +67,9 @@ public class DeviceItem extends RectangleItem {
 	 * Draw the device icon centered in the item's bounds.
 	 */
 	@Override
-	public void drawItem(Graphics2D g2, IContainer container) {
+	public void drawItem(Graphics g2, IContainer container) {
 	    Rectangle pxBounds = getBounds(container);
-	    
+
 	    //calculate icon size (and item bounds) based on approximate  zoom factor
 
 		int size = (int) Math.round(DEVICESIZE*container.approximateZoomFactor());
@@ -111,7 +111,7 @@ public class DeviceItem extends RectangleItem {
 		container.localToWorld(pxBounds, wr);
 		return wr;
 	}
-		
+
 	/**
 	 * Add any appropriate feedback.
 	 *
@@ -130,7 +130,7 @@ public class DeviceItem extends RectangleItem {
 
 		// add device type feedback in yellow (to show how)
 		feedbackStrings.add("$yellow$" + getDisplayName());
-		
+
 		//list items connected to this device
 		Set<AItem> connectedItems = ConnectionManager.getInstance().getConnectedItems(this);
 		if (!connectedItems.isEmpty()) {

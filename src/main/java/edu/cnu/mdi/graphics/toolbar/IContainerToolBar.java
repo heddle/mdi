@@ -16,7 +16,7 @@ public interface IContainerToolBar {
 
     /** Return to the configured default tool (typically pointer). */
     void resetDefaultSelection();
-    
+
  // ------------------------------------------------------------
     // Convenience extension hooks (default no-ops)
     // ------------------------------------------------------------

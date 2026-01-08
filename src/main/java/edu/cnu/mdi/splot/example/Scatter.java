@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.SwingUtilities;
 
+import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.PlotData;
@@ -19,7 +20,6 @@ import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.HorizontalLine;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 import edu.cnu.mdi.splot.plot.VerticalLine;
-import edu.cnu.mdi.splot.style.SymbolType;
 
 /**
  * <p>
@@ -77,7 +77,7 @@ public class Scatter extends AExample {
 
 	/** Maximum number of queued points applied to the model per drain tick. */
 	private static final int MAX_DRAIN_PER_TICK = 3000;
-	
+
 	/** Maximum number of points to retain in the curve (demonstrate stop enquinmg). */
 	private static final int MAX_POINTS = 50000;
 
@@ -177,10 +177,7 @@ public class Scatter extends AExample {
 	 */
 	private void startDaq() {
 		final Curve c = curve;
-		if (c == null) {
-			return;
-		}
-		if (!running.compareAndSet(false, true)) {
+		if ((c == null) || !running.compareAndSet(false, true)) {
 			return;
 		}
 

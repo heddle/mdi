@@ -6,6 +6,7 @@ import java.awt.Shape;
 import java.util.Collection;
 import java.util.Vector;
 
+import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.PlotData;
 
@@ -16,7 +17,7 @@ public class DataDrawer {
 
 	/**
 	 * Create a DataDrawer
-	 * 
+	 *
 	 * @param plotCanvas the owner canvas
 	 */
 	public DataDrawer(PlotCanvas plotCanvas) {
@@ -26,23 +27,19 @@ public class DataDrawer {
 	/**
 	 * Draw a data set on the canvas.Draws the optional fixed lines, then the
 	 * curves.
-	 * 
+	 *
 	 * @param g  the graphics context
 	 * @param plotData the PlotData to draw.
 	 */
 	public void draw(Graphics g, PlotData plotData) {
 
 		//if no curves, bail
-		if ((plotData == null) || plotData.size() < 1) {
-			return;
-		}
-
 		//clip checks
-		if (!(g.getClip().intersects(_plotCanvas.getActiveBounds()))) {
+		if ((plotData == null) || plotData.size() < 1 || !(g.getClip().intersects(_plotCanvas.getActiveBounds()))) {
 			return;
 		}
 
-		Rectangle clipRect = GraphicsUtilities.minClip(g.getClip(), _plotCanvas.getActiveBounds());
+		Rectangle clipRect = GraphicsUtils.minClip(g.getClip(), _plotCanvas.getActiveBounds());
 		if ((clipRect == null) || (clipRect.width == 0) || (clipRect.height == 0)) {
 			return;
 		}
@@ -59,7 +56,7 @@ public class DataDrawer {
 				line.draw(g);
 			}
 		}
-		
+
 		Collection<ACurve> curves = plotData.getCurves();
 		for (ACurve curve : curves) {
 			if (curve.isVisible()) {

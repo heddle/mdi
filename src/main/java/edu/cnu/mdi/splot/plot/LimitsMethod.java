@@ -1,74 +1,53 @@
 package edu.cnu.mdi.splot.plot;
 
-import java.util.EnumMap;
-
-import edu.cnu.mdi.splot.style.EnumComboBox;
-
-
-/**
- * How we want to choose axes limits
- * @author heddle
- *
- */
+import edu.cnu.mdi.component.EnumComboBox;
 
 public enum LimitsMethod {
-	
-	MANUALLIMITS, ALGORITHMICLIMITS, USEDATALIMITS;
-	
-	/**
-	 * A map for the names of the limit methods
-	 */
-	public static EnumMap<LimitsMethod, String> names = new EnumMap<LimitsMethod, String>(LimitsMethod.class);
 
-	static {
-		names.put(MANUALLIMITS,      "Manually enter limits");
-		names.put(ALGORITHMICLIMITS, "Algorithmic limits");
-		names.put(USEDATALIMITS,     "Use data limits");
-	}
+    MANUALLIMITS("Manually enter limits"),
+    ALGORITHMICLIMITS("Algorithmic limits"),
+    USEDATALIMITS("Use data limits");
 
-	
-	/**
-	 * Get the nice name of the enum.
-	 * 
-	 * @return the nice name, for combo boxes, menus, etc.
-	 */
-	public String getName() {
-		return names.get(this);
-	}
+    private final String displayName;
 
-	/**
-	 * Returns the enum value from the name.
-	 * 
-	 * @param name the name to match.
-	 * @return the <code>LimitsMethod</code> that corresponds to the name. Returns
-	 *         <code>null</code> if no match is found.
-	 */
-	public static LimitsMethod getValue(String name) {
-		if (name == null) {
+    LimitsMethod(String displayName) {
+        this.displayName = displayName;
+    }
+
+    /** Nice label for UI (combo boxes, menus, etc.). */
+    public String getName() {
+        return displayName;
+    }
+
+    @Override
+    public String toString() {
+        return displayName;
+    }
+
+    /**
+     * Returns the enum value from a string.
+     * Matches either the nice label (getName) or the enum constant name() (case-insensitive).
+     */
+    public static LimitsMethod getValue(String s) {
+        if (s == null) {
 			return null;
 		}
 
-		for (LimitsMethod val : values()) {
-			// check the nice name
-			if (name.equalsIgnoreCase(val.getName())) {
-				return val;
+        for (LimitsMethod val : values()) {
+            if (s.equalsIgnoreCase(val.getName()) || s.equalsIgnoreCase(val.name())) {
+				return val;      // constant id
 			}
-			// check the base name
-			if (name.equalsIgnoreCase(val.name())) {
-				return val;
-			}
-		}
-		return null;
-	}
-	
-	/**
-	 * Obtain a combo box of choices.
-	 * 
-	 * @param defaultChoice
-	 * @return the combo box of limit methods
-	 */
-	public static EnumComboBox getComboBox(LimitsMethod defaultChoice) {
-		return new EnumComboBox(names, defaultChoice);
-	}
+        }
+        return null;
+    }
 
+    /**
+     * Obtain a combo box of choices.
+     *
+     * @param defaultChoice which enum should be initially selected (nullable)
+     * @return the combo box
+     */
+    public static EnumComboBox<LimitsMethod> getComboBox(LimitsMethod defaultChoice) {
+    	return new EnumComboBox<>(LimitsMethod.class, defaultChoice, null, LimitsMethod::getName);
+    }
 }

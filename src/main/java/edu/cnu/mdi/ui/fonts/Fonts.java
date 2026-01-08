@@ -107,9 +107,9 @@ public final class Fonts {
         }
         return f;
     }
-    
+
     /**
-	 * Convenience method to derive a plain font from BASE_UI_FONT 
+	 * Convenience method to derive a plain font from BASE_UI_FONT
 	 * using a size delta (in points) relative to base.
 	 */
 	public static Font plainFontDelta(int sizeDelta) {
@@ -124,7 +124,7 @@ public final class Fonts {
         final int size = Math.max(8, base.getSize() + deltaPt);
 
         String key = "UI$" + style + "$" + deltaPt;
-        return FONT_CACHE.computeIfAbsent(key, k -> base.deriveFont(style, (float) size));
+        return FONT_CACHE.computeIfAbsent(key, k -> base.deriveFont(style, size));
     }
 
     /**
@@ -135,12 +135,14 @@ public final class Fonts {
         final int size = Math.max(8, base.getSize() + deltaPt);
 
         String key = "MONO$" + style + "$" + deltaPt;
-        return FONT_CACHE.computeIfAbsent(key, k -> base.deriveFont(style, (float) size));
+        return FONT_CACHE.computeIfAbsent(key, k -> base.deriveFont(style, size));
     }
 
     /** Keep your scale helper exactly as-is. */
     public static Font scaleFont(Font font, float scaleFactor) {
-        if (font == null) throw new IllegalArgumentException("font cannot be null");
+        if (font == null) {
+			throw new IllegalArgumentException("font cannot be null");
+		}
         return font.deriveFont(scaleFactor * font.getSize2D());
     }
 }

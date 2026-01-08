@@ -1,12 +1,10 @@
 package edu.cnu.mdi.feedback;
 
 import java.awt.Color;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.List;
 
-import javax.swing.BorderFactory;
-import javax.swing.border.Border;
 import javax.swing.text.SimpleAttributeSet;
 
 import edu.cnu.mdi.component.TextPaneScrollPane;
@@ -39,10 +37,10 @@ import edu.cnu.mdi.ui.colors.X11Colors;
  */
 @SuppressWarnings("serial")
 public class FeedbackPane extends TextPaneScrollPane {
-	
+
 	// background color
 	private Color bg;
-	
+
 	// default font size
 	private int fontSize;
 
@@ -75,14 +73,14 @@ public class FeedbackPane extends TextPaneScrollPane {
     public FeedbackPane() {
         this(Color.cyan, Color.black, 9);
     }
-    
+
     public FeedbackPane(Color fg, Color bg, int fontSize) {
 		super(bg);
 		this.bg = bg;
 		this.fontSize = fontSize;
-		
+
 		DEFAULT_STYLE = createStyle(fg, bg, "SansSerif", fontSize, false, true);
-		
+
 		int smallFontSize = Math.max(6, fontSize - 3);
 		SMALL_MONO_STYLE = createStyle(fg, bg, "Monospaced", smallFontSize, false, true);
 	}

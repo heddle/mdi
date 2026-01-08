@@ -7,19 +7,23 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
+import javax.swing.UIManager;
 
+import com.formdev.flatlaf.FlatIntelliJLaf;
+
+import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
-import edu.cnu.mdi.splot.plot.GraphicsUtilities;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotPanel;
 import edu.cnu.mdi.splot.plot.SplotMenus;
+import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
  * A template class for plot examples
- * 
+ *
  * @author heddle
- * 
+ *
  */
 @SuppressWarnings("serial")
 public abstract class AExample extends JFrame {
@@ -32,6 +36,7 @@ public abstract class AExample extends JFrame {
 
 	public AExample() {
 		super("sPlot");
+		UIInit();
 
 		// set up what to do if the window is closed
 		WindowAdapter windowAdapter = new WindowAdapter() {
@@ -63,12 +68,23 @@ public abstract class AExample extends JFrame {
 		add(ppanel, BorderLayout.CENTER);
 
 		pack();
-		GraphicsUtilities.centerComponent(this);
+		GraphicsUtils.centerComponent(this);
 	}
+
+	   //initialize the FlatLaf UI
+		private void UIInit() {
+			FlatIntelliJLaf.setup();
+			UIManager.put("Component.focusWidth", 1);
+			UIManager.put("Component.arc", 6);
+			UIManager.put("Button.arc", 6);
+			UIManager.put("TabbedPane.showTabSeparators", true);
+			Fonts.refresh();
+		}
+
 
 	/**
 	 * Get the plot canvas
-	 * 
+	 *
 	 * @return the plot canvas
 	 */
 	public PlotCanvas getPlotCanvas() {

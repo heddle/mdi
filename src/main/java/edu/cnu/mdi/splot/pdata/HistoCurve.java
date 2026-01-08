@@ -6,13 +6,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
-import edu.cnu.mdi.splot.fit.ErfFitter;
-import edu.cnu.mdi.splot.fit.ErfcFitter;
 import edu.cnu.mdi.splot.fit.FitResult;
-import edu.cnu.mdi.splot.fit.GaussianFitter;
 import edu.cnu.mdi.splot.fit.IFitter;
-import edu.cnu.mdi.splot.fit.MultiGaussianFitter;
-import edu.cnu.mdi.splot.fit.PolynomialFitter;
 import edu.cnu.mdi.splot.spline.CubicSpline;
 
 /**
@@ -104,7 +99,7 @@ public class HistoCurve extends ACurve {
 
 		for (int i = 0; i < n; i++) {
 			x[i] = 0.5 * (grid[i] + grid[i + 1]);
-			y[i] = (double) counts[i];
+			y[i] = counts[i];
 		}
 
 		return new FitVectors(x, y, null);

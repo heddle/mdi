@@ -223,7 +223,7 @@ public final class GeoJsonCityLoader {
 
         return new CityFeature(name, countryName, lon, lat, population, scalerank);
     }
-    
+
     /**
      * Wrap a longitude value to the canonical range [-π, π).
      *

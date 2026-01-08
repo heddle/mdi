@@ -177,7 +177,7 @@ public class BaseView extends JInternalFrame
         if (desktop != null) {
             desktop.add(this, 0);
         }
-        
+
         if ((this.container != null) && this.container instanceof BaseContainer) {
         	getViewPopupMenu().addSeparator();
         	getViewPopupMenu().add(LayerInspectorDialog.createMenuItem(this));
@@ -670,7 +670,7 @@ public class BaseView extends JInternalFrame
         final Rectangle2D.Double worldSystem;
 
         final Color background;
- 
+
         final JComponent splitWestComponent;
 
         final long toolbarBits;

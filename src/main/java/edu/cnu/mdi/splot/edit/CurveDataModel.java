@@ -1,6 +1,7 @@
 package edu.cnu.mdi.splot.edit;
 
 import java.util.List;
+
 import javax.swing.table.DefaultTableModel;
 
 import edu.cnu.mdi.splot.pdata.ACurve;
@@ -44,7 +45,7 @@ public class CurveDataModel extends DefaultTableModel {
 
 	/**
 	 * Get the number of columns
-	 * 
+	 *
 	 * @return the number of columns
 	 */
 	@Override
@@ -54,7 +55,7 @@ public class CurveDataModel extends DefaultTableModel {
 
 	/**
 	 * Get the number of rows
-	 * 
+	 *
 	 * @return the number of rows
 	 */
 	@Override
@@ -67,7 +68,7 @@ public class CurveDataModel extends DefaultTableModel {
 
 	/**
 	 * Set the value at a given row and column.
-	 * 
+	 *
 	 * @param value The string to set.
 	 * @param row   The zero based row.
 	 * @param col   The zero based column.
@@ -91,7 +92,7 @@ public class CurveDataModel extends DefaultTableModel {
 
 	/**
 	 * Get the value at a given row and column
-	 * 
+	 *
 	 * @return the value at a given row and column
 	 */
 	@Override
@@ -117,7 +118,7 @@ public class CurveDataModel extends DefaultTableModel {
 
 	/**
 	 * Add a new curve into the table.
-	 * 
+	 *
 	 * @param curve the new object to add to the model.
 	 */
 	public synchronized void add(ACurve curve) {
@@ -133,7 +134,7 @@ public class CurveDataModel extends DefaultTableModel {
 
 	/**
 	 * remove an curve from the table.
-	 * 
+	 *
 	 * @param curve the curveto remove.
 	 */
 	public synchronized void remove(ACurve curve) {
@@ -160,15 +161,12 @@ public class CurveDataModel extends DefaultTableModel {
 
 	/**
 	 * Get the curve (DataColumn) in the model at the given row.
-	 * 
+	 *
 	 * @param row the zero based row
 	 * @return the curve corresponding to the row.
 	 */
 	public ACurve getCurveAtRow(int row) {
-		if ((_data == null) || (row < 0)) {
-			return null;
-		}
-		if (row >= _data.size()) {
+		if ((_data == null) || (row < 0) || (row >= _data.size())) {
 			return null;
 		}
 		return _data.get(row);

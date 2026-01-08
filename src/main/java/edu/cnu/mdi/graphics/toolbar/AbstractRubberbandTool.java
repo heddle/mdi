@@ -115,7 +115,7 @@ public abstract class AbstractRubberbandTool implements ITool, IRubberbanded {
             return;
         }
 
- 
+
         // Defensive: if a temporary override tool is activated without onSelected,
         // still obtain the controller here.
         if (controller == null) {

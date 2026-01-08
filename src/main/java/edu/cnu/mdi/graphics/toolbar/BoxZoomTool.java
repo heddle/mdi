@@ -166,7 +166,7 @@ public class BoxZoomTool implements ITool, IRubberbanded {
     }
 
     /**
-     * Set the rubber-band policy used by this tool. 
+     * Set the rubber-band policy used by this tool.
      * Legal policies from {@link Rubberband.Policy} are
      * <ul>
      * <li>{@link Rubberband.Policy#RECTANGLE}</li>
@@ -174,8 +174,8 @@ public class BoxZoomTool implements ITool, IRubberbanded {
      * <li>{@link Rubberband.Policy#SQUARE}</li>
      * <li>{@link Rubberband.Policy#XONLY}</li>
      * </ul>
-     * 
-     * 
+     *
+     *
      *
      * @param policy the new policy (must not be null).
      */

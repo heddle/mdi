@@ -1,7 +1,7 @@
 package edu.cnu.mdi.ui.menu;
 
-import java.awt.event.KeyEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -20,7 +20,7 @@ import edu.cnu.mdi.desktop.Desktop;
  */
 @SuppressWarnings("serial")
 public class FileMenu extends JMenu {
-	
+
     /** Label used for the File menu. */
     public static final String MENU_LABEL = "File";
 

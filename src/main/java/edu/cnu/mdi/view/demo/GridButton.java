@@ -1,9 +1,6 @@
 package edu.cnu.mdi.view.demo;
 
 import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.geom.Point2D;
-import java.util.List;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.toolbar.ToolActionButton;
@@ -36,7 +33,7 @@ public class GridButton extends ToolActionButton {
 
 	        int dxPx = snapX - focusPx.x;
 	        int dyPx = snapY - focusPx.y;
-	        
+
 	        device.translateLocal(dxPx, dyPx);
 	    }
 

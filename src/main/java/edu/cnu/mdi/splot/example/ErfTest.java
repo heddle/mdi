@@ -56,11 +56,11 @@ public class ErfTest extends AExample {
 
 		FitVectors testData = FitVectors.testData(erfEval, -4.0, 4.0, n, 3.0, 3.0);
 	   	Curve curve = (Curve) plotData.getFirstCurve();
-		
+
 	   	double e[] = new double[n];
 			for (int i = 0; i < n; i++) {
 				//convert weight to error
-		    	e[i] = 1.0 / Math.sqrt(1.0e-12 + testData.w[i]);		    	
+		    	e[i] = 1.0 / Math.sqrt(1.0e-12 + testData.w[i]);
 			}
 		curve.addAll(testData.x, testData.y, e);
 	}

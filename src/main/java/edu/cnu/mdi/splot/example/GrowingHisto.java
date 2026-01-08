@@ -4,6 +4,7 @@ import java.awt.Color;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
 
+import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
@@ -11,7 +12,6 @@ import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
-import edu.cnu.mdi.splot.style.IStyled;
 
 @SuppressWarnings("serial")
 public class GrowingHisto extends AExample {
@@ -49,17 +49,17 @@ public class GrowingHisto extends AExample {
 	    IStyled style = hc.getStyle();
 		style.setFillColor(new Color(196, 196, 196, 64));
 		style.setBorderColor(Color.black);
-		
+
 		//basic example, not fitting
 		hc.setCurveMethod(CurveDrawingMethod.GAUSSIAN);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6);
 		params.setNumDecimalY(0);
 	}
-	
+
 	private static void addData(final PlotCanvas canvas, final long maxCount, final int increment, NormalDistribution normDev) {
 	    final HistoCurve hc = (HistoCurve) canvas.getPlotData().getCurve(0);
-	    
+
 	    final double[] x = new double[increment];
 
 		Runnable runner = new Runnable() {
@@ -80,10 +80,10 @@ public class GrowingHisto extends AExample {
 				}
 			}
 		};
-		
+
 		Thread sourceThread = new Thread(runner);
 		sourceThread.start();
-	    
+
 	}
 
 	public static void main(String arg[]) {

@@ -144,14 +144,14 @@ public class DemoApp extends BaseMDIApplication {
 
         // Map view (also loads demo geojson)
         mapView = createMapView();
-        
+
         // Network declutter demo view
         networkDeclutterDemoView = createNetworkDeclutterDemoView();
-        
+
         // Network layout demo view
         networkLayoutDemoView = createNetworkLayoutDemoView();
-        
-        
+
+
     }
 
     /**
@@ -207,14 +207,14 @@ public class DemoApp extends BaseMDIApplication {
 
         // Column 1: 3D centered
         virtualView.moveTo(view3D, 1, VirtualView.CENTER);
-        
+
         //column 2: log view upper left
         virtualView.moveTo(logView, 2, VirtualView.UPPERLEFT);
-        
+
         // Column 3: network declutter demo centered
         virtualView.moveTo(networkDeclutterDemoView, 3, VirtualView.CENTER);
         networkDeclutterDemoView.setVisible(true);
-        
+
         // Column 4: network layout demo lower left
         virtualView.moveTo(networkLayoutDemoView, 4, 0, -50, VirtualView.BOTTOMLEFT);
         networkLayoutDemoView.setVisible(true);
@@ -331,7 +331,7 @@ public class DemoApp extends BaseMDIApplication {
 
         return view3D;
     }
-    
+
     /**
 	 * Create the network declutter demo view.
 	 */
@@ -347,7 +347,7 @@ public class DemoApp extends BaseMDIApplication {
 		);
 		return view;
 	}
-    
+
     /**
  	 * Create the network layout demo view.
  	 */
@@ -356,9 +356,9 @@ public class DemoApp extends BaseMDIApplication {
     			PropertySupport.FRACTION, 0.7,
     			PropertySupport.ASPECT, 1.2,
 		    	PropertySupport.TOOLBARBITS, ToolBarBits.DEFAULTS | ToolBarBits.CONNECTORBUTTON,
- 				PropertySupport.VISIBLE, false, 
- 				PropertySupport.PROPNAME, "NETWORKLAYOUTDEMO", 
- 				PropertySupport.BACKGROUND, X11Colors.getX11Color("alice blue"), 
+ 				PropertySupport.VISIBLE, false,
+ 				PropertySupport.PROPNAME, "NETWORKLAYOUTDEMO",
+ 				PropertySupport.BACKGROUND, X11Colors.getX11Color("alice blue"),
  				PropertySupport.TITLE, "Network Layout Demo View "
  		);
  		return view;
@@ -409,7 +409,7 @@ public class DemoApp extends BaseMDIApplication {
      */
     public static void main(String[] args) {
        EventQueue.invokeLater(() -> {
-    	     
+
              DemoApp frame = DemoApp.getInstance();
              frame.setVisible(true);
         });

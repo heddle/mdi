@@ -34,7 +34,7 @@ public class ToolController {
     private final Map<String, ITool> tools = new LinkedHashMap<>();
     private ITool active;
     private ITool defaultTool;
-    
+
     private final java.util.List<ToolSelectionListener> listeners =
             new java.util.concurrent.CopyOnWriteArrayList<>();
 
@@ -103,7 +103,9 @@ public class ToolController {
 	}
 
     private void notifySelectionChanged() {
-    	if (active == null) return;
+    	if (active == null) {
+			return;
+		}
         for (ToolSelectionListener l : listeners) {
             l.activeToolChanged(active);
         }
@@ -119,9 +121,13 @@ public class ToolController {
      */
     public void select(String id) {
         ITool next = get(id);
-        if (next == null || next == active) return;
+        if (next == null || next == active) {
+			return;
+		}
 
-        if (active != null) active.onDeselected(ctx);
+        if (active != null) {
+			active.onDeselected(ctx);
+		}
 
         active = next;
         active.onSelected(ctx);
@@ -131,7 +137,9 @@ public class ToolController {
     }
 
     private void applyCursor() {
-        if (ctx.canvas() == null) return;
+        if (ctx.canvas() == null) {
+			return;
+		}
 
         Cursor c = (active == null) ? Cursor.getDefaultCursor() : active.cursor(ctx);
         ctx.canvas().setCursor((c != null) ? c : Cursor.getDefaultCursor());
@@ -161,7 +169,7 @@ public class ToolController {
             select(defaultTool.id());
         }
     }
-    
+
     public void applyCursorNow() {
         applyCursor();
     }

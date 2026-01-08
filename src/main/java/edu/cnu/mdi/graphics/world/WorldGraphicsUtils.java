@@ -159,7 +159,7 @@ public class WorldGraphicsUtils {
 	 * @param lineStyle the line style.
 	 */
 	public static void drawWorldLine(Graphics g, IContainer container, double x1, double y1, double x2, double y2,
-			Color lineColor, int lineWidth, LineStyle lineStyle) {
+			Color lineColor, float lineWidth, LineStyle lineStyle) {
 
 		if (lineColor == null) {
 			return;
@@ -313,7 +313,7 @@ public class WorldGraphicsUtils {
 	 * @param lineStyle  the line style.
 	 */
 	public static void drawWorldRadArc(Graphics g, IContainer container, double xc, double yc, double rmin, double rmax,
-			double startAngle, double stopAngle, Color fillColor, Color lineColor, int lineWidth, LineStyle lineStyle) {
+			double startAngle, double stopAngle, Color fillColor, Color lineColor, float lineWidth, LineStyle lineStyle) {
 
 		Graphics2D g2 = (Graphics2D) g;
 
@@ -517,7 +517,7 @@ public class WorldGraphicsUtils {
 	 * @param lineStyle      the line style.
 	 */
 	public static void drawWorldOval(Graphics g, IContainer container, Rectangle2D.Double worldRectangle,
-			Color fillColor, Color lineColor, int lineWidth, LineStyle lineStyle) {
+			Color fillColor, Color lineColor, float lineWidth, LineStyle lineStyle) {
 
 		Graphics2D g2 = (Graphics2D) g;
 
@@ -554,7 +554,7 @@ public class WorldGraphicsUtils {
 	 * @param lineStyle      the line style.
 	 */
 	public static void drawWorldRectangle(Graphics g, IContainer container, Rectangle2D.Double worldRectangle,
-			Color fillColor, Color lineColor, int lineWidth, LineStyle lineStyle) {
+			Color fillColor, Color lineColor, float lineWidth, LineStyle lineStyle) {
 
 		Graphics2D g2 = (Graphics2D) g;
 
@@ -666,7 +666,7 @@ public class WorldGraphicsUtils {
 			Color lineColor, float lineWidth) {
 		drawWorldPolygon(g, container, worldPolygon, fillColor, lineColor, lineWidth, LineStyle.SOLID);
 	}
-	
+
 	/**
 	 * Draw a world polygon.
 	 *
@@ -830,7 +830,7 @@ public class WorldGraphicsUtils {
 	 * @return the polygon that was drawn
 	 */
 	public static Polygon drawPath2D(Graphics g, IContainer container, Path2D.Double path, Color fillColor,
-			Color lineColor, int lineWidth, LineStyle lineStyle, boolean closed) {
+			Color lineColor, float lineWidth, LineStyle lineStyle, boolean closed) {
 
 		Graphics2D g2 = (Graphics2D) g;
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -1605,7 +1605,7 @@ public class WorldGraphicsUtils {
 	        if (segmentLengthSquared < 1.0e-20) {
 	            return new Point2D.Double(p1.x, p1.y);
 	        }
-	        
+
 	        double t = (dxWp * dx + dyWp * dy) / segmentLengthSquared;
 
 	        // Clamp t to [0, 1] to stay on the segment
@@ -1646,7 +1646,7 @@ public class WorldGraphicsUtils {
 		double pixdist = Math.sqrt(p1.x * p1.x + p1.y * p1.y);
 		return pixdist / dist;
 	}
-	
+
 	/**
 	 * Hit-test a polyline-like {@link Path2D} by checking whether {@code wp} lies within
 	 * {@code tolWorld} of any line segment in the path.

@@ -148,7 +148,7 @@ public class ItemModification {
 	 * @param currentMousePoint the currentMousePoint to set
 	 */
 	public void setCurrentMousePoint(Point currentMousePoint) {
-		
+
 		if (currentMousePoint == null) {
 			return;
 		}
@@ -330,7 +330,7 @@ public class ItemModification {
 	public void setUserObject(Object userObject) {
 		this.userObject = userObject;
 	}
-	
-	
+
+
 
 }

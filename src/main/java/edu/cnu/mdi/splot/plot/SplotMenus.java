@@ -8,17 +8,15 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
+import edu.cnu.mdi.dialog.DialogUtils;
 import edu.cnu.mdi.splot.edit.CurveEditorDialog;
-import edu.cnu.mdi.splot.edit.DialogUtilities;
-import edu.cnu.mdi.splot.pdata.PlotDataType;
 
 /**
  * This class creates and manages the menus for sPlot.
- * 
+ *
  * @author heddle
  *
  */
@@ -38,7 +36,7 @@ public class SplotMenus implements ActionListener {
 
 	/**
 	 * Create a set of menus and items for sPlot
-	 * 
+	 *
 	 * @param canvas  the plot canvas being controlled
 	 * @param menuBar the menu bar
 	 * @param addQuit if <code>true</code> include a quit item
@@ -50,7 +48,7 @@ public class SplotMenus implements ActionListener {
 
 	/**
 	 * Create a set of menus and items for sPlot
-	 * 
+	 *
 	 * @param canvas  the plot canvas being controlled
 	 * @param popup   a popup to hold the menus
 	 * @param addQuit if <code>true</code> include a quit item
@@ -78,7 +76,7 @@ public class SplotMenus implements ActionListener {
 
 	/**
 	 * Convenience routine for adding a menu item.
-	 * 
+	 *
 	 * @param label     the menu label.
 	 * @param accelChar the accelerator character.
 	 * @param menu      the menu to add the item to.
@@ -131,7 +129,7 @@ public class SplotMenus implements ActionListener {
 
 		else if (source == _curveItem) {
 			CurveEditorDialog cd = new CurveEditorDialog(_plotCanvas);
-			DialogUtilities.centerDialog(cd);
+			DialogUtils.centerDialog(cd);
 			cd.selectFirstCurve();
 			cd.setVisible(true);
 		}
@@ -143,7 +141,7 @@ public class SplotMenus implements ActionListener {
 
 	/**
 	 * Get the underlying plot canvas
-	 * 
+	 *
 	 * @return the plot canvas
 	 */
 	public PlotCanvas getPlotCanvas() {
@@ -153,7 +151,7 @@ public class SplotMenus implements ActionListener {
 
 	/**
 	 * Get the edit menu
-	 * 
+	 *
 	 * @return the edit menu
 	 */
 	public JMenu getEditMenu() {
@@ -162,7 +160,7 @@ public class SplotMenus implements ActionListener {
 
 	/**
 	 * Get the preferences item
-	 * 
+	 *
 	 * @return the preferences item
 	 */
 	public JMenuItem getPreferencesItem() {
@@ -171,7 +169,7 @@ public class SplotMenus implements ActionListener {
 
 	/**
 	 * Get the curve (editor) item
-	 * 
+	 *
 	 * @return the curve editor item
 	 */
 	public JMenuItem getCurveItem() {

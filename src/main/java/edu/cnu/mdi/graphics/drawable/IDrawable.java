@@ -1,6 +1,5 @@
 package edu.cnu.mdi.graphics.drawable;
 
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 
 import edu.cnu.mdi.container.IContainer;
@@ -24,8 +23,8 @@ public interface IDrawable {
      *                  query coordinate transforms, world bounds, etc.
      */
     void draw(Graphics2D g2, IContainer container);
-    
-  
+
+
     /**
      * Mark this drawable as "dirty".
      * <p>

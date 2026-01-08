@@ -272,11 +272,7 @@ public class LambertEqualAreaProjection implements IMapProjection {
             latLon.x = lon;
 
             latLonToXY(latLon, xy);
-            if (Double.isNaN(xy.x) || Double.isNaN(xy.y)) {
-                continue;
-            }
-
-            if (!isPointOnMap(xy)) {
+            if (Double.isNaN(xy.x) || Double.isNaN(xy.y) || !isPointOnMap(xy)) {
                 continue;
             }
 
@@ -313,11 +309,7 @@ public class LambertEqualAreaProjection implements IMapProjection {
             latLon.y = lat;
 
             latLonToXY(latLon, xy);
-            if (Double.isNaN(xy.x) || Double.isNaN(xy.y)) {
-                continue;
-            }
-
-            if (!isPointOnMap(xy)) {
+            if (Double.isNaN(xy.x) || Double.isNaN(xy.y) || !isPointOnMap(xy)) {
                 continue;
             }
 

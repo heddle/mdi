@@ -1,8 +1,8 @@
 package edu.cnu.mdi.mapping;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Stroke;
-import java.awt.BasicStroke;
 
 /**
  * Encapsulates the visual style used when rendering maps and graticules.
@@ -78,7 +78,7 @@ public final class MapTheme {
 
     /** Returns the political border color. */
     public Color getBorderColor() { return borderColor; }
-    
+
     /** Returns the city point color. */
     public Color getCityColor() { return cityColor; }
 

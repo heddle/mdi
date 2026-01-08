@@ -10,7 +10,6 @@ import java.util.List;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.graphics.GraphicsUtils;
-import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.DrawingToolSupport;
 import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
 import edu.cnu.mdi.properties.PropertySupport;
@@ -53,10 +52,10 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 				PropertySupport.WIDTH, width, // container width, not total view width
 				PropertySupport.HEIGHT, height, // container height, not total view width
 				PropertySupport.TOOLBARBITS, ToolBarBits.DRAWING,
-				PropertySupport.VISIBLE, true, 
-				PropertySupport.PROPNAME, "DRAWING", 
-				PropertySupport.BACKGROUND, Color.white, 
-				PropertySupport.TITLE, "Drawing View ", 
+				PropertySupport.VISIBLE, true,
+				PropertySupport.PROPNAME, "DRAWING",
+				PropertySupport.BACKGROUND, Color.white,
+				PropertySupport.TITLE, "Drawing View ",
 				PropertySupport.STANDARDVIEWDECORATIONS, true,
 				PropertySupport.CONTAINERCLASS, DrawingToolSupport.class);
 

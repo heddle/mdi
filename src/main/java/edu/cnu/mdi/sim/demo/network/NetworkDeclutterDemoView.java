@@ -1,14 +1,12 @@
 package edu.cnu.mdi.sim.demo.network;
 
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.RenderingHints;
 import java.util.Random;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.ImageManager;
@@ -37,9 +35,9 @@ public class NetworkDeclutterDemoView extends SimulationView {
     private int iconRadiusPx;
 
 
-    /** 
+    /**
 	 * Create a network layout demo view.
-	 * 
+	 *
 	 * @param keyVals variable set of arguments.
 	 */
     public NetworkDeclutterDemoView(Object... keyVals) {
@@ -60,9 +58,9 @@ public class NetworkDeclutterDemoView extends SimulationView {
 
 		setAfterDraw();
 		setBeforeDraw();
-		
+
 		getContainer().scale(1.1); // initial zoom
-		
+
 
         // Start engine thread (remains paused until Run unless you call startAndRun()).
         startSimulation();
@@ -85,9 +83,9 @@ public class NetworkDeclutterDemoView extends SimulationView {
 			public void draw(Graphics2D g2, IContainer container) {
 				Point pp0 = new Point();
 				Point pp1 = new Point();
-				
+
 				g2.setColor(Color.black);
-				
+
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				for (NetworkModel.Edge e : model.edges) {
 					NetworkModel.Node client = model.nodes.get(e.clientIndex);
@@ -101,7 +99,7 @@ public class NetworkDeclutterDemoView extends SimulationView {
 			}
 		});
 	}
-    
+
 	// Draw nodes after edges
 	private void setAfterDraw() {
 		getContainer().setAfterDraw(new DrawableAdapter() {

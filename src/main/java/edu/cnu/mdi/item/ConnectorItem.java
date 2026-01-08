@@ -1,7 +1,6 @@
 package edu.cnu.mdi.item;
 
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
@@ -20,7 +19,6 @@ import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
  * Endpoints are recomputed from the items each time geometry is updated, so the connection
  * follows its endpoints when nodes move.
  */
-@SuppressWarnings("serial")
 public class ConnectorItem extends PolylineItem {
 
     private final AItem startItem;
@@ -44,6 +42,10 @@ public class ConnectorItem extends PolylineItem {
         setResizable(true);      // vertex-based reshape uses "resize" pathway in your framework
         setRotatable(false);
         setDeletable(true);
+        setSelectable(true);
+        setLocked(false);
+
+        setDisplayName("Connector");
 
         // Optional: make connections not "connectable" themselves
         setConnectable(false);
@@ -63,7 +65,7 @@ public class ConnectorItem extends PolylineItem {
     }
 
     @Override
-    public void drawItem(Graphics2D g, IContainer container) {
+    public void drawItem(Graphics g, IContainer container) {
         // Keep anchors synced; then draw like a normal polyline.
         syncAnchorsToItems();
         super.drawItem(g, container);
@@ -87,8 +89,9 @@ public class ConnectorItem extends PolylineItem {
 
 	@Override
 	public void modify() {
-		if (_modification == null)
+		if (_modification == null) {
 			return;
+		}
 
         // Let the PolylineItem reshape logic move vertices…
         super.modify();
@@ -97,23 +100,6 @@ public class ConnectorItem extends PolylineItem {
         // This preserves elbow edits while keeping endpoints attached.
         syncAnchorsToItems();
         setDirty(true);
-    }
-
-    @Override
-    public void translateWorld(double dx, double dy) {
-        // Optional behavior: translate only elbow(s), not endpoints
-        if (_path == null) return;
-
-        Point2D.Double[] wpoly = WorldGraphicsUtils.pathToWorldPolygon(_path);
-        if (wpoly == null || wpoly.length < 3) return;
-
-        // Move only interior points (elbows)
-        for (int i = 1; i < wpoly.length - 1; i++) {
-            wpoly[i] = new Point2D.Double(wpoly[i].x + dx, wpoly[i].y + dy);
-        }
-
-        _path = WorldGraphicsUtils.worldPolygonToPath(wpoly);
-        geometryChanged();
     }
 
     @Override
@@ -128,14 +114,20 @@ public class ConnectorItem extends PolylineItem {
      * Keeps elbow vertices unchanged.
      */
     private void syncAnchorsToItems() {
-        if (_path == null) return;
+        if (_path == null) {
+			return;
+		}
 
         Point2D.Double[] wpoly = WorldGraphicsUtils.pathToWorldPolygon(_path);
-        if (wpoly == null || wpoly.length < 2) return;
+        if (wpoly == null || wpoly.length < 2) {
+			return;
+		}
 
         Point2D.Double a = anchorWorld(startItem);
         Point2D.Double b = anchorWorld(endItem);
-        if (a == null || b == null) return;
+        if (a == null || b == null) {
+			return;
+		}
 
         wpoly[0] = a;
         wpoly[wpoly.length - 1] = b;
@@ -161,8 +153,12 @@ public class ConnectorItem extends PolylineItem {
         Point2D.Double a = anchorWorld(start);
         Point2D.Double b = anchorWorld(end);
 
-        if (a == null) a = new Point2D.Double(0, 0);
-        if (b == null) b = new Point2D.Double(1, 1);
+        if (a == null) {
+			a = new Point2D.Double(0, 0);
+		}
+        if (b == null) {
+			b = new Point2D.Double(1, 1);
+		}
 
         Point2D.Double elbow = new Point2D.Double(a.x, b.y);
 

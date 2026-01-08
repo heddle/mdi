@@ -2,14 +2,12 @@ package edu.cnu.mdi.splot.toolbar;
 
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Toolkit;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JToggleButton;
 
-import edu.cnu.mdi.splot.plot.ImageManager;
+import edu.cnu.mdi.graphics.ImageManager;
 
 public class ToolBarToggleButton extends JToggleButton {
 
@@ -49,7 +47,7 @@ public class ToolBarToggleButton extends JToggleButton {
 
 	/**
 	 * Create a toolbar toggle button
-	 * 
+	 *
 	 * @param container     the owner container.
 	 * @param imageFileName the name if the file holding the icon
 	 * @param toolTip       a string for a tool tip
@@ -61,7 +59,7 @@ public class ToolBarToggleButton extends JToggleButton {
 
 	/**
 	 * Create a toolbar toggle button
-	 * 
+	 *
 	 * @param container     the owner container.
 	 * @param imageFileName the name if the file holding the icon
 	 * @param toolTip       a string for a tool tip
@@ -74,7 +72,7 @@ public class ToolBarToggleButton extends JToggleButton {
 
 	/**
 	 * Create a toolbar toggle button
-	 * 
+	 *
 	 * @param container     the owner container.
 	 * @param imageFileName the name if the file holding the icon
 	 * @param toolTip       a string for a tool tip
@@ -92,7 +90,8 @@ public class ToolBarToggleButton extends JToggleButton {
 		// setFocusPainted(false);
 
 		setActionCommand(actionCommand);
-		ImageIcon imageIcon = ImageManager.getInstance().loadImageIcon(imageFileName);
+		Icon icon = ImageManager.getInstance().loadUiIcon(imageFileName, 20, 20);
+		setIcon(icon);
 
 		String bareName = new String(imageFileName);
 		int index = bareName.indexOf(".");
@@ -102,7 +101,6 @@ public class ToolBarToggleButton extends JToggleButton {
 
 		setFocusPainted(false);
 		setToolTipText(toolTip);
-		setIcon(imageIcon);
 		setRolloverEnabled(true);
 
 		// try to get an enabled icon
@@ -122,7 +120,7 @@ public class ToolBarToggleButton extends JToggleButton {
 
 	/**
 	 * Get the preferred size.
-	 * 
+	 *
 	 * @return the preferred size for layout.
 	 */
 	@Override
@@ -132,35 +130,10 @@ public class ToolBarToggleButton extends JToggleButton {
 
 	/**
 	 * Get the appropriate cursor for this tool.
-	 * 
+	 *
 	 * @return The cursor appropriate when the mouse is in the container. The
 	 *         default will be a cross hair.
 	 */
 	public Cursor canvasCursor() {
-
-		if (!triedOnce) {
-			if (customCursorImageFile != null) {
-				Image image = ImageManager.getInstance().loadImage(customCursorImageFile, this);
-				if (image != null) {
-
-					if (xhot < 0) {
-						xhot = image.getWidth(this) / 2;
-					}
-					if (yhot < 0) {
-						yhot = image.getHeight(this) / 2;
-					}
-					customCursor = Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(xhot, yhot),
-							"pointer");
-				}
-			}
-			triedOnce = true;
-		}
-
-		if (customCursor != null) {
-			return customCursor;
-		}
-		else {
-			return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
-		}
-	}
+		return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);	}
 }

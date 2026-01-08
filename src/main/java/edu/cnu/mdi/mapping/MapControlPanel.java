@@ -26,7 +26,7 @@ import edu.cnu.mdi.ui.fonts.Fonts;
 public class MapControlPanel extends JPanel {
 	// max slider value for minimum population
 	private static final int MAX_POP_SLIDER_VALUE = 2_000_000;
-	
+
 	// current map theme and available themes
 	private MapTheme _darkTheme = MapTheme.dark();
 	private MapTheme _lightTheme = MapTheme.light();
@@ -37,25 +37,25 @@ public class MapControlPanel extends JPanel {
 	private JRadioButton _lightThemeButton;
 	private JRadioButton _darkThemeButton;
 	private JRadioButton _blueThemeButton;
-	
+
 	private boolean showNames = true;
-	
+
 	// Reference to the map view being controlled
 	private MapView2D mapView;
 
-	
+
 	public MapControlPanel(MapView2D mapView) {
 		this.mapView = mapView;
 		setAlignmentX(Component.LEFT_ALIGNMENT);
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-		
+
 		createProjectionCombo(this);
 		createCheckboxes(this);
 		createMinPopRangeSlider(this);
 		createThemeSelector(this);
 	}
-	
+
 	//create a radio button for theme selection
 	private JRadioButton createThemeButton(String label, ButtonGroup bg, ActionListener al, boolean selected) {
 		JRadioButton themeButton = new JRadioButton();
@@ -66,7 +66,7 @@ public class MapControlPanel extends JPanel {
 		themeButton.addActionListener(al);
 		return themeButton;
 	}
-	
+
 	//create the projection selection combo box
 	private void createProjectionCombo(JPanel panel) {
 		JLabel projLabel = new JLabel("Projection");
@@ -88,23 +88,23 @@ public class MapControlPanel extends JPanel {
 		panel.add(Box.createVerticalStrut(12));
 
 	}
-	
+
 	//create any display checkboxes
 	private void createCheckboxes(JPanel panel) {
 		JCheckBox showCityNamesCheckBox = new JCheckBox("Show city names", true);
 		showCityNamesCheckBox.setFont(Fonts.mediumFont);
 		showCityNamesCheckBox.setHorizontalAlignment(SwingConstants.LEFT);
-		
+
 		showCityNamesCheckBox.addActionListener(e -> {
 			showNames = showCityNamesCheckBox.isSelected();
 			updateCityLabelVisibility();
 		});
-		
+
 		leftAlign(showCityNamesCheckBox);
 		panel.add(showCityNamesCheckBox);
 		panel.add(Box.createVerticalStrut(12));
 	}
-	
+
 	//create the minimum population slider
 	private void createMinPopRangeSlider(JPanel panel) {
 		RangeSlider minPopSlider = new RangeSlider(0, MAX_POP_SLIDER_VALUE, MAX_POP_SLIDER_VALUE / 2, true);
@@ -119,7 +119,7 @@ public class MapControlPanel extends JPanel {
 	private static void leftAlign(JComponent c) {
 		c.setAlignmentX(Component.LEFT_ALIGNMENT);
 	}
-	
+
 	private void createThemeSelector(JPanel panel) {
 		ButtonGroup themeGroup = new ButtonGroup();
 		ActionListener themeListener = e -> {
@@ -139,9 +139,9 @@ public class MapControlPanel extends JPanel {
 
 		leftAlign(_lightThemeButton);
 		leftAlign(_darkThemeButton);
-		leftAlign(_blueThemeButton);		
-		
-		
+		leftAlign(_blueThemeButton);
+
+
 		JPanel subPanel = new JPanel();
 		subPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -167,7 +167,7 @@ public class MapControlPanel extends JPanel {
 			mapView.refresh();
 		}
 	}
-	
+
 	/**
 	 * Update the map theme to light or dark and refresh the display.
 	 *
@@ -178,7 +178,7 @@ public class MapControlPanel extends JPanel {
 			mapView.refresh();
 		}
 	}
-	
+
 	/**
 	 * Update whether city names (labels) are drawn.
 	 */
@@ -189,10 +189,10 @@ public class MapControlPanel extends JPanel {
 			mapView.refresh();
 		}
 	}
-	
+
 	/**
 	 * Get the current map theme.
-	 * 
+	 *
 	 * @return the current MapTheme
 	 */
 	public MapTheme getCurrentTheme() {

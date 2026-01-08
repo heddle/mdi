@@ -13,7 +13,7 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 
 @SuppressWarnings("serial")
 public class ThreeGaussians extends AExample {
-	
+
 	private static final String curveName = "3 Gaussian Fit";
 
 	@Override
@@ -58,33 +58,33 @@ public class ThreeGaussians extends AExample {
  			sum += B;
  			return sum;
  		};
- 		
+
 		FitVectors testData = FitVectors.testData(eval, -1.0, 7.0, n, 4.0, 5.0);
 		for (int i = 0; i < n; i++) {
 			double x = testData.x[i];
 			double y = testData.y[i];
 			double w = testData.w[i];
-			
+
 			//convert weight to error
 	    	double e = 1.0 / Math.sqrt(1.0e-12 + w);
-	    	
+
 	    	Curve curve = (Curve) canvas.getPlotData().getCurve(curveName);
-	    	
+
 	    	//since we are on the EDT thread direct add is safe
 			curve.add(x, y, e);
 
 		}
-		 
+
 	}
 
 
 	@Override
 	public void setParameters() {
 		PlotData plotData = canvas.getPlotData();
-		
+
 		//symbol fill color
 		plotData.getCurve(0).getStyle().setFillColor(new Color(32, 32, 32, 64));
-		
+
 		//symbol border color
 		plotData.getCurve(0).getStyle().setBorderColor(Color.darkGray);
 		plotData.getCurve(0).setCurveMethod(CurveDrawingMethod.GAUSSIANS);
@@ -101,7 +101,7 @@ public class ThreeGaussians extends AExample {
 	}
 
 	public static void main(String arg[]) {
-	
+
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {

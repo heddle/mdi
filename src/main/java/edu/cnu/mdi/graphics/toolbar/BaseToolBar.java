@@ -60,12 +60,12 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 
     /** Convenience reference for style button (so we can enable/disable it). */
     private ToolActionButton styleButton;
-    
+
     /** Convenience reference for box zoom tool. It is cached
      * so that the boxZoom rubberband policy can be changed from the
      * default of Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT */
     private ITool boxZoom;
-    
+
 
     /**
      * Create a toolbar using a bit mask to control which tools/widgets are added.
@@ -229,7 +229,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 		    addActionButton(new UndoZoomButton(toolContext));
 		}
 
-		addActionButton(new WorldButton(toolContext)); 
+		addActionButton(new WorldButton(toolContext));
 		addActionButton(new ZoomInButton(toolContext));
 		addActionButton(new ZoomOutButton(toolContext));
 		addActionButton(new RefreshButton(toolContext));
@@ -253,7 +253,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
             add(statusLine);
         }
     }
-    
+
     /**
      * Set the rubberband policy for the box zoom tool.
      * @param policy the rubberband policy to set.
@@ -314,7 +314,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
         statusLine.setForeground(Color.cyan);
         statusLine.setFocusable(false);            // key fix
         statusLine.setRequestFocusEnabled(false);  // extra;
-        statusLine.setOpaque(true); 
+        statusLine.setOpaque(true);
 
 
         FontMetrics fm = getFontMetrics(statusLine.getFont());
@@ -591,7 +591,7 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 	    addActionButton(button); // your existing method
 	    return this;
 	}
-	
+
 	/**
 	 * @return true if this toolbar was built with a delete button.
 	 */

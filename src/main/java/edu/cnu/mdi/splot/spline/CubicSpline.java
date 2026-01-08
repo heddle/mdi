@@ -279,14 +279,18 @@ public class CubicSpline implements Evaluator {
         }
 
         double[] out = new double[roots.size()];
-        for (int i = 0; i < out.length; i++) out[i] = roots.get(i);
+        for (int i = 0; i < out.length; i++) {
+			out[i] = roots.get(i);
+		}
         Arrays.sort(out);
         return out;
     }
 
     private static void addDedup(List<Double> roots, double x, double eps) {
         for (double r : roots) {
-            if (Math.abs(r - x) <= eps) return;
+            if (Math.abs(r - x) <= eps) {
+				return;
+			}
         }
         roots.add(x);
     }

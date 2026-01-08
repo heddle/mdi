@@ -69,7 +69,7 @@ public class ToolContext {
     public Component canvas() {
         return (container == null) ? null : container.getComponent();
     }
-    
+
     /**
 	 * Get the cursor manager for this tool context.
 	 *
@@ -89,7 +89,7 @@ public class ToolContext {
     public void showPopup(MouseEvent e) {
         PopupTriggerSupport.showPopup(container, e);
     }
-    
+
     public ToolController controller() {
         if (toolBar == null) {
             throw new IllegalStateException("ToolContext has no ToolBar");
@@ -97,7 +97,7 @@ public class ToolContext {
         return toolBar.getToolController();
     }
 
-    
+
     public void resetToDefaultTool() {
         if (toolBar() != null) {
             controller().resetToDefault();

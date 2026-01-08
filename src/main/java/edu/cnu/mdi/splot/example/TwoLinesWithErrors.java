@@ -37,7 +37,7 @@ public class TwoLinesWithErrors extends AExample {
 	protected String getPlotTitle() {
 		return "<html>Sample Plot X<SUP>2</SUP> vs. Q<SUP>2</SUP>";
 	}
-	
+
 	//test data for line 1
 	private FitVectors line1Data() {
 		final double m = 3.3; // slope
@@ -54,7 +54,7 @@ public class TwoLinesWithErrors extends AExample {
 		// test data
 		return FitVectors.testData(evaluator, 0.0, 10.0, n, 10, 20);
 	}
-	
+
 	//test data for line 2
 	private FitVectors line2Data() {
 		final double m = -1.7; // slope
@@ -78,17 +78,17 @@ public class TwoLinesWithErrors extends AExample {
 		FitVectors fv2 = line2Data();
 		Curve curve1 = (Curve) canvas.getPlotData().getCurve(0);
 		Curve curve2 = (Curve) canvas.getPlotData().getCurve(1);
-		
+
 		for (int i = 0; i < fv1.x.length; i++) {
 			double e = 1.0 / Math.sqrt(1.0e-12 + fv1.w[i]);
 			curve1.add(fv1.x[i], fv1.y[i], e);
 		}
-		
+
 		for (int i = 0; i < fv2.x.length; i++) {
 			double e = 1.0 / Math.sqrt(1.0e-12 + fv2.w[i]);
 			curve2.add(fv2.x[i], fv2.y[i], e);
 		}
-		
+
 
 	}
 

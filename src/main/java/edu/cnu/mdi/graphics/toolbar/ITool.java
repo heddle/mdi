@@ -161,7 +161,7 @@ public interface ITool {
 	default Cursor cursor(ToolContext ctx) {
 		return Cursor.getDefaultCursor();
 	}
-	
+
 	/**
 	 * Called when a key is pressed while this tool is active.
 	 *
@@ -171,5 +171,5 @@ public interface ITool {
 	default void keyPressed(ToolContext ctx, KeyEvent e) {
         // no-op
     }
-	
+
 }

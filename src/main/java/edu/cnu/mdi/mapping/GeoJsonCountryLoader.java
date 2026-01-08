@@ -140,7 +140,7 @@ public final class GeoJsonCountryLoader {
         }
         return result;
     }
-    
+
     /**
      * Wrap a longitude value to the canonical range [-π, π).
      *
@@ -198,7 +198,7 @@ public final class GeoJsonCountryLoader {
             List<Point2D.Double> ring = new ArrayList<>();
             for (JsonNode coordNode : ringNode) {
                 if (coordNode.isArray() && coordNode.size() >= 2) {
-                	
+
                 	//convert to radians
                     double lon = Math.toRadians(coordNode.get(0).asDouble());
                     double lat = Math.toRadians(coordNode.get(1).asDouble());

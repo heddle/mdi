@@ -3,7 +3,6 @@ package edu.cnu.mdi.graphics.toolbar;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import java.util.Objects;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.item.AItem;

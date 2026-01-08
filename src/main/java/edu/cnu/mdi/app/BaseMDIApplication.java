@@ -17,9 +17,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 
-import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
-import com.formdev.flatlaf.FlatLightLaf;
 
 import edu.cnu.mdi.desktop.Desktop;
 import edu.cnu.mdi.properties.PropertySupport;
@@ -85,7 +83,7 @@ public class BaseMDIApplication extends JFrame {
 
         // Initialize FlatLaf LookAndFeel
         UIInit();
-                
+
         _properties = PropertySupport.fromKeyValues(keyVals);
 
         // --------------------------------------------------------------------
@@ -150,7 +148,7 @@ public class BaseMDIApplication extends JFrame {
 
         instance = this;
     }
-    
+
     //initialize the FlatLaf UI
 	private void UIInit() {
 		FlatIntelliJLaf.setup();

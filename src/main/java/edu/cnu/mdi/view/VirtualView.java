@@ -2,7 +2,6 @@ package edu.cnu.mdi.view;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -203,7 +202,7 @@ public class VirtualView extends BaseView
     @Override
     public void addNotify() {
         super.addNotify();
-        
+
         adjustTitleFont();  // <-- reduce title font size for virtual view
         if (parentHooked) {
             return;
@@ -246,7 +245,7 @@ public class VirtualView extends BaseView
 
         super.removeNotify();
     }
-    
+
     /**
      * Reduce the title bar font size for the virtual view.
      * <p>
@@ -564,7 +563,7 @@ public class VirtualView extends BaseView
             }
 
             _views.remove(view);
-            
+
             ComponentListener cl = viewComponentListeners.remove(view);
             if (cl != null) {
                 view.removeComponentListener(cl);
@@ -838,7 +837,7 @@ public class VirtualView extends BaseView
         return col;
     }
 
- 
+
 
     /**
      * Get the currently visible column index.
@@ -848,7 +847,7 @@ public class VirtualView extends BaseView
     public int getCurrentColumn() {
         return _currentCol;
     }
-    
+
     public void moveTo(BaseView view, int col, int constraint) {
 		moveTo(view, col, 0, 0, constraint);
 	}

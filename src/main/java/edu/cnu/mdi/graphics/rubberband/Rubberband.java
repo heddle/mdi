@@ -134,10 +134,7 @@ public final class Rubberband {
 			@Override
 			public void mousePressed(MouseEvent event) {
 
-				if (!isActive()) {
-					return;
-				}
-				if (twoClickLineMode()) {
+				if (!isActive() || twoClickLineMode()) {
 					return;
 				}
 

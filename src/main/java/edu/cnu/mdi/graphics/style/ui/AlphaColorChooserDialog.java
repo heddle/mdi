@@ -1,7 +1,14 @@
 package edu.cnu.mdi.graphics.style.ui;
 
-import java.awt.*;
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+
+import javax.swing.JColorChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
 
 public final class AlphaColorChooserDialog {
 
@@ -27,7 +34,9 @@ public final class AlphaColorChooserDialog {
         int result = JOptionPane.showConfirmDialog(parent, panel, title,
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
-        if (result != JOptionPane.OK_OPTION) return null;
+        if (result != JOptionPane.OK_OPTION) {
+			return null;
+		}
 
         Color rgb = chooser.getColor();
         return new Color(rgb.getRed(), rgb.getGreen(), rgb.getBlue(), alpha.getValue());

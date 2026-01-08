@@ -4,13 +4,13 @@ import java.awt.Color;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
 
+import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.plot.PlotParameters;
-import edu.cnu.mdi.splot.style.IStyled;
 
 @SuppressWarnings("serial")
 public class TwoHisto extends AExample {
@@ -50,9 +50,9 @@ public class TwoHisto extends AExample {
 
 	    HistoCurve hc1 = (HistoCurve) canvas.getPlotData().getCurve(0);
 	    HistoCurve hc2 = (HistoCurve) canvas.getPlotData().getCurve(1);
-	    
+
 		for (int i = 0; i < n; i++) {
-			
+
 			double val1 = normDev1.sample();
 			double val2 = normDev2.sample();
 			hc1.add(val1);
@@ -66,7 +66,7 @@ public class TwoHisto extends AExample {
 	    HistoCurve hc2 = (HistoCurve) canvas.getPlotData().getCurve(1);
 	    IStyled style1 = hc1.getStyle();
 	    IStyled style2 = hc2.getStyle();
-	
+
 		style1.setFillColor(new Color(196, 196, 196, 64));
 		style1.setBorderColor(Color.black);
 		hc1.setCurveMethod(CurveDrawingMethod.GAUSSIAN);

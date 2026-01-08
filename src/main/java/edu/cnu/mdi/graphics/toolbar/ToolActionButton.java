@@ -4,7 +4,6 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
 import edu.cnu.mdi.graphics.ImageManager;
@@ -43,7 +42,7 @@ public abstract class ToolActionButton extends JButton implements ToolContextAwa
         this(imageFile, toolTip);
         this.ctx = java.util.Objects.requireNonNull(ctx, "ctx");
     }
-    
+
     protected ToolActionButton(String imageFile, String toolTip) {
         setFocusPainted(false);
         setBorderPainted(false);
@@ -59,7 +58,7 @@ public abstract class ToolActionButton extends JButton implements ToolContextAwa
             }
         });
     }
-    
+
     @Override
     public final void setToolContext(ToolContext toolContext) {
         this.ctx = toolContext;

@@ -3,11 +3,11 @@ package edu.cnu.mdi.splot.plot;
 import java.awt.Graphics;
 import java.awt.Point;
 
-import edu.cnu.mdi.splot.style.Styled;
-
+import edu.cnu.mdi.graphics.GraphicsUtils;
+import edu.cnu.mdi.graphics.style.Styled;
 /**
  * Just a straight line to be drawn on the plot, e.g. a y = 0 line
- * 
+ *
  * @author heddle
  *
  */
@@ -36,7 +36,7 @@ public abstract class PlotLine {
 
 	/**
 	 * Set the line drawing style
-	 * 
+	 *
 	 * @param style the new style
 	 */
 	public void setStyle(Styled style) {
@@ -45,7 +45,7 @@ public abstract class PlotLine {
 
 	/**
 	 * Get the line style
-	 * 
+	 *
 	 * @return the line style
 	 */
 	public Styled getStyle() {
@@ -54,7 +54,7 @@ public abstract class PlotLine {
 
 	/**
 	 * Draw the line
-	 * 
+	 *
 	 * @param g the graphis context
 	 */
 	public void draw(Graphics g) {
@@ -63,7 +63,7 @@ public abstract class PlotLine {
 		wp.setLocation(getX1(), getY1());
 		_canvas.worldToLocal(p1, wp);
 
-		GraphicsUtilities.drawStyleLine(g, _style.getAuxLineColor(), _style.getAuxLineWidth(), _style.getAuxLineStyle(),
+		GraphicsUtils.drawStyleLine(g, _style.getAuxLineColor(), _style.getAuxLineWidth(), _style.getAuxLineStyle(),
 				p0.x, p0.y, p1.x, p1.y);
 	}
 

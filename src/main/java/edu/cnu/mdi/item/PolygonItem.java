@@ -14,66 +14,51 @@ import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 public class PolygonItem extends PathBasedItem {
 
 	/**
-	 * Create a world polygon item.
+	 * Create a world polygon item
 	 *
-	 * @param layer the z layer this item is on.
-	 * @param points   the points of the polygon (world coordinates).
+	 * @param itemList  the layer this item is on.
+	 * @param points the points of the polygon
 	 */
-	public PolygonItem(Layer layer, Point2D.Double[] points) {
-		super(layer);
+	public PolygonItem(Layer itemList, Point2D.Double points[]) {
+		super(itemList);
+
+		// set the path
 		if (points != null) {
 			setPath(points);
 		}
 	}
 
 	/**
-	 * Create an empty world polygon item (path may be set later).
+	 * Create a world polygon item
 	 *
-	 * @param layer the z layer this item is on.
+	 * @param itemList the layer this item is on.
 	 */
-	public PolygonItem(Layer layer) {
-		super(layer);
+	public PolygonItem(Layer itemList) {
+		super(itemList);
 	}
 
 	/**
 	 * Set the path from a world polygon.
 	 *
-	 * @param points the points of the polygon (world coordinates).
+	 * @param points the points of the polygon.
 	 */
-	public void setPath(Point2D.Double[] points) {
+	public void setPath(Point2D.Double points[]) {
 		_path = WorldGraphicsUtils.worldPolygonToPath(points);
-		geometryChanged(); // updates focus + marks dirty
-	}
-
-	@Override
-	protected void updateFocus() {
-		_focus = (_path == null) ? null : WorldGraphicsUtils.getCentroid(_path);
+		geometryChanged();
 	}
 
 	/**
-	 * Reshape the polygon by moving the selected vertex to the current world point.
-	 * <p>
-	 * If Ctrl/Shift is held, scaling logic happens elsewhere (so this method is not used).
-	 * </p>
+	 * Reshape the polygon based on the modification. Not much we can do to a
+	 * polygon except move the selected point. Keep in mind that if control or shift
+	 * was pressed, the polygon will scale rather than coming here.
 	 */
 	@Override
 	protected void reshape() {
-		if (_path == null || _modification == null) {
-			return;
-		}
-
 		int index = _modification.getSelectIndex();
 		Point2D.Double[] wpoly = WorldGraphicsUtils.pathToWorldPolygon(_path);
-		if (wpoly == null || index < 0 || index >= wpoly.length) {
-			return;
-		}
-
-		wpoly[index] = _modification.getCurrentWorldPoint();
+		Point2D.Double wp = _modification.getCurrentWorldPoint();
+		wpoly[index] = wp;
 		setPath(wpoly);
 	}
 
-	@Override
-	protected boolean isClosedPath() {
-		return true;
-	}
 }

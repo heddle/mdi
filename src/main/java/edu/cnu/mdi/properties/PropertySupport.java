@@ -139,8 +139,8 @@ public class PropertySupport {
 		}
 		return o;
 	}
-	
-	
+
+
 
 	/**
 	 * Get the full path of an image file to be used as a background image.
@@ -336,7 +336,7 @@ public class PropertySupport {
 	public static double getFraction(Properties props) {
 		return getDouble(props, FRACTION, Double.NaN);
 	}
-	
+
 	/**
 	 * Get an aspect ratio from the properties
 	 *

@@ -1,7 +1,6 @@
 package edu.cnu.mdi.item;
 
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -39,21 +38,21 @@ public class PointItem extends AItem {
 	/**
 	 * Constructor for a basic point item.
 	 *
-	 * @param layer the z layer this item is on.
+	 * @param itemList the list this item is on.
 	 */
-	public PointItem(Layer layer) {
-		super(layer);
+	public PointItem(Layer itemList) {
+		super(itemList);
 		_focus = new Point2D.Double(Double.NaN, Double.NaN);
 	}
 
 	/**
 	 * Constructor for a basic point item.
 	 *
-	 * @param layer the z layer this item is on.
+	 * @param itemList the list this item is on.
 	 * @param icon  an icon to draw at the point
 	 */
-	public PointItem(Layer layer, ImageIcon icon) {
-		super(layer);
+	public PointItem(Layer itemList, ImageIcon icon) {
+		super(itemList);
 		_imageIcon = icon;
 		_focus = new Point2D.Double(Double.NaN, Double.NaN);
 	}
@@ -61,11 +60,11 @@ public class PointItem extends AItem {
 	/**
 	 * Constructor for a basic point item.
 	 *
-	 * @param layer    the z layer this item is on.
+	 * @param itemList    the list this item is on.
 	 * @param location the location for the point.
 	 */
-	public PointItem(Layer layer, Point2D.Double location) {
-		super(layer);
+	public PointItem(Layer itemList, Point2D.Double location) {
+		super(itemList);
 		_focus = new Point2D.Double(location.x, location.y);
 	}
 
@@ -76,7 +75,7 @@ public class PointItem extends AItem {
 	 * @param container the graphical container being rendered.
 	 */
 	@Override
-	public void drawItem(Graphics2D g, IContainer container) {
+	public void drawItem(Graphics g, IContainer container) {
 
 		// draw icon?
 		if (_imageIcon != null) {
@@ -284,43 +283,21 @@ public class PointItem extends AItem {
 	public void setAlignmentV(int yAlignment) {
 		this._yAlignment = yAlignment;
 	}
-	
-	/**
-	 * Translate this point by the given delta in <b>world</b> coordinates.
-	 * <p>
-	 * A {@link PointItem} is fully defined by its world-space focus point, so
-	 * translating the item is equivalent to translating the focus. This method
-	 * intentionally does not touch icon alignment; alignment is applied only when
-	 * computing pixel bounds and drawing.
-	 * </p>
-	 *
-	 * @param dx world-space delta x
-	 * @param dy world-space delta y
-	 */
-	public void translateWorld(double dx, double dy) {
 
+	@Override
+	public void translateWorld(double dx, double dy) {
 	    if (_focus == null) {
 	        _focus = new Point2D.Double(Double.NaN, Double.NaN);
 	    }
-
 	    // If not yet placed, treat as no-op.
-	    if (Double.isNaN(_focus.x) || Double.isNaN(_focus.y)) {
+	    if (Double.isNaN(_focus.x) || Double.isNaN(_focus.y) || (Math.abs(dx) < 1.0e-12 && Math.abs(dy) < 1.0e-12)) {
 	        return;
 	    }
-
-	    if (Math.abs(dx) < 1.0e-12 && Math.abs(dy) < 1.0e-12) {
-	        return;
-	    }
-
 	    _focus.x += dx;
 	    _focus.y += dy;
-
 	    // PointItem doesn't maintain a Path2D, but it does participate in selection,
 	    // caching, and redraw logic. Mark dirty so any cached draw info is invalidated.
 	    setDirty(true);
 	}
-	
-	
-
 
 }

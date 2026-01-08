@@ -24,7 +24,7 @@ public abstract class PlainView3D extends BaseView implements ActionListener {
 	protected final Panel3D _panel3D;
 
 	public PlainView3D(Object... keyVals) {
-		super(PropertySupport.fromKeyValues(keyVals)); 
+		super(PropertySupport.fromKeyValues(keyVals));
 		_menuBar = new JMenuBar();
 		setJMenuBar(_menuBar);
 		addMenus();
@@ -41,9 +41,9 @@ public abstract class PlainView3D extends BaseView implements ActionListener {
 		add(_panel3D, BorderLayout.CENTER);
 		add(Box.createHorizontalStrut(1), BorderLayout.WEST);
 	//	pack();
-		
+
 	}
-	
+
 
 	// make the 3d panel
 	protected abstract Panel3D make3DPanel(float angleX, float angleY, float angleZ, float xDist, float yDist,

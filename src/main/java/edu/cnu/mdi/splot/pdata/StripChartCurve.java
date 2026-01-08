@@ -186,7 +186,7 @@ public class StripChartCurve extends ACurve {
 	/** Scale internal ms values into the current display unit. */
 	private double scaleTime(double tms) {
 		// milliseconds per 1 unit (e.g., SECONDS -> 1000)
-		final double denom = (double) timeUnit.toMillis(1);
+		final double denom = timeUnit.toMillis(1);
 		return tms / denom;
 	}
 

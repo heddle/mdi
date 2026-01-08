@@ -78,12 +78,24 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
         add(buttons, BorderLayout.SOUTH);
 
         // Default button actions (no-op until bound)
-        startBtn.addActionListener(e -> { if (host != null) host.startSimulation(); });
-        runBtn.addActionListener(e -> { if (host != null) host.runSimulation(); });
-        pauseBtn.addActionListener(e -> { if (host != null) host.pauseSimulation(); });
-        resumeBtn.addActionListener(e -> { if (host != null) host.resumeSimulation(); });
-        stopBtn.addActionListener(e -> { if (host != null) host.stopSimulation(); });
-        cancelBtn.addActionListener(e -> { if (host != null) host.cancelSimulation(); });
+        startBtn.addActionListener(e -> { if (host != null) {
+			host.startSimulation();
+		} });
+        runBtn.addActionListener(e -> { if (host != null) {
+			host.runSimulation();
+		} });
+        pauseBtn.addActionListener(e -> { if (host != null) {
+			host.pauseSimulation();
+		} });
+        resumeBtn.addActionListener(e -> { if (host != null) {
+			host.resumeSimulation();
+		} });
+        stopBtn.addActionListener(e -> { if (host != null) {
+			host.stopSimulation();
+		} });
+        cancelBtn.addActionListener(e -> { if (host != null) {
+			host.cancelSimulation();
+		} });
 
         // Initial state
         applyState(SimulationState.NEW, "unbound");

@@ -58,12 +58,14 @@ public abstract class AbstractLineRubberbandTool implements ITool, IRubberbanded
 
     @Override
     public final void mousePressed(ToolContext ctx, MouseEvent e) {
-        if (ctx == null || e == null) return;
-
-        if (rubberband != null) return;
+        if (ctx == null || e == null || (rubberband != null)) {
+			return;
+		}
 
         owner = ctx.container();
-        if (owner == null) return;
+        if (owner == null) {
+			return;
+		}
 
         controller = safeController(ctx);
 
@@ -84,17 +86,23 @@ public abstract class AbstractLineRubberbandTool implements ITool, IRubberbanded
         controller = null;
 
         try {
-            if (rb == null || c == null) return;
+            if (rb == null || c == null) {
+				return;
+			}
 
             Point p0 = rb.getStartPt();
             Point p1 = rb.getCurrentPt();
 
-            if (!isValidLine(p0, p1)) return;
+            if (!isValidLine(p0, p1)) {
+				return;
+			}
 
             createFromLine(c, p0, p1);
 
             c.selectAllItems(false);
-            if (tc != null) tc.resetToDefault();
+            if (tc != null) {
+				tc.resetToDefault();
+			}
             c.refresh();
 
         } finally {
@@ -111,11 +119,15 @@ public abstract class AbstractLineRubberbandTool implements ITool, IRubberbanded
     protected final void cancelRubberband() {
         Rubberband rb = rubberband;
         rubberband = null;
-        if (rb != null) rb.cancel();
+        if (rb != null) {
+			rb.cancel();
+		}
     }
 
     private boolean isValidLine(Point p0, Point p1) {
-        if (p0 == null || p1 == null) return false;
+        if (p0 == null || p1 == null) {
+			return false;
+		}
         return (Math.abs(p0.x - p1.x) > minDeltaPx) || (Math.abs(p0.y - p1.y) > minDeltaPx);
     }
 

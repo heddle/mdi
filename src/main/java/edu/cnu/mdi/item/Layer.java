@@ -417,6 +417,10 @@ public class Layer extends ArrayList<AItem> {
      * @param select new selection state
      */
     public void selectItem(AItem item, boolean select) {
+
+    	if (item instanceof edu.cnu.mdi.item.ConnectorItem) {
+    		System.out.println("Layer: selectItem: " + item.getName() + " select=" + select);
+    	}
         if (_locked) {
             return;
         }
@@ -472,7 +476,7 @@ public class Layer extends ArrayList<AItem> {
             if (!isEmpty()) {
                 ArrayList<AItem> encitems = new ArrayList<>();
                 for (AItem item : this) {
-                    if (item.isVisible() && item.isEnclosed(container, rect)) {
+                    if (item.isVisible() && item.enclosed(container, rect)) {
                         encitems.add(item);
                     }
                 }
@@ -616,8 +620,8 @@ public class Layer extends ArrayList<AItem> {
     public void setLocked(boolean locked) {
         this._locked = locked;
     }
-    
-    
+
+
 
     /**
      * Set the display name of this layer.

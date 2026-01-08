@@ -30,8 +30,8 @@ import edu.cnu.mdi.item.Layer;
 public class ConnectionManager implements ItemChangeListener {
 
 	/** Singleton instance. */
-	private static volatile ConnectionManager instance = null;	
-	
+	private static volatile ConnectionManager instance = null;
+
     /** All known connectors currently present in any observed list(s). */
     private final Set<ConnectorItem> connectors = new HashSet<>();
 
@@ -70,10 +70,12 @@ public class ConnectionManager implements ItemChangeListener {
      * @return true if a new connection is allowed
      */
     public boolean canConnect(AItem item1, AItem item2) {
-        if (item1 == null || item2 == null) return false;
-        if (item1 == item2) return false;
-        if (item1.getContainer() != item2.getContainer()) return false;
-        if (!item1.isConnectable() || !item2.isConnectable()) return false;
+        if (item1 == null || item2 == null || (item1 == item2) || (item1.getContainer() != item2.getContainer())) {
+			return false;
+		}
+        if (!item1.isConnectable() || !item2.isConnectable()) {
+			return false;
+		}
 
         return !hasConnection(item1, item2);
     }
@@ -92,12 +94,14 @@ public class ConnectionManager implements ItemChangeListener {
      * @return the created connector, or null if connection is not allowed
      */
     public ConnectorItem connect(Layer layer, AItem item1, AItem item2) {
- 
+
     	Objects.requireNonNull(layer, "layer");
-        if (!canConnect(item1, item2)) return null;
+        if (!canConnect(item1, item2)) {
+			return null;
+		}
 
         ConnectorItem ci = new ConnectorItem(layer, item1, item2);
-        
+
         //dealing with at least two layers here!
         layer.addItemChangeListener(instance);
         item1.getLayer().addItemChangeListener(instance);
@@ -111,7 +115,9 @@ public class ConnectionManager implements ItemChangeListener {
      * (Direction does not matter.)
      */
     public boolean hasConnection(AItem item1, AItem item2) {
-        if (item1 == null || item2 == null) return false;
+        if (item1 == null || item2 == null) {
+			return false;
+		}
 
         for (ConnectorItem c : connectors) {
             if (connects(c, item1, item2)) {
@@ -134,7 +140,9 @@ public class ConnectionManager implements ItemChangeListener {
     @Override
     public void itemChanged(Layer layer, AItem item, ItemChangeType type) {
 
-        if (type == null) return;
+        if (type == null) {
+			return;
+		}
 
         switch (type) {
             case ADDED:
@@ -146,7 +154,7 @@ public class ConnectionManager implements ItemChangeListener {
             case DELETED:
                 // If a connector was removed, drop it from our cache.
                 if (item instanceof ConnectorItem) {
-                    connectors.remove((ConnectorItem) item);
+                    connectors.remove(item);
                     break;
                 }
 
@@ -156,7 +164,7 @@ public class ConnectionManager implements ItemChangeListener {
                 }
                 break;
 
-  
+
             default:
                 // ignore other changes
                 break;
@@ -168,7 +176,9 @@ public class ConnectionManager implements ItemChangeListener {
     // ------------------------------------------------------------------------
 
     private void removeConnectionsForEndpoint(AItem endpoint) {
-        if (endpoint == null) return;
+        if (endpoint == null) {
+			return;
+		}
 
         for (Iterator<ConnectorItem> it = connectors.iterator(); it.hasNext();) {
             ConnectorItem c = it.next();
@@ -187,7 +197,7 @@ public class ConnectionManager implements ItemChangeListener {
             }
         }
     }
-    
+
     /**
      * Get all items directly connected to the given item.
      *
@@ -230,7 +240,9 @@ public class ConnectionManager implements ItemChangeListener {
     private static boolean connects(ConnectorItem c, AItem i1, AItem i2) {
         AItem a = safeStart(c);
         AItem b = safeEnd(c);
-        if (a == null || b == null) return false;
+        if (a == null || b == null) {
+			return false;
+		}
 
         return (a == i1 && b == i2) || (a == i2 && b == i1);
     }

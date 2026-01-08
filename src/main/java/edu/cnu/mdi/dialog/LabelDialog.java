@@ -2,7 +2,9 @@ package edu.cnu.mdi.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -42,6 +44,8 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  */
 @SuppressWarnings("serial")
 public class LabelDialog extends JDialog implements ListSelectionListener, ItemListener {
+
+	private static final int MINWIDTH = 300;
 
     /**
      * Last selected font (size/style), used as the default in the null constructor.
@@ -123,6 +127,7 @@ public class LabelDialog extends JDialog implements ListSelectionListener, ItemL
         Container cp = getContentPane();
 
         JPanel top = new JPanel(new FlowLayout());
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
 
         // Create and add the scroll list (size only)
         createScrollLists(top);
@@ -152,6 +157,22 @@ public class LabelDialog extends JDialog implements ListSelectionListener, ItemL
         DialogUtils.centerDialog(this);
     }
 
+	@Override
+    public Dimension getMinimumSize() {
+		Dimension d = super.getMinimumSize();
+		if (d.width < MINWIDTH) {
+			d.width = MINWIDTH;
+		}
+		return d;
+	}
+	@Override
+	public Dimension getPreferredSize() {
+		Dimension d = super.getPreferredSize();
+		if (d.width < MINWIDTH) {
+			d.width = MINWIDTH;
+		}
+		return d;
+	}
     /**
      * Initialize UI controls (size, bold, italic) based on the input font.
      */
@@ -203,24 +224,25 @@ public class LabelDialog extends JDialog implements ListSelectionListener, ItemL
         textField.setBorder(new CommonBorder("Enter the text"));
     }
 
-    /**
-     * Create a box that contains the color labels.
-     */
     private Box createTextAndColorBox() {
         Box box = Box.createVerticalBox();
 
         createTextEntryField();
+        textField.setAlignmentX(Component.LEFT_ALIGNMENT);   // optional, keeps label/field consistent
         box.add(textField);
         box.add(Box.createVerticalStrut(8));
 
         JPanel subbox = new JPanel();
         subbox.setLayout(new BoxLayout(subbox, BoxLayout.Y_AXIS));
+        subbox.setAlignmentX(Component.LEFT_ALIGNMENT);      // <-- key line
 
         _textForeground = new ColorLabel(null, Color.black, "Foreground", 200);
+        _textForeground.setAlignmentX(Component.LEFT_ALIGNMENT); // optional
         subbox.add(_textForeground);
         subbox.add(Box.createVerticalStrut(8));
 
         _textBackground = new ColorLabel(null, null, "Background", 200);
+        _textBackground.setAlignmentX(Component.LEFT_ALIGNMENT); // optional
         subbox.add(_textBackground);
 
         subbox.setBorder(new CommonBorder("Colors"));
@@ -274,7 +296,7 @@ public class LabelDialog extends JDialog implements ListSelectionListener, ItemL
      * </p>
      */
     protected void previewFont() {
-        String resultSizeName = (String) fontSizeList.getSelectedValue();
+        String resultSizeName = fontSizeList.getSelectedValue();
         if (resultSizeName == null) {
             resultSizeName = " " + inputFont.getSize() + " ";
         }

@@ -7,8 +7,9 @@ import java.awt.EventQueue;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JProgressBar;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.WindowConstants;
 
 import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.Simulation;
@@ -52,7 +53,7 @@ public class DemoSimulationFrame extends JFrame {
      */
     public DemoSimulationFrame() {
         super("Simulation Framework Demo");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new Dimension(520, 180));
 
         progress.setStringPainted(true);

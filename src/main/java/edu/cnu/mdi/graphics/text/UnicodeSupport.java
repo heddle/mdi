@@ -2,7 +2,7 @@ package edu.cnu.mdi.graphics.text;
 
 
 public class UnicodeSupport {
-	
+
 	//subscripts and superscripts
 	public static final String SUB0 = "\u2080";
 	public static final String SUB1 = "\u2081";

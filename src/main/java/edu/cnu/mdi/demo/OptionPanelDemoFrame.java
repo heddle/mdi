@@ -8,6 +8,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 
 import edu.cnu.mdi.component.OptionPanel;
 
@@ -17,7 +18,7 @@ public class OptionPanelDemoFrame extends JFrame {
     public OptionPanelDemoFrame() {
         super("OptionPanel Demo");
 
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
         // Sample options

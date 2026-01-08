@@ -9,6 +9,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 
+import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
@@ -48,7 +49,7 @@ public class PlotTicks {
 	/**
 	 * Sets whether we want to draw the bin values on the x axis. Only relevant for
 	 * histograms
-	 * 
+	 *
 	 * @param drawBinVal the value
 	 */
 	public void setDrawBinValue(boolean drawBinVal) {
@@ -59,7 +60,7 @@ public class PlotTicks {
 
 	/**
 	 * Draw the plot ticks
-	 * 
+	 *
 	 * @param g the Graphics context
 	 */
 	public void draw(Graphics g) {
@@ -110,7 +111,7 @@ public class PlotTicks {
 		if (!plotData.isHistogramData()) {
 			return;
 		}
-		
+
 		HistoCurve hc = (HistoCurve)(plotData.getCurve(0));
 		HistoData hd = hc.getHistoData();
 		if (hd == null) {
@@ -204,7 +205,7 @@ public class PlotTicks {
 				if (drawVal) {
 					String valstr = DoubleFormat.doubleFormat(value, params.getNumDecimalY(), params.getMinExponentY());
 					int sw = fm.stringWidth(valstr);
-					GraphicsUtilities.drawRotatedText((Graphics2D) g, valstr, _tickFont, sb, _pp.y + sw / 2, 0, 0, -90);
+					GraphicsUtils.drawRotatedText((Graphics2D) g, valstr, _tickFont, sb, _pp.y + sw / 2, 0, 0, -90);
 				}
 			}
 		}

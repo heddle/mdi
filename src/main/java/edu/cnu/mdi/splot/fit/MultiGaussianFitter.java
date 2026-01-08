@@ -3,8 +3,8 @@ package edu.cnu.mdi.splot.fit;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
+import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.MultivariateJacobianFunction;
 import org.apache.commons.math3.fitting.leastsquares.ParameterValidator;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -42,7 +42,7 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
 
     /** Base Parameter names. */
     public static final String[] paramNames = { "A", "μ", "σ", "B" };
-    
+
     /**
      * Create a MultiGaussianFitter.
      * @param m number of Gaussian components (must be >= 1)
@@ -62,8 +62,12 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
     public MultiGaussianFitter(int m, boolean includeBaseline, LeastSquaresOptimizer optimizer) {
         super(Objects.requireNonNull(optimizer, "optimizer"),
               (x, y, w) -> InitialGuess.guess(m, includeBaseline, x, y));
-        if (m <= 0) throw new IllegalArgumentException("m must be >= 1");
-        if (m > 6) throw new IllegalArgumentException("m must be <= 6 to keep fit manageable");
+        if (m <= 0) {
+			throw new IllegalArgumentException("m must be >= 1");
+		}
+        if (m > 6) {
+			throw new IllegalArgumentException("m must be <= 6 to keep fit manageable");
+		}
         this.m = m;
         this.includeBaseline = includeBaseline;
     }
@@ -305,7 +309,9 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
             public Builder componentSigma(int k, double lower, double upper) { lo[idxSigma(k)] = lower; hi[idxSigma(k)] = upper; return this; }
 
             public Builder baseline(double lower, double upper) {
-                if (!includeBaseline) throw new IllegalStateException("baseline not enabled");
+                if (!includeBaseline) {
+					throw new IllegalStateException("baseline not enabled");
+				}
                 lo[3 * m] = lower; hi[3 * m] = upper; return this;
             }
 
@@ -338,7 +344,9 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
                     out[3 * k + 1] = 0.0;
                     out[3 * k + 2] = Math.max(DEFAULT_MIN_SIGMA, 1.0);
                 }
-                if (includeBaseline) out[3 * m] = 0.0;
+                if (includeBaseline) {
+					out[3 * m] = 0.0;
+				}
                 return out;
             }
 
@@ -353,7 +361,9 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
                 sum += y[i];
             }
             double B = sum / n;
-            if (includeBaseline) out[3 * m] = B;
+            if (includeBaseline) {
+				out[3 * m] = B;
+			}
 
             double range = Math.max(1e-12, xmax - xmin);
             double step = range / m;
@@ -380,7 +390,7 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
             return out;
         }
     }
-    
+
     //------- descriptive string section -----------------
    	@Override
    	public String modelName() {
@@ -404,7 +414,7 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
 
    	/**
    	 * Get the parameter name for the given index.
-   	 * 
+   	 *
    	 * @param index the parameter index
    	 * @return the parameter name
    	 */
@@ -413,7 +423,7 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
    		if (index < 0 || index >= getParameterCount()) {
    			throw new IllegalArgumentException("bad parameter index in Gaussian fit: " + index);
    		}
-   		
+
    		if (includeBaseline && (index == getParameterCount() - 1)) {
    			return "B";
    		}
@@ -427,7 +437,7 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
    	public IFitStringGetter getStringGetter() {
    		return this;
    	}
-   	
+
  	//--------------------- test main -----------------------
  	public static void main(String arg[]) {
 		final double[] mu = {1.2, 3.3};
@@ -447,7 +457,7 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
  			sum += B;
  			return sum;
  		};
- 		
+
  		FitVectors testData = FitVectors.testData(eval, -1.0, 7.0, n, 4.0, 5.0);
  		MultiGaussianFitter fitter = new MultiGaussianFitter(numGauss, true);
  		FitResult result = fitter.fit(testData.x, testData.y, testData.w);
@@ -457,7 +467,7 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
 			System.out.print(" sigma = " + Arrays.toString(sigma) + "\n");
 			System.out.println(" B = " + B);
 		System.out.println(result);
- 		
+
  		//print data and fit values
 		for (int i = 0; i < (n-1); i+=10) {
 			double xv = testData.x[i];

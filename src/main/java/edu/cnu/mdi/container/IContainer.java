@@ -46,7 +46,7 @@ public interface IContainer {
 	 *         annotation layer, which is kept on top.
 	 */
 	public Layer getAnnotationLayer();
-	
+
 	/**
 	 * Get the connection layer for this container.
 	 *
@@ -54,7 +54,7 @@ public interface IContainer {
 	 *         on first, i.e. connections are under other items.
 	 */
 	public Layer getConnectionLayer();
-	
+
 	/**
 	 * Get the default user content layer for this container.
 	 * @return the default user content layer (never null after construction)
@@ -62,7 +62,7 @@ public interface IContainer {
 	public Layer getDefaultLayer();
 
 	/**
-	 * Gets an z layer by name. Do not use for the annotation layer or 
+	 * Gets an z layer by name. Do not use for the annotation layer or
 	 * connection layer-- for that use getAnnotationLayer() or getConnectionLayer().
 	 *
 	 * @param name the name of the layer.
@@ -151,7 +151,7 @@ public interface IContainer {
 	 * Restore the default world. This gets us back to the original zoom level.
 	 */
 	public void restoreDefaultWorld();
-	
+
 	/**
 	 * Reset the world system to a new value.
 	 * Resets the default and previous world systems as well.
@@ -361,12 +361,12 @@ public interface IContainer {
 
 
 	public boolean isStandardPanning();
-	
+
 	public void setStandardPanning(boolean standardPanning);
-	
+
 	/**
 	 * Get the approximate zoom factor based on the current and default world systems.
-	 * 
+	 *
 	 * @return the approximate zoom factor
 	 */
 	public double approximateZoomFactor();

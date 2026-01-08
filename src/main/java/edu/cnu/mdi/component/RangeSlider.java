@@ -85,7 +85,7 @@ public class RangeSlider extends JPanel {
         super(new BorderLayout());
         this.showValue = showValue;
 
-        slider = new JSlider(JSlider.HORIZONTAL, min, max, defaultVal);
+        slider = new JSlider(SwingConstants.HORIZONTAL, min, max, defaultVal);
 
         if (majorTick > 0 && majorTick < max) {
             slider.setMajorTickSpacing(majorTick);

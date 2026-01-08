@@ -1,11 +1,24 @@
 package edu.cnu.mdi.swing;
 
-import java.awt.*;
-import javax.swing.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.Window;
+
+import javax.swing.AbstractButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
 
 /**
  * Utility class for common window and component placement tasks in Swing
- * applications.  
+ * applications.
  *
  * <p>This class centralizes logic for determining the "main" display screen,
  * centering windows, sizing components relative to the display, and retrieving
@@ -96,12 +109,18 @@ public final class WindowPlacement {
      * @param dv vertical offset from true center (positive → down).
      */
     public static void centerComponent(Component component, int dh, int dv) {
-        if (component == null) return;
+        if (component == null) {
+			return;
+		}
 
         Rectangle bounds = boundsOfMainScreen();
         Dimension size = component.getSize();
-        if (size.height > bounds.height) size.height = bounds.height;
-        if (size.width > bounds.width) size.width = bounds.width;
+        if (size.height > bounds.height) {
+			size.height = bounds.height;
+		}
+        if (size.width > bounds.width) {
+			size.width = bounds.width;
+		}
 
         int x = bounds.x + ((bounds.width - size.width) / 2) + dh;
         int y = bounds.y + ((bounds.height - size.height) / 2) + dv;
@@ -111,7 +130,7 @@ public final class WindowPlacement {
 
     /**
      * Returns a {@link Dimension} representing the given fraction of the total
-     * main screen size.  
+     * main screen size.
      *
      * <p>For example, {@code screenFraction(0.5)} returns a dimension equal to
      * half the screen width and half the screen height.</p>

@@ -12,12 +12,12 @@ import java.awt.event.MouseEvent;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
+import javax.swing.JColorChooser;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.JColorChooser;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -74,6 +74,13 @@ public class ColorLabel extends JComponent {
     public ColorLabel(IColorChangeListener colorChangeListener, Color initialColor, String prompt) {
         this(colorChangeListener, initialColor, prompt, -1);
     }
+
+    public ColorLabel(IColorChangeListener colorChangeListener, Color initialColor, Font font, String prompt) {
+        this(colorChangeListener, initialColor, prompt, -1);
+        setFont(font);
+    }
+
+
 
     /**
      * Create a clickable color label.
@@ -236,6 +243,10 @@ public class ColorLabel extends JComponent {
         // prompt
         g.drawString(prompt, rectSize + 6, fm.getHeight() - 4);
     }
+
+    public void setColorListener(IColorChangeListener listener) {
+		this.colorChangeListener = listener;
+	}
 
     @Override
     public Dimension getPreferredSize() {

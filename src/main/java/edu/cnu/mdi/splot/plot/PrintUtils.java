@@ -8,29 +8,30 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 
-public class PrintUtilities implements Printable {
+public class PrintUtils implements Printable {
 
 	private static boolean _isPrinting;
 	private Component _componentToBePrinted;
 
 	public static void printComponent(Component c) {
-		new PrintUtilities(c).print();
+		new PrintUtils(c).print();
 	}
 
-	public PrintUtilities(Component componentToBePrinted) {
+	public PrintUtils(Component componentToBePrinted) {
 		_componentToBePrinted = componentToBePrinted;
 	}
 
 	public void print() {
 		PrinterJob printJob = PrinterJob.getPrinterJob();
 		printJob.setPrintable(this);
-		if (printJob.printDialog())
+		if (printJob.printDialog()) {
 			try {
 				printJob.print();
 			}
 			catch (PrinterException pe) {
 				System.out.println("Error printing: " + pe);
 			}
+		}
 	}
 
 	@Override

@@ -6,7 +6,7 @@ import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
-import edu.cnu.mdi.splot.plot.X11Colors;
+import edu.cnu.mdi.ui.colors.X11Colors;
 
 @SuppressWarnings("serial")
 public class AnotherGaussian extends AExample {
@@ -63,11 +63,11 @@ public class AnotherGaussian extends AExample {
 	@Override
 	public void setParameters() {
 		PlotData plotData = canvas.getPlotData();
-		
+
 		Curve curve = (Curve) plotData.getCurve(0);
 		//symbol fill color
 		curve.getStyle().setFillColor(X11Colors.getX11Color("dark sea green"));
-		
+
 		//symbol border color
 		curve.getStyle().setBorderColor(X11Colors.getX11Color("dark red"));
 		curve.setCurveMethod(CurveDrawingMethod.GAUSSIAN);

@@ -10,6 +10,7 @@ import java.awt.Rectangle;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicLabelUI;
 
@@ -24,7 +25,7 @@ import javax.swing.plaf.basic.BasicLabelUI;
  * Metal L&F by extending MetalLabelUI instead of BasicLabelUI.
  * <P>
  * No other changes are required.
- * 
+ *
  * @author Darryl
  */
 public class VerticalLabelUI extends BasicLabelUI {
@@ -47,7 +48,7 @@ public class VerticalLabelUI extends BasicLabelUI {
 	/**
 	 * Constructs a <code>VerticalLabelUI</code> with the desired rotation.
 	 * <P>
-	 * 
+	 *
 	 * @param clockwise true to rotate clockwise, false for anticlockwise
 	 */
 	public VerticalLabelUI(boolean clockwise) {
@@ -69,7 +70,7 @@ public class VerticalLabelUI extends BasicLabelUI {
 	/**
 	 * Overridden to always return -1, since a vertical label does not have a
 	 * meaningful baseline.
-	 * 
+	 *
 	 * @see ComponentUI#getBaseline(JComponent, int, int)
 	 */
 	@Override
@@ -81,7 +82,7 @@ public class VerticalLabelUI extends BasicLabelUI {
 	/**
 	 * Overridden to always return Component.BaselineResizeBehavior.OTHER, since a
 	 * vertical label does not have a meaningful baseline
-	 * 
+	 *
 	 * @see ComponentUI#getBaselineResizeBehavior(javax.swing.JComponent)
 	 */
 	@Override
@@ -128,7 +129,7 @@ public class VerticalLabelUI extends BasicLabelUI {
 
 	/**
 	 * Returns a Dimension appropriate for vertical rendering
-	 * 
+	 *
 	 * @see ComponentUI#getPreferredSize(javax.swing.JComponent)
 	 */
 	@Override
@@ -138,7 +139,7 @@ public class VerticalLabelUI extends BasicLabelUI {
 
 	/**
 	 * Returns a Dimension appropriate for vertical rendering
-	 * 
+	 *
 	 * @see ComponentUI#getMaximumSize(javax.swing.JComponent)
 	 */
 	@Override
@@ -148,7 +149,7 @@ public class VerticalLabelUI extends BasicLabelUI {
 
 	/**
 	 * Returns a Dimension appropriate for vertical rendering
-	 * 
+	 *
 	 * @see ComponentUI#getMinimumSize(javax.swing.JComponent)
 	 */
 	@Override

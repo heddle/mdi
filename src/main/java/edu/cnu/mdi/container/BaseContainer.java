@@ -326,7 +326,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 */
 	@Override
 	public void paintComponent(Graphics g) {
-
 		Graphics2D g2 = (Graphics2D) g;
 
 		if ((_view != null) && !_view.isViewVisible()) {
@@ -374,8 +373,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		if (_annotationLayer != null) {
 			_annotationLayer.draw(g2, this);
 		}
-		
-	
+
+
 		// always clean after drawing
 		setDirty(false);
 	}

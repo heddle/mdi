@@ -151,10 +151,7 @@ public class ViewManager extends Vector<BaseView> {
      */
     @Override
     public synchronized boolean add(BaseView view) {
-        if (view == null) {
-            return false;
-        }
-        if (contains(view)) {
+        if ((view == null) || contains(view)) {
             return false;
         }
 
@@ -187,10 +184,7 @@ public class ViewManager extends Vector<BaseView> {
      * @return {@code true} if the view was removed; {@code false} otherwise.
      */
     public synchronized boolean remove(BaseView view) {
-        if (view == null) {
-            return false;
-        }
-        if (!contains(view)) {
+        if ((view == null) || !contains(view)) {
             return false;
         }
 
@@ -316,10 +310,7 @@ public class ViewManager extends Vector<BaseView> {
      * Ensure a menu item exists for the given view if a view menu is configured.
      */
     private void ensureMenuItem(BaseView view) {
-        if (_viewMenu == null) {
-            return;
-        }
-        if (menuItems.containsKey(view)) {
+        if ((_viewMenu == null) || menuItems.containsKey(view)) {
             return;
         }
 

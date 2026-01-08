@@ -135,8 +135,12 @@ public class DataList extends ArrayList<Double> {
             if (d == null) {
                 continue;
             }
-            if (d < newMin) newMin = d;
-            if (d > newMax) newMax = d;
+            if (d < newMin) {
+				newMin = d;
+			}
+            if (d > newMax) {
+				newMax = d;
+			}
         }
 
         min = newMin;

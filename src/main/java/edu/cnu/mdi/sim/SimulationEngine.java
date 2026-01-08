@@ -106,7 +106,7 @@ public final class SimulationEngine {
         simThread.setDaemon(true);
         simThread.start();
     }
-    
+
     /**
      * Get the simulation instance being executed by this engine.
      * <p>
@@ -277,10 +277,7 @@ public final class SimulationEngine {
                     while (pauseRequested && !stopRequested && !context.isCancelRequested()) {
                         LockSupport.parkNanos(10_000_000L); // 10ms
                     }
-                    if (stopRequested) {
-                        break;
-                    }
-                    if (context.isCancelRequested()) {
+                    if (stopRequested || context.isCancelRequested()) {
                         break;
                     }
 

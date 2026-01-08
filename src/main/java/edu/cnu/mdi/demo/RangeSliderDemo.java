@@ -8,7 +8,9 @@ import java.awt.GridLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 
 import edu.cnu.mdi.component.RangeSlider;
 
@@ -27,14 +29,14 @@ public class RangeSliderDemo extends JFrame {
     public RangeSliderDemo() {
 
         super("RangeSlider Demo");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setSize(500, 300);
 
         // ================================
         // Title label
         // ================================
-        JLabel header = new JLabel("RangeSlider Component Demo", JLabel.CENTER);
+        JLabel header = new JLabel("RangeSlider Component Demo", SwingConstants.CENTER);
         header.setFont(new Font("SansSerif", Font.BOLD, 18));
         header.setForeground(new Color(20, 40, 120));
         add(header, BorderLayout.NORTH);
@@ -48,7 +50,7 @@ public class RangeSliderDemo extends JFrame {
         // Example 1 – Normal slider
         // --------------------------------
         JPanel example1 = new JPanel(new BorderLayout());
-        JLabel example1Label = new JLabel("Normal Slider (shows current value)", JLabel.CENTER);
+        JLabel example1Label = new JLabel("Normal Slider (shows current value)", SwingConstants.CENTER);
 
         RangeSlider slider1 = new RangeSlider(0, 100, 30, 20, 5, true);
 
@@ -69,7 +71,7 @@ public class RangeSliderDemo extends JFrame {
         // Example 2 – Compact slider
         // --------------------------------
         JPanel example2 = new JPanel(new BorderLayout());
-        JLabel example2Label = new JLabel("Compact Slider (no value label)", JLabel.CENTER);
+        JLabel example2Label = new JLabel("Compact Slider (no value label)", SwingConstants.CENTER);
 
         RangeSlider slider2 = new RangeSlider(0, 50, 10, false);
 

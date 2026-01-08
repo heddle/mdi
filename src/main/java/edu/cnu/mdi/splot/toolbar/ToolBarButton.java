@@ -3,10 +3,10 @@ package edu.cnu.mdi.splot.toolbar;
 import java.awt.Cursor;
 import java.awt.Dimension;
 
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JButton;
 
-import edu.cnu.mdi.splot.plot.ImageManager;
+import edu.cnu.mdi.graphics.ImageManager;
 
 public class ToolBarButton extends JButton {
 
@@ -17,7 +17,7 @@ public class ToolBarButton extends JButton {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param container     the owner container.
 	 * @param imageFileName the name if the file holding the icon
 	 * @param toolTip       a string for a tool tip
@@ -26,7 +26,8 @@ public class ToolBarButton extends JButton {
 		super();
 
 		setActionCommand(actionCommand);
-		ImageIcon imageIcon = ImageManager.getInstance().loadImageIcon(imageFileName);
+		Icon icon = ImageManager.getInstance().loadUiIcon(imageFileName, 20, 20);
+		setIcon(icon);
 
 		String bareName = new String(imageFileName);
 		int index = bareName.indexOf(".");
@@ -36,7 +37,6 @@ public class ToolBarButton extends JButton {
 
 		setFocusPainted(false);
 		setToolTipText(toolTip);
-		setIcon(imageIcon);
 		setRolloverEnabled(true);
 		setBorderPainted(false);
 
@@ -44,7 +44,7 @@ public class ToolBarButton extends JButton {
 
 	/**
 	 * Get the appropriate cursor for this tool.
-	 * 
+	 *
 	 * @return the cursor appropriate when the mouse is in the container (and this
 	 *         button is active).
 	 */
@@ -54,7 +54,7 @@ public class ToolBarButton extends JButton {
 
 	/**
 	 * Get the preferred size.
-	 * 
+	 *
 	 * @return the preferred size for layout.
 	 */
 	@Override

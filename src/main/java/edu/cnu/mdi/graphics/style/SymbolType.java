@@ -1,5 +1,7 @@
 package edu.cnu.mdi.graphics.style;
 
+import edu.cnu.mdi.component.EnumComboBox;
+
 public enum SymbolType {
     NOSYMBOL("No Symbol"),
     SQUARE("Square"),
@@ -50,5 +52,15 @@ public enum SymbolType {
     public String toString() {
         // Optional, but convenient if someone drops SymbolType into a default renderer.
         return displayName;
+    }
+
+    /**
+     * Obtain a combo box of choices.
+     *
+     * @param defaultChoice which enum should be initially selected (nullable)
+     * @return the combo box
+     */
+    public static EnumComboBox<SymbolType> getComboBox(SymbolType defaultChoice) {
+    	return new EnumComboBox<>(SymbolType.class, defaultChoice, null, SymbolType::getName);
     }
 }

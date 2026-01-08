@@ -4,16 +4,14 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Double;
 
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.graphics.text.UnicodeSupport;
-import edu.cnu.mdi.util.Point2DSupport;
 
 @SuppressWarnings("serial")
 public class MapContainer extends BaseContainer {
-	
+
 	public MapContainer(Double worldSystem) {
 		super(worldSystem);
 		setStandardPanning(false);
@@ -42,7 +40,7 @@ public class MapContainer extends BaseContainer {
 	 */
 	@Override
 	public void recenter(Point pp) {
-		
+
 		IMapProjection mp = getMapView2D().getProjection();
 		EProjection proj = mp.getProjection();
 		Point2D.Double wp = new Point2D.Double();
@@ -54,26 +52,26 @@ public class MapContainer extends BaseContainer {
 		case MERCATOR:
 			((MercatorProjection)mp).setCentralLongitude(ll.x);
 			break;
-			
+
 		case MOLLWEIDE:
 			((MollweideProjection)mp).setCentralLongitude(ll.x);
 			break;
-			
+
 		case ORTHOGRAPHIC:
 			((OrthographicProjection)mp).setCenter(ll.x, ll.y);
 			break;
-			
+
 		case LAMBERT_EQUAL_AREA:
 			((LambertEqualAreaProjection)mp).setCenter(ll.x, ll.y);
 			break;
 		}
-		
+
 		getMapView2D().invalidate();
 		setDirty(true);
 		refresh();
 
 	}
-	
+
 	/**
 	 * Convert local point to lat/lon point
 	 * @param pp the local point
@@ -84,7 +82,7 @@ public class MapContainer extends BaseContainer {
 		localToWorld(pp, wp);
 		getMapView2D().getProjection().latLonFromXY(ll, wp);
 	}
-	
+
 	/**
 	 * Convert world point to lat/lon point
 	 * @param ll the lat/lon point
@@ -93,7 +91,7 @@ public class MapContainer extends BaseContainer {
 	public void worldToLatLon(Point2D.Double ll, Point2D.Double wp) {
 		getMapView2D().getProjection().latLonFromXY(ll, wp);
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */

@@ -17,8 +17,8 @@ public class EditStyleButton extends ToolActionButton {
 	@Override
 	protected void perform(ToolContext ctx) {
 		var c = ctx.container();
-		
-		List<AItem> selected = c.getSelectedItems(); 
+
+		List<AItem> selected = c.getSelectedItems();
 
 		if (selected == null || selected.isEmpty()) {
 			java.awt.Toolkit.getDefaultToolkit().beep();
@@ -28,8 +28,9 @@ public class EditStyleButton extends ToolActionButton {
 		// seed from first selected item
 		IStyled seed = selected.get(0).getStyleSafe();
 		Styled edited = StyleEditorDialog.edit(c.getComponent(), seed, false);
-		if (edited == null)
+		if (edited == null) {
 			return;
+		}
 
 		for (AItem item : selected) {
 			item.setStyle(edited.copy()); // avoid shared mutable style objects

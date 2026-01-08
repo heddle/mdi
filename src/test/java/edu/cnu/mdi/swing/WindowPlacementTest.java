@@ -1,22 +1,26 @@
 package edu.cnu.mdi.swing;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Assumptions;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import javax.swing.AbstractButton;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JDialog;
-import javax.swing.JInternalFrame;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 
-import static org.junit.jupiter.api.Assertions.*;
+import javax.swing.AbstractButton;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JInternalFrame;
+import javax.swing.JPanel;
+
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for {@link WindowPlacement}.

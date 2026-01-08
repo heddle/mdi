@@ -41,9 +41,13 @@ public final class SwingGraphicsUtils {
      *         {@code null} or has zero/negative width or height
      */
     public static BufferedImage createComponentImageBuffer(Component c) {
-        if (c == null) return null;
+        if (c == null) {
+			return null;
+		}
         Dimension size = c.getSize();
-        if (size.width < 1 || size.height < 1) return null;
+        if (size.width < 1 || size.height < 1) {
+			return null;
+		}
         return new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
     }
 
@@ -62,9 +66,13 @@ public final class SwingGraphicsUtils {
      * @return a new ARGB image, or {@code null} if the component is invalid
      */
     public static BufferedImage createComponentTranslucentImageBuffer(Component c) {
-        if (c == null) return null;
+        if (c == null) {
+			return null;
+		}
         Dimension size = c.getSize();
-        if (size.width < 1 || size.height < 1) return null;
+        if (size.width < 1 || size.height < 1) {
+			return null;
+		}
         return new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
     }
 
@@ -83,10 +91,14 @@ public final class SwingGraphicsUtils {
      * @param image  the target image buffer
      */
     public static void paintComponentOnImage(Component c, BufferedImage image) {
-        if (c == null || image == null) return;
+        if (c == null || image == null) {
+			return;
+		}
 
         Dimension size = c.getSize();
-        if (size.width < 1 || size.height < 1) return;
+        if (size.width < 1 || size.height < 1) {
+			return;
+		}
 
         Graphics2D g2 = image.createGraphics();
         try {

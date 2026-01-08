@@ -1,29 +1,26 @@
 package edu.cnu.mdi.view.demo;
 
 import java.awt.Cursor;
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
 
-import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.toolbar.ITool;
 import edu.cnu.mdi.graphics.toolbar.ToolContext;
 import edu.cnu.mdi.item.Layer;
 
 public class PlaceDeviceTool implements ITool {
-	
+
 	// The device symbol to place
     private  EDeviceSymbol symbol;
-    
+
     private Layer deviceLayer;
-    
+
 
     public PlaceDeviceTool(Layer deviceLayer, EDeviceSymbol symbol) {
     	this.deviceLayer = deviceLayer;
         this.symbol = java.util.Objects.requireNonNull(symbol);
     }
-    
+
     @Override
     public Cursor cursor(ToolContext ctx) {
         return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);

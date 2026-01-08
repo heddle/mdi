@@ -69,16 +69,26 @@ public class FontSpecPanel extends JPanel {
 	}
 
 	private static String styleText(Font f) {
-		if (f.isBold() && f.isItalic()) return "Bold Italic";
-		if (f.isBold()) return "Bold";
-		if (f.isItalic()) return "Italic";
+		if (f.isBold() && f.isItalic()) {
+			return "Bold Italic";
+		}
+		if (f.isBold()) {
+			return "Bold";
+		}
+		if (f.isItalic()) {
+			return "Italic";
+		}
 		return "Plain";
 	}
 
 	public Font getSelectedFont() {
 		int style = Font.PLAIN;
-		if (_bold.isSelected()) style |= Font.BOLD;
-		if (_italic.isSelected()) style |= Font.ITALIC;
+		if (_bold.isSelected()) {
+			style |= Font.BOLD;
+		}
+		if (_italic.isSelected()) {
+			style |= Font.ITALIC;
+		}
 
 		int size = ((Number) _size.getValue()).intValue();
 		return new Font(_base.getFamily(), style, size);

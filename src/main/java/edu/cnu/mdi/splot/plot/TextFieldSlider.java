@@ -34,7 +34,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 
 	/**
 	 * Create a TextFieldSlider
-	 * 
+	 *
 	 * @param min               the minimum slider value
 	 * @param max               the maximum slider value
 	 * @param value             the initial slider value
@@ -64,7 +64,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 		if ((labels != null) && (labels.length > 1)) {
 			// assume the labels are equally spaced
 			float del = ((float) (max - min)) / (labels.length - 1);
-			Hashtable<Integer, JLabel> labelTable = new Hashtable<Integer, JLabel>();
+			Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
 
 			for (int i = 0; i < labels.length; i++) {
 				int sv = (int) (min + i * del);
@@ -145,7 +145,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 	 * Take the current slider value and convert in to the real value. This allows,
 	 * for example, to have a slider range of 0 to 100 mapped to a real-valued range
 	 * that is not even necessarily linear.
-	 * 
+	 *
 	 * @return the real value corresponding to the current slider value.
 	 */
 	public abstract double sliderValueToRealValue();
@@ -154,7 +154,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 	 * Convert a real value to the corresponding slider value. This allows, for
 	 * example, to have a slider range of 0 to 100 mapped to a real-valued range
 	 * that is not even necessarily linear.
-	 * 
+	 *
 	 * @param val the real value to convert.
 	 * @return the corresponding slider value. (The slider is not automatically set
 	 *         to this value)
@@ -163,7 +163,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 
 	/**
 	 * Convert format real value into a display string
-	 * 
+	 *
 	 * @param val the value to format
 	 * @return the formatted value
 	 */
@@ -177,7 +177,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 
 	/**
 	 * Get the slider component
-	 * 
+	 *
 	 * @return the slider component
 	 */
 	public JSlider getSlider() {
@@ -186,7 +186,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 
 	/**
 	 * Get the text field component
-	 * 
+	 *
 	 * @return the text field component
 	 */
 	public JTextField getTextField() {
@@ -195,7 +195,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 
 	/**
 	 * Convenience method to set the slider value
-	 * 
+	 *
 	 * @param val the value to set
 	 */
 	public void setValue(int val) {
@@ -204,7 +204,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 
 	/**
 	 * Convenience method to get the slider's current value.
-	 * 
+	 *
 	 * @return the slider's current value.
 	 */
 	public int getValue() {

@@ -13,7 +13,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.optim.SimpleVectorValueChecker;
 
-import edu.cnu.mdi.splot.plot.UnicodeSupport;
+import edu.cnu.mdi.graphics.text.UnicodeSupport;
 
 /**
  * Base class for least-squares fitters built on Apache Commons Math 3.x
@@ -47,7 +47,7 @@ import edu.cnu.mdi.splot.plot.UnicodeSupport;
  * to the conventional weighted chi-square.
  */
 public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
-	
+
 	//helpers from unicode
 	public static final String SUB0 = UnicodeSupport.SUB0;
 	public static final String SUB1 = UnicodeSupport.SUB1;
@@ -62,13 +62,13 @@ public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
 	public static final String CAPSIG = UnicodeSupport.CAPITAL_SIGMA;
 	public static final String OMEGA = UnicodeSupport.SMALL_OMEGA;
 	public static final String PHI = UnicodeSupport.SMALL_PHI;
-	
+
 	public String[] subArray = {SUB0, SUB1, SUB2, UnicodeSupport.SUB3,
 			                   UnicodeSupport.SUB4, UnicodeSupport.SUB5,
 			                   UnicodeSupport.SUB6, UnicodeSupport.SUB7,
 			                   UnicodeSupport.SUB8, UnicodeSupport.SUB9};
-	
-	
+
+
 
     /** Optimizer used for the fit (often Levenberg-Marquardt). */
     protected final LeastSquaresOptimizer optimizer;
@@ -99,7 +99,7 @@ public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
      * Subclasses may override via {@link #getCovarianceThreshold()}.
      */
     protected final double covarianceThreshold;
-  
+
     /**
      * Construct a fitter with default iteration/evaluation/checker settings.
      *
@@ -314,14 +314,14 @@ public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
             return null;
         }
     }
-    
+
     /**
 	 * Create an evaluator for the fit result.
 	 *
 	 * @param fit the fit result
 	 * @return an evaluator
 	 */
-    
+
     public abstract Evaluator asEvaluator(final FitResult fit);
 
     /**
@@ -355,14 +355,14 @@ public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
 				opt.getIterations(), opt.getEvaluations());
 		return fr;
 	}
-   
+
     /**
      * Get the descriptive string getter for this fitter.
      * @return the string getter
      */
     public abstract IFitStringGetter getStringGetter();
-    
- 
+
+
     /**
      * Fit with no weights, no initial guess override, and no parameter validator override.
      *
@@ -467,7 +467,7 @@ public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
         final RealMatrix cov = safeCovariances(opt, getCovarianceThreshold());
 
         FitResult fr = buildFitResult(getStringGetter(), params, cov, n, p, opt);
-        
+
         // set the evaluator so can treat the fit as a function useful for plotting
         fr.setEvaluator(asEvaluator(fr));
         return fr;

@@ -6,7 +6,7 @@ import java.awt.Rectangle;
 
 /**
  * A legend like rectangle for extra text
- * 
+ *
  * @author heddle
  *
  */
@@ -26,7 +26,7 @@ public class ExtraText extends DraggableRectangle {
 
 	/**
 	 * Create a Extra Text rectangle
-	 * 
+	 *
 	 * @param canvas the parent plot canvas
 	 */
 	public ExtraText(PlotCanvas canvas) {
@@ -36,7 +36,7 @@ public class ExtraText extends DraggableRectangle {
 
 	/**
 	 * Draw the extra text
-	 * 
+	 *
 	 * @param g the graphics context
 	 */
 	public void draw(Graphics g) {

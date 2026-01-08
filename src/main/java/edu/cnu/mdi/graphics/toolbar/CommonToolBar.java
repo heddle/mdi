@@ -4,7 +4,6 @@ import java.awt.Component;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.Enumeration;
-import java.util.Objects;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;

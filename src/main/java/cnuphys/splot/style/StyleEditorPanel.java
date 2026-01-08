@@ -1,4 +1,4 @@
-package edu.cnu.mdi.splot.style;
+package cnuphys.splot.style;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,15 +11,15 @@ import javax.swing.JPanel;
 import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.component.EnumComboBox;
 import edu.cnu.mdi.dialog.ColorLabel;
+import edu.cnu.mdi.format.DoubleFormat;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
-import edu.cnu.mdi.splot.plot.DoubleFormat;
 import edu.cnu.mdi.splot.plot.TextFieldSlider;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
-@SuppressWarnings("serial")
+
 public class StyleEditorPanel extends JPanel {
 
 	public static final String SYMBOLSIZEPROP = "Symbol Size";
@@ -252,7 +252,7 @@ public class StyleEditorPanel extends JPanel {
 	 *
 	 * @return the symbol selector
 	 */
-	public EnumComboBox<SymbolType> getSymbolSelector() {
+	public EnumComboBox getSymbolSelector() {
 		return _symbolSelector;
 	}
 
@@ -261,7 +261,7 @@ public class StyleEditorPanel extends JPanel {
 	 *
 	 * @return the border selector
 	 */
-	public EnumComboBox<LineStyle> getBorderSelector() {
+	public EnumComboBox getBorderSelector() {
 		return _fitLineStyleSelector;
 	}
 

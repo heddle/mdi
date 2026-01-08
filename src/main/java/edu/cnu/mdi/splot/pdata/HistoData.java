@@ -7,10 +7,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import edu.cnu.mdi.graphics.text.UnicodeSupport;
 import edu.cnu.mdi.splot.plot.DoubleFormat;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
-import edu.cnu.mdi.splot.plot.UnicodeSupport;
 
 /**
  * Container class for 1D histogram data.
@@ -203,7 +203,7 @@ public class HistoData {
             counts[bin]++;
         }
     }
-    
+
     /**
      * Add many values to the histogram.
      * <p>
@@ -397,7 +397,7 @@ public class HistoData {
     // "Prepare for fit" helper
     // ------------------------------------------------------------------------
 
- 
+
     /**
      * Fit prep result that also reports which peak bin and window were used.
      * Useful for status/debug strings in the UI.
@@ -501,7 +501,7 @@ public class HistoData {
             }
 
             xArr[j] = getBinMidValue(bin);
-            yArr[j] = (double) c;
+            yArr[j] = c;
             if (poissonWeights) {
                 wArr[j] = poissonWeightForCount(c);
             }
@@ -1027,8 +1027,12 @@ public class HistoData {
     }
 
     private static int clampBin(int bin, int nbin) {
-        if (bin < 0) return 0;
-        if (bin >= nbin) return nbin - 1;
+        if (bin < 0) {
+			return 0;
+		}
+        if (bin >= nbin) {
+			return nbin - 1;
+		}
         return bin;
     }
 
@@ -1047,7 +1051,7 @@ public class HistoData {
         for (int j = lo; j <= hi; j++) {
             int d = Math.abs(j - i);
             int w = (radius + 1 - d); // >= 1
-            weightedSum += (long) w * counts[j];
+            weightedSum += w * counts[j];
             weightSum += w;
         }
         return (weightSum > 0L) ? ((double) weightedSum / weightSum) : Double.NEGATIVE_INFINITY;
@@ -1183,7 +1187,7 @@ public class HistoData {
         }
         return g;
     }
-    
+
     @Override
     public String toString() {
         String nm = (name == null) ? "" : name.trim();

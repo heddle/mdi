@@ -79,7 +79,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 	protected KeyAdapter3D _keyAdapter;
 
 	protected String _rendererStr;
-	
+
 	private boolean _skipLastStage = false;
 
 	/*
@@ -306,7 +306,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 
 		// Draw the 3D items
 		gl.glPushMatrix();
-		
+
 		beforeDraw(drawable);
 		for (Item3D item : _itemList) {
 			if (item.isVisible()) {
@@ -314,7 +314,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 			}
 		}
 		afterDraw(drawable);
-		
+
 		gl.glPopMatrix();
 
 		//ced might not like these lines
@@ -336,7 +336,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 	 */
 	public void beforeDraw(GLAutoDrawable drawable) {
 	}
-	
+
 	/**
 	 * Called after drawing the items.
 	 */
@@ -488,7 +488,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 			refresh();
 		}
 	}
-	
+
 	/**
 	 * Clear all items from the list.
 	 */

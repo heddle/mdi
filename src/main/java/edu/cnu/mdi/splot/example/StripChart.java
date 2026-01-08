@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import edu.cnu.mdi.graphics.style.IStyled;
+import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.fit.Evaluator;
 import edu.cnu.mdi.splot.pdata.PlotData;
@@ -11,12 +13,10 @@ import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.StripChartCurve;
 import edu.cnu.mdi.splot.plot.LimitsMethod;
 import edu.cnu.mdi.splot.plot.PlotParameters;
-import edu.cnu.mdi.splot.style.IStyled;
-import edu.cnu.mdi.splot.style.SymbolType;
 
 @SuppressWarnings("serial")
 public class StripChart extends AExample implements Evaluator {
-	
+
 	private Random random = new Random();
 
 	@Override
@@ -65,7 +65,7 @@ public class StripChart extends AExample implements Evaluator {
 	@Override
 	public double value(double x) {
 		// memory in mb
-		
+
 		double megaBytes = 100*(random.nextDouble() - 0.5) + (Runtime.getRuntime().totalMemory()) / 1048576.;
 		return megaBytes;
 	}

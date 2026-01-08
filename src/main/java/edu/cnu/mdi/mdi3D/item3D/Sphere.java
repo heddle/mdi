@@ -93,9 +93,9 @@ public class Sphere extends Item3D {
 
         // Enable depth testing to hide hidden parts of gridlines
         gl.glEnable(GL.GL_DEPTH_TEST);
-        
+
         // Apply polygon offset to avoid z-fighting
-        gl.glEnable(GL2.GL_POLYGON_OFFSET_FILL);
+        gl.glEnable(GL.GL_POLYGON_OFFSET_FILL);
         gl.glPolygonOffset(-1.0f, -1.0f);
 
         if (_theta != null) {
@@ -106,7 +106,7 @@ public class Sphere extends Item3D {
         }
 
         // Disable polygon offset
-        gl.glDisable(GL2.GL_POLYGON_OFFSET_FILL);
+        gl.glDisable(GL.GL_POLYGON_OFFSET_FILL);
     }
     /**
      * Draws meridian (longitude) lines at the given azimuthal angles (phi).

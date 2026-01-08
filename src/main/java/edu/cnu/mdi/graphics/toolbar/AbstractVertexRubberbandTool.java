@@ -91,7 +91,7 @@ public abstract class AbstractVertexRubberbandTool implements ITool, IRubberband
         }
 
         container = ctx.container();
- 
+
         //ignore if already active
         if (rubberband != null) {
             return;

@@ -31,6 +31,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.CurveChangeType;
@@ -314,7 +315,7 @@ public class PlotCanvas extends JComponent
 		case USEDATALIMITS:  //do nothing
 			break;
 		}
-		
+
 		// ------------------------------------------------------------------
 		// Guard against degenerate or invalid ranges.
 		//
@@ -566,7 +567,7 @@ public class PlotCanvas extends JComponent
 					String s = HistoData.statusString(this, hd, pp, _workPoint);
 					if (s != null) {
 						Color lc = curve.getStyle().getLineColor();
-						_statusString += "&nbsp&nbsp" + colorStr(s, GraphicsUtilities.colorToHex(lc));
+						_statusString += "&nbsp&nbsp" + colorStr(s, GraphicsUtils.colorToHex(lc));
 						// break;
 					}
 				}
@@ -874,7 +875,7 @@ public class PlotCanvas extends JComponent
 	 * Print
 	 */
 	public void print() {
-		PrintUtilities.printComponent((_parent != null) ? _parent : this);
+		PrintUtils.printComponent((_parent != null) ? _parent : this);
 	}
 
 	public File getSavePngFile() {
@@ -925,7 +926,7 @@ public class PlotCanvas extends JComponent
 				ImageOutputStream ios = ImageIO.createImageOutputStream(file);
 				Environment.getInstance().getPngWriter().setOutput(ios);
 
-				bi = GraphicsUtilities.getComponentImage((_parent != null) ? _parent : this);
+				bi = GraphicsUtils.getComponentImage((_parent != null) ? _parent : this);
 
 				Environment.getInstance().getPngWriter().write(bi);
 				ios.close();

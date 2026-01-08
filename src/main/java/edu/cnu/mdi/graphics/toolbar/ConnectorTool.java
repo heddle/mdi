@@ -10,7 +10,6 @@ import edu.cnu.mdi.graphics.connection.ConnectionManager;
 import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.item.AItem;
-import edu.cnu.mdi.item.ConnectorItem;
 import edu.cnu.mdi.item.Layer;
 
 /**
@@ -55,7 +54,7 @@ public class ConnectorTool implements ITool, IRubberbanded {
 
 	/** First selected endpoint. Null when idle. */
 	private AItem first;
-	
+
 	/** Second selected endpoint. Null when idle */
 	private AItem second;
 
@@ -90,15 +89,15 @@ public class ConnectorTool implements ITool, IRubberbanded {
 
 	@Override
 	public void mousePressed(ToolContext ctx, MouseEvent e) {
-		if (ctx == null || e == null)
+		if (ctx == null || e == null || (e.getButton() != MouseEvent.BUTTON1)) {
 			return;
-		if (e.getButton() != MouseEvent.BUTTON1)
-			return;
+		}
 
 		// Acquire container on every click (tool may be reused across containers)
 		IContainer c = ctx.container();
-		if (c == null)
+		if (c == null) {
 			return;
+		}
 		owner = c;
 
 		// Find item under click; must be clickable + connectable
@@ -129,7 +128,7 @@ public class ConnectorTool implements ITool, IRubberbanded {
 				// ignore self-connection (change if you want to allow it)
 				return;
 			}
-			
+
 			second = hit;
 
 			// End rubberband at the click point (or compute anchor for second item if
@@ -198,14 +197,14 @@ public class ConnectorTool implements ITool, IRubberbanded {
 		}
 
 		first = null;
-		
+
 		second = null;
 
 		if (owner != null) {
 			owner.refresh();
 		}
 	}
-	
+
 	//like when you click on nothing
 	private void abortToDefault() {
 	    cancel(); // cancels rubberband + clears state + refresh
@@ -236,8 +235,9 @@ public class ConnectorTool implements ITool, IRubberbanded {
 	private static AItem pickClickableItem(IContainer c, Point p) {
 		AItem item = c.getItemAtPoint(p);
 
-		if (item == null)
+		if (item == null) {
 			return null;
+		}
 
 		// If you have isClickable():
 		return item.isConnectable() ? item : null;

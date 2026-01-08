@@ -50,7 +50,7 @@ public enum EProjection {
     public static EnumComboBox<EProjection> createComboBox() {
 		return new EnumComboBox<>(EProjection.class, null, EProjection::projectionLabel);
 	}
-    
+
     public static String projectionLabel(EProjection p) {
         return switch (p) {
             case MERCATOR -> "Mercator";

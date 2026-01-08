@@ -1,10 +1,17 @@
 package edu.cnu.mdi.demo;
 
+import java.awt.BorderLayout;
+import java.awt.Font;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
+
 import edu.cnu.mdi.component.EnumComboBox;
 import edu.cnu.mdi.mapping.EProjection;
-
-import javax.swing.*;
-import java.awt.*;
 
 /**
  * Harness frame for testing EnumComboBox with the EProjection enum.
@@ -18,7 +25,7 @@ public class EnumComboBoxDemoFrame extends JFrame {
     public EnumComboBoxDemoFrame() {
         super("EnumComboBox Demo");
 
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(8, 8));
 
         //

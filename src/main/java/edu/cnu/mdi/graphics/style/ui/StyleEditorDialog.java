@@ -1,10 +1,22 @@
 package edu.cnu.mdi.graphics.style.ui;
 
-import java.awt.*;
-import javax.swing.*;
+import java.awt.Component;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 
 import edu.cnu.mdi.component.EnumComboBox;
-import edu.cnu.mdi.graphics.style.*;
+import edu.cnu.mdi.graphics.style.IStyled;
+import edu.cnu.mdi.graphics.style.LineStyle;
+import edu.cnu.mdi.graphics.style.Styled;
+import edu.cnu.mdi.graphics.style.SymbolType;
 
 public final class StyleEditorDialog {
 
@@ -22,7 +34,10 @@ public final class StyleEditorDialog {
 
         lineStyleBox.setSelectedItem(seed.getLineStyle());
 
-        JSpinner lineWidthSpin = new JSpinner(new SpinnerNumberModel(seed.getLineWidth(), 1, 20, 1));
+        JSpinner lineWidthSpin =
+        	    new JSpinner(new SpinnerNumberModel(seed.getLineWidth(), 0.25, 20.0, 0.25));
+        	lineWidthSpin.setEditor(new JSpinner.NumberEditor(lineWidthSpin, "0.##"));
+
 
         EnumComboBox<SymbolType> symbolBox =
                 new EnumComboBox<>(SymbolType.class, null, SymbolType::getName);
@@ -51,13 +66,15 @@ public final class StyleEditorDialog {
         int result = JOptionPane.showConfirmDialog(parent, form, "Edit Style",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
-        if (result != JOptionPane.OK_OPTION) return null;
+        if (result != JOptionPane.OK_OPTION) {
+			return null;
+		}
 
         Styled out = new Styled();
         out.setFillColor(fillBtn.getColor());
         out.setLineColor(lineBtn.getColor());
         out.setLineStyle(lineStyleBox.getSelectedEnum());
-        out.setLineWidth((Integer) lineWidthSpin.getValue());
+        out.setLineWidth(((Number) lineWidthSpin.getValue()).floatValue());
 
         if (showSymbolControls) {
             out.setSymbolType(symbolBox.getSelectedEnum());

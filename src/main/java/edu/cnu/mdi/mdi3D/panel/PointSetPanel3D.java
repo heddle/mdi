@@ -6,7 +6,6 @@ import java.awt.Font;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
-import java.util.Random;
 
 import javax.swing.JFrame;
 

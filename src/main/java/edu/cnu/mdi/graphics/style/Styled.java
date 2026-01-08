@@ -2,6 +2,7 @@ package edu.cnu.mdi.graphics.style;
 
 import java.awt.Color;
 
+
 /**
  * An adapter for the IStyled interface.
  *
@@ -10,28 +11,104 @@ import java.awt.Color;
  */
 public class Styled implements IStyled {
 
+	private static Color _defFillColor = new Color(0, 0, 255, 128);
+	private static Color _defBorderColor = new Color(192, 192, 192, 128);
+	private static Color _defAuxLineColor = new Color(160, 160, 160, 144);
+
 	// default fill color half-alpha blue
-	private Color _fillColor = new Color(0, 0, 255, 128);
+	private Color _fillColor = _defFillColor;
+
+	// default line color is black
+	private Color _borderColor = _defBorderColor;
 
 	// default line color is black
 	private Color _lineColor = Color.black;
 
-	// default line style is solid
+	// default fit line style is solid
 	private LineStyle _lineStyle = LineStyle.SOLID;
 
-	// default line width is 1
-	private int _lineWidth = 1;
+	// auxiliary lines
+	// default fit color is null--will use line color
+	private Color _auxLineColor = _defAuxLineColor;
+
+	// default auxiliary line style is solid
+	private LineStyle _auxLineStyle = LineStyle.DASH;
+
+	// default fit line width is 1
+	private float _lineWidth = 0.75f;
+
+	// default auxiliary line width is 1
+	private float _auxLineWidth = 0.75f;
 
 	// default symbol type = square
 	private SymbolType _symbolType = SymbolType.SQUARE;
 
 	// default full width symbol size
-	private int _symbolSize = 10;
+	private int _symbolSize = 8;
+
+	// for random combinations
+	private static final Color _colors[] = { Color.black, Color.red, Color.blue, Color.gray };
+	private static final SymbolType _symbols[] = { SymbolType.SQUARE, SymbolType.CIRCLE, SymbolType.DIAMOND,
+			SymbolType.CROSS, SymbolType.DOWNTRIANGLE, SymbolType.UPTRIANGLE };
 
 	/**
 	 * Create with all defaults.
 	 */
 	public Styled() {
+	}
+
+	/**
+	 * Generate a sort of random style
+	 *
+	 * @param index determines the style. Can be any integer
+	 */
+	public Styled(int index) {
+		_fillColor = _colors[index % _colors.length];
+		_borderColor = _fillColor.darker();
+		_symbolType = _symbols[index % _symbols.length];
+	}
+
+	public Styled(IStyled other) {
+		_fillColor = other.getFillColor();
+		_borderColor = other.getBorderColor();
+		_lineColor = other.getLineColor();
+		_lineStyle = other.getLineStyle();
+		_lineWidth = other.getLineWidth();
+		_auxLineColor = other.getAuxLineColor();
+		_auxLineStyle = other.getAuxLineStyle();
+		_auxLineWidth = other.getAuxLineWidth();
+		_symbolType = other.getSymbolType();
+		_symbolSize = other.getSymbolSize();
+	}
+
+
+	/**
+	 * Create a Styled object
+	 *
+	 * @param fillColor    the fill color
+	 * @param borderColor  the symbol border color
+	 * @param fitLineColor the fit line color
+	 * @param auxLineColor the auxiliary line color
+	 * @param fitLineStyle the fit line style
+	 * @param auxLineStyle the auxiliary line style
+	 * @param fitLineWidth the line width for fits
+	 * @param fitLineWidth the line width for auxiliary lines
+	 * @param symbolType   the symbol type
+	 * @param symbolSize   the symbol size
+	 */
+	public Styled(Color fillColor, Color borderColor, Color fitLineColor, Color auxLineColor, LineStyle fitLineStyle,
+			LineStyle auxLineStyle, float fitLineWidth, float auxLineWidth, SymbolType symbolType, int symbolSize) {
+		_fillColor = fillColor;
+		_borderColor = borderColor;
+		_lineStyle = fitLineStyle;
+		_lineWidth = fitLineWidth;
+		_symbolType = symbolType;
+		_symbolSize = symbolSize;
+
+	}
+
+	public Styled copy() {
+		return new Styled(this);
 	}
 
 	/**
@@ -54,35 +131,34 @@ public class Styled implements IStyled {
 	public Styled(Color fillColor, boolean darkerLineColor) {
 		_fillColor = fillColor;
 		if (darkerLineColor) {
-			_lineColor = fillColor.darker();
-		} else {
-			_lineColor = fillColor.brighter();
+			_borderColor = fillColor.darker();
+		}
+		else {
+			_borderColor = fillColor.brighter();
 		}
 
 	}
 
-	/** Copy ctor. */
-    public Styled(IStyled other) {
-        if (other == null) return;
-        _fillColor = other.getFillColor();
-        _lineColor = other.getLineColor();
-        _lineStyle = other.getLineStyle();
-        _lineWidth = other.getLineWidth();
-        _symbolType = other.getSymbolType();
-        _symbolSize = other.getSymbolSize();
-    }
-
-    public Styled copy() {
-        return new Styled(this);
-    }	
-	
+	/**
+	 * Get the fill color for the symbols
+	 *
+	 * @return the fill color for the symbols
+	 */
 	@Override
 	public Color getFillColor() {
 		return _fillColor;
 	}
 
 	@Override
+	public Color getBorderColor() {
+		return _borderColor;
+	}
+
+	@Override
 	public Color getLineColor() {
+		if (_lineColor == null) {
+			return _borderColor;
+		}
 		return _lineColor;
 	}
 
@@ -92,7 +168,7 @@ public class Styled implements IStyled {
 	}
 
 	@Override
-	public int getLineWidth() {
+	public float getLineWidth() {
 		return _lineWidth;
 	}
 
@@ -107,20 +183,40 @@ public class Styled implements IStyled {
 	}
 
 	@Override
-	public void setLineColor(Color lineColor) {
-		_lineColor = lineColor;
+	public void setBorderColor(Color lineColor) {
+		_borderColor = lineColor;
 	}
 
+	@Override
+	public void setLineColor(Color fitColor) {
+		_lineColor = fitColor;
+	}
+
+	/**
+	 * Set the line style
+	 *
+	 * @param lineStyle the new line style
+	 */
 	@Override
 	public void setLineStyle(LineStyle lineStyle) {
 		_lineStyle = lineStyle;
 	}
 
+	/**
+	 * Set the line width
+	 *
+	 * @param lineWidth the new line width
+	 */
 	@Override
-	public void setLineWidth(int lineWidth) {
+	public void setLineWidth(float lineWidth) {
 		_lineWidth = lineWidth;
 	}
 
+	/**
+	 * Set the symbol type
+	 *
+	 * @param lineWidth the new symbol type
+	 */
 	@Override
 	public void setSymbolType(SymbolType symbolType) {
 		_symbolType = symbolType;
@@ -146,4 +242,34 @@ public class Styled implements IStyled {
 		_symbolSize = symbolSize;
 	}
 
+	@Override
+	public Color getAuxLineColor() {
+		return _auxLineColor;
+	}
+
+	@Override
+	public void setAuxLineColor(Color auxColor) {
+		_auxLineColor = auxColor;
+	}
+
+	@Override
+	public LineStyle getAuxLineStyle() {
+		return _auxLineStyle;
+	}
+
+	@Override
+	public void setAuxLineStyle(LineStyle lineStyle) {
+		_auxLineStyle = lineStyle;
+	}
+
+	@Override
+	public float getAuxLineWidth() {
+		return _auxLineWidth;
+	}
+
+	@Override
+	public void setAuxLineWidth(float lineWidth) {
+		_auxLineWidth = lineWidth;
+
+	}
 }

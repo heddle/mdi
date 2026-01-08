@@ -8,6 +8,8 @@ import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES1;
 import com.jogamp.opengl.GL2ES3;
 import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.fixedfunc.GLLightingFunc;
+import com.jogamp.opengl.fixedfunc.GLMatrixFunc;
 import com.jogamp.opengl.glu.GLUquadric;
 import com.jogamp.opengl.util.gl2.GLUT;
 
@@ -44,7 +46,7 @@ public class Support3D {
 			int j = i * 3;
 			gl.glVertex3f(coords[j], coords[j + 1], coords[j + 2]);
 		}
-		
+
 		gl.glEnd();
 	}
 
@@ -141,8 +143,8 @@ public class Support3D {
 		double[] modelview = new double[16];
 		double[] projection = new double[16];
 		gl.glGetIntegerv(GL.GL_VIEWPORT, viewport, 0);
-		gl.glGetDoublev(GL2.GL_MODELVIEW_MATRIX, modelview, 0);
-		gl.glGetDoublev(GL2.GL_PROJECTION_MATRIX, projection, 0);
+		gl.glGetDoublev(GLMatrixFunc.GL_MODELVIEW_MATRIX, modelview, 0);
+		gl.glGetDoublev(GLMatrixFunc.GL_PROJECTION_MATRIX, projection, 0);
 
 		// Use gluProject to map the marker's 3D position to window (screen)
 		// coordinates.
@@ -169,14 +171,14 @@ public class Support3D {
 
 		// --- Switch to 2D orthographic projection for drawing text ---
 		// Save the current projection matrix.
-		gl.glMatrixMode(GL2.GL_PROJECTION);
+		gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
 		gl.glPushMatrix();
 		gl.glLoadIdentity();
 		// Set up an orthographic projection covering the entire window.
 		gl.glOrtho(0, viewport[2], 0, viewport[3], -1, 1);
 
 		// Save the current modelview matrix.
-		gl.glMatrixMode(GL2.GL_MODELVIEW);
+		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
 		gl.glPushMatrix();
 		gl.glLoadIdentity();
 
@@ -207,10 +209,10 @@ public class Support3D {
 		// Restore the modelview matrix.
 		gl.glPopMatrix();
 		// Restore the projection matrix.
-		gl.glMatrixMode(GL2.GL_PROJECTION);
+		gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
 		gl.glPopMatrix();
 		// Return to modelview matrix mode.
-		gl.glMatrixMode(GL2.GL_MODELVIEW);
+		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
 	}
 
 	/**
@@ -237,7 +239,7 @@ public class Support3D {
 
 	/**
 	 * Prepare for transparent drawing
-	 * 
+	 *
 	 * @param drawable the OpenGL drawable
 	 */
 	public static void prepareForTransparent(GLAutoDrawable drawable) {
@@ -313,17 +315,17 @@ public class Support3D {
 
 // Enable lighting if requested
 		if (enableLighting) {
-			gl.glEnable(GL2.GL_LIGHTING);
-			gl.glEnable(GL2.GL_LIGHT0);
+			gl.glEnable(GLLightingFunc.GL_LIGHTING);
+			gl.glEnable(GLLightingFunc.GL_LIGHT0);
 
 // Define light properties
 			float[] lightPosition = { 1.0f, 1.0f, 1.0f, 0.0f }; // Directional light
 			float[] lightDiffuse = { 1.0f, 1.0f, 1.0f, 1.0f };
 			float[] lightSpecular = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-			gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_POSITION, lightPosition, 0);
-			gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_DIFFUSE, lightDiffuse, 0);
-			gl.glLightfv(GL2.GL_LIGHT0, GL2.GL_SPECULAR, lightSpecular, 0);
+			gl.glLightfv(GLLightingFunc.GL_LIGHT0, GLLightingFunc.GL_POSITION, lightPosition, 0);
+			gl.glLightfv(GLLightingFunc.GL_LIGHT0, GLLightingFunc.GL_DIFFUSE, lightDiffuse, 0);
+			gl.glLightfv(GLLightingFunc.GL_LIGHT0, GLLightingFunc.GL_SPECULAR, lightSpecular, 0);
 
 // Material properties
 			float[] matAmbient = { 0.2f, 0.2f, 0.2f, 1.0f };
@@ -331,10 +333,10 @@ public class Support3D {
 			float[] matSpecular = { 1.0f, 1.0f, 1.0f, 1.0f };
 			float[] matShininess = { 50.0f }; // Shininess factor
 
-			gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_AMBIENT, matAmbient, 0);
-			gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_DIFFUSE, matDiffuse, 0);
-			gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_SPECULAR, matSpecular, 0);
-			gl.glMaterialfv(GL2.GL_FRONT, GL2.GL_SHININESS, matShininess, 0);
+			gl.glMaterialfv(GL.GL_FRONT, GLLightingFunc.GL_AMBIENT, matAmbient, 0);
+			gl.glMaterialfv(GL.GL_FRONT, GLLightingFunc.GL_DIFFUSE, matDiffuse, 0);
+			gl.glMaterialfv(GL.GL_FRONT, GLLightingFunc.GL_SPECULAR, matSpecular, 0);
+			gl.glMaterialfv(GL.GL_FRONT, GLLightingFunc.GL_SHININESS, matShininess, 0);
 		}
 
 // Draw sphere
@@ -345,7 +347,7 @@ public class Support3D {
 
 // Disable lighting after drawing
 		if (enableLighting) {
-			gl.glDisable(GL2.GL_LIGHTING);
+			gl.glDisable(GLLightingFunc.GL_LIGHTING);
 		}
 	}
 
@@ -474,7 +476,7 @@ public class Support3D {
 
 	/**
 	 * Draw a rectangular solid
-	 * 
+	 *
 	 * @param drawable
 	 * @param xc
 	 * @param yc
@@ -493,7 +495,7 @@ public class Support3D {
 
 	/**
 	 * Draw a rectangular solid
-	 * 
+	 *
 	 * @param drawable
 	 * @param xc
 	 * @param yc
@@ -677,7 +679,7 @@ public class Support3D {
 				gl.glEnd();
 			}
 		}
-		
+
 		gl.glLineWidth(1f);
 
 	}
@@ -1176,7 +1178,7 @@ public class Support3D {
 		gl.glLineWidth(1f);
 
 	}
-	
+
 	/**
 	 * Draw and fill a spherical polygon
 	 *
@@ -1189,15 +1191,15 @@ public class Support3D {
 	 */
 	public static void drawSphericalPolygon(GLAutoDrawable drawable, float radius, float[] coords, Color lineColor, Color fillColor, float lineWidth) {
 	    GL2 gl = drawable.getGL().getGL2();
-	    
+
 	    int numPoints = coords.length / 2;
 	    float[] cartesianCoords = new float[numPoints * 3];
-	    
+
 	    // Convert spherical to Cartesian coordinates
 	    for (int i = 0; i < numPoints; i++) {
 	        float theta = coords[2 * i];
 	        float phi = coords[2 * i + 1];
-	        
+
 	        cartesianCoords[3 * i] = radius * (float) (Math.sin(theta) * Math.cos(phi));
 	        cartesianCoords[3 * i + 1] = radius * (float) (Math.sin(theta) * Math.sin(phi));
 	        cartesianCoords[3 * i + 2] = radius * (float) Math.cos(theta);

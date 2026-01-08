@@ -9,7 +9,7 @@ import edu.cnu.mdi.component.CommonBorder;
 
 /**
  * A base class for panels that will be used as tabs on the Preferences dialog
- * 
+ *
  * @author heddle
  *
  */
@@ -21,7 +21,7 @@ public abstract class APreferencePanel extends JPanel implements KeyListener {
 
 	/**
 	 * Create a panel for use in editing plot preferences
-	 * 
+	 *
 	 * @param canvas the plot canvas
 	 * @param tabname the name that will appear on the editor tab
 	 */
@@ -39,7 +39,7 @@ public abstract class APreferencePanel extends JPanel implements KeyListener {
 
 	/**
 	 * Default implementation is to do nothing
-	 * 
+	 *
 	 * @param kev the Key Event
 	 */
 	@Override
@@ -48,7 +48,7 @@ public abstract class APreferencePanel extends JPanel implements KeyListener {
 
 	/**
 	 * Default implementation is to do nothing
-	 * 
+	 *
 	 * @param kev the Key Event
 	 */
 	@Override
@@ -57,7 +57,7 @@ public abstract class APreferencePanel extends JPanel implements KeyListener {
 
 	/**
 	 * Default implementation is call apply() if the hey was "Enter"
-	 * 
+	 *
 	 * @param kev the Key Event
 	 */
 	@Override

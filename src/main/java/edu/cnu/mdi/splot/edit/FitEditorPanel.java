@@ -6,16 +6,17 @@ import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
+import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 
+import edu.cnu.mdi.component.CommonBorder;
+import edu.cnu.mdi.component.EnumComboBox;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
-import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.splot.plot.TextFieldSlider;
-import edu.cnu.mdi.splot.style.EnumComboBox;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 @SuppressWarnings("serial")
@@ -57,9 +58,10 @@ public class FitEditorPanel extends JPanel {
 	// add the components
 	private void addContent() {
 
-		setLayout(new VerticalFlowLayout());
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
 		_fitSelector = CurveDrawingMethod.getComboBox(CurveDrawingMethod.NONE);
+		setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		createPolySelector();
 		createNumGaussSelector();
@@ -172,7 +174,7 @@ public class FitEditorPanel extends JPanel {
 
 	/**
 	 * Reconfigure fit widgets based on fit type
-	 * 
+	 *
 	 * @param curve the active curve
 	 */
 	public void reconfigure(ACurve curve) {
@@ -240,7 +242,7 @@ public class FitEditorPanel extends JPanel {
 
 	/**
 	 * FitEditorPanel Set the choices
-	 * 
+	 *
 	 * @param curve the curve whose fit-related settings should be reflected in the UI
 	 */
 	public void setFit(ACurve curve) {
@@ -258,7 +260,7 @@ public class FitEditorPanel extends JPanel {
 		CurveDrawingMethod cmd = curve.getCurveDrawingMethod();
 		if (cmd != null) {
 			// EnumComboBox historically used the enum's name() string.
-			_fitSelector.setSelectedItem(cmd.getDisplayName());
+			_fitSelector.setSelectedItem(cmd.getName());
 		}
 
 		// Per-curve knobs (now stored on ACurve)
@@ -268,7 +270,7 @@ public class FitEditorPanel extends JPanel {
 
 	/**
 	 * Further enable/disable based on fit type
-	 * 
+	 *
 	 * @param type the active curve drawing method
 	 */
 	public void fitSpecific(CurveDrawingMethod type) {
@@ -292,7 +294,7 @@ public class FitEditorPanel extends JPanel {
 
 	/**
 	 * Get the fit selector.
-	 * 
+	 *
 	 * @return the fit selector
 	 */
 	public EnumComboBox getFitSelector() {
@@ -301,7 +303,7 @@ public class FitEditorPanel extends JPanel {
 
 	/**
 	 * Get the polynomial order slider.
-	 * 
+	 *
 	 * @return polynomial order slider
 	 */
 	public TextFieldSlider getPolynomialOrderSelector() {
@@ -310,7 +312,7 @@ public class FitEditorPanel extends JPanel {
 
 	/**
 	 * Get the number of gaussian slider.
-	 * 
+	 *
 	 * @return number of gaussian slider
 	 */
 	public TextFieldSlider getNumGaussianSelector() {
@@ -319,7 +321,7 @@ public class FitEditorPanel extends JPanel {
 
 	/**
 	 * Get the rms or sigma check box.
-	 * 
+	 *
 	 * @return the rms or sigma check box
 	 */
 	public JCheckBox getNumRMSCheckBox() {
@@ -328,7 +330,7 @@ public class FitEditorPanel extends JPanel {
 
 	/**
 	 * Get the draw stat error check box.
-	 * 
+	 *
 	 * @return the draw stat error checkbox
 	 */
 	public JCheckBox getStatErrorCheckBox() {

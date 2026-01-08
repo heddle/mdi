@@ -5,8 +5,8 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.math3.linear.RealMatrix;
 
+import edu.cnu.mdi.graphics.text.UnicodeSupport;
 import edu.cnu.mdi.splot.plot.SmartDoubleFormatter;
-import edu.cnu.mdi.splot.plot.UnicodeSupport;
 
 /**
  * Generic result for a (weighted) least-squares fit.
@@ -16,7 +16,7 @@ import edu.cnu.mdi.splot.plot.UnicodeSupport;
  * polynomial, etc.).
  */
 public final class FitResult {
-	
+
 	//helpers from unicode
 	public static final String CHI = UnicodeSupport.SMALL_CHI;
 	public static final String CHISQ = CHI + UnicodeSupport.SUPER2;
@@ -27,7 +27,7 @@ public final class FitResult {
 
     /** Gets descriptive strings from fitter */
     public IFitStringGetter stringGetter;
-    
+
     /** Optional covariance matrix of parameters (p x p), or null if unavailable. */
     public final RealMatrix covariance;
 
@@ -54,10 +54,10 @@ public final class FitResult {
 
     /** Evaluations used by an iterative optimizer; may be 0 for closed-form fits. */
     public final int evaluations;
-    
+
     /** "Use as a function" evaluator for the fit. */
     public Evaluator evaluator;
-    
+
     /**
 	 * Create a fit result.
 	 *
@@ -94,7 +94,7 @@ public final class FitResult {
         this.iterations = iterations;
         this.evaluations = evaluations;
     }
-    
+
     /**
      * Set the evaluator.
      * @param evaluator
@@ -142,38 +142,35 @@ public final class FitResult {
 
     /** Standard error for parameter i (NaN if unavailable). */
     public double paramStdError(int i) {
-        if (covariance == null) {
-            return Double.NaN;
-        }
-        if (i < 0 || i >= covariance.getRowDimension() || i >= covariance.getColumnDimension()) {
+        if ((covariance == null) || i < 0 || i >= covariance.getRowDimension() || i >= covariance.getColumnDimension()) {
             return Double.NaN;
         }
         double v = covariance.getEntry(i, i);
         return (v > 0.0 && Double.isFinite(v)) ? Math.sqrt(v) : Double.NaN;
     }
 
- 
+
     /**
 	 * HTML summary of the fit result.
-	 * 
+	 *
 	 * @return HTML string
 	 */
     public String htmlSummary() {
     	String BR = "<br>";
     	StringBuilder sb = new StringBuilder();
     	sb.append("<html><body>");
-    	
-    	
+
+
     	sb.append("<b>Fit Result:</b>" + BR);
     	sb.append(" Model: " + stringGetter.modelName() + BR);
     	sb.append(" Form: " + stringGetter.functionForm() + BR);
     	sb.append("<b> Parameters:</b>" + BR);
-    	
+
     	IntStream.range(0, params.length)
 		.forEach(i ->
-			sb.append(String.format(" %s = %.3g%s%.3g%n", 
+			sb.append(String.format(" %s = %.3g%s%.3g%n",
 					stringGetter.parameterName(i), params[i], PLUSMINUS, paramStdError(i)) + BR)
-		);  
+		);
 	  	sb.append(String.format(" %s: %.3g%n", CHISQ, chiSquare) + BR);
 	  	sb.append(String.format(" %s/DoF: " + doubleFormat(chiSquareReduced, 3) + "%n", CHISQ) + BR);
 	  	sb.append(" DoF: " + dof + BR);
@@ -185,17 +182,17 @@ public final class FitResult {
 
     @Override
     public String toString() {
-    	
+
     	StringBuilder sb = new StringBuilder();
     	sb.append("FitResult:\n");
     	sb.append(" Model: " + stringGetter.modelName() + "\n");
     	sb.append(" Form: " + stringGetter.functionForm() + "\n");
     	sb.append(" Parameters:\n");
-  
+
     	IntStream.range(0, params.length)
         .forEach(i ->
             sb.append(String.format(" %s = %.3g%n", stringGetter.parameterName(i), params[i]))
-        );  
+        );
       	sb.append(String.format(" %s: %.3g\n", CHISQ, chiSquare));
     	sb.append(String.format(" %s/DoF: " + doubleFormat(chiSquareReduced, 3) + "\n", CHISQ));
     	sb.append(" Degrees of Freedom: " + dof + "\n");
@@ -204,7 +201,7 @@ public final class FitResult {
     	sb.append(" Evaluations: " + evaluations + "\n");
     	return sb.toString();
     }
-    
+
     // Helper to format doubles
 	private String doubleFormat(double value, int sigFig) {
 		return SmartDoubleFormatter.doubleFormat(value, sigFig);

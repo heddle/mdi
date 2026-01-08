@@ -3,15 +3,15 @@ package edu.cnu.mdi.splot.fit;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
+import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.MultivariateJacobianFunction;
 import org.apache.commons.math3.fitting.leastsquares.ParameterValidator;
-import org.apache.commons.math3.special.Erf;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.special.Erf;
 import org.apache.commons.math3.util.Pair;
 
 import edu.cnu.mdi.splot.pdata.FitVectors;
@@ -41,7 +41,7 @@ public final class ErfcFitter extends ALeastSquaresFitter {
     public static final int IDX_X0 = 1;
     public static final int IDX_SIGMA = 2;
     public static final int IDX_B = 3;
-    
+
     /** Base Parameter names. */
     public static final String[] paramNames = { "A", "x" + SUB0, "σ", "B" };
 
@@ -127,8 +127,8 @@ public final class ErfcFitter extends ALeastSquaresFitter {
             );
         }
 
-        
-        
+
+
         final double[] p = fit.params.clone();
         return (double x) -> {
             double A = p[IDX_A];
@@ -242,7 +242,9 @@ public final class ErfcFitter extends ALeastSquaresFitter {
 
             // Sort by x to interpret endpoints robustly.
             Integer[] idx = new Integer[n];
-            for (int i = 0; i < n; i++) idx[i] = i;
+            for (int i = 0; i < n; i++) {
+				idx[i] = i;
+			}
             Arrays.sort(idx, (i, j) -> Double.compare(x[i], x[j]));
 
             double yLeft = y[idx[0]];
@@ -251,7 +253,7 @@ public final class ErfcFitter extends ALeastSquaresFitter {
             // For erf: transitions from low to high (or high to low), similar for erfc but reversed.
             double B = 0.5 * (yLeft + yRight);
             double A = 0.5 * (yRight - yLeft);
-            
+
             //because erfc goes down with increasing z
             A = -A;
 
@@ -276,7 +278,7 @@ public final class ErfcFitter extends ALeastSquaresFitter {
             return new double[] { A, x0, sigma, B };
         }
     }
-    
+
     //------- descriptive string section -----------------
 	@Override
 	public String modelName() {
@@ -290,7 +292,7 @@ public final class ErfcFitter extends ALeastSquaresFitter {
 
  	/**
  	 * Get the parameter name for the given index.
- 	 * 
+ 	 *
  	 * @param index the parameter index
  	 * @return the parameter name
  	 */
@@ -307,9 +309,9 @@ public final class ErfcFitter extends ALeastSquaresFitter {
  	public IFitStringGetter getStringGetter() {
  		return this;
  	}
- 	
 
- 	
+
+
  	// Test the Erfc fitter
  	public static void testErfc() {
 		double A = 2.0;
@@ -317,12 +319,12 @@ public final class ErfcFitter extends ALeastSquaresFitter {
  		double sigma = 0.5;
  		double B = 0.1;
  		int n = 100;
- 		
+
  		Evaluator erfcEval = (double x) -> {
  			double z = (x - x0) / sigma;
  			return A * Erf.erfc(z) + B;
  		};
- 		
+
  		FitVectors testData = FitVectors.testData(erfcEval, -4.0, 4.0, n, 3.0, 3.0);
  		ErfcFitter fitter = new ErfcFitter();
  		FitResult result = fitter.fit(testData.x, testData.y, testData.w);
@@ -345,5 +347,5 @@ public final class ErfcFitter extends ALeastSquaresFitter {
  	public static void main(String[] args) {
  		testErfc();
  	}
- 
+
 }

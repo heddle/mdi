@@ -1,8 +1,7 @@
 package edu.cnu.mdi.splot.fit;
 
-import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
-
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
+import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.MultivariateJacobianFunction;
 import org.apache.commons.math3.fitting.leastsquares.ParameterValidator;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -54,7 +53,7 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
     public PolynomialFitter(int degree) {
         this(degree, new LevenbergMarquardtOptimizer());
     }
-    
+
     /**
      * Create a polynomial fitter for a given degree with a custom optimizer.
      *
@@ -154,7 +153,7 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
         };
     }
 
- 
+
     /**
      * Build a weighted (or unweighted) linear least-squares initial guess for polynomial coefficients.
      *
@@ -314,7 +313,7 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
                 return new ParameterBounds(lo.clone(), hi.clone());
             }
         }
-    }   
+    }
 
     //------- descriptive string section -----------------
 	@Override
@@ -329,13 +328,13 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
 		} else if (degree == 2) {
 			return "y(x)=c₀+c₁x+c₂x²";
 		}
-	
+
 		return String.format("y(x)=c%s+c%sx+c%sx%s+...+ c%sx%s", SUB0, SUB1, SUB2, SUP2, SUBN, SUPN);
 	}
 
 	/**
 	 * Get the parameter name for the given index.
-	 * 
+	 *
 	 * @param index the parameter index
 	 * @return the parameter name
 	 */
@@ -344,7 +343,7 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
 		if (index < 0 || index >= getParameterCount()) {
 			throw new IllegalArgumentException("bad parameter index: " + index);
 		}
-		
+
 		if (degree == 1) {
 			if (index == 0) {
 				return "b";
@@ -363,24 +362,24 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
 	public IFitStringGetter getStringGetter() {
 		return this;
 	}
-    
+
 	// Linear test
 	private static void testLinear() {
-	  	
+
     	final double m = 3.3; // slope
     	final double b = -0.4; // intercept
     	int n = 100;
-    	
+
         Evaluator evaluator = new Evaluator() {
-    		@Override	
+    		@Override
     		public double value(double x) {
     			return m * x + b;
     		}
         };
-        
+
         //test data
         FitVectors testData = FitVectors.testData(evaluator, 0.0, 10.0, n, 5, 10);
- 
+
 		PolynomialFitter fitter = new PolynomialFitter(1); // Linear fit
 		FitResult result = fitter.fit(testData.x, testData.y, testData.w);
 		System.out.println("\n===== Linear Fit Test  =====");
@@ -391,9 +390,9 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
 			double yv = result.evaluator.value(xv);
 			System.out.printf("x=%.3f fit y=%.3f data y=%.3f%n", xv, yv, testData.y[i]);
 		}
-		
+
 	}
-	
+
 	// Cubic test
 	private static void testCubic() {
 		final double c0 = 1.0;
@@ -401,14 +400,14 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
 		final double c2 = 0.5;
 		final double c3 = 0.1;
 		int n = 200;
-		
+
 		Evaluator evaluator = new Evaluator() {
-			@Override	
+			@Override
 			public double value(double x) {
 				return c0 + c1 * x + c2 * x * x + c3 * x * x * x;
 			}
 		};
-		
+
 		//test data
 		FitVectors testData = FitVectors.testData(evaluator, -10.0, 10.0, n, 20, 50);
 		PolynomialFitter fitter = new PolynomialFitter(3); // Cubic fit
@@ -421,9 +420,9 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
 			double yv = result.evaluator.value(xv);
 			System.out.printf("x=%.3f fit y=%.3f data y=%.3f%n", xv, yv, testData.y[i]);
 		}
-		
+
 	}
-    
+
     // Example main for testing
     public static void main(String[] args) {
     	testLinear();

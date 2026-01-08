@@ -1,6 +1,6 @@
 package edu.cnu.mdi.view;
 
-import java.awt.Graphics2D;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -131,7 +131,7 @@ public class VirtualWindowItem extends RectangleItem {
 	 * @param container the graphical container being rendered.
 	 */
 	@Override
-	public void drawItem(Graphics2D g, IContainer container) {
+	public void drawItem(Graphics g, IContainer container) {
 		if (!_baseView.isVisible() || _baseView.isClosed() || _baseView.isIcon()) {
 			setEnabled(false);
 		} else {

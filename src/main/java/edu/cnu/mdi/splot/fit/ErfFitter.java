@@ -3,15 +3,15 @@ package edu.cnu.mdi.splot.fit;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
+import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.MultivariateJacobianFunction;
 import org.apache.commons.math3.fitting.leastsquares.ParameterValidator;
-import org.apache.commons.math3.special.Erf;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.special.Erf;
 import org.apache.commons.math3.util.Pair;
 
 import edu.cnu.mdi.splot.pdata.FitVectors;
@@ -40,7 +40,7 @@ public final class ErfFitter extends ALeastSquaresFitter {
     public static final int IDX_X0 = 1;
     public static final int IDX_SIGMA = 2;
     public static final int IDX_B = 3;
-    
+
     /** Base Parameter names. */
     public static final String[] paramNames = { "A", "x" + SUB0, "σ", "B" };
 
@@ -129,7 +129,7 @@ public final class ErfFitter extends ALeastSquaresFitter {
             );
         }
 
-        
+
         final double[] p = fit.params.clone();
         return (double x) -> {
             double A = p[IDX_A];
@@ -243,7 +243,9 @@ public final class ErfFitter extends ALeastSquaresFitter {
 
             // Sort by x to interpret endpoints robustly.
             Integer[] idx = new Integer[n];
-            for (int i = 0; i < n; i++) idx[i] = i;
+            for (int i = 0; i < n; i++) {
+				idx[i] = i;
+			}
             Arrays.sort(idx, (i, j) -> Double.compare(x[i], x[j]));
 
             double yLeft = y[idx[0]];
@@ -253,7 +255,7 @@ public final class ErfFitter extends ALeastSquaresFitter {
             double B = 0.5 * (yLeft + yRight);
             double A = 0.5 * (yRight - yLeft);
 
- 
+
             // x0: approximate midpoint of transition from yLeft to yRight
             double target = B; // midpoint
             int best = idx[0];
@@ -275,7 +277,7 @@ public final class ErfFitter extends ALeastSquaresFitter {
             return new double[] { A, x0, sigma, B };
         }
     }
-    
+
     //------- descriptive string section -----------------
  	@Override
  	public String modelName() {
@@ -289,7 +291,7 @@ public final class ErfFitter extends ALeastSquaresFitter {
 
  	/**
  	 * Get the parameter name for the given index.
- 	 * 
+ 	 *
  	 * @param index the parameter index
  	 * @return the parameter name
  	 */
@@ -306,9 +308,9 @@ public final class ErfFitter extends ALeastSquaresFitter {
  	public IFitStringGetter getStringGetter() {
  		return this;
  	}
- 	
+
  	//------------------ test methods -----------------------
- 	
+
  	// Test the Erf fitter
  	private static void testErf() {
 		double A = 2.0;
@@ -340,11 +342,11 @@ public final class ErfFitter extends ALeastSquaresFitter {
 			System.out.printf("x=%.3f fit y=%.3f data y=%.3f%n", xv, yv, testData.y[i]);
 		}
 	}
- 	
+
 
  	//------------------ test main -----------------------
  	public static void main(String[] args) {
  		testErf();
  	}
- 
+
 }

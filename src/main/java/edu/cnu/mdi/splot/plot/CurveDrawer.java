@@ -12,6 +12,10 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.Objects;
 
+import edu.cnu.mdi.graphics.SymbolDraw;
+import edu.cnu.mdi.graphics.style.IStyled;
+import edu.cnu.mdi.graphics.style.Styled;
+import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.fit.Evaluator;
 import edu.cnu.mdi.splot.fit.FitResult;
@@ -22,20 +26,16 @@ import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.Snapshot;
 import edu.cnu.mdi.splot.pdata.StripChartCurve;
-import edu.cnu.mdi.splot.style.IStyled;
-import edu.cnu.mdi.splot.style.Styled;
-import edu.cnu.mdi.splot.style.SymbolDraw;
-import edu.cnu.mdi.splot.style.SymbolType;
 
 public class CurveDrawer {
 
 	private static final Color _transGray = new Color(80, 80, 80, 16);
-	
+
 	protected final Object lock = new Object();
 
 	/**
 	 * Draw a curve with x and y error bars
-	 * 
+	 *
 	 * @param g          the graphics context
 	 * @param plotCanvas the plot canvas
 	 * @param xcol       the x data column
@@ -47,11 +47,11 @@ public class CurveDrawer {
 
 		Objects.requireNonNull(curve, "curve");
 		Objects.requireNonNull(plotCanvas, "plotCanvas");
-		
+
 		if (!curve.isVisible()) {
 			return;
 		}
-		
+
 		if (curve instanceof Curve) {
 			drawXYCurve(g, plotCanvas, (Curve)curve);
 		}
@@ -65,14 +65,14 @@ public class CurveDrawer {
 			System.err.println("Unsupported curve type in drawCurve " + curve.name());
 			return;
 		}
-		
+
 	}
 
 
 
 	/**
 	 * Draw a standard XY(with optional errors) curve
-	 * 
+	 *
 	 * @param g           the graphics context
 	 * @param plotCanvas  the plot canvas
 	 * @param curve 	the XY(E)curve to be drawn
@@ -81,7 +81,7 @@ public class CurveDrawer {
 		if (!curve.isVisible()) {
 			return;
 		}
-		
+
 		if (curve.isDirty()) {
 			curve.doFit(true);
 		}
@@ -100,7 +100,7 @@ public class CurveDrawer {
 		if ((x == null) || (x.length < 1)) {
 			return;
 		}
-		
+
 		//draw the fit line or basic connector lines
 		drawFitOrLines(g, canvas, curve, x, y);
 
@@ -130,27 +130,27 @@ public class CurveDrawer {
 		}
 	}
 
-	
+
 	/**
 	 * Draw a strip chart
-	 * 
+	 *
 	 * @param g           the graphics context
 	 * @param plotCanvas  the plot canvas
 	 * @param stripChartCurve the strip chart curve
 	 */
 	public static void drawStripChart(Graphics g, PlotCanvas canvas, StripChartCurve stripChartCurve) {
-		
+
 		Objects.requireNonNull(stripChartCurve, "stripChartCurve");
 		Objects.requireNonNull(canvas, "canvas");
-		
+
 		if (!stripChartCurve.isVisible()) {
 			return;
 		}
-		
+
 		if (stripChartCurve.isDirty()) {
 			stripChartCurve.doFit(true);
 		}
-		
+
         //get threadsafe copy of the data
 		Snapshot snapshot = stripChartCurve.snapshot();
 
@@ -167,7 +167,7 @@ public class CurveDrawer {
 
 	/**
 	 * Draw a 1D histogram
-	 * 
+	 *
 	 * @param g           the graphics context
 	 * @param plotCanvas  the plot canvas
 	 * @param histoCurve the histogram curve
@@ -202,7 +202,7 @@ public class CurveDrawer {
 			y[bin] = counts[bin];
 			err[bin] = Math.sqrt(y[bin]);
 		}
-		
+
 		// draw the fit line
 		drawFitOrLines(g, canvas, histoCurve, x, y);
 
@@ -238,19 +238,18 @@ public class CurveDrawer {
 
 	}
 
-	
+
 	/**
 	 * Draw the fit or basic no-fit connections for the given curve
-	 * 
+	 *
 	 * @param g          the graphics context
-	 * 
+	 *
 	 * @param plotCanvas the plot canvas
-	 * 
+	 *
 	 * @param curve      the curve
 	 */
 	private static void drawFitOrLines(Graphics g, PlotCanvas canvas, ACurve curve, double x[], double y[]) {
-		
-	        
+
 		IStyled style = curve.getStyle();
 		Point2D.Double wp = new Point2D.Double();
 		Point p0 = new Point();
@@ -267,7 +266,7 @@ public class CurveDrawer {
 		}
 		g2.setColor(lineColor);
 		CurveDrawingMethod drawMethod = curve.getCurveDrawingMethod();
-		
+
 		switch (drawMethod) {
 		case NONE:
 			break;
@@ -303,7 +302,7 @@ public class CurveDrawer {
 				g2.drawLine(p1.x, p0.y, p1.x, p1.y);
 				p0.setLocation(p1);
 			}
-			
+
 			break;
 
 		case CUBICSPLINE:
@@ -326,7 +325,7 @@ public class CurveDrawer {
 				System.err.println("No fit result for curve " + curve.name());
 				return;
 			}
-			
+
 			//this is the evaluator for the fit
 			ivg = curve.getFitValueGetter();
 			if (ivg == null) {
@@ -336,8 +335,8 @@ public class CurveDrawer {
 			drawEvaluator(g2, canvas, ivg);
 			break;
 		}
-		
-		
+
+
 		g2.setStroke(oldStroke);
 	}
 
@@ -346,7 +345,7 @@ public class CurveDrawer {
 
 		Objects.requireNonNull(plotCanvas, "plotCanvas");
 		Objects.requireNonNull(ivg, "evaluator");
-	
+
 		// the plot screen rectangle
 		Rectangle rect = plotCanvas.getActiveBounds();
 		int iy = rect.y;
@@ -382,9 +381,9 @@ public class CurveDrawer {
 			else {
 				poly.lineTo(pp.x, pp.y);
 			}
-		}	
-		
-		Graphics2D g2 = (Graphics2D) g;
+		}
+
+		Graphics2D g2 = g;
         Object oldAA = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);

@@ -1,8 +1,12 @@
 package edu.cnu.mdi.mapping;
 
-import java.awt.*;
-import java.awt.geom.Path2D;
-import java.awt.geom.PathIterator;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
@@ -10,7 +14,6 @@ import java.util.List;
 import java.util.Objects;
 
 import edu.cnu.mdi.container.IContainer;
-import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
 
@@ -43,7 +46,7 @@ public class CountryRenderer {
     private boolean fillLand = true;
     private boolean drawBorders = true;
     private boolean useAntialias = true;
-    
+
 	private List<CountryCache> _countryCache = new ArrayList<>();
 
 
@@ -101,7 +104,7 @@ public class CountryRenderer {
     public void render(Graphics2D g2, IContainer container) {
         Objects.requireNonNull(g2, "g2");
         Objects.requireNonNull(container, "container");
-        
+
         _countryCache.clear();
 
         Component comp = container.getComponent();
@@ -234,7 +237,7 @@ public class CountryRenderer {
         Objects.requireNonNull(container, "container");
 		Point2D.Double worldPt = new Point2D.Double();
 		container.localToWorld(mouseLocal, worldPt);
-      
+
         for (CountryCache cc : _countryCache) {
 			if (cc.contains(worldPt, container)) {
 				return cc.country;
@@ -264,7 +267,7 @@ public class CountryRenderer {
 			this.oneSide = oneSide;
 			this.otherSide = otherSide;
     	}
-    	
+
     	public boolean contains(Point2D.Double worldPt, IContainer container) {
 			if (oneSide.npoints > 2) {
 				if (oneSide.contains(worldPt.x, worldPt.y)) {

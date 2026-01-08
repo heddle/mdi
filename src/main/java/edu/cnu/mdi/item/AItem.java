@@ -32,7 +32,6 @@ import edu.cnu.mdi.item.ItemModification.ModificationType;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.view.BaseView;
 
-
 /**
  * This is the base class for custom items that are rendered on an AContainer.
  *
@@ -41,7 +40,7 @@ import edu.cnu.mdi.view.BaseView;
  */
 public abstract class AItem implements IDrawable, IFeedbackProvider {
 
-	// usef for drawing a the focus point
+	// used for drawing a the focus point
 	protected static final Color _FOCUSFILL = new Color(128, 128, 128, 128);
 
 	// used for selecting
@@ -64,9 +63,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * world coordinate based.
 	 */
 	protected Path2D.Double _path;
-	
-	// optional display name
-	protected String _displayName = null;
 
 	/**
 	 * The line is used by line based items
@@ -74,7 +70,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	protected Line2D.Double _line;
 
 	/**
-	 * Optionally secondary points (such as internal points)
+	 * Optionaly secondary points (such as internal points)
 	 */
 	protected Point2D.Double _secondaryPoints[];
 
@@ -84,7 +80,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	protected Point2D.Double _focus;
 
 	/**
-	 * What Z-layer the item is on.
+	 * What layer the item is on.
 	 */
 	protected Layer _layer;
 
@@ -125,34 +121,33 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * Controls whether the item can be rotated.
 	 */
 	protected boolean _rotatable = false;
-	
-	/**
-	 * Controls whether the item responds to a double click.
-	 */
-	protected boolean _doubleClickable = false;
-	
-	/**
-	 * Controls whether the item can be connected to other items.
-	 */
-	protected boolean _connectable = false;
-	
-	/**
-	 * Controls whether the item can be selected.
-	 */
-	protected boolean _selectable = true;
 
-	
 	/**
 	 * Controls whether the item responds to a righjt click.
 	 */
 	protected boolean _rightClickable = false;
 
 	/**
+	 * Controls whether the item can be selected.
+	 */
+	protected boolean _selectable = true;
+
+	/**
+	 * Controls whether the item can be connected to other items.
+	 */
+	protected boolean connectable = false;
+
+	/**
+	 * Controls whether the item responds to a double click.
+	 */
+	protected boolean doubleClickable = false;
+
+	/**
 	 * Controls whether the item is locked-which takes precedence over other flags.
 	 * A locked item cannot be dragged, rotated, resized, or deleted--regardless of
 	 * the values of those flags.
 	 */
-	protected boolean _locked = false;
+	protected boolean _locked = true;
 
 	/**
 	 * Controls whether the item can be resized.
@@ -194,6 +189,11 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	// reference rotation angle in degrees.
 	private double _azimuth = 0.0;
 
+	/**
+	 * The name of the item.
+	 */
+	protected String _displayName = "no name";
+
 	// used for select points
 	private static final Color _selectFill = Color.white;
 
@@ -203,10 +203,10 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	// used for select points
 	private static final Color _selectLine = Color.black;
 
-
 	/**
 	 * Create an item on a specific layer.
-	 * @param layer the z layer it is on.
+	 *
+	 * @param layer the layer it is on.
 	 */
 	public AItem(Layer layer) {
 		_layer = layer;
@@ -258,7 +258,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @param g         the graphics context.
 	 * @param container the graphical container being rendered.
 	 */
-	public void drawSelections(Graphics g, IContainer container) {
+	public void drawSelections(Graphics2D g, IContainer container) {
 
 		if (!isSelected()) {
 			return;
@@ -280,7 +280,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 			if ((rp != null) && (rotateIcon != null)) {
 				g.setColor(_rotateFill);
 				g.fillOval(rp.x - RPSIZE2, rp.y - RPSIZE2, RPSIZE, RPSIZE);
-
 				rotateIcon.paintIcon(container.getComponent(), g, rp.x - rotateIcon.getIconHeight() / 2,
 						rp.y - rotateIcon.getIconHeight() / 2);
 			}
@@ -403,60 +402,14 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	public void setRotatable(boolean rotatable) {
 		_rotatable = rotatable;
 	}
-	
-	/**
-	 * Check whether the item can be double clicked.
-	 *
-	 * @return <code>true</code> if the item can be double clicked.
-	 */
-	public boolean isDoubleClickable() {
-		if (_locked) {
-			return false;
-		}
-		return _doubleClickable;
-	}
-	
-	/**
-	 * Set whether the item can be double clicked.
-	 *
-	 * @param doubleClickable if <code>true</code>, the item can be double clicked.
-	 */
-	public void setDoubleClickable(boolean doubleClickable) {
-		_doubleClickable = doubleClickable;
-	}
-	
+
 	/**
 	 * Check whether the item can be connected to other items.
 	 *
 	 * @return <code>true</code> if the item can be connected to other items.
 	 */
 	public boolean isConnectable() {
-		if (_locked) {
-			return false;
-		}
-		return _connectable;
-	}
-
-	/**
-	 * Set whether the item is selectable
-	 *
-	 * @param selectable if <code>true</code>, the item can be selected
-	 */
-	public void setSelectable(boolean selectable) {
-		_selectable = selectable;
-	}
-	
-	
-	/**
-	 * Check whether the item can be selected.
-	 *
-	 * @return <code>true</code> if the item can be selected.
-	 */
-	public boolean isSelectable() {
-		if (_locked) {
-			return false;
-		}
-		return _selectable;
+		return connectable;
 	}
 
 	/**
@@ -466,10 +419,46 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 *                    items.
 	 */
 	public void setConnectable(boolean connectable) {
-		_connectable = connectable;
+		this.connectable = connectable;
 	}
 
-	
+	/**
+	 * Check whether the item responds to a double click.
+	 *
+	 * @return <code>true</code> if the item responds to a double click.
+	 */
+	public boolean isDoubleClickable() {
+		return doubleClickable;
+	}
+
+	/**
+	 * Set whether the item responds to a double click.
+	 *
+	 * @param doubleClickable if <code>true</code>, the item responds to a double
+	 *                        click.
+	 */
+	public void setDoubleClickable(boolean doubleClickable) {
+		this.doubleClickable = doubleClickable;
+	}
+
+	/**
+	 * Check whether the item can be selected.
+	 *
+	 * @return <code>true</code> if the item can be selected.
+	 */
+	public boolean isSelectable() {
+		return _selectable;
+	}
+
+	/**
+	 * Set whether the item can be selected.
+	 *
+	 * @param selectable if <code>true</code>, the item can be selected.
+	 */
+	public void setSelectable(boolean selectable) {
+		this._selectable = selectable;
+	}
+
 	/**
 	 * Check whether the item is locked, which takes precedence over other flags. A
 	 * locked item cannot be dragged, rotated, resized, or deleted--regardless of
@@ -579,7 +568,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @param g         the graphics context.
 	 * @param container the graphical container being rendered.
 	 */
-	public abstract void drawItem(Graphics2D g, IContainer container);
+	public abstract void drawItem(Graphics g, IContainer container);
 
 	/**
 	 * Checks whether the item should be drawn. This is an additional check, beyond
@@ -629,6 +618,13 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		return false;
 	}
 
+	public IStyled getStyleSafe() {
+		if (_style == null) {
+			_style = new Styled();
+		}
+		return _style;
+	}
+
 	/**
 	 * Get the drawing style for this item. Through this object you can set the fill
 	 * color, line style, etc.
@@ -637,13 +633,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 */
 	public IStyled getStyle() {
 		return _style;
-	}
-
-	public IStyled getStyleSafe() {
-	    if (_style == null) {
-	        _style = new Styled();
-	    }
-	    return _style;
 	}
 
 	/**
@@ -655,6 +644,45 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		this._style = style;
 	}
 
+	public abstract void translateWorld(double dx, double dy);
+
+	public void translateLocal(int dx, int dy) {
+
+		if (dx == 0 && dy == 0) {
+			return;
+		}
+
+		IContainer container = getContainer();
+		if (container == null) {
+			return;
+		}
+		// convert local deltas to world deltas
+		Point2D.Double w0 = new Point2D.Double();
+		Point2D.Double w1 = new Point2D.Double();
+		container.localToWorld(new Point(0, 0), w0);
+		container.localToWorld(new Point(dx, dy), w1);
+		double dxWorld = w1.x - w0.x;
+		double dyWorld = w1.y - w0.y;
+		translateWorld(dxWorld, dyWorld);
+	}
+
+	/**
+	 * Set the name of the item.
+	 *
+	 * @param name the name of the item.
+	 */
+	public void setDisplayName(String name) {
+		_displayName = name;
+	}
+
+	/**
+	 * Return the name of the item.
+	 *
+	 * @return the name of the item.
+	 */
+	public String getDisplayName() {
+		return _displayName;
+	}
 
 	/**
 	 * Equality check.
@@ -692,7 +720,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @param r         the bounds
 	 * @return <code>true</code> if the bounds (r) completely enclose the item.
 	 */
-	public boolean isEnclosed(IContainer container, Rectangle r) {
+	public boolean enclosed(IContainer container, Rectangle r) {
 
 		if (_lastDrawnPolygon != null) {
 			return r.contains(_lastDrawnPolygon.getBounds());
@@ -712,23 +740,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * @return the box around the item.
 	 */
 	public Rectangle getBounds(IContainer container) {
-	    Rectangle2D.Double wr = getWorldBounds();
-	    if (wr == null || wr.isEmpty()) {
-	        return null;
-	    }
-	    Rectangle r = new Rectangle();
-	    container.worldToLocal(r, wr);
-	    return r;
-	}
-	
-	/**
-	 * Get the pick tolerance in pixels.
-	 *
-	 * @param container the container being rendered
-	 * @return the pick tolerance in pixels.
-	 */
-	protected double getPickTolerancePx(IContainer container) {
-	    return 6.0;
+		return null;
 	}
 
 	/**
@@ -742,10 +754,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * A modification such as a drag, resize or rotate has begun.
 	 */
 	public void startModification() {
-		
-		if (_modification == null) {
-			return;
-		}
 
 		IContainer container = _modification.getContainer();
 		Point smp = _modification.getStartMousePoint();
@@ -776,11 +784,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * A modification such as a drag, resize or rotate has ended.
 	 */
 	public void stopModification() {
-		
-		if (_modification == null) {
-			return;
-		}
-		
 		switch (_modification.getType()) {
 		case DRAG:
 			_layer.notifyItemChangeListeners(this, ItemChangeType.MOVED);
@@ -818,26 +821,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		_focus = wp;
 	}
 
-    /**
-     * Update the focus point after a geometry change.
-     * <p>
-     * Default implementation does nothing. Subclasses may override (e.g. LineItem
-     * uses midpoint; polygonal items might use centroid).
-     * </p>
-     */
-    protected void updateFocus() {
-        // default: no-op
-    }
-
-    /**
-     * Convenience hook for subclasses: call this after changing geometry.
-     * Marks the item dirty and updates focus.
-     */
-    protected final void geometryChanged() {
-        updateFocus();
-        setDirty(true);
-    }
-
 	/**
 	 * This gets the screen (pixel) version focus of the item. Fot pointlike items
 	 * it will be the location. For polygobal items it might be the centroid.
@@ -866,6 +849,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 
 	/**
 	 * Get the last drawn polygon.
+	 *
 	 * @return the last drawn polygon.
 	 */
 	public Polygon getLastDrawnPolygon() {
@@ -907,7 +891,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	}
 
 	/**
-	 * Get the layer this item is on.
+	 * Get the laywer this item is on.
 	 *
 	 * @return the layer this item is on.
 	 */
@@ -1041,13 +1025,20 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		cbitem.addItemListener(il);
 		menu.add(cbitem);
 
+		// properties
+//		JMenuItem pitem = new JMenuItem("Properties...");
+//		pitem.setEnabled(isLayerEnabled());
+//
+//		pitem.addActionListener(_editAction);
+//		menu.add(pitem);
+
 		return menu;
 	}
 
 	/**
 	 * Get the reference rotation angle in degrees.
 	 *
-	 * @return the azimuth in degrees, used to rotate the item.
+	 * @return the azimuth
 	 */
 	public double getAzimuth() {
 		return _azimuth;
@@ -1060,8 +1051,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 */
 	public void setAzimuth(double azimuth) {
 		_azimuth = azimuth;
-		
-		// keep it between -180 and +180
 		while (_azimuth > 180.0) {
 			_azimuth -= 360.0;
 		}
@@ -1133,46 +1122,42 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * layer, so they are gone as far as this application is concerned.
 	 */
 	public void deleteAllChildren() {
-	    if (_children == null || _children.isEmpty()) {
-	        return;
-	    }
+		if (_children == null || _children.isEmpty()) {
+			return;
+		}
 
-	    // Iterate over a shallow copy to prevent concurrency issues
-	    for (IDrawable drawable : new ArrayList<>(_children)) {
-	        if (drawable instanceof AItem) {
-	            AItem item = (AItem) drawable;
-	            Layer layer = item.getLayer();
-	            if (layer != null) {
-	                layer.remove(item);
-	            }
-	        }
-	    }
+		// Iterate over a shallow copy to prevent concurrency issues
+		for (IDrawable drawable : new ArrayList<>(_children)) {
+			if (drawable instanceof AItem item) {
+				Layer layer = item.getLayer();
+				if (layer != null) {
+					layer.remove(item);
+				}
+			}
+		}
 
-	    _children.clear();
-	   }
+		_children.clear();
+	}
 
 	/**
 	 * Called when the drawable is about to be removed from a layer.
 	 */
 	@Override
 	public void prepareForRemoval() {
+		// tell my parent I am no longer its child
+		if (_parent != null) {
+			_parent.removeChild(this);
 
-	    // tell my parent I am no longer its child
-	    if (_parent != null) {
-	        _parent.removeChild(this);
-	    }
+			_focus = null;
+			_lastDrawnPolygon = null;
+			_layer = null;
+			_path = null;
+			_secondaryPoints = null;
+			_style = null;
+		}
 
-	    // remove my children
-	    deleteAllChildren();
-
-	    // clear references (always)
-	    _focus = null;
-	    _lastDrawnPolygon = null;
-	    _path = null;
-	    _secondaryPoints = null;
-	    _style = null;
-	    _modification = null;
-	    _layer = null;
+		// remove my children
+		deleteAllChildren();
 	}
 
 	/**
@@ -1251,76 +1236,13 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		this._resizePolicy = resizePolicy;
 	}
 
-	
-	/**
-     * Translate this item by the given delta in <b>world</b> coordinates.
-     * <p>
-     * This is the programmatic equivalent of a drag gesture. It moves the
-     * underlying {@link #_path} by applying a world-space translation transform.
-     * If this item maintains secondary geometry (e.g., helper points used for
-     * selection handles), those are translated consistently.
-     * </p>
-     *
-     * @param dx world-space delta x
-     * @param dy world-space delta y
-     */
-    public abstract void translateWorld(double dx, double dy);
-
-
-    /**
-	 * Translate this item by the given delta in <b>local</b> (pixel) coordinates.
-	 * <p>
-	 * This is the programmatic equivalent of a drag gesture. It converts the
-	 * provided local-space deltas into world-space deltas, then calls
-	 * {@link #translateWorld(double, double)} to perform the actual translation.
-	 * </p>
-	 *
-	 * @param dx local-space delta x
-	 * @param dy local-space delta y
-	 */
-    public void translateLocal(int dx, int dy) {
-    	
-    	if (dx == 0 && dy == 0) {
-			return;
-		}
-    	
-		IContainer container = getContainer();
-		if (container == null) {
-			return;
-		}
-		// convert local deltas to world deltas
-        Point2D.Double w0 = new Point2D.Double();
-        Point2D.Double w1 = new Point2D.Double();
-        container.localToWorld(new Point(0, 0), w0);
-        container.localToWorld(new Point(dx, dy), w1);
-
-        double dxWorld = w1.x - w0.x;
-        double dyWorld = w1.y - w0.y;
-
-		translateWorld(dxWorld, dyWorld);
-    }
-    
-    /**
-	 * Set the display name of this item.
-	 * <p>
-	 * This name is used in various user interface contexts.
-	 * </p>
-	 * @param name the display name of this item.
-	 */
-    public void setDisplayName(String name) {
-		_displayName = name;
+	protected void updateFocus() {
+		// default implementation does nothing
 	}
-    
-    /**
-	 * Get the display name of this item.
-	 * <p>
-	 * If no display name has been set, the class simple name is returned.
-	 * </p>
-	 *
-	 * @return the display name of this item.
-	 */
-    public String getDisplayName() {
-    	return _displayName != null ? _displayName : this.getClass().getSimpleName();
-    }
-	
+
+	public void geometryChanged() {
+		updateFocus();
+		setDirty(true);
+	}
+
 }

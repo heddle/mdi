@@ -8,9 +8,9 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 
+import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
-import edu.cnu.mdi.splot.plot.GraphicsUtilities;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotPanel;
 import edu.cnu.mdi.splot.plot.SplotMenus;
@@ -64,7 +64,7 @@ public abstract class APlotDialog extends JDialog {
 		addWest();
 
 		pack();
-		GraphicsUtilities.centerComponent(this);
+		GraphicsUtils.centerComponent(this);
 	}
 
 	/**
@@ -99,7 +99,7 @@ public abstract class APlotDialog extends JDialog {
 
 	/**
 	 * Get the plot canvas
-	 * 
+	 *
 	 * @return the plot canvas
 	 */
 	public PlotCanvas getPlotCanvas() {

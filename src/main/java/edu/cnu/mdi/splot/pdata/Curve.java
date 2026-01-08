@@ -11,13 +11,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
-import edu.cnu.mdi.splot.fit.ErfFitter;
-import edu.cnu.mdi.splot.fit.ErfcFitter;
 import edu.cnu.mdi.splot.fit.FitResult;
-import edu.cnu.mdi.splot.fit.GaussianFitter;
 import edu.cnu.mdi.splot.fit.IFitter;
-import edu.cnu.mdi.splot.fit.MultiGaussianFitter;
-import edu.cnu.mdi.splot.fit.PolynomialFitter;
 import edu.cnu.mdi.splot.spline.CubicSpline;
 
 /**

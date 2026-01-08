@@ -3,8 +3,8 @@ package edu.cnu.mdi.splot.fit;
 import java.util.Arrays;
 import java.util.Objects;
 
-import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
+import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.MultivariateJacobianFunction;
 import org.apache.commons.math3.fitting.leastsquares.ParameterValidator;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
@@ -40,7 +40,7 @@ public final class GaussianFitter extends ALeastSquaresFitter {
     public static final int IDX_MU = 1;
     public static final int IDX_SIGMA = 2;
     public static final int IDX_B = 3;
-    
+
     /** Parameter names. */
     public static final String[] paramNames = { "A", "μ", "σ", "B" };
 
@@ -137,7 +137,7 @@ public final class GaussianFitter extends ALeastSquaresFitter {
                 " parameters, got " + fit.params.length
             );
         }
-        
+
        final double[] p = fit.params.clone();
         return (double x) -> {
             double A = p[IDX_A];
@@ -259,7 +259,9 @@ public final class GaussianFitter extends ALeastSquaresFitter {
 
             // Baseline guess: median-ish from endpoints.
             Integer[] idx = new Integer[n];
-            for (int i = 0; i < n; i++) idx[i] = i;
+            for (int i = 0; i < n; i++) {
+				idx[i] = i;
+			}
             Arrays.sort(idx, (i, j) -> Double.compare(x[i], x[j]));
 
             double yLeft = y[idx[0]];
@@ -312,7 +314,7 @@ public final class GaussianFitter extends ALeastSquaresFitter {
             return new double[] { A, mu, sigma, B };
         }
     }
-    
+
     //------- descriptive string section -----------------
  	@Override
  	public String modelName() {
@@ -321,13 +323,13 @@ public final class GaussianFitter extends ALeastSquaresFitter {
 
  	@Override
  	public String functionForm() {
- 		return String.format("y(x)=%se^[-(x-%s)%s/(2%s%s)] + %s", 
+ 		return String.format("y(x)=%se^[-(x-%s)%s/(2%s%s)] + %s",
  				paramNames[0], paramNames[1], SUP2, paramNames[2], SUP2, paramNames[3]);
  	}
 
  	/**
  	 * Get the parameter name for the given index.
- 	 * 
+ 	 *
  	 * @param index the parameter index
  	 * @return the parameter name
  	 */
@@ -344,7 +346,7 @@ public final class GaussianFitter extends ALeastSquaresFitter {
  	public IFitStringGetter getStringGetter() {
  		return this;
  	}
- 	
+
  	//--------------------- test main -----------------------
  	public static void main(String arg[]) {
  		final double mu = 1.2;
@@ -352,13 +354,13 @@ public final class GaussianFitter extends ALeastSquaresFitter {
  		final double A = 2.0;
  		final double B = 0.5;
  		int n = 50;
- 		
- 		
+
+
  		Evaluator eval = (double x) -> {
  			double z = (x - mu) / sigma;
  			return A * Math.exp(-0.5 * z * z) + B;
  		};
- 		
+
  		FitVectors testData = FitVectors.testData(eval, -1.0, 3.0, n, 4.0, 5.0);
  		GaussianFitter fitter = new GaussianFitter();
  		FitResult result = fitter.fit(testData.x, testData.y, testData.w);
@@ -368,7 +370,7 @@ public final class GaussianFitter extends ALeastSquaresFitter {
  			System.out.print(" sigma = " + sigma);
  			System.out.println(" B = " + B);
  		System.out.println(result);
- 		
+
  		//print data and fit values
 		for (int i = 0; i < (n-1); i+=10) {
 			double xv = testData.x[i];
@@ -376,7 +378,7 @@ public final class GaussianFitter extends ALeastSquaresFitter {
 			System.out.printf("x=%.3f fit y=%.3f data y=%.3f%n", xv, yv, testData.y[i]);
 		}
 
- 		
- 	
- 	}	
+
+
+ 	}
 }

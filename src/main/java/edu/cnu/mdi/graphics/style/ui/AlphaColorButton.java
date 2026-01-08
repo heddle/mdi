@@ -1,9 +1,12 @@
 package edu.cnu.mdi.graphics.style.ui;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 
 public class AlphaColorButton extends JButton {
 
@@ -40,11 +43,13 @@ public class AlphaColorButton extends JButton {
         Graphics2D g2 = img.createGraphics();
         // checker background
         int s = 4;
-        for (int y=0; y<h; y+=s) for (int x=0; x<w; x+=s) {
-            boolean dark = ((x/s)+(y/s))%2==0;
-            g2.setColor(dark ? new Color(200,200,200) : new Color(240,240,240));
-            g2.fillRect(x,y,s,s);
-        }
+        for (int y=0; y<h; y+=s) {
+			for (int x=0; x<w; x+=s) {
+			    boolean dark = ((x/s)+(y/s))%2==0;
+			    g2.setColor(dark ? new Color(200,200,200) : new Color(240,240,240));
+			    g2.fillRect(x,y,s,s);
+			}
+		}
         g2.setColor(c);
         g2.fillRect(0,0,w,h);
         g2.setColor(Color.black);

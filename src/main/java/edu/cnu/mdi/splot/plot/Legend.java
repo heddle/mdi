@@ -4,13 +4,14 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.util.Collection;
 
+import edu.cnu.mdi.graphics.GraphicsUtils;
+import edu.cnu.mdi.graphics.SymbolDraw;
+import edu.cnu.mdi.graphics.style.Styled;
+import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.PlotData;
-import edu.cnu.mdi.splot.style.Styled;
-import edu.cnu.mdi.splot.style.SymbolDraw;
-import edu.cnu.mdi.splot.style.SymbolType;
 
 @SuppressWarnings("serial")
 public class Legend extends DraggableRectangle {
@@ -34,7 +35,7 @@ public class Legend extends DraggableRectangle {
 
 	/**
 	 * Create a Legend rectangle
-	 * 
+	 *
 	 * @param canvas the parent plot canvas
 	 */
 	public Legend(PlotCanvas canvas) {
@@ -44,19 +45,15 @@ public class Legend extends DraggableRectangle {
 
 	/**
 	 * Draw the legend
-	 * 
+	 *
 	 * @param g the graphics context
 	 */
 	public void draw(Graphics g) {
 		// System.err.println(toString());
 		PlotData plotData = _canvas.getPlotData();
 
-		if (plotData == null) {
-			return;
-		}
-
 		// are there any visible curves?
-		if (plotData.getVisibleCurves().isEmpty()) {
+		if ((plotData == null) || plotData.getVisibleCurves().isEmpty()) {
 			return;
 		}
 
@@ -107,7 +104,7 @@ public class Legend extends DraggableRectangle {
 		g.drawString(legStr, x + width - _maxStringWidth - HGAP, yc + fm.getHeight() / 2);
 
 		if ((_numVisCurves > 0) && cdm != CurveDrawingMethod.NONE) {
-			GraphicsUtilities.drawStyleLine(g, style.getLineColor(), style.getLineWidth(),
+			GraphicsUtils.drawStyleLine(g, style.getLineColor(), style.getLineWidth(),
 					style.getLineStyle(), x + HGAP, yc, x + HGAP + _params.getLegendLineLength(), yc);
 		}
 

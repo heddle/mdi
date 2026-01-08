@@ -14,6 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 
 /**
  * A compact color chooser dialog based on Swing's {@link JColorChooser} with:
@@ -102,7 +103,7 @@ public final class AlphaColorChooserDialog {
 
 		final Window owner = (parent != null) ? SwingUtilities.getWindowAncestor(parent) : null;
 		final JDialog dialog = new JDialog(owner, (title != null) ? title : "Choose Color", JDialog.ModalityType.APPLICATION_MODAL);
-		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		dialog.setContentPane(content);
 
 		// Keyboard: Enter=OK, Esc=Cancel

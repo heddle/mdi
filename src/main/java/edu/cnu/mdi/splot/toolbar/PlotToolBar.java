@@ -41,14 +41,14 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 	public static final String BOXZOOM = "BOXZOOM";
 	public static final String WORLD = "WORLD";
 	public static final String PNG = "PNG";
-	
-	
+
+
 	//plot data type
 	private PlotDataType type;
 
 	/**
 	 * Creates a new plot tool bar r.
-	 * 
+	 *
 	 * @param orientation the initial orientation -- it must be either
 	 *                    <code>HORIZONTAL</code> or <code>VERTICAL</code>
 	 */
@@ -58,11 +58,11 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 		this.type = canvas.getPlotData().getType();
 
-		_pointerButton = new ToolBarToggleButton("images/pointer.gif", "Make selections", POINTER, 3, 1,
+		_pointerButton = new ToolBarToggleButton("images/svg/pointer.svg", "Make selections", POINTER, 3, 1,
 				"images/pointercursor.gif");
 		_pointerButton.setSelected(true);
 		add(_pointerButton);
-		
+
 		switch (type) {
 		case XYEXYE:
 		case XYXY:
@@ -71,9 +71,9 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 					"images/box_zoomcursor.gif");
 			add(_boxZoomButton);
 			addHGap(8);
-			add(new ToolBarButton("images/world.gif", "Include all data", WORLD));
-			add(new ToolBarButton("images/zoom_in.gif", "Zoom in", ZOOMIN));
-			add(new ToolBarButton("images/zoom_out.gif", "Zoom out", ZOOMOUT));
+			add(new ToolBarButton("images/svg/reset_zoom.svg", "Include all data", WORLD));
+			add(new ToolBarButton("images/svg/zoom_in.svg", "Zoom in", ZOOMIN));
+			add(new ToolBarButton("images/svg/zoom_out.svg", "Zoom out", ZOOMOUT));
 			break;
 		case STRIP:
 			break;
@@ -81,8 +81,8 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 
 		addHGap(8);
-		add(new ToolBarButton("images/printer.gif", "Print the plot", PRINT));
-		add(new ToolBarButton("images/camera.gif", "Save as PNG", PNG));
+		add(new ToolBarButton("images/svg/printer.svg", "Print the plot", PRINT));
+		add(new ToolBarButton("images/svg/camera.svg", "Save as PNG", PNG));
 	}
 
 	/**
@@ -102,7 +102,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Get the primary button group so that we can add other buttons to the group
-	 * 
+	 *
 	 * @return the primary button group so that we can add other buttons to the
 	 *         group
 	 */
@@ -117,7 +117,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Add a regular button to the toolbar
-	 * 
+	 *
 	 * @param button the ToolBarButton to add.
 	 */
 	public void add(ToolBarButton button) {
@@ -127,7 +127,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Add a toggle button to the toolbar.
-	 * 
+	 *
 	 * @param toggleButton the button to add.
 	 */
 	public void add(JToggleButton toggleButton) {
@@ -136,7 +136,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Add a toggle button to the toolbar.
-	 * 
+	 *
 	 * @param toggleButton the button to add.
 	 * @param toGroup      if <code>true</code> and to the primary button group
 	 */
@@ -154,7 +154,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * remove a toggle button from the toolbar.
-	 * 
+	 *
 	 * @param toggleButton the button to remove.
 	 */
 	public void remove(JToggleButton toggleButton) {
@@ -170,7 +170,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 	/**
 	 * Get the default toggle button. This will become active if you click an active
 	 * toggle button to turn it off.
-	 * 
+	 *
 	 * @return the default toggle buton.
 	 */
 	public JToggleButton getDefaultToggleButton() {
@@ -180,7 +180,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 	/**
 	 * Set the default toggle button. This will become active if you click an active
 	 * toggle button to turn it off.
-	 * 
+	 *
 	 * @param defaultToggleButton the default toggle button.
 	 */
 	public void setDefaultToggleButton(ToolBarToggleButton defaultToggleButton) {
@@ -199,7 +199,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Get the command of the active toggle button
-	 * 
+	 *
 	 * @return the command of the active toggle button
 	 */
 	public String getActiveCommand() {
@@ -209,7 +209,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Get which tool bar toggle button from the primary button group is active
-	 * 
+	 *
 	 * @return the active toolbar toggle button (from the primary button group), or
 	 *         null.
 	 */
@@ -236,7 +236,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Check whether the default button is active
-	 * 
+	 *
 	 * @return <code>true</code> if the default button is active.
 	 */
 	public boolean isDefaultActivated() {
@@ -246,7 +246,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Check whether a given button is active
-	 * 
+	 *
 	 * @param tbtb the button to test
 	 * @return <code>true</code> if the default button is active.
 	 */
@@ -283,7 +283,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Add a toolBar listener
-	 * 
+	 *
 	 * @param ToolBarListener the listener to add
 	 */
 	public void addToolBarListener(IToolBarListener listener) {
@@ -299,7 +299,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Remove a ToolBarListener.
-	 * 
+	 *
 	 * @param ToolBarListener the ToolBarListener to remove.
 	 */
 
@@ -333,7 +333,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Find a button from the action command
-	 * 
+	 *
 	 * @param actionCommand the action command to match
 	 * @return the button or <code>null</code> if not found
 	 */
@@ -357,7 +357,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 	/**
 	 * Set a button enabled by the action command
-	 * 
+	 *
 	 * @param actionCommand the action command
 	 * @param enabled       the flag
 	 */

@@ -12,6 +12,7 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.RadialGradientPaint;
@@ -21,7 +22,6 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Transparency;
 import java.awt.Window;
-import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.NoninvertibleTransformException;
@@ -239,8 +239,8 @@ public class GraphicsUtils {
 		}
 		return stroke;
 	}
-	
-	
+
+
 	/**
 	 * Copy a stroke but change the width
 	 * @param original
@@ -568,6 +568,28 @@ public class GraphicsUtils {
 		Dimension d = screenFraction(fractionalSize);
 		frame.setSize(d);
 		centerComponent(frame);
+	}
+
+	/**
+	 * Draw a styled line.
+	 *
+	 * @param g         the Graphics context.
+	 * @param lineColor the line color.
+	 * @param lineWidth the line width.
+	 * @param lineStyle the line style.
+	 * @param x1        the starting x coordinate.
+	 * @param y1        the starting y coordinate.
+	 * @param x2        the ending x coordinate.
+	 * @param y2        the ending y coordinate.
+	 */
+	public static void drawStyleLine(Graphics g, Color lineColor, float lineWidth, LineStyle lineStyle, int x1, int y1,
+			int x2, int y2) {
+		Graphics2D g2 = (Graphics2D) g;
+		g2.setColor(lineColor);
+		Stroke oldStroke = g2.getStroke();
+		g2.setStroke(GraphicsUtils.getStroke(lineWidth, lineStyle));
+		g2.drawLine(x1, y1, x2, y2);
+		g2.setStroke(oldStroke);
 	}
 
 	/**

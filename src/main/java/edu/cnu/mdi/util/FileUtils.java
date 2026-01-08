@@ -20,8 +20,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
-import edu.cnu.mdi.graphics.ImageManager;
-
 public class FileUtils {
 
 	// constants for append or overwrite

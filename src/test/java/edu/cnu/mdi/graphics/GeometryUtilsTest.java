@@ -1,14 +1,18 @@
 package edu.cnu.mdi.graphics;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Point;
 import java.awt.Rectangle;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for {@link GeometryUtils}.  
+ * Unit tests for {@link GeometryUtils}.
  *
  * <p>This test suite verifies:</p>
  * <ul>

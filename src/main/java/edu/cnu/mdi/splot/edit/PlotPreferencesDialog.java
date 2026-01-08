@@ -5,6 +5,7 @@ import java.awt.Component;
 
 import javax.swing.JTabbedPane;
 
+import edu.cnu.mdi.dialog.SimpleDialog;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 
 /**

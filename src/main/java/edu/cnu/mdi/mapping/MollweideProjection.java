@@ -56,7 +56,7 @@ public class MollweideProjection implements IMapProjection {
     /** Number of segments for approximating curves. */
     private static final int NUM_SEGMENTS = 360;
 
- 
+
     /**
      * Creates a Mollweide projection with the given central meridian and theme.
      *
@@ -99,8 +99,8 @@ public class MollweideProjection implements IMapProjection {
 
         return theta;
     }
-  
-    
+
+
     /**
      * Get the central longitude λ₀ (in radians).
      *
@@ -122,7 +122,7 @@ public class MollweideProjection implements IMapProjection {
         // Use the same normalization helper used elsewhere
         this.lambda0 = wrapLongitude(centralLongitude);
     }
-    
+
     /**
      * Test to see if the line between two longitudes crosses the
      * seam (the line at the central longitude). This is a test
@@ -136,14 +136,14 @@ public class MollweideProjection implements IMapProjection {
     public boolean crossesSeam(double lon1, double lon2) {
 		double d1 = lon1 - lambda0;
 		double d2 = lon2 - lambda0;
-		
+
 		d1 = wrapLongitude(d1);
 		d2 = wrapLongitude(d2);
 
 
 //		return (d1 * d2 < 0) && (Math.abs(d1 - d2) > Math.PI);
 		return Math.abs(d1 - d2) > Math.PI;
-    	
+
     }
 
 

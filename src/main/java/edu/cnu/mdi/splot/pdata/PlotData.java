@@ -87,31 +87,31 @@ public class PlotData implements CurveChangeListener {
 	 * @param fitOrders optional fit orders for each curve (may be null). If
 	 * non-null, the length must match the number of curve names. This fit orders are
 	 * assigned to each curve via {@link Curve#setFitOrder(int)}. They are only relevant
-	 * for MultiGaussian (no. of Gaussians) and Polynomial (polynomial degree) fits. 
+	 * for MultiGaussian (no. of Gaussians) and Polynomial (polynomial degree) fits.
 	 * @throws PlotDataException if there is a problem creating the data set
 	 */
 	public PlotData(PlotDataType type, String[] curveNames, int[] fitOrders) throws PlotDataException {
- 		
+
 		Objects.requireNonNull(type, "type");
 		Objects.requireNonNull(curveNames, "curveNames");
-		
+
 		int curveCount = curveNames.length;
 		if (curveCount < 1) {
 			throw new PlotDataException("Must supply at least one curve name.");
 		}
-		
+
 		//fit orders can be null, but if not null lengths must match
 		if (fitOrders != null) {
 			if (fitOrders.length != curveCount) {
 				throw new PlotDataException("If fit orders are supplied, their count must match the number of curve names.");
 			}
 		}
-		
+
 		this.type = type;
 
 		switch (type) {
 
-		case XYXY: 
+		case XYXY:
 			for (int i = 0; i < curveCount; i++) {
 				DataColumn xData = new DataColumn();
 				DataColumn yData = new DataColumn();
@@ -122,9 +122,9 @@ public class PlotData implements CurveChangeListener {
 				addCurve(curve);
 			}
 			break;
-		
 
-		case XYEXYE: 
+
+		case XYEXYE:
 			for (int i = 0; i < curveCount; i++) {
 				DataColumn xData = new DataColumn();
 				DataColumn yData = new DataColumn();
@@ -136,7 +136,7 @@ public class PlotData implements CurveChangeListener {
 				addCurve(curve);
 			}
 			break;
-		
+
 
 		case H1D:
 			throw new PlotDataException("Use PlotData(HistoData...) constructor for 1D histograms.");
@@ -144,14 +144,14 @@ public class PlotData implements CurveChangeListener {
 		case STRIP:
 			throw new PlotDataException("Use PlotData(StripData) constructor for STRIP data.");
 		}
-		
+
 	}
 
 	/** @return the plot data type. */
 	public PlotDataType getType() {
 		return type;
 	}
-	
+
 	/**
 	 * Convenience method to determine if this is histogram plot data.
 	 * @return true if histogram plot data
@@ -159,12 +159,12 @@ public class PlotData implements CurveChangeListener {
 	public boolean isHistoData() {
 		return (type == PlotDataType.H1D);
 	}
-	
-	
+
+
 	public boolean isXYData() {
 		return (type == PlotDataType.XYEXYE) || (type == PlotDataType.XYXY);
 	}
-	
+
 	/**
 	 * Determine if this is strip chart plot data.
 	 * @return true if strip chart plot data
@@ -177,7 +177,7 @@ public class PlotData implements CurveChangeListener {
 	public List<ACurve> getCurves() {
 		return Collections.unmodifiableList(curves);
 	}
-	
+
 	/** @return a list of visible curves. */
 	public List<ACurve> getVisibleCurves() {
 		ArrayList<ACurve> visibleCurves = new ArrayList<>();
@@ -198,9 +198,9 @@ public class PlotData implements CurveChangeListener {
 	public ACurve getCurve(int index) {
 		return curves.get(index);
 	}
-	
-	/** 
-	 * Convenience: get a curve by name. 
+
+	/**
+	 * Convenience: get a curve by name.
 	 * @param name the curve name
 	 * @return the curve with the given name, or null if not found
 	 */
@@ -212,8 +212,8 @@ public class PlotData implements CurveChangeListener {
 		}
 		return null;
 	}
-	
-	/** 
+
+	/**
 	 * Convenience: get the first curve. Often there is only one.
 	 * @return the first curve, or null if there are no curves
 	 */
@@ -223,8 +223,8 @@ public class PlotData implements CurveChangeListener {
 		}
 		return curves.get(0);
 	}
-	
-	
+
+
 	/**
 	 * Determine if this is histogram plot data.
 	 * @return true if histogram plot data
@@ -279,7 +279,7 @@ public class PlotData implements CurveChangeListener {
 			listenerList.remove(DataChangeListener.class, listener);
 		}
 	}
-	
+
 	/** @return the minimum x value over all curves. */
 	public double xMin() {
 		if (curves.isEmpty()) {
@@ -294,7 +294,7 @@ public class PlotData implements CurveChangeListener {
 		}
 		return xmin;
 	}
-	
+
 	/** @return the maximum x value over all curves. */
 	public double xMax() {
 		if (curves.isEmpty()) {
@@ -308,8 +308,8 @@ public class PlotData implements CurveChangeListener {
 			}
 		}
 		return xmax;
-	}	
-	
+	}
+
 	/** @return the minimum y value over all curves. */
 	public double yMin() {
 		if (curves.isEmpty()) {
@@ -324,7 +324,7 @@ public class PlotData implements CurveChangeListener {
 		}
 		return ymin;
 	}
-	
+
 	/** @return the maximum y value over all curves. */
 	public double yMax() {
 		if (curves.isEmpty()) {
@@ -339,7 +339,7 @@ public class PlotData implements CurveChangeListener {
 		}
 		return ymax;
 	}
-	
-	
+
+
 
 }

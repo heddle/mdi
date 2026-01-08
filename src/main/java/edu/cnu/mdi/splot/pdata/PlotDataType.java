@@ -2,7 +2,7 @@ package edu.cnu.mdi.splot.pdata;
 
 /**
  * Types of data sets
- * 
+ *
  * @author heddle These are the different types of data sets.
  *         <ul>
  *         <li><code>XYXY</code> An arbitrary number of (x, y) columns

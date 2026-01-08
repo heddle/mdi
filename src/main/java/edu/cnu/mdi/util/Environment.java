@@ -25,8 +25,6 @@ import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriter;
-import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
 
 /**
  * Environment information and simple application preferences for the mdi

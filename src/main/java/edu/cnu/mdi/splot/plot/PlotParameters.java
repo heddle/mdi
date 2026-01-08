@@ -30,7 +30,7 @@ public class PlotParameters {
 	private Color _textBorderColor = Color.black;
 
 	// for extra text
-	private Font _extraFont = Fonts.plainFontDelta(-2);;
+	private Font _extraFont = Fonts.plainFontDelta(-2);
 	private Color _extraFillColor = new Color(248, 248, 248, 224);
 	private Color _extraTextColor = Color.black;
 	private Color _extraBorderColor = Color.black;

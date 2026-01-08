@@ -2,6 +2,7 @@ package edu.cnu.mdi.splot.edit;
 
 import java.awt.BorderLayout;
 
+import edu.cnu.mdi.dialog.SimpleDialog;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 
 public class CurveEditorDialog extends SimpleDialog {
@@ -17,7 +18,7 @@ public class CurveEditorDialog extends SimpleDialog {
 
 	/**
 	 * Edit the plot preferences
-	 * 
+	 *
 	 * @param plotCanvas the plot being edited
 	 */
 	public CurveEditorDialog(PlotCanvas plotCanvas) {
@@ -51,7 +52,7 @@ public class CurveEditorDialog extends SimpleDialog {
 
 	/**
 	 * A button was hit. The default behavior is to shutdown the dialog.
-	 * 
+	 *
 	 * @param command the label on the button that was hit.
 	 */
 	@Override

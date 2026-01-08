@@ -32,19 +32,19 @@ public final class ToolBarBits {
     public static final long EVERYTHING = STYLEBUTTON | ELLIPSEBUTTON | TEXTBUTTON | RECTANGLEBUTTON | POLYGONBUTTON | LINEBUTTON
             | DELETEBUTTON | STATUSFIELD | CENTERBUTTON | UNDOZOOMBUTTON | RADARCBUTTON | POLYLINEBUTTON
             | MAGNIFYBUTTON | PANBUTTON | BOXZOOMBUTTON;
-    
+
     public static final long DEFAULTS = BOXZOOMBUTTON | DELETEBUTTON | CENTERBUTTON | UNDOZOOMBUTTON | PANBUTTON;
 
     /** All drawing-shape tools. */
     public static final long DRAWING =
-            EVERYTHING & ~MAGNIFYBUTTON;;
+            EVERYTHING & ~MAGNIFYBUTTON;
 
     /** Default set (same as everything in your current intent). */
     public static final long STANDARD = EVERYTHING;
 
     /** Everything except drawing tools. */
     public static final long NODRAWING = EVERYTHING & ~DRAWING;
-    
+
     /** Only the text drawing tool (plus whatever non-drawing widgets you keep in STANDARD). */
     public static final long TEXTDRAWING = (STANDARD & ~DRAWING) | TEXTBUTTON;
 

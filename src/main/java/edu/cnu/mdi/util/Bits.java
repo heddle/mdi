@@ -136,7 +136,9 @@ public final class Bits {
      * @return index of the lowest set bit, or {@code -1} if {@code bits == 0}
      */
     public static int firstSet(long bits) {
-        if (bits == 0L) return -1;
+        if (bits == 0L) {
+			return -1;
+		}
         return Long.numberOfTrailingZeros(bits);
     }
 
@@ -153,7 +155,9 @@ public final class Bits {
      * @return index of the highest set bit, or {@code -1} if {@code bits == 0}
      */
     public static int highestSet(long bits) {
-        if (bits == 0L) return -1;
+        if (bits == 0L) {
+			return -1;
+		}
         return 63 - Long.numberOfLeadingZeros(bits);
     }
 
@@ -208,8 +212,12 @@ public final class Bits {
      * @return the masked value
      */
     public static long mask(long bits, int width) {
-        if (width <= 0) return 0L;
-        if (width >= 64) return bits;
+        if (width <= 0) {
+			return 0L;
+		}
+        if (width >= 64) {
+			return bits;
+		}
         long m = (1L << width) - 1;
         return bits & m;
     }

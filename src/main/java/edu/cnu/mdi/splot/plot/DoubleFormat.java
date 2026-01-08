@@ -8,11 +8,11 @@ public class DoubleFormat {
 	/**
 	 * cache formats which are few and often repeated to avoid recreating
 	 */
-	private static Hashtable<String, DecimalFormat> formats = new Hashtable<String, DecimalFormat>(143);
+	private static Hashtable<String, DecimalFormat> formats = new Hashtable<>(143);
 
 	/**
 	 * Format a double
-	 * 
+	 *
 	 * @param value  the value to format.
 	 * @param numdec the number of digits right of the decimal.
 	 */
@@ -22,7 +22,7 @@ public class DoubleFormat {
 
 	/**
 	 * Format a double
-	 * 
+	 *
 	 * @param value  the value to format.
 	 * @param numdec the number of digits right of the decimal.
 	 * @param scinot if <code>true</code>, use scientific notation.
@@ -79,7 +79,7 @@ public class DoubleFormat {
 	 * 1.234567E-6 <br>
 	 * 1.234567E-7 <br>
 	 * </code>
-	 * 
+	 *
 	 * @param value       the value to format.
 	 * @param numdec      the number of digits right of the decimal. If the
 	 *                    exponenent is >= n or <= -n it will use sci notation.
@@ -109,7 +109,7 @@ public class DoubleFormat {
 
 	/**
 	 * main program for testing.
-	 * 
+	 *
 	 * @param args command line arguments (ignored.)
 	 */
 	public static void main(String[] args) {

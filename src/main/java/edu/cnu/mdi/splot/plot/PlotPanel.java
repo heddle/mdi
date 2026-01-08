@@ -21,6 +21,7 @@ import javax.swing.border.Border;
 
 import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.splot.toolbar.PlotToolBar;
+import edu.cnu.mdi.ui.colors.X11Colors;
 
 @SuppressWarnings("serial")
 public class PlotPanel extends JPanel implements PropertyChangeListener {
@@ -50,7 +51,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 
 	/**
 	 * Create a plot panel for a single xy dataset and a toolbar
-	 * 
+	 *
 	 * @param dataSet   the data set
 	 * @param plotTitle the title of the plot
 	 */
@@ -60,7 +61,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 
 	/**
 	 * Create a plot panel for a single xy dataset
-	 * 
+	 *
 	 * @param dataSet     the data set
 	 * @param plotTitle   the title of the plot
 	 * @param decorations (stripped down panel?)
@@ -138,7 +139,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 			@Override
 			public void paint(Graphics g) {
 				// exclude from print
-				if (!PrintUtilities.isPrinting()) {
+				if (!PrintUtils.isPrinting()) {
 					super.paint(g);
 				}
 			}
@@ -181,7 +182,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 			@Override
 			public void paint(Graphics g) {
 				// exclude from print
-				if (!PrintUtilities.isPrinting()) {
+				if (!PrintUtils.isPrinting()) {
 					super.paint(g);
 				}
 			}
@@ -233,7 +234,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 				@Override
 				public void paint(Graphics g) {
 					// exclude from print
-					if (!PrintUtilities.isPrinting()) {
+					if (!PrintUtils.isPrinting()) {
 						super.paint(g);
 					}
 				}
@@ -274,7 +275,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 
 	/**
 	 * Get the underlying plot canvas
-	 * 
+	 *
 	 * @return the plot canvas
 	 */
 	public PlotCanvas getCanvas() {
@@ -283,7 +284,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 
 	/**
 	 * Get the plot parameters
-	 * 
+	 *
 	 * @return the plot parameters
 	 */
 	public PlotParameters getParameters() {

@@ -171,7 +171,7 @@ public class PointerTool implements ITool, IRubberbanded {
         if (owner == null) {
             owner = ctx.container();
         }
-        
+
 
         // Popups handled centrally by BaseToolBar.
         // If a rubber-band is already active, ignore new presses.

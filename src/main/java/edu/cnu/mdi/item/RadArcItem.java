@@ -34,11 +34,15 @@ public class RadArcItem extends PolygonItem {
 
     @Override
     protected void reshape() {
-        if (_modification == null) return;
+        if (_modification == null) {
+			return;
+		}
 
         int idx = _modification.getSelectIndex(); // 0=leg handle, 1=arc-end handle (matches your selection points)
         Point2D.Double wp = _modification.getCurrentWorldPoint();
-        if (wp == null) return;
+        if (wp == null) {
+			return;
+		}
 
         if (idx == 0) {
             // Dragging the first leg endpoint: change radius and direction

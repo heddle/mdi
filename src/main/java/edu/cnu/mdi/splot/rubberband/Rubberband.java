@@ -12,7 +12,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 
-import edu.cnu.mdi.splot.plot.GraphicsUtilities;
+import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 
 public final class Rubberband {
@@ -78,7 +78,7 @@ public final class Rubberband {
 
 	/**
 	 * Create a Rubberband
-	 * 
+	 *
 	 * @param container    the parent component being rubberbanded
 	 * @param rubberbanded who gets notified when we are done.
 	 * @param policy       the stretching shape policy.
@@ -92,7 +92,7 @@ public final class Rubberband {
 
 	/**
 	 * This activates or deactivates the rubber banding.
-	 * 
+	 *
 	 * @param b the value of the active flag.
 	 */
 	public void setActive(boolean b) {
@@ -101,7 +101,7 @@ public final class Rubberband {
 
 	/**
 	 * Sets the component being controlled by this rubber band
-	 * 
+	 *
 	 * @param component the component being rubberbanded.
 	 */
 	private void setComponent(Component component) {
@@ -204,7 +204,7 @@ public final class Rubberband {
 
 	/**
 	 * A hack that prevents the same point from being added consecutively.
-	 * 
+	 *
 	 * @param p the polygon in question.
 	 * @param x the x coordinate.
 	 * @param y the y coordinate.
@@ -224,7 +224,7 @@ public final class Rubberband {
 
 	/**
 	 * Convenience method to see we are in a poly mode.
-	 * 
+	 *
 	 * @return <code>true</code> if we are in a poly mode.
 	 */
 	private boolean polyMode() {
@@ -233,7 +233,7 @@ public final class Rubberband {
 
 	/**
 	 * Convenience method to see we are in radarc mode.
-	 * 
+	 *
 	 * @return <code>true</code> if we are in radarc mode.
 	 */
 	private boolean radArcMode() {
@@ -242,7 +242,7 @@ public final class Rubberband {
 
 	/**
 	 * Convenience method to see we are in line mode.
-	 * 
+	 *
 	 * @return <code>true</code> if we are in line mode.
 	 */
 	private boolean lineMode() {
@@ -251,7 +251,7 @@ public final class Rubberband {
 
 	/**
 	 * Convenience method to see we are in rectangle/ellipse "normal" mode.
-	 * 
+	 *
 	 * @return <code>true</code> if we are in rectangle/ellipse "normal" mode.
 	 */
 	private boolean normalMode() {
@@ -261,7 +261,7 @@ public final class Rubberband {
 	/**
 	 * Draw the rubber band outline. Erasing is not necessary because we are saving
 	 * a background image.
-	 * 
+	 *
 	 * @param g the graphics context.
 	 */
 	private void draw(Graphics2D g) {
@@ -276,23 +276,23 @@ public final class Rubberband {
 		case YONLY:
 		case RECTANGLE_PRESERVE_ASPECT:
 			g.fillRect(rect.x, rect.y, rect.width, rect.height);
-			GraphicsUtilities.drawHighlightedRectangle(g, rect, _highlightColor1, _highlightColor2);
+			GraphicsUtils.drawHighlightedRectangle(g, rect, _highlightColor1, _highlightColor2);
 			break;
 
 		case LINE:
-			GraphicsUtilities.drawHighlightedLine(g, _startPt.x, _startPt.y, _currentPt.x, _currentPt.y,
+			GraphicsUtils.drawHighlightedLine(g, _startPt.x, _startPt.y, _currentPt.x, _currentPt.y,
 					_highlightColor1, _highlightColor2);
 			break;
 
 		case OVAL:
 			g.fillOval(rect.x, rect.y, rect.width, rect.height);
-			GraphicsUtilities.drawHighlightedOval(g, rect, _highlightColor1, _highlightColor2);
+			GraphicsUtils.drawHighlightedOval(g, rect, _highlightColor1, _highlightColor2);
 			break;
 
 		case RADARC:
 
 			if (_tempPoly.npoints == 1) {
-				GraphicsUtilities.drawHighlightedLine(g, _tempPoly.xpoints[0], _tempPoly.ypoints[0], _currentPt.x,
+				GraphicsUtils.drawHighlightedLine(g, _tempPoly.xpoints[0], _tempPoly.ypoints[0], _currentPt.x,
 						_currentPt.y, _highlightColor1, _highlightColor2);
 			}
 			else if (_tempPoly.npoints == 2) {
@@ -309,10 +309,7 @@ public final class Rubberband {
 				double r1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
 				double r2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
 
-				if (r1 < 0.99) {
-					return;
-				}
-				if (r2 < 0.99) {
+				if ((r1 < 0.99) || (r2 < 0.99)) {
 					return;
 				}
 
@@ -338,12 +335,12 @@ public final class Rubberband {
 
 				g.fillArc(_tempPoly.xpoints[0] - pixrad, _tempPoly.ypoints[0] - pixrad, size, size, startAngle,
 						arcAngle);
-				GraphicsUtilities.drawHighlightedArc(g, _tempPoly.xpoints[0] - pixrad, _tempPoly.ypoints[0] - pixrad,
+				GraphicsUtils.drawHighlightedArc(g, _tempPoly.xpoints[0] - pixrad, _tempPoly.ypoints[0] - pixrad,
 						size, size, startAngle, arcAngle, _highlightColor1, _highlightColor2);
 
-				GraphicsUtilities.drawHighlightedLine(g, _tempPoly.xpoints[0], _tempPoly.ypoints[0],
+				GraphicsUtils.drawHighlightedLine(g, _tempPoly.xpoints[0], _tempPoly.ypoints[0],
 						_tempPoly.xpoints[1], _tempPoly.ypoints[1], _highlightColor1, _highlightColor2);
-				GraphicsUtilities.drawHighlightedLine(g, _tempPoly.xpoints[0], _tempPoly.ypoints[0], (int) x2, (int) y2,
+				GraphicsUtils.drawHighlightedLine(g, _tempPoly.xpoints[0], _tempPoly.ypoints[0], (int) x2, (int) y2,
 						_highlightColor1, _highlightColor2);
 			}
 
@@ -352,7 +349,7 @@ public final class Rubberband {
 		case POLYLINE:
 			tpoly = new Polygon(_tempPoly.xpoints, _tempPoly.ypoints, _tempPoly.npoints);
 			addPoint(tpoly, _currentPt.x, _currentPt.y);
-			GraphicsUtilities.drawHighlightedPolyline(g, tpoly.xpoints, tpoly.ypoints, tpoly.npoints, _highlightColor1,
+			GraphicsUtils.drawHighlightedPolyline(g, tpoly.xpoints, tpoly.ypoints, tpoly.npoints, _highlightColor1,
 					_highlightColor2);
 			break;
 
@@ -360,7 +357,7 @@ public final class Rubberband {
 			tpoly = new Polygon(_tempPoly.xpoints, _tempPoly.ypoints, _tempPoly.npoints);
 			addPoint(tpoly, _currentPt.x, _currentPt.y);
 			g.fillPolygon(tpoly);
-			GraphicsUtilities.drawHighlightedShape(g, tpoly, _highlightColor1, _highlightColor2);
+			GraphicsUtils.drawHighlightedShape(g, tpoly, _highlightColor1, _highlightColor2);
 			break;
 		}
 	}
@@ -368,13 +365,13 @@ public final class Rubberband {
 	/**
 	 * Here the current or stretched point can be modified to affect some
 	 * policy--such as preserve the aspect ratio. The default is to do nothing.
-	 * 
+	 *
 	 * @param cp the new current point.
 	 */
 	private void modifyCurrentPoint(Point cp) {
 		Rectangle b = _canvas.getActiveBounds();
 		if (_policy == Policy.RECTANGLE_PRESERVE_ASPECT) {
-			GraphicsUtilities.rectangleARFixedAdjust(b, getStart(), cp);
+			GraphicsUtils.rectangleARFixedAdjust(b, getStart(), cp);
 		}
 		else if ((_policy == Policy.XONLY) && (cp != _startPt)) {
 			cp.y = b.y + b.height;
@@ -390,7 +387,7 @@ public final class Rubberband {
 
 	/**
 	 * Check whether this rubberband is active.
-	 * 
+	 *
 	 * @return <code>true</code> if active
 	 */
 	public boolean isActive() {
@@ -399,7 +396,7 @@ public final class Rubberband {
 
 	/**
 	 * Get the starting screen point.
-	 * 
+	 *
 	 * @return the anchor (starting) screen point.
 	 */
 	public Point getStart() {
@@ -408,7 +405,7 @@ public final class Rubberband {
 
 	/**
 	 * Get the current screen point.
-	 * 
+	 *
 	 * @return The current screen point.
 	 */
 	public Point getCurrent() {
@@ -418,7 +415,7 @@ public final class Rubberband {
 	/**
 	 * Set the starting point to the given point. Essentially reset the
 	 * rubberbanding.
-	 * 
+	 *
 	 * @param anchorPt the new starting screen point.
 	 */
 
@@ -430,10 +427,10 @@ public final class Rubberband {
 
 		// first image is simply big enough for component
 
-		_image = GraphicsUtilities.getComponentImageBuffer(_component);
+		_image = GraphicsUtils.getComponentImageBuffer(_component);
 
 		// this image holds background
-		_backgroundImage = GraphicsUtilities.getComponentImage(_component);
+		_backgroundImage = GraphicsUtils.getComponentImage(_component);
 
 		// XONLY? (like for a time chart)
 		if (_policy == Policy.XONLY) {
@@ -456,7 +453,7 @@ public final class Rubberband {
 
 	/**
 	 * Set the current point to the given point.
-	 * 
+	 *
 	 * @param newCurrentPoint the new current point.
 	 */
 	private void setCurrent(Point newCurrentPoint) {
@@ -490,7 +487,7 @@ public final class Rubberband {
 
 	/**
 	 * Set the end point.
-	 * 
+	 *
 	 * @param p the end point.
 	 */
 	public void endRubberbanding(Point p) {
@@ -514,7 +511,7 @@ public final class Rubberband {
 
 	/**
 	 * Get the component being rubber banded.
-	 * 
+	 *
 	 * @return the component being rubber banded.
 	 */
 	public Component getComponent() {
@@ -524,7 +521,7 @@ public final class Rubberband {
 	/**
 	 * This gets the rubber banded polygon, which will be <code>null</code> for
 	 * rectangle or oval policies.
-	 * 
+	 *
 	 * @return the rubber banded polygon.
 	 */
 	Polygon getRubberbandPolygon() {
@@ -534,7 +531,7 @@ public final class Rubberband {
 	/**
 	 * Get the vertices of the rubber band. For an oval, it the corners of the
 	 * enclosing rectangle.
-	 * 
+	 *
 	 * @return the rubber band vertices in a Point array.
 	 */
 	public Point[] getRubberbandVertices() {
@@ -572,7 +569,7 @@ public final class Rubberband {
 
 	/**
 	 * Return a rectangle that gives the final bounds of the rubber band.
-	 * 
+	 *
 	 * @return a bounding rectangle.
 	 */
 	public Rectangle getRubberbandBounds() {
@@ -594,7 +591,7 @@ public final class Rubberband {
 
 	/**
 	 * Set the fill color for this rubber band.
-	 * 
+	 *
 	 * @param color the new fill color.
 	 */
 	public void setFillColor(Color color) {
@@ -603,7 +600,7 @@ public final class Rubberband {
 
 	/**
 	 * Set one of the highlight colors used to stipple draw the boundary.
-	 * 
+	 *
 	 * @param highlightColor1 the value for the highlight color.
 	 */
 	public void setHighlightColor1(Color highlightColor1) {
@@ -612,7 +609,7 @@ public final class Rubberband {
 
 	/**
 	 * Set the other highlight color used to stipple draw the boundary.
-	 * 
+	 *
 	 * @param highlightColor2 the value for the other highlight color.
 	 */
 	public void setHighlightColor2(Color highlightColor2) {

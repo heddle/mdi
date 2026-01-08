@@ -14,6 +14,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.EventListenerList;
 
+import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.fit.ErfFitter;
 import edu.cnu.mdi.splot.fit.ErfcFitter;
@@ -24,7 +25,6 @@ import edu.cnu.mdi.splot.fit.IFitter;
 import edu.cnu.mdi.splot.fit.MultiGaussianFitter;
 import edu.cnu.mdi.splot.fit.PolynomialFitter;
 import edu.cnu.mdi.splot.spline.CubicSpline;
-import edu.cnu.mdi.splot.style.Styled;
 
 /**
  * Base class for all plottable curves (XY curves, histogram curves, strip-chart curves, etc.).
@@ -136,7 +136,7 @@ public abstract class ACurve {
 	private boolean pendingData;
 	private boolean pendingStyle;
 	private boolean pendingFit;
-	
+
 	/**
 	 * Latch used by {@link #scheduleDrainOnce(Runnable)} to ensure we post at most
 	 * one drain runnable to the EDT at a time.
@@ -153,7 +153,7 @@ public abstract class ACurve {
 		initStyle();
 	}
 
-	
+
 	/**
 	 * Perform a curve fit (or compute derived artifacts like splines), depending on the configured
 	 * curve drawing method.
@@ -322,7 +322,7 @@ public abstract class ACurve {
 	public boolean isHistogram() {
 		return this instanceof HistoCurve;
 	}
-	
+
 	/**
 	 * Convenience method to determine if this curve is a strip chart curve.
 	 *
@@ -331,7 +331,7 @@ public abstract class ACurve {
 	public boolean isStripChart() {
 		return this instanceof StripChartCurve;
 	}
-	
+
 	/**
 	 * Convenience method to determine if this curve is an XY curve.
 	 *
@@ -621,11 +621,11 @@ public abstract class ACurve {
 					+ "For background threads, use enqueue(...) + drainPendingOnEDT(...).");
 		}
 	}
-	
+
 	// ====================================================================
 	// Pending-queue infrastructure for background producers
 	// ====================================================================
-	
+
 	/**
 	 * Schedule a drain operation to run later on the Swing EDT, coalescing multiple
 	 * requests into a single posted runnable.
@@ -756,7 +756,7 @@ public abstract class ACurve {
 				return;
 			}
 			Objects.requireNonNull(drainAction, "drainAction");
-			
+
 			timer = new Timer(periodMs, e -> {
 				int drained = drainAction.getAsInt();
 				if (drainedCallback != null) {
