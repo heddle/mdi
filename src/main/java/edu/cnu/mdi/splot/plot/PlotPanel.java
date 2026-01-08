@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 
+import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.splot.toolbar.PlotToolBar;
 
 @SuppressWarnings("serial")
@@ -69,7 +70,6 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		_canvas.setParent(this);
 		_decorations = decorations;
 
-		Environment.getInstance().commonize(this, null);
 		setLayout(new BorderLayout(0, 0));
 
 		_canvas.addPropertyChangeListener(this);
@@ -105,7 +105,6 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 	private void addSouth() {
 		// south panel for x axis and status
 		JPanel spanel = new JPanel();
-		Environment.getInstance().commonize(spanel, null);
 
 		spanel.setLayout(new BorderLayout());
 		spanel.setOpaque(true);
@@ -149,7 +148,6 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		JPanel npanel = new JPanel();
 		npanel.setOpaque(true);
 		npanel.setBackground(Color.white);
-		Environment.getInstance().commonize(npanel, null);
 		npanel.setLayout(new BorderLayout());
 
 		// title label

@@ -9,8 +9,10 @@ import java.util.Set;
 
 import javax.swing.JComboBox;
 
-import edu.cnu.mdi.splot.plot.Environment;
+import edu.cnu.mdi.ui.fonts.Fonts;
 
+
+@SuppressWarnings("rawtypes")
 public class EnumComboBox extends JComboBox {
 
 	// reverse hash which takes a string and gives the enum
@@ -19,7 +21,7 @@ public class EnumComboBox extends JComboBox {
 	// an extra choce, not an enum name, like "any"
 	private String _extraChoice;
 
-	protected static final Font _font = Environment.getInstance().getCommonFont(9);
+	protected static Font _font = Fonts.plainFontDelta(-3);
 
 	/**
 	 * Create a combobox from an enum map.

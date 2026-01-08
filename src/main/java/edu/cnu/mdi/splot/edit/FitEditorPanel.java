@@ -13,10 +13,10 @@ import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
-import edu.cnu.mdi.splot.plot.CommonBorder;
-import edu.cnu.mdi.splot.plot.Environment;
+import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.splot.plot.TextFieldSlider;
 import edu.cnu.mdi.splot.style.EnumComboBox;
+import edu.cnu.mdi.ui.fonts.Fonts;
 
 @SuppressWarnings("serial")
 public class FitEditorPanel extends JPanel {
@@ -27,8 +27,8 @@ public class FitEditorPanel extends JPanel {
 	public static final String USERMSPROP = "Use RMS in Legend";
 	public static final String STATERRPROP = "Show Stat Errors";
 
-	private static final Font _font = Environment.getInstance().getCommonFont(10);
-	private static final Font _font2 = Environment.getInstance().getCommonFont(9);
+	private static final Font _font = Fonts.plainFontDelta(-2);
+	private static final Font _font2 = Fonts.plainFontDelta(-3);
 
 	// change fit style
 	EnumComboBox _fitSelector;
@@ -52,7 +52,6 @@ public class FitEditorPanel extends JPanel {
 	public FitEditorPanel() {
 		addContent();
 		setBorder(new CommonBorder("Fit"));
-		Environment.getInstance().commonize(this, null);
 	}
 
 	// add the components

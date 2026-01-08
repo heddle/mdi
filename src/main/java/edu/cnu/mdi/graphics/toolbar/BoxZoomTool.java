@@ -10,7 +10,6 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.log.Log;
-import edu.cnu.mdi.util.Environment;
 
 /**
  * Tool that performs a rubber-band (box) zoom on an {@link IContainer}.

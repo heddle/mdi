@@ -15,6 +15,10 @@ import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import edu.cnu.mdi.component.CommonBorder;
+import edu.cnu.mdi.ui.fonts.Fonts;
+
+@SuppressWarnings("serial")
 public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 
 	// the underlying slider
@@ -25,18 +29,31 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 
 	private int _defaultValue;
 
-	private static Font _smallFont = Environment.getInstance().getCommonFont(9);
-	private static Font _tinyFont = Environment.getInstance().getCommonFont(8);
+	private static Font _smallFont = Fonts.plainFontDelta(-3);
+	private static Font _tinyFont = Fonts.plainFontDelta(-4);
 
+	/**
+	 * Create a TextFieldSlider
+	 * 
+	 * @param min               the minimum slider value
+	 * @param max               the maximum slider value
+	 * @param value             the initial slider value
+	 * @param font              the font for the text field
+	 * @param minorTickSpacing  the minor tick spacing (0 for none)
+	 * @param labels            an array of labels to put on the slider (can be
+	 *                          null)
+	 * @param sliderWidth       the preferred width of the slider (0 for default)
+	 * @param textFieldWidth    the preferred width of the text field (0 for
+	 *                          default)
+	 * @param borderTitle       the title for the border (null for no border)
+	 */
 	public TextFieldSlider(int min, int max, int value, Font font, int minorTickSpacing, String labels[],
 			int sliderWidth, int textFieldWidth, String borderTitle) {
 		_defaultValue = value;
-		Environment.getInstance().commonize(this, null);
 
 		_slider = new JSlider(SwingConstants.HORIZONTAL, min, max, value);
 		_slider.addChangeListener(this);
 		_slider.setFont(_smallFont);
-		Environment.getInstance().commonize(_slider, null);
 
 		if (minorTickSpacing > 0) {
 			_slider.setMinorTickSpacing(minorTickSpacing);

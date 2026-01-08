@@ -4,7 +4,7 @@ import java.awt.GridLayout;
 
 import javax.swing.JPanel;
 
-import edu.cnu.mdi.splot.plot.CommonBorder;
+import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 
 @SuppressWarnings("serial")

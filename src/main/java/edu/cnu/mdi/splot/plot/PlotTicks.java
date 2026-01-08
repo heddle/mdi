@@ -12,6 +12,7 @@ import java.awt.geom.Point2D;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
+import edu.cnu.mdi.ui.fonts.Fonts;
 
 public class PlotTicks {
 
@@ -27,7 +28,7 @@ public class PlotTicks {
 
 	private Color _tickColor = Color.black;
 
-	private Font _tickFont = Environment.getInstance().getCommonFont(11);
+	private Font _tickFont = Fonts.plainFontDelta(-1);
 
 	// plot owner
 	private PlotCanvas _plotCanvas;

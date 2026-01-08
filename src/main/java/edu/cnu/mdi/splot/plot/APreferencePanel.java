@@ -5,12 +5,15 @@ import java.awt.event.KeyListener;
 
 import javax.swing.JPanel;
 
+import edu.cnu.mdi.component.CommonBorder;
+
 /**
  * A base class for panels that will be used as tabs on the Preferences dialog
  * 
  * @author heddle
  *
  */
+@SuppressWarnings("serial")
 public abstract class APreferencePanel extends JPanel implements KeyListener {
 
 	// the plot canvas
@@ -31,7 +34,6 @@ public abstract class APreferencePanel extends JPanel implements KeyListener {
 	protected JPanel titledPanel(String title) {
 		JPanel pan = new JPanel();
 		pan.setBorder(new CommonBorder(title));
-		Environment.getInstance().commonize(pan, null);
 		return pan;
 	}
 

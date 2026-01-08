@@ -7,8 +7,6 @@ import java.util.Objects;
 
 import javax.swing.event.EventListenerList;
 
-import edu.cnu.mdi.splot.debug.ListenerDebugger;
-
 /**
  * A lightweight, UI-agnostic container for the data backing a plot.
  * <p>
@@ -147,9 +145,6 @@ public class PlotData implements CurveChangeListener {
 			throw new PlotDataException("Use PlotData(StripData) constructor for STRIP data.");
 		}
 		
-		//if debugging is needed
-		ListenerDebugger.getInstance().attachPlotData(this);
-
 	}
 
 	/** @return the plot data type. */

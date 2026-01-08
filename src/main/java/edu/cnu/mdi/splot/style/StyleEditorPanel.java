@@ -8,19 +8,20 @@ import java.awt.Font;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
+import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.splot.edit.ColorLabel;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
-import edu.cnu.mdi.splot.plot.CommonBorder;
 import edu.cnu.mdi.splot.plot.DoubleFormat;
-import edu.cnu.mdi.splot.plot.Environment;
 import edu.cnu.mdi.splot.plot.TextFieldSlider;
+import edu.cnu.mdi.ui.fonts.Fonts;
 
+@SuppressWarnings("serial")
 public class StyleEditorPanel extends JPanel {
 
 	public static final String SYMBOLSIZEPROP = "Symbol Size";
 	public static final String LINEWIDTHPROP = "Line Width";
 
-	private static final Font _font = Environment.getInstance().getCommonFont(10);
+	private static final Font _font = Fonts.plainFontDelta(-2);
 
 	// change symbol type
 	private EnumComboBox _symbolSelector;
@@ -49,8 +50,6 @@ public class StyleEditorPanel extends JPanel {
 	public StyleEditorPanel(PlotDataType type) {
 		addContent(type);
 		setBorder(new CommonBorder("Style"));
-
-		Environment.getInstance().commonize(this, null);
 	}
 
 	// add the content
@@ -166,7 +165,6 @@ public class StyleEditorPanel extends JPanel {
 	private JPanel flowPanel(int constraint) {
 		JPanel sp = new JPanel();
 		sp.setLayout(new FlowLayout(constraint));
-		Environment.getInstance().commonize(sp, null);
 		return sp;
 	}
 

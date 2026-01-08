@@ -11,6 +11,8 @@ import java.util.Hashtable;
 
 import javax.swing.ImageIcon;
 
+import edu.cnu.mdi.util.Environment;
+
 public class ImageManager {
 
 	public static ImageIcon cnuIcon = ImageManager.getInstance().loadImageIcon("images/cnuicon.png");

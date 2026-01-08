@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.Font;
 import java.util.Vector;
 
+import edu.cnu.mdi.ui.fonts.Fonts;
+
 /**
  * A centralized, mutable set of visual and behavioral parameters used by a
  * {@link PlotCanvas}.
@@ -22,13 +24,13 @@ import java.util.Vector;
 public class PlotParameters {
 
 	// for legend
-	private Font _textFont = Environment.getInstance().getCommonFont(10);
+	private Font _textFont = Fonts.plainFontDelta(-2);
 	private Color _textFillColor = new Color(248, 248, 248, 224);
 	private Color _textTextColor = Color.black;
 	private Color _textBorderColor = Color.black;
 
 	// for extra text
-	private Font _extraFont = Environment.getInstance().getCommonFont(10);
+	private Font _extraFont = Fonts.plainFontDelta(-2);;
 	private Color _extraFillColor = new Color(248, 248, 248, 224);
 	private Color _extraTextColor = Color.black;
 	private Color _extraBorderColor = Color.black;
@@ -52,12 +54,12 @@ public class PlotParameters {
 	private String[] _extraStrings;
 
 
-	private Font _titleFont = Environment.getInstance().getCommonFont(20);
-	private Font _axesLabelFont = Environment.getInstance().getCommonFont(14);
+	private Font _titleFont = Fonts.plainFontDelta(8);
+	private Font _axesLabelFont = Fonts.plainFontDelta(2);
 	private String _plotTitle = "No Plot";
 	private String _xLabel = "X Data";
 	private String _yLabel = "Y Data";
-	private Font _statusFont = Environment.getInstance().getCommonFont(10);
+	private Font _statusFont = Fonts.plainFontDelta(-2);
 
 	// annotating lines
 	private final Vector<PlotLine> _lines = new Vector<>();

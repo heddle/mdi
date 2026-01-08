@@ -45,6 +45,7 @@ import edu.cnu.mdi.splot.toolbar.IToolBarListener;
 import edu.cnu.mdi.splot.toolbar.PlotToolBar;
 import edu.cnu.mdi.splot.toolbar.ToolBarButton;
 import edu.cnu.mdi.splot.toolbar.ToolBarToggleButton;
+import edu.cnu.mdi.util.Environment;
 
 @SuppressWarnings("serial")
 public class PlotCanvas extends JComponent

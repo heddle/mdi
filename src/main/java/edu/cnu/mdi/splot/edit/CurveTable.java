@@ -18,8 +18,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 
 import edu.cnu.mdi.splot.pdata.ACurve;
-import edu.cnu.mdi.splot.plot.Environment;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
+import edu.cnu.mdi.ui.fonts.Fonts;
 
 @SuppressWarnings("serial")
 public class CurveTable extends JTable {
@@ -29,7 +29,7 @@ public class CurveTable extends JTable {
 	// a scroll pane for this table
 	private JScrollPane _scrollPane;
 
-	protected static Font _listFont = Environment.getInstance().getCommonFont(12);
+	protected static Font _listFont = Fonts.plainFontDelta(0);
 
 	private static final Color _unselectedColor = new Color(240, 240, 240);
 
@@ -180,7 +180,6 @@ public class CurveTable extends JTable {
 	public JScrollPane getScrollPane() {
 		if (_scrollPane == null) {
 			_scrollPane = new JScrollPane(this);
-			Environment.getInstance().commonize(_scrollPane, null);
 
 			int totalWidth = 0;
 			for (int i = 0; i < getColumnCount(); i++) {

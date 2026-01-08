@@ -16,9 +16,9 @@ import javax.swing.SwingConstants;
 import javax.swing.event.EventListenerList;
 
 import edu.cnu.mdi.splot.pdata.PlotDataType;
-import edu.cnu.mdi.splot.plot.Environment;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 
+@SuppressWarnings("serial")
 public class PlotToolBar extends JToolBar implements ActionListener, ItemListener {
 
 	// make all the toggle buttons mutually exclusive

@@ -107,6 +107,14 @@ public final class Fonts {
         }
         return f;
     }
+    
+    /**
+	 * Convenience method to derive a plain font from BASE_UI_FONT 
+	 * using a size delta (in points) relative to base.
+	 */
+	public static Font plainFontDelta(int sizeDelta) {
+		return deriveFromBase(Font.PLAIN, sizeDelta);
+	}
 
     /**
      * Derive a font from BASE_UI_FONT using a size delta (in points) relative to base.

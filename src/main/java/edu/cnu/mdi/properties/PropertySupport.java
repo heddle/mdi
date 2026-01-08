@@ -15,7 +15,6 @@ import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.util.Environment;
 
-
 public class PropertySupport {
 
 	public static final String ASPECT = "ASPECT";

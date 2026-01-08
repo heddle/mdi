@@ -23,14 +23,15 @@ import edu.cnu.mdi.splot.fit.FitResult;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
-import edu.cnu.mdi.splot.plot.CommonBorder;
-import edu.cnu.mdi.splot.plot.Environment;
+import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.style.EnumComboBox;
 import edu.cnu.mdi.splot.style.IStyled;
 import edu.cnu.mdi.splot.style.LineStyle;
 import edu.cnu.mdi.splot.style.StyleEditorPanel;
 import edu.cnu.mdi.splot.style.SymbolType;
+import edu.cnu.mdi.ui.fonts.Fonts;
+import edu.cnu.mdi.util.Environment;
 
 /**
  * Used to edit parameters for curves on a plot
@@ -45,8 +46,8 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 	protected PlotCanvas _plotCanvas;
 
 	// list font
-	protected static Font _listFont = Environment.getInstance().getCommonFont(12);
-	protected static Font _textFont = Environment.getInstance().getCommonFont(10);
+	protected static Font _listFont = Fonts.plainFontDelta(0);
+	protected static Font _textFont = Fonts.plainFontDelta(-2);
 
 	// curve table
 	private CurveTable _curveTable;
@@ -69,7 +70,6 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 		// note components already created by super constructor
 		_plotCanvas = plotCanvas;
 		_plotCanvas.addPropertyChangeListener(this);
-		Environment.getInstance().commonize(this, null);
 		setBorder(new CommonBorder());
 		addContent();
 	}
@@ -106,7 +106,7 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 	protected void addContent() {
 		setLayout(new BorderLayout());
 
-		JPanel sp = getOpaquePanel();
+		JPanel sp = new JPanel();
 		sp.setLayout(new VerticalFlowLayout());
 		addList(sp);
 		addStyle(sp);
@@ -119,7 +119,7 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 	// add the curve list
 	protected void addList(JPanel addPanel) {
 
-		JPanel nPanel = getOpaquePanel();
+		JPanel nPanel = new JPanel();
 		nPanel.setLayout(new BorderLayout(0, 4));
 
 		Collection<ACurve> curves = _plotCanvas.getPlotData().getCurves();
@@ -392,12 +392,6 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 			
 		}
 
-	}
-
-	private JPanel getOpaquePanel() {
-		JPanel panel = new JPanel();
-		Environment.getInstance().commonize(panel, null);
-		return panel;
 	}
 
 }
