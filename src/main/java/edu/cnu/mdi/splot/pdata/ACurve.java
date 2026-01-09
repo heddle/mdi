@@ -592,6 +592,15 @@ public abstract class ACurve {
 	protected void initStyle() {
 		style = new Styled(styleCount++);
 	}
+	
+	/** @return single-line summary of the current fit result, or null if none */
+	public String getFitSummary() {
+		if (fitResult == null) {
+			return null;
+		}
+		return fitResult.singleLineSummary();
+	}
+
 
 	/**
 	 * Obtain a consistent snapshot of the current data, suitable for plotting without locking.
@@ -737,6 +746,7 @@ public abstract class ACurve {
 			}
 			return drained;
 		}
+		
 
 		/**
 		 * Start a Swing {@link Timer} that periodically drains queued items on the EDT.

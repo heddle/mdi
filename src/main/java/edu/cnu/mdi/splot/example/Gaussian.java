@@ -15,6 +15,10 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 public class Gaussian extends AExample {
 
 	private static final String curveName = "Gaussian Fit";
+	
+	public Gaussian(boolean headless) {
+		super(headless);
+	}
 
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
@@ -83,6 +87,10 @@ public class Gaussian extends AExample {
 		plotData.getCurve(0).setCurveMethod(CurveDrawingMethod.GAUSSIAN);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6).setNumDecimalY(2);
+		String extra[] = { "Use the Edit Plot -> Curves..",
+				"to change fit, colors, etc.",
+				"This box, like the Legend, is draggable." };
+		params.setExtraStrings(extra);
 	}
 
 	// Since we are using Swing, we need to start things off on the
@@ -92,7 +100,7 @@ public class Gaussian extends AExample {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				Gaussian example = new Gaussian();
+				Gaussian example = new Gaussian(false);
 				example.setVisible(true);
 			}
 		});

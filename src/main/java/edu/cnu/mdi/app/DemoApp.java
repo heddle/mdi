@@ -7,6 +7,9 @@ import java.awt.geom.Rectangle2D;
 import java.io.IOException;
 import java.util.List;
 
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
+
 import edu.cnu.mdi.desktop.Desktop;
 import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
 import edu.cnu.mdi.log.Log;
@@ -24,6 +27,19 @@ import edu.cnu.mdi.mdi3D.panel.Panel3D;
 import edu.cnu.mdi.mdi3D.view3D.PlainView3D;
 import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
+import edu.cnu.mdi.splot.example.AnotherGaussian;
+import edu.cnu.mdi.splot.example.ErfTest;
+import edu.cnu.mdi.splot.example.ErfcTest;
+import edu.cnu.mdi.splot.example.Gaussian;
+import edu.cnu.mdi.splot.example.GrowingHisto;
+import edu.cnu.mdi.splot.example.Histo;
+import edu.cnu.mdi.splot.example.Scatter;
+import edu.cnu.mdi.splot.example.StraightLine;
+import edu.cnu.mdi.splot.example.StripChart;
+import edu.cnu.mdi.splot.example.ThreeGaussians;
+import edu.cnu.mdi.splot.example.TwoHisto;
+import edu.cnu.mdi.splot.example.TwoLinesWithErrors;
+import edu.cnu.mdi.splot.plot.PlotView;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.view.DrawingView;
@@ -68,7 +84,7 @@ public class DemoApp extends BaseMDIApplication {
     private final boolean enableVirtualDesktop = true;
 
     /** Number of "columns"/cells in the virtual desktop. */
-    private final int virtualDesktopCols = 5;
+    private final int virtualDesktopCols = 6;
 
     // -------------------------------------------------------------------------
     // Sample views used by the demo. None are meant to be completely realistic.
@@ -79,6 +95,7 @@ public class DemoApp extends BaseMDIApplication {
     private DrawingView drawingView;
     private MapView2D mapView;
     private LogView logView;
+    private PlotView plotView;
     private NetworkDeclutterDemoView networkDeclutterDemoView;
     private NetworkLayoutDemoView networkLayoutDemoView;
 
@@ -145,6 +162,9 @@ public class DemoApp extends BaseMDIApplication {
         // Map view (also loads demo geojson)
         mapView = createMapView();
 
+        // Plot view
+        plotView = createPlotView();
+
         // Network declutter demo view
         networkDeclutterDemoView = createNetworkDeclutterDemoView();
 
@@ -208,8 +228,8 @@ public class DemoApp extends BaseMDIApplication {
         // Column 1: 3D centered
         virtualView.moveTo(view3D, 1, VirtualView.CENTER);
 
-        //column 2: log view upper left
-        virtualView.moveTo(logView, 2, VirtualView.UPPERLEFT);
+        // Column 2: plot view centered
+        virtualView.moveTo(plotView, 2, VirtualView.CENTER);
 
         // Column 3: network declutter demo centered
         virtualView.moveTo(networkDeclutterDemoView, 3, VirtualView.CENTER);
@@ -218,6 +238,9 @@ public class DemoApp extends BaseMDIApplication {
         // Column 4: network layout demo lower left
         virtualView.moveTo(networkLayoutDemoView, 4, 0, -50, VirtualView.BOTTOMLEFT);
         networkLayoutDemoView.setVisible(true);
+
+        //column 5: log view upper left (is not vis by default)
+        virtualView.moveTo(logView, 5, VirtualView.UPPERLEFT);
 
     }
 
@@ -331,7 +354,106 @@ public class DemoApp extends BaseMDIApplication {
 
         return view3D;
     }
+	/**
+	 * Create the demo plot view.
+	 */
+    PlotView createPlotView() {
+    			PlotView view = new PlotView(
+    					PropertySupport.TITLE, "Demo Plots",
+    					PropertySupport.PROPNAME, "PLOTVIEW",
+    					PropertySupport.FRACTION, 0.7,
+    					PropertySupport.ASPECT, 1.2,
+    					PropertySupport.BACKGROUND, X11Colors.getX11Color("light yellow"),
+    					PropertySupport.VISIBLE, true
+    					);
 
+    			//add the examples menu
+    			JMenu examplesMenu = new JMenu("Examples");
+    			view.getJMenuBar().add(examplesMenu);
+
+				JMenuItem gaussianItem = new JMenuItem("Gaussian Fit");
+				JMenuItem anotheGaussianItem = new JMenuItem("Another Gaussian");
+				JMenuItem erfcItem = new JMenuItem("Erfc Fit");
+				JMenuItem erfItem = new JMenuItem("Erf Fit");
+				JMenuItem histoItem = new JMenuItem("Histogram");
+				JMenuItem growingHistoItem = new JMenuItem("Growing Histogram");
+				JMenuItem lineItem = new JMenuItem("Straight Line Fit");
+				JMenuItem stripItem = new JMenuItem("Memory Use Strip Chart");
+				JMenuItem threeGaussiansItem = new JMenuItem("Three Gaussians");
+				JMenuItem twoHistoItem = new JMenuItem("Two Histograms");
+				JMenuItem twoLines = new JMenuItem("Two Lines with Errors");
+
+				gaussianItem.addActionListener(e -> {
+					Gaussian example = new Gaussian(true);
+					view.switchToExample(example);
+				});
+
+				anotheGaussianItem.addActionListener(e -> {
+					AnotherGaussian example = new AnotherGaussian(true);
+					view.switchToExample(example);
+				});
+				
+				erfcItem.addActionListener(e -> {
+					ErfcTest example = new ErfcTest(true);
+					view.switchToExample(example);
+				});
+				
+				erfItem.addActionListener(e -> {
+					ErfTest example = new ErfTest(true);
+					view.switchToExample(example);
+				});
+
+				histoItem.addActionListener(e -> {
+					Histo example = new Histo(true);
+					view.switchToExample(example);
+				});
+				
+				growingHistoItem.addActionListener(e -> {
+					GrowingHisto example = new GrowingHisto(true);
+					view.switchToExample(example);
+				});
+				
+				lineItem.addActionListener(e -> {
+					StraightLine example = new StraightLine(true);
+					view.switchToExample(example);
+				});
+				
+				stripItem.addActionListener(e -> {
+					StripChart example = new StripChart(true);
+					view.switchToExample(example);
+				});
+				
+				threeGaussiansItem.addActionListener(e -> {
+					ThreeGaussians example = new ThreeGaussians(true);
+					view.switchToExample(example);
+				});
+				
+				twoHistoItem.addActionListener(e -> {
+					TwoHisto example = new TwoHisto(true);
+					view.switchToExample(example);
+				});
+				
+				twoLines.addActionListener(e -> {
+					TwoLinesWithErrors example = new TwoLinesWithErrors(true);
+					view.switchToExample(example);
+				});
+				
+
+				examplesMenu.add(gaussianItem);
+				examplesMenu.add(anotheGaussianItem);
+				examplesMenu.add(erfcItem);
+				examplesMenu.add(erfItem);
+				examplesMenu.add(histoItem);
+				examplesMenu.add(growingHistoItem);
+				examplesMenu.add(lineItem);
+				examplesMenu.add(stripItem);
+				examplesMenu.add(threeGaussiansItem);
+				examplesMenu.add(twoHistoItem);
+				examplesMenu.add(twoLines);
+				
+
+    			return view;
+    }
     /**
 	 * Create the network declutter demo view.
 	 */

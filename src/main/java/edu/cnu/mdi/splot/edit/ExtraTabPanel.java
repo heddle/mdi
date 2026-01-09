@@ -11,9 +11,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import edu.cnu.mdi.component.CommonBorder;
-import edu.cnu.mdi.dialog.ColorLabel;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
+import edu.cnu.mdi.ui.colors.ColorLabel;
 
 /**
  * Tab for the "extra text" block.

@@ -12,12 +12,24 @@ import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.StripChartCurve;
 import edu.cnu.mdi.splot.plot.LimitsMethod;
+import edu.cnu.mdi.splot.plot.PlotChangeType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
 @SuppressWarnings("serial")
 public class StripChart extends AExample implements Evaluator {
 
 	private Random random = new Random();
+	
+	public StripChart(boolean headless) {
+		super(headless);
+		PlotData ds = canvas.getPlotData();
+		StripChartCurve sc = (StripChartCurve) ds.getFirstCurve();
+		sc.setTimeUnit(TimeUnit.SECONDS);
+		PlotParameters params = canvas.getParameters();
+		params.setXLabel("Time (" + sc.getTimeUnitShortLabel() + ")");
+		sc.start();
+
+	}
 
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
@@ -26,6 +38,18 @@ public class StripChart extends AExample implements Evaluator {
 		StripChartCurve sd = new StripChartCurve("Memory", capacity, this, updateTimeMs);
 		return new PlotData(sd);
 	}
+	
+	@Override
+	public void plotChanged(PlotChangeType type) {
+		switch (type) {
+		case SHUTDOWN:
+			PlotData ds = canvas.getPlotData();
+			StripChartCurve sc = (StripChartCurve) ds.getFirstCurve();
+			sc.stop();
+			break;
+		}
+	}
+
 
 	@Override
 	protected String getXAxisLabel() {
@@ -75,15 +99,8 @@ public class StripChart extends AExample implements Evaluator {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				StripChart example = new StripChart();
-				PlotData ds = example.canvas.getPlotData();
-				StripChartCurve sc = (StripChartCurve) ds.getFirstCurve();
-				sc.setTimeUnit(TimeUnit.SECONDS);
-				PlotParameters params = example.canvas.getParameters();
-				params.setXLabel("Time (" + sc.getTimeUnitShortLabel() + ")");
-
+				StripChart example = new StripChart(false);
 				example.setVisible(true);
-				sc.start();
 			}
 		});
 

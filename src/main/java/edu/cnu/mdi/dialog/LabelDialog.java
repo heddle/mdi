@@ -28,6 +28,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import edu.cnu.mdi.component.CommonBorder;
+import edu.cnu.mdi.ui.colors.ColorLabel;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**

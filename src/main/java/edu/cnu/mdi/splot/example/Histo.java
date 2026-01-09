@@ -14,6 +14,10 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 
 @SuppressWarnings("serial")
 public class Histo extends AExample {
+	
+	public Histo(boolean headless) {
+		super(headless);
+	}
 
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
@@ -72,7 +76,7 @@ public class Histo extends AExample {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				Histo example = new Histo();
+				Histo example = new Histo(false);
 				example.setVisible(true);
 			}
 		});

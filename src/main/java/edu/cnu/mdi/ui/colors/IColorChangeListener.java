@@ -1,4 +1,4 @@
-package edu.cnu.mdi.dialog;
+package edu.cnu.mdi.ui.colors;
 
 import java.awt.Color;
 import java.awt.Component;

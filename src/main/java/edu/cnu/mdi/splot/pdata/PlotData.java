@@ -146,6 +146,19 @@ public class PlotData implements CurveChangeListener {
 		}
 
 	}
+	
+	/**
+	 * Create empty plot data with one default curve.
+	 * @return empty plot data
+	 */
+	public static PlotData emptyData() {
+		try {
+			return new PlotData(PlotDataType.XYXY, new String[] { "Curve 1" }, null);
+		} catch (PlotDataException e) {
+			// should not happen
+			throw new RuntimeException("Failed to create empty PlotData", e);
+		}
+	}
 
 	/** @return the plot data type. */
 	public PlotDataType getType() {

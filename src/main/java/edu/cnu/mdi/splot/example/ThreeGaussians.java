@@ -15,6 +15,10 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 public class ThreeGaussians extends AExample {
 
 	private static final String curveName = "3 Gaussian Fit";
+	
+	public ThreeGaussians(boolean headless) {
+		super(headless);
+	}
 
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
@@ -105,7 +109,7 @@ public class ThreeGaussians extends AExample {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				ThreeGaussians example = new ThreeGaussians();
+				ThreeGaussians example = new ThreeGaussians(false);
 				example.setVisible(true);
 			}
 		});

@@ -20,7 +20,6 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
-import java.util.Objects;
 
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageOutputStream;
@@ -29,9 +28,15 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.event.EventListenerList;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.feedback.FeedbackPane;
+import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.graphics.GraphicsUtils;
+import edu.cnu.mdi.log.ILogListener;
+import edu.cnu.mdi.log.Log.Level;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.CurveChangeType;
@@ -57,8 +62,12 @@ public class PlotCanvas extends JComponent
 	public static final String TITLEFONTCHANGE = "Title Font";
 	public static final String XLABELTEXTCHANGE = "X Label Text";
 	public static final String YLABELTEXTCHANGE = "Y Label Text";
-	public static final String AXESFONTCHANGE   = "Axes Font";
+	public static final String AXESFONTCHANGE = "Axes Font";
 	public static final String STATUSFONTCHANGE = "Status Font";
+	
+	
+	// List of plot change listeners
+	private EventListenerList _listenerList;
 
 	// used to fire property changes. Transient.
 	private long drawCount = 0;
@@ -112,9 +121,6 @@ public class PlotCanvas extends JComponent
 	// reusable point
 	public Point2D.Double _workPoint = new Point2D.Double();
 
-	// gives xy of mouse in plot coordinates
-	private String _statusString = " ";
-
 	// toolbar controlling plot
 	private PlotToolBar _toolbar;
 
@@ -124,14 +130,16 @@ public class PlotCanvas extends JComponent
 	/**
 	 * Create a plot canvas for plotting a dataset
 	 *
-	 * @param plotData   the dataset to plot. It might contain many curves
+	 * @param plotData  the dataset to plot. It might contain many curves
 	 * @param plotTitle the plot title
 	 * @param xLabel    the x axis label
 	 * @param yLabel    the y axis label
 	 */
 	public PlotCanvas(PlotData plotData, String plotTitle, String xLabel, String yLabel) {
 
-		Objects.requireNonNull(plotData, "plotData");
+		if (plotData == null) {
+			plotData = PlotData.emptyData();
+		}
 		if (_dataFilePath == null) {
 			_dataFilePath = Environment.getInstance().getHomeDirectory();
 		}
@@ -142,7 +150,6 @@ public class PlotCanvas extends JComponent
 		_parameters.setXLabel(xLabel);
 		_parameters.setYLabel(yLabel);
 		_plotTicks = new PlotTicks(this);
-
 
 		setPlotData(plotData);
 
@@ -159,7 +166,6 @@ public class PlotCanvas extends JComponent
 		_dataDrawer = new DataDrawer(this);
 		_plotPopup = new PlotPopupMenu(this);
 		setComponentPopupMenu(_plotPopup);
-
 
 		addComponentListener(componentAdapter);
 		addMouseListener(this);
@@ -277,8 +283,8 @@ public class PlotCanvas extends JComponent
 		double ymin = _plotData.yMin();
 		double ymax = _plotData.yMax();
 
-		//the limits methods are in the plot parameters
-		//defaults are ALGORITHMICLIMITS
+		// the limits methods are in the plot parameters
+		// defaults are ALGORITHMICLIMITS
 		PlotParameters params = getParameters();
 
 		LimitsMethod xMethod = params.getXLimitsMethod();
@@ -296,7 +302,7 @@ public class PlotCanvas extends JComponent
 			xmax = ns.getNiceMax();
 			break;
 
-		case USEDATALIMITS:  //do nothing
+		case USEDATALIMITS: // do nothing
 			break;
 		}
 
@@ -312,7 +318,7 @@ public class PlotCanvas extends JComponent
 			ymax = ns.getNiceMax();
 			break;
 
-		case USEDATALIMITS:  //do nothing
+		case USEDATALIMITS: // do nothing
 			break;
 		}
 
@@ -328,20 +334,20 @@ public class PlotCanvas extends JComponent
 		// invertible and allow the plot to draw immediately.
 		// ------------------------------------------------------------------
 		if (!Double.isFinite(xmin) || !Double.isFinite(xmax) || !Double.isFinite(ymin) || !Double.isFinite(ymax)) {
-		    _worldSystem.setFrame(0, 0, 1, 1);
-		    return;
+			_worldSystem.setFrame(0, 0, 1, 1);
+			return;
 		}
 
 		// Ensure min <= max
 		if (xmax < xmin) {
-		    double tmp = xmin;
-		    xmin = xmax;
-		    xmax = tmp;
+			double tmp = xmin;
+			xmin = xmax;
+			xmax = tmp;
 		}
 		if (ymax < ymin) {
-		    double tmp = ymin;
-		    ymin = ymax;
-		    ymax = tmp;
+			double tmp = ymin;
+			ymin = ymax;
+			ymax = tmp;
 		}
 
 		double dx = xmax - xmin;
@@ -349,16 +355,15 @@ public class PlotCanvas extends JComponent
 
 		// Expand any zero/near-zero range
 		if (Math.abs(dx) < 1.0e-12) {
-		    double pad = (Math.abs(xmin) > 0) ? (0.01 * Math.abs(xmin)) : 1.0;
-		    xmin -= pad;
-		    xmax += pad;
+			double pad = (Math.abs(xmin) > 0) ? (0.01 * Math.abs(xmin)) : 1.0;
+			xmin -= pad;
+			xmax += pad;
 		}
 		if (Math.abs(dy) < 1.0e-12) {
-		    double pad = (Math.abs(ymin) > 0) ? (0.01 * Math.abs(ymin)) : 1.0;
-		    ymin -= pad;
-		    ymax += pad;
+			double pad = (Math.abs(ymin) > 0) ? (0.01 * Math.abs(ymin)) : 1.0;
+			ymin -= pad;
+			ymax += pad;
 		}
-
 
 		_worldSystem.setFrame(xmin, ymin, xmax - xmin, ymax - ymin);
 	}
@@ -426,8 +431,7 @@ public class PlotCanvas extends JComponent
 		Rectangle bounds = getBounds();
 		if (bounds == null) {
 			_activeBounds = null;
-		}
-		else {
+		} else {
 			int left = 0;
 			int top = 0;
 			int right = left + bounds.width;
@@ -481,9 +485,8 @@ public class PlotCanvas extends JComponent
 
 		try {
 			_worldToLocal = _localToWorld.createInverse();
-		}
-		catch (NoninvertibleTransformException e) {
-			 e.printStackTrace();
+		} catch (NoninvertibleTransformException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -535,87 +538,114 @@ public class PlotCanvas extends JComponent
 			return;
 		}
 
+		PlotPanel plotPanel = plotPanel();
+		if (plotPanel == null) {
+			return;
+		}
+
 		Point pp = e.getPoint();
+		FeedbackPane feedback = plotPanel().getFeedbackPane();
 
 		if ((_activeBounds == null) || (_worldSystem == null)) {
-			_statusString = " ";
+			return;
 		}
 
-		else if (!activeBoundsContains(pp.x, pp.y)) {
-			_statusString = " ";
+		feedback.clear();
+		// location string
+
+		pp.x -= _activeBounds.x;
+		pp.y -= _activeBounds.y;
+		localToWorld(pp, _workPoint);
+		feedback.append(String.format("(x, y) = (%7.2g, %-7.2g)", _workPoint.x, _workPoint.y));
+
+		if (_plotData.isXYData()) {
+			List<ACurve> curves = _plotData.getVisibleCurves();
+
+			for (ACurve curve : curves) {
+				String cStr = String.format("%s: %d points ", curve.name(), curve.length());
+
+				String fitSummary = curve.getFitSummary();
+				if (fitSummary != null) {
+					cStr += " " + fitSummary;
+				}
+				feedback.append(cStr);
+
+			}
 		}
-		else {
-			 pp.x -= _activeBounds.x;
-			 pp.y -= _activeBounds.y;
-			localToWorld(pp, _workPoint);
-			_statusString = String.format("<html>(x, y) = (%7.2g, %-7.2g)", _workPoint.x, _workPoint.y);
+		
+		if (_plotData.isHistoData()) {
+			List<ACurve> curves = _plotData.getVisibleCurves();
 
-			if (_plotData.isXYData()) {
-				List<ACurve> curves = _plotData.getVisibleCurves();
-
-				for (ACurve curve : curves) {
-					String numStr = String.format("<html><b> %s</b>: %d points ", curve.name(), curve.length());
-					_statusString += "&nbsp&nbsp" + numStr;
+			for (ACurve curve : curves) {
+				HistoCurve hc = (HistoCurve) curve;
+				HistoData hd = hc.getHistoData();
+				String cStr = HistoData.statusString(this, hd, pp, _workPoint);
+				String fitSummary = curve.getFitSummary();
+				if (fitSummary != null) {
+					cStr += " " + fitSummary;
 				}
+				feedback.append(cStr);
 			}
-			else if (_plotData.isHistoData()) {
-				List<ACurve> curves = _plotData.getVisibleCurves();
-
-				for (ACurve curve : curves) {
-					HistoCurve hc = (HistoCurve) curve;
-					HistoData hd = hc.getHistoData();
-					String s = HistoData.statusString(this, hd, pp, _workPoint);
-					if (s != null) {
-						Color lc = curve.getStyle().getLineColor();
-						_statusString += "&nbsp&nbsp" + colorStr(s, GraphicsUtils.colorToHex(lc));
-						// break;
-					}
-				}
-			}
-
 		}
 	}
+	
+	
+	/**
+	 * Add a plot change listener
+	 * 
+	 * @param listener the listener to add
+	 */
+	public void addPlotChangeListener(PlotChangeListener listener) {
 
-	private String colorStr(String s, String color) {
-		return "<font color=" + color + ">" + s + "</font>";
-	}
-
-	// this method includes the border
-	private boolean activeBoundsContains(int x, int y) {
-		if (_activeBounds == null) {
-			return false;
-		}
-		int l = _activeBounds.x;
-		if (x < l) {
-			return false;
+		if (_listenerList == null) {
+			_listenerList = new EventListenerList();
 		}
 
-		int t = _activeBounds.y;
-		if (y < t) {
-			return false;
-		}
-
-		int r = l + _activeBounds.width;
-		if (x > r) {
-			return false;
-		}
-
-		int b = t + _activeBounds.height;
-		if (y > b) {
-			return false;
-		}
-
-		return true;
+		// avoid adding duplicates
+		_listenerList.remove(PlotChangeListener.class, listener);
+		_listenerList.add(PlotChangeListener.class, listener);
 	}
 
 	/**
-	 * Get the last updated location string
-	 *
-	 * @return
+	 * Remove a PlotChangeListener.
+	 * 
+	 * @param listener the PlotChangeListener to remove.
 	 */
-	public String getLocationString() {
-		return _statusString;
+
+	public void removePlotChangeListener(PlotChangeListener listener) {
+
+		if ((listener == null) || (_listenerList == null)) {
+			return;
+		}
+
+		_listenerList.remove(PlotChangeListener.class, listener);
 	}
+	
+	// notify listeners of message
+	private void notifyListeners(PlotChangeType event) {
+
+		if (_listenerList == null) {
+			return;
+		}
+
+		// Guaranteed to return a non-null array
+		Object[] listeners = _listenerList.getListenerList();
+
+		// This weird loop is the bullet proof way of notifying all listeners.
+		// for (int i = listeners.length - 2; i >= 0; i -= 2) {
+		// order is flipped so it goes in order as added
+		for (int i = 0; i < listeners.length; i += 2) {
+			if (listeners[i] == PlotChangeListener.class) {
+				PlotChangeListener listener = (PlotChangeListener) listeners[i + 1];
+				listener.plotChanged(event);
+			}
+		}
+	}
+	
+	public void shutDown() {
+		notifyListeners(PlotChangeType.SHUTDOWN);
+	}
+
 
 	/**
 	 * The mouse has been clicked on the plot canvas
@@ -656,8 +686,7 @@ public class PlotCanvas extends JComponent
 		if (isPointer() && _parameters.isLegendDrawn() && _legend.contains(e.getPoint())) {
 			_legend.setDraggingPrimed(true);
 			_legend.setCurrentPoint(e.getPoint());
-		}
-		else if (isPointer() && _parameters.extraDrawing() && _extra.contains(e.getPoint())) {
+		} else if (isPointer() && _parameters.extraDrawing() && _extra.contains(e.getPoint())) {
 			_extra.setDraggingPrimed(true);
 			_extra.setCurrentPoint(e.getPoint());
 		}
@@ -670,13 +699,11 @@ public class PlotCanvas extends JComponent
 
 					if (e.isShiftDown()) {
 						_rubberband = new Rubberband(this, this, Rubberband.Policy.XONLY);
-					}
-					else {
+					} else {
 						_rubberband = new Rubberband(this, this, Rubberband.Policy.YONLY);
 					}
 
-				}
-				else {
+				} else {
 					_rubberband = new Rubberband(this, this, Rubberband.Policy.RECTANGLE);
 				}
 				_rubberband.setActive(true);
@@ -931,8 +958,7 @@ public class PlotCanvas extends JComponent
 				Environment.getInstance().getPngWriter().write(bi);
 				ios.close();
 			}
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
@@ -964,7 +990,6 @@ public class PlotCanvas extends JComponent
 		firePropertyChange(propName, oldValue, newValue);
 	}
 
-
 	/**
 	 * Get the canavas's plot ticks
 	 *
@@ -984,6 +1009,13 @@ public class PlotCanvas extends JComponent
 				ppan._toolbar.setSelectedToggle(s);
 			}
 		}
+	}
+
+	public PlotPanel plotPanel() {
+		if ((_parent != null) && (_parent instanceof PlotPanel)) {
+			return (PlotPanel) _parent;
+		}
+		return null;
 	}
 
 	@Override

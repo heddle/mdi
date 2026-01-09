@@ -16,6 +16,10 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 
 @SuppressWarnings("serial")
 public class ErfcTest extends AExample {
+	
+	public ErfcTest(boolean headless) {
+		super(headless);
+	}
 
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
@@ -85,7 +89,7 @@ public class ErfcTest extends AExample {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				ErfcTest example = new ErfcTest();
+				ErfcTest example = new ErfcTest(false);
 				example.setVisible(true);
 			}
 		});

@@ -20,6 +20,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.Border;
 
 import edu.cnu.mdi.component.CommonBorder;
+import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.splot.toolbar.PlotToolBar;
 import edu.cnu.mdi.ui.colors.X11Colors;
 
@@ -31,9 +32,9 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 
 	// title related
 	private JLabel _titleLabel;
-
-	// status label
-	private JLabel _status;
+	
+	// feedback pane
+	private FeedbackPane _feedbackPane;
 
 	// axes labels
 	private JLabel _xLabel;
@@ -79,22 +80,6 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		addSouth();
 		addNorth();
 		addWest();
-
-		if (_decorations == STANDARD) {
-			// update the status line with the mouse plot coordinates of the
-			// mouse
-			MouseMotionAdapter mma = new MouseMotionAdapter() {
-				@Override
-				public void mouseMoved(MouseEvent me) {
-					if (_status != null) {
-						_status.setText(_canvas.getLocationString());
-					}
-				}
-			};
-
-			_canvas.addMouseMotionListener(mma);
-		}
-
 	}
 
 	@Override
@@ -120,11 +105,12 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 
 		// status label
 		if (_decorations == STANDARD) {
-
-			_status = makeStatusLabel();
-
-			_status.setAlignmentX(Component.CENTER_ALIGNMENT);
-			spanel.add(_status, BorderLayout.SOUTH);
+			_feedbackPane = new FeedbackPane();
+			FontMetrics fm = getFontMetrics(getFont());
+			int h = 3*fm.getHeight() + 4;
+			Dimension d = new Dimension(super.getPreferredSize().width, h);
+			_feedbackPane.getViewport().setPreferredSize(d);
+			spanel.add(_feedbackPane.getViewport(), BorderLayout.SOUTH);
 		}
 
 		add(spanel, BorderLayout.SOUTH);
@@ -172,58 +158,6 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		add(_yLabel, BorderLayout.WEST);
 	}
 
-	private JLabel makeStatusLabel() {
-		Font font = _canvas.getParameters().getStatusFont();
-		FontMetrics fm = getFontMetrics(font);
-		final int height = 4 + 3 * (fm.getHeight() + 2);
-		Color bg = X11Colors.getX11Color("alice blue");
-
-		JLabel label = new JLabel() {
-			@Override
-			public void paint(Graphics g) {
-				// exclude from print
-				if (!PrintUtils.isPrinting()) {
-					super.paint(g);
-				}
-			}
-
-			@Override
-			public Dimension getPreferredSize() {
-				Dimension d = super.getPreferredSize();
-				d.height = height;
-				return d;
-			}
-
-			@Override
-			public Dimension getMinimumSize() {
-				Dimension d = super.getMinimumSize();
-				d.height = height;
-				return d;
-			}
-
-			@Override
-			public Dimension getMaximumSize() {
-				Dimension d = super.getMaximumSize();
-				d.height = height;
-				return d;
-			}
-
-		};
-
-		label.setFont(font);
-		label.setOpaque(true);
-		label.setBackground(bg);
-		label.setForeground(Color.black);
-		label.setHorizontalAlignment(SwingConstants.LEFT);
-		label.setVerticalAlignment(SwingConstants.CENTER);
-
-		Border commonBorder = new CommonBorder();
-		Border emptyBorder = BorderFactory.createLineBorder(bg, 2);
-
-		label.setBorder(BorderFactory.createCompoundBorder(commonBorder, emptyBorder));
-
-		return label;
-	}
 
 	// convenience function for making a label
 	private JLabel makeJLabel(String text, Font font, int alignment, Color bg, Color fg, boolean excludeFromPrint) {
@@ -272,13 +206,22 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		}
 		return lab;
 	}
+	
+	/**
+	 * Get the feedback pane
+	 *
+	 * @return the feedback pane
+	 */
+	public FeedbackPane getFeedbackPane() {
+		return _feedbackPane;
+	}
 
 	/**
 	 * Get the underlying plot canvas
 	 *
 	 * @return the plot canvas
 	 */
-	public PlotCanvas getCanvas() {
+	public PlotCanvas getPlotCanvas() {
 		return _canvas;
 	}
 
@@ -323,8 +266,8 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 			_yLabel.setFont(font);
 		}
 		else if (PlotCanvas.STATUSFONTCHANGE.equals(evt.getPropertyName())) {
-			Font font = (Font) evt.getNewValue();
-			_status.setFont(font);
+	//		Font font = (Font) evt.getNewValue();
+	//		_status.setFont(font);
 		}
 
 	}

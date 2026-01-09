@@ -950,7 +950,7 @@ public class HistoData {
      * @return status string or null if not inside histogram polygon
      */
     public static String statusString(PlotCanvas canvas, HistoData histo, Point mousePoint, Point.Double wp) {
-        String s = null;
+        String s = "";
 
         Polygon poly = GetPolygon(canvas, histo);
         if (poly.contains(mousePoint)) {

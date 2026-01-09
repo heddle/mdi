@@ -8,11 +8,11 @@ public class PlotPopupMenu extends JPopupMenu {
     protected PlotCanvas _plotCanvas;
 
     // all the menus and items
-    protected SplotMenus _menus;
+    protected SplotEditMenu _menus;
 
     public PlotPopupMenu(PlotCanvas plotCanvas) {
 	_plotCanvas = plotCanvas;
-	_menus = new SplotMenus(_plotCanvas, this, false);
+	_menus = new SplotEditMenu(_plotCanvas, this, false);
     }
 
 }

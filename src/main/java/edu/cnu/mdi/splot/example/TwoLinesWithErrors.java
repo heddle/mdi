@@ -15,6 +15,10 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 @SuppressWarnings("serial")
 public class TwoLinesWithErrors extends AExample {
 
+	public TwoLinesWithErrors(boolean headless) {
+		super(headless);
+	}
+	
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
 		String[] curveNames = { "Line 1", "Line 2" };
@@ -111,7 +115,7 @@ public class TwoLinesWithErrors extends AExample {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				TwoLinesWithErrors example = new TwoLinesWithErrors();
+				TwoLinesWithErrors example = new TwoLinesWithErrors(false);
 				example.setVisible(true);
 			}
 		});

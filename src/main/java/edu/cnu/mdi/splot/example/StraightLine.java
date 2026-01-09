@@ -12,6 +12,10 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 @SuppressWarnings("serial")
 public class StraightLine extends AExample {
 
+	public StraightLine(boolean headless) {
+		super(headless);
+	}
+	
 	static double x[] = { 3, 2.5, 3.5, 4, 5 };
 	static double y[] = { 238.0, 280.0, 310, 321.0, 420.0 };
 	static double sig[] = { 14.7, 12.1, 13.1, 20.0, 8.0 };
@@ -71,7 +75,7 @@ public class StraightLine extends AExample {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				StraightLine example = new StraightLine();
+				StraightLine example = new StraightLine(false);
 				example.setVisible(true);
 			}
 		});

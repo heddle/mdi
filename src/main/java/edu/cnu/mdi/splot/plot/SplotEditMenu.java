@@ -20,7 +20,9 @@ import edu.cnu.mdi.splot.edit.CurveEditorDialog;
  * @author heddle
  *
  */
-public class SplotMenus implements ActionListener {
+public class SplotEditMenu implements ActionListener {
+	
+	public static final String MENU_TITLE = "Edit Plot";
 
 	// the owner canvas
 	private PlotCanvas _plotCanvas;
@@ -41,7 +43,7 @@ public class SplotMenus implements ActionListener {
 	 * @param menuBar the menu bar
 	 * @param addQuit if <code>true</code> include a quit item
 	 */
-	public SplotMenus(PlotCanvas canvas, JMenuBar menuBar, boolean addQuit) {
+	public SplotEditMenu(PlotCanvas canvas, JMenuBar menuBar, boolean addQuit) {
 		_plotCanvas = canvas;
 		makeMenus(canvas, menuBar, addQuit);
 	}
@@ -53,20 +55,19 @@ public class SplotMenus implements ActionListener {
 	 * @param popup   a popup to hold the menus
 	 * @param addQuit if <code>true</code> include a quit item
 	 */
-	public SplotMenus(PlotCanvas canvas, JPopupMenu popup, boolean addQuit) {
+	public SplotEditMenu(PlotCanvas canvas, JPopupMenu popup, boolean addQuit) {
 		_plotCanvas = canvas;
 		makeMenus(canvas, popup, addQuit);
 	}
 
 	// make the menus
 	private void makeMenus(PlotCanvas canvas, Container container, boolean addQuit) {
-//		makeFileMenu(container, addQuit);
 		makeEditMenu(canvas, container);
 	}
 
 	// make the edit menu
 	protected void makeEditMenu(PlotCanvas canvas, Container container) {
-		_editMenu = new JMenu("Edit");
+		_editMenu = new JMenu(MENU_TITLE);
 		_prefItem = addMenuItem("Preferences...", 'P', _editMenu);
 		_curveItem = addMenuItem("Curves...", 'C', _editMenu);
 		_editMenu.addSeparator();

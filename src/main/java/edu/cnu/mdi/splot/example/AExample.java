@@ -15,8 +15,10 @@ import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
+import edu.cnu.mdi.splot.plot.PlotChangeListener;
+import edu.cnu.mdi.splot.plot.PlotChangeType;
 import edu.cnu.mdi.splot.plot.PlotPanel;
-import edu.cnu.mdi.splot.plot.SplotMenus;
+import edu.cnu.mdi.splot.plot.SplotEditMenu;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
@@ -26,17 +28,33 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  *
  */
 @SuppressWarnings("serial")
-public abstract class AExample extends JFrame {
+public abstract class AExample extends JFrame implements PlotChangeListener{
 
 	// the plot canvas
 	protected PlotCanvas canvas;
 
+	// the plot panel
+	protected PlotPanel plotPanel;
+
 	// the menus and items
-	protected SplotMenus menus;
+	protected SplotEditMenu menus;
+	
+	protected JMenuBar menuBar;
+	
+	protected boolean headless = false;
 
 	public AExample() {
+		this(false);
+	}
+
+	public AExample(boolean headless) {
 		super("sPlot");
+		this.headless = headless;
 		UIInit();
+		dataSetup();
+		if (headless) {
+			return;
+		}
 
 		// set up what to do if the window is closed
 		WindowAdapter windowAdapter = new WindowAdapter() {
@@ -47,40 +65,60 @@ public abstract class AExample extends JFrame {
 		};
 		addWindowListener(windowAdapter);
 
+
+		// add the menu bar
+		setJMenuBar(menuBar);
+		add(plotPanel, BorderLayout.CENTER);
+		pack();
+		GraphicsUtils.centerComponent(this);
+	}
+	
+	protected void dataSetup() {
 		try {
 			canvas = new PlotCanvas(createPlotData(), getPlotTitle(), getXAxisLabel(), getYAxisLabel());
-		}
-		catch (PlotDataException e) {
+			canvas.addPlotChangeListener(this);
+		} catch (PlotDataException e) {
 			e.printStackTrace();
 			return;
 		}
 
-		// add the menu bar
-		JMenuBar mb = new JMenuBar();
-		setJMenuBar(mb);
-		menus = new SplotMenus(canvas, mb, true);
 		fillData();
 		setParameters();
-		final PlotPanel ppanel = new PlotPanel(canvas);
+		plotPanel = new PlotPanel(canvas);
 
-		ppanel.setPreferredSize(new Dimension(750, 700));
+		menuBar = new JMenuBar();
+		menus = new SplotEditMenu(canvas, menuBar, true);
 
-		add(ppanel, BorderLayout.CENTER);
+		plotPanel.setPreferredSize(new Dimension(750, 700));
 
-		pack();
-		GraphicsUtils.centerComponent(this);
 	}
 
-	   //initialize the FlatLaf UI
-		private void UIInit() {
-			FlatIntelliJLaf.setup();
-			UIManager.put("Component.focusWidth", 1);
-			UIManager.put("Component.arc", 6);
-			UIManager.put("Button.arc", 6);
-			UIManager.put("TabbedPane.showTabSeparators", true);
-			Fonts.refresh();
-		}
+	// initialize the FlatLaf UI
+	private void UIInit() {
+		FlatIntelliJLaf.setup();
+		UIManager.put("Component.focusWidth", 1);
+		UIManager.put("Component.arc", 6);
+		UIManager.put("Button.arc", 6);
+		UIManager.put("TabbedPane.showTabSeparators", true);
+		Fonts.refresh();
+	}
 
+	@Override
+	public void plotChanged(PlotChangeType type) {
+		switch (type) {
+		case SHUTDOWN:
+			break;
+		}
+	}
+	
+	/**
+	 * Get the menus
+	 *
+	 * @return the menus
+	 */
+	public SplotEditMenu getMenus() {
+		return menus;
+	}
 
 	/**
 	 * Get the plot canvas
@@ -92,7 +130,17 @@ public abstract class AExample extends JFrame {
 	}
 
 	/**
+	 * Get the plot panel
+	 * 
+	 * @return the plot panel
+	 */
+	public PlotPanel getPlotPanel() {
+		return plotPanel;
+	}
+
+	/**
 	 * Create the plot data
+	 * 
 	 * @return the plot data
 	 * @throws PlotDataException
 	 */

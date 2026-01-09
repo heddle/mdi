@@ -10,11 +10,23 @@ import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
+import edu.cnu.mdi.splot.pdata.StripChartCurve;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
+import edu.cnu.mdi.splot.plot.PlotChangeType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
 @SuppressWarnings("serial")
 public class GrowingHisto extends AExample {
+	
+	private static Thread sourceThread;
+	
+	public GrowingHisto(boolean headless) {
+		super(headless);
+		double mu = 50.0;
+		double sig = 10.0;
+	    NormalDistribution normDev = new NormalDistribution(mu, sig);
+		addData(getPlotCanvas(), 100000, 100, normDev);
+	}
 
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
@@ -81,22 +93,30 @@ public class GrowingHisto extends AExample {
 			}
 		};
 
-		Thread sourceThread = new Thread(runner);
+		sourceThread = new Thread(runner);
 		sourceThread.start();
 
 	}
+	
+	@Override
+	public void plotChanged(PlotChangeType type) {
+		switch (type) {
+		case SHUTDOWN:
+			if (sourceThread != null && sourceThread.isAlive()) {
+				sourceThread.interrupt();
+			}
+			break;
+		}
+	}
+
 
 	public static void main(String arg[]) {
 
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				GrowingHisto example = new GrowingHisto();
+				GrowingHisto example = new GrowingHisto(false);
 				example.setVisible(true);
-				double mu = 50.0;
-				double sig = 10.0;
-			    NormalDistribution normDev = new NormalDistribution(mu, sig);
-				addData(example.getPlotCanvas(), 100000, 100, normDev);
 			}
 		});
 

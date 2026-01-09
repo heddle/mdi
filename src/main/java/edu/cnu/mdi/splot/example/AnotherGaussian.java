@@ -12,6 +12,9 @@ import edu.cnu.mdi.ui.colors.X11Colors;
 public class AnotherGaussian extends AExample {
 
 
+	public AnotherGaussian(boolean headless) {
+		super(headless);
+	}
 
 	static double rawData[] = { 17200.000000, 0.000000, 0.000000, 17600.000000, 0.000000, 0.000000, 18000.000000,
 			0.000000, 0.000000, 18400.000000, 0.000000, 0.000000, 18800.000000, 0.000000, 0.000000, 19200.000000,
@@ -30,7 +33,7 @@ public class AnotherGaussian extends AExample {
 
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
-		String[] curveNames = {"Gussian" };
+		String[] curveNames = {"Gaussian" };
 		return new PlotData(PlotDataType.XYEXYE, curveNames, null);
 	}
 
@@ -81,7 +84,7 @@ public class AnotherGaussian extends AExample {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				AnotherGaussian example = new AnotherGaussian();
+				AnotherGaussian example = new AnotherGaussian(false);
 				example.setVisible(true);
 			}
 		});

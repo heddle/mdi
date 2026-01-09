@@ -10,13 +10,13 @@ import javax.swing.JPanel;
 
 import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.component.EnumComboBox;
-import edu.cnu.mdi.dialog.ColorLabel;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.DoubleFormat;
 import edu.cnu.mdi.splot.plot.TextFieldSlider;
+import edu.cnu.mdi.ui.colors.ColorLabel;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 @SuppressWarnings("serial")
@@ -28,10 +28,10 @@ public class StyleEditorPanel extends JPanel {
 	private static final Font _font = Fonts.plainFontDelta(-2);
 
 	// change symbol type
-	private EnumComboBox _symbolSelector;
+	private EnumComboBox<SymbolType> _symbolSelector;
 
 	// change symbol border style
-	private EnumComboBox _fitLineStyleSelector;
+	private EnumComboBox<LineStyle> _fitLineStyleSelector;
 
 	// symbol border color
 	protected ColorLabel _borderColor;

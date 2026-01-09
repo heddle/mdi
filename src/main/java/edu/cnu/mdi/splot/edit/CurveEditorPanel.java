@@ -21,7 +21,6 @@ import javax.swing.event.ListSelectionListener;
 
 import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.component.EnumComboBox;
-import edu.cnu.mdi.dialog.IColorChangeListener;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
@@ -32,6 +31,7 @@ import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.style.StyleEditorPanel;
+import edu.cnu.mdi.ui.colors.IColorChangeListener;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.Environment;
 
@@ -80,7 +80,6 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 	public void setEnabled(boolean enabled) {
 		_fitPanel.setEnabled(enabled);
 		_stylePanel.setEnabled(enabled);
-		// _showCurve.setEnabled(enabled);
 	}
 
 	// new curve has been selected

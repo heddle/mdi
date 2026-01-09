@@ -11,9 +11,9 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
 import edu.cnu.mdi.component.CommonBorder;
-import edu.cnu.mdi.dialog.ColorLabel;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
+import edu.cnu.mdi.ui.colors.ColorLabel;
 
 /**
  * Tab for legend settings.

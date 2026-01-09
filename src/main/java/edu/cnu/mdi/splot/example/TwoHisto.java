@@ -14,6 +14,10 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 
 @SuppressWarnings("serial")
 public class TwoHisto extends AExample {
+	
+	public TwoHisto(boolean headless) {
+		super(headless);
+	}
 
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
@@ -86,7 +90,7 @@ public class TwoHisto extends AExample {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				TwoHisto example = new TwoHisto();
+				TwoHisto example = new TwoHisto(false);
 				example.setVisible(true);
 			}
 		});
