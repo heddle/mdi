@@ -8,6 +8,7 @@ import edu.cnu.mdi.dialog.LabelDialog;
 import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.text.UnicodeSupport;
 import edu.cnu.mdi.item.TextItem;
+import edu.cnu.mdi.item.TextItemEXP;
 
 /**
  * Tool that creates an annotated {@link TextItem} on the container canvas.
@@ -76,7 +77,7 @@ public class TextTool implements ITool {
         ctx.container().localToWorld(mouseEvent.getPoint(), wp);
 
         // Create the item and place it on the annotation layer.
-        TextItem item = new TextItem(
+        TextItemEXP item = new TextItemEXP(
                 ctx.container().getAnnotationLayer(),
                 wp,
                 font,
