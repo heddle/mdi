@@ -368,7 +368,7 @@ public class DemoApp extends BaseMDIApplication {
     					);
 
     			//add the examples menu
-    			JMenu examplesMenu = new JMenu("Examples");
+    			JMenu examplesMenu = new JMenu("Gallery");
     			view.getJMenuBar().add(examplesMenu);
 
 				JMenuItem gaussianItem = new JMenuItem("Gaussian Fit");

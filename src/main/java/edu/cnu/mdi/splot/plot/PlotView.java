@@ -76,7 +76,8 @@ public class PlotView extends BaseView {
 		PlotCanvas plotCanvas = example.getPlotCanvas();
 		PlotPanel plotPanel = example.getPlotPanel();
 		setPlotPanel(plotPanel);
-		new SplotEditMenu(plotCanvas, getJMenuBar(),false);
+		JMenu menu = new SplotEditMenu(plotCanvas);
+		getJMenuBar().add(menu);
 		revalidate();
 		repaint();
 	}

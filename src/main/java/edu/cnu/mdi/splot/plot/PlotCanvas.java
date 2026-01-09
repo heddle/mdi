@@ -124,9 +124,6 @@ public class PlotCanvas extends JComponent
 	// toolbar controlling plot
 	private PlotToolBar _toolbar;
 
-	// popup menu
-	private PlotPopupMenu _plotPopup;
-
 	/**
 	 * Create a plot canvas for plotting a dataset
 	 *
@@ -164,8 +161,6 @@ public class PlotCanvas extends JComponent
 		_legend = new Legend(this);
 		_extra = new ExtraText(this);
 		_dataDrawer = new DataDrawer(this);
-		_plotPopup = new PlotPopupMenu(this);
-		setComponentPopupMenu(_plotPopup);
 
 		addComponentListener(componentAdapter);
 		addMouseListener(this);
@@ -647,27 +642,6 @@ public class PlotCanvas extends JComponent
 	}
 
 
-	/**
-	 * The mouse has been clicked on the plot canvas
-	 *
-	 * @param e the mouseEvent
-	 */
-	@Override
-	public void mouseClicked(MouseEvent e) {
-
-		if ((_rubberband != null) || (_parameters.isLegendDrawn() && _legend.contains(e.getPoint()))) {
-			return;
-		}
-
-		String command = toolbarCommand();
-
-		if ((SwingUtilities.isLeftMouseButton(e) && e.isControlDown())) {
-			if (PlotToolBar.POINTER.equals(command)) {
-				_plotPopup.show(e.getComponent(), e.getX(), e.getY());
-			}
-
-		}
-	}
 
 	private boolean isPointer() {
 		return (_toolbar == null) || _toolbar.isDefaultActivated();
@@ -1022,6 +996,12 @@ public class PlotCanvas extends JComponent
 	public void dataSetChanged(PlotData plotData, ACurve curve, CurveChangeType type) {
 		setWorldSystem();
 		needsRedraw(false);
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

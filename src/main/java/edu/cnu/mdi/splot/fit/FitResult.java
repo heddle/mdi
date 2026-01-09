@@ -189,7 +189,7 @@ public final class FitResult {
 		StringBuilder sb = new StringBuilder();
 		sb.append(" " + stringGetter.functionForm());
 		sb.append(" ");
-		IntStream.range(0, params.length).forEach(i -> sb.append(String.format(" %s = %.2g%s%.2g",
+		IntStream.range(0, params.length).forEach(i -> sb.append(String.format(" %s=%.2g%s%.2g",
 				stringGetter.parameterName(i), params[i], PLUSMINUS, paramStdError(i))));
 		sb.append(String.format(" %s/DoF: " + doubleFormat(chiSquareReduced, 2), CHISQ));
 		return sb.toString();
@@ -220,7 +220,6 @@ public final class FitResult {
 
     // Helper to format doubles
 	private String doubleFormat(double value, int sigFig) {
-		return DoubleFormat.doubleFormat(value, sigFig, 2);
-//		return SmartDoubleFormatter.doubleFormat(value, sigFig);
+		return SmartDoubleFormatter.doubleFormat(value, sigFig);
 	}
 }

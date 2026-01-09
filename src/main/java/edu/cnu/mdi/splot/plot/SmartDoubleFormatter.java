@@ -19,7 +19,7 @@ public class SmartDoubleFormatter {
         String scientific = bd.toString();
 
         // Use scientific if plain string is ugly/long
-        if (plain.length() > sigDigits + 5) {
+        if (plain.length() > sigDigits + 4) {
             return scientific;
         } else {
             return plain;

@@ -37,7 +37,7 @@ public abstract class AExample extends JFrame implements PlotChangeListener{
 	protected PlotPanel plotPanel;
 
 	// the menus and items
-	protected SplotEditMenu menus;
+	protected SplotEditMenu menu;
 	
 	protected JMenuBar menuBar;
 	
@@ -87,7 +87,8 @@ public abstract class AExample extends JFrame implements PlotChangeListener{
 		plotPanel = new PlotPanel(canvas);
 
 		menuBar = new JMenuBar();
-		menus = new SplotEditMenu(canvas, menuBar, true);
+		menu = new SplotEditMenu(canvas);
+		menuBar.add(menu);
 
 		plotPanel.setPreferredSize(new Dimension(750, 700));
 
@@ -111,15 +112,6 @@ public abstract class AExample extends JFrame implements PlotChangeListener{
 		}
 	}
 	
-	/**
-	 * Get the menus
-	 *
-	 * @return the menus
-	 */
-	public SplotEditMenu getMenus() {
-		return menus;
-	}
-
 	/**
 	 * Get the plot canvas
 	 *

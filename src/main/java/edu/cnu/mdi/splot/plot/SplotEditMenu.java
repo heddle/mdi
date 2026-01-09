@@ -1,14 +1,11 @@
 package edu.cnu.mdi.splot.plot;
 
-import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
 import edu.cnu.mdi.dialog.DialogUtils;
@@ -20,15 +17,13 @@ import edu.cnu.mdi.splot.edit.CurveEditorDialog;
  * @author heddle
  *
  */
-public class SplotEditMenu implements ActionListener {
-	
+@SuppressWarnings("serial")
+public class SplotEditMenu extends JMenu implements ActionListener {
+
 	public static final String MENU_TITLE = "Edit Plot";
 
 	// the owner canvas
 	private PlotCanvas _plotCanvas;
-
-	// the menus
-	protected JMenu _editMenu;
 
 	// the menu items
 	protected JMenuItem _prefItem;
@@ -43,36 +38,13 @@ public class SplotEditMenu implements ActionListener {
 	 * @param menuBar the menu bar
 	 * @param addQuit if <code>true</code> include a quit item
 	 */
-	public SplotEditMenu(PlotCanvas canvas, JMenuBar menuBar, boolean addQuit) {
+	public SplotEditMenu(PlotCanvas canvas) {
+		super(MENU_TITLE);
 		_plotCanvas = canvas;
-		makeMenus(canvas, menuBar, addQuit);
-	}
-
-	/**
-	 * Create a set of menus and items for sPlot
-	 *
-	 * @param canvas  the plot canvas being controlled
-	 * @param popup   a popup to hold the menus
-	 * @param addQuit if <code>true</code> include a quit item
-	 */
-	public SplotEditMenu(PlotCanvas canvas, JPopupMenu popup, boolean addQuit) {
-		_plotCanvas = canvas;
-		makeMenus(canvas, popup, addQuit);
-	}
-
-	// make the menus
-	private void makeMenus(PlotCanvas canvas, Container container, boolean addQuit) {
-		makeEditMenu(canvas, container);
-	}
-
-	// make the edit menu
-	protected void makeEditMenu(PlotCanvas canvas, Container container) {
-		_editMenu = new JMenu(MENU_TITLE);
-		_prefItem = addMenuItem("Preferences...", 'P', _editMenu);
-		_curveItem = addMenuItem("Curves...", 'C', _editMenu);
-		_editMenu.addSeparator();
-		_showExtraCB = addMenuCheckBox("Show any Extra Text", _editMenu, canvas.getParameters().extraDrawing());
-		container.add(_editMenu);
+		_prefItem = addMenuItem("Preferences...", 'P', this);
+		_curveItem = addMenuItem("Curves...", 'C', this);
+		addSeparator();
+		_showExtraCB = addMenuCheckBox("Show any Extra Text", this, canvas.getParameters().extraDrawing());
 	}
 
 	/**
@@ -147,16 +119,6 @@ public class SplotEditMenu implements ActionListener {
 	 */
 	public PlotCanvas getPlotCanvas() {
 		return _plotCanvas;
-	}
-
-
-	/**
-	 * Get the edit menu
-	 *
-	 * @return the edit menu
-	 */
-	public JMenu getEditMenu() {
-		return _editMenu;
 	}
 
 	/**
