@@ -6,21 +6,19 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Path2D.Double;
+import java.awt.RenderingHints;
+import java.awt.font.FontRenderContext;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 import edu.cnu.mdi.container.IContainer;
-import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.text.Snippet;
 import edu.cnu.mdi.graphics.text.UnicodeSupport;
-import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 import edu.cnu.mdi.ui.fonts.Fonts;
-import edu.cnu.mdi.util.TextUtils;
 
 /**
  * A drawable item that renders text with a rectangular background/border.
@@ -43,9 +41,6 @@ public class TextItem extends RectangleItem {
 
 	// makes the bounds bigger than the text by a bit
 	private static final int MARGIN = 4;
-
-	// twice the margin
-	private static final int MARGIN2 = 2 * MARGIN;
 
 	// default font
 	private static final Font _defaultFont = Fonts.plainFontDelta(0);
@@ -80,32 +75,125 @@ public class TextItem extends RectangleItem {
 
 		_focus = location;
 		_resizePolicy = ResizePolicy.SCALEONLY;
+		setPath(getUnrotatedPoints());
+	}
+
+	@Override
+	public void drawItem(Graphics g, IContainer container) {
+		super.drawItem(g, container);
+
+		Point cp = new Point();
+		container.worldToLocal(cp, _focus);
+		FontMetrics fm = container.getComponent().getFontMetrics(_font);
+
+		Dimension size = getSize();
+		Font fitFont = justFitSize(_text, fm, size.width-2*MARGIN, size.height-2*MARGIN);
+		drawRotatedText(g, cp, _text, fitFont, _textColor, getAzimuth());
+	}
+
+	// get the size of the rectangle from the last drawn polygon
+	private Dimension getSize() {
+		int x0 = _lastDrawnPolygon.xpoints[0];
+		int x1 = _lastDrawnPolygon.xpoints[1];
+		int x2 = _lastDrawnPolygon.xpoints[2];
+
+		int y0 = _lastDrawnPolygon.ypoints[0];
+		int y1 = _lastDrawnPolygon.ypoints[1];
+		int y2 = _lastDrawnPolygon.ypoints[2];
+
+		double delx = x2 - x1;
+		double dely = y2 - y1;
+		int h = (int) Math.sqrt(delx * delx + dely * dely);
+
+		delx = x0 - x1;
+		dely = y0 - y1;
+		int w = (int) Math.sqrt(delx * delx + dely * dely);
+
+		return new Dimension(w, h);
 	}
 
 	/**
-	 * Custom drawer for the text item.
+	 * Determine the maximum font size that will fit the given string within the specified width and height.
 	 *
-	 * @param g         the graphics context.
-	 * @param container the graphical container being rendered.
+	 * @param s  the string to fit
+	 * @param fm the FontMetrics of the base font
+	 * @param w  the width of the box
+	 * @param h  the height of the box
+	 * @return a Font object at the maximum size that fits within the box
 	 */
-	@Override
-	public void drawItem(Graphics g, IContainer container) {
+	protected Font justFitSize(String s, FontMetrics fm, int w, int h) {
+	    Font baseFont = fm.getFont();
+	    // Get the FontRenderContext from the existing metrics to ensure accurate scaling
+	    FontRenderContext frc = fm.getFontRenderContext();
 
-		Point2D.Double oldFocus = _focus;
-		setPath(getPoints(container));
-		_focus = oldFocus;
-		super.drawItem(g, container);
+	    int low = 1;
+	    int high = 1000; // Define a reasonable maximum font size
 
-		if (_text == null) {
-			return;
-		}
+	    Font testFont = baseFont;
 
-		Point p = getFocusPoint(container);
-		g.setColor((_textColor != null) ? _textColor : Color.black);
+	    while (low <= high) {
+	        int mid = (low + high) / 2;
+	        testFont = baseFont.deriveFont((float) mid);
 
-		GraphicsUtils.drawSnippets(g, p.x, p.y, _font, _text, container.getComponent(), getAzimuth());
-		g.setFont(_font);
+	        // Measure string bounds at this size
+	        Rectangle2D bounds = testFont.getStringBounds(s, frc);
+
+	        // Check if it fits within the box dimensions
+	        if (bounds.getWidth() <= w && bounds.getHeight() <= h) {
+	            low = mid + 1;
+	        } else {
+	            high = mid - 1; // Too big, try a smaller size
+	        }
+	    }
+	    return testFont;
 	}
+
+
+	public void drawRotatedText(Graphics g, Point cp, String s, Font font, Color tcolor, double theta) {
+	    Graphics2D g2d = (Graphics2D) g.create();
+
+	    // 1. Set font and color
+	    g2d.setFont(font);
+	    g2d.setColor(tcolor);
+
+	    // 2. Enable antialiasing for smoother text
+	    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+	    // 3. Calculate text dimensions for centering
+	    FontMetrics fm = g2d.getFontMetrics();
+	    Rectangle2D rect = fm.getStringBounds(s, g2d);
+	    double textWidth = rect.getWidth();
+	    double textHeight = rect.getHeight();
+
+	    // 4. Apply transformations
+	    // Translate to the center point cp
+	    g2d.translate(cp.x, cp.y);
+	    // Rotate by theta degrees (convert to radians)
+	    g2d.rotate(Math.toRadians(theta));
+
+	    // 5. Draw string centered on the origin (which is now cp)
+	    // Horizontal center: -textWidth / 2
+	    // Vertical center: (textHeight / 2) - ascent to account for the baseline
+	    float x = (float) (-textWidth / 2);
+	    float y = (float) (fm.getAscent() - textHeight / 2);
+
+	    g2d.drawString(s, x, y);
+
+	    // 6. Dispose the graphics copy
+	    g2d.dispose();
+	}
+
+	// get the unrotated corner points of the text box
+	private Point2D.Double[] getUnrotatedPoints() {
+		Dimension size = sizeText(getContainer().getComponent(), _font, _text);
+		Point2D.Double bl = new Point2D.Double(_focus.x - size.width / 2, _focus.y - size.height / 2);
+		Point2D.Double br = new Point2D.Double(_focus.x + size.width / 2, _focus.y - size.height / 2);
+		Point2D.Double tr = new Point2D.Double(_focus.x + size.width / 2, _focus.y + size.height / 2);
+		Point2D.Double tl = new Point2D.Double(_focus.x - size.width / 2, _focus.y + size.height / 2);
+		return new Point2D.Double[] { bl, br, tr, tl };
+	}
+
+
 
 	/**
 	 * Get the size of the text, including an invisible border of thickness MARGIN
@@ -128,7 +216,7 @@ public class TextItem extends RectangleItem {
 			height = Math.max(height, s.getDeltaY() + size.height);
 		}
 
-		return new Dimension(width + MARGIN2, height + MARGIN2);
+		return new Dimension(width + 2*MARGIN, height + 2*MARGIN);
 	}
 
 	/**
@@ -181,25 +269,6 @@ public class TextItem extends RectangleItem {
 		_textColor = textForeground;
 	}
 
-	/**
-	 * Get the rotation point
-	 *
-	 * @param container the container bing rendered
-	 * @return the rotation point where rotations are initiated
-	 */
-	@Override
-	public Point getRotatePoint(IContainer container) {
-		if (!isRotatable()) {
-			return null;
-		}
-
-		if (_lastDrawnPolygon != null) {
-			int x = (_lastDrawnPolygon.xpoints[1] + _lastDrawnPolygon.xpoints[2]) / 2;
-			int y = (_lastDrawnPolygon.ypoints[1] + _lastDrawnPolygon.ypoints[2]) / 2;
-			return new Point(x, y);
-		}
-		return null;
-	}
 
 	// get the world rectangle bounds
 	private static Rectangle2D.Double getWorldRectangle(IContainer container, Point2D.Double location, Font font,
@@ -215,90 +284,4 @@ public class TextItem extends RectangleItem {
 		return wr;
 	}
 
-	// get the corners
-	private Point2D.Double[] getPoints(IContainer container) {
-		// step one: get unrotated worlds rect
-		Rectangle2D.Double wr = getWorldRectangle(container, _focus, _font, _text);
-
-		// step two: get rectangle points
-		Point2D.Double points[] = WorldGraphicsUtils.getPoints(wr);
-
-		// rotate ?
-		if (Math.abs(getAzimuth()) > 0.001) {
-			AffineTransform at = AffineTransform.getRotateInstance(Math.toRadians(-getAzimuth()), _focus.x, _focus.y);
-			for (Point2D.Double wp : points) {
-				at.transform(wp, wp);
-			}
-		}
-		return points;
-	}
-
-	@Override
-	public void stopModification() {
-		_path = WorldGraphicsUtils.worldPolygonToPath(getPoints(getContainer()));
-		super.stopModification();
-	}
-
-	/**
-	 * Simple scaling of the object.
-	 */
-	@Override
-	protected void scale() {
-		_path = (Double) (_modification.getStartPath().clone());
-		Point2D.Double startPoint = _modification.getStartWorldPoint();
-		Point2D.Double currentPoint = _modification.getCurrentWorldPoint();
-
-		Point2D.Double center = WorldGraphicsUtils.getCentroid(_path);
-
-		Point2D.Double startFocus = _modification.getStartFocus();
-		double oldFocusDx = center.x - startFocus.x;
-		double oldFocusDy = center.y - startFocus.y;
-
-		double scale = currentPoint.distance(center) / startPoint.distance(center);
-		AffineTransform at = AffineTransform.getTranslateInstance(center.x, center.y);
-		at.concatenate(AffineTransform.getScaleInstance(scale, scale));
-		at.concatenate(AffineTransform.getTranslateInstance(-center.x, -center.y));
-		_path.transform(at);
-
-		_focus.x = center.x - scale * oldFocusDx;
-		_focus.y = center.y - scale * oldFocusDy;
-
-		// updateFocus();
-
-		// change font size?
-
-		if (this._lastDrawnPolygon != null) {
-			int x0 = _lastDrawnPolygon.xpoints[0];
-			int x1 = _lastDrawnPolygon.xpoints[1];
-			int x2 = _lastDrawnPolygon.xpoints[2];
-
-			int y0 = _lastDrawnPolygon.ypoints[0];
-			int y1 = _lastDrawnPolygon.ypoints[1];
-			int y2 = _lastDrawnPolygon.ypoints[2];
-
-			double delx = x2 - x1;
-			double dely = y2 - y1;
-			int w = (int) Math.sqrt(delx * delx + dely * dely);
-
-			delx = x1 - x0;
-			dely = y1 - y0;
-
-			// get present size requirement
-			Dimension size = sizeText(getContainer().getComponent(), _font, _text);
-
-			if (size.width > w) {
-				while (size.width > w) {
-					_font = TextUtils.nextSmallerFont(_font, 1);
-					size = sizeText(getContainer().getComponent(), _font, _text);
-				}
-			} else if (size.width < w) {
-				while (size.width <= w) {
-					_font = TextUtils.nextBiggerFont(_font, 1);
-					size = sizeText(getContainer().getComponent(), _font, _text);
-				}
-				_font = TextUtils.nextSmallerFont(_font, 1);
-			}
-
-		}
-	}
 }
