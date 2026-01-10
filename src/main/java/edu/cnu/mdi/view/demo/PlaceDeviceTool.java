@@ -4,8 +4,8 @@ import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 
 import edu.cnu.mdi.container.IContainer;
-import edu.cnu.mdi.graphics.toolbar.ITool;
 import edu.cnu.mdi.graphics.toolbar.ToolContext;
+import edu.cnu.mdi.graphics.toolbar.tool.ITool;
 import edu.cnu.mdi.item.Layer;
 
 public class PlaceDeviceTool implements ITool {

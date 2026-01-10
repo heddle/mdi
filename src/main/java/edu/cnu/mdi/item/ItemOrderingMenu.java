@@ -22,8 +22,10 @@ public class ItemOrderingMenu extends JMenu implements ActionListener {
 	/**
 	 * Used to get from resource bundle
 	 */
-	protected static String moveNames[] = { "Move {0} to Front of List {1}", "Move {0} to Back of List {1}",
-			"Move {0} Forward in List {1}", "Move {0} Backward in List {1}" };
+	protected static String moveNames[] = { "Move to Front of Layer {0}", 
+			"Move to Back of Layer {0}",
+			"Move Forward in Layer {0}", 
+			"Move Backward in Layer {0}" };
 
 	protected static final int BRINGTOFRONT = 0;
 
@@ -53,7 +55,7 @@ public class ItemOrderingMenu extends JMenu implements ActionListener {
 	public static JMenu getItemOrderingMenu(AItem item, boolean insertItemName) {
 		hotItem = item;
 		createMenuItems();
-		setLabels(item, insertItemName);
+		setLabels(item);
 		return orderingMenu;
 	}
 
@@ -90,26 +92,11 @@ public class ItemOrderingMenu extends JMenu implements ActionListener {
 	 * @param item
 	 * @param insertItemName
 	 */
-	private static void setLabels(AItem item, boolean insertItemName) {
-		String itemName = null;
-		String layerName = null;
+	private static void setLabels(AItem item) {
 
-		if (insertItemName) {
-			itemName = item.getName();
-			layerName = item.getLayer().getName();
-		}
+		String layerName = item.getLayer().getName();
 
-		String o1 = "";
-		String o2 = "";
-
-		if (itemName != null) {
-			o1 = "\"" + itemName + "\"";
-		}
-		if (layerName != null) {
-			o2 = "\"" + layerName + "\"";
-		}
-
-		Object objects[] = { o1, o2 };
+		Object objects[] = { layerName != null ? layerName : "?" };
 
 		for (int i = 0; i < menuItems.length; i++) {
 			String s = MessageFormat.format(menuLabels[i], objects);

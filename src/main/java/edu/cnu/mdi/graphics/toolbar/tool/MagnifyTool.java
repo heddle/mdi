@@ -1,9 +1,11 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.tool;
 
 import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 
 import edu.cnu.mdi.component.MagnifyWindow;
+import edu.cnu.mdi.graphics.toolbar.ToolContext;
+import edu.cnu.mdi.graphics.toolbar.ToolController;
 import edu.cnu.mdi.view.BaseView;
 
 /**

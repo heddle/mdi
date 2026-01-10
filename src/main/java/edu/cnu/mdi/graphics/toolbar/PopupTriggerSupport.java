@@ -6,7 +6,6 @@ import java.awt.event.MouseEvent;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.item.AItem;
-import edu.cnu.mdi.item.ItemPopupManager;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
 import edu.cnu.mdi.view.BaseView;
 
@@ -89,7 +88,7 @@ public final class PopupTriggerSupport {
 		// Item under cursor?
 		AItem item = container.getItemAtPoint(p);
 		if (item != null && item.isRightClickable()) {
-			ItemPopupManager.prepareForPopup(item, container, p);
+			item.prepareForPopup(p);
 			return;
 		}
 

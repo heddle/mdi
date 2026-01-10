@@ -1,4 +1,4 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.tool;
 
 import java.awt.Font;
 import java.awt.event.MouseEvent;
@@ -6,6 +6,7 @@ import java.awt.geom.Point2D;
 
 import edu.cnu.mdi.dialog.LabelDialog;
 import edu.cnu.mdi.graphics.text.UnicodeSupport;
+import edu.cnu.mdi.graphics.toolbar.ToolContext;
 import edu.cnu.mdi.item.TextItem;
 import edu.cnu.mdi.swing.WindowPlacement;
 

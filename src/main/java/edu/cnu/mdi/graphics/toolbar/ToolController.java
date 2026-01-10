@@ -6,6 +6,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import edu.cnu.mdi.graphics.toolbar.tool.ITool;
+
 /**
  * Central registry and selection manager for {@link ITool} instances.
  * <p>

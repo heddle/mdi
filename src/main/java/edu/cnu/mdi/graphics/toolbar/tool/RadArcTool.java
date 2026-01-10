@@ -1,8 +1,10 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.tool;
 
 import java.awt.Point;
 
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
+import edu.cnu.mdi.graphics.toolbar.DrawingToolSupport;
+import edu.cnu.mdi.graphics.toolbar.ToolController;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 

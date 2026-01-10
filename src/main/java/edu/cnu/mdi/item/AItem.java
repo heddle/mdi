@@ -17,6 +17,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
@@ -203,6 +204,9 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	// used for select points
 	private static final Color _selectLine = Color.black;
 
+	// the popup menu for this item
+	protected JPopupMenu _popupMenu;
+
 	/**
 	 * Create an item on a specific layer.
 	 *
@@ -213,7 +217,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		_layer.add(this);
 
 		_layer.getContainer().getFeedbackControl().addFeedbackProvider(this);
-
 	}
 
 	/**
@@ -1000,13 +1003,23 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	/**
 	 * Get this item's popup menu
 	 *
-	 * @param container the containe the item lives on
-	 * @param pp        the location of the click
 	 * @return the item's popup menu
 	 */
-	public JPopupMenu getPopupMenu(final IContainer container, Point pp) {
-		JPopupMenu menu = new JPopupMenu();
-		menu.add(ItemOrderingMenu.getItemOrderingMenu(this, true));
+	public JPopupMenu getPopupMenu() {
+		if (_popupMenu == null) {
+			createPopupMenu();
+		}
+		return _popupMenu;
+	}
+	
+	/**
+	 * Create the basic popup menu for this item.
+	 *
+	 * @return the item's basic popup menu
+	 */
+	protected JPopupMenu createPopupMenu() {
+		_popupMenu = new JPopupMenu();
+		_popupMenu.add(ItemOrderingMenu.getItemOrderingMenu(this, true));
 
 		final JCheckBoxMenuItem cbitem = new JCheckBoxMenuItem("Locked", isLocked());
 
@@ -1014,26 +1027,41 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		ItemListener il = new ItemListener() {
 
 			@Override
-			public void itemStateChanged(ItemEvent arg0) {
+			public void itemStateChanged(ItemEvent e) {
 				titem.setLocked(cbitem.isSelected());
 				if (titem.isLocked()) {
 					titem.setSelected(false);
-					container.refresh();
+
+					IContainer cont = titem.getLayer().getContainer();
+					if (cont != null) {
+						titem.getContainer().refresh();
+					}
 				}
 			}
 		};
 		cbitem.addItemListener(il);
-		menu.add(cbitem);
-
-		// properties
-//		JMenuItem pitem = new JMenuItem("Properties...");
-//		pitem.setEnabled(isLayerEnabled());
-//
-//		pitem.addActionListener(_editAction);
-//		menu.add(pitem);
-
-		return menu;
+		_popupMenu.add(cbitem);
+		return _popupMenu;
 	}
+	
+	/**
+	 * Prepare and show the popup menu at the given point.
+	 *
+	 * @param pp the point to show the popup menu at.
+	 */
+	public void prepareForPopup(Point pp) {
+		Objects.requireNonNull(pp, "Popup location cannot be null");
+		IContainer container = getContainer();
+		if (container == null) {
+			return;
+		}
+		JPopupMenu menu = getPopupMenu();
+		if (menu == null) {
+			return;
+		}
+		menu.show(container.getComponent(), pp.x, pp.y);
+	}
+
 
 	/**
 	 * Get the reference rotation angle in degrees.

@@ -1,6 +1,7 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.button;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.graphics.toolbar.ToolContext;
 
 /**
  * One-shot toolbar button that deletes all currently selected items from the

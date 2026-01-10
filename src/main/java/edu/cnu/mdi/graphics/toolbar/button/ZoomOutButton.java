@@ -1,4 +1,6 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.button;
+
+import edu.cnu.mdi.graphics.toolbar.ToolContext;
 
 /**
  * One-shot toolbar action that zooms out by scaling the world system.

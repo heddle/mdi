@@ -1,5 +1,7 @@
 package edu.cnu.mdi.graphics.toolbar;
 
+import edu.cnu.mdi.graphics.toolbar.tool.ITool;
+
 /**
  * Listener notified when the active tool changes.
  * <p>

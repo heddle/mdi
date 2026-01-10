@@ -35,6 +35,25 @@ public class ColorDialog extends JDialog {
 		pack();
 		setLocationRelativeTo(owner);
 	}
+	
+	/**
+	 * Show the color dialog
+	 *
+	 * @param owner             The parent window
+	 * @param initColor         The initial color
+	 * @param allowNoColor      If true, user can select "no color"
+	 * @param allowTransparency It true, alpha color slider is enabled.
+	 * @return The selected color, or initColor if canceled
+	 */
+	public static Color showDialog(Window owner, Color initColor, boolean allowNoColor, boolean allowTransparency) {
+		ColorDialog dialog = new ColorDialog(owner, initColor, allowNoColor, allowTransparency);
+		dialog.setVisible(true);
+		if (dialog.getAnswer() == DialogUtils.OK_RESPONSE) {
+			return dialog.getColor();
+		} else {
+			return initColor;
+		}
+	}
 
 	/**
 	 * Create the color panel

@@ -5,7 +5,12 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
+
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.graphics.style.Styled;
+import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.EllipseItem;
 import edu.cnu.mdi.item.Layer;
@@ -14,8 +19,12 @@ import edu.cnu.mdi.item.PolygonItem;
 import edu.cnu.mdi.item.PolylineItem;
 import edu.cnu.mdi.item.RadArcItem;
 import edu.cnu.mdi.item.RectangleItem;
-
-@SuppressWarnings("serial")
+/**
+ * Support methods for drawing tools.
+ *
+ * @author heddle
+ *
+ */
 public class DrawingToolSupport {
 
 	/**
@@ -55,7 +64,31 @@ public class DrawingToolSupport {
 		Point2D.Double center = new Point2D.Double();
 		container.localToWorld(pc, center);
 
-		return new EllipseItem(layer, width, height, 0.0, center);
+		return new EllipseItem(layer, width, height, 0.0, center) {
+			@Override
+			public JPopupMenu createPopupMenu() {
+				JPopupMenu menu = super.createPopupMenu();
+				menu.addSeparator();
+				// Add custom menu items 
+				addStyleEdit(menu, this);
+				return menu;
+			}
+		};
+	}
+	
+	private static void addStyleEdit(final JPopupMenu menu, final AItem item) {
+		JMenuItem styleMenuItem = new JMenuItem("Edit Style...");
+		styleMenuItem.addActionListener(e -> {
+			Styled edited = StyleEditorDialog.edit(item.getContainer().getComponent(), 
+					item.getStyle(), false);
+			if (edited == null) {
+				return;
+			}
+			item.setStyle(edited.copy());
+			item.setDirty(true);
+			item.getContainer().refresh();
+		});
+		menu.add(styleMenuItem);
 	}
 
 	/**
@@ -69,7 +102,16 @@ public class DrawingToolSupport {
 		IContainer container = layer.getContainer();
 		Rectangle2D.Double wr = new Rectangle2D.Double();
 		container.localToWorld(b, wr);
-		return new RectangleItem(layer, wr);
+		return new RectangleItem(layer, wr) {
+			@Override
+			public JPopupMenu createPopupMenu() {
+				JPopupMenu menu = super.createPopupMenu();
+				menu.addSeparator();
+				// Add custom menu items 
+				addStyleEdit(menu, this);
+				return menu;
+			}
+		};
 	}
 
 	/**
@@ -86,7 +128,16 @@ public class DrawingToolSupport {
 		Point2D.Double wp1 = new Point2D.Double();
 		container.localToWorld(p0, wp0);
 		container.localToWorld(p1, wp1);
-		return new LineItem(layer, wp0, wp1);
+		return new LineItem(layer, wp0, wp1) {
+			@Override
+			public JPopupMenu createPopupMenu() {
+				JPopupMenu menu = super.createPopupMenu();
+				menu.addSeparator();
+				// Add custom menu items 
+				addStyleEdit(menu, this);
+				return menu;
+			}
+		};
 	}
 
 	/**
@@ -106,8 +157,16 @@ public class DrawingToolSupport {
 		Point2D.Double wp1 = new Point2D.Double();
 		container.localToWorld(pc, wpc);
 		container.localToWorld(p1, wp1);
-		return new RadArcItem(layer, wpc, wp1, arcAngle);
-		// return new ArcItem(layer, wpc, wp1, arcAngle);
+		return new RadArcItem(layer, wpc, wp1, arcAngle) {
+			@Override
+			public JPopupMenu createPopupMenu() {
+				JPopupMenu menu = super.createPopupMenu();
+				menu.addSeparator();
+				// Add custom menu items 
+				addStyleEdit(menu, this);
+				return menu;
+			}
+		};
 	}
 
 	/**
@@ -128,7 +187,16 @@ public class DrawingToolSupport {
 			container.localToWorld(pp[index], wp[index]);
 		}
 
-		return new PolygonItem(layer, wp);
+		return new PolygonItem(layer, wp) {
+			@Override
+			public JPopupMenu createPopupMenu() {
+				JPopupMenu menu = super.createPopupMenu();
+				menu.addSeparator();
+				// Add custom menu items 
+				addStyleEdit(menu, this);
+				return menu;
+			}
+		};
 	}
 
 	/**
@@ -150,7 +218,16 @@ public class DrawingToolSupport {
 			container.localToWorld(pp[index], wp[index]);
 		}
 
-		AItem item = new PolylineItem(layer, wp);
+		AItem item = new PolylineItem(layer, wp) {
+			@Override
+			public JPopupMenu createPopupMenu() {
+				JPopupMenu menu = super.createPopupMenu();
+				menu.addSeparator();
+				// Add custom menu items 
+				addStyleEdit(menu, this);
+				return menu;
+			}
+		};
 
 		return item;
 	}

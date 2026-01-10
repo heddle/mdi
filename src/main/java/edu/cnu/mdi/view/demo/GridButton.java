@@ -3,8 +3,8 @@ package edu.cnu.mdi.view.demo;
 import java.awt.Point;
 
 import edu.cnu.mdi.container.IContainer;
-import edu.cnu.mdi.graphics.toolbar.ToolActionButton;
 import edu.cnu.mdi.graphics.toolbar.ToolContext;
+import edu.cnu.mdi.graphics.toolbar.button.ToolActionButton;
 
 public class GridButton extends ToolActionButton {
 

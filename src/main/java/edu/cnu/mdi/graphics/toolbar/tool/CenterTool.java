@@ -1,4 +1,4 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.tool;
 
 import java.awt.Cursor;
 import java.awt.Point;
@@ -6,6 +6,7 @@ import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.graphics.toolbar.ToolContext;
 
 /**
  * Tool that recenters the view on the clicked canvas location.

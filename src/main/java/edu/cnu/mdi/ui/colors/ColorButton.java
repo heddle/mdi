@@ -1,4 +1,4 @@
-package edu.cnu.mdi.graphics.style.ui;
+package edu.cnu.mdi.ui.colors;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -8,11 +8,18 @@ import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
-public class AlphaColorButton extends JButton {
-
+/**
+ * A button that displays a color and allows the user to change it
+ *
+ * @author heddle
+ *
+ */
+@SuppressWarnings("serial")
+public class ColorButton extends JButton {
+	
 	private Color color;
 
-	public AlphaColorButton(String label, Color initial) {
+	public ColorButton(String label, Color initial) {
 		super(label);
 		this.color = (initial != null) ? initial : new Color(0, 0, 0, 255);
 		setFocusPainted(false);
@@ -25,7 +32,7 @@ public class AlphaColorButton extends JButton {
 	}
 
 	public void setColor(Color c) {
-		color = (c != null) ? c : color;
+		color = c;
 		updateSwatch();
 	}
 
@@ -34,10 +41,9 @@ public class AlphaColorButton extends JButton {
 	}
 
 	private void chooseColor() {
-		Color chosen = AlphaColorChooserDialog.show(this, getText(), color);
-		if (chosen != null) {
-			setColor(chosen);
-		}
+		java.awt.Window owner = javax.swing.SwingUtilities.getWindowAncestor(ColorButton.this);
+		Color chosen = ColorDialog.showDialog(owner, color, true, true);
+		setColor(chosen);
 	}
 
 	private static Image makeSwatch(Color c, int w, int h) {
@@ -59,4 +65,5 @@ public class AlphaColorButton extends JButton {
 		g2.dispose();
 		return img;
 	}
+
 }

@@ -2,6 +2,8 @@ package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.event.MouseEvent;
 
+import edu.cnu.mdi.graphics.toolbar.tool.PanTool;
+
 /**
  * Strategy interface for implementing panning behavior.
  * <p>

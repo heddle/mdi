@@ -1,38 +1,40 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.tool;
 
 import java.awt.Cursor;
 import java.awt.Point;
 
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
+import edu.cnu.mdi.graphics.toolbar.DrawingToolSupport;
+import edu.cnu.mdi.graphics.toolbar.ToolController;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 
 /**
- * Tool that creates a polygon item by vertex rubber-banding.
+ * Tool that creates a polyline item by vertex rubber-banding.
  * <p>
- * Drop-in replacement for the legacy {@code PolygonButton}.
+ * Drop-in replacement for the legacy {@code PolylineButton}.
  * </p>
  * <ul>
- * <li>Press starts {@link Rubberband.Policy#POLYGON} vertex capture.</li>
- * <li>Completion creates a polygon item in the container's annotation
+ * <li>Press starts {@link Rubberband.Policy#POLYLINE} vertex capture.</li>
+ * <li>Completion creates a polyline item in the container's annotation
  * list.</li>
  * <li>After creation: clears selection, resets to default tool, refreshes.</li>
  * </ul>
  *
  * @author heddle
  */
-public class PolygonTool extends AbstractVertexRubberbandTool {
+public class PolylineTool extends AbstractVertexRubberbandTool {
 
 	/** Tool id used by {@link ToolController} for registration/selection. */
-	public static final String ID = "polygon";
+	public static final String ID = "polyline";
 
 	/**
-	 * Create a polygon tool.
+	 * Create a polyline tool.
 	 * <p>
-	 * Polygons require at least 2 vertices (matches the legacy check).
+	 * Polylines require at least 2 vertices (matches the legacy check).
 	 * </p>
 	 */
-	public PolygonTool() {
+	public PolylineTool() {
 		super(2);
 	}
 
@@ -43,7 +45,7 @@ public class PolygonTool extends AbstractVertexRubberbandTool {
 
 	@Override
 	public String toolTip() {
-		return "Create a polygon";
+		return "Create a polyline";
 	}
 
 	@Override
@@ -53,12 +55,12 @@ public class PolygonTool extends AbstractVertexRubberbandTool {
 
 	@Override
 	protected Rubberband.Policy rubberbandPolicy() {
-		return Rubberband.Policy.POLYGON;
+		return Rubberband.Policy.POLYLINE;
 	}
 
 	@Override
 	protected AItem createItem(Layer layer, Point[] vertices) {
-		return DrawingToolSupport.createPolygonItem(layer, vertices);
+		return DrawingToolSupport.createPolylineItem(layer, vertices);
 	}
 
 	@Override

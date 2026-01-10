@@ -17,6 +17,7 @@ import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.SymbolType;
+import edu.cnu.mdi.ui.colors.ColorButton;
 
 public final class StyleEditorDialog {
 
@@ -27,8 +28,8 @@ public final class StyleEditorDialog {
 	public static Styled edit(Component parent, IStyled initial, boolean showSymbolControls) {
 		Styled seed = (initial == null) ? new Styled() : new Styled(initial);
 
-		AlphaColorButton fillBtn = new AlphaColorButton("Fill", seed.getFillColor());
-		AlphaColorButton lineBtn = new AlphaColorButton("Line", seed.getLineColor());
+		ColorButton fillBtn = new ColorButton("Fill", seed.getFillColor());
+		ColorButton lineBtn = new ColorButton("Line", seed.getLineColor());
 
 		EnumComboBox<LineStyle> lineStyleBox = new EnumComboBox<>(LineStyle.class, null, LineStyle::getName);
 

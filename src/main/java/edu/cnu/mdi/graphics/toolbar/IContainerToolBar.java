@@ -1,6 +1,9 @@
 package edu.cnu.mdi.graphics.toolbar;
 
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
+import edu.cnu.mdi.graphics.toolbar.button.ToolActionButton;
+import edu.cnu.mdi.graphics.toolbar.button.ToolToggleButton;
+import edu.cnu.mdi.graphics.toolbar.tool.ITool;
 
 /**
  * Minimal toolbar contract exposed to containers and non-UI helpers. Keeps

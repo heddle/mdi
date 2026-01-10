@@ -1,4 +1,4 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.button;
 
 import java.awt.Dimension;
 
@@ -6,6 +6,8 @@ import javax.swing.Icon;
 import javax.swing.JToggleButton;
 
 import edu.cnu.mdi.graphics.ImageManager;
+import edu.cnu.mdi.graphics.toolbar.ToolController;
+import edu.cnu.mdi.graphics.toolbar.tool.ITool;
 
 /**
  * A toolbar toggle button that activates a registered {@link ITool}.

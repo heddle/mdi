@@ -1,10 +1,11 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.tool;
 
 import java.awt.Cursor;
 import java.awt.Point;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
+import edu.cnu.mdi.graphics.toolbar.DrawingToolSupport;
 import edu.cnu.mdi.item.AItem;
 
 /**
@@ -40,17 +41,15 @@ public class LineTool extends AbstractLineRubberbandTool {
 
 	@Override
 	protected void createFromLine(IContainer owner, Point p0, Point p1) {
-		if (owner instanceof DrawingToolSupport dc) {
-			// Create the item and place it on the annotation layer.
-			AItem item = DrawingToolSupport.createLineItem(owner.getAnnotationLayer(), p0, p1);
-			if (item != null) {
-				item.setRightClickable(true);
-				item.setDraggable(true);
-				item.setRotatable(false);
-				item.setResizable(true);
-				item.setDeletable(true);
-				item.setLocked(false);
-			}
+		// Create the item and place it on the annotation layer.
+		AItem item = DrawingToolSupport.createLineItem(owner.getAnnotationLayer(), p0, p1);
+		if (item != null) {
+			item.setRightClickable(true);
+			item.setDraggable(true);
+			item.setRotatable(false);
+			item.setResizable(true);
+			item.setDeletable(true);
+			item.setLocked(false);
 		}
 	}
 }

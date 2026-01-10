@@ -1,7 +1,12 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.tool;
 
 import java.awt.Cursor;
 import java.awt.event.MouseEvent;
+
+import edu.cnu.mdi.graphics.toolbar.DirectPanBehavior;
+import edu.cnu.mdi.graphics.toolbar.PanBehavior;
+import edu.cnu.mdi.graphics.toolbar.PreviewImagePanBehavior;
+import edu.cnu.mdi.graphics.toolbar.ToolContext;
 
 /**
  * Tool that pans the active {@link edu.cnu.mdi.container.IContainer}.

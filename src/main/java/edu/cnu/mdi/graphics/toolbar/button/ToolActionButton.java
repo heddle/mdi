@@ -1,4 +1,4 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.button;
 
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -7,6 +7,8 @@ import javax.swing.Icon;
 import javax.swing.JButton;
 
 import edu.cnu.mdi.graphics.ImageManager;
+import edu.cnu.mdi.graphics.toolbar.ToolContext;
+import edu.cnu.mdi.graphics.toolbar.ToolContextAware;
 
 /**
  * A non-toggle toolbar button that performs an immediate action (one-shot).

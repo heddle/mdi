@@ -1,10 +1,11 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.button;
 
 import java.util.List;
 
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
+import edu.cnu.mdi.graphics.toolbar.ToolContext;
 import edu.cnu.mdi.item.AItem;
 
 @SuppressWarnings("serial")
@@ -16,9 +17,9 @@ public class EditStyleButton extends ToolActionButton {
 
 	@Override
 	protected void perform(ToolContext ctx) {
-		var c = ctx.container();
+		var container = ctx.container();
 
-		List<AItem> selected = c.getSelectedItems();
+		List<AItem> selected = container.getSelectedItems();
 
 		if (selected == null || selected.isEmpty()) {
 			java.awt.Toolkit.getDefaultToolkit().beep();
@@ -27,7 +28,7 @@ public class EditStyleButton extends ToolActionButton {
 
 		// seed from first selected item
 		IStyled seed = selected.get(0).getStyleSafe();
-		Styled edited = StyleEditorDialog.edit(c.getComponent(), seed, false);
+		Styled edited = StyleEditorDialog.edit(container.getComponent(), seed, false);
 		if (edited == null) {
 			return;
 		}
@@ -37,6 +38,6 @@ public class EditStyleButton extends ToolActionButton {
 			item.setDirty(true);
 		}
 
-		c.refresh();
+		container.refresh();
 	}
 }

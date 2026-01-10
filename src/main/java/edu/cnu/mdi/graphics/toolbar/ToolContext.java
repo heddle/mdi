@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.event.MouseEvent;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.graphics.toolbar.tool.ITool;
 
 /**
  * Provides shared services and state to {@link ITool} implementations.

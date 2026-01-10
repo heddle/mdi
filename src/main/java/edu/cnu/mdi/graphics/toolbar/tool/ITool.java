@@ -1,8 +1,10 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.graphics.toolbar.tool;
 
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+
+import edu.cnu.mdi.graphics.toolbar.ToolContext;
 
 /**
  * A pluggable interaction tool for a canvas owned by an {@code IContainer}.
