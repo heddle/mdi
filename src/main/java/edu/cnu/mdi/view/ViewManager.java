@@ -5,7 +5,6 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Vector;
 
 import javax.swing.JMenu;
@@ -117,24 +116,6 @@ public class ViewManager extends Vector<BaseView> {
 			runOnEdt(this::rebuildViewMenu);
 		}
 		return _viewMenu;
-	}
-
-	/**
-	 * Make a view visible/invisible. If making visible and the view is not a
-	 * {@link VirtualView}, the manager will ask the current {@link VirtualView} (if
-	 * any) to activate the corresponding view cell.
-	 *
-	 * @param view the view to show/hide (must not be {@code null}).
-	 * @param vis  {@code true} to show; {@code false} to hide.
-	 */
-	public void setVisible(BaseView view, boolean vis) {
-		Objects.requireNonNull(view, "view must not be null");
-		runOnEdt(() -> {
-			view.setVisible(vis);
-			if (vis && !(view instanceof VirtualView)) {
-				makeViewVisibleInVirtualWorld(view);
-			}
-		});
 	}
 
 	/**

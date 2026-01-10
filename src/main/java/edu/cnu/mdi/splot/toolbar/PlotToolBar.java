@@ -57,8 +57,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 
 		this.type = canvas.getPlotData().getType();
 
-		_pointerButton = new ToolBarToggleButton("images/svg/pointer.svg", "Make selections", POINTER, 3, 1,
-				"images/pointercursor.gif");
+		_pointerButton = new ToolBarToggleButton("images/svg/pointer.svg", "Make selections", POINTER, 3, 1);
 		_pointerButton.setSelected(true);
 		add(_pointerButton);
 
@@ -66,8 +65,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 		case XYEXYE:
 		case XYXY:
 		case H1D:
-			_boxZoomButton = new ToolBarToggleButton("images/box_zoom.gif", "Zoom to area", BOXZOOM, 3, 1,
-					"images/box_zoomcursor.gif");
+			_boxZoomButton = new ToolBarToggleButton("images/svg/box_zoom.svg", "Zoom to area", BOXZOOM, 3, 1);
 			add(_boxZoomButton);
 			addHGap(8);
 			add(new ToolBarButton("images/svg/reset_zoom.svg", "Include all data", WORLD));

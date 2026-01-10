@@ -663,9 +663,9 @@ public class PlotCanvas extends JComponent
 				if (getPlotData().getType() == PlotDataType.H1D) {
 
 					if (e.isShiftDown()) {
-						_rubberband = new Rubberband(this, this, Rubberband.Policy.XONLY);
-					} else {
 						_rubberband = new Rubberband(this, this, Rubberband.Policy.YONLY);
+					} else {
+						_rubberband = new Rubberband(this, this, Rubberband.Policy.XONLY);
 					}
 
 				} else {

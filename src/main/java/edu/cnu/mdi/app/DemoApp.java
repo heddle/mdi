@@ -333,12 +333,14 @@ public class DemoApp extends BaseMDIApplication {
 	 * Create the demo plot view.
 	 */
 	PlotView createPlotView() {
-		PlotView view = new PlotView(PropertySupport.TITLE, "Demo Plots", PropertySupport.PROPNAME, "PLOTVIEW",
-				PropertySupport.FRACTION, 0.7, PropertySupport.ASPECT, 1.2, PropertySupport.BACKGROUND,
-				X11Colors.getX11Color("light yellow"), PropertySupport.VISIBLE, true);
+		final PlotView view = new PlotView(PropertySupport.TITLE, "Demo Plots", PropertySupport.PROPNAME, "PLOTVIEW",
+				PropertySupport.FRACTION, 0.7, PropertySupport.ASPECT, 1.2, PropertySupport.VISIBLE, true);
+	
+
 
 		// add the examples menu
 		JMenu examplesMenu = new JMenu("Gallery");
+
 		view.getJMenuBar().add(examplesMenu);
 
 		JMenuItem gaussianItem = new JMenuItem("Gaussian Fit");
@@ -419,7 +421,6 @@ public class DemoApp extends BaseMDIApplication {
 		examplesMenu.add(threeGaussiansItem);
 		examplesMenu.add(twoHistoItem);
 		examplesMenu.add(twoLines);
-
 		return view;
 	}
 

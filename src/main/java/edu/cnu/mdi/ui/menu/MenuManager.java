@@ -20,8 +20,6 @@ public class MenuManager {
 	// file menu
 	private static JMenu _fileMenu;
 
-	// option menu
-	private static JMenu _optionMenu;
 	/**
 	 * The BaseMDIApplication being managed.
 	 */
@@ -98,18 +96,6 @@ public class MenuManager {
 			_fileMenu = getMenu(FileMenu.MENU_LABEL);
 		}
 		return _fileMenu;
-	}
-
-	/**
-	 * Get the option menu.
-	 *
-	 * @return the option menu, if it has been set.
-	 */
-	public JMenu getOptionMenu() {
-		if (_optionMenu == null) {
-			_optionMenu = getMenu(OptionMenu.menuLabel);
-		}
-		return _optionMenu;
 	}
 
 	/**

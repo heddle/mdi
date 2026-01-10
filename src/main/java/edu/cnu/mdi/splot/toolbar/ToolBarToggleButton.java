@@ -9,6 +9,7 @@ import javax.swing.JToggleButton;
 
 import edu.cnu.mdi.graphics.ImageManager;
 
+@SuppressWarnings("serial")
 public class ToolBarToggleButton extends JToggleButton {
 
 	/**
@@ -21,10 +22,6 @@ public class ToolBarToggleButton extends JToggleButton {
 	 */
 	protected Cursor customCursor;
 
-	/**
-	 * Optional file with a custom cursor.
-	 */
-	protected String customCursorImageFile;
 
 	/**
 	 * Used in conjunction with custom cursor.
@@ -54,7 +51,20 @@ public class ToolBarToggleButton extends JToggleButton {
 	 * @param actionCommand theaction command.
 	 */
 	public ToolBarToggleButton(String imageFileName, String toolTip, String actionCommand) {
-		this(imageFileName, toolTip, actionCommand, -1, -1, null);
+		this(imageFileName, toolTip, actionCommand, -1, -1);
+	}
+
+	/**
+	 * Create a toolbar toggle button
+	 *
+	 * @param container     the owner container.
+	 * @param imageFileName the name if the file holding the icon
+	 * @param toolTip       a string for a tool tip
+	 * @param actionCommand theaction command.
+	 */
+	public ToolBarToggleButton(String imageFileName, String toolTip,
+			String actionCommand, int xh, int yh) {
+		this(imageFileName, toolTip, actionCommand, xh, yh, ICONSIZE, ICONSIZE);
 	}
 
 	/**
@@ -66,26 +76,12 @@ public class ToolBarToggleButton extends JToggleButton {
 	 * @param actionCommand theaction command.
 	 */
 	public ToolBarToggleButton(String imageFileName, String toolTip, String actionCommand, int xh, int yh,
-			String cursorImageFile) {
-		this(imageFileName, toolTip, actionCommand, xh, yh, cursorImageFile, ICONSIZE, ICONSIZE);
-	}
-
-	/**
-	 * Create a toolbar toggle button
-	 *
-	 * @param container     the owner container.
-	 * @param imageFileName the name if the file holding the icon
-	 * @param toolTip       a string for a tool tip
-	 * @param actionCommand theaction command.
-	 */
-	public ToolBarToggleButton(String imageFileName, String toolTip, String actionCommand, int xh, int yh,
-			String cursorImageFile, int iw, int ih) {
+			 int iw, int ih) {
 		super();
 		preferredSize = new Dimension(iw, ih);
 
 		xhot = xh;
 		yhot = yh;
-		customCursorImageFile = cursorImageFile;
 
 		// setFocusPainted(false);
 
