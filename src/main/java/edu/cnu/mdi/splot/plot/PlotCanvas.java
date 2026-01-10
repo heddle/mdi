@@ -26,17 +26,12 @@ import javax.imageio.stream.ImageOutputStream;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.EventListenerList;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackPane;
-import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.graphics.GraphicsUtils;
-import edu.cnu.mdi.log.ILogListener;
-import edu.cnu.mdi.log.Log.Level;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.CurveChangeType;
@@ -64,8 +59,7 @@ public class PlotCanvas extends JComponent
 	public static final String YLABELTEXTCHANGE = "Y Label Text";
 	public static final String AXESFONTCHANGE = "Axes Font";
 	public static final String STATUSFONTCHANGE = "Status Font";
-	
-	
+
 	// List of plot change listeners
 	private EventListenerList _listenerList;
 
@@ -567,7 +561,7 @@ public class PlotCanvas extends JComponent
 
 			}
 		}
-		
+
 		if (_plotData.isHistoData()) {
 			List<ACurve> curves = _plotData.getVisibleCurves();
 
@@ -583,11 +577,10 @@ public class PlotCanvas extends JComponent
 			}
 		}
 	}
-	
-	
+
 	/**
 	 * Add a plot change listener
-	 * 
+	 *
 	 * @param listener the listener to add
 	 */
 	public void addPlotChangeListener(PlotChangeListener listener) {
@@ -603,7 +596,7 @@ public class PlotCanvas extends JComponent
 
 	/**
 	 * Remove a PlotChangeListener.
-	 * 
+	 *
 	 * @param listener the PlotChangeListener to remove.
 	 */
 
@@ -615,7 +608,7 @@ public class PlotCanvas extends JComponent
 
 		_listenerList.remove(PlotChangeListener.class, listener);
 	}
-	
+
 	// notify listeners of message
 	private void notifyListeners(PlotChangeType event) {
 
@@ -636,12 +629,10 @@ public class PlotCanvas extends JComponent
 			}
 		}
 	}
-	
+
 	public void shutDown() {
 		notifyListeners(PlotChangeType.SHUTDOWN);
 	}
-
-
 
 	private boolean isPointer() {
 		return (_toolbar == null) || _toolbar.isDefaultActivated();
@@ -1001,7 +992,7 @@ public class PlotCanvas extends JComponent
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 }

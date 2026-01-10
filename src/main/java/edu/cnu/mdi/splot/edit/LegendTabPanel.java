@@ -51,24 +51,43 @@ public class LegendTabPanel extends JPanel {
 		_font = new FontSpecPanel("Legend font", _params.getTextFont());
 
 		JPanel colors = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-		_fill = new ColorLabel((src, col) -> {}, _params.getTextBackground(), getFont(), "Fill");
-		_text = new ColorLabel((src, col) -> {}, _params.getTextForeground(), getFont(), "Text");
-		_stroke = new ColorLabel((src, col) -> {}, _params.getTextBorderColor(), getFont(), "Border");
+		_fill = new ColorLabel((src, col) -> {
+		}, _params.getTextBackground(), getFont(), "Fill");
+		_text = new ColorLabel((src, col) -> {
+		}, _params.getTextForeground(), getFont(), "Text");
+		_stroke = new ColorLabel((src, col) -> {
+		}, _params.getTextBorderColor(), getFont(), "Border");
 		colors.add(_fill);
 		colors.add(_text);
 		colors.add(_stroke);
 
 		int row = 0;
 
-		c.gridx = 0; c.gridy = row++; c.gridwidth = 2; add(_draw, c);
-		c.gridx = 0; c.gridy = row++; c.gridwidth = 2; add(_border, c);
+		c.gridx = 0;
+		c.gridy = row++;
+		c.gridwidth = 2;
+		add(_draw, c);
+		c.gridx = 0;
+		c.gridy = row++;
+		c.gridwidth = 2;
+		add(_border, c);
 
 		c.gridwidth = 1;
-		c.gridx = 0; c.gridy = row; add(new javax.swing.JLabel("Legend line length"), c);
-		c.gridx = 1; c.gridy = row++; add(_lineLen, c);
+		c.gridx = 0;
+		c.gridy = row;
+		add(new javax.swing.JLabel("Legend line length"), c);
+		c.gridx = 1;
+		c.gridy = row++;
+		add(_lineLen, c);
 
-		c.gridx = 0; c.gridy = row++; c.gridwidth = 2; add(_font, c);
-		c.gridx = 0; c.gridy = row++; c.gridwidth = 2; add(colors, c);
+		c.gridx = 0;
+		c.gridy = row++;
+		c.gridwidth = 2;
+		add(_font, c);
+		c.gridx = 0;
+		c.gridy = row++;
+		c.gridwidth = 2;
+		add(colors, c);
 	}
 
 	public void apply() {

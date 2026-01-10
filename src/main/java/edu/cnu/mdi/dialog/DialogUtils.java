@@ -14,9 +14,8 @@ import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.log.Log;
-
+import edu.cnu.mdi.swing.WindowPlacement;
 
 public class DialogUtils {
 
@@ -69,7 +68,7 @@ public class DialogUtils {
 	 */
 
 	public static void centerDialog(JDialog dialog) {
-		GraphicsUtils.centerComponent(dialog);
+		WindowPlacement.centerComponent(dialog);
 	}
 
 	/**

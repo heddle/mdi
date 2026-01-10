@@ -171,7 +171,6 @@ public class FitEditorPanel extends JPanel {
 		};
 	}
 
-
 	/**
 	 * Reconfigure fit widgets based on fit type
 	 *
@@ -243,7 +242,8 @@ public class FitEditorPanel extends JPanel {
 	/**
 	 * FitEditorPanel Set the choices
 	 *
-	 * @param curve the curve whose fit-related settings should be reflected in the UI
+	 * @param curve the curve whose fit-related settings should be reflected in the
+	 *              UI
 	 */
 	public void setFit(ACurve curve) {
 		if (curve == null) {

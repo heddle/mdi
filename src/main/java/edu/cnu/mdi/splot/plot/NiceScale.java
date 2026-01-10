@@ -6,8 +6,8 @@ import java.util.List;
 /**
  * Utility for generating "nice" axis bounds and tick spacing.
  * <p>
- * Produces a tick spacing from the set {1, 2, 5}×10^n and expands the
- * requested min/max to "nice" endpoints aligned to that spacing.
+ * Produces a tick spacing from the set {1, 2, 5}×10^n and expands the requested
+ * min/max to "nice" endpoints aligned to that spacing.
  * </p>
  */
 public class NiceScale {
@@ -21,7 +21,8 @@ public class NiceScale {
 	private final boolean _includeZero;
 
 	/**
-	 * Convenience constructor: defaults to 10 ticks including ends, not forced to include zero.
+	 * Convenience constructor: defaults to 10 ticks including ends, not forced to
+	 * include zero.
 	 *
 	 * @param min minimum data value
 	 * @param max maximum data value
@@ -143,8 +144,8 @@ public class NiceScale {
 	}
 
 	/**
-	 * Sets the minimum and maximum data points for the axis.
-	 * Recomputes tick spacing and nice endpoints.
+	 * Sets the minimum and maximum data points for the axis. Recomputes tick
+	 * spacing and nice endpoints.
 	 *
 	 * @param min minimum data value
 	 * @param max maximum data value
@@ -172,7 +173,8 @@ public class NiceScale {
 	 * @return array of tick values (never null)
 	 */
 	public double[] getTicks() {
-		if (!Double.isFinite(_niceMin) || !Double.isFinite(_niceMax) || !Double.isFinite(_tickSpacing) || _tickSpacing <= 0) {
+		if (!Double.isFinite(_niceMin) || !Double.isFinite(_niceMax) || !Double.isFinite(_tickSpacing)
+				|| _tickSpacing <= 0) {
 			return new double[0];
 		}
 
@@ -208,8 +210,8 @@ public class NiceScale {
 	}
 
 	/**
-	 * Returns a "nice" number approximately equal to range.
-	 * Rounds the number if round = true; takes ceiling if round = false.
+	 * Returns a "nice" number approximately equal to range. Rounds the number if
+	 * round = true; takes ceiling if round = false.
 	 *
 	 * @param range the data range
 	 * @param round whether to round the result
@@ -227,28 +229,21 @@ public class NiceScale {
 		if (round) {
 			if (fraction < 1.5) {
 				niceFraction = 1;
-			}
-			else if (fraction < 3) {
+			} else if (fraction < 3) {
 				niceFraction = 2;
-			}
-			else if (fraction < 7) {
+			} else if (fraction < 7) {
 				niceFraction = 5;
-			}
-			else {
+			} else {
 				niceFraction = 10;
 			}
-		}
-		else {
+		} else {
 			if (fraction <= 1) {
 				niceFraction = 1;
-			}
-			else if (fraction <= 2) {
+			} else if (fraction <= 2) {
 				niceFraction = 2;
-			}
-			else if (fraction <= 5) {
+			} else if (fraction <= 5) {
 				niceFraction = 5;
-			}
-			else {
+			} else {
 				niceFraction = 10;
 			}
 		}

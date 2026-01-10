@@ -10,7 +10,6 @@ import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
 
-
 public class SymbolDraw {
 
 	/**
@@ -125,10 +124,10 @@ public class SymbolDraw {
 	 */
 	public static void drawStar(Graphics g, int x, int y, int s2, Color lc) {
 		g.setColor(lc);
-		g.drawLine(x-s2, y, x+s2, y);
-		g.drawLine(x, y-s2, x, y+s2);
-		g.drawLine(x-s2, y-s2, x+s2, y+s2);
-		g.drawLine(x-s2, y+s2, x+s2, y-s2);
+		g.drawLine(x - s2, y, x + s2, y);
+		g.drawLine(x, y - s2, x, y + s2);
+		g.drawLine(x - s2, y - s2, x + s2, y + s2);
+		g.drawLine(x - s2, y + s2, x + s2, y - s2);
 	}
 
 	/**

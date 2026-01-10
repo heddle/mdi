@@ -136,7 +136,7 @@ public class Support3D {
 		GL2 gl = drawable.getGL().getGL2();
 
 		// Draw the marker (reuse your drawPoint method)
-		//drawPoint(drawable, x, y, z, markerColor, markerSize, circular);
+		// drawPoint(drawable, x, y, z, markerColor, markerSize, circular);
 
 		// Retrieve the current matrices and viewport to project the marker position.
 		int[] viewport = new int[4];
@@ -1183,27 +1183,28 @@ public class Support3D {
 	 * Draw and fill a spherical polygon
 	 *
 	 * @param drawable  the OpenGL drawable
-      * @param radius the sphere radius
+	 * @param radius    the sphere radius
 	 * @param coords    the vertices as [theta phi, theta phi, …] in radians
-	 * @param lineColor    the line color
-	 * @param fillColor    the fill color
+	 * @param lineColor the line color
+	 * @param fillColor the fill color
 	 * @param lineWidth the line width in pixels
 	 */
-	public static void drawSphericalPolygon(GLAutoDrawable drawable, float radius, float[] coords, Color lineColor, Color fillColor, float lineWidth) {
-	    GL2 gl = drawable.getGL().getGL2();
+	public static void drawSphericalPolygon(GLAutoDrawable drawable, float radius, float[] coords, Color lineColor,
+			Color fillColor, float lineWidth) {
+		GL2 gl = drawable.getGL().getGL2();
 
-	    int numPoints = coords.length / 2;
-	    float[] cartesianCoords = new float[numPoints * 3];
+		int numPoints = coords.length / 2;
+		float[] cartesianCoords = new float[numPoints * 3];
 
-	    // Convert spherical to Cartesian coordinates
-	    for (int i = 0; i < numPoints; i++) {
-	        float theta = coords[2 * i];
-	        float phi = coords[2 * i + 1];
+		// Convert spherical to Cartesian coordinates
+		for (int i = 0; i < numPoints; i++) {
+			float theta = coords[2 * i];
+			float phi = coords[2 * i + 1];
 
-	        cartesianCoords[3 * i] = radius * (float) (Math.sin(theta) * Math.cos(phi));
-	        cartesianCoords[3 * i + 1] = radius * (float) (Math.sin(theta) * Math.sin(phi));
-	        cartesianCoords[3 * i + 2] = radius * (float) Math.cos(theta);
-	    }
+			cartesianCoords[3 * i] = radius * (float) (Math.sin(theta) * Math.cos(phi));
+			cartesianCoords[3 * i + 1] = radius * (float) (Math.sin(theta) * Math.sin(phi));
+			cartesianCoords[3 * i + 2] = radius * (float) Math.cos(theta);
+		}
 
 		// Fill the polygon
 		if (fillColor != null) {
@@ -1226,7 +1227,7 @@ public class Support3D {
 			gl.glEnd();
 		}
 
-	    gl.glLineWidth(1.0f); // Reset line width to default
+		gl.glLineWidth(1.0f); // Reset line width to default
 	}
 
 	/**

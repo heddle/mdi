@@ -14,7 +14,7 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 
 @SuppressWarnings("serial")
 public class Histo extends AExample {
-	
+
 	public Histo(boolean headless) {
 		super(headless);
 	}
@@ -45,11 +45,11 @@ public class Histo extends AExample {
 		int n = 10000;
 		double mu = 50.0;
 		double sig = 10.0;
-	    NormalDistribution normDev = new NormalDistribution(mu, sig);
+		NormalDistribution normDev = new NormalDistribution(mu, sig);
 
-	    //since this is the EDT thread, we can use add directly. If
-	    //it was a background thread, we would use enqueue
-	    HistoCurve hc = (HistoCurve) canvas.getPlotData().getCurve(0);
+		// since this is the EDT thread, we can use add directly. If
+		// it was a background thread, we would use enqueue
+		HistoCurve hc = (HistoCurve) canvas.getPlotData().getCurve(0);
 		for (int i = 0; i < n; i++) {
 			double val = normDev.sample();
 			hc.add(val);
@@ -58,12 +58,12 @@ public class Histo extends AExample {
 
 	@Override
 	public void setParameters() {
-	    HistoCurve hc = (HistoCurve) canvas.getPlotData().getCurve(0);
-	    IStyled style = hc.getStyle();
+		HistoCurve hc = (HistoCurve) canvas.getPlotData().getCurve(0);
+		IStyled style = hc.getStyle();
 		style.setFillColor(new Color(196, 196, 196, 64));
 		style.setBorderColor(Color.black);
 
-		//basic example, not fitting
+		// basic example, not fitting
 		hc.setCurveMethod(CurveDrawingMethod.GAUSSIAN);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6);

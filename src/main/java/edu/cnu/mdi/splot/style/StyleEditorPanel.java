@@ -72,8 +72,7 @@ public class StyleEditorPanel extends JPanel {
 			_borderColor = new ColorLabel(null, Color.black, _font, "Symbol Border");
 			symPan.add(_borderColor);
 
-		}
-		else {
+		} else {
 			symPan = flowPanel(FlowLayout.LEFT);
 			_symbolColor = new ColorLabel(null, Color.black, _font, "Histogram Fill");
 			symPan.add(_symbolColor);

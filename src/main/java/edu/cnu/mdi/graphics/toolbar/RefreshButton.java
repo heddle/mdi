@@ -6,14 +6,14 @@ package edu.cnu.mdi.graphics.toolbar;
 @SuppressWarnings("serial")
 public class RefreshButton extends ToolActionButton {
 
-    public RefreshButton(ToolContext ctx) {
-        super(ctx, "images/svg/refresh.svg", "Refresh the view");
-    }
+	public RefreshButton(ToolContext ctx) {
+		super(ctx, "images/svg/refresh.svg", "Refresh the view");
+	}
 
-    @Override
-    protected void perform(ToolContext ctx) {
-        if (ctx.container() != null) {
-            ctx.container().refresh();
-        }
-    }
+	@Override
+	protected void perform(ToolContext ctx) {
+		if (ctx.container() != null) {
+			ctx.container().refresh();
+		}
+	}
 }

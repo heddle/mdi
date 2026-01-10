@@ -68,8 +68,7 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 				}
 
 				mitem.addActionListener(this);
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 			}
 		}
 
@@ -84,8 +83,7 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 				cb = new JCheckBoxMenuItem(label, selected);
 				menu.add(cb);
 				cb.addActionListener(this);
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 			}
 		}
 
@@ -105,8 +103,7 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 			DialogUtils.centerDialog(cd);
 			cd.selectFirstCurve();
 			cd.setVisible(true);
-		}
-		else if (source == _showExtraCB) {
+		} else if (source == _showExtraCB) {
 			_plotCanvas.getParameters().setExtraDrawing(_showExtraCB.isSelected());
 			_plotCanvas.repaint();
 		}

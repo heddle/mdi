@@ -7,7 +7,6 @@ import java.util.List;
 
 import edu.cnu.mdi.container.IContainer;
 
-
 public interface IFeedbackProvider extends EventListener {
 
 	/**

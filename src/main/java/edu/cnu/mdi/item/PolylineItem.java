@@ -6,14 +6,13 @@ import java.awt.geom.Point2D;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 
-
 public class PolylineItem extends PathBasedItem {
 
 	/**
 	 * Create a world polyline item
 	 *
-	 * @param itemList  the list this item is on.
-	 * @param points the points of the polygon
+	 * @param itemList the list this item is on.
+	 * @param points   the points of the polygon
 	 */
 	public PolylineItem(Layer itemList, Point2D.Double points[]) {
 		super(itemList);

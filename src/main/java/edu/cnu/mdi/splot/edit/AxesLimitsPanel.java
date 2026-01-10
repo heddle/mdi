@@ -10,12 +10,13 @@ import edu.cnu.mdi.splot.plot.PlotCanvas;
 @SuppressWarnings("serial")
 public class AxesLimitsPanel extends JPanel {
 
-	//the two panels for t x and y axes
-	private OneAxisLimitsPanel  xPanel;
-	private OneAxisLimitsPanel  yPanel;
+	// the two panels for t x and y axes
+	private OneAxisLimitsPanel xPanel;
+	private OneAxisLimitsPanel yPanel;
 
 	/**
 	 * Create the panel for editing the axes limits
+	 * 
 	 * @param canvas
 	 */
 	public AxesLimitsPanel(PlotCanvas canvas) {

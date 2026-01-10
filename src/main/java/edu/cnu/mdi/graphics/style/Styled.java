@@ -2,7 +2,6 @@ package edu.cnu.mdi.graphics.style;
 
 import java.awt.Color;
 
-
 /**
  * An adapter for the IStyled interface.
  *
@@ -81,7 +80,6 @@ public class Styled implements IStyled {
 		_symbolSize = other.getSymbolSize();
 	}
 
-
 	/**
 	 * Create a Styled object
 	 *
@@ -132,8 +130,7 @@ public class Styled implements IStyled {
 		_fillColor = fillColor;
 		if (darkerLineColor) {
 			_borderColor = fillColor.darker();
-		}
-		else {
+		} else {
 			_borderColor = fillColor.brighter();
 		}
 

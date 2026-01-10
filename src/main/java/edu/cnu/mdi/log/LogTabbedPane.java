@@ -23,7 +23,7 @@ public class LogTabbedPane extends JTabbedPane implements ChangeListener {
 	private TextPaneScrollPane config = new TextPaneScrollPane();
 	private TextPaneScrollPane exception = new TextPaneScrollPane();
 
-	//auto new line?
+	// auto new line?
 	private boolean _autoNewline;
 
 	public LogTabbedPane() {

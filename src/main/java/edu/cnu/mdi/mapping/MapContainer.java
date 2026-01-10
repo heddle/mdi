@@ -17,10 +17,9 @@ public class MapContainer extends BaseContainer {
 		setStandardPanning(false);
 	}
 
-
 	/**
 	 * {@inheritDoc}
-     */
+	 */
 	@Override
 	public void pan(int dh, int dv) {
 
@@ -50,19 +49,19 @@ public class MapContainer extends BaseContainer {
 
 		switch (proj) {
 		case MERCATOR:
-			((MercatorProjection)mp).setCentralLongitude(ll.x);
+			((MercatorProjection) mp).setCentralLongitude(ll.x);
 			break;
 
 		case MOLLWEIDE:
-			((MollweideProjection)mp).setCentralLongitude(ll.x);
+			((MollweideProjection) mp).setCentralLongitude(ll.x);
 			break;
 
 		case ORTHOGRAPHIC:
-			((OrthographicProjection)mp).setCenter(ll.x, ll.y);
+			((OrthographicProjection) mp).setCenter(ll.x, ll.y);
 			break;
 
 		case LAMBERT_EQUAL_AREA:
-			((LambertEqualAreaProjection)mp).setCenter(ll.x, ll.y);
+			((LambertEqualAreaProjection) mp).setCenter(ll.x, ll.y);
 			break;
 		}
 
@@ -74,6 +73,7 @@ public class MapContainer extends BaseContainer {
 
 	/**
 	 * Convert local point to lat/lon point
+	 * 
 	 * @param pp the local point
 	 * @param ll the lat/lon point
 	 */
@@ -85,6 +85,7 @@ public class MapContainer extends BaseContainer {
 
 	/**
 	 * Convert world point to lat/lon point
+	 * 
 	 * @param ll the lat/lon point
 	 * @param wp the world point
 	 */

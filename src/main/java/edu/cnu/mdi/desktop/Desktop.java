@@ -72,7 +72,7 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 
 	private boolean mouseReleased = false;
 
-	//hack related to internal frame drag bug
+	// hack related to internal frame drag bug
 	private static Ping _ping;
 	private JInternalFrame _dragFrame;
 	private long _lastDragTime = Long.MAX_VALUE;
@@ -112,7 +112,7 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 		}
 
 		_ping = new Ping(1000);
-		//use the ping to deal with hover
+		// use the ping to deal with hover
 		IPing pingListener = new IPing() {
 
 			@Override
@@ -123,7 +123,6 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 		};
 		_ping.addPingListener(pingListener);
 	}
-
 
 	private void heartbeat() {
 		if (_dragFrame == null) {
@@ -148,7 +147,6 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 
 		}
 	}
-
 
 	/**
 	 * Create a desktop pane.
@@ -190,7 +188,7 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 		}
 
 		if (_afterDraw != null) {
-			_afterDraw.draw((Graphics2D)g, null);
+			_afterDraw.draw((Graphics2D) g, null);
 		}
 	}
 
@@ -236,7 +234,7 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 		}
 
 		return super.add(comp, index);
-    }
+	}
 
 	/**
 	 * Gets the top internal frame. Surprising that we had to write this.
@@ -263,7 +261,6 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 		}
 		return frames[minIndex];
 	}
-
 
 	/**
 	 * Load the configuration file that preserves the an arrangement of views.
@@ -385,7 +382,6 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 		}
 	}
 
-
 	@Override
 	public void mouseDragged(MouseEvent e) {
 
@@ -415,9 +411,9 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		mouseReleased = true;
-        _dragFrame = null;
-        _lastDragTime = Long.MAX_VALUE;
-     }
+		_dragFrame = null;
+		_lastDragTime = Long.MAX_VALUE;
+	}
 
 	@Override
 	public void mouseEntered(MouseEvent e) {
@@ -426,6 +422,5 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 	@Override
 	public void mouseExited(MouseEvent e) {
 	}
-
 
 }

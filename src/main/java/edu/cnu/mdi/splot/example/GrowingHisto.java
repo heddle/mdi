@@ -10,21 +10,20 @@ import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
-import edu.cnu.mdi.splot.pdata.StripChartCurve;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotChangeType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
 @SuppressWarnings("serial")
 public class GrowingHisto extends AExample {
-	
+
 	private static Thread sourceThread;
-	
+
 	public GrowingHisto(boolean headless) {
 		super(headless);
 		double mu = 50.0;
 		double sig = 10.0;
-	    NormalDistribution normDev = new NormalDistribution(mu, sig);
+		NormalDistribution normDev = new NormalDistribution(mu, sig);
 		addData(getPlotCanvas(), 100000, 100, normDev);
 	}
 
@@ -33,7 +32,6 @@ public class GrowingHisto extends AExample {
 		HistoData h1 = new HistoData("Histo 1", 0.0, 100.0, 50);
 		return new PlotData(h1);
 	}
-
 
 	@Override
 	protected String getXAxisLabel() {
@@ -52,27 +50,28 @@ public class GrowingHisto extends AExample {
 
 	@Override
 	public void fillData() {
-		//no op, data added by background tread
+		// no op, data added by background tread
 	}
 
 	@Override
 	public void setParameters() {
-	    HistoCurve hc = (HistoCurve) canvas.getPlotData().getCurve(0);
-	    IStyled style = hc.getStyle();
+		HistoCurve hc = (HistoCurve) canvas.getPlotData().getCurve(0);
+		IStyled style = hc.getStyle();
 		style.setFillColor(new Color(196, 196, 196, 64));
 		style.setBorderColor(Color.black);
 
-		//basic example, not fitting
+		// basic example, not fitting
 		hc.setCurveMethod(CurveDrawingMethod.GAUSSIAN);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6);
 		params.setNumDecimalY(0);
 	}
 
-	private static void addData(final PlotCanvas canvas, final long maxCount, final int increment, NormalDistribution normDev) {
-	    final HistoCurve hc = (HistoCurve) canvas.getPlotData().getCurve(0);
+	private static void addData(final PlotCanvas canvas, final long maxCount, final int increment,
+			NormalDistribution normDev) {
+		final HistoCurve hc = (HistoCurve) canvas.getPlotData().getCurve(0);
 
-	    final double[] x = new double[increment];
+		final double[] x = new double[increment];
 
 		Runnable runner = new Runnable() {
 			@Override
@@ -97,7 +96,7 @@ public class GrowingHisto extends AExample {
 		sourceThread.start();
 
 	}
-	
+
 	@Override
 	public void plotChanged(PlotChangeType type) {
 		switch (type) {
@@ -109,7 +108,6 @@ public class GrowingHisto extends AExample {
 		}
 	}
 
-
 	public static void main(String arg[]) {
 
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
@@ -119,8 +117,6 @@ public class GrowingHisto extends AExample {
 				example.setVisible(true);
 			}
 		});
-
-
 
 	}
 }

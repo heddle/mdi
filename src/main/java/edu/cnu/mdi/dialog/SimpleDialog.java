@@ -48,7 +48,7 @@ public class SimpleDialog extends JDialog implements ActionListener {
 	// convenient access to south button panel (if exists)
 	protected JPanel buttonPanel;
 
-	//optional user supplied object to cache
+	// optional user supplied object to cache
 	protected Object _userObject;
 
 //	super("Plot Preferences", plotCanvas, true, APPLY, CLOSE)
@@ -67,10 +67,10 @@ public class SimpleDialog extends JDialog implements ActionListener {
 	/**
 	 * Create a SimpleDialog
 	 *
-	 * @param title    the title of the dialog
+	 * @param title      the title of the dialog
 	 * @param userObject an optional user object to cache
-	 * @param modal    if <code>true</code> the dialog is modal
-	 * @param closeout a set of closeout labels
+	 * @param modal      if <code>true</code> the dialog is modal
+	 * @param closeout   a set of closeout labels
 	 */
 	public SimpleDialog(String title, Object userObject, boolean modal, String... closeout) {
 		super();

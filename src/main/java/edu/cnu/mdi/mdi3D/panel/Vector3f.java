@@ -42,32 +42,30 @@ public class Vector3f {
 
 	/**
 	 * Get the length of the vector
+	 * 
 	 * @return the length
 	 */
-    public float length() {
-        return (float) Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
-    }
-    public float dot(Vector3f other) {
-        return this.x * other.x + this.y * other.y + this.z * other.z;
-    }
+	public float length() {
+		return (float) Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+	}
 
-    public Vector3f cross(Vector3f other) {
-        return new Vector3f(
-            this.y * other.z - this.z * other.y,
-            this.z * other.x - this.x * other.z,
-            this.x * other.y - this.y * other.x
-        );
-    }
+	public float dot(Vector3f other) {
+		return this.x * other.x + this.y * other.y + this.z * other.z;
+	}
 
-    public void normalize() {
-        float length = length();
-        if (length != 0.0f) {
-            this.x /= length;
-            this.y /= length;
-            this.z /= length;
-        }
-    }
+	public Vector3f cross(Vector3f other) {
+		return new Vector3f(this.y * other.z - this.z * other.y, this.z * other.x - this.x * other.z,
+				this.x * other.y - this.y * other.x);
+	}
 
+	public void normalize() {
+		float length = length();
+		if (length != 0.0f) {
+			this.x /= length;
+			this.y /= length;
+			this.z /= length;
+		}
+	}
 
 	/**
 	 * Obtain a vector that is the mispoint of two other vectors

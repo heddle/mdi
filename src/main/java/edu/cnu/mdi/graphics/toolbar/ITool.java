@@ -50,7 +50,6 @@ public interface ITool {
 	 */
 	String toolTip();
 
-
 	/**
 	 * Called when this tool becomes active.
 	 * <p>
@@ -169,7 +168,7 @@ public interface ITool {
 	 * @param e   the key event (never null).
 	 */
 	default void keyPressed(ToolContext ctx, KeyEvent e) {
-        // no-op
-    }
+		// no-op
+	}
 
 }

@@ -75,13 +75,10 @@ public class ColorLabel extends JComponent {
 	 * @param prompt              the prompt string.
 	 * @param desiredWidth        if positive the desired total width.
 	 */
-	public ColorLabel(IColorChangeListener colorChangeListener, 
-			Color intitialColor, 
-			String prompt, 
-			int desiredWidth) {
+	public ColorLabel(IColorChangeListener colorChangeListener, Color intitialColor, String prompt, int desiredWidth) {
 		this(colorChangeListener, intitialColor, null, prompt, desiredWidth);
 	}
-	
+
 	/**
 	 * Create a clickable color label.
 	 *
@@ -89,13 +86,9 @@ public class ColorLabel extends JComponent {
 	 * @param intitialColor       the initial color.
 	 * @param prompt              the prompt string.
 	 */
-	public ColorLabel(IColorChangeListener colorChangeListener, 
-			Color intitialColor, 
-			Font font,
-			String prompt) {
+	public ColorLabel(IColorChangeListener colorChangeListener, Color intitialColor, Font font, String prompt) {
 		this(colorChangeListener, intitialColor, font, prompt, 200);
 	}
-
 
 	/**
 	 * Create a clickable color label.
@@ -105,24 +98,21 @@ public class ColorLabel extends JComponent {
 	 * @param prompt              the prompt string.
 	 * @param desiredWidth        if positive the desired total width.
 	 */
-	public ColorLabel(IColorChangeListener colorChangeListener, 
-			Color intitialColor, 
-			Font font,
-			String prompt, 
+	public ColorLabel(IColorChangeListener colorChangeListener, Color intitialColor, Font font, String prompt,
 			int desiredWidth) {
 		_colorChangeListener = colorChangeListener;
 		_currentColor = intitialColor;
 		_prompt = prompt;
 		_desiredWidth = desiredWidth;
-		
+
 		setFont(font != null ? font : Fonts.plainFontDelta(0));
 
 		MouseAdapter ma = new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
-			    java.awt.Window owner = javax.swing.SwingUtilities.getWindowAncestor(ColorLabel.this);
+				java.awt.Window owner = javax.swing.SwingUtilities.getWindowAncestor(ColorLabel.this);
 
-				ColorDialog cd = new ColorDialog(owner,_currentColor, true, true);
+				ColorDialog cd = new ColorDialog(owner, _currentColor, true, true);
 				cd.setVisible(true);
 
 				if (cd.answer == DialogUtils.OK_RESPONSE) {
@@ -171,7 +161,7 @@ public class ColorLabel extends JComponent {
 		}
 		return _size;
 	}
-	
+
 	/**
 	 * Set the color change listener.
 	 *
@@ -189,7 +179,7 @@ public class ColorLabel extends JComponent {
 	public Color getColor() {
 		return _currentColor;
 	}
-	
+
 	/**
 	 * Set the new color.
 	 *

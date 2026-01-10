@@ -49,7 +49,7 @@ public class PointItem extends AItem {
 	 * Constructor for a basic point item.
 	 *
 	 * @param itemList the list this item is on.
-	 * @param icon  an icon to draw at the point
+	 * @param icon     an icon to draw at the point
 	 */
 	public PointItem(Layer itemList, ImageIcon icon) {
 		super(itemList);
@@ -60,7 +60,7 @@ public class PointItem extends AItem {
 	/**
 	 * Constructor for a basic point item.
 	 *
-	 * @param itemList    the list this item is on.
+	 * @param itemList the list this item is on.
 	 * @param location the location for the point.
 	 */
 	public PointItem(Layer itemList, Point2D.Double location) {
@@ -286,18 +286,18 @@ public class PointItem extends AItem {
 
 	@Override
 	public void translateWorld(double dx, double dy) {
-	    if (_focus == null) {
-	        _focus = new Point2D.Double(Double.NaN, Double.NaN);
-	    }
-	    // If not yet placed, treat as no-op.
-	    if (Double.isNaN(_focus.x) || Double.isNaN(_focus.y) || (Math.abs(dx) < 1.0e-12 && Math.abs(dy) < 1.0e-12)) {
-	        return;
-	    }
-	    _focus.x += dx;
-	    _focus.y += dy;
-	    // PointItem doesn't maintain a Path2D, but it does participate in selection,
-	    // caching, and redraw logic. Mark dirty so any cached draw info is invalidated.
-	    setDirty(true);
+		if (_focus == null) {
+			_focus = new Point2D.Double(Double.NaN, Double.NaN);
+		}
+		// If not yet placed, treat as no-op.
+		if (Double.isNaN(_focus.x) || Double.isNaN(_focus.y) || (Math.abs(dx) < 1.0e-12 && Math.abs(dy) < 1.0e-12)) {
+			return;
+		}
+		_focus.x += dx;
+		_focus.y += dy;
+		// PointItem doesn't maintain a Path2D, but it does participate in selection,
+		// caching, and redraw logic. Mark dirty so any cached draw info is invalidated.
+		setDirty(true);
 	}
 
 }

@@ -11,6 +11,6 @@ package edu.cnu.mdi.splot.pdata;
  *         <li><code>STRIP</code> xy strip chart
  */
 public enum PlotDataType {
-    XYXY, XYEXYE, H1D, STRIP;
+	XYXY, XYEXYE, H1D, STRIP;
 
 }

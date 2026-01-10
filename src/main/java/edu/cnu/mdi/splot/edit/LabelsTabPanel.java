@@ -46,24 +46,42 @@ public class LabelsTabPanel extends JPanel {
 
 		int row = 0;
 
-		c.gridx = 0; c.gridy = row; add(new javax.swing.JLabel("Plot title"), c);
-		c.gridx = 1; c.gridy = row++; add(_titleTF, c);
+		c.gridx = 0;
+		c.gridy = row;
+		add(new javax.swing.JLabel("Plot title"), c);
+		c.gridx = 1;
+		c.gridy = row++;
+		add(_titleTF, c);
 
-		c.gridx = 0; c.gridy = row; add(new javax.swing.JLabel("X axis label"), c);
-		c.gridx = 1; c.gridy = row++; add(_xLabelTF, c);
+		c.gridx = 0;
+		c.gridy = row;
+		add(new javax.swing.JLabel("X axis label"), c);
+		c.gridx = 1;
+		c.gridy = row++;
+		add(_xLabelTF, c);
 
-		c.gridx = 0; c.gridy = row; add(new javax.swing.JLabel("Y axis label"), c);
-		c.gridx = 1; c.gridy = row++; add(_yLabelTF, c);
+		c.gridx = 0;
+		c.gridy = row;
+		add(new javax.swing.JLabel("Y axis label"), c);
+		c.gridx = 1;
+		c.gridy = row++;
+		add(_yLabelTF, c);
 
-		c.gridx = 0; c.gridy = row; c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = row;
+		c.gridwidth = 2;
 		_titleFont = new FontSpecPanel("Title font", _params.getTitleFont());
-		add(_titleFont, c); row++;
+		add(_titleFont, c);
+		row++;
 
-		c.gridx = 0; c.gridy = row;
+		c.gridx = 0;
+		c.gridy = row;
 		_axesFont = new FontSpecPanel("Axes label font", _params.getAxesFont());
-		add(_axesFont, c); row++;
+		add(_axesFont, c);
+		row++;
 
-		c.gridx = 0; c.gridy = row;
+		c.gridx = 0;
+		c.gridy = row;
 		_statusFont = new FontSpecPanel("Status font", _params.getStatusFont());
 		add(_statusFont, c);
 	}

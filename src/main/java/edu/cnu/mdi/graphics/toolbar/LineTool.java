@@ -12,45 +12,45 @@ import edu.cnu.mdi.item.AItem;
  */
 public class LineTool extends AbstractLineRubberbandTool {
 
-    public static final String ID = "line";
+	public static final String ID = "line";
 
-    public LineTool() {
-        super(2); // legacy MIN_DELTA_PIXELS
-    }
+	public LineTool() {
+		super(2); // legacy MIN_DELTA_PIXELS
+	}
 
-    @Override
-    public String id() {
-        return ID;
-    }
+	@Override
+	public String id() {
+		return ID;
+	}
 
-    @Override
-    public String toolTip() {
-        return "Create a line";
-    }
+	@Override
+	public String toolTip() {
+		return "Create a line";
+	}
 
-    @Override
-    protected Rubberband.Policy rubberbandPolicy() {
-        return Rubberband.Policy.LINE;
-    }
+	@Override
+	protected Rubberband.Policy rubberbandPolicy() {
+		return Rubberband.Policy.LINE;
+	}
 
-    @Override
-    protected Cursor activeCursor() {
-        return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
-    }
+	@Override
+	protected Cursor activeCursor() {
+		return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
+	}
 
-    @Override
-    protected void createFromLine(IContainer owner, Point p0, Point p1) {
-        if (owner instanceof DrawingToolSupport dc) {
-            // Create the item and place it on the annotation layer.
-            AItem item = DrawingToolSupport.createLineItem(owner.getAnnotationLayer(), p0, p1);
-            if (item != null) {
-                item.setRightClickable(true);
-                item.setDraggable(true);
-                item.setRotatable(false);
-                item.setResizable(true);
-                item.setDeletable(true);
-                item.setLocked(false);
-            }
-        }
-    }
+	@Override
+	protected void createFromLine(IContainer owner, Point p0, Point p1) {
+		if (owner instanceof DrawingToolSupport dc) {
+			// Create the item and place it on the annotation layer.
+			AItem item = DrawingToolSupport.createLineItem(owner.getAnnotationLayer(), p0, p1);
+			if (item != null) {
+				item.setRightClickable(true);
+				item.setDraggable(true);
+				item.setRotatable(false);
+				item.setResizable(true);
+				item.setDeletable(true);
+				item.setLocked(false);
+			}
+		}
+	}
 }

@@ -9,9 +9,6 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
 import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.Point;
 import java.awt.Polygon;
@@ -111,7 +108,6 @@ public class GraphicsUtils {
 	 */
 	final public static BasicStroke dash2_2t = new BasicStroke(4.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
 			DASH, DASH[0]);
-
 
 	/**
 	 * A stroke used for common dashed lines.
@@ -240,24 +236,17 @@ public class GraphicsUtils {
 		return stroke;
 	}
 
-
 	/**
 	 * Copy a stroke but change the width
+	 * 
 	 * @param original
 	 * @param newWidth
 	 * @return
 	 */
 	public static BasicStroke copyWithNewWidth(BasicStroke original, float newWidth) {
-	    return new BasicStroke(
-	        newWidth,
-	        original.getEndCap(),
-	        original.getLineJoin(),
-	        original.getMiterLimit(),
-	        original.getDashArray(),
-	        original.getDashPhase()
-	    );
+		return new BasicStroke(newWidth, original.getEndCap(), original.getLineJoin(), original.getMiterLimit(),
+				original.getDashArray(), original.getDashPhase());
 	}
-
 
 	/**
 	 * Create four points corresponding to the corners of a rectangle. Useful for
@@ -352,139 +341,6 @@ public class GraphicsUtils {
 	}
 
 	/**
-	 * Center a component.
-	 *
-	 * @param component The Component to center
-	 */
-	public static void centerComponent(Component component) {
-		centerComponent(component, 0, 0);
-	}
-
-	// get the best screen for launching
-	private static Rectangle boundsOfMainScreen() {
-
-		// main screen should have bounds.x = 0
-
-		GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		GraphicsDevice[] allScreens = env.getScreenDevices();
-
-		if (allScreens != null) {
-			for (GraphicsDevice screen : allScreens) {
-				GraphicsConfiguration gc = screen.getDefaultConfiguration();
-				Rectangle b = gc.getBounds();
-				if (b.x == 0) {
-					return b;
-				}
-			}
-		}
-
-		// if null, get bounds of biggest screen
-
-		GraphicsDevice bigScreen = null;
-		int maxWidth = -1;
-
-		if (allScreens != null) {
-			for (GraphicsDevice screen : allScreens) {
-				GraphicsConfiguration gc = screen.getDefaultConfiguration();
-				Rectangle b = gc.getBounds();
-				if (b.width > maxWidth) {
-					maxWidth = b.width;
-					bigScreen = screen;
-				}
-			}
-		}
-
-		if (bigScreen != null) {
-			GraphicsConfiguration gc = bigScreen.getDefaultConfiguration();
-			return gc.getBounds();
-		}
-		return null;
-	}
-
-	/**
-	 * Center a component.
-	 *
-	 * @param component The Component to center.
-	 * @param dh        offset from horizontal center.
-	 * @param dv        offset from vertical center.
-	 */
-	public static void centerComponent(Component component, int dh, int dv) {
-
-		if (component == null) {
-			return;
-		}
-
-		try {
-
-//			GraphicsEnvironment env = GraphicsEnvironment
-//					.getLocalGraphicsEnvironment();
-//			GraphicsDevice[] allScreens = env.getScreenDevices();
-//
-//
-//
-//			GraphicsConfiguration gc = allScreens[0].getDefaultConfiguration();
-//
-//			Rectangle bounds = gc.getBounds();
-
-			Rectangle bounds = boundsOfMainScreen();
-			Dimension componentSize = component.getSize();
-			if (componentSize.height > bounds.height) {
-				componentSize.height = bounds.height;
-			}
-			if (componentSize.width > bounds.width) {
-				componentSize.width = bounds.width;
-			}
-
-			int x = bounds.x + ((bounds.width - componentSize.width) / 2) + dh;
-			int y = bounds.y + ((bounds.height - componentSize.height) / 2) + dv;
-
-			component.setLocation(x, y);
-
-		} catch (Exception e) {
-			Log.getInstance().exception(e);
-			component.setLocation(200, 200);
-			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Returns a dimension that is a specified fraction of the screen size. This is
-	 * useful, for example, to make a farme 85% of the screen.
-	 *
-	 * @param fraction the fraction desired, e.g., 0.85. No check for reasonableness
-	 *                 is made.
-	 * @return the requested dimension.
-	 */
-	public static Dimension screenFraction(double fraction) {
-		Dimension d = getDisplaySize();
-		d.width = (int) (fraction * d.width);
-		d.height = (int) (fraction * d.height);
-		return d;
-	}
-
-	/**
-	 * Get the screen size of the biggest display among the devices
-	 *
-	 * @return the screen size of the biggest display among the devices
-	 */
-	public static Dimension getDisplaySize() {
-
-		GraphicsEnvironment g = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		GraphicsDevice[] devices = g.getScreenDevices();
-
-		int maxw = 0;
-		int maxh = 0;
-
-		for (GraphicsDevice element : devices) {
-//			maxw = Math.max(maxw, devices[i].getDisplayMode().getWidth());
-			maxh = Math.max(maxh, element.getDisplayMode().getHeight());
-		}
-
-		maxw = (16 * maxh) / 9;
-		return new Dimension(maxw, maxh);
-	}
-
-	/**
 	 * Adjust a second point so that the rectangle it forms with the first point
 	 * matches an aspect ratio of a given rectangle. Useful for rubber banding when
 	 * you want to preserve the aspect ratio.
@@ -556,18 +412,6 @@ public class GraphicsUtils {
 		int x = Math.min(p1.x, p2.x);
 		int y = Math.min(p1.y, p2.y);
 		return new Rectangle(x, y, w, h);
-	}
-
-	/**
-	 * Size and center a JFrame relative to the screen.
-	 *
-	 * @param frame          the frame to size.
-	 * @param fractionalSize the fraction desired of the screen--e.g., 0.85 for 85%.
-	 */
-	public void sizeToScreen(JFrame frame, double fractionalSize) {
-		Dimension d = screenFraction(fractionalSize);
-		frame.setSize(d);
-		centerComponent(frame);
 	}
 
 	/**
@@ -1029,8 +873,6 @@ public class GraphicsUtils {
 
 		Stroke oldStroke = g2.getStroke();
 
-
-
 		g2.setStroke(dash1_2);
 		g2.setColor(color1);
 		g2.drawLine(x1, y1, x2, y2);
@@ -1044,13 +886,12 @@ public class GraphicsUtils {
 
 	}
 
-	public static void drawThickHighlightedLine(Graphics g, int x1, int y1, int x2, int y2, Color color1, Color color2) {
+	public static void drawThickHighlightedLine(Graphics g, int x1, int y1, int x2, int y2, Color color1,
+			Color color2) {
 
 		Graphics2D g2 = (Graphics2D) g;
 
 		Stroke oldStroke = g2.getStroke();
-
-
 
 		g2.setStroke(dash1_2t);
 		g2.setColor(color1);
@@ -1064,7 +905,6 @@ public class GraphicsUtils {
 		g2.setStroke(oldStroke);
 
 	}
-
 
 	public static void drawHighlightedArc(Graphics g, int x, int y, int width, int height, int startAngle, int arcAngle,
 			Color color1, Color color2) {
@@ -1211,9 +1051,9 @@ public class GraphicsUtils {
 		g2.setStroke(oldStroke);
 	}
 
-
 	/**
 	 * draw a number (int) at the end of a line
+	 * 
 	 * @param g
 	 * @param val
 	 * @param start
@@ -1222,36 +1062,35 @@ public class GraphicsUtils {
 	 * @param f
 	 * @param fc
 	 */
-    public static void drawNumberAtEnd(Graphics g, int val, Point start, Point end, int gap, Font f, Color fc) {
-        Graphics2D g2d = (Graphics2D) g;
+	public static void drawNumberAtEnd(Graphics g, int val, Point start, Point end, int gap, Font f, Color fc) {
+		Graphics2D g2d = (Graphics2D) g;
 
-        // Set font and color
-        g2d.setFont(f);
-        g2d.setColor(fc);
+		// Set font and color
+		g2d.setFont(f);
+		g2d.setColor(fc);
 
-        // Convert the value to a string
-        String text = String.valueOf(val);
+		// Convert the value to a string
+		String text = String.valueOf(val);
 
-        // Get font metrics to measure text dimensions
-        FontMetrics metrics = g2d.getFontMetrics(f);
-        int textWidth = metrics.stringWidth(text);
-        int textHeight = metrics.getHeight();
+		// Get font metrics to measure text dimensions
+		FontMetrics metrics = g2d.getFontMetrics(f);
+		int textWidth = metrics.stringWidth(text);
+		int textHeight = metrics.getHeight();
 
+		// Calculate the angle of the line
+		double angle = Math.atan2(end.y - start.y, end.x - start.x);
 
-        // Calculate the angle of the line
-        double angle = Math.atan2(end.y - start.y, end.x - start.x);
+		// Calculate the position for the text to ensure alignment and gap
+		int xOffset = (int) (Math.cos(angle) * gap);
+		int yOffset = (int) (Math.sin(angle) * gap);
 
-        // Calculate the position for the text to ensure alignment and gap
-        int xOffset = (int) (Math.cos(angle) * gap);
-        int yOffset = (int) (Math.sin(angle) * gap);
+		// Align text so its center is aligned with the line
+		int x = end.x + xOffset - textWidth / 2;
+		int y = end.y + yOffset + textHeight / 2 - metrics.getDescent();
 
-        // Align text so its center is aligned with the line
-        int x = end.x + xOffset - textWidth / 2;
-        int y = end.y + yOffset + textHeight / 2 - metrics.getDescent();
-
-        // Draw the text
-        g2d.drawString(text, x, y);
-    }
+		// Draw the text
+		g2d.drawString(text, x, y);
+	}
 
 	/**
 	 * Returns <code>true</code> if the point is on the line, with an amount of slop
@@ -1492,8 +1331,6 @@ public class GraphicsUtils {
 		g.drawPolygon(xPoints, yPoints, 3);
 	}
 
-
-
 	/**
 	 * Get the hex format of the color in the form #rrggbbaa
 	 *
@@ -1612,25 +1449,26 @@ public class GraphicsUtils {
 
 	/**
 	 * A gradient 3D looking sphere
-	 * @param g the graphics context
-	 * @param radius pixel radius (as a float)
-	 * @param fillColor the basic fill color (will be converted to a gradient)
+	 * 
+	 * @param g          the graphics context
+	 * @param radius     pixel radius (as a float)
+	 * @param fillColor  the basic fill color (will be converted to a gradient)
 	 * @param frameColor option frame color (null for no frame)
-	 * @param center the center of the sphere
-	 * @param mode 1: best for most colors, with some transparency, 2: best for
-	 * most colors, with opaque, 3: best for light base colors, like yellow or white
+	 * @param center     the center of the sphere
+	 * @param mode       1: best for most colors, with some transparency, 2: best
+	 *                   for most colors, with opaque, 3: best for light base
+	 *                   colors, like yellow or white
 	 */
-	public static void drawGradientCircle(Graphics g, float radius,
-			Color fillColor, Color frameColor, Point2D.Float center, int mode) {
+	public static void drawGradientCircle(Graphics g, float radius, Color fillColor, Color frameColor,
+			Point2D.Float center, int mode) {
 
-		Graphics2D g2d = (Graphics2D)g;
+		Graphics2D g2d = (Graphics2D) g;
 		Point2D.Float focus;
 		Color[] colors = new Color[2];
 		float[] dist = { 0f, 1f };
 
-
 		if (mode == 1) {
-			focus = new Point2D.Float(center.x - 0.5f*radius, center.y - 0.5f*radius);
+			focus = new Point2D.Float(center.x - 0.5f * radius, center.y - 0.5f * radius);
 
 			int red = fillColor.getRed();
 			int green = fillColor.getGreen();
@@ -1638,21 +1476,18 @@ public class GraphicsUtils {
 
 			colors[0] = new Color(red, green, blue, 0);
 			colors[1] = new Color(red, green, blue, 255);
-		}
-		else if (mode == 2) {
-			focus = new Point2D.Float(center.x - 0.5f*radius, center.y - 0.5f*radius);
+		} else if (mode == 2) {
+			focus = new Point2D.Float(center.x - 0.5f * radius, center.y - 0.5f * radius);
 
 			colors[0] = Color.white;
 			colors[1] = fillColor;
 
-		}
-		else {
-			focus = new Point2D.Float(center.x - 0.25f*radius, center.y - 0.25f*radius);
+		} else {
+			focus = new Point2D.Float(center.x - 0.25f * radius, center.y - 0.25f * radius);
 
 			colors[1] = fillColor.darker();
 			colors[0] = fillColor;
 		}
-
 
 		RadialGradientPaint rgp = new RadialGradientPaint(center, radius, focus, dist, colors, CycleMethod.NO_CYCLE);
 		g2d.setPaint(rgp);

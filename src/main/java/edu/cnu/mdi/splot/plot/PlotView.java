@@ -30,7 +30,6 @@ public class PlotView extends BaseView {
 	public PlotView() {
 		this("sPlot");
 	}
-	
 
 	public PlotView(Object... keyVals) {
 		super(PropertySupport.fromKeyValues(keyVals));
@@ -51,7 +50,7 @@ public class PlotView extends BaseView {
 		_plotPanel = new PlotPanel(_plotCanvas);
 		return _plotPanel;
 	}
-	
+
 	public void setPlotPanel(PlotPanel plotPanel) {
 		remove(_plotPanel);
 		_plotPanel = plotPanel;
@@ -60,10 +59,11 @@ public class PlotView extends BaseView {
 		revalidate();
 		repaint();
 	}
-	
+
 	/**
-	 * Switch to a new example, replacing the current plot panel and menus
-	 * This is used by the demo app
+	 * Switch to a new example, replacing the current plot panel and menus This is
+	 * used by the demo app
+	 * 
 	 * @param example the example to switch to
 	 */
 	public void switchToExample(AExample example) {
@@ -81,16 +81,16 @@ public class PlotView extends BaseView {
 		revalidate();
 		repaint();
 	}
-	
+
 	private JMenu findMenu(JMenuBar menuBar, String targetName) {
-	    for (int i = 0; i < menuBar.getMenuCount(); i++) {
-	        JMenu menu = menuBar.getMenu(i);
-	        // Check either displayed text or internal component name
-	        if (menu != null && targetName.equals(menu.getText())) {
-	            return menu;
-	        }
-	    }
-	    return null; // Not found
+		for (int i = 0; i < menuBar.getMenuCount(); i++) {
+			JMenu menu = menuBar.getMenu(i);
+			// Check either displayed text or internal component name
+			if (menu != null && targetName.equals(menu.getText())) {
+				return menu;
+			}
+		}
+		return null; // Not found
 	}
 
 	/**

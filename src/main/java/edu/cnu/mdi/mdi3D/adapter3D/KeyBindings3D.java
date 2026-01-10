@@ -74,11 +74,11 @@ public class KeyBindings3D {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-				Component component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+			Component component = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
-				if ((component != null) && (component instanceof JTextComponent)) {
-					return;
-				}
+			if ((component != null) && (component instanceof JTextComponent)) {
+				return;
+			}
 
 			String command = e.getActionCommand();
 
@@ -106,10 +106,10 @@ public class KeyBindings3D {
 				_panel3D.rotateX(DTHETA);
 				_panel3D.refresh();
 			} else if ("y".equals(command)) {
-				_panel3D.rotateY( DTHETA);
+				_panel3D.rotateY(DTHETA);
 				_panel3D.refresh();
 			} else if ("z".equals(command)) {
-			    _panel3D.rotateZ( DTHETA);
+				_panel3D.rotateZ(DTHETA);
 				_panel3D.refresh();
 			} else if ("X".equals(command)) {
 				_panel3D.rotateX(-DTHETA);

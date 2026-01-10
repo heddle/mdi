@@ -9,10 +9,10 @@ import java.util.List;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
-import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.toolbar.DrawingToolSupport;
 import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
 import edu.cnu.mdi.properties.PropertySupport;
+import edu.cnu.mdi.swing.WindowPlacement;
 
 /**
  * A simple view used to test the tool bar.
@@ -42,7 +42,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 		DrawingView view = null;
 
 		// set to a fraction of screen
-		Dimension d = GraphicsUtils.screenFraction(0.4);
+		Dimension d = WindowPlacement.screenFraction(0.4);
 
 		int width = d.width;
 		int height = d.height;
@@ -51,13 +51,10 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 		view = new DrawingView(PropertySupport.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, width, height),
 				PropertySupport.WIDTH, width, // container width, not total view width
 				PropertySupport.HEIGHT, height, // container height, not total view width
-				PropertySupport.TOOLBARBITS, ToolBarBits.DRAWING,
-				PropertySupport.VISIBLE, true,
-				PropertySupport.PROPNAME, "DRAWING",
-				PropertySupport.BACKGROUND, Color.white,
-				PropertySupport.TITLE, "Drawing View ",
-				PropertySupport.STANDARDVIEWDECORATIONS, true,
-				PropertySupport.CONTAINERCLASS, DrawingToolSupport.class);
+				PropertySupport.TOOLBARBITS, ToolBarBits.DRAWING, PropertySupport.VISIBLE, true,
+				PropertySupport.PROPNAME, "DRAWING", PropertySupport.BACKGROUND, Color.white, PropertySupport.TITLE,
+				"Drawing View ", PropertySupport.STANDARDVIEWDECORATIONS, true, PropertySupport.CONTAINERCLASS,
+				DrawingToolSupport.class);
 
 		view.pack();
 		return view;

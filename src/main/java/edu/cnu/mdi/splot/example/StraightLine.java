@@ -15,7 +15,7 @@ public class StraightLine extends AExample {
 	public StraightLine(boolean headless) {
 		super(headless);
 	}
-	
+
 	static double x[] = { 3, 2.5, 3.5, 4, 5 };
 	static double y[] = { 238.0, 280.0, 310, 321.0, 420.0 };
 	static double sig[] = { 14.7, 12.1, 13.1, 20.0, 8.0 };
@@ -55,21 +55,18 @@ public class StraightLine extends AExample {
 	public void setParameters() {
 		PlotData plotData = canvas.getPlotData();
 
-		//symbol fill color
+		// symbol fill color
 		plotData.getCurve(0).getStyle().setFillColor(new Color(32, 32, 32, 64));
 
-		//symbol border color
+		// symbol border color
 		Curve curve = (Curve) plotData.getCurve(0);
 		curve.getStyle().setBorderColor(Color.darkGray);
 		curve.setCurveMethod(CurveDrawingMethod.POLYNOMIAL);
 		PlotParameters params = canvas.getParameters();
-		params.setMinExponentY(6)
-		.setNumDecimalY(2)
-		.setMinExponentX(6)
-		.setNumDecimalX(3);
+		params.setMinExponentY(6).setNumDecimalY(2).setMinExponentX(6).setNumDecimalX(3);
 	}
 
-	//--------------------------------------------------------------
+	// --------------------------------------------------------------
 	public static void main(String arg[]) {
 
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {

@@ -11,10 +11,10 @@ import edu.cnu.mdi.splot.plot.PlotCanvas;
 /**
  * A more comprehensive PlotParameters editor with tabs for:
  * <ul>
- *   <li>Labels</li>
- *   <li>Axes</li>
- *   <li>Legend</li>
- *   <li>Extra</li>
+ * <li>Labels</li>
+ * <li>Axes</li>
+ * <li>Legend</li>
+ * <li>Extra</li>
  * </ul>
  */
 @SuppressWarnings("serial")
@@ -54,9 +54,9 @@ public class PlotPreferencesDialog extends SimpleDialog {
 		_tabs = new JTabbedPane();
 
 		_labelsPanel = new LabelsTabPanel(_plotCanvas);
-		_axesPanel   = new AxesTabPanel(_plotCanvas);
+		_axesPanel = new AxesTabPanel(_plotCanvas);
 		_legendPanel = new LegendTabPanel(_plotCanvas);
-		_extraPanel  = new ExtraTabPanel(_plotCanvas);
+		_extraPanel = new ExtraTabPanel(_plotCanvas);
 
 		_tabs.addTab("Labels", _labelsPanel);
 		_tabs.addTab("Axes", _axesPanel);

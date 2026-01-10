@@ -350,7 +350,6 @@ public abstract class Item3D {
 		put(FILLALPHA, alpha);
 	}
 
-
 	/**
 	 * Convenience method to set the line (frame) alpha
 	 *
@@ -359,7 +358,6 @@ public abstract class Item3D {
 	public void setLineAlpha(int alpha) {
 		put(LINEALPHA, alpha);
 	}
-
 
 	/**
 	 * Convenience method to set the text color
@@ -456,16 +454,17 @@ public abstract class Item3D {
 	}
 
 	/**
-	 * Set the alpha of a color. If it already has the given alpha
-	 * it just returns the color. If not, it makes a new color
-	 * with the same RGB components and the new alpha
+	 * Set the alpha of a color. If it already has the given alpha it just returns
+	 * the color. If not, it makes a new color with the same RGB components and the
+	 * new alpha
+	 * 
 	 * @param color the color to change
 	 * @param alpha the alpha [0..255] 0 is transparent, 255 is opaque
 	 * @return the color
 	 */
 	public Color setAlpha(Color color, int alpha) {
 
-		alpha = Math.max(0,  Math.min(255, alpha));
+		alpha = Math.max(0, Math.min(255, alpha));
 		int a = color.getAlpha();
 		if (a == alpha) {
 			return color;

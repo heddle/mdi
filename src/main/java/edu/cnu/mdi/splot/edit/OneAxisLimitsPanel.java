@@ -20,45 +20,45 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 @SuppressWarnings("serial")
 public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 
-	public enum Axis {X, Y}
+	public enum Axis {
+		X, Y
+	}
 
-
-	//the plot canvas
+	// the plot canvas
 	private PlotCanvas _canvas;
 
-	//which axis
+	// which axis
 	private Axis _axis;
 
-	//current method
+	// current method
 	private LimitsMethod _method1;
 
-	//current manual limits
+	// current manual limits
 	private double _min1;
 	private double _max1;
 
-	//the data set
+	// the data set
 	private PlotData _dataSet;
 
-	//current data limits
+	// current data limits
 	private double _dataMin;
 	private double _dataMax;
 
-	//text fields for limits
+	// text fields for limits
 	private JFormattedTextField _minTF;
 	private JFormattedTextField _maxTF;
 
-
-	//the method combo box
+	// the method combo box
 	private EnumComboBox _methodSelector;
 
-	//plot parameters
+	// plot parameters
 	private PlotParameters _params;
-
 
 	/**
 	 * Edit the axes limits
+	 * 
 	 * @param canvas the plot canvas
-	 * @param axis which axis
+	 * @param axis   which axis
 	 */
 	public OneAxisLimitsPanel(PlotCanvas canvas, Axis axis) {
 		_canvas = canvas;
@@ -96,7 +96,7 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 			_dataMin = _dataSet.yMin();
 			_dataMax = _dataSet.yMax();
 			label = new JLabel("Y axis method");
-		break;
+			break;
 		}
 
 		double dataDel = 0.05 * (_dataMax - _dataMin);
@@ -121,15 +121,13 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 		_minTF = createTF(_min1);
 		spMin.add(_minTF);
 		spMin.add(new JLabel(_axis.name() + "min (manual)"));
-	//	spMin.add(Box.createHorizontalStrut(8));
-
+		// spMin.add(Box.createHorizontalStrut(8));
 
 		JPanel spMax = new JPanel();
 		spMax.setLayout(new FlowLayout(FlowLayout.LEFT, 8, 4));
 		_maxTF = createTF(_max1);
 		spMax.add(_maxTF);
 		spMax.add(new JLabel(_axis.name() + "max (manual)"));
-
 
 		p.add(spMin);
 		p.add(spMax);
@@ -144,7 +142,7 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 
 	}
 
-	//add the method combo box
+	// add the method combo box
 	private void addCombo(JPanel p) {
 		_methodSelector = LimitsMethod.getComboBox(_method1);
 		_methodSelector.addActionListener(this);
@@ -152,15 +150,15 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 	}
 
 	private JFormattedTextField createTF(double defValue) {
-			NumberFormat numberFormat = NumberFormat.getNumberInstance();
-			numberFormat.setMaximumFractionDigits(4);
-			numberFormat.setGroupingUsed(false);
+		NumberFormat numberFormat = NumberFormat.getNumberInstance();
+		numberFormat.setMaximumFractionDigits(4);
+		numberFormat.setGroupingUsed(false);
 
-			JFormattedTextField tf = new JFormattedTextField(numberFormat);
-			tf.setValue(defValue);
-			tf.setColumns(8);
+		JFormattedTextField tf = new JFormattedTextField(numberFormat);
+		tf.setValue(defValue);
+		tf.setColumns(8);
 
-			return tf;
+		return tf;
 
 	}
 
@@ -193,9 +191,8 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 
 		try {
 			return Double.parseDouble(tf.getText());
-		}
-		catch (Exception e) {
-			tf.setText(""+v);
+		} catch (Exception e) {
+			tf.setText("" + v);
 			return v;
 		}
 	}
@@ -211,6 +208,5 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 		_method1 = method;
 		fix();
 	}
-
 
 }

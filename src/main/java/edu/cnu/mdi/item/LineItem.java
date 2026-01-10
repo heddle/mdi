@@ -20,8 +20,8 @@ import edu.cnu.mdi.util.MathUtils;
  * </p>
  * <p>
  * This item supports {@link ItemModification.Type#DRAG} and
- * {@link ItemModification.Type#RESIZE} modifications. Rotation is currently
- * a no-op (consistent with the prior implementation).
+ * {@link ItemModification.Type#RESIZE} modifications. Rotation is currently a
+ * no-op (consistent with the prior implementation).
  * </p>
  */
 public class LineItem extends AItem {
@@ -30,8 +30,8 @@ public class LineItem extends AItem {
 	 * Create a world line object.
 	 *
 	 * @param itemList the list this item is on.
-	 * @param wp0   start of the line.
-	 * @param wp1   end of the line of the line.
+	 * @param wp0      start of the line.
+	 * @param wp1      end of the line of the line.
 	 */
 	public LineItem(Layer itemList, Point2D.Double wp0, Point2D.Double wp1) {
 		super(itemList);
@@ -174,15 +174,15 @@ public class LineItem extends AItem {
 	}
 
 	@Override
-    public void translateWorld(double dx, double dy) {
-        if ((_line == null) || (Math.abs(dx) < 1.0e-12 && Math.abs(dy) < 1.0e-12)) {
-            return;
-        }
-        _line.x1 += dx;
-        _line.y1 += dy;
-        _line.x2 += dx;
-        _line.y2 += dy;
-        updateFocus();   // midpoint of the segment
-        setDirty(true);  // invalidate cached bounds / redraw state
-    }
+	public void translateWorld(double dx, double dy) {
+		if ((_line == null) || (Math.abs(dx) < 1.0e-12 && Math.abs(dy) < 1.0e-12)) {
+			return;
+		}
+		_line.x1 += dx;
+		_line.y1 += dy;
+		_line.x2 += dx;
+		_line.y2 += dy;
+		updateFocus(); // midpoint of the segment
+		setDirty(true); // invalidate cached bounds / redraw state
+	}
 }

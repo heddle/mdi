@@ -18,14 +18,13 @@ public class TwoLinesWithErrors extends AExample {
 	public TwoLinesWithErrors(boolean headless) {
 		super(headless);
 	}
-	
+
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
 		String[] curveNames = { "Line 1", "Line 2" };
 		int[] fitOrders = { 1, 1 }; // linear fits
 		return new PlotData(PlotDataType.XYEXYE, curveNames, fitOrders);
 	}
-
 
 	@Override
 	protected String getXAxisLabel() {
@@ -42,7 +41,7 @@ public class TwoLinesWithErrors extends AExample {
 		return "<html>Sample Plot X<SUP>2</SUP> vs. Q<SUP>2</SUP>";
 	}
 
-	//test data for line 1
+	// test data for line 1
 	private FitVectors line1Data() {
 		final double m = 3.3; // slope
 		final double b = -0.4; // intercept
@@ -59,10 +58,10 @@ public class TwoLinesWithErrors extends AExample {
 		return FitVectors.testData(evaluator, 0.0, 10.0, n, 10, 20);
 	}
 
-	//test data for line 2
+	// test data for line 2
 	private FitVectors line2Data() {
 		final double m = -1.7; // slope
-		final double b =8; // intercept
+		final double b = 8; // intercept
 		int n = 20;
 
 		Evaluator evaluator = new Evaluator() {
@@ -92,7 +91,6 @@ public class TwoLinesWithErrors extends AExample {
 			double e = 1.0 / Math.sqrt(1.0e-12 + fv2.w[i]);
 			curve2.add(fv2.x[i], fv2.y[i], e);
 		}
-
 
 	}
 

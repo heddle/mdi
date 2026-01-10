@@ -111,8 +111,7 @@ public class ToolBarToggleButton extends JToggleButton {
 			try {
 				ImageIcon enabledImageIcon = ImageManager.getInstance().loadImageIcon(enabledFileName);
 				setSelectedIcon(enabledImageIcon);
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
@@ -135,5 +134,6 @@ public class ToolBarToggleButton extends JToggleButton {
 	 *         default will be a cross hair.
 	 */
 	public Cursor canvasCursor() {
-		return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);	}
+		return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
+	}
 }

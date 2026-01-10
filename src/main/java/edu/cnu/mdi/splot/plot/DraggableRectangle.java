@@ -41,8 +41,7 @@ public class DraggableRectangle extends Rectangle implements Draggable {
 	public void setCurrentPoint(Point p) {
 		if (p == null) {
 			_currentPoint = null;
-		}
-		else {
+		} else {
 			_currentPoint = new Point(p);
 		}
 	}

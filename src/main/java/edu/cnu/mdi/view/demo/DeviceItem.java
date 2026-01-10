@@ -27,7 +27,6 @@ public class DeviceItem extends RectangleItem {
 	// The device symbol represented by this item
 	private EDeviceSymbol symbol;
 
-
 	// instance number for this device
 	private int instanceNumber;
 
@@ -40,7 +39,6 @@ public class DeviceItem extends RectangleItem {
 		incrementMapCount(symbol);
 		this.instanceNumber = getMapCount(symbol);
 		setDisplayName(symbol + " (" + instanceNumber + ")");
-
 
 		// configure the device item
 		setRightClickable(true);
@@ -68,35 +66,37 @@ public class DeviceItem extends RectangleItem {
 	 */
 	@Override
 	public void drawItem(Graphics g2, IContainer container) {
-	    Rectangle pxBounds = getBounds(container);
+		Rectangle pxBounds = getBounds(container);
 
-	    //calculate icon size (and item bounds) based on approximate  zoom factor
+		// calculate icon size (and item bounds) based on approximate zoom factor
 
-		int size = (int) Math.round(DEVICESIZE*container.approximateZoomFactor());
-		//get the icon for the device
-		Icon icon = ImageManager.getInstance().loadUiIcon(symbol.iconPath, size, size); //ensure image manager is initialized
+		int size = (int) Math.round(DEVICESIZE * container.approximateZoomFactor());
+		// get the icon for the device
+		Icon icon = ImageManager.getInstance().loadUiIcon(symbol.iconPath, size, size); // ensure image manager is
+																						// initialized
 
-	    if (icon != null) {
-	        int x = pxBounds.x + (pxBounds.width - size) / 2;
-	        int y = pxBounds.y + (pxBounds.height - size) / 2;
+		if (icon != null) {
+			int x = pxBounds.x + (pxBounds.width - size) / 2;
+			int y = pxBounds.y + (pxBounds.height - size) / 2;
 
-	        // Paint the Icon directly (works for FlatSVGIcon, ImageIcon, etc.)
-	        // Prefer a real component as the paint context.
-	        java.awt.Component c = (container != null) ? container.getComponent() : null;
-	        icon.paintIcon(c, g2, x, y);
-	        return;
-	    }
+			// Paint the Icon directly (works for FlatSVGIcon, ImageIcon, etc.)
+			// Prefer a real component as the paint context.
+			java.awt.Component c = (container != null) ? container.getComponent() : null;
+			icon.paintIcon(c, g2, x, y);
+			return;
+		}
 
-	    super.drawItem(g2, container);
+		super.drawItem(g2, container);
 	}
 
-/**
- * Create a device item centered at given point in local container coordinates
- * @param layer the z layer to add the device to
- * @param p the point in local screen coordinates
- * @param symbol the device symbol to use
- * @return the created device item
- */
+	/**
+	 * Create a device item centered at given point in local container coordinates
+	 * 
+	 * @param layer  the z layer to add the device to
+	 * @param p      the point in local screen coordinates
+	 * @param symbol the device symbol to use
+	 * @return the created device item
+	 */
 	public static DeviceItem createDeviceItem(Layer layer, Point p, EDeviceSymbol symbol) {
 		IContainer container = layer.getContainer();
 		Rectangle2D.Double wr = createDeviceBounds(container, p);
@@ -104,7 +104,8 @@ public class DeviceItem extends RectangleItem {
 		return device;
 	}
 
-	// Create world rectangle for device centered at given point to serve as world bounds
+	// Create world rectangle for device centered at given point to serve as world
+	// bounds
 	private static Rectangle2D.Double createDeviceBounds(IContainer container, Point p) {
 		Rectangle pxBounds = new Rectangle(p.x - DEVICESIZE / 2, p.y - DEVICESIZE / 2, DEVICESIZE, DEVICESIZE);
 		Rectangle2D.Double wr = new Rectangle2D.Double();
@@ -131,7 +132,7 @@ public class DeviceItem extends RectangleItem {
 		// add device type feedback in yellow (to show how)
 		feedbackStrings.add("$yellow$" + getDisplayName());
 
-		//list items connected to this device
+		// list items connected to this device
 		Set<AItem> connectedItems = ConnectionManager.getInstance().getConnectedItems(this);
 		if (!connectedItems.isEmpty()) {
 			feedbackStrings.add("Connected to:");
@@ -141,6 +142,5 @@ public class DeviceItem extends RectangleItem {
 		}
 
 	}
-
 
 }

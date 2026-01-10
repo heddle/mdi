@@ -46,7 +46,6 @@ public class MapView2D extends BaseView implements MouseMotionListener {
 	// share cities across all map views
 	private static List<GeoJsonCityLoader.CityFeature> _cities;
 
-
 	// the map projection
 	private IMapProjection _projection;
 	private GraticuleRenderer _gratRenderer;
@@ -65,7 +64,6 @@ public class MapView2D extends BaseView implements MouseMotionListener {
 	private static String _latPrefix = "$yellow$Lat (" + UnicodeSupport.SMALL_PHI + ")";
 	private static String _lonPrefix = "$yellow$Lon (" + UnicodeSupport.SMALL_LAMBDA + ")";
 	private static String _deg = UnicodeSupport.DEGREE;
-
 
 	// default side panel width (control panel + feedback)
 	private static final int SIDE_PANEL_WIDTH = 220;
@@ -337,6 +335,5 @@ public class MapView2D extends BaseView implements MouseMotionListener {
 	protected IMapProjection getMapProjection() {
 		return _projection;
 	}
-
 
 }

@@ -10,22 +10,24 @@ import javax.swing.event.EventListenerList;
 /**
  * A lightweight, UI-agnostic container for the data backing a plot.
  * <p>
- * {@code PlotData} owns one or more {@link ACurve} instances (including histogram-backed curves such as
- * {@link HistoCurve}, and ordinary XY curves such as {@link Curve}). Views typically register a single
+ * {@code PlotData} owns one or more {@link ACurve} instances (including
+ * histogram-backed curves such as {@link HistoCurve}, and ordinary XY curves
+ * such as {@link Curve}). Views typically register a single
  * {@link DataChangeListener} on the {@code PlotData} and repaint when notified.
  * </p>
  *
- * <h3>Notifications</h3>
- * There are two kinds of changes:
+ * <h3>Notifications</h3> There are two kinds of changes:
  * <ul>
- *   <li><b>Structural</b> changes to the model (curves added/removed/cleared) &mdash; fired by {@code PlotData}.</li>
- *   <li><b>Data</b> changes within a curve (points appended, histogram filled, etc.) &mdash; fired by the curve, and
- *       forwarded by {@code PlotData} so the view can listen in one place.</li>
+ * <li><b>Structural</b> changes to the model (curves added/removed/cleared)
+ * &mdash; fired by {@code PlotData}.</li>
+ * <li><b>Data</b> changes within a curve (points appended, histogram filled,
+ * etc.) &mdash; fired by the curve, and forwarded by {@code PlotData} so the
+ * view can listen in one place.</li>
  * </ul>
  *
- * <h3>Threading</h3>
- * {@code PlotData} is not synchronized. If curves are updated from a background sampler (e.g. {@link StripChartCurve}),
- * the view should use its existing snapshot/copy strategy when rendering.
+ * <h3>Threading</h3> {@code PlotData} is not synchronized. If curves are
+ * updated from a background sampler (e.g. {@link StripChartCurve}), the view
+ * should use its existing snapshot/copy strategy when rendering.
  *
  * @author heddle
  */
@@ -41,10 +43,11 @@ public class PlotData implements CurveChangeListener {
 	private final PlotDataType type;
 
 	/**
-	 * Create plot data from one or more 1D histogram data objects. Each {@link HistoData}
-	 * is wrapped in a {@link HistoCurve} and added to this model.
+	 * Create plot data from one or more 1D histogram data objects. Each
+	 * {@link HistoData} is wrapped in a {@link HistoCurve} and added to this model.
 	 *
-	 * @param histos one or more histogram data objects (must be non-null and contain no nulls)
+	 * @param histos one or more histogram data objects (must be non-null and
+	 *               contain no nulls)
 	 * @throws PlotDataException if there is a problem creating the data set
 	 */
 	public PlotData(HistoData... histos) throws PlotDataException {
@@ -81,13 +84,16 @@ public class PlotData implements CurveChangeListener {
 	/**
 	 * Create plot data with specified data set type and column names.
 	 *
-	 * @param type     the data set type (non-null)
+	 * @param type       the data set type (non-null)
 	 * @param curveNames a curve is created for each curve name. Must be non-null
-	 * and contain at least one name. The names should not be null.
-	 * @param fitOrders optional fit orders for each curve (may be null). If
-	 * non-null, the length must match the number of curve names. This fit orders are
-	 * assigned to each curve via {@link Curve#setFitOrder(int)}. They are only relevant
-	 * for MultiGaussian (no. of Gaussians) and Polynomial (polynomial degree) fits.
+	 *                   and contain at least one name. The names should not be
+	 *                   null.
+	 * @param fitOrders  optional fit orders for each curve (may be null). If
+	 *                   non-null, the length must match the number of curve names.
+	 *                   This fit orders are assigned to each curve via
+	 *                   {@link Curve#setFitOrder(int)}. They are only relevant for
+	 *                   MultiGaussian (no. of Gaussians) and Polynomial (polynomial
+	 *                   degree) fits.
 	 * @throws PlotDataException if there is a problem creating the data set
 	 */
 	public PlotData(PlotDataType type, String[] curveNames, int[] fitOrders) throws PlotDataException {
@@ -100,10 +106,11 @@ public class PlotData implements CurveChangeListener {
 			throw new PlotDataException("Must supply at least one curve name.");
 		}
 
-		//fit orders can be null, but if not null lengths must match
+		// fit orders can be null, but if not null lengths must match
 		if (fitOrders != null) {
 			if (fitOrders.length != curveCount) {
-				throw new PlotDataException("If fit orders are supplied, their count must match the number of curve names.");
+				throw new PlotDataException(
+						"If fit orders are supplied, their count must match the number of curve names.");
 			}
 		}
 
@@ -123,7 +130,6 @@ public class PlotData implements CurveChangeListener {
 			}
 			break;
 
-
 		case XYEXYE:
 			for (int i = 0; i < curveCount; i++) {
 				DataColumn xData = new DataColumn();
@@ -137,7 +143,6 @@ public class PlotData implements CurveChangeListener {
 			}
 			break;
 
-
 		case H1D:
 			throw new PlotDataException("Use PlotData(HistoData...) constructor for 1D histograms.");
 
@@ -146,9 +151,10 @@ public class PlotData implements CurveChangeListener {
 		}
 
 	}
-	
+
 	/**
 	 * Create empty plot data with one default curve.
+	 * 
 	 * @return empty plot data
 	 */
 	public static PlotData emptyData() {
@@ -167,12 +173,12 @@ public class PlotData implements CurveChangeListener {
 
 	/**
 	 * Convenience method to determine if this is histogram plot data.
+	 * 
 	 * @return true if histogram plot data
 	 */
 	public boolean isHistoData() {
 		return (type == PlotDataType.H1D);
 	}
-
 
 	public boolean isXYData() {
 		return (type == PlotDataType.XYEXYE) || (type == PlotDataType.XYXY);
@@ -180,6 +186,7 @@ public class PlotData implements CurveChangeListener {
 
 	/**
 	 * Determine if this is strip chart plot data.
+	 * 
 	 * @return true if strip chart plot data
 	 */
 	public boolean isStripData() {
@@ -214,6 +221,7 @@ public class PlotData implements CurveChangeListener {
 
 	/**
 	 * Convenience: get a curve by name.
+	 * 
 	 * @param name the curve name
 	 * @return the curve with the given name, or null if not found
 	 */
@@ -228,6 +236,7 @@ public class PlotData implements CurveChangeListener {
 
 	/**
 	 * Convenience: get the first curve. Often there is only one.
+	 * 
 	 * @return the first curve, or null if there are no curves
 	 */
 	public ACurve getFirstCurve() {
@@ -237,9 +246,9 @@ public class PlotData implements CurveChangeListener {
 		return curves.get(0);
 	}
 
-
 	/**
 	 * Determine if this is histogram plot data.
+	 * 
 	 * @return true if histogram plot data
 	 */
 	public boolean isHistogramData() {
@@ -260,8 +269,6 @@ public class PlotData implements CurveChangeListener {
 		}
 		return added;
 	}
-
-
 
 	/** Curve-level notification (forwarded to {@link DataChangeListener}s). */
 	@Override
@@ -352,7 +359,5 @@ public class PlotData implements CurveChangeListener {
 		}
 		return ymax;
 	}
-
-
 
 }

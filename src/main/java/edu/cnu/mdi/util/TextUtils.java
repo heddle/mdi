@@ -12,11 +12,12 @@ import java.util.StringTokenizer;
 
 public class TextUtils {
 
-    /** Minimum font size returned by sizing helpers. */
-    public static final int MIN_FONT_SIZE = 4;
+	/** Minimum font size returned by sizing helpers. */
+	public static final int MIN_FONT_SIZE = 4;
 
-    /** Maximum font size returned by sizing helpers (defensive upper bound). */
-    public static final int MAX_FONT_SIZE = 512;
+	/** Maximum font size returned by sizing helpers (defensive upper bound). */
+	public static final int MAX_FONT_SIZE = 512;
+
 	/**
 	 * Draws "ghosted" text for the specified foreground and background colors.
 	 *
@@ -141,40 +142,41 @@ public class TextUtils {
 	}
 
 	/**
-     * Get the next smaller font. This method clamps the resulting size so that
-     * it never returns a font with a non-positive size.
-     *
-     * @param font     the base font
-     * @param stepdown the step down (e.g., if stepdown is 2 and the font size is 28,
-     *                 a font of size 26 is returned).
-     * @return a font a little smaller, or null if {@code font} is null.
-     */
-    public static Font nextSmallerFont(Font font, int stepdown) {
-        if (font == null) {
-            return null;
-        }
-        int step = Math.max(1, stepdown);
-        int newSize = Math.max(MIN_FONT_SIZE, font.getSize() - step);
-        return (newSize == font.getSize()) ? font : new Font(font.getFontName(), font.getStyle(), newSize);
-    }
+	 * Get the next smaller font. This method clamps the resulting size so that it
+	 * never returns a font with a non-positive size.
+	 *
+	 * @param font     the base font
+	 * @param stepdown the step down (e.g., if stepdown is 2 and the font size is
+	 *                 28, a font of size 26 is returned).
+	 * @return a font a little smaller, or null if {@code font} is null.
+	 */
+	public static Font nextSmallerFont(Font font, int stepdown) {
+		if (font == null) {
+			return null;
+		}
+		int step = Math.max(1, stepdown);
+		int newSize = Math.max(MIN_FONT_SIZE, font.getSize() - step);
+		return (newSize == font.getSize()) ? font : new Font(font.getFontName(), font.getStyle(), newSize);
+	}
 
-    /**
-     * Get the next bigger font. This method clamps the resulting size to a
-     * defensive maximum.
-     *
-     * @param font   the base font
-     * @param stepup the step up (e.g., if stepup is 2 and the font size is 28,
-     *               a font of size 30 is returned).
-     * @return a font a little bigger, or null if {@code font} is null.
-     */
-    public static Font nextBiggerFont(Font font, int stepup) {
-        if (font == null) {
-            return null;
-        }
-        int step = Math.max(1, stepup);
-        int newSize = Math.min(MAX_FONT_SIZE, font.getSize() + step);
-        return (newSize == font.getSize()) ? font : new Font(font.getFontName(), font.getStyle(), newSize);
-    }
+	/**
+	 * Get the next bigger font. This method clamps the resulting size to a
+	 * defensive maximum.
+	 *
+	 * @param font   the base font
+	 * @param stepup the step up (e.g., if stepup is 2 and the font size is 28, a
+	 *               font of size 30 is returned).
+	 * @return a font a little bigger, or null if {@code font} is null.
+	 */
+	public static Font nextBiggerFont(Font font, int stepup) {
+		if (font == null) {
+			return null;
+		}
+		int step = Math.max(1, stepup);
+		int newSize = Math.min(MAX_FONT_SIZE, font.getSize() + step);
+		return (newSize == font.getSize()) ? font : new Font(font.getFontName(), font.getStyle(), newSize);
+	}
+
 	/**
 	 * This method breaks a string into an array of tokens.
 	 *
@@ -197,8 +199,8 @@ public class TextUtils {
 	}
 
 	/**
-	 * Convert a comma separated string to an array of strings,
-	 * removing white space
+	 * Convert a comma separated string to an array of strings, removing white space
+	 * 
 	 * @param s the commas separated string
 	 * @return the array of strings, no white space
 	 */
@@ -218,6 +220,7 @@ public class TextUtils {
 
 	/**
 	 * Convert an array of strings to a single comma separated string
+	 * 
 	 * @param array the string array of matches
 	 * @return a comma separated string
 	 */
@@ -233,13 +236,12 @@ public class TextUtils {
 
 		StringBuffer sb = new StringBuffer(256);
 
-		for (int i = 0; i < (len-1); i++) {
+		for (int i = 0; i < (len - 1); i++) {
 			sb.append(array[i] + ", ");
 		}
-		sb.append(array[len-1]);
+		sb.append(array[len - 1]);
 		return sb.toString();
 
 	}
-
 
 }

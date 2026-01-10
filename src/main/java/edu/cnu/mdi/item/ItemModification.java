@@ -86,15 +86,16 @@ public class ItemModification {
 		this.item = item;
 		this.container = container;
 		this.startMousePoint = (startMousePoint == null) ? new Point() : new Point(startMousePoint);
-		this.currentMousePoint = (currentMousePoint == null) ? new Point(this.startMousePoint) : new Point(currentMousePoint);
+		this.currentMousePoint = (currentMousePoint == null) ? new Point(this.startMousePoint)
+				: new Point(currentMousePoint);
 
 		this.shift = shift;
 		this.control = control;
-        Path2D.Double p = item.getPath();
-        this.startPath = (p == null) ? null : (Path2D.Double) p.clone();
+		Path2D.Double p = item.getPath();
+		this.startPath = (p == null) ? null : (Path2D.Double) p.clone();
 
-        Line2D.Double l = item.getLine();
-        this.startLine = (l == null) ? null : (Line2D.Double) l.clone();
+		Line2D.Double l = item.getLine();
+		this.startLine = (l == null) ? null : (Line2D.Double) l.clone();
 
 		if (item.getSecondaryPoints() != null) {
 			secondaryPath = WorldGraphicsUtils.worldPolygonToPath(item.getSecondaryPoints());
@@ -330,7 +331,5 @@ public class ItemModification {
 	public void setUserObject(Object userObject) {
 		this.userObject = userObject;
 	}
-
-
 
 }

@@ -12,7 +12,8 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
 /**
- * Compact font editor: preserves font family, edits size and style (bold/italic).
+ * Compact font editor: preserves font family, edits size and style
+ * (bold/italic).
  */
 @SuppressWarnings("serial")
 public class FontSpecPanel extends JPanel {

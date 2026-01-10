@@ -14,7 +14,6 @@ import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 import edu.cnu.mdi.item.ItemModification.ModificationType;
 import edu.cnu.mdi.item.RectangleItem;
 
-
 //getAnnotationLayer()
 public class VirtualWindowItem extends RectangleItem {
 
@@ -105,7 +104,6 @@ public class VirtualWindowItem extends RectangleItem {
 				_vview.getContainer().refresh();
 				break;
 			}
-
 
 			Point2D.Double wp0 = _modification.getStartWorldPoint();
 			Point2D.Double wp1 = _modification.getCurrentWorldPoint();

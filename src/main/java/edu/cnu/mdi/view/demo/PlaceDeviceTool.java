@@ -11,20 +11,19 @@ import edu.cnu.mdi.item.Layer;
 public class PlaceDeviceTool implements ITool {
 
 	// The device symbol to place
-    private  EDeviceSymbol symbol;
+	private EDeviceSymbol symbol;
 
-    private Layer deviceLayer;
+	private Layer deviceLayer;
 
+	public PlaceDeviceTool(Layer deviceLayer, EDeviceSymbol symbol) {
+		this.deviceLayer = deviceLayer;
+		this.symbol = java.util.Objects.requireNonNull(symbol);
+	}
 
-    public PlaceDeviceTool(Layer deviceLayer, EDeviceSymbol symbol) {
-    	this.deviceLayer = deviceLayer;
-        this.symbol = java.util.Objects.requireNonNull(symbol);
-    }
-
-    @Override
-    public Cursor cursor(ToolContext ctx) {
-        return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
-    }
+	@Override
+	public Cursor cursor(ToolContext ctx) {
+		return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
+	}
 
 	@Override
 	public void mouseClicked(ToolContext ctx, MouseEvent e) {

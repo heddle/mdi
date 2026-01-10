@@ -7,7 +7,7 @@ import java.util.Comparator;
 
 public class MathUtils {
 
-	//small number test
+	// small number test
 	private static final double TINY = 1.0e-16;
 
 	/**
@@ -139,7 +139,6 @@ public class MathUtils {
 		double t = numerator / denominator;
 		return t;
 	}
-
 
 	/**
 	 * Given an array of pixel points, this rearranges the array into a convex hull.
@@ -286,9 +285,9 @@ public class MathUtils {
 	/**
 	 * Sort an array with an index sort
 	 *
-	 * @param   <T>
-	 * @param a the array to sort
-	 * @param c the comparator
+	 * @param <T>
+	 * @param a   the array to sort
+	 * @param c   the comparator
 	 * @return the index sorted array
 	 */
 	public static <T> int[] indexSort(final T[] a, final Comparator<? super T> c) {
@@ -367,47 +366,48 @@ public class MathUtils {
 	 * @param p2 Second endpoint of first segment
 	 * @param q1 First endpoint of second segment
 	 * @param q2 Second endpoint of second segment
-	 * @param u Will hold intersection, or NaN s if no intersection
+	 * @param u  Will hold intersection, or NaN s if no intersection
 	 * @return <code>true</code> if intersection is found
 	 */
-	public static boolean segmentCrossing(Point2D.Double p1, Point2D.Double p2,
-			Point2D.Double q1, Point2D.Double q2, Point2D.Double u) {
+	public static boolean segmentCrossing(Point2D.Double p1, Point2D.Double p2, Point2D.Double q1, Point2D.Double q2,
+			Point2D.Double u) {
 		u.x = Double.NaN;
 		u.y = Double.NaN;
 
 		double x1o = p1.x;
-        double dx1 = p2.x - p1.x;
+		double dx1 = p2.x - p1.x;
 
-        double y1o = p1.y;
-        double dy1 = p2.y - p1.y;
+		double y1o = p1.y;
+		double dy1 = p2.y - p1.y;
 
-        double x2o = q1.x;
-        double dx2 = q2.x - q1.x;
+		double x2o = q1.x;
+		double dx2 = q2.x - q1.x;
 
-        double y2o = q1.y;
-        double dy2 = q2.y - q1.y;
+		double y2o = q1.y;
+		double dy2 = q2.y - q1.y;
 
-        double denom = dx2 * dy1 - dx1 * dy2;
+		double denom = dx2 * dy1 - dx1 * dy2;
 
-        if (Math.abs(denom) > TINY) {
-            //t is the "t parameter" for the segment 1 parameterization
+		if (Math.abs(denom) > TINY) {
+			// t is the "t parameter" for the segment 1 parameterization
 
-            double t = (dy2*x1o - dy2*x2o - dx2*y1o + dx2*y2o) / denom;
-            double s = (dy1*x1o - dy1*x2o - dx1*y1o + dx1*y2o) / denom;
+			double t = (dy2 * x1o - dy2 * x2o - dx2 * y1o + dx2 * y2o) / denom;
+			double s = (dy1 * x1o - dy1 * x2o - dx1 * y1o + dx1 * y2o) / denom;
 
-            if ((t > 0) && (t < 1) && (s > 0) && (s < 1)) {
-                u.x = x1o + dx1 * t;
-                u.y = y1o + dy1 * t;
-                return true;
-            }
-         }
+			if ((t > 0) && (t < 1) && (s > 0) && (s < 1)) {
+				u.x = x1o + dx1 * t;
+				u.y = y1o + dy1 * t;
+				return true;
+			}
+		}
 
-        return false;
+		return false;
 
 	}
 
 	/**
 	 * Does a segment intersect a rectangle
+	 * 
 	 * @param p1
 	 * @param p2
 	 * @param x
@@ -416,8 +416,8 @@ public class MathUtils {
 	 * @param h
 	 * @return <code>true</code> if it intersects
 	 */
-	public static boolean segmentCutsRectangle(Point2D.Double p1, Point2D.Double p2,
-			double x, double y, double w, double h, Point2D.Double u1, Point2D.Double u2) {
+	public static boolean segmentCutsRectangle(Point2D.Double p1, Point2D.Double p2, double x, double y, double w,
+			double h, Point2D.Double u1, Point2D.Double u2) {
 
 		Point2D.Double q1 = new Point2D.Double();
 		Point2D.Double q2 = new Point2D.Double();
@@ -427,32 +427,30 @@ public class MathUtils {
 		int count = 0;
 
 		q1.setLocation(x, y);
-		q2.setLocation(x, y+h);
+		q2.setLocation(x, y + h);
 		if (segmentCrossing(p1, p2, q1, q2, u)) {
 			u1.setLocation(u);
 			count = 1;
 		}
 
-		q2.setLocation(x+w, y);
+		q2.setLocation(x + w, y);
 		if (segmentCrossing(p1, p2, q1, q2, u)) {
 			if (count == 0) {
 				u1.setLocation(u);
 				count = 1;
-			}
-			else {
+			} else {
 				u2.setLocation(u);
 				return true;
 			}
 		}
 
-		q1.setLocation(x+w, y+h);
-		q2.setLocation(x, y+h);
+		q1.setLocation(x + w, y + h);
+		q2.setLocation(x, y + h);
 		if (segmentCrossing(p1, p2, q1, q2, u)) {
 			if (count == 0) {
 				u1.setLocation(u);
 				count = 1;
-			}
-			else {
+			} else {
 				u2.setLocation(u);
 				return true;
 			}
@@ -462,7 +460,7 @@ public class MathUtils {
 			return false;
 		}
 
-		q2.setLocation(x+w, y);
+		q2.setLocation(x + w, y);
 		if (segmentCrossing(p1, p2, q1, q2, u)) {
 			u2.setLocation(u);
 			return true;
@@ -470,7 +468,6 @@ public class MathUtils {
 
 		return false;
 	}
-
 
 	// main program for testing
 	public static void main(String arg[]) {
@@ -487,10 +484,10 @@ public class MathUtils {
 		p1.setLocation(2, 2);
 		p2.setLocation(6, 6);
 
-        double x = 3;
-        double y = 2;
-        double w = 2;
-        double h = 2;
+		double x = 3;
+		double y = 2;
+		double w = 2;
+		double h = 2;
 
 		boolean result = segmentCutsRectangle(p1, p2, x, y, w, h, u1, u2);
 		System.out.println("done");

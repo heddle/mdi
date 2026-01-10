@@ -11,52 +11,53 @@ import edu.cnu.mdi.component.EnumComboBox;
  */
 public enum EProjection {
 
-    /** Mercator projection (cylindrical, conformal). */
-    MERCATOR("Mercator"),
+	/** Mercator projection (cylindrical, conformal). */
+	MERCATOR("Mercator"),
 
-    /** Orthographic projection (planar, perspective view of a hemisphere). */
-    ORTHOGRAPHIC("Orthographic"),
+	/** Orthographic projection (planar, perspective view of a hemisphere). */
+	ORTHOGRAPHIC("Orthographic"),
 
-    /** Mollweide equal-area pseudocylindrical projection. */
-    MOLLWEIDE("Mollweide"),
+	/** Mollweide equal-area pseudocylindrical projection. */
+	MOLLWEIDE("Mollweide"),
 
-    /** Lambert azimuthal equal-area projection (hemisphere). */
-    LAMBERT_EQUAL_AREA("Lambert Azimuthal Equal-Area");
+	/** Lambert azimuthal equal-area projection (hemisphere). */
+	LAMBERT_EQUAL_AREA("Lambert Azimuthal Equal-Area");
 
-    private final String displayName;
+	private final String displayName;
 
-    EProjection(String displayName) {
-        this.displayName = displayName;
-    }
+	EProjection(String displayName) {
+		this.displayName = displayName;
+	}
 
-    /**
-     * Returns a human-readable name for this projection type.
-     *
-     * @return the display name
-     */
-    public String getName() {
-        return displayName;
-    }
+	/**
+	 * Returns a human-readable name for this projection type.
+	 *
+	 * @return the display name
+	 */
+	public String getName() {
+		return displayName;
+	}
 
-    @Override
-    public String toString() {
-        return displayName;
-    }
-    /**
+	@Override
+	public String toString() {
+		return displayName;
+	}
+
+	/**
 	 * Creates an EnumComboBox for selecting EProjection values.
 	 *
 	 * @return a new EnumComboBox configured for EProjection
 	 */
-    public static EnumComboBox<EProjection> createComboBox() {
+	public static EnumComboBox<EProjection> createComboBox() {
 		return new EnumComboBox<>(EProjection.class, null, EProjection::projectionLabel);
 	}
 
-    public static String projectionLabel(EProjection p) {
-        return switch (p) {
-            case MERCATOR -> "Mercator";
-            case ORTHOGRAPHIC -> "Orthographic";
-            case MOLLWEIDE -> "Mollweide";
-            case LAMBERT_EQUAL_AREA -> "Lambert Equal-Area";
-        };
-    }
+	public static String projectionLabel(EProjection p) {
+		return switch (p) {
+		case MERCATOR -> "Mercator";
+		case ORTHOGRAPHIC -> "Orthographic";
+		case MOLLWEIDE -> "Mollweide";
+		case LAMBERT_EQUAL_AREA -> "Lambert Equal-Area";
+		};
+	}
 }

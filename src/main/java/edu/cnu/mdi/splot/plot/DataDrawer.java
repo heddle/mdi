@@ -28,13 +28,13 @@ public class DataDrawer {
 	 * Draw a data set on the canvas.Draws the optional fixed lines, then the
 	 * curves.
 	 *
-	 * @param g  the graphics context
+	 * @param g        the graphics context
 	 * @param plotData the PlotData to draw.
 	 */
 	public void draw(Graphics g, PlotData plotData) {
 
-		//if no curves, bail
-		//clip checks
+		// if no curves, bail
+		// clip checks
 		if ((plotData == null) || plotData.size() < 1 || !(g.getClip().intersects(_plotCanvas.getActiveBounds()))) {
 			return;
 		}
@@ -49,7 +49,7 @@ public class DataDrawer {
 
 		g.setClip(clipRect);
 
-		// any fixed  horizontal or verticallines?
+		// any fixed horizontal or verticallines?
 		Vector<PlotLine> lines = _plotCanvas.getParameters().getPlotLines();
 		if (!lines.isEmpty()) {
 			for (PlotLine line : lines) {
@@ -63,7 +63,6 @@ public class DataDrawer {
 				CurveDrawer.drawCurve(g, _plotCanvas, curve);
 			}
 		}
-
 
 		// restore the old clip
 		g.setClip(oldClip);

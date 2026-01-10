@@ -18,26 +18,25 @@ public class GridButton extends ToolActionButton {
 
 	@Override
 	protected void perform(ToolContext ctx) {
-	    int gridSize = view.getGridDrawer().getGridSize();
-	    IContainer container = view.getContainer();
+		int gridSize = view.getGridDrawer().getGridSize();
+		IContainer container = view.getContainer();
 
-	    for (DeviceItem device : view.getAllDevices()) {
+		for (DeviceItem device : view.getAllDevices()) {
 
-	        Point focusPx = device.getFocusPoint(container);
-	        if (focusPx == null) {
-	            continue;
-	        }
+			Point focusPx = device.getFocusPoint(container);
+			if (focusPx == null) {
+				continue;
+			}
 
-	        int snapX = Math.round((float) focusPx.x / gridSize) * gridSize;
-	        int snapY = Math.round((float) focusPx.y / gridSize) * gridSize;
+			int snapX = Math.round((float) focusPx.x / gridSize) * gridSize;
+			int snapY = Math.round((float) focusPx.y / gridSize) * gridSize;
 
-	        int dxPx = snapX - focusPx.x;
-	        int dyPx = snapY - focusPx.y;
+			int dxPx = snapX - focusPx.x;
+			int dyPx = snapY - focusPx.y;
 
-	        device.translateLocal(dxPx, dyPx);
-	    }
+			device.translateLocal(dxPx, dyPx);
+		}
 
-	    container.refresh();
+		container.refresh();
 	}
-	}
-
+}

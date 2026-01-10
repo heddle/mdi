@@ -41,13 +41,11 @@ public class ColorPanel extends JPanel implements ItemListener, ChangeListener {
 	 */
 	protected JLabel oldcolorlabel;
 
-
 	/**
 	 * Label showing the new color
 	 */
 	protected JLabel newcolorlabel;
 
-	
 	protected static int minw = 440;
 
 	protected static int minh = 340;
@@ -59,17 +57,17 @@ public class ColorPanel extends JPanel implements ItemListener, ChangeListener {
 	public ColorPanel() {
 		setLayout(new BorderLayout());
 		colorChooser = new JColorChooser();
-		
-        // Retrieve all existing panels
-        AbstractColorChooserPanel[] panels = colorChooser.getChooserPanels();
-        
-        for (AbstractColorChooserPanel panel : panels) {
-            // Keep the RGB panel, remove others
-            if (!panel.getDisplayName().equals("RGB")) {
-            	colorChooser.removeChooserPanel(panel);
-            }
-        }
-        
+
+		// Retrieve all existing panels
+		AbstractColorChooserPanel[] panels = colorChooser.getChooserPanels();
+
+		for (AbstractColorChooserPanel panel : panels) {
+			// Keep the RGB panel, remove others
+			if (!panel.getDisplayName().equals("RGB")) {
+				colorChooser.removeChooserPanel(panel);
+			}
+		}
+
 		colorChooser.getSelectionModel().addChangeListener(this);
 
 		add("Center", colorChooser);
@@ -77,7 +75,6 @@ public class ColorPanel extends JPanel implements ItemListener, ChangeListener {
 		previewPanel = createPreviewPanel();
 		colorChooser.setPreviewPanel(previewPanel);
 	}
-
 
 	/**
 	 * Create the preview panel
@@ -181,29 +178,28 @@ public class ColorPanel extends JPanel implements ItemListener, ChangeListener {
 
 	@Override
 	public void itemStateChanged(ItemEvent e) {
-	    if (e.getSource() == nocolorcb) {
-	        boolean noColor = (e.getStateChange() == ItemEvent.SELECTED);
-	        setNoColor(noColor);
+		if (e.getSource() == nocolorcb) {
+			boolean noColor = (e.getStateChange() == ItemEvent.SELECTED);
+			setNoColor(noColor);
 
-	        if (noColor) {
-	            // Optional: visually show "no color" in the preview
-	            newcolorlabel.setBackground(getBackground());
-	        } else {
-	            // Ensure preview updates immediately
-	            Color newColor = colorChooser.getColor();
-	            newcolorlabel.setBackground(newColor);
-	        }
-	    }
+			if (noColor) {
+				// Optional: visually show "no color" in the preview
+				newcolorlabel.setBackground(getBackground());
+			} else {
+				// Ensure preview updates immediately
+				Color newColor = colorChooser.getColor();
+				newcolorlabel.setBackground(newColor);
+			}
+		}
 	}
 
 	public void setNoColor(boolean nocol) {
-	    // Avoid firing item events recursively if already in that state
-	    if (nocolorcb.isSelected() != nocol) {
-	        nocolorcb.setSelected(nocol);
+		// Avoid firing item events recursively if already in that state
+		if (nocolorcb.isSelected() != nocol) {
+			nocolorcb.setSelected(nocol);
 //		    colorChooser.setEnabled(!nocol);
-	    }
+		}
 	}
-
 
 	/**
 	 * Check whether "no color" was selected

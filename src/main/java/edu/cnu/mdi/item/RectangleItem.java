@@ -13,7 +13,7 @@ public class RectangleItem extends PolygonItem {
 	 * Create a world rectangle object.
 	 *
 	 * @param itemList the list this item is on.
-	 * @param wr    the initial bounds of the item.
+	 * @param wr       the initial bounds of the item.
 	 */
 	public RectangleItem(Layer itemList, Rectangle2D.Double wr) {
 		super(itemList, WorldGraphicsUtils.getPoints(wr));
@@ -51,6 +51,6 @@ public class RectangleItem extends PolygonItem {
 		wpoly[k].x += vk.x;
 		wpoly[k].y += vk.y;
 		_path = WorldGraphicsUtils.worldPolygonToPath(wpoly);
-		geometryChanged	();
+		geometryChanged();
 	}
 }

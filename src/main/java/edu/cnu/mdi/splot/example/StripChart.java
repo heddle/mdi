@@ -19,7 +19,7 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 public class StripChart extends AExample implements Evaluator {
 
 	private Random random = new Random();
-	
+
 	public StripChart(boolean headless) {
 		super(headless);
 		PlotData ds = canvas.getPlotData();
@@ -38,7 +38,7 @@ public class StripChart extends AExample implements Evaluator {
 		StripChartCurve sd = new StripChartCurve("Memory", capacity, this, updateTimeMs);
 		return new PlotData(sd);
 	}
-	
+
 	@Override
 	public void plotChanged(PlotChangeType type) {
 		switch (type) {
@@ -49,7 +49,6 @@ public class StripChart extends AExample implements Evaluator {
 			break;
 		}
 	}
-
 
 	@Override
 	protected String getXAxisLabel() {
@@ -90,7 +89,7 @@ public class StripChart extends AExample implements Evaluator {
 	public double value(double x) {
 		// memory in mb
 
-		double megaBytes = 100*(random.nextDouble() - 0.5) + (Runtime.getRuntime().totalMemory()) / 1048576.;
+		double megaBytes = 100 * (random.nextDouble() - 0.5) + (Runtime.getRuntime().totalMemory()) / 1048576.;
 		return megaBytes;
 	}
 

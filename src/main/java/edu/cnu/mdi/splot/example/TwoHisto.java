@@ -14,7 +14,7 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 
 @SuppressWarnings("serial")
 public class TwoHisto extends AExample {
-	
+
 	public TwoHisto(boolean headless) {
 		super(headless);
 	}
@@ -46,14 +46,14 @@ public class TwoHisto extends AExample {
 		int n = 10000;
 		double mu = 50.0;
 		double sig = 10.0;
-	    NormalDistribution normDev1 = new NormalDistribution(mu, sig);
+		NormalDistribution normDev1 = new NormalDistribution(mu, sig);
 
 		mu = 100.0;
 		sig = 20.0;
-	    NormalDistribution normDev2 = new NormalDistribution(mu, sig);
+		NormalDistribution normDev2 = new NormalDistribution(mu, sig);
 
-	    HistoCurve hc1 = (HistoCurve) canvas.getPlotData().getCurve(0);
-	    HistoCurve hc2 = (HistoCurve) canvas.getPlotData().getCurve(1);
+		HistoCurve hc1 = (HistoCurve) canvas.getPlotData().getCurve(0);
+		HistoCurve hc2 = (HistoCurve) canvas.getPlotData().getCurve(1);
 
 		for (int i = 0; i < n; i++) {
 
@@ -66,10 +66,10 @@ public class TwoHisto extends AExample {
 
 	@Override
 	public void setParameters() {
-	    HistoCurve hc1 = (HistoCurve) canvas.getPlotData().getCurve(0);
-	    HistoCurve hc2 = (HistoCurve) canvas.getPlotData().getCurve(1);
-	    IStyled style1 = hc1.getStyle();
-	    IStyled style2 = hc2.getStyle();
+		HistoCurve hc1 = (HistoCurve) canvas.getPlotData().getCurve(0);
+		HistoCurve hc2 = (HistoCurve) canvas.getPlotData().getCurve(1);
+		IStyled style1 = hc1.getStyle();
+		IStyled style2 = hc2.getStyle();
 
 		style1.setFillColor(new Color(196, 196, 196, 64));
 		style1.setBorderColor(Color.black);

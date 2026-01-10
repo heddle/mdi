@@ -56,14 +56,13 @@ public class PropertySupport {
 	public static final String WIDTH = "WIDTH";
 	public static final String WORLDSYSTEM = "WORLDSYSTEM";
 
-	//properties for 3D views
+	// properties for 3D views
 	public static final String ANGLE_X = "ANGLEX";
 	public static final String ANGLE_Y = "ANGLEY";
 	public static final String ANGLE_Z = "ANGLEZ";
 	public static final String DIST_X = "DISTX";
 	public static final String DIST_Y = "DISTY";
 	public static final String DIST_Z = "DISTZ";
-
 
 	// default fill color a gray
 	public static Color defaultFillColor = new Color(208, 208, 208, 128);
@@ -139,8 +138,6 @@ public class PropertySupport {
 		}
 		return o;
 	}
-
-
 
 	/**
 	 * Get the full path of an image file to be used as a background image.
@@ -356,7 +353,6 @@ public class PropertySupport {
 	public static JComponent getSplitWestComponent(Properties props) {
 		return getJComponent(props, SPLITWESTCOMPONENT);
 	}
-
 
 	/**
 	 * Get a symbol from the properties
@@ -575,6 +571,7 @@ public class PropertySupport {
 		}
 		return null;
 	}
+
 	/**
 	 * Get a String from properties.
 	 *
@@ -655,8 +652,6 @@ public class PropertySupport {
 		return defaultValue;
 
 	}
-
-
 
 	/**
 	 * Get a double from properties. Tries to handle both a String (e.g., "67.0")
@@ -761,9 +756,9 @@ public class PropertySupport {
 	 * Get a boolean from properties. Tries to handle both a String (e.g., "true")
 	 * and Boolean value.
 	 *
-	 * @param props the properties
-	 * @param key   the key
-	 * @param       boolean defaultVal
+	 * @param props   the properties
+	 * @param key     the key
+	 * @param boolean defaultVal
 	 * @return the boolean value, or on error the default
 	 */
 	public static boolean getBoolean(Properties props, String key, boolean defaultVal) {

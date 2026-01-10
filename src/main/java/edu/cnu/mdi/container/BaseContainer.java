@@ -40,35 +40,38 @@ import edu.cnu.mdi.view.BaseView;
 /**
  * Primary 2D drawing container for MDI.
  * <p>
- * A container holds a world-coordinate viewport and a z-stack of {@link Layer}s.
- * Each layer holds a collection of {@link AItem}s.
+ * A container holds a world-coordinate viewport and a z-stack of
+ * {@link Layer}s. Each layer holds a collection of {@link AItem}s.
  *
- * <h2>Layer architecture</h2>
- * This container defines three standard layers:
+ * <h2>Layer architecture</h2> This container defines three standard layers:
  * <ul>
- *   <li><b>Connections</b> (protected; drawn first / bottom)</li>
- *   <li><b>Content</b> (default user layer; typical items go here)</li>
- *   <li><b>Annotations</b> (protected; drawn last / top)</li>
+ * <li><b>Connections</b> (protected; drawn first / bottom)</li>
+ * <li><b>Content</b> (default user layer; typical items go here)</li>
+ * <li><b>Annotations</b> (protected; drawn last / top)</li>
  * </ul>
  *
- * <h3>Important implementation note</h3>
- * {@link Layer}'s constructor auto-registers the new layer with the container via
- * {@link IContainer#addLayer(Layer)}. During this container's constructor, the protected
- * layer fields are not yet assigned when the first {@code addLayer} calls occur.
+ * <h3>Important implementation note</h3> {@link Layer}'s constructor
+ * auto-registers the new layer with the container via
+ * {@link IContainer#addLayer(Layer)}. During this container's constructor, the
+ * protected layer fields are not yet assigned when the first {@code addLayer}
+ * calls occur.
  * <p>
- * Therefore, after constructing the layers we explicitly remove the protected layers from
- * {@link #_layers} and re-add the default user layer if needed. This guarantees that:
+ * Therefore, after constructing the layers we explicitly remove the protected
+ * layers from {@link #_layers} and re-add the default user layer if needed.
+ * This guarantees that:
  * <ul>
- *   <li>{@link #_layers} contains only user layers</li>
- *   <li>protected layers are still drawn and hit-tested in their fixed positions</li>
+ * <li>{@link #_layers} contains only user layers</li>
+ * <li>protected layers are still drawn and hit-tested in their fixed
+ * positions</li>
  * </ul>
  *
- * <h2>Visibility and locking</h2>
- * Container-wide operations that involve user interaction (hit testing, selection, deletion,
- * enclosed selection) respect:
+ * <h2>Visibility and locking</h2> Container-wide operations that involve user
+ * interaction (hit testing, selection, deletion, enclosed selection) respect:
  * <ul>
- *   <li>{@link Layer#isVisible()} – invisible layers are ignored for hit testing and enclosure</li>
- *   <li>{@link Layer#isLocked()} – locked layers are treated as non-interactive and ignored</li>
+ * <li>{@link Layer#isVisible()} – invisible layers are ignored for hit testing
+ * and enclosure</li>
+ * <li>{@link Layer#isLocked()} – locked layers are treated as non-interactive
+ * and ignored</li>
  * </ul>
  *
  * @author heddle
@@ -128,7 +131,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 */
 	protected FeedbackControl _feedbackControl;
 
-
 	/** Transform local(screen) -> world. */
 	protected AffineTransform localToWorld;
 
@@ -166,7 +168,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		_layers.remove(_connectionLayer);
 		_layers.remove(_annotationLayer);
 
-		// Ensure the default layer is present as a user layer (should be, but guarantee it).
+		// Ensure the default layer is present as a user layer (should be, but guarantee
+		// it).
 		if (!_layers.contains(_defaultLayer)) {
 			_layers.add(_defaultLayer);
 		}
@@ -207,6 +210,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * Get the default user content layer.
+	 * 
 	 * @return the default user content layer (never null after construction)
 	 */
 	@Override
@@ -229,9 +233,9 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 * <p>
 	 * Order:
 	 * <ol>
-	 *   <li>Connections</li>
-	 *   <li>User layers</li>
-	 *   <li>Annotations</li>
+	 * <li>Connections</li>
+	 * <li>User layers</li>
+	 * <li>Annotations</li>
 	 * </ol>
 	 *
 	 * @return immutable snapshot list in draw order (never null)
@@ -255,9 +259,9 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 * <p>
 	 * Order:
 	 * <ol>
-	 *   <li>Annotations</li>
-	 *   <li>User layers (top -> bottom)</li>
-	 *   <li>Connections</li>
+	 * <li>Annotations</li>
+	 * <li>User layers (top -> bottom)</li>
+	 * <li>Connections</li>
 	 * </ol>
 	 *
 	 * @return immutable snapshot list in hit-test order (never null)
@@ -293,9 +297,11 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	}
 
 	/**
-	 * Get the approximate zoom factor based on the current and default world systems.
+	 * Get the approximate zoom factor based on the current and default world
+	 * systems.
 	 *
-	 * @return the approximate zoom factor. Numbers > 1 mean zoomed in; < 1 mean zoomed out.
+	 * @return the approximate zoom factor. Numbers > 1 mean zoomed in; < 1 mean
+	 *         zoomed out.
 	 */
 	@Override
 	public double approximateZoomFactor() {
@@ -314,12 +320,12 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 * <p>
 	 * Rendering order:
 	 * <ol>
-	 *   <li>background</li>
-	 *   <li>connection layer</li>
-	 *   <li>before-draw</li>
-	 *   <li>user layers</li>
-	 *   <li>after-draw</li>
-	 *   <li>annotation layer</li>
+	 * <li>background</li>
+	 * <li>connection layer</li>
+	 * <li>before-draw</li>
+	 * <li>user layers</li>
+	 * <li>after-draw</li>
+	 * <li>annotation layer</li>
 	 * </ol>
 	 *
 	 * @param g graphics context
@@ -358,7 +364,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 			_connectionLayer.draw(g2, this);
 		}
 
-
 		// user layers including the default (content) layer
 		for (Layer layer : _layers) {
 			layer.draw(g2, this);
@@ -374,7 +379,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 			_annotationLayer.draw(g2, this);
 		}
 
-
 		// always clean after drawing
 		setDirty(false);
 	}
@@ -386,7 +390,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	public void addLayer(Layer layer) {
 		Objects.requireNonNull(layer, "layer");
 
-		// During constructor, _connectionLayer/_annotationLayer may not be assigned yet,
+		// During constructor, _connectionLayer/_annotationLayer may not be assigned
+		// yet,
 		// so we cannot reliably detect protected layers here. We enforce correctness
 		// after construction by cleaning _layers in the constructor.
 		if (layer == _annotationLayer) {
@@ -717,8 +722,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	/**
 	 * {@inheritDoc}
 	 * <p>
-	 * Includes protected layers. Does not require visibility, so selections on hidden
-	 * layers still count (if your tools allow that state).
+	 * Includes protected layers. Does not require visibility, so selections on
+	 * hidden layers still count (if your tools allow that state).
 	 */
 	@Override
 	public boolean anySelectedItems() {
@@ -748,8 +753,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	/**
 	 * {@inheritDoc}
 	 * <p>
-	 * Includes protected layers. Uses {@link Layer#getSelectedItems()} which may itself
-	 * honor layer locking depending on your Layer implementation.
+	 * Includes protected layers. Uses {@link Layer#getSelectedItems()} which may
+	 * itself honor layer locking depending on your Layer implementation.
 	 */
 	@Override
 	public List<AItem> getSelectedItems() {
@@ -837,7 +842,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 			_feedbackControl.updateFeedback(mouseEvent, wp, dragging);
 		}
 	}
-
 
 	/**
 	 * {@inheritDoc}
@@ -994,7 +998,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 			return;
 		}
 
-		if ((_worldSystem == null) || (Math.abs(_worldSystem.width) < 1.0e-12) || (Math.abs(_worldSystem.height) < 1.0e-12)) {
+		if ((_worldSystem == null) || (Math.abs(_worldSystem.width) < 1.0e-12)
+				|| (Math.abs(_worldSystem.height) < 1.0e-12)) {
 			localToWorld = null;
 			worldToLocal = null;
 			return;
@@ -1043,7 +1048,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	/**
 	 * {@inheritDoc}
 	 * <p>
-	 * Default implementation does nothing; many views bind wheel zoom in the tool layer.
+	 * Default implementation does nothing; many views bind wheel zoom in the tool
+	 * layer.
 	 */
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent mouseEvent) {

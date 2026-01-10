@@ -15,9 +15,8 @@ import edu.cnu.mdi.item.PolylineItem;
 import edu.cnu.mdi.item.RadArcItem;
 import edu.cnu.mdi.item.RectangleItem;
 
-
 @SuppressWarnings("serial")
-public class DrawingToolSupport  {
+public class DrawingToolSupport {
 
 	/**
 	 * From a given screen rectangle, create an ellipse item.
@@ -94,7 +93,7 @@ public class DrawingToolSupport  {
 	 * Create a radarc item from the given parameters, probably obtained by
 	 * rubberbanding.
 	 *
-	 * @param layer the z layer to put the item on
+	 * @param layer    the z layer to put the item on
 	 * @param pc       the center of the arc
 	 * @param p1       the point at the end of the first leg. Thus pc->p1 determine
 	 *                 the radius.

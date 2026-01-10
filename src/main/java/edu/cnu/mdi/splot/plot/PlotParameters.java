@@ -14,11 +14,7 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * return {@code this} so calls can be chained, e.g.
  *
  * <pre>
- * params.setPlotTitle("My Plot")
- *       .setXLabel("t (s)")
- *       .setYLabel("V (m/s)")
- *       .mustIncludeYZero(true)
- *       .setLegendDrawing(true);
+ * params.setPlotTitle("My Plot").setXLabel("t (s)").setYLabel("V (m/s)").mustIncludeYZero(true).setLegendDrawing(true);
  * </pre>
  */
 public class PlotParameters {
@@ -52,7 +48,6 @@ public class PlotParameters {
 	private boolean _extraBorder = true;
 	private boolean _drawExtra = true;
 	private String[] _extraStrings;
-
 
 	private Font _titleFont = Fonts.plainFontDelta(8);
 	private Font _axesLabelFont = Fonts.plainFontDelta(2);
@@ -433,8 +428,8 @@ public class PlotParameters {
 	}
 
 	/**
-	 * Add a plot line (annotation) to the plot. If the line is already present,
-	 * it is moved to the end (top) of the internal list.
+	 * Add a plot line (annotation) to the plot. If the line is already present, it
+	 * is moved to the end (top) of the internal list.
 	 *
 	 * @param line the line to add
 	 * @return this parameters instance (for chaining)
@@ -600,7 +595,8 @@ public class PlotParameters {
 	/**
 	 * Set the exponent where we switch to scientific notation on the x axis.
 	 *
-	 * @param minExponentX the exponent threshold for scientific notation on the x axis
+	 * @param minExponentX the exponent threshold for scientific notation on the x
+	 *                     axis
 	 * @return this parameters instance (for chaining)
 	 */
 	public PlotParameters setMinExponentX(int minExponentX) {
@@ -640,7 +636,8 @@ public class PlotParameters {
 	/**
 	 * Set the exponent where we switch to scientific notation on the y axis.
 	 *
-	 * @param minExponentY the exponent threshold for scientific notation on the y axis
+	 * @param minExponentY the exponent threshold for scientific notation on the y
+	 *                     axis
 	 * @return this parameters instance (for chaining)
 	 */
 	public PlotParameters setMinExponentY(int minExponentY) {
@@ -651,8 +648,9 @@ public class PlotParameters {
 	/**
 	 * Manually set the x range.
 	 * <p>
-	 * This forces {@link #setXLimitsMethod(LimitsMethod)} to {@link LimitsMethod#MANUALLIMITS}
-	 * and requests that the owning canvas recompute the world coordinate system.
+	 * This forces {@link #setXLimitsMethod(LimitsMethod)} to
+	 * {@link LimitsMethod#MANUALLIMITS} and requests that the owning canvas
+	 * recompute the world coordinate system.
 	 *
 	 * @param xmin the minimum x
 	 * @param xmax the maximum x
@@ -669,8 +667,9 @@ public class PlotParameters {
 	/**
 	 * Manually set the y range.
 	 * <p>
-	 * This forces {@link #setYLimitsMethod(LimitsMethod)} to {@link LimitsMethod#MANUALLIMITS}
-	 * and requests that the owning canvas recompute the world coordinate system.
+	 * This forces {@link #setYLimitsMethod(LimitsMethod)} to
+	 * {@link LimitsMethod#MANUALLIMITS} and requests that the owning canvas
+	 * recompute the world coordinate system.
 	 *
 	 * @param ymin the minimum y
 	 * @param ymax the maximum y

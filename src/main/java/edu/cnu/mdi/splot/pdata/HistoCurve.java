@@ -11,20 +11,21 @@ import edu.cnu.mdi.splot.fit.IFitter;
 import edu.cnu.mdi.splot.spline.CubicSpline;
 
 /**
- * Histogram-backed curve that integrates {@link HistoData} into the {@link ACurve}
- * fitting and drawing framework.
+ * Histogram-backed curve that integrates {@link HistoData} into the
+ * {@link ACurve} fitting and drawing framework.
  *
  * <h2>Thread-safety</h2>
  * <p>
- * The {@link ACurve} contract requires that notifications (e.g. {@link #markDataChanged()})
- * occur on the Swing Event Dispatch Thread (EDT). This class preserves that contract while
- * allowing histogram filling from any thread:
+ * The {@link ACurve} contract requires that notifications (e.g.
+ * {@link #markDataChanged()}) occur on the Swing Event Dispatch Thread (EDT).
+ * This class preserves that contract while allowing histogram filling from any
+ * thread:
  * </p>
  * <ul>
- *   <li>If {@link #add(double)} or {@link #addAll(double[])} are called on the EDT, they apply
- *       immediately and notify once.</li>
- *   <li>If called off the EDT, values are enqueued and a coalesced EDT drain is scheduled.
- *       The drain applies many samples in bulk and notifies once.</li>
+ * <li>If {@link #add(double)} or {@link #addAll(double[])} are called on the
+ * EDT, they apply immediately and notify once.</li>
+ * <li>If called off the EDT, values are enqueued and a coalesced EDT drain is
+ * scheduled. The drain applies many samples in bulk and notifies once.</li>
  * </ul>
  *
  * @author heddle
@@ -38,14 +39,14 @@ public class HistoCurve extends ACurve {
 	private final PendingQueue<Double> pending = new PendingQueue<>();
 
 	/**
-	 * Coalescing latch: ensures we only post one drain runnable to the EDT at a time,
-	 * no matter how many background threads call {@link #add(double)}.
+	 * Coalescing latch: ensures we only post one drain runnable to the EDT at a
+	 * time, no matter how many background threads call {@link #add(double)}.
 	 */
 	private final AtomicBoolean drainScheduled = new AtomicBoolean(false);
 
 	/**
-	 * Maximum number of pending samples to apply per single EDT drain pass.
-	 * Keeps the EDT responsive under heavy producer rates.
+	 * Maximum number of pending samples to apply per single EDT drain pass. Keeps
+	 * the EDT responsive under heavy producer rates.
 	 */
 	private static final int DEFAULT_DRAIN_MAX = 10_000;
 
@@ -104,7 +105,6 @@ public class HistoCurve extends ACurve {
 
 		return new FitVectors(x, y, null);
 	}
-
 
 	/**
 	 * Perform a curve computation (fit or spline) depending on the
@@ -204,9 +204,9 @@ public class HistoCurve extends ACurve {
 	/**
 	 * Add a value to the histogram.
 	 * <p>
-	 * Safe from any thread. Off-EDT calls enqueue and schedule a coalesced EDT drain.
-	 * The {@link ACurve} notification contract is preserved: {@link #markDataChanged()}
-	 * is invoked on the EDT only.
+	 * Safe from any thread. Off-EDT calls enqueue and schedule a coalesced EDT
+	 * drain. The {@link ACurve} notification contract is preserved:
+	 * {@link #markDataChanged()} is invoked on the EDT only.
 	 * </p>
 	 *
 	 * @param x the value to add
@@ -227,9 +227,9 @@ public class HistoCurve extends ACurve {
 	/**
 	 * Add multiple values to the histogram.
 	 * <p>
-	 * Safe from any thread. Off-EDT calls enqueue and schedule a coalesced EDT drain.
-	 * The {@link ACurve} notification contract is preserved: {@link #markDataChanged()}
-	 * is invoked on the EDT only.
+	 * Safe from any thread. Off-EDT calls enqueue and schedule a coalesced EDT
+	 * drain. The {@link ACurve} notification contract is preserved:
+	 * {@link #markDataChanged()} is invoked on the EDT only.
 	 * </p>
 	 *
 	 * @param x the values to add (non-null)
@@ -250,8 +250,8 @@ public class HistoCurve extends ACurve {
 	}
 
 	/**
-	 * Enqueue a value to be added to the histogram later on the EDT.
-	 * This method should be used by background worker threads.
+	 * Enqueue a value to be added to the histogram later on the EDT. This method
+	 * should be used by background worker threads.
 	 *
 	 * @param x the value to enqueue
 	 */
@@ -260,8 +260,8 @@ public class HistoCurve extends ACurve {
 	}
 
 	/**
-	 * Enqueue multiple values to be added to the histogram later on the EDT.
-	 * This method should be used by background worker threads.
+	 * Enqueue multiple values to be added to the histogram later on the EDT. This
+	 * method should be used by background worker threads.
 	 *
 	 * @param x the values to enqueue (non-null)
 	 */
@@ -275,7 +275,8 @@ public class HistoCurve extends ACurve {
 	/**
 	 * Drain pending enqueued values on the EDT and apply them to the histogram.
 	 * <p>
-	 * This method is EDT-only because it ultimately fires {@link #markDataChanged()}.
+	 * This method is EDT-only because it ultimately fires
+	 * {@link #markDataChanged()}.
 	 * </p>
 	 *
 	 * @param max maximum number of values to apply in this drain pass
@@ -320,7 +321,8 @@ public class HistoCurve extends ACurve {
 	 * Clear histogram contents and statistics.
 	 * <p>
 	 * EDT-only by default, preserving the existing behavior. If you decide you want
-	 * this to be thread-safe later, it can follow the same enqueue/schedule pattern.
+	 * this to be thread-safe later, it can follow the same enqueue/schedule
+	 * pattern.
 	 * </p>
 	 */
 	public void clearData() {

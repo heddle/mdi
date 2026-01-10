@@ -282,36 +282,35 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 			EnumComboBox<SymbolType> ecb = (EnumComboBox<SymbolType>) source;
 			SymbolType stype = ecb.getSelectedEnum(); // may be null if extraChoiceLabel used
 
-
 			if (curve.getStyle().getSymbolType() != stype) {
 				curve.getStyle().setSymbolType(stype);
 				_plotCanvas.repaint();
 			}
 
 		} else if (source == _stylePanel.getBorderSelector()) {
-		    @SuppressWarnings("unchecked")
-		    EnumComboBox<LineStyle> ecb = (EnumComboBox<LineStyle>) source;
-		    LineStyle lineStyle = ecb.getSelectedEnum();
+			@SuppressWarnings("unchecked")
+			EnumComboBox<LineStyle> ecb = (EnumComboBox<LineStyle>) source;
+			LineStyle lineStyle = ecb.getSelectedEnum();
 
-		    if (curve.getStyle().getLineStyle() != lineStyle) {
-		        curve.getStyle().setLineStyle(lineStyle);
-		        _plotCanvas.repaint();
-		    }
+			if (curve.getStyle().getLineStyle() != lineStyle) {
+				curve.getStyle().setLineStyle(lineStyle);
+				_plotCanvas.repaint();
+			}
 
 		} else if (source == _fitPanel.getFitSelector()) {
-		    @SuppressWarnings("unchecked")
-		    EnumComboBox<CurveDrawingMethod> ecb = (EnumComboBox<CurveDrawingMethod>) source;
-		    CurveDrawingMethod fitType = ecb.getSelectedEnum();
+			@SuppressWarnings("unchecked")
+			EnumComboBox<CurveDrawingMethod> ecb = (EnumComboBox<CurveDrawingMethod>) source;
+			CurveDrawingMethod fitType = ecb.getSelectedEnum();
 
-		    if (curve.getCurveDrawingMethod() != fitType) {
-		        curve.setCurveMethod(fitType);
-		        _fitPanel.fitSpecific(curve.getCurveDrawingMethod());
+			if (curve.getCurveDrawingMethod() != fitType) {
+				curve.setCurveMethod(fitType);
+				_fitPanel.fitSpecific(curve.getCurveDrawingMethod());
 
-		        _fitPanel.reconfigure(curve);
-		        validate();
-		        _fitPanel.repaint();
-		        _plotCanvas.repaint();
-		    }
+				_fitPanel.reconfigure(curve);
+				validate();
+				_fitPanel.repaint();
+				_plotCanvas.repaint();
+			}
 		}
 
 	}
@@ -396,31 +395,30 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 	}
 
 	private void syncSelectorsFromCurve(ACurve curve) {
-	    if (curve == null) {
+		if (curve == null) {
 			return;
 		}
 
-	    // Symbol
-	    if (_stylePanel.getSymbolSelector() != null) {
-	        @SuppressWarnings("unchecked")
-	        EnumComboBox<SymbolType> cb = _stylePanel.getSymbolSelector();
-	        cb.setSelectedItem(curve.getStyle().getSymbolType());
-	    }
+		// Symbol
+		if (_stylePanel.getSymbolSelector() != null) {
+			@SuppressWarnings("unchecked")
+			EnumComboBox<SymbolType> cb = _stylePanel.getSymbolSelector();
+			cb.setSelectedItem(curve.getStyle().getSymbolType());
+		}
 
-	    // Line style
-	    if (_stylePanel.getBorderSelector() != null) {
-	        @SuppressWarnings("unchecked")
-	        EnumComboBox<LineStyle> cb = _stylePanel.getBorderSelector();
-	        cb.setSelectedItem(curve.getStyle().getLineStyle());
-	    }
+		// Line style
+		if (_stylePanel.getBorderSelector() != null) {
+			@SuppressWarnings("unchecked")
+			EnumComboBox<LineStyle> cb = _stylePanel.getBorderSelector();
+			cb.setSelectedItem(curve.getStyle().getLineStyle());
+		}
 
-	    // Fit / drawing method
-	    if (_fitPanel.getFitSelector() != null) {
-	        @SuppressWarnings("unchecked")
-	        EnumComboBox<CurveDrawingMethod> cb = _fitPanel.getFitSelector();
-	        cb.setSelectedItem(curve.getCurveDrawingMethod());
-	    }
+		// Fit / drawing method
+		if (_fitPanel.getFitSelector() != null) {
+			@SuppressWarnings("unchecked")
+			EnumComboBox<CurveDrawingMethod> cb = _fitPanel.getFitSelector();
+			cb.setSelectedItem(curve.getCurveDrawingMethod());
+		}
 	}
-
 
 }

@@ -20,12 +20,12 @@ import edu.cnu.mdi.ui.colors.X11Colors;
  * </p>
  *
  * <ul>
- *   <li><code>"$mono$"</code> — renders the remainder of the line using a small
- *       monospaced style (e.g. for coordinate dumps or debug info).</li>
- *   <li><code>"$colorName$"</code> — renders the remainder of the line using
- *       the specified X11 color (e.g. <code>"$red$hit"</code>,
- *       <code>"$dark blue$selection"</code>).</li>
- *   <li>No prefix — renders using the default feedback style.</li>
+ * <li><code>"$mono$"</code> — renders the remainder of the line using a small
+ * monospaced style (e.g. for coordinate dumps or debug info).</li>
+ * <li><code>"$colorName$"</code> — renders the remainder of the line using the
+ * specified X11 color (e.g. <code>"$red$hit"</code>,
+ * <code>"$dark blue$selection"</code>).</li>
+ * <li>No prefix — renders using the default feedback style.</li>
  * </ul>
  *
  * <p>
@@ -44,37 +44,35 @@ public class FeedbackPane extends TextPaneScrollPane {
 	// default font size
 	private int fontSize;
 
+	/**
+	 * Cache of styles keyed by lower-case X11 color names.
+	 * <p>
+	 * For example, the key {@code "red"} maps to a style that renders cyan text on
+	 * the configured background.
+	 * </p>
+	 */
+	private final Map<String, SimpleAttributeSet> styleCache = new ConcurrentHashMap<>(101);
 
-    /**
-     * Cache of styles keyed by lower-case X11 color names.
-     * <p>
-     * For example, the key {@code "red"} maps to a style that renders cyan text
-     * on the configured background.
-     * </p>
-     */
-    private final Map<String, SimpleAttributeSet> styleCache = new ConcurrentHashMap<>(101);
+	/**
+	 * Default style: cyan text, black background, SansSerif, bold, non-italic.
+	 */
+	private SimpleAttributeSet DEFAULT_STYLE;
 
-    /**
-     * Default style: cyan text, black background, SansSerif, bold, non-italic.
-     */
-    private SimpleAttributeSet DEFAULT_STYLE;
+	/**
+	 * Small monospaced style: cyan text, black background, monospaced font, small
+	 * size, bold, non-italic.
+	 */
+	private SimpleAttributeSet SMALL_MONO_STYLE;
 
-    /**
-     * Small monospaced style: cyan text, black background, monospaced font,
-     * small size, bold, non-italic.
-     */
-    private SimpleAttributeSet SMALL_MONO_STYLE;
+	/**
+	 * Constructs a {@code FeedbackPane} a dark background suitable for
+	 * overlay-style feedback. Uses 9 pt font size.
+	 */
+	public FeedbackPane() {
+		this(Color.cyan, Color.black, 9);
+	}
 
-    /**
-     * Constructs a {@code FeedbackPane}  a
-     * dark background suitable for overlay-style feedback.
-     * Uses 9 pt font size.
-     */
-    public FeedbackPane() {
-        this(Color.cyan, Color.black, 9);
-    }
-
-    public FeedbackPane(Color fg, Color bg, int fontSize) {
+	public FeedbackPane(Color fg, Color bg, int fontSize) {
 		super(bg);
 		this.bg = bg;
 		this.fontSize = fontSize;
@@ -85,126 +83,120 @@ public class FeedbackPane extends TextPaneScrollPane {
 		SMALL_MONO_STYLE = createStyle(fg, bg, "Monospaced", smallFontSize, false, true);
 	}
 
-    /**
-     * Ensures the message text ends with a newline so that appended messages
-     * each appear on their own line.
-     *
-     * @param message the message text, may be {@code null}
-     * @return the message text, never {@code null}, always ending with
-     *         {@code '\n'}
-     */
-    private String fixMessage(String message) {
-        if (message == null) {
-            return "";
-        }
-        if (!message.endsWith("\n")) {
-            return message + "\n";
-        }
-        return message;
-    }
+	/**
+	 * Ensures the message text ends with a newline so that appended messages each
+	 * appear on their own line.
+	 *
+	 * @param message the message text, may be {@code null}
+	 * @return the message text, never {@code null}, always ending with {@code '\n'}
+	 */
+	private String fixMessage(String message) {
+		if (message == null) {
+			return "";
+		}
+		if (!message.endsWith("\n")) {
+			return message + "\n";
+		}
+		return message;
+	}
 
-    /**
-     * Appends a feedback line using the simple prefix-based styling rules.
-     * <p>
-     * Rules:
-     * </p>
-     * <ul>
-     *   <li>If the message begins with <code>"$mono$"</code>, the prefix is
-     *       stripped and the remainder is rendered using the small monospaced
-     *       style.</li>
-     *   <li>If the message begins with <code>"$colorName$"</code>, where
-     *       {@code colorName} is a valid X11 color name, the remainder is
-     *       rendered using a style derived from that color. Styles are cached
-     *       per color name.</li>
-     *   <li>Otherwise, the message is rendered using
-     *       {@link #DEFAULT_STYLE}.</li>
-     * </ul>
-     *
-     * @param message the message text (may contain styling prefixes).
-     */
-    @Override
-    public void append(String message) {
-        if (message == null) {
-            return;
-        }
+	/**
+	 * Appends a feedback line using the simple prefix-based styling rules.
+	 * <p>
+	 * Rules:
+	 * </p>
+	 * <ul>
+	 * <li>If the message begins with <code>"$mono$"</code>, the prefix is stripped
+	 * and the remainder is rendered using the small monospaced style.</li>
+	 * <li>If the message begins with <code>"$colorName$"</code>, where
+	 * {@code colorName} is a valid X11 color name, the remainder is rendered using
+	 * a style derived from that color. Styles are cached per color name.</li>
+	 * <li>Otherwise, the message is rendered using {@link #DEFAULT_STYLE}.</li>
+	 * </ul>
+	 *
+	 * @param message the message text (may contain styling prefixes).
+	 */
+	@Override
+	public void append(String message) {
+		if (message == null) {
+			return;
+		}
 
-        // Special-case monospaced small style
-        if (message.startsWith("$mono$")) {
-            appendSmallMono(message.substring(6));
-            return;
-        }
+		// Special-case monospaced small style
+		if (message.startsWith("$mono$")) {
+			appendSmallMono(message.substring(6));
+			return;
+		}
 
-        SimpleAttributeSet style = null;
+		SimpleAttributeSet style = null;
 
-        // Look for $colorName$ prefix
-        if (message.startsWith("$")) {
-            int nextIndex = message.indexOf("$", 1);
-            if (nextIndex > 3 && nextIndex < 30) {
-                String x11ColorName = message.substring(1, nextIndex).toLowerCase();
-                message = message.substring(nextIndex + 1);
+		// Look for $colorName$ prefix
+		if (message.startsWith("$")) {
+			int nextIndex = message.indexOf("$", 1);
+			if (nextIndex > 3 && nextIndex < 30) {
+				String x11ColorName = message.substring(1, nextIndex).toLowerCase();
+				message = message.substring(nextIndex + 1);
 
-                style = styleCache.get(x11ColorName);
-                if (style == null) {
-                    Color color = X11Colors.getX11Color(x11ColorName);
-                    if (color != null) {
-                        style = createStyle(color, bg, "SansSerif",
-                                            fontSize, false, true);
-                        styleCache.put(x11ColorName, style);
-                    }
-                }
-            }
-        }
+				style = styleCache.get(x11ColorName);
+				if (style == null) {
+					Color color = X11Colors.getX11Color(x11ColorName);
+					if (color != null) {
+						style = createStyle(color, bg, "SansSerif", fontSize, false, true);
+						styleCache.put(x11ColorName, style);
+					}
+				}
+			}
+		}
 
-        append((style == null) ? DEFAULT_STYLE : style, message);
-    }
+		append((style == null) ? DEFAULT_STYLE : style, message);
+	}
 
-    /**
-     * Appends a line using the {@link #SMALL_MONO_STYLE} style.
-     *
-     * @param message the message text (without any styling prefixes).
-     */
-    private void appendSmallMono(String message) {
-        append(SMALL_MONO_STYLE, message);
-    }
+	/**
+	 * Appends a line using the {@link #SMALL_MONO_STYLE} style.
+	 *
+	 * @param message the message text (without any styling prefixes).
+	 */
+	private void appendSmallMono(String message) {
+		append(SMALL_MONO_STYLE, message);
+	}
 
-    /**
-     * Appends the given message using the specified style.
-     *
-     * @param style   the style to apply; must not be {@code null}
-     * @param message the message text; may be {@code null} (treated as empty)
-     */
-    public void append(SimpleAttributeSet style, String message) {
-        append(fixMessage(message), style, false);
-    }
+	/**
+	 * Appends the given message using the specified style.
+	 *
+	 * @param style   the style to apply; must not be {@code null}
+	 * @param message the message text; may be {@code null} (treated as empty)
+	 */
+	public void append(SimpleAttributeSet style, String message) {
+		append(fixMessage(message), style, false);
+	}
 
-    /**
-     * Replaces the current content with the provided feedback strings and
-     * appends each one using {@link #append(String)}. Called by a FeedbackControl
-     *
-     * @param feedbackStrings the list of feedback strings to display; may be
-     *                        {@code null} or empty, in which case the pane is
-     *                        simply cleared
-     */
-    public void updateFeedback(List<String> feedbackStrings) {
-        clear();
+	/**
+	 * Replaces the current content with the provided feedback strings and appends
+	 * each one using {@link #append(String)}. Called by a FeedbackControl
+	 *
+	 * @param feedbackStrings the list of feedback strings to display; may be
+	 *                        {@code null} or empty, in which case the pane is
+	 *                        simply cleared
+	 */
+	public void updateFeedback(List<String> feedbackStrings) {
+		clear();
 
-        if (feedbackStrings == null || feedbackStrings.isEmpty()) {
-            return;
-        }
+		if (feedbackStrings == null || feedbackStrings.isEmpty()) {
+			return;
+		}
 
-        for (String s : feedbackStrings) {
-            append(s);
-        }
-    }
+		for (String s : feedbackStrings) {
+			append(s);
+		}
+	}
 
-    /**
-     * Returns a short descriptive name for this component, useful for
-     * debugging.
-     *
-     * @return the string {@code "FeedbackPane"}
-     */
-    @Override
-    public String toString() {
-        return "FeedbackPane";
-    }
+	/**
+	 * Returns a short descriptive name for this component, useful for debugging.
+	 *
+	 * @return the string {@code "FeedbackPane"}
+	 */
+	@Override
+	public String toString() {
+		return "FeedbackPane";
+	}
 }

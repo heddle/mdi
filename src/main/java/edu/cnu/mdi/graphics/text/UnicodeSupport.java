@@ -1,9 +1,8 @@
 package edu.cnu.mdi.graphics.text;
 
-
 public class UnicodeSupport {
 
-	//subscripts and superscripts
+	// subscripts and superscripts
 	public static final String SUB0 = "\u2080";
 	public static final String SUB1 = "\u2081";
 	public static final String SUB2 = "\u2082";
@@ -28,13 +27,11 @@ public class UnicodeSupport {
 	public static final String SUPERN = "\u207F";
 	public static final String SUBN = "\u2099";
 
-
-	//erase left
+	// erase left
 	public static final String BACKSPACE = "\u232B";
 
-	//enter
+	// enter
 	public static final String ENTER = "\u21B5";
-
 
 	public static final String SMILEYFACE = "\u263A";
 	public static final String OVERLINE = "\u0305";

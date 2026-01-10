@@ -21,9 +21,9 @@ import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.view.BaseView;
 
 /**
- * A 2D drawing container with a world coordinate system and conversion
- * to pixel (screen) coordinates. Implementations are typically Swing
- * components that render one or more {@link IDrawable}s.
+ * A 2D drawing container with a world coordinate system and conversion to pixel
+ * (screen) coordinates. Implementations are typically Swing components that
+ * render one or more {@link IDrawable}s.
  */
 public interface IContainer {
 
@@ -42,8 +42,8 @@ public interface IContainer {
 	/**
 	 * Get the annotation layer for this container.
 	 *
-	 * @return the annotation layer for this container. All drawing tools draw on the
-	 *         annotation layer, which is kept on top.
+	 * @return the annotation layer for this container. All drawing tools draw on
+	 *         the annotation layer, which is kept on top.
 	 */
 	public Layer getAnnotationLayer();
 
@@ -57,13 +57,14 @@ public interface IContainer {
 
 	/**
 	 * Get the default user content layer for this container.
+	 * 
 	 * @return the default user content layer (never null after construction)
 	 */
 	public Layer getDefaultLayer();
 
 	/**
-	 * Gets an z layer by name. Do not use for the annotation layer or
-	 * connection layer-- for that use getAnnotationLayer() or getConnectionLayer().
+	 * Gets an z layer by name. Do not use for the annotation layer or connection
+	 * layer-- for that use getAnnotationLayer() or getConnectionLayer().
 	 *
 	 * @param name the name of the layer.
 	 * @return the z layer, or <code>null</code>.
@@ -153,12 +154,12 @@ public interface IContainer {
 	public void restoreDefaultWorld();
 
 	/**
-	 * Reset the world system to a new value.
-	 * Resets the default and previous world systems as well.
+	 * Reset the world system to a new value. Resets the default and previous world
+	 * systems as well.
+	 * 
 	 * @param worldSystem the new world system.
 	 */
 	public void resetWorldSystem(Rectangle2D.Double worldSystem);
-
 
 	/**
 	 * Convenience routine to scale the container.
@@ -201,8 +202,8 @@ public interface IContainer {
 	 * Find all items, if any, at the point.
 	 *
 	 * @param lp the pixel point in question.
-	 * @return all items across all item lists that contain the given point. It may be
-	 *         an empty vector, but it won't be <code>null</null>.
+	 * @return all items across all item lists that contain the given point. It may
+	 *         be an empty vector, but it won't be <code>null</null>.
 	 */
 	public ArrayList<AItem> getItemsAtPoint(Point lp);
 
@@ -244,7 +245,6 @@ public interface IContainer {
 	 */
 	public void zoom(final double xmin, final double xmax, final double ymin, final double ymax);
 
-
 	/**
 	 * Get this container's tool bar interface.
 	 *
@@ -266,7 +266,6 @@ public interface IContainer {
 	 * @param dragging   <code>true</code> if we are dragging
 	 */
 	public void locationUpdate(MouseEvent mouseEvent, boolean dragging);
-
 
 	/**
 	 * Get the view (internal frame) that holds this container.
@@ -305,7 +304,8 @@ public interface IContainer {
 	public FeedbackControl getFeedbackControl();
 
 	/**
-	 * Convenience method for setting the dirty flag for all items on all item lists.
+	 * Convenience method for setting the dirty flag for all items on all item
+	 * lists.
 	 *
 	 * @param dirty the new value of the dirty flag.
 	 */
@@ -358,14 +358,13 @@ public interface IContainer {
 	 */
 	public void setWorldSystem(Rectangle2D.Double wr);
 
-
-
 	public boolean isStandardPanning();
 
 	public void setStandardPanning(boolean standardPanning);
 
 	/**
-	 * Get the approximate zoom factor based on the current and default world systems.
+	 * Get the approximate zoom factor based on the current and default world
+	 * systems.
 	 *
 	 * @return the approximate zoom factor
 	 */

@@ -120,9 +120,7 @@ public class AxesTabPanel extends JPanel {
 		_params.setMinExponentY(((Number) _expY.getValue()).intValue());
 
 		// If include-zero toggles, world limits may change.
-		boolean axisAffectsWorld =
-				(_xZero0 != _includeXZero.isSelected()) ||
-				(_yZero0 != _includeYZero.isSelected());
+		boolean axisAffectsWorld = (_xZero0 != _includeXZero.isSelected()) || (_yZero0 != _includeYZero.isSelected());
 
 		// Tick formatting doesn’t require setWorldSystem(), just repaint.
 		return axisAffectsWorld;

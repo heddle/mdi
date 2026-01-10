@@ -23,7 +23,7 @@ public class ColorDialog extends JDialog {
 	/**
 	 * Constructor
 	 *
-	 * @param owner            The parent window
+	 * @param owner             The parent window
 	 * @param initColor         The initial color
 	 * @param allowNoColor      If true, user can select "no color"
 	 * @param allowTransparency It true, alpha color slider is enabled.

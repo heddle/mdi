@@ -53,29 +53,24 @@ public class CurveDrawer {
 		}
 
 		if (curve instanceof Curve) {
-			drawXYCurve(g, plotCanvas, (Curve)curve);
-		}
-		else if (curve instanceof StripChartCurve) {
+			drawXYCurve(g, plotCanvas, (Curve) curve);
+		} else if (curve instanceof StripChartCurve) {
 			drawStripChart(g, plotCanvas, (StripChartCurve) curve);
-		}
-		else if (curve instanceof HistoCurve) {
+		} else if (curve instanceof HistoCurve) {
 			drawHistoCurve(g, plotCanvas, (HistoCurve) curve);
-		}
-		else {
+		} else {
 			System.err.println("Unsupported curve type in drawCurve " + curve.name());
 			return;
 		}
 
 	}
 
-
-
 	/**
 	 * Draw a standard XY(with optional errors) curve
 	 *
-	 * @param g           the graphics context
-	 * @param plotCanvas  the plot canvas
-	 * @param curve 	the XY(E)curve to be drawn
+	 * @param g          the graphics context
+	 * @param plotCanvas the plot canvas
+	 * @param curve      the XY(E)curve to be drawn
 	 */
 	public static void drawXYCurve(Graphics g, PlotCanvas canvas, Curve curve) {
 		if (!curve.isVisible()) {
@@ -90,7 +85,7 @@ public class CurveDrawer {
 		Point p0 = new Point();
 		Point p1 = new Point();
 
-		//get threadsafe copy of the data
+		// get threadsafe copy of the data
 		Snapshot snapshot = curve.snapshot();
 
 		double x[] = snapshot.x;
@@ -101,9 +96,8 @@ public class CurveDrawer {
 			return;
 		}
 
-		//draw the fit line or basic connector lines
+		// draw the fit line or basic connector lines
 		drawFitOrLines(g, canvas, curve, x, y);
-
 
 		// symbols?
 		Styled style = curve.getStyle();
@@ -111,7 +105,7 @@ public class CurveDrawer {
 		if (style.getSymbolType() != SymbolType.NOSYMBOL) {
 			for (int i = 0; i < x.length; i++) {
 
-				//draw sigmaY error bars
+				// draw sigmaY error bars
 				if (ysig != null) {
 					double y0 = y[i] - ysig[i];
 					double y1 = y[i] + ysig[i];
@@ -130,12 +124,11 @@ public class CurveDrawer {
 		}
 	}
 
-
 	/**
 	 * Draw a strip chart
 	 *
-	 * @param g           the graphics context
-	 * @param plotCanvas  the plot canvas
+	 * @param g               the graphics context
+	 * @param plotCanvas      the plot canvas
 	 * @param stripChartCurve the strip chart curve
 	 */
 	public static void drawStripChart(Graphics g, PlotCanvas canvas, StripChartCurve stripChartCurve) {
@@ -151,7 +144,7 @@ public class CurveDrawer {
 			stripChartCurve.doFit(true);
 		}
 
-        //get threadsafe copy of the data
+		// get threadsafe copy of the data
 		Snapshot snapshot = stripChartCurve.snapshot();
 
 		double x[] = snapshot.x;
@@ -168,8 +161,8 @@ public class CurveDrawer {
 	/**
 	 * Draw a 1D histogram
 	 *
-	 * @param g           the graphics context
-	 * @param plotCanvas  the plot canvas
+	 * @param g          the graphics context
+	 * @param plotCanvas the plot canvas
 	 * @param histoCurve the histogram curve
 	 */
 	private static void drawHistoCurve(Graphics g, PlotCanvas canvas, HistoCurve histoCurve) {
@@ -238,7 +231,6 @@ public class CurveDrawer {
 
 	}
 
-
 	/**
 	 * Draw the fit or basic no-fit connections for the given curve
 	 *
@@ -271,7 +263,7 @@ public class CurveDrawer {
 		case NONE:
 			break;
 
-		case CONNECT:  // simple connections
+		case CONNECT: // simple connections
 			wp.setLocation(x[0], y[0]);
 			canvas.worldToLocal(p0, wp);
 
@@ -314,19 +306,19 @@ public class CurveDrawer {
 			drawEvaluator(g2, canvas, ivg);
 			break;
 
-			//all the true fits
+		// all the true fits
 		default:
 			FitResult fr = curve.fitResult();
 			if (fr == null) {
 				if (curve.isDirty()) {
 					System.err.println("Curve is dirty in drawFitOrLines for curve " + curve.name());
 				}
-				//no fit result
+				// no fit result
 				System.err.println("No fit result for curve " + curve.name());
 				return;
 			}
 
-			//this is the evaluator for the fit
+			// this is the evaluator for the fit
 			ivg = curve.getFitValueGetter();
 			if (ivg == null) {
 				System.err.println("Fit evaluator is null in CurveDrawer");
@@ -335,7 +327,6 @@ public class CurveDrawer {
 			drawEvaluator(g2, canvas, ivg);
 			break;
 		}
-
 
 		g2.setStroke(oldStroke);
 	}
@@ -377,19 +368,17 @@ public class CurveDrawer {
 				poly = new Path2D.Float();
 				poly.moveTo(pp.x, pp.y);
 
-			}
-			else {
+			} else {
 				poly.lineTo(pp.x, pp.y);
 			}
 		}
 
 		Graphics2D g2 = g;
-        Object oldAA = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
+		Object oldAA = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		g.draw(poly);
-				//restore
+		// restore
 		if (oldAA != null) {
 			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAA);
 		}

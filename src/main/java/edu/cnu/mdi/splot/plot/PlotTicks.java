@@ -112,7 +112,7 @@ public class PlotTicks {
 			return;
 		}
 
-		HistoCurve hc = (HistoCurve)(plotData.getCurve(0));
+		HistoCurve hc = (HistoCurve) (plotData.getCurve(0));
 		HistoData hd = hc.getHistoData();
 		if (hd == null) {
 			return;

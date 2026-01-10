@@ -23,10 +23,9 @@ public class ErfTest extends AExample {
 
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
-	String[] curveNames = {"Erf Fit" };
-	   return new PlotData(PlotDataType.XYEXYE, curveNames, null);
+		String[] curveNames = { "Erf Fit" };
+		return new PlotData(PlotDataType.XYEXYE, curveNames, null);
 	}
-
 
 	@Override
 	protected String getXAxisLabel() {
@@ -58,13 +57,13 @@ public class ErfTest extends AExample {
 		};
 
 		FitVectors testData = FitVectors.testData(erfEval, -4.0, 4.0, n, 3.0, 3.0);
-	   	Curve curve = (Curve) plotData.getFirstCurve();
+		Curve curve = (Curve) plotData.getFirstCurve();
 
-	   	double e[] = new double[n];
-			for (int i = 0; i < n; i++) {
-				//convert weight to error
-		    	e[i] = 1.0 / Math.sqrt(1.0e-12 + testData.w[i]);
-			}
+		double e[] = new double[n];
+		for (int i = 0; i < n; i++) {
+			// convert weight to error
+			e[i] = 1.0 / Math.sqrt(1.0e-12 + testData.w[i]);
+		}
 		curve.addAll(testData.x, testData.y, e);
 	}
 
@@ -77,8 +76,7 @@ public class ErfTest extends AExample {
 		params.addPlotLine(new HorizontalLine(canvas, 0));
 		params.addPlotLine(new HorizontalLine(canvas, 1));
 		curve.getStyle().setFillColor(new Color(0, 0, 240, 128));
-		String extra[] = { "Sample annotation string",
-				"Sample annotation string",
+		String extra[] = { "Sample annotation string", "Sample annotation string",
 				"This box, like the Legend, is draggable." };
 		params.setExtraStrings(extra);
 	}

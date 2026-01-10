@@ -6,23 +6,22 @@ import java.math.RoundingMode;
 
 public class SmartDoubleFormatter {
 
-    public static String doubleFormat(double value, int sigDigits) {
+	public static String doubleFormat(double value, int sigDigits) {
 
-        if (Double.isNaN(value) || Double.isInfinite(value)) {
-            return String.valueOf(value);
-        }
+		if (Double.isNaN(value) || Double.isInfinite(value)) {
+			return String.valueOf(value);
+		}
 
-        BigDecimal bd = new BigDecimal(value,
-                new MathContext(sigDigits, RoundingMode.HALF_UP));
+		BigDecimal bd = new BigDecimal(value, new MathContext(sigDigits, RoundingMode.HALF_UP));
 
-        String plain = bd.toPlainString();
-        String scientific = bd.toString();
+		String plain = bd.toPlainString();
+		String scientific = bd.toString();
 
-        // Use scientific if plain string is ugly/long
-        if (plain.length() > sigDigits + 4) {
-            return scientific;
-        } else {
-            return plain;
-        }
-    }
+		// Use scientific if plain string is ugly/long
+		if (plain.length() > sigDigits + 4) {
+			return scientific;
+		} else {
+			return plain;
+		}
+	}
 }

@@ -18,8 +18,8 @@ import edu.cnu.mdi.ui.colors.X11Colors;
 
 /**
  * A {@link JScrollPane} that owns a non-editable {@link JTextPane} using a
- * {@link StyledDocument} and a collection of convenience styles for
- * terminal / status-like output.
+ * {@link StyledDocument} and a collection of convenience styles for terminal /
+ * status-like output.
  * <p>
  * This class is also written to behave well under the Nimbus look &amp; feel:
  * the scroll pane and its viewport are opaque and painted with the configured
@@ -48,8 +48,8 @@ public class TextPaneScrollPane extends JScrollPane {
 	// ------------------------------------------------------------------------
 
 	/** Small blue monospaced style on a light blue background. */
-	public static final SimpleAttributeSet BLUE_M_10_B = createStyle(Color.blue,
-			X11Colors.getX11Color("Alice Blue"), "monospaced", 10, false, true);
+	public static final SimpleAttributeSet BLUE_M_10_B = createStyle(Color.blue, X11Colors.getX11Color("Alice Blue"),
+			"monospaced", 10, false, true);
 
 	/** Red monospaced terminal style on a transparent background. */
 	public static final SimpleAttributeSet RED_TERMINAL = createStyle(Color.red, TRANSPARENT, "monospaced", 11, false,
@@ -60,8 +60,8 @@ public class TextPaneScrollPane extends JScrollPane {
 			false, true);
 
 	/** Cyan monospaced terminal style on a transparent background. */
-	public static final SimpleAttributeSet CYAN_TERMINAL = createStyle(Color.cyan, TRANSPARENT, "monospaced", 11,
-			false, true);
+	public static final SimpleAttributeSet CYAN_TERMINAL = createStyle(Color.cyan, TRANSPARENT, "monospaced", 11, false,
+			true);
 
 	/** Blue monospaced terminal style. */
 	public static final SimpleAttributeSet BLUE_TERMINAL = createStyle(Color.blue, "monospaced", 12, false, true);
@@ -71,8 +71,8 @@ public class TextPaneScrollPane extends JScrollPane {
 			TRANSPARENT, "monospaced", 11, false, true);
 
 	/** Blue bold sans-serif on a light background. */
-	public static final SimpleAttributeSet BLUE_SS_12_B = createStyle(Color.blue,
-			X11Colors.getX11Color("Alice Blue"), "sansserif", 12, false, true);
+	public static final SimpleAttributeSet BLUE_SS_12_B = createStyle(Color.blue, X11Colors.getX11Color("Alice Blue"),
+			"sansserif", 12, false, true);
 
 	/** Blue plain sans-serif. */
 	public static final SimpleAttributeSet BLUE_SS_12_P = createStyle(Color.blue, "sansserif", 12, false, false);
@@ -92,8 +92,8 @@ public class TextPaneScrollPane extends JScrollPane {
 	public static final SimpleAttributeSet BLACK_SS_12_P = createStyle(Color.black, "sansserif", 12, false, false);
 
 	/** Small blue bold sans-serif on a light background. */
-	public static final SimpleAttributeSet BLUE_SS_10_B = createStyle(Color.blue,
-			X11Colors.getX11Color("Alice Blue"), "sansserif", 10, false, true);
+	public static final SimpleAttributeSet BLUE_SS_10_B = createStyle(Color.blue, X11Colors.getX11Color("Alice Blue"),
+			"sansserif", 10, false, true);
 
 	/** Small red plain sans-serif. */
 	public static final SimpleAttributeSet RED_SS_10_P = createStyle(Color.red, "sansserif", 10, false, false);
@@ -332,8 +332,8 @@ public class TextPaneScrollPane extends JScrollPane {
 	// ------------------------------------------------------------------------
 
 	/**
-	 * Internal implementation of append that performs the actual document
-	 * insertion and caret update.
+	 * Internal implementation of append that performs the actual document insertion
+	 * and caret update.
 	 */
 	private void baseAppend(final String text, final AttributeSet style, final boolean writeTime) {
 		if ((text == null) || (document == null)) {

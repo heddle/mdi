@@ -7,7 +7,6 @@ import javax.swing.JMenuItem;
 
 import edu.cnu.mdi.view.BaseView;
 
-
 public class QuickZoomMenuItem extends JMenuItem {
 
 	public QuickZoomMenuItem(String title, final BaseView view, final double xmin, final double ymin, final double xmax,

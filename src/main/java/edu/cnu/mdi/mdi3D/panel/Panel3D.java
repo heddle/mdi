@@ -36,21 +36,17 @@ import edu.cnu.mdi.mdi3D.item3D.Item3D;
 import edu.cnu.mdi.mdi3D.item3D.PointSet3D;
 import edu.cnu.mdi.mdi3D.item3D.Triangle3D;
 
-
-
-
 @SuppressWarnings("serial")
 public class Panel3D extends JPanel implements GLEventListener {
 	protected float[] rotationMatrix = new float[16];
 
-	//background default color used for r, g and b
+	// background default color used for r, g and b
 	public static final float BGFEFAULT = 0.9804f;
 
-	//the actual components of the background
+	// the actual components of the background
 	private float _bgRed = BGFEFAULT;
 	private float _bgGreen = BGFEFAULT;
 	private float _bgBlue = BGFEFAULT;
-
 
 	public float _xscale = 1.0f;
 	public float _yscale = 1.0f;
@@ -60,7 +56,6 @@ public class Panel3D extends JPanel implements GLEventListener {
 	protected GLCapabilities glcapabilities;
 	protected final GLJPanel gljpanel;
 	public static GLU glu; // glu utilities
-
 
 	// distance in front of the screen
 	private float _zdist;
@@ -122,7 +117,6 @@ public class Panel3D extends JPanel implements GLEventListener {
 		_skipLastStage = skipLastStage;
 		loadIdentityMatrix();
 
-
 		rotateX(angleX);
 		rotateY(angleY);
 		rotateZ(angleZ);
@@ -174,13 +168,13 @@ public class Panel3D extends JPanel implements GLEventListener {
 	 * Create the initial items
 	 */
 	public void createInitialItems() {
-		//default empty implementation
- }
+		// default empty implementation
+	}
 
 	public void loadIdentityMatrix() {
-	    for (int i = 0; i < 16; i++) {
-	        rotationMatrix[i] = (i % 5 == 0) ? 1.0f : 0.0f; // Set diagonal elements to 1
-	    }
+		for (int i = 0; i < 16; i++) {
+			rotationMatrix[i] = (i % 5 == 0) ? 1.0f : 0.0f; // Set diagonal elements to 1
+		}
 	}
 
 	// add a component in the specified place if not null
@@ -226,75 +220,75 @@ public class Panel3D extends JPanel implements GLEventListener {
 	}
 
 	public void rotate(Vector3f axis, float angle) {
-	    // Normalize the axis
-	    float length = (float) Math.sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
-	    if (length == 0.0f) {
+		// Normalize the axis
+		float length = (float) Math.sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
+		if (length == 0.0f) {
 			return;
 		}
 
-	    float x = axis.x / length;
-	    float y = axis.y / length;
-	    float z = axis.z / length;
+		float x = axis.x / length;
+		float y = axis.y / length;
+		float z = axis.z / length;
 
-	    // Compute rotation matrix components
-	    float c = (float) Math.cos(angle);
-	    float s = (float) Math.sin(angle);
-	    float t = 1.0f - c;
+		// Compute rotation matrix components
+		float c = (float) Math.cos(angle);
+		float s = (float) Math.sin(angle);
+		float t = 1.0f - c;
 
-	    float[] rotation = new float[16];
-	    rotation[0] = t * x * x + c;
-	    rotation[1] = t * x * y - s * z;
-	    rotation[2] = t * x * z + s * y;
-	    rotation[3] = 0;
+		float[] rotation = new float[16];
+		rotation[0] = t * x * x + c;
+		rotation[1] = t * x * y - s * z;
+		rotation[2] = t * x * z + s * y;
+		rotation[3] = 0;
 
-	    rotation[4] = t * x * y + s * z;
-	    rotation[5] = t * y * y + c;
-	    rotation[6] = t * y * z - s * x;
-	    rotation[7] = 0;
+		rotation[4] = t * x * y + s * z;
+		rotation[5] = t * y * y + c;
+		rotation[6] = t * y * z - s * x;
+		rotation[7] = 0;
 
-	    rotation[8] = t * x * z - s * y;
-	    rotation[9] = t * y * z + s * x;
-	    rotation[10] = t * z * z + c;
-	    rotation[11] = 0;
+		rotation[8] = t * x * z - s * y;
+		rotation[9] = t * y * z + s * x;
+		rotation[10] = t * z * z + c;
+		rotation[11] = 0;
 
-	    rotation[12] = 0;
-	    rotation[13] = 0;
-	    rotation[14] = 0;
-	    rotation[15] = 1;
+		rotation[12] = 0;
+		rotation[13] = 0;
+		rotation[14] = 0;
+		rotation[15] = 1;
 
-	    // Multiply the current matrix with the rotation matrix
-	    multiplyMatrix(rotation);
-	    refresh();
+		// Multiply the current matrix with the rotation matrix
+		multiplyMatrix(rotation);
+		refresh();
 	}
 
 	private void multiplyMatrix(float[] other) {
-	    float[] result = new float[16];
+		float[] result = new float[16];
 
-	    for (int row = 0; row < 4; row++) {
-	        for (int col = 0; col < 4; col++) {
-	            result[row * 4 + col] = 0;
-	            for (int k = 0; k < 4; k++) {
-	                result[row * 4 + col] += rotationMatrix[row * 4 + k] * other[k * 4 + col];
-	            }
-	        }
-	    }
+		for (int row = 0; row < 4; row++) {
+			for (int col = 0; col < 4; col++) {
+				result[row * 4 + col] = 0;
+				for (int k = 0; k < 4; k++) {
+					result[row * 4 + col] += rotationMatrix[row * 4 + k] * other[k * 4 + col];
+				}
+			}
+		}
 
-	    System.arraycopy(result, 0, rotationMatrix, 0, 16);
+		System.arraycopy(result, 0, rotationMatrix, 0, 16);
 	}
 
 	@Override
 	public void display(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
-		   // Reassert the state you need on every frame
-	    gl.glEnable(GL.GL_DEPTH_TEST);
-	    gl.glDepthFunc(GL.GL_LEQUAL);
+		// Reassert the state you need on every frame
+		gl.glEnable(GL.GL_DEPTH_TEST);
+		gl.glDepthFunc(GL.GL_LEQUAL);
 
-	    gl.glEnable(GL.GL_BLEND);
-	    gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-	    gl.glDepthMask(true);  // for opaque phase
+		gl.glEnable(GL.GL_BLEND);
+		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
+		gl.glDepthMask(true); // for opaque phase
 
-	 // Clear the buffers
-	    gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+		// Clear the buffers
+		gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 		gl.glLoadIdentity();
 
 		// Translate and scale
@@ -317,7 +311,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 
 		gl.glPopMatrix();
 
-		//ced might not like these lines
+		// ced might not like these lines
 		if (_skipLastStage) {
 			return;
 		}
@@ -378,8 +372,6 @@ public class Panel3D extends JPanel implements GLEventListener {
 		gl.glEnable(GL3.GL_PROGRAM_POINT_SIZE);
 	}
 
-
-
 	@Override
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
 		GL2 gl = drawable.getGL().getGL2(); // get the OpenGL 2 graphics context
@@ -404,7 +396,6 @@ public class Panel3D extends JPanel implements GLEventListener {
 		gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
 		gl.glLoadIdentity(); // reset
 	}
-
 
 	/**
 	 * Change the x distance to move in or out
@@ -438,7 +429,6 @@ public class Panel3D extends JPanel implements GLEventListener {
 	 */
 	public void refreshQueued() {
 	}
-
 
 	/**
 	 * Refresh the drawing
@@ -573,7 +563,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 
 	}
 
-	//for main program test
+	// for main program test
 	private static Panel3D createPanel3D() {
 
 		final float xymax = 600f;
@@ -581,7 +571,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 		final float zmin = -100f;
 		final float xdist = 0f;
 		final float ydist = 0f;
-		final float zdist = -2.75f*xymax;
+		final float zdist = -2.75f * xymax;
 
 		final float thetax = 45f;
 		final float thetay = 45f;
@@ -614,7 +604,6 @@ public class Panel3D extends JPanel implements GLEventListener {
 				addItem(new Cylinder(this, 0f, 0f, 0f, 300f, 300f, 300f, 50f, new Color(0, 255, 255, 128)));
 
 				addItem(new Cube(this, 0f, 0f, 0f, 600, new Color(0, 0, 255, 32), true));
-
 
 				// Cube cube = new Cube(this, 0.25f, 0.25f, 0.25f, 0.5f,
 				// Color.yellow);
@@ -657,6 +646,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 
 		};
 	}
+
 	public void rotateX(float angle) {
 		float[] rotation = createRotationX(angle);
 		multiplyMatrix(rotation);
@@ -668,65 +658,48 @@ public class Panel3D extends JPanel implements GLEventListener {
 	}
 
 	public void rotateZ(float angle) {
-        float[] rotation = createRotationZ(angle);
-        multiplyMatrix(rotation);
+		float[] rotation = createRotationZ(angle);
+		multiplyMatrix(rotation);
 	}
 
 	private float[] createRotationX(float angle) {
-	    float radians = (float) Math.toRadians(angle);
-	    float c = (float) Math.cos(radians);
-	    float s = (float) Math.sin(radians);
+		float radians = (float) Math.toRadians(angle);
+		float c = (float) Math.cos(radians);
+		float s = (float) Math.sin(radians);
 
-	    return new float[] {
-	        1, 0, 0, 0,
-	        0, c, -s, 0,
-	        0, s, c, 0,
-	        0, 0, 0, 1
-	    };
+		return new float[] { 1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1 };
 	}
 
 	private float[] createRotationY(float angle) {
-	    float radians = (float) Math.toRadians(angle);
-	    float c = (float) Math.cos(radians);
-	    float s = (float) Math.sin(radians);
+		float radians = (float) Math.toRadians(angle);
+		float c = (float) Math.cos(radians);
+		float s = (float) Math.sin(radians);
 
-	    return new float[] {
-	        c, 0, s, 0,
-	        0, 1, 0, 0,
-	        -s, 0, c, 0,
-	        0, 0, 0, 1
-	    };
+		return new float[] { c, 0, s, 0, 0, 1, 0, 0, -s, 0, c, 0, 0, 0, 0, 1 };
 	}
 
 	private float[] createRotationZ(float angle) {
-	    float radians = (float) Math.toRadians(angle);
-	    float c = (float) Math.cos(radians);
-	    float s = (float) Math.sin(radians);
+		float radians = (float) Math.toRadians(angle);
+		float c = (float) Math.cos(radians);
+		float s = (float) Math.sin(radians);
 
-	    return new float[] {
-	        c, -s, 0, 0,
-	        s, c, 0, 0,
-	        0, 0, 1, 0,
-	        0, 0, 0, 1
-	    };
+		return new float[] { c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 };
 	}
 
 	/**
-
+	 * 
 	 * Print the panel. No default implementation.
-
+	 * 
 	 */
 
 	public void print() {
 
 	}
 
-
-
 	/**
-
+	 * 
 	 * Snapshot of the panel. No default implementation.
-
+	 * 
 	 */
 
 	public void snapshot() {

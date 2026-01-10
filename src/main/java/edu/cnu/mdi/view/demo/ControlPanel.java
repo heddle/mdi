@@ -19,6 +19,7 @@ public class ControlPanel extends JPanel {
 
 	/**
 	 * Construct a control panel for the given view.
+	 * 
 	 * @param view the view to control
 	 */
 	public ControlPanel(NetworkLayoutDemoView view) {
@@ -31,7 +32,7 @@ public class ControlPanel extends JPanel {
 
 	}
 
-	//create any display checkboxes
+	// create any display checkboxes
 	private void createCheckboxes(JPanel panel) {
 		JCheckBox showGrid = new JCheckBox("Show \"snap to\" grid", true);
 		showGrid.setFont(Fonts.mediumFont);

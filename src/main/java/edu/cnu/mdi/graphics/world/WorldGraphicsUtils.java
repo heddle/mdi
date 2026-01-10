@@ -23,7 +23,6 @@ import edu.cnu.mdi.util.MathUtils;
 import edu.cnu.mdi.util.Point2DSupport;
 import edu.cnu.mdi.util.TextUtils;
 
-
 /**
  * Drawing methods for world based objects.
  *
@@ -221,7 +220,6 @@ public class WorldGraphicsUtils {
 		drawWorldLine(g, container, wp0.x, wp0.y, wp1.x, wp1.y, lineColor, 1, LineStyle.SOLID);
 	}
 
-
 	/**
 	 * Draw a world line 1 pixel wide in solid style
 	 *
@@ -237,7 +235,6 @@ public class WorldGraphicsUtils {
 			Color lineColor) {
 		drawWorldLine(g, container, x1, y1, x2, y2, lineColor, 1, LineStyle.SOLID);
 	}
-
 
 	/**
 	 * Get pixel rectangle boundary of two wotld points
@@ -313,7 +310,8 @@ public class WorldGraphicsUtils {
 	 * @param lineStyle  the line style.
 	 */
 	public static void drawWorldRadArc(Graphics g, IContainer container, double xc, double yc, double rmin, double rmax,
-			double startAngle, double stopAngle, Color fillColor, Color lineColor, float lineWidth, LineStyle lineStyle) {
+			double startAngle, double stopAngle, Color fillColor, Color lineColor, float lineWidth,
+			LineStyle lineStyle) {
 
 		Graphics2D g2 = (Graphics2D) g;
 
@@ -617,9 +615,10 @@ public class WorldGraphicsUtils {
 	 */
 	public static void drawWorldOval(Graphics g, IContainer container, Rectangle2D.Double worldRectangle,
 			IStyled style) {
-		drawWorldOval(g, container, worldRectangle, style.getFillColor(), style.getLineColor(),
-				style.getLineWidth(), style.getLineStyle());
+		drawWorldOval(g, container, worldRectangle, style.getFillColor(), style.getLineColor(), style.getLineWidth(),
+				style.getLineStyle());
 	}
+
 	/**
 	 * Draw a world rectangle based on an IStyled object.
 	 *
@@ -704,8 +703,6 @@ public class WorldGraphicsUtils {
 		}
 
 	}
-
-
 
 	/**
 	 * Draw ghosted (etched) text at the given world point.
@@ -1014,7 +1011,6 @@ public class WorldGraphicsUtils {
 		return null;
 	}
 
-
 	/**
 	 * Convert a path to a polygon.
 	 *
@@ -1023,38 +1019,37 @@ public class WorldGraphicsUtils {
 	 * @return the polygon corresponding to the path
 	 */
 	public static Polygon pathToPolygon(IContainer container, Path2D.Double path) {
-	    if (container == null || path == null) {
-	        return null;
-	    }
+		if (container == null || path == null) {
+			return null;
+		}
 
-	    int n = neededCapacity(path);
-	    if (n <= 0) {
-	        return null;
-	    }
+		int n = neededCapacity(path);
+		if (n <= 0) {
+			return null;
+		}
 
-	    int[] x = new int[n];
-	    int[] y = new int[n];
-	    int count = 0;
+		int[] x = new int[n];
+		int[] y = new int[n];
+		int count = 0;
 
-	    Point pp = new Point();
-	    PathIterator pi = path.getPathIterator(null);
-	    double[] coords = new double[6];
+		Point pp = new Point();
+		PathIterator pi = path.getPathIterator(null);
+		double[] coords = new double[6];
 
-	    while (!pi.isDone()) {
-	        int type = pi.currentSegment(coords);
-	        if (type == PathIterator.SEG_MOVETO || type == PathIterator.SEG_LINETO) {
-	            container.worldToLocal(pp, coords[0], coords[1]);
-	            x[count] = pp.x;
-	            y[count] = pp.y;
-	            count++;
-	        }
-	        // TODO: curves (SEG_QUADTO / SEG_CUBICTO) if/when you support them
-	        pi.next();
-	    }
+		while (!pi.isDone()) {
+			int type = pi.currentSegment(coords);
+			if (type == PathIterator.SEG_MOVETO || type == PathIterator.SEG_LINETO) {
+				container.worldToLocal(pp, coords[0], coords[1]);
+				x[count] = pp.x;
+				y[count] = pp.y;
+				count++;
+			}
+			// TODO: curves (SEG_QUADTO / SEG_CUBICTO) if/when you support them
+			pi.next();
+		}
 
-	    return (count > 0) ? new Polygon(x, y, count) : null;
+		return (count > 0) ? new Polygon(x, y, count) : null;
 	}
-
 
 	/**
 	 * Counts the needed capacity if you are going to pull out the points an put
@@ -1192,7 +1187,6 @@ public class WorldGraphicsUtils {
 		return points;
 	}
 
-
 	/**
 	 * Get radarc points given some defining data
 	 *
@@ -1286,33 +1280,33 @@ public class WorldGraphicsUtils {
 	 */
 	public static Point2D.Double[] pathToWorldPolygon(Path2D.Double path) {
 
-	    if (path == null) {
-	        return null;
-	    }
+		if (path == null) {
+			return null;
+		}
 
-	    PathIterator pi = path.getPathIterator(null);
+		PathIterator pi = path.getPathIterator(null);
 
-	    ArrayList<Point2D.Double> pointsList = new ArrayList<>();
+		ArrayList<Point2D.Double> pointsList = new ArrayList<>();
 
-	    double coords[] = new double[6];
-	    while (!pi.isDone()) {
-	        int type = pi.currentSegment(coords);
-	        switch (type) {
-	        case PathIterator.SEG_MOVETO:
-	        case PathIterator.SEG_LINETO:
-	            pointsList.add(new Point2D.Double(coords[0], coords[1]));
-	            break;
+		double coords[] = new double[6];
+		while (!pi.isDone()) {
+			int type = pi.currentSegment(coords);
+			switch (type) {
+			case PathIterator.SEG_MOVETO:
+			case PathIterator.SEG_LINETO:
+				pointsList.add(new Point2D.Double(coords[0], coords[1]));
+				break;
 
-	        // TODO curves
-	        }
-	        pi.next();
-	    }
+			// TODO curves
+			}
+			pi.next();
+		}
 
-	    if (pointsList.isEmpty()) {
-	        return null;
-	    }
+		if (pointsList.isEmpty()) {
+			return null;
+		}
 
-	    return pointsList.toArray(new Point2D.Double[0]);
+		return pointsList.toArray(new Point2D.Double[0]);
 	}
 
 	/**
@@ -1586,37 +1580,38 @@ public class WorldGraphicsUtils {
 
 	/**
 	 * Obtain the point on a segment p1 to p2 that is closest to given point wp
+	 * 
 	 * @param p1 one end of the segment
 	 * @param p2 other end of the segment
 	 * @param wp the point in question
 	 * @return the closest point on the segment
 	 */
-	 public static Point2D.Double closestPointOnSegment(Point2D.Double p1, Point2D.Double p2, Point2D.Double wp) {
-	        // Vector from p1 to p2
-	        double dx = p2.x - p1.x;
-	        double dy = p2.y - p1.y;
+	public static Point2D.Double closestPointOnSegment(Point2D.Double p1, Point2D.Double p2, Point2D.Double wp) {
+		// Vector from p1 to p2
+		double dx = p2.x - p1.x;
+		double dy = p2.y - p1.y;
 
-	        // Vector from p1 to wp
-	        double dxWp = wp.x - p1.x;
-	        double dyWp = wp.y - p1.y;
+		// Vector from p1 to wp
+		double dxWp = wp.x - p1.x;
+		double dyWp = wp.y - p1.y;
 
-	        // Calculate projection scalar (t)
-	        double segmentLengthSquared = dx * dx + dy * dy;
-	        if (segmentLengthSquared < 1.0e-20) {
-	            return new Point2D.Double(p1.x, p1.y);
-	        }
+		// Calculate projection scalar (t)
+		double segmentLengthSquared = dx * dx + dy * dy;
+		if (segmentLengthSquared < 1.0e-20) {
+			return new Point2D.Double(p1.x, p1.y);
+		}
 
-	        double t = (dxWp * dx + dyWp * dy) / segmentLengthSquared;
+		double t = (dxWp * dx + dyWp * dy) / segmentLengthSquared;
 
-	        // Clamp t to [0, 1] to stay on the segment
-	        t = Math.max(0, Math.min(1, t));
+		// Clamp t to [0, 1] to stay on the segment
+		t = Math.max(0, Math.min(1, t));
 
-	        // Calculate the closest point on the segment
-	        double closestX = p1.x + t * dx;
-	        double closestY = p1.y + t * dy;
+		// Calculate the closest point on the segment
+		double closestX = p1.x + t * dx;
+		double closestY = p1.y + t * dy;
 
-	        return new Point2D.Double(closestX, closestY);
-	    }
+		return new Point2D.Double(closestX, closestY);
+	}
 
 	/**
 	 * Obtain roughly the pixel/unit where unit is the length unit of our world
@@ -1648,8 +1643,8 @@ public class WorldGraphicsUtils {
 	}
 
 	/**
-	 * Hit-test a polyline-like {@link Path2D} by checking whether {@code wp} lies within
-	 * {@code tolWorld} of any line segment in the path.
+	 * Hit-test a polyline-like {@link Path2D} by checking whether {@code wp} lies
+	 * within {@code tolWorld} of any line segment in the path.
 	 * <p>
 	 * This is intended for paths composed of {@code MOVETO}/{@code LINETO} segments
 	 * (no curves). {@code SEG_CLOSE} is treated as a segment from the current point
@@ -1663,64 +1658,65 @@ public class WorldGraphicsUtils {
 	 */
 	public static boolean isPointNearPath(Path2D.Double path, Point2D.Double wp, double tolWorld) {
 
-	    if (path == null || wp == null || tolWorld < 0) {
-	        return false;
-	    }
+		if (path == null || wp == null || tolWorld < 0) {
+			return false;
+		}
 
-	    final double tol2 = tolWorld * tolWorld;
+		final double tol2 = tolWorld * tolWorld;
 
-	    PathIterator pi = path.getPathIterator(null);
-	    double[] c = new double[6];
+		PathIterator pi = path.getPathIterator(null);
+		double[] c = new double[6];
 
-	    Point2D.Double last = null;
-	    Point2D.Double subpathStart = null;
+		Point2D.Double last = null;
+		Point2D.Double subpathStart = null;
 
-	    while (!pi.isDone()) {
-	        int type = pi.currentSegment(c);
+		while (!pi.isDone()) {
+			int type = pi.currentSegment(c);
 
-	        switch (type) {
-	        case PathIterator.SEG_MOVETO:
-	            last = new Point2D.Double(c[0], c[1]);
-	            subpathStart = last;
-	            // Also allow "near vertex" picking:
-	            if (last.distanceSq(wp) <= tol2) {
-	                return true;
-	            }
-	            break;
+			switch (type) {
+			case PathIterator.SEG_MOVETO:
+				last = new Point2D.Double(c[0], c[1]);
+				subpathStart = last;
+				// Also allow "near vertex" picking:
+				if (last.distanceSq(wp) <= tol2) {
+					return true;
+				}
+				break;
 
-	        case PathIterator.SEG_LINETO: {
-	            Point2D.Double cur = new Point2D.Double(c[0], c[1]);
-	            if (last != null) {
-	                if (distanceSqPointToSegment(last, cur, wp) <= tol2) {
-	                    return true;
-	                }
-	            } else {
-	                // Degenerate: no prior point; treat as point
-	                if (cur.distanceSq(wp) <= tol2) {
-	                    return true;
-	                }
-	            }
-	            last = cur;
-	            break;
-	        }
+			case PathIterator.SEG_LINETO: {
+				Point2D.Double cur = new Point2D.Double(c[0], c[1]);
+				if (last != null) {
+					if (distanceSqPointToSegment(last, cur, wp) <= tol2) {
+						return true;
+					}
+				} else {
+					// Degenerate: no prior point; treat as point
+					if (cur.distanceSq(wp) <= tol2) {
+						return true;
+					}
+				}
+				last = cur;
+				break;
+			}
 
-	        case PathIterator.SEG_CLOSE:
-	            if (last != null && subpathStart != null) {
-	                if (distanceSqPointToSegment(last, subpathStart, wp) <= tol2) {
-	                    return true;
-	                }
-	                last = subpathStart;
-	            }
-	            break;
+			case PathIterator.SEG_CLOSE:
+				if (last != null && subpathStart != null) {
+					if (distanceSqPointToSegment(last, subpathStart, wp) <= tol2) {
+						return true;
+					}
+					last = subpathStart;
+				}
+				break;
 
-	        default:
-	            throw new IllegalArgumentException("Path contains curves; isPointNearPath only supports line segments.");
-	        }
+			default:
+				throw new IllegalArgumentException(
+						"Path contains curves; isPointNearPath only supports line segments.");
+			}
 
-	        pi.next();
-	    }
+			pi.next();
+		}
 
-	    return false;
+		return false;
 	}
 
 	/**
@@ -1728,30 +1724,29 @@ public class WorldGraphicsUtils {
 	 */
 	private static double distanceSqPointToSegment(Point2D.Double a, Point2D.Double b, Point2D.Double p) {
 
-	    double dx = b.x - a.x;
-	    double dy = b.y - a.y;
+		double dx = b.x - a.x;
+		double dy = b.y - a.y;
 
-	    double len2 = dx * dx + dy * dy;
-	    if (len2 < 1.0e-20) {
-	        // Segment is essentially a point
-	        return a.distanceSq(p);
-	    }
+		double len2 = dx * dx + dy * dy;
+		if (len2 < 1.0e-20) {
+			// Segment is essentially a point
+			return a.distanceSq(p);
+		}
 
-	    double t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
-	    if (t <= 0.0) {
-	        return a.distanceSq(p);
-	    }
-	    if (t >= 1.0) {
-	        return b.distanceSq(p);
-	    }
+		double t = ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2;
+		if (t <= 0.0) {
+			return a.distanceSq(p);
+		}
+		if (t >= 1.0) {
+			return b.distanceSq(p);
+		}
 
-	    double cx = a.x + t * dx;
-	    double cy = a.y + t * dy;
+		double cx = a.x + t * dx;
+		double cy = a.y + t * dy;
 
-	    double ddx = p.x - cx;
-	    double ddy = p.y - cy;
-	    return ddx * ddx + ddy * ddy;
+		double ddx = p.x - cx;
+		double ddy = p.y - cy;
+		return ddx * ddx + ddy * ddy;
 	}
-
 
 }

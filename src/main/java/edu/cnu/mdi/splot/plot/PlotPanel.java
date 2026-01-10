@@ -8,21 +8,15 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Insets;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
-import javax.swing.border.Border;
 
-import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.splot.toolbar.PlotToolBar;
-import edu.cnu.mdi.ui.colors.X11Colors;
 
 @SuppressWarnings("serial")
 public class PlotPanel extends JPanel implements PropertyChangeListener {
@@ -32,7 +26,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 
 	// title related
 	private JLabel _titleLabel;
-	
+
 	// feedback pane
 	private FeedbackPane _feedbackPane;
 
@@ -107,7 +101,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		if (_decorations == STANDARD) {
 			_feedbackPane = new FeedbackPane();
 			FontMetrics fm = getFontMetrics(getFont());
-			int h = 3*fm.getHeight() + 4;
+			int h = 3 * fm.getHeight() + 4;
 			Dimension d = new Dimension(super.getPreferredSize().width, h);
 			_feedbackPane.getViewport().setPreferredSize(d);
 			spanel.add(_feedbackPane.getViewport(), BorderLayout.SOUTH);
@@ -158,7 +152,6 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		add(_yLabel, BorderLayout.WEST);
 	}
 
-
 	// convenience function for making a label
 	private JLabel makeJLabel(String text, Font font, int alignment, Color bg, Color fg, boolean excludeFromPrint) {
 
@@ -173,8 +166,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 					}
 				}
 			};
-		}
-		else {
+		} else {
 			lab = new JLabel(text != null ? text : " ");
 		}
 		lab.setFont(font);
@@ -206,7 +198,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		}
 		return lab;
 	}
-	
+
 	/**
 	 * Get the feedback pane
 	 *
@@ -247,27 +239,22 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		if (PlotCanvas.TITLETEXTCHANGE.equals(evt.getPropertyName())) {
 			_titleLabel.setText((String) evt.getNewValue());
 			_titleLabel.repaint();
-		}
-		else if (PlotCanvas.XLABELTEXTCHANGE.equals(evt.getPropertyName())) {
+		} else if (PlotCanvas.XLABELTEXTCHANGE.equals(evt.getPropertyName())) {
 			_xLabel.setText((String) evt.getNewValue());
 			_xLabel.repaint();
-		}
-		else if (PlotCanvas.YLABELTEXTCHANGE.equals(evt.getPropertyName())) {
+		} else if (PlotCanvas.YLABELTEXTCHANGE.equals(evt.getPropertyName())) {
 			_yLabel.setText((String) evt.getNewValue());
 			_yLabel.repaint();
-		}
-		else if (PlotCanvas.TITLEFONTCHANGE.equals(evt.getPropertyName())) {
+		} else if (PlotCanvas.TITLEFONTCHANGE.equals(evt.getPropertyName())) {
 			Font font = (Font) evt.getNewValue();
 			_titleLabel.setFont(font);
-		}
-		else if (PlotCanvas.AXESFONTCHANGE.equals(evt.getPropertyName())) {
+		} else if (PlotCanvas.AXESFONTCHANGE.equals(evt.getPropertyName())) {
 			Font font = (Font) evt.getNewValue();
 			_xLabel.setFont(font);
 			_yLabel.setFont(font);
-		}
-		else if (PlotCanvas.STATUSFONTCHANGE.equals(evt.getPropertyName())) {
-	//		Font font = (Font) evt.getNewValue();
-	//		_status.setFont(font);
+		} else if (PlotCanvas.STATUSFONTCHANGE.equals(evt.getPropertyName())) {
+			// Font font = (Font) evt.getNewValue();
+			// _status.setFont(font);
 		}
 
 	}

@@ -5,6 +5,7 @@ import java.awt.Point;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.style.Styled;
+
 /**
  * Just a straight line to be drawn on the plot, e.g. a y = 0 line
  *

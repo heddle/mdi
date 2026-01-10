@@ -5,7 +5,6 @@ import java.awt.event.KeyListener;
 
 import edu.cnu.mdi.mdi3D.panel.Panel3D;
 
-
 public class KeyAdapter3D implements KeyListener {
 
 	// steps in rotation angle
@@ -45,8 +44,7 @@ public class KeyAdapter3D implements KeyListener {
 		float step = panel3D.getZStep();
 		float ang = factor * DTHETA;
 
-
-        if (keyCode == KeyEvent.VK_L) {
+		if (keyCode == KeyEvent.VK_L) {
 			panel3D.deltaX(-step);
 			panel3D.refresh();
 		} else if (keyCode == KeyEvent.VK_R) {

@@ -12,7 +12,6 @@ import javax.swing.JMenuItem;
 
 import edu.cnu.mdi.log.Log;
 
-
 public class MenuManager {
 
 	// Singleton object

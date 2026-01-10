@@ -42,8 +42,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 	public static final String WORLD = "WORLD";
 	public static final String PNG = "PNG";
 
-
-	//plot data type
+	// plot data type
 	private PlotDataType type;
 
 	/**
@@ -79,7 +78,6 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 			break;
 		}
 
-
 		addHGap(8);
 		add(new ToolBarButton("images/svg/printer.svg", "Print the plot", PRINT));
 		add(new ToolBarButton("images/svg/camera.svg", "Save as PNG", PNG));
@@ -91,11 +89,9 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 	public void setSelectedToggle(String s) {
 		if (s == null) {
 			_pointerButton.setSelected(true);
-		}
-		else if (s.equals(BOXZOOM)) {
+		} else if (s.equals(BOXZOOM)) {
 			_boxZoomButton.setSelected(true);
-		}
-		else {
+		} else {
 			_pointerButton.setSelected(true);
 		}
 	}
@@ -226,8 +222,7 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 					return (ToolBarToggleButton) ab;
 				}
 			}
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 

@@ -23,21 +23,22 @@ import edu.cnu.mdi.view.BaseView;
 @SuppressWarnings("serial")
 public class NetworkLayoutDemoView extends BaseView {
 
-    // The drawing z layer to place the devices on
-    private final Layer deviceLayer;
+	// The drawing z layer to place the devices on
+	private final Layer deviceLayer;
 
 	// default side panel width (control panel + feedback)
 	private static final int SIDE_PANEL_WIDTH = 220;
 
-	//draws the snap to grid
+	// draws the snap to grid
 	private final GridDrawer gridDrawer;
 
 	/**
-	 * Construct a Network Layout Demo View with the given properties.
-	 * It is a demo, not a serious application. It demonstrates
-	 * placing network devices on a canvas, with feedback and some custom toolbar buttons.
-	 * @param keyVals key-value pairs for view properties. See how it is used
-	 * in {@link DemoApp where this view is instantiated}.
+	 * Construct a Network Layout Demo View with the given properties. It is a demo,
+	 * not a serious application. It demonstrates placing network devices on a
+	 * canvas, with feedback and some custom toolbar buttons.
+	 * 
+	 * @param keyVals key-value pairs for view properties. See how it is used in
+	 *                {@link DemoApp where this view is instantiated}.
 	 */
 	public NetworkLayoutDemoView(Object... keyVals) {
 		super(PropertySupport.fromKeyValues(keyVals));
@@ -45,14 +46,14 @@ public class NetworkLayoutDemoView extends BaseView {
 		getContainer().getFeedbackControl().addFeedbackProvider(this);
 		addToToolBar();
 
-		//add an underlying snap-to grid drawer
+		// add an underlying snap-to grid drawer
 		gridDrawer = new GridDrawer(getContainer(), 20, X11Colors.getX11Color("light gray"));
 
-		//add an east side panel with a control panel and feedback
+		// add an east side panel with a control panel and feedback
 		initEastSidePanel();
 	}
 
-	//initialize the east side panel with feedback and controls
+	// initialize the east side panel with feedback and controls
 	private void initEastSidePanel() {
 		// feedback control and provider (use custom coloring)
 		FeedbackPane fbp = initFeedback(Color.white, X11Colors.getX11Color("dark green"), 10);
@@ -74,28 +75,27 @@ public class NetworkLayoutDemoView extends BaseView {
 
 	}
 
-	//add the custom buttons to the toolbar
+	// add the custom buttons to the toolbar
 	private void addToToolBar() {
-	    IContainerToolBar tb = getContainer().getToolBar();
-	    if (tb == null) {
+		IContainerToolBar tb = getContainer().getToolBar();
+		if (tb == null) {
 			return;
 		}
 
-	    //add a space (in pixels) between existing "built in" buttons and our buttons
-	    tb.spacer(8);
+		// add a space (in pixels) between existing "built in" buttons and our buttons
+		tb.spacer(8);
 
-        // this is a one-shot button that represents snapping the items to a grid
-	    //one-shot buttons just perform an action when clicked
-		//they do not stay selected like toggle buttons
-	    //
-        tb.addOneShot(new GridButton(this));
+		// this is a one-shot button that represents snapping the items to a grid
+		// one-shot buttons just perform an action when clicked
+		// they do not stay selected like toggle buttons
+		//
+		tb.addOneShot(new GridButton(this));
 
-        //add a mutually exclusive toolbar toggle button for all known devices
-        for (EDeviceSymbol ds : EDeviceSymbol.values()) {
+		// add a mutually exclusive toolbar toggle button for all known devices
+		for (EDeviceSymbol ds : EDeviceSymbol.values()) {
 			tb.addToolToggle(new PlaceDeviceTool(deviceLayer, ds), ds.iconPath, ds.toolTip);
 		}
 	}
-
 
 	// Provide feedback strings showing screen and world coordinates
 	// items will ad to the feedback when they are mouse-overed
@@ -117,6 +117,7 @@ public class NetworkLayoutDemoView extends BaseView {
 
 	/**
 	 * Get the grid drawer used in this view.
+	 * 
 	 * @return the grid drawer
 	 */
 	public GridDrawer getGridDrawer() {
@@ -125,6 +126,7 @@ public class NetworkLayoutDemoView extends BaseView {
 
 	/**
 	 * Get all the device items currently on the device layer.
+	 * 
 	 * @return list of all device items
 	 */
 	public List<DeviceItem> getAllDevices() {

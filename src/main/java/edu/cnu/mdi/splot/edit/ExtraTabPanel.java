@@ -51,9 +51,12 @@ public class ExtraTabPanel extends JPanel {
 		_font = new FontSpecPanel("Extra font", _params.getExtraFont());
 
 		JPanel colors = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
-		_fill = new ColorLabel((src, col) -> {}, _params.getExtraBackground(), getFont(), "Fill");
-		_text = new ColorLabel((src, col) -> {}, _params.getExtraForeground(), getFont(), "Text");
-		_stroke = new ColorLabel((src, col) -> {}, _params.getExtraBorderColor(), getFont(), "Border");
+		_fill = new ColorLabel((src, col) -> {
+		}, _params.getExtraBackground(), getFont(), "Fill");
+		_text = new ColorLabel((src, col) -> {
+		}, _params.getExtraForeground(), getFont(), "Text");
+		_stroke = new ColorLabel((src, col) -> {
+		}, _params.getExtraBorderColor(), getFont(), "Border");
 		colors.add(_fill);
 		colors.add(_text);
 		colors.add(_stroke);
@@ -75,16 +78,32 @@ public class ExtraTabPanel extends JPanel {
 
 		int row = 0;
 
-		c.gridx = 0; c.gridy = row++; c.gridwidth = 2; add(_draw, c);
-		c.gridx = 0; c.gridy = row++; c.gridwidth = 2; add(_border, c);
+		c.gridx = 0;
+		c.gridy = row++;
+		c.gridwidth = 2;
+		add(_draw, c);
+		c.gridx = 0;
+		c.gridy = row++;
+		c.gridwidth = 2;
+		add(_border, c);
 
-		c.gridx = 0; c.gridy = row++; c.gridwidth = 2; add(_font, c);
-		c.gridx = 0; c.gridy = row++; c.gridwidth = 2; add(colors, c);
+		c.gridx = 0;
+		c.gridy = row++;
+		c.gridwidth = 2;
+		add(_font, c);
+		c.gridx = 0;
+		c.gridy = row++;
+		c.gridwidth = 2;
+		add(colors, c);
 
-		c.gridx = 0; c.gridy = row++; c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = row++;
+		c.gridwidth = 2;
 		add(new javax.swing.JLabel("Extra lines (one per line)"), c);
 
-		c.gridx = 0; c.gridy = row++; c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = row++;
+		c.gridwidth = 2;
 		add(new JScrollPane(_linesTA), c);
 	}
 

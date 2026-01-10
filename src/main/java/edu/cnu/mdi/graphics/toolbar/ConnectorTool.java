@@ -58,7 +58,6 @@ public class ConnectorTool implements ITool, IRubberbanded {
 	/** Second selected endpoint. Null when idle */
 	private AItem second;
 
-
 	/** If true, reset to default after successful connection (one-shot). */
 	private final boolean oneShot;
 
@@ -205,14 +204,13 @@ public class ConnectorTool implements ITool, IRubberbanded {
 		}
 	}
 
-	//like when you click on nothing
+	// like when you click on nothing
 	private void abortToDefault() {
-	    cancel(); // cancels rubberband + clears state + refresh
-	    if (controller != null) {
-	        controller.resetToDefault();
-	    }
+		cancel(); // cancels rubberband + clears state + refresh
+		if (controller != null) {
+			controller.resetToDefault();
+		}
 	}
-
 
 	/**
 	 * Choose an anchor point for connections.

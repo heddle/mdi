@@ -25,20 +25,26 @@ import edu.cnu.mdi.splot.spline.CubicSpline;
  *
  * <h3>1) Thread-safe mutation via {@code add(...)} / {@code addAll(...)}</h3>
  * <p>
- * Methods such as {@link #add(double, double)} and {@link #addAll(double[], double[])} may be called
- * from <em>any</em> thread. They preserve the {@link ACurve} contract that notifications occur on
- * the Swing EDT:
+ * Methods such as {@link #add(double, double)} and
+ * {@link #addAll(double[], double[])} may be called from <em>any</em> thread.
+ * They preserve the {@link ACurve} contract that notifications occur on the
+ * Swing EDT:
  * </p>
  * <ul>
- *   <li>If called on the EDT, they apply immediately and fire a DATA change event.</li>
- *   <li>If called off the EDT, they enqueue points and schedule a coalesced EDT drain pass. The drain
- *       applies a batch and then fires a single consolidated DATA change event.</li>
+ * <li>If called on the EDT, they apply immediately and fire a DATA change
+ * event.</li>
+ * <li>If called off the EDT, they enqueue points and schedule a coalesced EDT
+ * drain pass. The drain applies a batch and then fires a single consolidated
+ * DATA change event.</li>
  * </ul>
  *
- * <h3>2) Streaming / DAQ mode via {@code enqueue(...)} + {@code drainPendingOnEDT(...)}</h3>
+ * <h3>2) Streaming / DAQ mode via {@code enqueue(...)} +
+ * {@code drainPendingOnEDT(...)}</h3>
  * <p>
- * Background producer threads may call {@link #enqueue(double, double)} / {@link #enqueue(double, double, double)}
- * and the UI (EDT) drains periodically using {@link #drainPendingOnEDT(int)} (often via {@link #startPendingDrainTimer}).
+ * Background producer threads may call {@link #enqueue(double, double)} /
+ * {@link #enqueue(double, double, double)} and the UI (EDT) drains periodically
+ * using {@link #drainPendingOnEDT(int)} (often via
+ * {@link #startPendingDrainTimer}).
  * </p>
  *
  * @author heddle
@@ -58,15 +64,16 @@ public class Curve extends ACurve {
 	// --------------------------------------------------------------------
 
 	/**
-	 * Lock-free staging queue holding points that have been produced on background threads but
-	 * not yet applied to the curve's data columns.
+	 * Lock-free staging queue holding points that have been produced on background
+	 * threads but not yet applied to the curve's data columns.
 	 */
 	private final ConcurrentLinkedQueue<PendingPoint> pending = new ConcurrentLinkedQueue<>();
 
 	/**
 	 * Approximate pending queue size for monitoring/backpressure.
 	 * <p>
-	 * We maintain this separately because {@link ConcurrentLinkedQueue#size()} is O(n).
+	 * We maintain this separately because {@link ConcurrentLinkedQueue#size()} is
+	 * O(n).
 	 * </p>
 	 */
 	private final AtomicLong pendingCount = new AtomicLong(0);
@@ -77,14 +84,15 @@ public class Curve extends ACurve {
 	private volatile Timer pendingDrainTimer;
 
 	/**
-	 * Coalescing latch: ensures we only post one drain runnable to the EDT at a time,
-	 * no matter how many background threads call {@link #add} / {@link #addAll}.
+	 * Coalescing latch: ensures we only post one drain runnable to the EDT at a
+	 * time, no matter how many background threads call {@link #add} /
+	 * {@link #addAll}.
 	 */
 	private final AtomicBoolean drainScheduled = new AtomicBoolean(false);
 
 	/**
-	 * Maximum points to apply per scheduled drain pass. This prevents the EDT from being
-	 * monopolized if producers temporarily outrun the UI.
+	 * Maximum points to apply per scheduled drain pass. This prevents the EDT from
+	 * being monopolized if producers temporarily outrun the UI.
 	 */
 	private static final int DEFAULT_DRAIN_MAX = 10_000;
 
@@ -202,7 +210,8 @@ public class Curve extends ACurve {
 	/**
 	 * Append a point and fire a DATA change event.
 	 * <p>
-	 * Safe to call from any thread. Off-EDT calls enqueue and schedule a coalesced EDT drain.
+	 * Safe to call from any thread. Off-EDT calls enqueue and schedule a coalesced
+	 * EDT drain.
 	 * </p>
 	 */
 	public void add(double x, double y) {
@@ -225,10 +234,12 @@ public class Curve extends ACurve {
 	/**
 	 * Append a point with Y error and fire a DATA change event.
 	 * <p>
-	 * Safe to call from any thread. Off-EDT calls enqueue and schedule a coalesced EDT drain.
+	 * Safe to call from any thread. Off-EDT calls enqueue and schedule a coalesced
+	 * EDT drain.
 	 * </p>
 	 *
-	 * @throws IllegalStateException if this curve has no error column (eData is null)
+	 * @throws IllegalStateException if this curve has no error column (eData is
+	 *                               null)
 	 */
 	public void add(double x, double y, double ey) {
 		if (eData == null) {
@@ -252,7 +263,8 @@ public class Curve extends ACurve {
 	/**
 	 * Append many points and fire a single DATA change event.
 	 * <p>
-	 * Safe to call from any thread. Off-EDT calls enqueue and schedule a coalesced EDT drain.
+	 * Safe to call from any thread. Off-EDT calls enqueue and schedule a coalesced
+	 * EDT drain.
 	 * </p>
 	 */
 	public void addAll(double[] x, double[] y) {
@@ -285,10 +297,12 @@ public class Curve extends ACurve {
 	/**
 	 * Append many points with Y errors and fire a single DATA change event.
 	 * <p>
-	 * Safe to call from any thread. Off-EDT calls enqueue and schedule a coalesced EDT drain.
+	 * Safe to call from any thread. Off-EDT calls enqueue and schedule a coalesced
+	 * EDT drain.
 	 * </p>
 	 *
-	 * @throws IllegalStateException if this curve has no error column (eData is null)
+	 * @throws IllegalStateException if this curve has no error column (eData is
+	 *                               null)
 	 */
 	public void addAll(double[] x, double[] y, double[] ey) {
 		if (eData == null) {
@@ -298,8 +312,7 @@ public class Curve extends ACurve {
 		Objects.requireNonNull(y, "y");
 		Objects.requireNonNull(ey, "ey");
 		if (x.length != y.length || x.length != ey.length) {
-			throw new IllegalArgumentException(
-					"lengths differ: x=" + x.length + " y=" + y.length + " ey=" + ey.length);
+			throw new IllegalArgumentException("lengths differ: x=" + x.length + " y=" + y.length + " ey=" + ey.length);
 		}
 
 		if (!SwingUtilities.isEventDispatchThread()) {
@@ -350,11 +363,12 @@ public class Curve extends ACurve {
 	/**
 	 * Clear all data from this curve and fire a DATA change event.
 	 * <p>
-	 * Thread-safe: may be called from any thread. If called off the EDT, the clear is
-	 * performed later on the EDT and coalesced with other scheduled drains.
+	 * Thread-safe: may be called from any thread. If called off the EDT, the clear
+	 * is performed later on the EDT and coalesced with other scheduled drains.
 	 * </p>
 	 * <p>
-	 * Note: this also clears any queued (not-yet-applied) points so the curve truly becomes empty.
+	 * Note: this also clears any queued (not-yet-applied) points so the curve truly
+	 * becomes empty.
 	 * </p>
 	 */
 	public void clearData() {

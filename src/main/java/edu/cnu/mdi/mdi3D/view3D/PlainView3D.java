@@ -12,13 +12,11 @@ import edu.cnu.mdi.mdi3D.panel.Panel3D;
 import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.view.BaseView;
 
-
 @SuppressWarnings("serial")
 public abstract class PlainView3D extends BaseView implements ActionListener {
 
 	// the menu bar
 	private final JMenuBar _menuBar;
-
 
 	// the 3D panel
 	protected final Panel3D _panel3D;
@@ -40,20 +38,17 @@ public abstract class PlainView3D extends BaseView implements ActionListener {
 
 		add(_panel3D, BorderLayout.CENTER);
 		add(Box.createHorizontalStrut(1), BorderLayout.WEST);
-	//	pack();
+		// pack();
 
 	}
-
 
 	// make the 3d panel
 	protected abstract Panel3D make3DPanel(float angleX, float angleY, float angleZ, float xDist, float yDist,
 			float zDist);
 
-
 	// add the menus
 	protected void addMenus() {
 	}
-
 
 	@Override
 	public void actionPerformed(ActionEvent e) {

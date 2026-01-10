@@ -35,17 +35,15 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 	/**
 	 * Create a TextFieldSlider
 	 *
-	 * @param min               the minimum slider value
-	 * @param max               the maximum slider value
-	 * @param value             the initial slider value
-	 * @param font              the font for the text field
-	 * @param minorTickSpacing  the minor tick spacing (0 for none)
-	 * @param labels            an array of labels to put on the slider (can be
-	 *                          null)
-	 * @param sliderWidth       the preferred width of the slider (0 for default)
-	 * @param textFieldWidth    the preferred width of the text field (0 for
-	 *                          default)
-	 * @param borderTitle       the title for the border (null for no border)
+	 * @param min              the minimum slider value
+	 * @param max              the maximum slider value
+	 * @param value            the initial slider value
+	 * @param font             the font for the text field
+	 * @param minorTickSpacing the minor tick spacing (0 for none)
+	 * @param labels           an array of labels to put on the slider (can be null)
+	 * @param sliderWidth      the preferred width of the slider (0 for default)
+	 * @param textFieldWidth   the preferred width of the text field (0 for default)
+	 * @param borderTitle      the title for the border (null for no border)
 	 */
 	public TextFieldSlider(int min, int max, int value, Font font, int minorTickSpacing, String labels[],
 			int sliderWidth, int textFieldWidth, String borderTitle) {
@@ -91,8 +89,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 					try {
 						double val = Double.parseDouble(_textField.getText());
 						_slider.setValue(realValueToSliderValue(val));
-					}
-					catch (Exception e) {
+					} catch (Exception e) {
 
 					}
 				}

@@ -14,9 +14,9 @@ import edu.cnu.mdi.item.Layer;
  * yields exactly three screen points:
  * </p>
  * <ol>
- *   <li>center</li>
- *   <li>radius/start-angle point (defines radius and start angle)</li>
- *   <li>opening-angle point (relative to point 2, defines arc angle)</li>
+ * <li>center</li>
+ * <li>radius/start-angle point (defines radius and start angle)</li>
+ * <li>opening-angle point (relative to point 2, defines arc angle)</li>
  * </ol>
  * <p>
  * The arc angle is computed using the angle between the two radius vectors and
@@ -32,91 +32,93 @@ import edu.cnu.mdi.item.Layer;
  */
 public class RadArcTool extends AbstractVertexRubberbandTool {
 
-    /** Tool id used by {@link ToolController}. */
-    public static final String ID = "radArc";
+	/** Tool id used by {@link ToolController}. */
+	public static final String ID = "radArc";
 
-    /** Minimum radius in pixels required to accept the gesture (legacy: < 3 abort). */
-    private static final int MIN_RADIUS_PX = 3;
+	/**
+	 * Minimum radius in pixels required to accept the gesture (legacy: < 3 abort).
+	 */
+	private static final int MIN_RADIUS_PX = 3;
 
-    /** Construct the tool (requires exactly 3 vertices). */
-    public RadArcTool() {
-        super(3);
-    }
+	/** Construct the tool (requires exactly 3 vertices). */
+	public RadArcTool() {
+		super(3);
+	}
 
-    @Override
-    public String id() {
-        return ID;
-    }
+	@Override
+	public String id() {
+		return ID;
+	}
 
-    @Override
-    public String toolTip() {
-        return "Create a radius-arc";
-    }
+	@Override
+	public String toolTip() {
+		return "Create a radius-arc";
+	}
 
-    @Override
-    protected Rubberband.Policy rubberbandPolicy() {
-        return Rubberband.Policy.RADARC;
-    }
+	@Override
+	protected Rubberband.Policy rubberbandPolicy() {
+		return Rubberband.Policy.RADARC;
+	}
 
-    @Override
-    protected AItem createItem(Layer layer, Point[] pp) {
+	@Override
+	protected AItem createItem(Layer layer, Point[] pp) {
 
-        // Defensive (base guarantees length>=3, but RADARC expects exactly 3)
-        if (pp == null || pp.length != 3) {
-            return null;
-        }
+		// Defensive (base guarantees length>=3, but RADARC expects exactly 3)
+		if (pp == null || pp.length != 3) {
+			return null;
+		}
 
-        // Unpack points (screen coords)
-        double xc = pp[0].x;
-        double yc = pp[0].y;
+		// Unpack points (screen coords)
+		double xc = pp[0].x;
+		double yc = pp[0].y;
 
-        double x1 = pp[1].x;
-        double y1 = pp[1].y;
+		double x1 = pp[1].x;
+		double y1 = pp[1].y;
 
-        double x2 = pp[2].x;
-        double y2 = pp[2].y;
+		double x2 = pp[2].x;
+		double y2 = pp[2].y;
 
-        // Vectors from center
-        double dx1 = x1 - xc;
-        double dy1 = y1 - yc;
-        double dx2 = x2 - xc;
-        double dy2 = y2 - yc;
+		// Vectors from center
+		double dx1 = x1 - xc;
+		double dy1 = y1 - yc;
+		double dx2 = x2 - xc;
+		double dy2 = y2 - yc;
 
-        double r1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
-        double r2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+		double r1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+		double r2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
 
-        // Legacy guard
-        if (r1 < 0.99 || r2 < 0.99) {
-            return null;
-        }
+		// Legacy guard
+		if (r1 < 0.99 || r2 < 0.99) {
+			return null;
+		}
 
-        // Angle between radius vectors (clamped for numeric safety)
-        double cos = (dx1 * dx2 + dy1 * dy2) / (r1 * r2);
-        cos = Math.max(-1.0, Math.min(1.0, cos));
-        double aAngle = Math.acos(cos);
+		// Angle between radius vectors (clamped for numeric safety)
+		double cos = (dx1 * dx2 + dy1 * dy2) / (r1 * r2);
+		cos = Math.max(-1.0, Math.min(1.0, cos));
+		double aAngle = Math.acos(cos);
 
-        // Sign using 2D cross product (matches legacy sign logic)
-        if ((dx1 * dy2 - dx2 * dy1) > 0.0) {
-            aAngle = -aAngle;
-        }
+		// Sign using 2D cross product (matches legacy sign logic)
+		if ((dx1 * dy2 - dx2 * dy1) > 0.0) {
+			aAngle = -aAngle;
+		}
 
-        int arcAngleDeg = (int) Math.toDegrees(aAngle);
-        int pixrad = (int) r1;
+		int arcAngleDeg = (int) Math.toDegrees(aAngle);
+		int pixrad = (int) r1;
 
-        if (pixrad < MIN_RADIUS_PX) {
-            return null;
-        }
+		if (pixrad < MIN_RADIUS_PX) {
+			return null;
+		}
 
-         return DrawingToolSupport.createRadArcItem(layer, pp[0], pp[1], arcAngleDeg);
-    }
+		return DrawingToolSupport.createRadArcItem(layer, pp[0], pp[1], arcAngleDeg);
+	}
 
-    @Override
-    protected void configureItem(AItem item) {
-        item.setRightClickable(true);
-        item.setDraggable(true);
-        item.setRotatable(true);
-        item.setResizable(true);
-        item.setDeletable(true);
-        item.setLocked(false);
-    }
+	@Override
+	protected void configureItem(AItem item) {
+		item.setRightClickable(true);
+		item.setDraggable(true);
+		item.setRotatable(true);
+		item.setResizable(true);
+		item.setDeletable(true);
+		item.setLocked(false);
+	}
 }

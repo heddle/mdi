@@ -20,26 +20,30 @@ import edu.cnu.mdi.splot.spline.CubicSpline;
  * Backing data model for a strip chart / time-series plot.
  *
  * <p>
- * This class periodically samples a provided {@link Evaluator} and appends
- * (t, y) points into bounded X and Y columns. When capacity is reached, the
- * oldest samples are dropped ("scrolls off the left").
+ * This class periodically samples a provided {@link Evaluator} and appends (t,
+ * y) points into bounded X and Y columns. When capacity is reached, the oldest
+ * samples are dropped ("scrolls off the left").
  * </p>
  *
  * <h2>Threading</h2>
  * <p>
- * Sampling runs on a background scheduler thread. To preserve the {@link ACurve}
- * contract that notifications occur on the Swing Event Dispatch Thread (EDT),
- * this class uses a lock-free staging queue:
+ * Sampling runs on a background scheduler thread. To preserve the
+ * {@link ACurve} contract that notifications occur on the Swing Event Dispatch
+ * Thread (EDT), this class uses a lock-free staging queue:
  * </p>
  * <ul>
- *   <li>The background sampler thread computes samples and {@linkplain #enqueueSample(double, double) enqueues} them.</li>
- *   <li>An EDT drain pass applies samples in bounded batches under {@link #lock}.</li>
- *   <li>A single consolidated {@link #markDataChanged()} is fired per batch (EDT-only).</li>
+ * <li>The background sampler thread computes samples and
+ * {@linkplain #enqueueSample(double, double) enqueues} them.</li>
+ * <li>An EDT drain pass applies samples in bounded batches under
+ * {@link #lock}.</li>
+ * <li>A single consolidated {@link #markDataChanged()} is fired per batch
+ * (EDT-only).</li>
  * </ul>
  *
  * <p>
- * The optional {@link #setOnSample(Runnable)} callback, if provided, is invoked on the EDT after
- * each drain pass. This is a convenient place to call {@code repaint()} safely.
+ * The optional {@link #setOnSample(Runnable)} callback, if provided, is invoked
+ * on the EDT after each drain pass. This is a convenient place to call
+ * {@code repaint()} safely.
  * </p>
  */
 public class StripChartCurve extends ACurve {
@@ -91,7 +95,8 @@ public class StripChartCurve extends ACurve {
 	 *
 	 * @param name        series name
 	 * @param capacity    max number of retained samples (>= 2)
-	 * @param accumulator value source; called as {@code accumulator.value(tMs)} (non-null)
+	 * @param accumulator value source; called as {@code accumulator.value(tMs)}
+	 *                    (non-null)
 	 * @param intervalMs  update interval in milliseconds (> 0)
 	 */
 	public StripChartCurve(String name, int capacity, Evaluator accumulator, long intervalMs) {
@@ -119,8 +124,8 @@ public class StripChartCurve extends ACurve {
 	 * capacity, oldest samples are dropped immediately.
 	 *
 	 * <p>
-	 * If called off the EDT, this method schedules the capacity enforcement on the EDT
-	 * to keep column mutation and notifications Swing-correct.
+	 * If called off the EDT, this method schedules the capacity enforcement on the
+	 * EDT to keep column mutation and notifications Swing-correct.
 	 * </p>
 	 *
 	 * @param capacity must be >= 2
@@ -161,8 +166,8 @@ public class StripChartCurve extends ACurve {
 	/**
 	 * Set the display unit for the time axis.
 	 * <p>
-	 * Internal storage remains milliseconds; snapshot/min/max are scaled.
-	 * This triggers a data change notification so axes/ticks update.
+	 * Internal storage remains milliseconds; snapshot/min/max are scaled. This
+	 * triggers a data change notification so axes/ticks update.
 	 * </p>
 	 *
 	 * @param unit non-null
@@ -193,16 +198,25 @@ public class StripChartCurve extends ACurve {
 	/** A short label you can use in axis titles ("Time (s)", etc.). */
 	public String getTimeUnitShortLabel() {
 		switch (timeUnit) {
-		case NANOSECONDS:  return "ns";
-		case MICROSECONDS: return "µs";
-		case MILLISECONDS: return "ms";
-		case SECONDS:      return "s";
-		case MINUTES:      return "min";
-		case HOURS:        return "hr";
-		case DAYS:         return "day";
-		default:           return timeUnit.toString().toLowerCase();
+		case NANOSECONDS:
+			return "ns";
+		case MICROSECONDS:
+			return "µs";
+		case MILLISECONDS:
+			return "ms";
+		case SECONDS:
+			return "s";
+		case MINUTES:
+			return "min";
+		case HOURS:
+			return "hr";
+		case DAYS:
+			return "day";
+		default:
+			return timeUnit.toString().toLowerCase();
 		}
 	}
+
 	/**
 	 * Set the sampling interval. If currently running, restarts the schedule.
 	 *
@@ -270,8 +284,8 @@ public class StripChartCurve extends ACurve {
 	}
 
 	/**
-	 * Permanently shut down this StripChartCurve (cannot be restarted). Use when the
-	 * owning plot is being disposed.
+	 * Permanently shut down this StripChartCurve (cannot be restarted). Use when
+	 * the owning plot is being disposed.
 	 */
 	public void shutdown() {
 		stop();
@@ -281,8 +295,8 @@ public class StripChartCurve extends ACurve {
 	/**
 	 * Clear all retained samples.
 	 * <p>
-	 * Thread-safe: if called off-EDT, schedules the clear on the EDT. Pending queued
-	 * samples are also discarded so the curve becomes truly empty.
+	 * Thread-safe: if called off-EDT, schedules the clear on the EDT. Pending
+	 * queued samples are also discarded so the curve becomes truly empty.
 	 * </p>
 	 */
 	public void clear() {
@@ -311,7 +325,7 @@ public class StripChartCurve extends ACurve {
 	@Override
 	public Snapshot snapshot() {
 		synchronized (lock) {
-			double[] xs = xData.values();  // internal ms
+			double[] xs = xData.values(); // internal ms
 			double[] ys = yData.values();
 
 			// scale x into selected display unit
@@ -326,8 +340,9 @@ public class StripChartCurve extends ACurve {
 	/**
 	 * Add an explicit sample (t, y) to this strip chart.
 	 * <p>
-	 * Thread-safe: may be called from any thread. Off-EDT calls enqueue and schedule
-	 * a coalesced EDT drain. Notifications remain EDT-only per {@link ACurve}.
+	 * Thread-safe: may be called from any thread. Off-EDT calls enqueue and
+	 * schedule a coalesced EDT drain. Notifications remain EDT-only per
+	 * {@link ACurve}.
 	 * </p>
 	 *
 	 * @param tms time value (typically ms since start)
@@ -354,7 +369,8 @@ public class StripChartCurve extends ACurve {
 	/**
 	 * Sampler task run by the scheduler thread.
 	 * <p>
-	 * Computes the sample and enqueues it; the data columns are mutated later on the EDT.
+	 * Computes the sample and enqueues it; the data columns are mutated later on
+	 * the EDT.
 	 * </p>
 	 */
 	private void addSample() {
@@ -389,8 +405,8 @@ public class StripChartCurve extends ACurve {
 	/**
 	 * Schedule a coalesced drain pass on the EDT.
 	 * <p>
-	 * If many background samples arrive, they will be applied in batches. This prevents
-	 * repaint/event storms and preserves Swing EDT discipline.
+	 * If many background samples arrive, they will be applied in batches. This
+	 * prevents repaint/event storms and preserves Swing EDT discipline.
 	 * </p>
 	 */
 	private void scheduleDrain() {
@@ -409,7 +425,8 @@ public class StripChartCurve extends ACurve {
 	}
 
 	/**
-	 * Drain pending samples on the EDT, apply them, and fire a single consolidated DATA event.
+	 * Drain pending samples on the EDT, apply them, and fire a single consolidated
+	 * DATA event.
 	 *
 	 * @param max maximum samples to apply this pass
 	 * @return number drained
@@ -543,6 +560,7 @@ public class StripChartCurve extends ACurve {
 			}
 		}
 	}
+
 	@Override
 	public int length() {
 		return xData.size();

@@ -374,22 +374,22 @@ public class PathBasedItem extends AItem {
 	}
 
 	@Override
-    public void translateWorld(double dx, double dy) {
-        if ((_path == null) || (Math.abs(dx) < 1.0e-12 && Math.abs(dy) < 1.0e-12)) {
-            return;
-        }
-        // Translate the primary path in world space.
-        AffineTransform at = AffineTransform.getTranslateInstance(dx, dy);
-        _path.transform(at);
-        // Keep any secondary points in sync (mirrors your DRAG logic in modify()).
-        if (_secondaryPoints != null) {
-            Path2D.Double path2 = (Path2D.Double) _path.clone();
-            // _path is already translated; path2 now represents the updated geometry.
-            // Convert to polygon storage used by selection handles.
-            WorldGraphicsUtils.pathToWorldPolygon(path2, _secondaryPoints);
-        }
-        // Recompute focus, invalidate caches, etc.
-        geometryChanged();
-    }
+	public void translateWorld(double dx, double dy) {
+		if ((_path == null) || (Math.abs(dx) < 1.0e-12 && Math.abs(dy) < 1.0e-12)) {
+			return;
+		}
+		// Translate the primary path in world space.
+		AffineTransform at = AffineTransform.getTranslateInstance(dx, dy);
+		_path.transform(at);
+		// Keep any secondary points in sync (mirrors your DRAG logic in modify()).
+		if (_secondaryPoints != null) {
+			Path2D.Double path2 = (Path2D.Double) _path.clone();
+			// _path is already translated; path2 now represents the updated geometry.
+			// Convert to polygon storage used by selection handles.
+			WorldGraphicsUtils.pathToWorldPolygon(path2, _secondaryPoints);
+		}
+		// Recompute focus, invalidate caches, etc.
+		geometryChanged();
+	}
 
 }

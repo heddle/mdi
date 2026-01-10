@@ -7,8 +7,9 @@ import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 /**
  * A closed, filled/stroked polygon defined in world coordinates.
  * <p>
- * The polygon geometry is stored as a world-coordinate {@link java.awt.geom.Path2D}.
- * Selection/reshape modifies vertices of that path.
+ * The polygon geometry is stored as a world-coordinate
+ * {@link java.awt.geom.Path2D}. Selection/reshape modifies vertices of that
+ * path.
  * </p>
  */
 public class PolygonItem extends PathBasedItem {
@@ -16,8 +17,8 @@ public class PolygonItem extends PathBasedItem {
 	/**
 	 * Create a world polygon item
 	 *
-	 * @param itemList  the layer this item is on.
-	 * @param points the points of the polygon
+	 * @param itemList the layer this item is on.
+	 * @param points   the points of the polygon
 	 */
 	public PolygonItem(Layer itemList, Point2D.Double points[]) {
 		super(itemList);

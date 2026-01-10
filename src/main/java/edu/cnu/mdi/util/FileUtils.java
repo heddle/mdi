@@ -482,7 +482,6 @@ public class FileUtils {
 		return s;
 	}
 
-
 	/**
 	 * Converts a base path and some other path to the relative path (for the other
 	 * path) For example if basePath is "/Users/heddle/clax/wd" and otherPath is
@@ -596,8 +595,6 @@ public class FileUtils {
 
 		return null;
 	}
-
-
 
 	/**
 	 * Obtain a list of classes found in a jar file

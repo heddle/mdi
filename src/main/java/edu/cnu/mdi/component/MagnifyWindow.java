@@ -76,7 +76,6 @@ public class MagnifyWindow extends JWindow {
 	 */
 	private static IDrawable _extraAfterDraw;
 
-
 	/** Menu used to select the magnification factor. */
 	private static JMenu _magMenu;
 
@@ -178,8 +177,7 @@ public class MagnifyWindow extends JWindow {
 		_mouseLocation = new Point(event.getPoint());
 
 		// Get the mouse pointer location in screen coordinates
-		Point mouseScreenPoint = MouseInfo.getPointerInfo() != null
-				? MouseInfo.getPointerInfo().getLocation()
+		Point mouseScreenPoint = MouseInfo.getPointerInfo() != null ? MouseInfo.getPointerInfo().getLocation()
 				: new Point(0, 0);
 
 		// Compute where to place the magnify window, trying to avoid going off-screen
@@ -201,37 +199,37 @@ public class MagnifyWindow extends JWindow {
 		_container.setWorldSystem(getMagWorld(sourceContainer));
 
 		// Share items or use specialized draw?
-			_container.shareModel(sourceContainer);
+		_container.shareModel(sourceContainer);
 
-			final IDrawable parentAfterDraw = sourceContainer.getAfterDraw();
+		final IDrawable parentAfterDraw = sourceContainer.getAfterDraw();
 
-			_extraAfterDraw = new DrawableAdapter() {
+		_extraAfterDraw = new DrawableAdapter() {
 
-				@Override
-				public void draw(Graphics2D g, edu.cnu.mdi.container.IContainer container) {
-					// Delegate to parent's after-draw, if any
-					if (parentAfterDraw != null) {
-						parentAfterDraw.draw(g, _container);
-					}
-
-					// Draw a crosshair at the center of the magnify window
-					Rectangle bounds = container.getComponent().getBounds();
-					int xc = bounds.x + bounds.width / 2;
-					int yc = bounds.y + bounds.height / 2;
-
-					int S2 = 8;
-					g.setColor(Color.cyan);
-					g.drawLine(xc - S2, yc - 1, xc - 1, yc - 1);
-					g.drawLine(xc - 1, yc - S2, xc - 1, yc - 1);
-					g.drawLine(xc + S2, yc + 1, xc + 1, yc + 1);
-					g.drawLine(xc + 1, yc + S2, xc + 1, yc + 1);
-					g.setColor(Color.red);
-					g.drawLine(xc - S2, yc, xc + S2, yc);
-					g.drawLine(xc, yc - S2, xc, yc + S2);
+			@Override
+			public void draw(Graphics2D g, edu.cnu.mdi.container.IContainer container) {
+				// Delegate to parent's after-draw, if any
+				if (parentAfterDraw != null) {
+					parentAfterDraw.draw(g, _container);
 				}
-			};
 
-			_container.setAfterDraw(_extraAfterDraw);
+				// Draw a crosshair at the center of the magnify window
+				Rectangle bounds = container.getComponent().getBounds();
+				int xc = bounds.x + bounds.width / 2;
+				int yc = bounds.y + bounds.height / 2;
+
+				int S2 = 8;
+				g.setColor(Color.cyan);
+				g.drawLine(xc - S2, yc - 1, xc - 1, yc - 1);
+				g.drawLine(xc - 1, yc - S2, xc - 1, yc - 1);
+				g.drawLine(xc + S2, yc + 1, xc + 1, yc + 1);
+				g.drawLine(xc + 1, yc + S2, xc + 1, yc + 1);
+				g.setColor(Color.red);
+				g.drawLine(xc - S2, yc, xc + S2, yc);
+				g.drawLine(xc, yc - S2, xc, yc + S2);
+			}
+		};
+
+		_container.setAfterDraw(_extraAfterDraw);
 
 		_container.setDirty(true);
 		_container.refresh();
@@ -292,21 +290,21 @@ public class MagnifyWindow extends JWindow {
 	 */
 	public static void closeMagnifyWindow() {
 
-	    if (_magnifyWindow == null) {
-	        return;
-	    }
+		if (_magnifyWindow == null) {
+			return;
+		}
 
-	    if (_magnifyWindow.isVisible()) {
-	        _magnifyWindow.setVisible(false);
+		if (_magnifyWindow.isVisible()) {
+			_magnifyWindow.setVisible(false);
 
-	        if (_sourceContainer != null) {
-	            IContainerToolBar tb = _sourceContainer.getToolBar();
-	            if (tb != null) {
-	                tb.resetDefaultSelection();
-	            }
-	            _sourceContainer = null;
-	        }
-	    }
+			if (_sourceContainer != null) {
+				IContainerToolBar tb = _sourceContainer.getToolBar();
+				if (tb != null) {
+					tb.resetDefaultSelection();
+				}
+				_sourceContainer = null;
+			}
+		}
 	}
 
 	/**

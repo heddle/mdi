@@ -33,7 +33,6 @@ public class MapControlPanel extends JPanel {
 	private MapTheme _blueTheme = MapTheme.blue();
 	private MapTheme _currentTheme = _lightTheme;
 
-
 	private JRadioButton _lightThemeButton;
 	private JRadioButton _darkThemeButton;
 	private JRadioButton _blueThemeButton;
@@ -42,7 +41,6 @@ public class MapControlPanel extends JPanel {
 
 	// Reference to the map view being controlled
 	private MapView2D mapView;
-
 
 	public MapControlPanel(MapView2D mapView) {
 		this.mapView = mapView;
@@ -56,7 +54,7 @@ public class MapControlPanel extends JPanel {
 		createThemeSelector(this);
 	}
 
-	//create a radio button for theme selection
+	// create a radio button for theme selection
 	private JRadioButton createThemeButton(String label, ButtonGroup bg, ActionListener al, boolean selected) {
 		JRadioButton themeButton = new JRadioButton();
 		themeButton.setSelected(selected);
@@ -67,7 +65,7 @@ public class MapControlPanel extends JPanel {
 		return themeButton;
 	}
 
-	//create the projection selection combo box
+	// create the projection selection combo box
 	private void createProjectionCombo(JPanel panel) {
 		JLabel projLabel = new JLabel("Projection");
 		projLabel.setFont(Fonts.mediumFont);
@@ -89,7 +87,7 @@ public class MapControlPanel extends JPanel {
 
 	}
 
-	//create any display checkboxes
+	// create any display checkboxes
 	private void createCheckboxes(JPanel panel) {
 		JCheckBox showCityNamesCheckBox = new JCheckBox("Show city names", true);
 		showCityNamesCheckBox.setFont(Fonts.mediumFont);
@@ -105,7 +103,7 @@ public class MapControlPanel extends JPanel {
 		panel.add(Box.createVerticalStrut(12));
 	}
 
-	//create the minimum population slider
+	// create the minimum population slider
 	private void createMinPopRangeSlider(JPanel panel) {
 		RangeSlider minPopSlider = new RangeSlider(0, MAX_POP_SLIDER_VALUE, MAX_POP_SLIDER_VALUE / 2, true);
 		minPopSlider.setOnChange(this::updateMinPopulationFilter);
@@ -141,10 +139,8 @@ public class MapControlPanel extends JPanel {
 		leftAlign(_darkThemeButton);
 		leftAlign(_blueThemeButton);
 
-
 		JPanel subPanel = new JPanel();
 		subPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
 
 		subPanel.add(_lightThemeButton);
 		subPanel.add(_darkThemeButton);
@@ -154,6 +150,7 @@ public class MapControlPanel extends JPanel {
 		panel.add(subPanel);
 
 	}
+
 	/**
 	 * Update the minimum population filter for displayed cities and refresh the
 	 * view. The population value is provided directly by the slider.
@@ -198,6 +195,5 @@ public class MapControlPanel extends JPanel {
 	public MapTheme getCurrentTheme() {
 		return _currentTheme;
 	}
-
 
 }

@@ -25,15 +25,15 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * <p>
  * Key invariants:
  * <ul>
- *   <li>{@link #_focus} is the <b>center</b> of the text box.</li>
- *   <li>When the item is being modified (drag/resize/rotate), we do <b>not</b>
- *       rebuild the path from font metrics. We rely on the affine transforms in
- *       {@link PathBasedItem#modify()} so the rectangle and handles stay
- *       lockstep with the mouse.</li>
- *   <li>The text baseline point is tracked as a {@link #_secondaryPoints}
- *       entry so it transforms together with the rectangle.</li>
- *   <li>When the modification ends, we “snap” back to a clean metrics-derived
- *       rectangle for stable serialization and consistent redraw.</li>
+ * <li>{@link #_focus} is the <b>center</b> of the text box.</li>
+ * <li>When the item is being modified (drag/resize/rotate), we do <b>not</b>
+ * rebuild the path from font metrics. We rely on the affine transforms in
+ * {@link PathBasedItem#modify()} so the rectangle and handles stay lockstep
+ * with the mouse.</li>
+ * <li>The text baseline point is tracked as a {@link #_secondaryPoints} entry
+ * so it transforms together with the rectangle.</li>
+ * <li>When the modification ends, we “snap” back to a clean metrics-derived
+ * rectangle for stable serialization and consistent redraw.</li>
  * </ul>
  * </p>
  */
@@ -64,8 +64,8 @@ public class TextItem extends RectangleItem {
 	 * @param fillColor the text background color.
 	 * @param lineColor the border color
 	 */
-	public TextItem(Layer itemList, Point2D.Double location, Font font, String text, Color textColor,
-			Color fillColor, Color lineColor) {
+	public TextItem(Layer itemList, Point2D.Double location, Font font, String text, Color textColor, Color fillColor,
+			Color lineColor) {
 		super(itemList, new Rectangle2D.Double(location.x, location.y, 1, 1));
 		setFont(font);
 		setText(text);
@@ -87,7 +87,7 @@ public class TextItem extends RectangleItem {
 		FontMetrics fm = container.getComponent().getFontMetrics(_font);
 
 		Dimension size = getSize();
-		Font fitFont = justFitSize(_text, fm, size.width-2*MARGIN, size.height-2*MARGIN);
+		Font fitFont = justFitSize(_text, fm, size.width - 2 * MARGIN, size.height - 2 * MARGIN);
 		drawRotatedText(g, cp, _text, fitFont, _textColor, getAzimuth());
 	}
 
@@ -113,7 +113,8 @@ public class TextItem extends RectangleItem {
 	}
 
 	/**
-	 * Determine the maximum font size that will fit the given string within the specified width and height.
+	 * Determine the maximum font size that will fit the given string within the
+	 * specified width and height.
 	 *
 	 * @param s  the string to fit
 	 * @param fm the FontMetrics of the base font
@@ -122,65 +123,65 @@ public class TextItem extends RectangleItem {
 	 * @return a Font object at the maximum size that fits within the box
 	 */
 	protected Font justFitSize(String s, FontMetrics fm, int w, int h) {
-	    Font baseFont = fm.getFont();
-	    // Get the FontRenderContext from the existing metrics to ensure accurate scaling
-	    FontRenderContext frc = fm.getFontRenderContext();
+		Font baseFont = fm.getFont();
+		// Get the FontRenderContext from the existing metrics to ensure accurate
+		// scaling
+		FontRenderContext frc = fm.getFontRenderContext();
 
-	    int low = 1;
-	    int high = 1000; // Define a reasonable maximum font size
+		int low = 1;
+		int high = 1000; // Define a reasonable maximum font size
 
-	    Font testFont = baseFont;
+		Font testFont = baseFont;
 
-	    while (low <= high) {
-	        int mid = (low + high) / 2;
-	        testFont = baseFont.deriveFont((float) mid);
+		while (low <= high) {
+			int mid = (low + high) / 2;
+			testFont = baseFont.deriveFont((float) mid);
 
-	        // Measure string bounds at this size
-	        Rectangle2D bounds = testFont.getStringBounds(s, frc);
+			// Measure string bounds at this size
+			Rectangle2D bounds = testFont.getStringBounds(s, frc);
 
-	        // Check if it fits within the box dimensions
-	        if (bounds.getWidth() <= w && bounds.getHeight() <= h) {
-	            low = mid + 1;
-	        } else {
-	            high = mid - 1; // Too big, try a smaller size
-	        }
-	    }
-	    return testFont;
+			// Check if it fits within the box dimensions
+			if (bounds.getWidth() <= w && bounds.getHeight() <= h) {
+				low = mid + 1;
+			} else {
+				high = mid - 1; // Too big, try a smaller size
+			}
+		}
+		return testFont;
 	}
 
-
 	public void drawRotatedText(Graphics g, Point cp, String s, Font font, Color tcolor, double theta) {
-	    Graphics2D g2d = (Graphics2D) g.create();
+		Graphics2D g2d = (Graphics2D) g.create();
 
-	    // 1. Set font and color
-	    g2d.setFont(font);
-	    g2d.setColor(tcolor);
+		// 1. Set font and color
+		g2d.setFont(font);
+		g2d.setColor(tcolor);
 
-	    // 2. Enable antialiasing for smoother text
-	    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		// 2. Enable antialiasing for smoother text
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-	    // 3. Calculate text dimensions for centering
-	    FontMetrics fm = g2d.getFontMetrics();
-	    Rectangle2D rect = fm.getStringBounds(s, g2d);
-	    double textWidth = rect.getWidth();
-	    double textHeight = rect.getHeight();
+		// 3. Calculate text dimensions for centering
+		FontMetrics fm = g2d.getFontMetrics();
+		Rectangle2D rect = fm.getStringBounds(s, g2d);
+		double textWidth = rect.getWidth();
+		double textHeight = rect.getHeight();
 
-	    // 4. Apply transformations
-	    // Translate to the center point cp
-	    g2d.translate(cp.x, cp.y);
-	    // Rotate by theta degrees (convert to radians)
-	    g2d.rotate(Math.toRadians(theta));
+		// 4. Apply transformations
+		// Translate to the center point cp
+		g2d.translate(cp.x, cp.y);
+		// Rotate by theta degrees (convert to radians)
+		g2d.rotate(Math.toRadians(theta));
 
-	    // 5. Draw string centered on the origin (which is now cp)
-	    // Horizontal center: -textWidth / 2
-	    // Vertical center: (textHeight / 2) - ascent to account for the baseline
-	    float x = (float) (-textWidth / 2);
-	    float y = (float) (fm.getAscent() - textHeight / 2);
+		// 5. Draw string centered on the origin (which is now cp)
+		// Horizontal center: -textWidth / 2
+		// Vertical center: (textHeight / 2) - ascent to account for the baseline
+		float x = (float) (-textWidth / 2);
+		float y = (float) (fm.getAscent() - textHeight / 2);
 
-	    g2d.drawString(s, x, y);
+		g2d.drawString(s, x, y);
 
-	    // 6. Dispose the graphics copy
-	    g2d.dispose();
+		// 6. Dispose the graphics copy
+		g2d.dispose();
 	}
 
 	// get the unrotated corner points of the text box
@@ -192,8 +193,6 @@ public class TextItem extends RectangleItem {
 		Point2D.Double tl = new Point2D.Double(_focus.x - size.width / 2, _focus.y + size.height / 2);
 		return new Point2D.Double[] { bl, br, tr, tl };
 	}
-
-
 
 	/**
 	 * Get the size of the text, including an invisible border of thickness MARGIN
@@ -216,7 +215,7 @@ public class TextItem extends RectangleItem {
 			height = Math.max(height, s.getDeltaY() + size.height);
 		}
 
-		return new Dimension(width + 2*MARGIN, height + 2*MARGIN);
+		return new Dimension(width + 2 * MARGIN, height + 2 * MARGIN);
 	}
 
 	/**
@@ -268,7 +267,6 @@ public class TextItem extends RectangleItem {
 	public void setTextColor(Color textForeground) {
 		_textColor = textForeground;
 	}
-
 
 	// get the world rectangle bounds
 	private static Rectangle2D.Double getWorldRectangle(IContainer container, Point2D.Double location, Font font,

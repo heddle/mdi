@@ -11,7 +11,6 @@ import javax.swing.UIManager;
 
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
-import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
@@ -19,6 +18,7 @@ import edu.cnu.mdi.splot.plot.PlotChangeListener;
 import edu.cnu.mdi.splot.plot.PlotChangeType;
 import edu.cnu.mdi.splot.plot.PlotPanel;
 import edu.cnu.mdi.splot.plot.SplotEditMenu;
+import edu.cnu.mdi.swing.WindowPlacement;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
@@ -28,7 +28,7 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  *
  */
 @SuppressWarnings("serial")
-public abstract class AExample extends JFrame implements PlotChangeListener{
+public abstract class AExample extends JFrame implements PlotChangeListener {
 
 	// the plot canvas
 	protected PlotCanvas canvas;
@@ -38,9 +38,9 @@ public abstract class AExample extends JFrame implements PlotChangeListener{
 
 	// the menus and items
 	protected SplotEditMenu menu;
-	
+
 	protected JMenuBar menuBar;
-	
+
 	protected boolean headless = false;
 
 	public AExample() {
@@ -65,14 +65,13 @@ public abstract class AExample extends JFrame implements PlotChangeListener{
 		};
 		addWindowListener(windowAdapter);
 
-
 		// add the menu bar
 		setJMenuBar(menuBar);
 		add(plotPanel, BorderLayout.CENTER);
 		pack();
-		GraphicsUtils.centerComponent(this);
+		WindowPlacement.centerComponent(this);
 	}
-	
+
 	protected void dataSetup() {
 		try {
 			canvas = new PlotCanvas(createPlotData(), getPlotTitle(), getXAxisLabel(), getYAxisLabel());
@@ -111,7 +110,7 @@ public abstract class AExample extends JFrame implements PlotChangeListener{
 			break;
 		}
 	}
-	
+
 	/**
 	 * Get the plot canvas
 	 *
@@ -123,7 +122,7 @@ public abstract class AExample extends JFrame implements PlotChangeListener{
 
 	/**
 	 * Get the plot panel
-	 * 
+	 *
 	 * @return the plot panel
 	 */
 	public PlotPanel getPlotPanel() {
@@ -132,7 +131,7 @@ public abstract class AExample extends JFrame implements PlotChangeListener{
 
 	/**
 	 * Create the plot data
-	 * 
+	 *
 	 * @return the plot data
 	 * @throws PlotDataException
 	 */

@@ -12,88 +12,87 @@ import java.util.Objects;
  * The controller owns:
  * </p>
  * <ul>
- *   <li>a registry of tools, keyed by tool id</li>
- *   <li>the currently active tool</li>
- *   <li>an optional default tool used when a toggle is turned off</li>
+ * <li>a registry of tools, keyed by tool id</li>
+ * <li>the currently active tool</li>
+ * <li>an optional default tool used when a toggle is turned off</li>
  * </ul>
  * <p>
- * Selection triggers tool lifecycle callbacks ({@link ITool#onSelected(ToolContext)}
- * and {@link ITool#onDeselected(ToolContext)}), and updates the canvas cursor to
+ * Selection triggers tool lifecycle callbacks
+ * ({@link ITool#onSelected(ToolContext)} and
+ * {@link ITool#onDeselected(ToolContext)}), and updates the canvas cursor to
  * match the active tool.
  * </p>
  * <p>
- * This class deliberately contains no Swing button logic. UI widgets simply request
- * activation via {@link #select(String)}.
+ * This class deliberately contains no Swing button logic. UI widgets simply
+ * request activation via {@link #select(String)}.
  * </p>
  *
  * @author heddle
  */
 public class ToolController {
 
-    private final ToolContext ctx;
-    private final Map<String, ITool> tools = new LinkedHashMap<>();
-    private ITool active;
-    private ITool defaultTool;
+	private final ToolContext ctx;
+	private final Map<String, ITool> tools = new LinkedHashMap<>();
+	private ITool active;
+	private ITool defaultTool;
 
-    private final java.util.List<ToolSelectionListener> listeners =
-            new java.util.concurrent.CopyOnWriteArrayList<>();
+	private final java.util.List<ToolSelectionListener> listeners = new java.util.concurrent.CopyOnWriteArrayList<>();
 
+	/**
+	 * Create a controller for the given context.
+	 *
+	 * @param ctx the tool context (never null).
+	 */
+	public ToolController(ToolContext ctx) {
+		this.ctx = Objects.requireNonNull(ctx, "ToolContext must not be null");
+	}
 
-    /**
-     * Create a controller for the given context.
-     *
-     * @param ctx the tool context (never null).
-     */
-    public ToolController(ToolContext ctx) {
-        this.ctx = Objects.requireNonNull(ctx, "ToolContext must not be null");
-    }
+	/**
+	 * Register a tool with the controller.
+	 * <p>
+	 * If a tool with the same id already exists, it will be replaced.
+	 * </p>
+	 *
+	 * @param tool the tool to register (must not be null).
+	 */
+	public void register(ITool tool) {
+		Objects.requireNonNull(tool, "tool must not be null");
+		tools.put(tool.id(), tool);
+	}
 
-    /**
-     * Register a tool with the controller.
-     * <p>
-     * If a tool with the same id already exists, it will be replaced.
-     * </p>
-     *
-     * @param tool the tool to register (must not be null).
-     */
-    public void register(ITool tool) {
-        Objects.requireNonNull(tool, "tool must not be null");
-        tools.put(tool.id(), tool);
-    }
+	/**
+	 * Look up a registered tool by id.
+	 *
+	 * @param id the tool id.
+	 * @return the tool instance, or null if not registered.
+	 */
+	public ITool get(String id) {
+		return tools.get(id);
+	}
 
-    /**
-     * Look up a registered tool by id.
-     *
-     * @param id the tool id.
-     * @return the tool instance, or null if not registered.
-     */
-    public ITool get(String id) {
-        return tools.get(id);
-    }
+	/**
+	 * @return the currently active tool, or null if none has been selected.
+	 */
+	public ITool getActive() {
+		return active;
+	}
 
-    /**
-     * @return the currently active tool, or null if none has been selected.
-     */
-    public ITool getActive() {
-        return active;
-    }
+	/**
+	 * Set the default tool to be used when toggles are turned off.
+	 *
+	 * @param id the id of a registered tool (ignored if not registered).
+	 */
+	public void setDefaultTool(String id) {
+		defaultTool = get(id);
+	}
 
-    /**
-     * Set the default tool to be used when toggles are turned off.
-     *
-     * @param id the id of a registered tool (ignored if not registered).
-     */
-    public void setDefaultTool(String id) {
-        defaultTool = get(id);
-    }
-
-    /**
-     * Get the configured default tool id.
-     *
-     * @return the default tool id, or null if no default tool is configured.
-     */
-    public String getDefaultToolId() {
-        return (defaultTool == null) ? null : defaultTool.id();
+	/**
+	 * Get the configured default tool id.
+	 *
+	 * @return the default tool id, or null if no default tool is configured.
+	 */
+	public String getDefaultToolId() {
+		return (defaultTool == null) ? null : defaultTool.id();
 	}
 
 	public void addSelectionListener(ToolSelectionListener l) {
@@ -102,76 +101,76 @@ public class ToolController {
 		}
 	}
 
-    private void notifySelectionChanged() {
-    	if (active == null) {
+	private void notifySelectionChanged() {
+		if (active == null) {
 			return;
 		}
-        for (ToolSelectionListener l : listeners) {
-            l.activeToolChanged(active);
-        }
-    }
+		for (ToolSelectionListener l : listeners) {
+			l.activeToolChanged(active);
+		}
+	}
 
-    /**
-     * Select the tool with the given id.
-     * <p>
-     * If the tool is already active or not registered, this method does nothing.
-     * </p>
-     *
-     * @param id the tool id.
-     */
-    public void select(String id) {
-        ITool next = get(id);
-        if (next == null || next == active) {
+	/**
+	 * Select the tool with the given id.
+	 * <p>
+	 * If the tool is already active or not registered, this method does nothing.
+	 * </p>
+	 *
+	 * @param id the tool id.
+	 */
+	public void select(String id) {
+		ITool next = get(id);
+		if (next == null || next == active) {
 			return;
 		}
 
-        if (active != null) {
+		if (active != null) {
 			active.onDeselected(ctx);
 		}
 
-        active = next;
-        active.onSelected(ctx);
+		active = next;
+		active.onSelected(ctx);
 
-        applyCursor();
-        notifySelectionChanged();
-    }
+		applyCursor();
+		notifySelectionChanged();
+	}
 
-    private void applyCursor() {
-        if (ctx.canvas() == null) {
+	private void applyCursor() {
+		if (ctx.canvas() == null) {
 			return;
 		}
 
-        Cursor c = (active == null) ? Cursor.getDefaultCursor() : active.cursor(ctx);
-        ctx.canvas().setCursor((c != null) ? c : Cursor.getDefaultCursor());
-    }
+		Cursor c = (active == null) ? Cursor.getDefaultCursor() : active.cursor(ctx);
+		ctx.canvas().setCursor((c != null) ? c : Cursor.getDefaultCursor());
+	}
 
-    /**
+	/**
 	 * Forward key press events to the active tool.
 	 *
 	 * @param e the key event (never null).
 	 */
-    public void keyPressed(KeyEvent e) {
-        ITool tool = getActive();
-        if (tool != null) {
-            tool.keyPressed(ctx, e);
-        }
-    }
+	public void keyPressed(KeyEvent e) {
+		ITool tool = getActive();
+		if (tool != null) {
+			tool.keyPressed(ctx, e);
+		}
+	}
 
-    /**
-     * Reset tool selection to the configured default tool, if any.
-     * <p>
-     * Typically called when a toggle button is deselected to avoid a "no tool active"
-     * state.
-     * </p>
-     */
-    public void resetToDefault() {
-        if (defaultTool != null) {
-            select(defaultTool.id());
-        }
-    }
+	/**
+	 * Reset tool selection to the configured default tool, if any.
+	 * <p>
+	 * Typically called when a toggle button is deselected to avoid a "no tool
+	 * active" state.
+	 * </p>
+	 */
+	public void resetToDefault() {
+		if (defaultTool != null) {
+			select(defaultTool.id());
+		}
+	}
 
-    public void applyCursorNow() {
-        applyCursor();
-    }
+	public void applyCursorNow() {
+		applyCursor();
+	}
 
 }

@@ -11,7 +11,6 @@ import edu.cnu.mdi.ui.colors.X11Colors;
 @SuppressWarnings("serial")
 public class AnotherGaussian extends AExample {
 
-
 	public AnotherGaussian(boolean headless) {
 		super(headless);
 	}
@@ -33,10 +32,9 @@ public class AnotherGaussian extends AExample {
 
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
-		String[] curveNames = {"Gaussian" };
+		String[] curveNames = { "Gaussian" };
 		return new PlotData(PlotDataType.XYEXYE, curveNames, null);
 	}
-
 
 	@Override
 	protected String getXAxisLabel() {
@@ -68,10 +66,10 @@ public class AnotherGaussian extends AExample {
 		PlotData plotData = canvas.getPlotData();
 
 		Curve curve = (Curve) plotData.getCurve(0);
-		//symbol fill color
+		// symbol fill color
 		curve.getStyle().setFillColor(X11Colors.getX11Color("dark sea green"));
 
-		//symbol border color
+		// symbol border color
 		curve.getStyle().setBorderColor(X11Colors.getX11Color("dark red"));
 		curve.setCurveMethod(CurveDrawingMethod.GAUSSIAN);
 		PlotParameters params = canvas.getParameters();

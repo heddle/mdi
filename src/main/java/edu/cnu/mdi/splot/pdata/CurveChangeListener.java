@@ -9,11 +9,11 @@ import java.util.EventListener;
  */
 public interface CurveChangeListener extends EventListener {
 
-    /**
-     * Notification that a curve changed.
-     *
-     * @param curve the curve that changed
-     * @param type  the change type
-     */
-    void curveChanged(ACurve curve, CurveChangeType type);
+	/**
+	 * Notification that a curve changed.
+	 *
+	 * @param curve the curve that changed
+	 * @param type  the change type
+	 */
+	void curveChanged(ACurve curve, CurveChangeType type);
 }
