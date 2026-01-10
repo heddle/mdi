@@ -114,14 +114,12 @@ public class BaseView extends JInternalFrame
 	/** Lazily resolved parent JFrame containing the desktop. */
 	private JFrame parentFrame;
 
-	/** View popup menu used for quick zoom, etc. */
+	/** View popup menu  */
 	protected final ViewPopupMenu viewPopupMenu;
 
 	/** Optional virtual window item (used by overview/minimap type views). */
 	protected VirtualWindowItem virtualItem;
 
-	/** Starting location recorded at creation time. */
-	protected final Point startingLocation = new Point();
 
 	// --------------------------------------------------------------------
 	// Construction
@@ -178,9 +176,6 @@ public class BaseView extends JInternalFrame
 			// Container-less views: we still position/bounds as configured.
 			FrameConfigurer.applyNoContainerBounds(this, cfg);
 		}
-
-		// Record initial placement.
-		this.startingLocation.setLocation(cfg.left, cfg.top);
 
 		// Add to desktop.
 		if (desktop != null) {
