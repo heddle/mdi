@@ -214,7 +214,7 @@ public class PointerTool implements ITool, IRubberbanded {
 	 * @param e mouse press event.
 	 */
 	private void startRubberbandSelection(MouseEvent e) {
-		rubberband = new Rubberband(owner, this, Rubberband.Policy.RECTANGLE);
+		rubberband = new Rubberband(owner.getComponent(), this, Rubberband.Policy.RECTANGLE);
 		rubberband.setActive(true);
 		rubberband.startRubberbanding(e.getPoint());
 	}

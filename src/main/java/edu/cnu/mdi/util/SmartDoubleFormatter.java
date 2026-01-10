@@ -1,4 +1,4 @@
-package edu.cnu.mdi.splot.plot;
+package edu.cnu.mdi.util;
 
 import java.math.BigDecimal;
 import java.math.MathContext;

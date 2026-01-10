@@ -74,6 +74,7 @@ public class PlotView extends BaseView {
 			example.getPlotCanvas().shutDown();
 		}
 		PlotCanvas plotCanvas = example.getPlotCanvas();
+		plotCanvas.standUp();
 		PlotPanel plotPanel = example.getPlotPanel();
 		setPlotPanel(plotPanel);
 		JMenu menu = new SplotEditMenu(plotCanvas);

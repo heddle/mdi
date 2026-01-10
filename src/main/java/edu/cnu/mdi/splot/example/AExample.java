@@ -108,6 +108,9 @@ public abstract class AExample extends JFrame implements PlotChangeListener {
 		switch (type) {
 		case SHUTDOWN:
 			break;
+
+		case STOODUP:
+			break;
 		}
 	}
 

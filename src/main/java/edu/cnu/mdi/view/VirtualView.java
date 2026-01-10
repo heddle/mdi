@@ -32,6 +32,7 @@ import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.ui.colors.X11Colors;
+import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.Environment;
 
 /**
@@ -74,9 +75,8 @@ public class VirtualView extends BaseView
 	private static final Color _bg = Color.gray;
 	private static final Color _fill = X11Colors.getX11Color("alice blue");
 
-	/** Virtual-window item colors for active/inactive views. */
-	private static final Color _vwfillInactive = new Color(255, 200, 120, 128);
-	private static final Color _vwfillActive = new Color(0, 0, 200, 128);
+	/** Virtual-window item color. */
+	private static final Color _vwfill = new Color(255, 200, 120, 128);
 
 	/**
 	 * Minimum height hack (prevents the internal frame from collapsing too small).
@@ -183,7 +183,7 @@ public class VirtualView extends BaseView
 		// Drawers that highlight current column and show debug dividers.
 		setBeforeDraw();
 		setAfterDraw();
-
+		
 		_instance = this;
 	}
 
@@ -207,7 +207,6 @@ public class VirtualView extends BaseView
 	@Override
 	public void addNotify() {
 		super.addNotify();
-
 		adjustTitleFont(); // <-- reduce title font size for virtual view
 		if (parentHooked) {
 			return;
@@ -259,14 +258,40 @@ public class VirtualView extends BaseView
 	 * rendered slightly smaller than standard views.
 	 */
 	private void adjustTitleFont() {
-		javax.swing.plaf.basic.BasicInternalFrameUI ui = (javax.swing.plaf.basic.BasicInternalFrameUI) getUI();
+	    javax.swing.plaf.InternalFrameUI ifui = getUI();
+	    if (!(ifui instanceof javax.swing.plaf.basic.BasicInternalFrameUI ui)) {
+	        return;
+	    }
 
-		if (ui != null && ui.getNorthPane() != null) {
-			java.awt.Font f = ui.getNorthPane().getFont();
-			if (f != null) {
-				ui.getNorthPane().setFont(f.deriveFont(f.getSize2D() - 2f));
-			}
-		}
+	    java.awt.Component north = ui.getNorthPane();
+	    if (!(north instanceof javax.swing.JComponent northPane)) {
+	        return;
+	    }
+
+	    java.awt.Font newFont = Fonts.boldFontDelta(-4);
+
+	    // Setting the container font alone usually doesn't change the visible title
+	    // because the title JLabel has its own font set by the UI delegate.
+	    setFontRecursively(northPane, newFont);
+
+	    northPane.revalidate();
+	    northPane.repaint();
+	}
+
+	private static void setFontRecursively(java.awt.Component c, java.awt.Font f) {
+	    c.setFont(f);
+
+	    // Title text is typically in a JLabel; ensure it gets the new font explicitly.
+	    if (c instanceof javax.swing.JLabel lbl) {
+	    	lbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+	        lbl.setFont(f);
+	    }
+
+	    if (c instanceof java.awt.Container container) {
+	        for (java.awt.Component child : container.getComponents()) {
+	            setFontRecursively(child, f);
+	        }
+	    }
 	}
 
 	/**
@@ -330,7 +355,7 @@ public class VirtualView extends BaseView
 			public void draw(Graphics2D g, IContainer container) {
 				Rectangle cr = getColRect(_currentCol);
 				g.setColor(_fill);
-				g.fillRect(cr.x + 1, cr.y + 1, cr.width - 1, cr.height - 1);
+				g.fillRect(cr.x + 1, cr.y + 1, cr.width - 2, cr.height - 2);
 			}
 		};
 
@@ -357,18 +382,15 @@ public class VirtualView extends BaseView
 				g.setColor(Color.red);
 				wp.y = world.y + world.height / 2;
 				for (int i = 1; i < _numcol; i++) {
-					wp.x = i * dx;
+					wp.x = i * dx+1;
 					container.worldToLocal(pp, wp);
 					g.drawLine(pp.x, 0, pp.x, b.height);
 				}
 
-				Rectangle cr = getColRect(_currentCol);
 
 				g.setColor(Color.red);
-				g.drawRect(0, 0, b.width - 1, b.height - 1);
+				g.drawRect(0, 0, b.width, b.height);
 
-				g.setColor(Color.green);
-				g.drawRect(cr.x, cr.y, cr.width - 1, cr.height - 1);
 			}
 		};
 
@@ -525,8 +547,6 @@ public class VirtualView extends BaseView
 			if (view.getVirtualItem() != null) {
 				view.getVirtualItem().setVisible(true);
 				getContainer().getAnnotationLayer().sendToFront(view.getVirtualItem());
-				view.getVirtualItem().getStyle().setFillColor(_vwfillActive);
-				view.getVirtualItem().getStyle().setLineColor(Color.white);
 			}
 		}
 	}
@@ -538,8 +558,6 @@ public class VirtualView extends BaseView
 			BaseView view = (BaseView) source;
 			if (view.getVirtualItem() != null) {
 				view.getVirtualItem().setVisible(true);
-				view.getVirtualItem().getStyle().setFillColor(_vwfillInactive);
-				view.getVirtualItem().getStyle().setLineColor(Color.blue);
 			}
 		}
 	}
@@ -588,8 +606,8 @@ public class VirtualView extends BaseView
 		_views.add(view);
 
 		final VirtualWindowItem vitem = new VirtualWindowItem(this, view);
-		vitem.getStyle().setFillColor(_vwfillInactive);
-		vitem.getStyle().setLineColor(Color.blue);
+		vitem.getStyle().setFillColor(_vwfill);
+		vitem.getStyle().setLineColor(Color.black);
 
 		view.addInternalFrameListener(this);
 
@@ -636,7 +654,7 @@ public class VirtualView extends BaseView
 		AItem item = getContainer().getItemAtPoint(e.getPoint());
 		if (item instanceof VirtualWindowItem) {
 			VirtualWindowItem vvi = (VirtualWindowItem) item;
-			setTitle("On [" + vvi.getBaseView().getTitle() + "]");
+			setTitle(vvi.getBaseView().getTitle());
 		} else {
 			setTitle(VVTITLE);
 		}

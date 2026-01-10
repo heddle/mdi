@@ -21,6 +21,9 @@ public class VirtualWindowItem extends RectangleItem {
 	private VirtualView _vview;
 
 	private BaseView _baseView;
+	
+	//margin for the virtual window border
+	private static final int del = 20;
 
 	public VirtualWindowItem(VirtualView vview, BaseView baseView) {
 		super(vview.getContainer().getAnnotationLayer(), getWorldRect(baseView));
@@ -141,9 +144,9 @@ public class VirtualWindowItem extends RectangleItem {
 	private static Rectangle2D.Double getWorldRect(BaseView bv) {
 		Rectangle b = bv.getBounds();
 		Rectangle2D.Double wr = new Rectangle2D.Double();
-		wr.x = b.x;
-		wr.y = b.y + b.height;
-		wr.width = b.width;
+		wr.x = b.x+del;
+		wr.y = b.y + b.height-del;
+		wr.width = b.width-2*del;
 		wr.height = b.height;
 		return wr;
 	}
@@ -155,10 +158,11 @@ public class VirtualWindowItem extends RectangleItem {
 
 		Point2D.Double offset = _vview.totalOffset();
 
-		wr.x = offset.x + bvBounds.x;
-		wr.y = offset.y + world.y + world.height - (bvBounds.y + bvBounds.height);
-		wr.width = bvBounds.width;
-		wr.height = bvBounds.height;
+		wr.x = offset.x + bvBounds.x + del;
+		wr.y = offset.y + world.y + world.height - (bvBounds.y + bvBounds.height) - del;
+		
+		wr.width = bvBounds.width - 2*del;
+		wr.height = bvBounds.height - 2*del;
 
 		setPath(WorldGraphicsUtils.getPoints(wr));
 		_vview.getContainer().refresh();

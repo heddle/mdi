@@ -47,6 +47,10 @@ public class StripChart extends AExample implements Evaluator {
 			StripChartCurve sc = (StripChartCurve) ds.getFirstCurve();
 			sc.stop();
 			break;
+			
+		case STOODUP:
+			// nothing to do
+			break;
 		}
 	}
 

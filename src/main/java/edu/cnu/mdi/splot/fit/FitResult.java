@@ -6,7 +6,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.math3.linear.RealMatrix;
 
 import edu.cnu.mdi.graphics.text.UnicodeSupport;
-import edu.cnu.mdi.splot.plot.SmartDoubleFormatter;
+import edu.cnu.mdi.util.SmartDoubleFormatter;
 
 /**
  * Generic result for a (weighted) least-squares fit.

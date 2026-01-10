@@ -33,6 +33,7 @@ import edu.cnu.mdi.splot.example.ErfcTest;
 import edu.cnu.mdi.splot.example.Gaussian;
 import edu.cnu.mdi.splot.example.GrowingHisto;
 import edu.cnu.mdi.splot.example.Histo;
+import edu.cnu.mdi.splot.example.Scatter;
 import edu.cnu.mdi.splot.example.StraightLine;
 import edu.cnu.mdi.splot.example.StripChart;
 import edu.cnu.mdi.splot.example.ThreeGaussians;
@@ -335,12 +336,9 @@ public class DemoApp extends BaseMDIApplication {
 	PlotView createPlotView() {
 		final PlotView view = new PlotView(PropertySupport.TITLE, "Demo Plots", PropertySupport.PROPNAME, "PLOTVIEW",
 				PropertySupport.FRACTION, 0.7, PropertySupport.ASPECT, 1.2, PropertySupport.VISIBLE, true);
-	
-
 
 		// add the examples menu
 		JMenu examplesMenu = new JMenu("Gallery");
-
 		view.getJMenuBar().add(examplesMenu);
 
 		JMenuItem gaussianItem = new JMenuItem("Gaussian Fit");
@@ -354,6 +352,7 @@ public class DemoApp extends BaseMDIApplication {
 		JMenuItem threeGaussiansItem = new JMenuItem("Three Gaussians");
 		JMenuItem twoHistoItem = new JMenuItem("Two Histograms");
 		JMenuItem twoLines = new JMenuItem("Two Lines with Errors");
+		JMenuItem scatterItem = new JMenuItem("Scatter Example");
 
 		gaussianItem.addActionListener(e -> {
 			Gaussian example = new Gaussian(true);
@@ -410,6 +409,11 @@ public class DemoApp extends BaseMDIApplication {
 			view.switchToExample(example);
 		});
 
+		scatterItem.addActionListener(e -> {
+			Scatter example = new Scatter(true);
+			view.switchToExample(example);
+		});
+
 		examplesMenu.add(gaussianItem);
 		examplesMenu.add(anotheGaussianItem);
 		examplesMenu.add(erfcItem);
@@ -421,6 +425,7 @@ public class DemoApp extends BaseMDIApplication {
 		examplesMenu.add(threeGaussiansItem);
 		examplesMenu.add(twoHistoItem);
 		examplesMenu.add(twoLines);
+		examplesMenu.add(scatterItem);
 		return view;
 	}
 

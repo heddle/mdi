@@ -105,6 +105,9 @@ public class GrowingHisto extends AExample {
 				sourceThread.interrupt();
 			}
 			break;
+		case STOODUP:
+			// no op
+			break;
 		}
 	}
 

@@ -73,7 +73,7 @@ public abstract class AbstractLineRubberbandTool implements ITool, IRubberbanded
 		controller = safeController(ctx);
 
 		Rubberband.Policy policy = Objects.requireNonNull(rubberbandPolicy(), "rubberbandPolicy");
-		rubberband = new Rubberband(owner, this, policy);
+		rubberband = new Rubberband(owner.getComponent(), this, policy);
 		rubberband.setActive(true);
 		rubberband.startRubberbanding(e.getPoint());
 	}

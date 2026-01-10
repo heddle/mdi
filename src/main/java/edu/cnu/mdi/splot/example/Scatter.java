@@ -18,6 +18,7 @@ import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.HorizontalLine;
+import edu.cnu.mdi.splot.plot.PlotChangeType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 import edu.cnu.mdi.splot.plot.VerticalLine;
 
@@ -72,6 +73,11 @@ public class Scatter extends AExample {
 	// Stress / DAQ knobs
 	// --------------------------------------------------------------------
 
+	
+	public Scatter(boolean headless) {
+		super(headless);
+	}
+	
 	/**
 	 * Number of concurrent producer threads simulating independent acquisition
 	 * sources.
@@ -236,6 +242,21 @@ public class Scatter extends AExample {
 			});
 		}
 	}
+	
+	@Override
+	public void plotChanged(PlotChangeType type) {
+		switch (type) {
+		case SHUTDOWN:
+			stopDaq();
+			break;
+		case STOODUP:
+			if (headless) {
+				startDaq();
+			}
+			break;
+		}
+	}
+
 
 	/**
 	 * Background DAQ producer loop.
@@ -277,7 +298,7 @@ public class Scatter extends AExample {
 
 	public static void main(String[] args) {
 		javax.swing.SwingUtilities.invokeLater(() -> {
-			final Scatter example = new Scatter();
+			final Scatter example = new Scatter(false);
 			example.setVisible(true);
 		});
 	}

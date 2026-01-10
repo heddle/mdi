@@ -147,6 +147,7 @@ public class BaseView extends JInternalFrame
 		this.desktop = Desktop.getInstance();
 		this.viewPopupMenu = new ViewPopupMenu(this);
 
+		setLayout(new BorderLayout(-1, -1));
 		// Parse configuration exactly once.
 		final ViewInitConfig cfg = ViewInitConfig.from(this.properties);
 

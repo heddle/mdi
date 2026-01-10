@@ -106,7 +106,7 @@ public class BoxZoomTool implements ITool, IRubberbanded {
 		owner = c;
 		cancelling = false;
 
-		rubberband = new Rubberband(owner, this, policy);
+		rubberband = new Rubberband(owner.getComponent(), this, policy);
 		rubberband.setHighlightColor1(Color.gray);
 		rubberband.setHighlightColor2(Color.green);
 		rubberband.setActive(true);

@@ -88,10 +88,6 @@ public final class Fonts {
 		smallFont = deriveFromBase(Font.PLAIN, -3);
 		tinyFont = deriveFromBase(Font.PLAIN, -4);
 
-		// "monster" is special: keep it absolute-ish, but still based on
-		// family/metrics.
-		monsterFont = BASE_UI_FONT.deriveFont(Font.BOLD, Math.max(28f, BASE_UI_FONT.getSize2D() * 3.0f));
-
 		// Monospace derived from base size (consistent across platforms).
 		defaultMono = deriveMono(Font.PLAIN, 0);
 		mono = deriveMono(Font.PLAIN, +1);
@@ -121,6 +117,15 @@ public final class Fonts {
 	public static Font plainFontDelta(int sizeDelta) {
 		return deriveFromBase(Font.PLAIN, sizeDelta);
 	}
+	
+	/**
+	 * Convenience method to derive a bold font from BASE_UI_FONT using a size
+	 * delta (in points) relative to base.
+	 */
+	public static Font boldFontDelta(int sizeDelta) {
+		return deriveFromBase(Font.BOLD, sizeDelta);
+	}
+
 
 	/**
 	 * Derive a font from BASE_UI_FONT using a size delta (in points) relative to
@@ -145,11 +150,4 @@ public final class Fonts {
 		return FONT_CACHE.computeIfAbsent(key, k -> base.deriveFont(style, size));
 	}
 
-	/** Keep your scale helper exactly as-is. */
-	public static Font scaleFont(Font font, float scaleFactor) {
-		if (font == null) {
-			throw new IllegalArgumentException("font cannot be null");
-		}
-		return font.deriveFont(scaleFactor * font.getSize2D());
-	}
 }

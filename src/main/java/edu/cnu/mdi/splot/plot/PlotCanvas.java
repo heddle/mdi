@@ -32,6 +32,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.GraphicsUtils;
+import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
+import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.CurveChangeType;
@@ -40,8 +42,6 @@ import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
-import edu.cnu.mdi.splot.rubberband.IRubberbanded;
-import edu.cnu.mdi.splot.rubberband.Rubberband;
 import edu.cnu.mdi.splot.toolbar.IToolBarListener;
 import edu.cnu.mdi.splot.toolbar.PlotToolBar;
 import edu.cnu.mdi.splot.toolbar.ToolBarButton;
@@ -630,8 +630,17 @@ public class PlotCanvas extends JComponent
 		}
 	}
 
+	/**
+	 * The plot is being shutdown
+	 */
 	public void shutDown() {
 		notifyListeners(PlotChangeType.SHUTDOWN);
+	}
+	/**
+	 * The plot is being stood up
+	 */
+	public void standUp() {
+		notifyListeners(PlotChangeType.STOODUP);
 	}
 
 	private boolean isPointer() {

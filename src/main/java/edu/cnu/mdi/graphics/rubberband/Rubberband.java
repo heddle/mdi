@@ -12,20 +12,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 
-import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.GraphicsUtils;
-
-/**
- * An abstract base class for rubberbands.
- * <p>
- *
- * Rubberbands do their rubberbanding inside of a Component, which must be
- * specified at construction time.
- * <p>
- *
- * Subclasses are responsible for implementing <em>void draw(Graphics g)</em>.
- *
- */
 
 public final class Rubberband {
 
@@ -36,7 +23,7 @@ public final class Rubberband {
 	 * Enum of possible rubber banding polices.
 	 */
 	public static enum Policy {
-		RECTANGLE, RECTANGLE_PRESERVE_ASPECT, POLYGON, POLYLINE, OVAL, LINE, RADARC, XONLY, TWO_CLICK_LINE
+		RECTANGLE, RECTANGLE_PRESERVE_ASPECT, POLYGON, POLYLINE, OVAL, LINE, RADARC, XONLY, YONLY, TWO_CLICK_LINE
 	}
 
 	// The default fill color. Should be fairly transparent.
@@ -85,20 +72,16 @@ public final class Rubberband {
 
 	// Listener to notify when we are done.
 	private IRubberbanded _rubberbanded;
-
-	// the container being rendered
-	private IContainer _container;
-
+	
 	/**
 	 * Create a Rubberband
 	 *
-	 * @param container    the parent component being rubberbanded
+	 * @param component    the component being rubberbanded
 	 * @param rubberbanded who gets notified when we are done.
 	 * @param policy       the stretching shape policy.
 	 */
-	public Rubberband(IContainer container, IRubberbanded rubberbanded, Policy policy) {
-		_container = container;
-		setComponent(container.getComponent());
+	public Rubberband(Component component, IRubberbanded rubberbanded, Policy policy) {
+		setComponent(component);
 		_rubberbanded = rubberbanded;
 		_policy = policy;
 	}
@@ -110,15 +93,6 @@ public final class Rubberband {
 	 */
 	public void setActive(boolean b) {
 		_active = b;
-	}
-
-	/**
-	 * Set the rubberbanding policy
-	 *
-	 * @param policy the new policy
-	 */
-	public void setPolicy(Policy policy) {
-		_policy = policy;
 	}
 
 	/**
@@ -282,7 +256,6 @@ public final class Rubberband {
 	 *
 	 * @param g the graphics context.
 	 */
-
 	private void draw(Graphics2D g) {
 
 		Rectangle rect = getRubberbandBounds();
@@ -292,6 +265,7 @@ public final class Rubberband {
 		switch (_policy) {
 		case RECTANGLE:
 		case XONLY:
+		case YONLY:
 		case RECTANGLE_PRESERVE_ASPECT:
 			g.fillRect(rect.x, rect.y, rect.width, rect.height);
 			GraphicsUtils.drawHighlightedRectangle(g, rect, _highlightColor1, _highlightColor2);
@@ -387,16 +361,17 @@ public final class Rubberband {
 	 * @param cp the new current point.
 	 */
 	private void modifyCurrentPoint(Point cp) {
-		Rectangle b = getComponent().getBounds();
+		Rectangle b = _component.getBounds();
 		if (_policy == Policy.RECTANGLE_PRESERVE_ASPECT) {
 			GraphicsUtils.rectangleARFixedAdjust(b, getStart(), cp);
 		} else if ((_policy == Policy.XONLY) && (cp != _startPt)) {
-			cp.y = b.height;
+			cp.y = b.y + b.height;
+		} else if ((_policy == Policy.YONLY) && (cp != _startPt)) {
+			cp.x = b.x + b.width;
 		}
 
-		// never let current point be out of bounds
-		cp.x = Math.max(1, Math.min(b.width - 2, cp.x));
-		cp.y = Math.max(1, Math.min(b.height - 2, cp.y));
+		cp.x = Math.max(1, Math.min(b.x + b.width - 1, cp.x));
+		cp.y = Math.max(1, Math.min(b.y + b.height - 1, cp.y));
 
 	}
 
@@ -445,11 +420,16 @@ public final class Rubberband {
 		_image = GraphicsUtils.getComponentImageBuffer(_component);
 
 		// this image holds background
-		_backgroundImage = _container.getImage();
+		_backgroundImage = GraphicsUtils.getComponentImage(_component);
 
 		// XONLY? (like for a time chart)
 		if (_policy == Policy.XONLY) {
-			anchorPt.y = 0;
+			Rectangle b = _component.getBounds();
+			anchorPt.y = b.y;
+		}
+		if (_policy == Policy.YONLY) {
+			Rectangle b = _component.getBounds();
+			anchorPt.x = b.x;
 		}
 
 		_startPt.setLocation(anchorPt);
@@ -473,7 +453,7 @@ public final class Rubberband {
 			return;
 		}
 
-		// we are drawing on the image
+		// we are drawing on the bare image
 
 		Graphics2D g2 = _image.createGraphics();
 		g2.setColor(_fillColor);
@@ -493,6 +473,56 @@ public final class Rubberband {
 		}
 		g.dispose();
 	}
+	
+	/**
+	 * Cancel the current rubber-band gesture (if any) without notifying the
+	 * {@link IRubberbanded} callback.
+	 * <p>
+	 * Use this when the active tool changes or an operation is aborted and you need
+	 * the rubberband to remove its temporary listeners and clean up, but you do
+	 * <em>not</em> want to treat the gesture as "completed".
+	 * </p>
+	 * <p>
+	 * This is intentionally different from {@link #endRubberbanding(Point)}, which
+	 * ends normally and notifies the callback.
+	 * </p>
+	 */
+	public void cancel() {
+
+		// If we never started, still ensure we detach listeners.
+		// (They are installed in setComponent().)
+		detachListeners();
+
+		// Reset state
+		_image = null;
+		_backgroundImage = null;
+		_poly = null;
+		_tempPoly = null;
+
+		_active = false;
+		_started = false;
+
+		// Optionally keep start/current, but it's harmless to leave them.
+		// _startPt.setLocation(0, 0);
+		// _currentPt.setLocation(0, 0);
+	}
+	
+	/**
+	 * Remove the temporary mouse listeners installed by this rubberband. Safe to
+	 * call multiple times.
+	 */
+	private void detachListeners() {
+		if (_component == null) {
+			return;
+		}
+		if (_mouseAdapter != null) {
+			_component.removeMouseListener(_mouseAdapter);
+		}
+		if (_mouseMotionAdapter != null) {
+			_component.removeMouseMotionListener(_mouseMotionAdapter);
+		}
+	}
+
 
 	/**
 	 * Set the end point.
@@ -576,55 +606,6 @@ public final class Rubberband {
 	}
 
 	/**
-	 * Cancel the current rubber-band gesture (if any) without notifying the
-	 * {@link IRubberbanded} callback.
-	 * <p>
-	 * Use this when the active tool changes or an operation is aborted and you need
-	 * the rubberband to remove its temporary listeners and clean up, but you do
-	 * <em>not</em> want to treat the gesture as "completed".
-	 * </p>
-	 * <p>
-	 * This is intentionally different from {@link #endRubberbanding(Point)}, which
-	 * ends normally and notifies the callback.
-	 * </p>
-	 */
-	public void cancel() {
-
-		// If we never started, still ensure we detach listeners.
-		// (They are installed in setComponent().)
-		detachListeners();
-
-		// Reset state
-		_image = null;
-		_backgroundImage = null;
-		_poly = null;
-		_tempPoly = null;
-
-		_active = false;
-		_started = false;
-
-		// Optionally keep start/current, but it's harmless to leave them.
-		// _startPt.setLocation(0, 0);
-		// _currentPt.setLocation(0, 0);
-	}
-
-	/**
-	 * Remove the temporary mouse listeners installed by this rubberband. Safe to
-	 * call multiple times.
-	 */
-	private void detachListeners() {
-		if (_component == null) {
-			return;
-		}
-		if (_mouseAdapter != null) {
-			_component.removeMouseListener(_mouseAdapter);
-		}
-		if (_mouseMotionAdapter != null) {
-			_component.removeMouseMotionListener(_mouseMotionAdapter);
-		}
-	}
-
-	/**
 	 * Return a rectangle that gives the final bounds of the rubber band.
 	 *
 	 * @return a bounding rectangle.
@@ -684,7 +665,7 @@ public final class Rubberband {
 	public Point getCurrentPt() {
 		return _currentPt;
 	}
-
+	
 	private boolean twoClickLineMode() {
 		return (_policy == Policy.TWO_CLICK_LINE);
 	}

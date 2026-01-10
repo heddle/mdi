@@ -113,7 +113,7 @@ public class ConnectorTool implements ITool, IRubberbanded {
 			first = hit;
 			Point firstAnchor = anchorFor(owner, hit, e.getPoint());
 
-			rubberband = new Rubberband(owner, this, Rubberband.Policy.TWO_CLICK_LINE);
+			rubberband = new Rubberband(owner.getComponent(), this, Rubberband.Policy.TWO_CLICK_LINE);
 			rubberband.setActive(true);
 
 			// Start the visual line at the anchor.
