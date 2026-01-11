@@ -23,7 +23,7 @@ public final class Rubberband {
 	 * Enum of possible rubber banding polices.
 	 */
 	public static enum Policy {
-		RECTANGLE, RECTANGLE_PRESERVE_ASPECT, POLYGON, POLYLINE, OVAL, LINE, RADARC, XONLY, YONLY, TWO_CLICK_LINE
+		RECTANGLE, NONE, RECTANGLE_PRESERVE_ASPECT, POLYGON, POLYLINE, OVAL, LINE, RADARC, XONLY, YONLY, TWO_CLICK_LINE
 	}
 
 	// The default fill color. Should be fairly transparent.
