@@ -31,6 +31,7 @@ import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.item.ItemModification.ModificationType;
 import edu.cnu.mdi.ui.colors.X11Colors;
+import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.view.BaseView;
 
 /**
@@ -57,7 +58,8 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	protected static final int RPSIZE2 = RPSIZE / 2;
 
 	// icon for rotation
-	protected static Icon rotateIcon = ImageManager.getInstance().loadUiIcon("images/svg/rotate.svg", 16);
+	protected static Icon rotateIcon = 
+			ImageManager.getInstance().loadUiIcon(Environment.MDI_RESOURCE_PATH + "images/svg/rotate.svg", 16);
 
 	/**
 	 * The path is used by some items (not point or line based items). NOTE: it is

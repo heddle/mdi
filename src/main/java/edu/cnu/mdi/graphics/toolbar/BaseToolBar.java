@@ -45,6 +45,7 @@ import edu.cnu.mdi.graphics.toolbar.tool.RectangleTool;
 import edu.cnu.mdi.graphics.toolbar.tool.TextTool;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.Bits;
+import edu.cnu.mdi.util.Environment;
 
 /**
  * Standard toolbar for an {@link IContainer} that manages a mutually exclusive
@@ -214,44 +215,45 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 		// Default tool: pointer.
 		toolController.setDefaultTool(pointer.id());
 
+		String resPath = Environment.MDI_RESOURCE_PATH;
 		// Buttons (order is respected)
-		addToolButton(pointer, "images/svg/pointer.svg", pointer.toolTip());
+		addToolButton(pointer, resPath + "images/svg/pointer.svg", pointer.toolTip());
 
 		if (boxZoom != null) {
-			addToolButton(boxZoom, "images/svg/box_zoom.svg", boxZoom.toolTip());
+			addToolButton(boxZoom, resPath + "images/svg/box_zoom.svg", boxZoom.toolTip());
 		}
 		if (pan != null) {
-			addToolButton(pan, "images/svg/pan.svg", pan.toolTip());
+			addToolButton(pan, resPath + "images/svg/pan.svg", pan.toolTip());
 		}
 		if (magnify != null) {
-			addToolButton(magnify, "images/svg/magnify.svg", magnify.toolTip());
+			addToolButton(magnify, resPath + "images/svg/magnify.svg", magnify.toolTip());
 		}
 		if (center != null) {
-			addToolButton(center, "images/svg/center.svg", center.toolTip());
+			addToolButton(center, resPath + "images/svg/center.svg", center.toolTip());
 		}
 		if (line != null) {
-			addToolButton(line, "images/svg/line.svg", line.toolTip());
+			addToolButton(line, resPath + "images/svg/line.svg", line.toolTip());
 		}
 		if (rectangle != null) {
-			addToolButton(rectangle, "images/svg/rectangle.svg", rectangle.toolTip());
+			addToolButton(rectangle, resPath + "images/svg/rectangle.svg", rectangle.toolTip());
 		}
 		if (ellipse != null) {
-			addToolButton(ellipse, "images/svg/ellipse.svg", ellipse.toolTip());
+			addToolButton(ellipse, resPath + "images/svg/ellipse.svg", ellipse.toolTip());
 		}
 		if (polygon != null) {
-			addToolButton(polygon, "images/svg/polygon.svg", polygon.toolTip());
+			addToolButton(polygon, resPath + "images/svg/polygon.svg", polygon.toolTip());
 		}
 		if (polyline != null) {
-			addToolButton(polyline, "images/svg/polyline.svg", polyline.toolTip());
+			addToolButton(polyline, resPath + "images/svg/polyline.svg", polyline.toolTip());
 		}
 		if (radArc != null) {
-			addToolButton(radArc, "images/svg/radarc.svg", radArc.toolTip());
+			addToolButton(radArc, resPath + "images/svg/radarc.svg", radArc.toolTip());
 		}
 		if (connector != null) {
-			addToolButton(connector, "images/svg/connect.svg", connector.toolTip());
+			addToolButton(connector, resPath + "images/svg/connect.svg", connector.toolTip());
 		}
 		if (text != null) {
-			addToolButton(text, "images/svg/text.svg", text.toolTip());
+			addToolButton(text, resPath + "images/svg/text.svg", text.toolTip());
 		}
 		if (Bits.check(bits, ToolBarBits.UNDOZOOMBUTTON)) {
 			addActionButton(new UndoZoomButton(toolContext));

@@ -1,6 +1,7 @@
 package edu.cnu.mdi.graphics.toolbar.button;
 
 import edu.cnu.mdi.graphics.toolbar.ToolContext;
+import edu.cnu.mdi.util.Environment;
 
 /**
  * One-shot toolbar action that undoes the last zoom operation.
@@ -9,7 +10,7 @@ import edu.cnu.mdi.graphics.toolbar.ToolContext;
 public class UndoZoomButton extends ToolActionButton {
 
 	public UndoZoomButton(ToolContext ctx) {
-		super(ctx, "images/svg/undo_zoom.svg", "Undo zoom");
+		super(ctx, Environment.MDI_RESOURCE_PATH + "images/svg/undo_zoom.svg", "Undo zoom");
 	}
 
 	@Override

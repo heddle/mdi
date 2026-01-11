@@ -1,6 +1,7 @@
 package edu.cnu.mdi.graphics.toolbar.button;
 
 import edu.cnu.mdi.graphics.toolbar.ToolContext;
+import edu.cnu.mdi.util.Environment;
 
 /**
  * One-shot toolbar action that zooms out by scaling the world system.
@@ -16,7 +17,7 @@ public class ZoomOutButton extends ToolActionButton {
 	}
 
 	public ZoomOutButton(ToolContext ctx, double factor) {
-		super(ctx, "images/svg/zoom_out.svg", "Zoom out");
+		super(ctx, Environment.MDI_RESOURCE_PATH + "images/svg/zoom_out.svg", "Zoom out");
 		this.factor = factor;
 	}
 

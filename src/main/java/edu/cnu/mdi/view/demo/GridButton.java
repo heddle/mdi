@@ -5,14 +5,16 @@ import java.awt.Point;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.toolbar.ToolContext;
 import edu.cnu.mdi.graphics.toolbar.button.ToolActionButton;
+import edu.cnu.mdi.util.Environment;
 
+@SuppressWarnings("serial")
 public class GridButton extends ToolActionButton {
 
 	// the parent view being controlled
 	private NetworkLayoutDemoView view;
 
 	public GridButton(NetworkLayoutDemoView view) {
-		super("images/svg/grid.svg", "Snap to Grid");
+		super(Environment.MDI_RESOURCE_PATH + "images/svg/grid.svg", "Snap to Grid");
 		this.view = view;
 	}
 

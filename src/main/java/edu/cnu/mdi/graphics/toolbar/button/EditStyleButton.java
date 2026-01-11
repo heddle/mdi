@@ -7,12 +7,13 @@ import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
 import edu.cnu.mdi.graphics.toolbar.ToolContext;
 import edu.cnu.mdi.item.AItem;
+import edu.cnu.mdi.util.Environment;
 
 @SuppressWarnings("serial")
 public class EditStyleButton extends ToolActionButton {
 
 	public EditStyleButton(ToolContext ctx) {
-		super(ctx, "images/svg/colorwheel.svg", "Edit style of selected items");
+		super(ctx, Environment.MDI_RESOURCE_PATH + "images/svg/colorwheel.svg", "Edit style of selected items");
 	}
 
 	@Override

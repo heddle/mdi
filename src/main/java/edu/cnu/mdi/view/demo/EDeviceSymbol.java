@@ -1,5 +1,7 @@
 package edu.cnu.mdi.view.demo;
 
+import edu.cnu.mdi.util.Environment;
+
 public enum EDeviceSymbol {
 	CLOUD("images/svg/cloud.svg", "cloud"), FIREWALL("images/svg/firewall.svg", "firewall"),
 	LAPTOP("images/svg/laptop.svg", "laptop"), PRINTER("images/svg/printer.svg", "printer"),
@@ -11,7 +13,7 @@ public enum EDeviceSymbol {
 	public final String toolTip;
 
 	EDeviceSymbol(String iconPath, String toolTip) {
-		this.iconPath = iconPath;
+		this.iconPath = Environment.MDI_RESOURCE_PATH + iconPath;
 		this.toolTip = toolTip;
 	}
 }

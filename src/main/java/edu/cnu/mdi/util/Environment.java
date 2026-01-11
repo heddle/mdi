@@ -35,7 +35,11 @@ import javax.imageio.ImageWriter;
  * The class is implemented as a simple, lazily-initialized singleton.
  */
 public final class Environment {
+	
+	//resourcde path prefix for MDI owned resources
+	public static final String MDI_RESOURCE_PATH = "/edu/cnu/mdi/";
 
+	// the logger
 	private static final Logger LOGGER = Logger.getLogger(Environment.class.getName());
 
 	/** Separator used when storing simple string lists as a single value. */

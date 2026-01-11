@@ -17,6 +17,7 @@ import javax.swing.event.EventListenerList;
 
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
+import edu.cnu.mdi.util.Environment;
 
 @SuppressWarnings("serial")
 public class PlotToolBar extends JToolBar implements ActionListener, ItemListener {
@@ -53,11 +54,12 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 	 */
 	public PlotToolBar(PlotCanvas canvas) {
 		super("toolBar", SwingConstants.HORIZONTAL);
+		String resPath = Environment.MDI_RESOURCE_PATH;
 		setFloatable(false);
 
 		this.type = canvas.getPlotData().getType();
 
-		_pointerButton = new ToolBarToggleButton("images/svg/pointer.svg", "Make selections", POINTER, 3, 1);
+		_pointerButton = new ToolBarToggleButton(resPath + "images/svg/pointer.svg", "Make selections", POINTER, 3, 1);
 		_pointerButton.setSelected(true);
 		add(_pointerButton);
 
@@ -65,20 +67,20 @@ public class PlotToolBar extends JToolBar implements ActionListener, ItemListene
 		case XYEXYE:
 		case XYXY:
 		case H1D:
-			_boxZoomButton = new ToolBarToggleButton("images/svg/box_zoom.svg", "Zoom to area", BOXZOOM, 3, 1);
+			_boxZoomButton = new ToolBarToggleButton(resPath + "images/svg/box_zoom.svg", "Zoom to area", BOXZOOM, 3, 1);
 			add(_boxZoomButton);
 			addHGap(8);
-			add(new ToolBarButton("images/svg/reset_zoom.svg", "Include all data", WORLD));
-			add(new ToolBarButton("images/svg/zoom_in.svg", "Zoom in", ZOOMIN));
-			add(new ToolBarButton("images/svg/zoom_out.svg", "Zoom out", ZOOMOUT));
+			add(new ToolBarButton(resPath + "images/svg/reset_zoom.svg", "Include all data", WORLD));
+			add(new ToolBarButton(resPath + "images/svg/zoom_in.svg", "Zoom in", ZOOMIN));
+			add(new ToolBarButton(resPath + "images/svg/zoom_out.svg", "Zoom out", ZOOMOUT));
 			break;
 		case STRIP:
 			break;
 		}
 
 		addHGap(8);
-		add(new ToolBarButton("images/svg/printer.svg", "Print the plot", PRINT));
-		add(new ToolBarButton("images/svg/camera.svg", "Save as PNG", PNG));
+		add(new ToolBarButton(resPath + "images/svg/printer.svg", "Print the plot", PRINT));
+		add(new ToolBarButton(resPath + "images/svg/camera.svg", "Save as PNG", PNG));
 	}
 
 	/**

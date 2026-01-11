@@ -2,6 +2,7 @@ package edu.cnu.mdi.graphics.toolbar.button;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.toolbar.ToolContext;
+import edu.cnu.mdi.util.Environment;
 
 /**
  * One-shot toolbar button that deletes all currently selected items from the
@@ -31,7 +32,7 @@ public class DeleteButton extends ToolActionButton {
 	 * @param ctx the tool context (must not be null)
 	 */
 	public DeleteButton(ToolContext ctx) {
-		super(ctx, "images/svg/delete.svg", "Delete selected items");
+		super(ctx, Environment.MDI_RESOURCE_PATH + "images/svg/delete.svg", "Delete selected items");
 	}
 
 	@Override

@@ -19,37 +19,61 @@ import edu.cnu.mdi.log.Log;
 /**
  * Centralized image/icon loading for MDI using classpath resources.
  * <p>
- * This manager is designed for applications packaged as a JAR where all icons
- * and images live under {@code src/main/resources} and are loaded from the
- * classpath (e.g. {@code "icons/zoom_in.svg"}).
+ * This manager is designed for applications packaged as a JAR where icons/images
+ * live under {@code src/main/resources} and are loaded from the classpath. This
+ * works the same way when MDI is used as a Maven dependency: resources packaged
+ * inside the {@code mdi-<version>.jar} remain accessible via the classpath.
+ * </p>
+ *
+ * <h2>Resource path convention</h2>
+ * <p>
+ * Resources are resolved using {@link Class#getResourceAsStream(String)} anchored
+ * to {@code ImageManager.class}. This class accepts resource paths either:
+ * </p>
+ * <ul>
+ *   <li><b>Absolute:</b> starting with {@code "/"} (recommended), e.g.
+ *       {@code "/edu/cnu/mdi/icons/zoom_in.svg"}</li>
+ *   <li><b>Classpath-relative:</b> without a leading {@code "/"}, e.g.
+ *       {@code "edu/cnu/mdi/icons/zoom_in.svg"} or {@code "icons/zoom_in.svg"}.
+ *       In these cases, this class will automatically prepend {@code "/"} so the
+ *       lookup is still absolute in the classpath.</li>
+ * </ul>
+ *
+ * <p>
+ * If you want {@code ImageManager} to remain agnostic about where resources live,
+ * your calling code can keep prepending whatever prefix you like (e.g.
+ * {@code "/edu/cnu/mdi/"}). This class will load MDI’s icons properly from the
+ * MDI dependency JAR, and also load application-provided icons, as long as the
+ * resource path is unique on the classpath.
  * </p>
  *
  * <h2>FlatLaf considerations</h2>
  * <ul>
- * <li><b>SVG UI icons:</b> Use {@link FlatSVGIcon}. FlatLaf will handle HiDPI
- * scaling correctly and icons remain crisp at all scales.</li>
- * <li><b>Raster UI icons:</b> When an icon is requested at a "logical" size
- * (e.g. 16), this class scales to device pixels via
- * {@link UIScale#scale(int)}.</li>
- * <li><b>Do not eagerly initialize icons in static initializers.</b>
- * Look-and-feel setup can affect scaling; this class caches lazily.</li>
+ *   <li><b>SVG UI icons:</b> Uses {@link FlatSVGIcon}. FlatLaf handles HiDPI
+ *       scaling correctly and SVG icons remain crisp at all scales.</li>
+ *   <li><b>Raster UI icons:</b> When an icon is requested at a "logical" size
+ *       (e.g. 16), raster icons are scaled to device pixels via
+ *       {@link UIScale#scale(int)}.</li>
+ *   <li><b>Avoid eager static initialization.</b> Look-and-feel setup can affect
+ *       scaling; this class caches lazily.</li>
  * </ul>
  *
  * <h2>Threading</h2>
  * <p>
- * All caches are thread-safe. Icon creation may occur off the EDT, but icons
- * are typically requested during UI construction on the EDT.
- * </p>
- *
- * <h2>Resource paths</h2>
- * <p>
- * Paths are resolved via {@link ClassLoader#getResourceAsStream(String)} and
- * should be relative (no leading slash). For example, if the file is at
- * {@code src/main/resources/icons/zoom_in.svg}, use
- * {@code "icons/zoom_in.svg"}.
+ * All caches are thread-safe. Icon creation may occur off the EDT, but icons are
+ * typically requested during UI construction on the EDT.
  * </p>
  */
 public final class ImageManager {
+
+	/**
+	 * Optional convenience prefix for MDI’s own resources.
+	 * <p>
+	 * This class does not automatically apply this prefix; it is provided so callers
+	 * can build MDI resource paths consistently.
+	 * </p>
+	 */
+	public static final String MDI_RESOURCE_PATH = "/edu/cnu/mdi";
 
 	/** Singleton instance. */
 	private static volatile ImageManager instance;
@@ -88,24 +112,24 @@ public final class ImageManager {
 	 * Load a UI icon at a given logical size.
 	 * <p>
 	 * For SVG resources, returns a {@link FlatSVGIcon} of the requested size. For
-	 * raster resources (png/jpg/gif), loads the image and scales it to the
-	 * requested logical size, then wraps it in an {@link ImageIcon}.
+	 * raster resources (png/jpg/gif), loads the image and scales it to the requested
+	 * logical size, then wraps it in an {@link ImageIcon}.
 	 * </p>
 	 *
 	 * <p>
 	 * "Logical size" means the size in typical UI coordinates (e.g. 16, 20, 24).
-	 * Under HiDPI displays, FlatLaf uses a scale factor; for raster icons we
-	 * convert logical size to device pixels using {@link UIScale#scale(int)}.
+	 * Under HiDPI displays, FlatLaf uses a scale factor; for raster icons we convert
+	 * logical size to device pixels using {@link UIScale#scale(int)}.
 	 * </p>
 	 *
-	 * @param resourcePath classpath resource path (e.g.
-	 *                     {@code "icons/zoom_in.svg"})
+	 * @param resourcePath classpath resource path (absolute preferred), e.g.
+	 *                     {@code "/edu/cnu/mdi/icons/zoom_in.svg"} or
+	 *                     {@code "edu/cnu/mdi/icons/zoom_in.svg"}
 	 * @param logicalW     requested logical width (e.g. 16, 20, 24)
 	 * @param logicalH     requested logical height
 	 * @return an {@link Icon}, or {@code null} if the resource cannot be found/read
 	 * @throws NullPointerException     if {@code resourcePath} is null
-	 * @throws IllegalArgumentException if {@code logicalW <= 0} or
-	 *                                  {@code logicalH <= 0}
+	 * @throws IllegalArgumentException if {@code logicalW <= 0} or {@code logicalH <= 0}
 	 */
 	public Icon loadUiIcon(String resourcePath, int logicalW, int logicalH) {
 		Objects.requireNonNull(resourcePath, "resourcePath");
@@ -113,8 +137,10 @@ public final class ImageManager {
 			throw new IllegalArgumentException("logicalW and logicalH must be positive.");
 		}
 
-		final String key = resourcePath + "@" + logicalW + "x" + logicalH;
-		return iconCache.computeIfAbsent(key, k -> createUiIcon(resourcePath, logicalW, logicalH));
+		final String normalized = normalizeResourcePath(resourcePath);
+		final String key = normalized + "@" + logicalW + "x" + logicalH;
+
+		return iconCache.computeIfAbsent(key, k -> createUiIcon(normalized, logicalW, logicalH));
 	}
 
 	/**
@@ -123,6 +149,8 @@ public final class ImageManager {
 	 * @param resourcePath classpath resource path
 	 * @param logicalSize  logical size in both dimensions
 	 * @return an {@link Icon}, or {@code null} if the resource cannot be found/read
+	 * @throws NullPointerException     if {@code resourcePath} is null
+	 * @throws IllegalArgumentException if {@code logicalSize <= 0}
 	 */
 	public Icon loadUiIcon(String resourcePath, int logicalSize) {
 		return loadUiIcon(resourcePath, logicalSize, logicalSize);
@@ -130,21 +158,31 @@ public final class ImageManager {
 
 	/**
 	 * Create (uncached) UI icon, choosing SVG vs raster handling.
+	 *
+	 * @param normalizedResourcePath normalized absolute resource path (leading '/')
 	 */
-	private Icon createUiIcon(String resourcePath, int logicalW, int logicalH) {
-		final String lower = resourcePath.toLowerCase();
+	private Icon createUiIcon(String normalizedResourcePath, int logicalW, int logicalH) {
+		final String lower = normalizedResourcePath.toLowerCase();
 
 		if (lower.endsWith(".svg")) {
-			// FlatLaf-native SVG icon. Crisp at any scale.
-			if (!resourceExists(resourcePath)) {
-				Log.getInstance().warning("SVG icon resource not found: " + resourcePath);
-				return null;
-			}
-			return new FlatSVGIcon(resourcePath, logicalW, logicalH);
+		    if (!resourceExists(normalizedResourcePath)) {
+		        Log.getInstance().warning("SVG icon resource not found: " + normalizedResourcePath);
+		        return null;
+		    }
+
+		    // Use Option B resource resolution (absolute classpath via Class.getResource*),
+		    // then let FlatSVGIcon read from a concrete URL and derive the requested size.
+		    java.net.URL url = ImageManager.class.getResource(normalizedResourcePath);
+		    if (url == null) {
+		        Log.getInstance().warning("SVG icon resource not found (URL): " + normalizedResourcePath);
+		        return null;
+		    }
+
+		    return new FlatSVGIcon(url).derive(logicalW, logicalH);
 		}
 
 		// Raster icon: load original and scale to device pixels using UIScale.
-		BufferedImage src = loadRaster(resourcePath);
+		BufferedImage src = loadRaster(normalizedResourcePath);
 		if (src == null) {
 			return null;
 		}
@@ -167,37 +205,37 @@ public final class ImageManager {
 	 * This returns the original image at its native pixel dimensions. It is cached.
 	 * </p>
 	 *
-	 * @param resourcePath classpath resource path (e.g.
-	 *                     {@code "images/background.png"})
+	 * @param resourcePath classpath resource path (absolute preferred), e.g.
+	 *                     {@code "/edu/cnu/mdi/images/background.png"}
 	 * @return the image, or {@code null} if the resource cannot be found/read
 	 * @throws NullPointerException if {@code resourcePath} is null
 	 */
 	public BufferedImage loadRaster(String resourcePath) {
 		Objects.requireNonNull(resourcePath, "resourcePath");
-		return rasterCache.computeIfAbsent(resourcePath, this::readRasterUnchecked);
+		final String normalized = normalizeResourcePath(resourcePath);
+		return rasterCache.computeIfAbsent(normalized, this::readRasterUnchecked);
 	}
 
 	/**
 	 * Load an arbitrary image as an {@link Image}.
 	 * <p>
-	 * This is a thin convenience wrapper around {@link #loadRaster(String)} for
-	 * code that expects {@link Image} instead of {@link BufferedImage}.
+	 * Thin convenience wrapper around {@link #loadRaster(String)} for code that expects
+	 * {@link Image} instead of {@link BufferedImage}.
 	 * </p>
 	 *
 	 * @param resourcePath classpath resource path
 	 * @return the image, or {@code null} if not found/read
 	 */
 	public Image loadImage(String resourcePath) {
-		BufferedImage bi = loadRaster(resourcePath);
-		return bi;
+		return loadRaster(resourcePath);
 	}
 
 	/**
 	 * Load an {@link ImageIcon} without applying any HiDPI logical sizing.
 	 * <p>
-	 * Prefer {@link #loadUiIcon(String, int)} for toolbar/menu icons. This method
-	 * is intended for legacy usage where the caller expects the icon at its native
-	 * pixel size.
+	 * Prefer {@link #loadUiIcon(String, int)} for toolbar/menu icons. This method is
+	 * intended for legacy usage where the caller expects the icon at its native pixel
+	 * size.
 	 * </p>
 	 *
 	 * @param resourcePath classpath resource path
@@ -209,43 +247,77 @@ public final class ImageManager {
 	}
 
 	/**
-	 * Read a raster image from the classpath, returning null on failure. This
-	 * method is used by the cache and must not throw.
+	 * Read a raster image from the classpath, returning {@code null} on failure.
+	 * <p>
+	 * This method is used by the cache and must not throw.
+	 * </p>
+	 *
+	 * @param normalizedResourcePath normalized absolute resource path (leading '/')
+	 * @return the decoded image, or {@code null} if missing or unreadable
 	 */
-	private BufferedImage readRasterUnchecked(String resourcePath) {
-		try (InputStream in = getResourceAsStream(resourcePath)) {
+	private BufferedImage readRasterUnchecked(String normalizedResourcePath) {
+		try (InputStream in = getResourceAsStream(normalizedResourcePath)) {
 			if (in == null) {
-				Log.getInstance().warning("Raster resource not found: " + resourcePath);
+				Log.getInstance().warning("Raster resource not found: " + normalizedResourcePath);
 				return null;
 			}
 			return ImageIO.read(in);
 		} catch (IOException e) {
 			Log.getInstance().exception(e);
-			Log.getInstance().warning("Failed to read raster resource: " + resourcePath);
+			Log.getInstance().warning("Failed to read raster resource: " + normalizedResourcePath);
 			return null;
 		}
 	}
 
 	/**
-	 * Returns true if a resource exists on the classpath.
+	 * Returns {@code true} if a resource exists on the classpath.
+	 *
+	 * @param resourcePath classpath resource path (absolute or relative)
+	 * @return {@code true} if the resource can be opened; {@code false} otherwise
 	 */
 	private boolean resourceExists(String resourcePath) {
-		try (InputStream in = getResourceAsStream(resourcePath)) {
+		final String normalized = normalizeResourcePath(resourcePath);
+		try (InputStream in = getResourceAsStream(normalized)) {
 			return in != null;
-		} catch (IOException ioe) {
-			// Should not occur for ByteArray-backed streams; be safe.
+		} catch (IOException e) {
+			// Extremely unlikely, but be defensive.
 			return false;
 		}
 	}
 
 	/**
-	 * Get a resource as a stream from the current class loader.
+	 * Normalize resource paths so lookups are absolute in the classpath.
+	 * <p>
+	 * With {@link Class#getResourceAsStream(String)}, a leading {@code "/"} means
+	 * "absolute from the classpath root". Without it, the lookup becomes relative
+	 * to this class's package, which is rarely what we want in a library.
+	 * </p>
 	 *
-	 * @param resourcePath classpath resource path
-	 * @return stream or null if not found
+	 * @param resourcePath raw resource path
+	 * @return an absolute resource path beginning with {@code "/"}
 	 */
-	private InputStream getResourceAsStream(String resourcePath) {
-		return getClass().getClassLoader().getResourceAsStream(resourcePath);
+	private static String normalizeResourcePath(String resourcePath) {
+		String rp = Objects.requireNonNull(resourcePath, "resourcePath").trim();
+		if (rp.isEmpty()) {
+			return "/";
+		}
+		return rp.startsWith("/") ? rp : ("/" + rp);
+	}
+
+	/**
+	 * Get a resource as a stream using {@link Class#getResourceAsStream(String)}.
+	 * <p>
+	 * This method expects an <b>absolute</b> classpath resource name (leading
+	 * {@code "/"}). Use {@link #normalizeResourcePath(String)} for user-provided
+	 * paths.
+	 * </p>
+	 *
+	 * @param normalizedResourcePath absolute classpath resource path (leading '/')
+	 * @return stream or {@code null} if not found
+	 */
+	private InputStream getResourceAsStream(String normalizedResourcePath) {
+		// Option B: use Class.getResourceAsStream so leading "/" is supported.
+		return ImageManager.class.getResourceAsStream(normalizedResourcePath);
 	}
 
 	// -------------------------------------------------------------------------
@@ -255,8 +327,8 @@ public final class ImageManager {
 	/**
 	 * Clear all cached images and icons.
 	 * <p>
-	 * Useful if you support runtime theme changes and want to rebuild icons, or
-	 * when memory pressure suggests cache eviction.
+	 * Useful if you support runtime theme changes and want to rebuild icons, or when
+	 * memory pressure suggests cache eviction.
 	 * </p>
 	 */
 	public void clearCaches() {

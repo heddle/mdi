@@ -13,8 +13,13 @@ public class PlaceDeviceTool implements ITool {
 	// The device symbol to place
 	private EDeviceSymbol symbol;
 
+	// The layer to place the device on
 	private Layer deviceLayer;
 
+	/**
+	 * Constructs a PlaceDeviceTool that places devices of the given symbol on the
+	 * given layer.
+	 */
 	public PlaceDeviceTool(Layer deviceLayer, EDeviceSymbol symbol) {
 		this.deviceLayer = deviceLayer;
 		this.symbol = java.util.Objects.requireNonNull(symbol);
@@ -26,7 +31,7 @@ public class PlaceDeviceTool implements ITool {
 	}
 
 	@Override
-	public void mouseClicked(ToolContext ctx, MouseEvent e) {
+	public void mousePressed(ToolContext ctx, MouseEvent e) {
 		java.util.Objects.requireNonNull(ctx, "ctx");
 		if (e.getButton() == MouseEvent.BUTTON1) {
 			IContainer container = ctx.container();

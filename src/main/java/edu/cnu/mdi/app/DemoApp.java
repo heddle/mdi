@@ -137,7 +137,9 @@ public class DemoApp extends BaseMDIApplication {
 	public static DemoApp getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new DemoApp(PropertySupport.TITLE, "Demo Application of MDI Views",
-					PropertySupport.BACKGROUNDIMAGE, "images/mdilogo.png", PropertySupport.FRACTION, 0.8);
+					PropertySupport.BACKGROUNDIMAGE, 
+					Environment.MDI_RESOURCE_PATH + "images/mdilogo.png", 
+					PropertySupport.FRACTION, 0.8);
 		}
 		return INSTANCE;
 	}
@@ -460,9 +462,10 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	private MapView2D createMapView() {
 
+		String resPrefix = Environment.MDI_RESOURCE_PATH;
 		// Load a small set of countries just for demo purposes.
 		try {
-			List<CountryFeature> countries = GeoJsonCountryLoader.loadFromResource("/geo/countries.geojson");
+			List<CountryFeature> countries = GeoJsonCountryLoader.loadFromResource(resPrefix + "/geo/countries.geojson");
 			MapView2D.setCountries(countries);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -470,7 +473,7 @@ public class DemoApp extends BaseMDIApplication {
 
 		// Load cities as well (optional).
 		try {
-			List<GeoJsonCityLoader.CityFeature> cities = GeoJsonCityLoader.loadFromResource("/geo/cities.geojson");
+			List<GeoJsonCityLoader.CityFeature> cities = GeoJsonCityLoader.loadFromResource(resPrefix + "/geo/cities.geojson");
 			MapView2D.setCities(cities);
 		} catch (IOException e) {
 			e.printStackTrace();

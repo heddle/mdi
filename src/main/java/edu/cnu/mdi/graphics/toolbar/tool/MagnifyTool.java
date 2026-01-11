@@ -1,6 +1,5 @@
 package edu.cnu.mdi.graphics.toolbar.tool;
 
-import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 
 import edu.cnu.mdi.component.MagnifyWindow;
@@ -28,9 +27,6 @@ public class MagnifyTool implements ITool {
 	/** Tool id used by {@link ToolController}. */
 	public static final String ID = "magnify";
 
-	/** Cursor image to use while magnifying (same as legacy magnify button). */
-	private static final String CURSOR_IMAGE = "images/box_zoomcursor.gif";
-
 	@Override
 	public String id() {
 		return ID;
@@ -39,12 +35,6 @@ public class MagnifyTool implements ITool {
 	@Override
 	public String toolTip() {
 		return "Magnification";
-	}
-
-	@Override
-	public Cursor cursor(ToolContext ctx) {
-		// Use your CursorManager (cached, platform-safe).
-		return ctx.cursors().custom(CURSOR_IMAGE, 0, 0);
 	}
 
 	@Override

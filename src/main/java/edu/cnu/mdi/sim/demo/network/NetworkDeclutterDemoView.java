@@ -13,6 +13,7 @@ import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.sim.SimulationEngineConfig;
 import edu.cnu.mdi.sim.ui.SimulationView;
+import edu.cnu.mdi.util.Environment;
 
 /**
  * World-based network decluttering demo hosted in an MDI
@@ -55,8 +56,9 @@ public class NetworkDeclutterDemoView extends SimulationView {
 		this.sim.setEngine(getSimulationEngine());
 
 		// Load icons
-		serverIcon = ImageManager.getInstance().loadUiIcon("images/svg/server.svg", 32, 32);
-		clientIcon = ImageManager.getInstance().loadUiIcon("images/svg/workstation.svg", 32, 32);
+		String resPath = Environment.MDI_RESOURCE_PATH;
+		serverIcon = ImageManager.getInstance().loadUiIcon(resPath + "images/svg/server.svg", 32, 32);
+		clientIcon = ImageManager.getInstance().loadUiIcon(resPath + "images/svg/workstation.svg", 32, 32);
 		iconRadiusPx = clientIcon.getIconWidth() / 2; // assuming square icons of same size
 
 		setAfterDraw();

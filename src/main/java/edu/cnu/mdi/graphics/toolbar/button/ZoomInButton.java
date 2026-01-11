@@ -1,6 +1,7 @@
 package edu.cnu.mdi.graphics.toolbar.button;
 
 import edu.cnu.mdi.graphics.toolbar.ToolContext;
+import edu.cnu.mdi.util.Environment;
 
 /**
  * One-shot toolbar action that zooms in by scaling the world system.
@@ -16,7 +17,7 @@ public class ZoomInButton extends ToolActionButton {
 	}
 
 	public ZoomInButton(ToolContext ctx, double factor) {
-		super(ctx, "images/svg/zoom_in.svg", "Zoom in");
+		super(ctx, Environment.MDI_RESOURCE_PATH + "images/svg/zoom_in.svg", "Zoom in");
 		this.factor = factor;
 	}
 

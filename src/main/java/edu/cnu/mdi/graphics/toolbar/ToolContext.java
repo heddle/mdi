@@ -32,7 +32,6 @@ public class ToolContext {
 
 	private final IContainer container;
 	private final BaseToolBar toolBar;
-	private final CursorManager cursors = new CursorManager();
 
 	/**
 	 * Create a new tool context.
@@ -72,15 +71,6 @@ public class ToolContext {
 	 */
 	public Component canvas() {
 		return (container == null) ? null : container.getComponent();
-	}
-
-	/**
-	 * Get the cursor manager for this tool context.
-	 *
-	 * @return the cursor manager (never null).
-	 */
-	public CursorManager cursors() {
-		return cursors;
 	}
 
 	/**
