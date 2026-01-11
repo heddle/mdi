@@ -268,7 +268,7 @@ public class VirtualView extends BaseView
 	        return;
 	    }
 
-	    java.awt.Font newFont = Fonts.boldFontDelta(-4);
+	    java.awt.Font newFont = Fonts.boldFontDelta(-3);
 
 	    // Setting the container font alone usually doesn't change the visible title
 	    // because the title JLabel has its own font set by the UI delegate.

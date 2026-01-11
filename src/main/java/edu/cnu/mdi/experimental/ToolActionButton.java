@@ -21,11 +21,12 @@ import edu.cnu.mdi.graphics.ImageManager;
 public abstract class ToolActionButton extends JButton {
 
 	/** Preferred size for toolbar buttons. */
-	private static final Dimension PREFERRED_SIZE = new Dimension(24, 24);
+	protected static Dimension PREFERRED_SIZE = new Dimension(24, 24);
+	
 	/**
 	 * Create a new action button.
 	 *
-	 * @param imageFile image resource path for the icon.
+	 * @param imageFile for example, "images/svg/delete.svg".
 	 * @param toolTip   tooltip text.
 	 */
 	protected ToolActionButton(String imageFile, String toolTip) {
@@ -33,11 +34,11 @@ public abstract class ToolActionButton extends JButton {
 		setBorderPainted(false);
 		setToolTipText(toolTip);
 
-		Icon icon = ImageManager.getInstance().loadUiIcon(imageFile, 20, 20);
+		int imageWidth = PREFERRED_SIZE.width - 4;
+		int imageHeight = PREFERRED_SIZE.height - 4;
+		Icon icon = ImageManager.getInstance().loadUiIcon(imageFile, imageWidth, imageHeight);
 		setIcon(icon);
 
-		// Works with injection: ctx will be set by BaseToolBar before the user can
-		// click.
 		addActionListener(e -> {
 			doAction();
 		});
@@ -45,6 +46,7 @@ public abstract class ToolActionButton extends JButton {
 	
 	/**
 	 * Perform the action associated with this button.
+	 * This is implemented by subclasses.
 	 */
 	public abstract void doAction();
 
