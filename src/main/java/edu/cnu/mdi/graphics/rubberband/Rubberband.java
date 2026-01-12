@@ -135,6 +135,11 @@ public final class Rubberband {
 					if (_tempPoly == null) {
 						startRubberbanding(event.getPoint());
 					} else {
+						// check if point is approved used by connection rubberbanding
+						if (!_rubberbanded.approvePoint(event.getPoint())) {
+							cancel();
+							return;
+						}
 						addPoint(_tempPoly, event.getX(), event.getY());
 						if (_tempPoly.npoints == 2) {
 							endRubberbanding(event.getPoint());
@@ -147,14 +152,6 @@ public final class Rubberband {
 
 			@Override
 			public void mouseClicked(MouseEvent event) {
-				if (isActive()) {
-					if (polyMode()) {
-						// double click to end
-						if (event.getClickCount() > 1) {
-							endRubberbanding(event.getPoint());
-						}
-					}
-				}
 			}
 
 			@Override
@@ -351,6 +348,10 @@ public final class Rubberband {
 			g.fillPolygon(tpoly);
 			GraphicsUtils.drawHighlightedShape(g, tpoly, _highlightColor1, _highlightColor2);
 			break;
+			
+		case NONE:
+			// do nothing
+			break;
 		}
 	}
 
@@ -433,6 +434,11 @@ public final class Rubberband {
 		}
 
 		_startPt.setLocation(anchorPt);
+		// check if point is approved used by connection rubberbanding
+		if (!_rubberbanded.approvePoint(anchorPt)) {
+			cancel();
+			return;
+		}
 		_currentPt.setLocation(anchorPt);
 
 		if (polyMode() || radArcMode() || lineMode()) {

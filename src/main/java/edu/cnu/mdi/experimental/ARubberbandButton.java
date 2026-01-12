@@ -2,9 +2,13 @@ package edu.cnu.mdi.experimental;
 
 import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Objects;
+
+import javax.swing.JToggleButton;
 
 import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
@@ -30,39 +34,49 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 	 *
 	 * @author heddle
 	 */
-	public abstract class ARubberbandTool implements IRubberbanded {
+	@SuppressWarnings("serial")
+	public abstract class ARubberbandButton extends JToggleButton implements MouseListener, IRubberbanded {
 
 		/** Minimum width/height in pixels for a creation gesture to be accepted. */
 		private final int minSizePx;
 
-		/** Active rubber-band session (null when idle). */
-		private Rubberband rubberband;
-
 		/** Component that owns the current gesture (null when idle). */
-		private Component canvas;
+		protected Component canvas;
 
 		/** Toolbar that owns this tool. */
-		private AToolBar toolBar;
-
+		protected AToolBar toolBar;
+		
+		/** Rubberband policy to use. */
+		protected Rubberband.Policy policy;
+		
+		/** Cached rubber band */
+		protected Rubberband rubberband;
+		
 		/**
 		 * Create a rubber-band based tool.
 		 *
 		 * @param canvas    component on which rubber-banding occurs.
 		 * @param toolBar   toolbar that owns this tool.
+		 * @param policy    rubber-band policy to use (e.g.,
+		 * 				{@link Rubberband.Policy#OVAL}).
 		 * @param minSizePx minimum pixel size for bounds to be considered valid.
 		 */
-		protected ARubberbandTool(Component canvas, AToolBar toolBar, int minSizePx) {
+		protected ARubberbandButton(Component canvas, AToolBar toolBar, Rubberband.Policy policy, int minSizePx) {
 			Objects.requireNonNull(canvas, "canvas");
 			Objects.requireNonNull(toolBar, "toolBar");
+			Objects.requireNonNull(policy, "policy");
 			this.canvas = canvas;
 			this.toolBar = toolBar;
+			this.policy = policy;
 			this.minSizePx = Math.max(1, minSizePx);
 		}
 
 		/**
 		 * @return rubber-band policy to use (e.g., {@link Rubberband.Policy#OVAL}).
 		 */
-		protected abstract Rubberband.Policy rubberbandPolicy();
+		protected Rubberband.Policy rubberbandPolicy() {
+			return policy;
+		}
 
 		/**
 		 * @return cursor to use while active. Default is crosshair.
@@ -71,20 +85,6 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 			return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
 		}
 
-		/**
-		 * Starts rubber-banding on mouse press. {@link IAnnotationSupport}.
-		 */
-		public final void mousePressed(MouseEvent e) {
-
-			if (rubberband != null) {
-				return;
-			}
-
-			Rubberband.Policy policy = Objects.requireNonNull(rubberbandPolicy(), "rubberbandPolicy");
-			rubberband = new Rubberband(canvas, this, policy);
-			rubberband.setActive(true);
-			rubberband.startRubberbanding(e.getPoint());
-		}
 
 		/**
 		 * Called by {@link Rubberband} when the gesture completes. Creates an item if
@@ -106,13 +106,22 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 				if (!isValidBounds(bounds)) {
 					return;
 				}
+				Point[] vertices = rb.getRubberbandVertices();
+				handleRubberbanding(bounds, vertices);
 
-				toolBar.resetDefaultToggleButton();
 				canvas.repaint();
 
 			} finally {
 			}
 		}
+		
+		/**
+		 * Handle a completed rubber-band gesture with valid bounds.
+		 *
+		 * @param bounds   the rubber-band bounds
+		 * @param vertices the rubber-band vertices
+		 */
+		public abstract void handleRubberbanding(Rectangle bounds, Point[] vertices);
 
 		/**
 		 * Cancel an in-progress rubber-band gesture.
@@ -129,5 +138,38 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 		private boolean isValidBounds(Rectangle b) {
 			return (b != null) && (b.width >= minSizePx) && (b.height >= minSizePx);
 		}
+		
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+		}
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+		}
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			if (rubberband == null) {
+				Rubberband.Policy policy = Objects.requireNonNull(rubberbandPolicy(), "rubberbandPolicy");
+				rubberband = new Rubberband(canvas, this, policy);
+			}
+			
+			rubberband.setActive(true);
+			rubberband.startRubberbanding(e.getPoint());
+		}
+
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+
+		
 
 }

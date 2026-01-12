@@ -37,9 +37,9 @@ public final class ToolBarBits {
 	public static final long CONNECTORBUTTON = 0100000L;
 	public static final long ZOOMINBUTTON    = 0200000L;
 	public static final long ZOOMOUTBUTTON   = 0400000L;
-	public static final long RESETZOOMBUTTON = 00100000L;
-	public static final long CAMERABUTTON    = 00200000L;
-	public static final long PRINTERBUTTON   = 00400000L;
+	public static final long RESETZOOMBUTTON = 01000000L;
+	public static final long CAMERABUTTON    = 02000000L;
+	public static final long PRINTERBUTTON   = 04000000L;
 	public static final long STATUSFIELD     = 010000000L;
 	
 	/** Map the button to the corresponding icon image file */
@@ -57,7 +57,7 @@ public final class ToolBarBits {
 		put(POLYLINEBUTTON,   "images/svg/polyline.svg");
 		put(BOXZOOMBUTTON,    "images/svg/box_zoom.svg");
 		put(PANBUTTON,        "images/svg/pan.svg");
-		put(CONNECTORBUTTON,  "images/svg/connector.svg");
+		put(CONNECTORBUTTON,  "images/svg/connect.svg");
 		put(ZOOMINBUTTON,     "images/svg/zoom_in.svg");
 		put(ZOOMOUTBUTTON,    "images/svg/zoom_out.svg");
 		put(RESETZOOMBUTTON,  "images/svg/reset_zoom.svg");
@@ -67,38 +67,68 @@ public final class ToolBarBits {
 		put(MAGNIFYBUTTON,    "images/svg/magnify.svg");
 		put(STATUSFIELD,      ""); // No icon for status field
 	}};
+	
+	/** Map the button to the corresponding icon image file */
+	public static final HashMap<Long, String> BUTTON_TOOLTIP_MAP = new HashMap<>() {{
+		put(POINTERBUTTON,    "Make single or bulk selection"); //rubber-band toggle button
+		put(ELLIPSEBUTTON,    "Create an ellipse item"); //rubber-band toggle button
+		put(TEXTBUTTON,       "Create a text item"); //simple click toggle button
+		put(RECTANGLEBUTTON,  "Create a rectangle item"); //rubber-band toggle button
+		put(POLYGONBUTTON,    "Create a polygon item"); //rubber-band toggle button
+		put(LINEBUTTON,       "Create a line item"); //rubber-band toggle button
+		put(STYLEBUTTON,      "Edit style of selected item(s)"); //one shot button
+		put(DELETEBUTTON,     "Delete selected item(s)"); //one shot button
+		put(CENTERBUTTON,     "Recenter the view at clicked location"); //simple click toggle button
+		put(UNDOZOOMBUTTON,   "Undo last zoom action"); //one shot button
+		put(POLYLINEBUTTON,   "Create a polyline item"); //rubber-band toggle button
+		put(BOXZOOMBUTTON,    "Rubber-band zoom to area"); //rubber-band toggle button
+		put(PANBUTTON,        "Pan the view by dragging"); //drag toggle button
+		put(CONNECTORBUTTON,  "Connect two item with a connector line"); //rubber-band toggle button
+		put(ZOOMINBUTTON,     "Zoom in be a fixed amount"); //one shot button
+		put(ZOOMOUTBUTTON,    "Zoom out by a fixed amount"); //one shot button
+		put(RESETZOOMBUTTON,  "Restore zoom to default"); //one shot button
+		put(CAMERABUTTON,     "Snapshot of the current canvas as a png image"); //one shot button
+		put(PRINTERBUTTON,    "Print the current canvas"); //one shot button
+		put(RADARCBUTTON,     "Create a radarc item"); //rubber-band toggle button
+		put(MAGNIFYBUTTON,    "Magnify area under mouse cursor"); //move toggle button
+		put(STATUSFIELD,      ""); // No icon for status field
+	}};
+
 
 	/*
 	 * Note that is the predefined sets of buttons to include on a toolbar,
 	 * the order of the bits does NOT determine order of the buttons on the toolbar.
 	 */
-	/** All standard annotation tool buttons */
+	/** All predefined annotation tool buttons */
 	public static final long ANNOTATIONTOOLS = POINTERBUTTON | ELLIPSEBUTTON | TEXTBUTTON | RECTANGLEBUTTON | POLYGONBUTTON | LINEBUTTON
 			| POLYLINEBUTTON | STYLEBUTTON | DELETEBUTTON;
 	
-	/** All standard drawing tool buttons */
+	/** All predefined drawing tool buttons */
 	public static final long DRAWINGTOOLS = ANNOTATIONTOOLS | RADARCBUTTON;
 	
-	/** All standard zoom tool buttons */
+	/** All predefined zoom tool buttons */
 	public static final long ZOOMTOOLS = BOXZOOMBUTTON | UNDOZOOMBUTTON | ZOOMINBUTTON | ZOOMOUTBUTTON
 			| RESETZOOMBUTTON;
 	
-	/** All standard picture view tool buttons */
+	/** All predefined picture view tool buttons */
 	public static final long PICVIEWSTOOLS = CAMERABUTTON | PRINTERBUTTON;
 
-	/** All standard navigation tool buttons */
+	/** All predefined navigation tool buttons */
 	public static final long NAVIGATIONTOOLS = POINTERBUTTON | ZOOMTOOLS | PANBUTTON | CENTERBUTTON;
 
-	/** All standard plot tool buttons for splot panels*/
+	/** All predefined plot tool buttons for splot panels*/
 	public static final long PLOTTOOLS = POINTERBUTTON | ZOOMTOOLS | PICVIEWSTOOLS;
+	
+	/** All predefined toolbar buttons and status field (for testing) */
+	public static final long EVERYTHING = 01777777777777777777777L;
 	
 	/**
 	 * Get the full resource path for the icon corresponding to the given button bit.
-	 * This only works for prepefined buttons with known icons in the MDI resources path.
+	 * This only works for predefined buttons with known icons in the MDI resources path.
 	 * @param buttonBit the button bit flag.
 	 * @return the full resource path for the icon.
 	 */
-	public static final String getMDIIconResourcePath(long buttonBit) {
+	public static final String getResourcePath(long buttonBit) {
 		return Environment.MDI_RESOURCE_PATH + BUTTON_ICON_MAP.get(buttonBit);
 	}
 	
@@ -110,6 +140,16 @@ public final class ToolBarBits {
 	 */
 	private static boolean addButton(long buttonBit, long toolbarBits) {
 		return (toolbarBits & buttonBit) == buttonBit;
+	}
+	
+	/**
+	 * Get the tooltip the icon corresponding to the given button bit.
+	 * This only works for predefined buttons with known icons in the MDI resources path.
+	 * @param buttonBit the button bit flag.
+	 * @return the tooltip for the icon.
+	 */
+	public static String getToolTip(long buttonBit) {
+		return BUTTON_TOOLTIP_MAP.get(buttonBit);
 	}
 	
 	/*

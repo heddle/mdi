@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.FontMetrics;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -278,8 +277,11 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 			addActionButton(deleteButton);
 		}
 
-		if (Bits.check(bits, ToolBarBits.STATUSFIELD)) {
+		if (Bits.check(bits, ToolBarBits.STATUSFIELD) && getOrientation() == HORIZONTAL) {
 			createStatusTextField();
+			add(Box.createHorizontalGlue());
+			statusLine.setMaximumSize(new Dimension(Integer.MAX_VALUE, 
+					statusLine.getPreferredSize().height));
 			add(statusLine);
 		}
 	}
@@ -347,12 +349,6 @@ public class BaseToolBar extends CommonToolBar implements MouseListener, MouseMo
 		statusLine.setFocusable(false); // key fix
 		statusLine.setRequestFocusEnabled(false); // extra;
 		statusLine.setOpaque(true);
-
-		FontMetrics fm = getFontMetrics(statusLine.getFont());
-		Dimension d = statusLine.getPreferredSize();
-		d.width = fm.stringWidth(" ( 9999.99999 , 9999.99999 ) XXXXXXXXXXX");
-		statusLine.setPreferredSize(d);
-		statusLine.setMaximumSize(d);
 	}
 
 	/**

@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
+import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
@@ -50,20 +51,26 @@ import javax.swing.SwingConstants;
 public abstract class AToolBar extends JToolBar {
 
 	/** Primary mutually-exclusive group for tool toggle buttons. */
-	private final ButtonGroup toggleGroup = new ButtonGroup();
+	protected final ButtonGroup toggleGroup = new ButtonGroup();
 
 	/** Optional default toggle button to activate when "no selection" occurs. */
 	private JToggleButton defaultToggleButton;
+	
+	/** Status field to display messages (may be null). */
+	protected JTextField statusField;
 
 	/** Listener that watches selection changes on group-managed toggles. */
 	private final ItemListener toggleSelectionListener = new ItemListener() {
 		@Override
 		public void itemStateChanged(ItemEvent e) {
+			
 			if (!(e.getItemSelectable() instanceof JToggleButton)) {
 				return;
 			}
 
+
 			JToggleButton b = (JToggleButton) e.getItemSelectable();
+			
 
 			// Only respond to selection events; deselection is handled by the
 			// newly-selected button's selection event OR by resetDefaultSelection().
@@ -207,6 +214,7 @@ public abstract class AToolBar extends JToolBar {
 			}
 		}
 		this.defaultToggleButton = defaultToggleButton;
+		resetDefaultToggleButton();
 	}
 
 	/**
@@ -216,8 +224,7 @@ public abstract class AToolBar extends JToolBar {
 	 * {@link ButtonGroup}. If no default is set, this method does nothing.
 	 * </p>
 	 */
-	public void resetDefaultToggleButton
-	() {
+	public void resetDefaultToggleButton() {
 		if (defaultToggleButton == null) {
 			return;
 		}
@@ -245,5 +252,17 @@ public abstract class AToolBar extends JToolBar {
 		}
 		return null;
 	}
+	
+	/**
+	 * Set the status text shown on the toolbar.
+	 * 
+	 * @param text the status text to set.
+	 */
+	public void updateStatusText(String text) {
+		if (statusField != null) {
+			statusField.setText(text);
+		}
+	}
+	
 
 }
