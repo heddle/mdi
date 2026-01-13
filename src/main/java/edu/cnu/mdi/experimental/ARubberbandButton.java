@@ -104,6 +104,7 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 
 				Rectangle bounds = rb.getRubberbandBounds();
 				if (!isValidBounds(bounds)) {
+					System.out.println("Rubberband bounds invalid: " + bounds);
 					return;
 				}
 				Point[] vertices = rb.getRubberbandVertices();

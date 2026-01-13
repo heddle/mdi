@@ -7,6 +7,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.Enumeration;
 import java.util.Objects;
 
@@ -128,6 +129,21 @@ public class BaseToolBar extends AToolBar {
 			};
 			configureButton(boxZoomButton, ToolBarBits.BOXZOOMBUTTON);
 			addToggle(boxZoomButton);
+		}
+		
+		//pan button
+		if (ToolBarBits.hasPanButton(bits)) {
+			ADragButton panButton = new ADragButton(canvas, this) {
+
+				@Override
+				public void updateDrag(Point start, Point previous, Point current) {
+					// TODO Auto-generated method stub
+					
+				}
+			};
+			configureButton(panButton, ToolBarBits.PANBUTTON);
+			addToggle(panButton);
+			
 		}
 
 		//center button
@@ -327,10 +343,16 @@ public class BaseToolBar extends AToolBar {
 		    if (button instanceof MouseListener) {
 		    	canvas.removeMouseListener((MouseListener) button);
 		    }
+		    if (button instanceof MouseMotionListener) {
+		    	canvas.removeMouseMotionListener((MouseMotionListener) button);
+		    }
 		}
 		
 		if (newlyActive instanceof MouseListener) {
 			canvas.addMouseListener((MouseListener) newlyActive);
+		}
+		if (newlyActive instanceof MouseMotionListener) {
+			canvas.addMouseMotionListener((MouseMotionListener) newlyActive);
 		}
 	}
 	

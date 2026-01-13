@@ -22,12 +22,11 @@ public abstract class ASingleClickButton  extends JToggleButton implements Mouse
 	 */
 	public ASingleClickButton(Component canvas, AToolBar toolBar) {
 		this.toolBar = toolBar;
+		this.canvas = canvas;
 	}
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		Objects.requireNonNull(canvas, "canvas");
-		Objects.requireNonNull(toolBar, "toolBar");
 	}
 	
 	/**
@@ -39,6 +38,8 @@ public abstract class ASingleClickButton  extends JToggleButton implements Mouse
 
 	@Override
 	public void mousePressed(MouseEvent e) {
+		Objects.requireNonNull(canvas, "canvas");
+		Objects.requireNonNull(toolBar, "toolBar");
 		handleCanvasClick(e);
 	}
 
