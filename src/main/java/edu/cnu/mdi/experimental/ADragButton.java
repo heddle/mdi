@@ -11,12 +11,16 @@ import javax.swing.JToggleButton;
 @SuppressWarnings("serial")
 public abstract class ADragButton extends JToggleButton implements MouseListener, MouseMotionListener {
 
+	// Is a drag operation in progress?
 	private boolean dragging = false;
 	
+	// Starting point of the drag
 	private Point startPoint = null;
 	
+	// Current point during the drag
 	private Point currentPoint = new Point();
 	
+	// Previous point during the drag
 	private Point previousPoint = new Point();
 	
 	/** Component that owns the current gesture (null when idle). */
@@ -39,56 +43,65 @@ public abstract class ADragButton extends JToggleButton implements MouseListener
 		
 	}
 
+	
+	private boolean contained(Point p) {
+		return (p.x >= 0 && p.y >= 0 && p.x < canvas.getWidth() && p.y < canvas.getHeight());
+	}
+	
+	
 	@Override
 	public void mousePressed(MouseEvent e) {
-		System.out.println("mouse pressed at " + e.getPoint());
 		startPoint = e.getPoint();
 		currentPoint.setLocation(startPoint);
 		previousPoint.setLocation(startPoint);
-		
+		startDrag(startPoint);
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		if (!dragging) {
-			return;
+		if(dragging) {
+			endDrag();
 		}
-		System.out.println("mouse released at " + e.getPoint());
+	}
+	
+	private void endDrag() {
 		dragging = false;
+		doneDrag(startPoint, currentPoint);
+	    startPoint = null;
+		currentPoint.setLocation(0, 0);
+		previousPoint.setLocation(0, 0);
 	}
 
 	@Override
 	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
+		if (!contained(e.getPoint())) {
+			return;
+		}
 		dragging = true;
 		previousPoint.setLocation(currentPoint);
 		currentPoint.setLocation(e.getPoint());
 		if(previousPoint.equals(currentPoint)) {
-			System.out.println("no movement");
 			return;
 		}
-		System.out.println("dragging start " + startPoint + " previous " + previousPoint + " current " + currentPoint);
-		
+		updateDrag(startPoint, previousPoint, currentPoint);		
 	}
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
 	}
 	
+	public abstract void startDrag(Point start);
 	public abstract void updateDrag(Point start, Point previous, Point current);
+	public abstract void doneDrag(Point start, Point end);
 	
 
 }

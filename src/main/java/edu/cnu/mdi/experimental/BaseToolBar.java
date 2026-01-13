@@ -3,11 +3,13 @@ package edu.cnu.mdi.experimental;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.image.BufferedImage;
 import java.util.Enumeration;
 import java.util.Objects;
 
@@ -17,6 +19,7 @@ import javax.swing.Icon;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 
+import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.graphics.rubberband.Rubberband.Policy;
 import edu.cnu.mdi.ui.fonts.Fonts;
@@ -55,6 +58,11 @@ public class BaseToolBar extends AToolBar {
 	//predefined click on canvas buttons
 	protected ASingleClickButton centerButton;
 	protected ASingleClickButton textButton;
+	
+	//for panning
+	private BufferedImage base;
+	private BufferedImage buffer;
+
 
 		
 	/**
@@ -134,16 +142,63 @@ public class BaseToolBar extends AToolBar {
 		//pan button
 		if (ToolBarBits.hasPanButton(bits)) {
 			ADragButton panButton = new ADragButton(canvas, this) {
+				@Override
+				public void startDrag(Point start) {
+					System.out.println("start dragging at " + start);
+					base = GraphicsUtils.getComponentImage(canvas);
+					buffer = GraphicsUtils.getComponentImageBuffer(canvas);
+				}
 
 				@Override
 				public void updateDrag(Point start, Point previous, Point current) {
-					// TODO Auto-generated method stub
-					
+					System.out.println("dragging start " + start + " previous " + previous + " current " + current);
+					int totalDx = current.x - start.x;
+					int totalDy = current.y - start.y;
+
+					Graphics gg = buffer.getGraphics();
+					gg.setColor(canvas.getBackground());
+					gg.fillRect(0, 0, buffer.getWidth(), buffer.getHeight());
+					gg.drawImage(base, totalDx, totalDy, canvas);
+					gg.dispose();
+
+					Graphics g = canvas.getGraphics();
+					g.drawImage(buffer, 0, 0, canvas);
+					g.dispose();
 				}
+
+				@Override
+				public void doneDrag(Point start, Point end) {
+					System.out.println("done dragging from " + start + " to " + end);
+					base = null;
+					buffer = null;
+					canvas.repaint();
+				}
+
 			};
 			configureButton(panButton, ToolBarBits.PANBUTTON);
 			addToggle(panButton);
 			
+		}
+		
+		//magnify button
+		if (ToolBarBits.hasMagnifyButton(bits)) {
+			Dimension dimension = new Dimension(100, 100);
+			AMoveButton magnifyButton = new AMoveButton(canvas, this, dimension) {
+
+				@Override
+				public void handleMove(Point p) {
+					// TODO Auto-generated method stub
+					
+				}
+
+				@Override
+				public void doneMove(Point p) {
+					// TODO Auto-generated method stub
+					
+				}
+			};
+			configureButton(magnifyButton, ToolBarBits.MAGNIFYBUTTON);
+			addToggle(magnifyButton);
 		}
 
 		//center button
