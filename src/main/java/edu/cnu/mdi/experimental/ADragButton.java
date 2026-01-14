@@ -64,6 +64,7 @@ public abstract class ADragButton extends JToggleButton implements MouseListener
 		}
 	}
 	
+	// Complete the drag operation
 	private void endDrag() {
 		dragging = false;
 		doneDrag(startPoint, currentPoint);

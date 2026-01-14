@@ -13,6 +13,9 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 
 	// Is a move operation in progress?
 	private boolean moving = false;
+	
+	// Starting point of the drag
+	private Point startPoint = null;
 
 	/** Component that owns the current gesture (null when idle). */
 	protected Component canvas;
@@ -20,16 +23,21 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 	/** Toolbar that owns this tool. */
 	protected AToolBar toolBar;
 	
-	protected Dimension dimension;
+	/** Dimension of the move area. */
+	protected Dimension size;
 
 	/**
 	 * Create a single-click button that performs an action when clicked.
-	 *
+	 * @param canvas Component on which the move is occurring
+	 * @param toolBar Toolbar that owns this tool
+	 * @param size Dimension of the move area. The entire area centered at the point
+	 * must be within the canvas to be valid. Use <code>null</code> to ignore.
+	 * 
 	 */
-	public AMoveButton(Component canvas, AToolBar toolBar, final Dimension dimension) {
+	public AMoveButton(Component canvas, AToolBar toolBar, final Dimension size) {
 		this.toolBar = toolBar;
 		this.canvas = canvas;
-		this.dimension = dimension;
+		this.size = size;
 	}
 	
 	@Override
@@ -38,10 +46,15 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 	}
 
 	
+	/**
+	 * Check if point is contained within the canvas, considering size.
+	 * @param p Point to check
+	 * @return true if contained (including size), false otherwise
+	 */
 	private boolean contained(Point p) {
 		//contained if box centered at p with size dimension is fully within canvas
-		int halfWidth = dimension.width / 2;
-		int halfHeight = dimension.height / 2;
+		int halfWidth = (size == null ? 0 : size.width / 2);
+		int halfHeight = (size == null ? 0 : size.height / 2);
 		return (p.x - halfWidth >= 0 && p.y - halfHeight >=
 				0 && p.x + halfWidth < canvas.getWidth() && p.y + halfHeight < canvas.getHeight());
 	}
@@ -56,10 +69,12 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 	public void mouseReleased(MouseEvent e) {
 	}
 	
-	private void endMove(Point p) {
+	// Complete the move operation
+	private void endMove(Point end) {
 		moving = false;
 		toolBar.resetDefaultToggleButton();
-		doneMove(p);
+		doneMove(startPoint, end);
+	    startPoint = null;
 	}
 
 	@Override
@@ -79,13 +94,21 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 	public void mouseMoved(MouseEvent e) {
 		if (contained(e.getPoint())) {
 			moving = true;
-			System.out.println("Moving at " + e.getPoint());
-			handleMove(e.getPoint());
-		} 
-	
+
+			if (startPoint == null) {
+				startPoint = e.getPoint();
+				// System.out.println("Starting move at " + e.getPoint());
+				startMove(startPoint);
+			} else {
+				System.out.println("Moving at " + e.getPoint());
+				updateMove(startPoint, e.getPoint());
+			}
+		}
+
 	}
 	
-	public abstract void handleMove(Point p);
-	public abstract void doneMove(Point p);
+	public abstract void startMove(Point start);
+	public abstract void updateMove(Point start, Point p);
+	public abstract void doneMove(Point start, Point end);
 
 }

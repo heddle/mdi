@@ -40,7 +40,7 @@ public abstract class ASingleClickButton  extends JToggleButton implements Mouse
 	public void mousePressed(MouseEvent e) {
 		Objects.requireNonNull(canvas, "canvas");
 		Objects.requireNonNull(toolBar, "toolBar");
-		handleCanvasClick(e);
+		canvasClick(e);
 	}
 
 	@Override
@@ -58,6 +58,6 @@ public abstract class ASingleClickButton  extends JToggleButton implements Mouse
 		// No action needed on mouse exit
 	}
 	
-	public abstract void handleCanvasClick(MouseEvent e);
+	public abstract void canvasClick(MouseEvent e);
 
 }

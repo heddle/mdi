@@ -6,6 +6,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.Objects;
 
 import javax.swing.JToggleButton;
@@ -35,7 +36,7 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 	 * @author heddle
 	 */
 	@SuppressWarnings("serial")
-	public abstract class ARubberbandButton extends JToggleButton implements MouseListener, IRubberbanded {
+	public abstract class ARubberbandButton extends JToggleButton implements MouseMotionListener, MouseListener, IRubberbanded {
 
 		/** Minimum width/height in pixels for a creation gesture to be accepted. */
 		private final int minSizePx;
@@ -51,6 +52,9 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 		
 		/** Cached rubber band */
 		protected Rubberband rubberband;
+		
+		/** If true, rubberbanding starts on drag instead of press */
+		protected boolean startOnDrag;
 		
 		/**
 		 * Create a rubber-band based tool.
@@ -69,6 +73,9 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 			this.toolBar = toolBar;
 			this.policy = policy;
 			this.minSizePx = Math.max(1, minSizePx);
+			
+			startOnDrag = (policy == Rubberband.Policy.RECTANGLE ||
+					policy == Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT);
 		}
 
 		/**
@@ -108,7 +115,7 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 					return;
 				}
 				Point[] vertices = rb.getRubberbandVertices();
-				handleRubberbanding(bounds, vertices);
+				rubberbanding(bounds, vertices);
 
 				canvas.repaint();
 
@@ -122,7 +129,7 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 		 * @param bounds   the rubber-band bounds
 		 * @param vertices the rubber-band vertices
 		 */
-		public abstract void handleRubberbanding(Rectangle bounds, Point[] vertices);
+		public abstract void rubberbanding(Rectangle bounds, Point[] vertices);
 
 		/**
 		 * Cancel an in-progress rubber-band gesture.
@@ -152,9 +159,20 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 		@Override
 		public void mouseExited(MouseEvent e) {
 		}
+		
+		@Override
+		public void mouseMoved(MouseEvent e) {
+		}
 
 		@Override
-		public void mousePressed(MouseEvent e) {
+		public void mouseDragged(MouseEvent e) {
+			if (startOnDrag && rubberband == null) {
+				init(e);
+			}
+		}
+		
+		// initialize rubberbanding
+		private void init(MouseEvent e) {
 			if (rubberband == null) {
 				Rubberband.Policy policy = Objects.requireNonNull(rubberbandPolicy(), "rubberbandPolicy");
 				rubberband = new Rubberband(canvas, this, policy);
@@ -164,10 +182,16 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 			rubberband.startRubberbanding(e.getPoint());
 		}
 
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			if (!startOnDrag && rubberband == null) {
+				init(e);
+			}
+		}
+
 		@Override
 		public void mouseReleased(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
 		}
 
 
