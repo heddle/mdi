@@ -6,13 +6,10 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.Point;
 import java.awt.Polygon;
-import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -20,16 +17,12 @@ import java.awt.Stroke;
 import java.awt.Transparency;
 import java.awt.Window;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Ellipse2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
-import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageOutputStream;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -39,9 +32,6 @@ import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.text.Snippet;
-import edu.cnu.mdi.log.Log;
-import edu.cnu.mdi.util.Environment;
-import edu.cnu.mdi.util.FileUtils;
 
 /**
  * A class of generic static methods for simple graphics utilities.
@@ -238,7 +228,7 @@ public class GraphicsUtils {
 
 	/**
 	 * Copy a stroke but change the width
-	 * 
+	 *
 	 * @param original
 	 * @param newWidth
 	 * @return

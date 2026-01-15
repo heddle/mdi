@@ -72,6 +72,9 @@ public class BaseToolBar extends AToolBar {
 	
 	//what policy to use for box zoom
 	protected Rubberband.Policy boxZoomPolicy;
+	
+	//what policy to use for pointer
+	protected Rubberband.Policy pointerPolicy;
 
 	/**
 	 * Creates a new horizontal toolbar associated with a canvas.
@@ -84,11 +87,13 @@ public class BaseToolBar extends AToolBar {
 	 * creating the toolbar.
 	 */
 	public BaseToolBar(Component canvas, IToolHandler handler, long bits) {
-		this(canvas, handler, bits, HORIZONTAL, Policy.RECTANGLE_PRESERVE_ASPECT);
+		this(canvas, handler, bits, HORIZONTAL, 
+				Policy.RECTANGLE,  Policy.RECTANGLE_PRESERVE_ASPECT);
 	}
 	
-	public BaseToolBar(Component canvas, IToolHandler handler, long bits, Rubberband.Policy boxZoomPolicy) {
-		this(canvas, handler, bits, HORIZONTAL, boxZoomPolicy);
+	public BaseToolBar(Component canvas, IToolHandler handler, long bits, 
+			Rubberband.Policy pointerPolicy, Rubberband.Policy boxZoomPolicy) {
+		this(canvas, handler, bits, HORIZONTAL, pointerPolicy, boxZoomPolicy);
 	}
 
 
@@ -104,12 +109,16 @@ public class BaseToolBar extends AToolBar {
 	 *
 	 * @param orientation the initial orientation -- it must be either
 	 *                    <code>HORIZONTAL</code> or <code>VERTICAL</code>
+	 * @param pointerPolicy   the rubberband policy to use for the pointer tool
+	 * @param boxZoomPolicy   the rubberband policy to use for the box zoom tool
 	 */
-	public BaseToolBar(Component canvas, IToolHandler handler, long bits, int orientation,  Rubberband.Policy boxZoomPolicy) {
+	public BaseToolBar(Component canvas, IToolHandler handler, long bits, int orientation,  
+			Rubberband.Policy pointerPolicy, Rubberband.Policy boxZoomPolicy) {
 		super(orientation);
 		this.canvas = canvas;
 		this.bits = bits;
 		this.handler = handler;
+		this.pointerPolicy = pointerPolicy;
 		this.boxZoomPolicy = boxZoomPolicy;
 		Objects.requireNonNull(canvas, "Canvas component cannot be null");
 		Objects.requireNonNull(handler, "Tool handler cannot be null");
@@ -127,11 +136,15 @@ public class BaseToolBar extends AToolBar {
 	private void addPredefinedButtons() {
 		//pointer button
 		if (ToolBarBits.hasPointerButton(bits)) {
-		pointerButton = new ARubberbandButton(canvas, this, Policy.RECTANGLE, DEFAULT_MIN_SIZE_PX) {
+		pointerButton = new ARubberbandButton(canvas, this, pointerPolicy, DEFAULT_MIN_SIZE_PX) {
 
 				@Override
 				public void rubberbanding(Rectangle bounds, Point[] vertices) {
 					handler.pointerRubberbanding(BaseToolBar.this, canvas, bounds);
+				}
+
+				@Override
+				public void simplePress(Point p) {
 				}
 
 			};
@@ -148,6 +161,10 @@ public class BaseToolBar extends AToolBar {
 				@Override
 				public void rubberbanding(Rectangle bounds, Point[] vertices) {
 					handler.boxZoomRubberbanding(BaseToolBar.this, canvas, bounds);
+				}
+				
+				@Override
+				public void simplePress(Point p) {
 				}
 
 			};
@@ -279,6 +296,10 @@ public class BaseToolBar extends AToolBar {
 					resetDefaultToggleButton();
 				}
 
+				@Override
+				public void simplePress(Point p) {
+				}
+
 			};
 			configureButton(lineButton, ToolBarBits.LINEBUTTON);
 			addToggle(lineButton);
@@ -293,6 +314,10 @@ public class BaseToolBar extends AToolBar {
 					// create rectangle item
 					System.out.println("Rectangle button rubberbanded: " + bounds);
 					resetDefaultToggleButton();
+				}
+				
+				@Override
+				public void simplePress(Point p) {
 				}
 
 			};
@@ -311,6 +336,10 @@ public class BaseToolBar extends AToolBar {
 					System.out.println("Ellipse button rubberbanded: " + bounds);
 					resetDefaultToggleButton();
 				}
+				
+				@Override
+				public void simplePress(Point p) {
+				}
 
 			};
 			configureButton(ellipseButton, ToolBarBits.ELLIPSEBUTTON);
@@ -326,6 +355,10 @@ public class BaseToolBar extends AToolBar {
 					// create radarc item
 					System.out.println("RadArc button rubberbanded: " + bounds);
 					resetDefaultToggleButton();
+				}
+				
+				@Override
+				public void simplePress(Point p) {
 				}
 
 			};
@@ -343,6 +376,10 @@ public class BaseToolBar extends AToolBar {
 					System.out.println("Polygon button rubberbanded, num vert " + vertices.length);
 					resetDefaultToggleButton();
 				}
+				
+				@Override
+				public void simplePress(Point p) {
+				}
 
 			};
 			configureButton(polygonButton, ToolBarBits.POLYGONBUTTON);
@@ -358,6 +395,10 @@ public class BaseToolBar extends AToolBar {
 					// create polyline item
 					System.out.println("Polyline button rubberbanded, num vert " + vertices.length);
 					resetDefaultToggleButton();
+				}
+				
+				@Override
+				public void simplePress(Point p) {
 				}
 
 			};
@@ -392,6 +433,10 @@ public class BaseToolBar extends AToolBar {
 					resetDefaultToggleButton();
 				}
 
+				@Override
+				public void simplePress(Point p) {
+				}
+				
 				@Override
 				public boolean approvePoint(Point p) {
 					return true;
@@ -511,6 +556,14 @@ public class BaseToolBar extends AToolBar {
 		if (newlyActive instanceof MouseMotionListener) {
 			canvas.addMouseMotionListener((MouseMotionListener) newlyActive);
 		}
+	}
+	
+	/**
+	 * Check if the pointer tool is currently active.
+	 * @return true if the pointer tool is active, false otherwise
+	 */
+	public boolean isPointerActive() {
+		return pointerButton != null && pointerButton.isSelected();
 	}
 
 

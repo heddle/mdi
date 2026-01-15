@@ -14,7 +14,7 @@ public interface IToolHandler {
 	 * @param bounds Rectangle defining the rubberband area
 	 */
 	public void pointerRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds);
-
+	
 	/**
 	 * Handle box zoom rubberbanding with the given bounds.
 	 * 

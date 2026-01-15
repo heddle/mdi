@@ -17,23 +17,14 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.List;
 
-import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageOutputStream;
 import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import javax.swing.Timer;
 import javax.swing.event.EventListenerList;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
+import edu.cnu.mdi.experimental.BaseToolBar;
 import edu.cnu.mdi.feedback.FeedbackPane;
-import edu.cnu.mdi.graphics.GraphicsUtils;
-import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
-import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.CurveChangeType;
@@ -42,15 +33,11 @@ import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
-import edu.cnu.mdi.splot.toolbar.IToolBarListener;
-import edu.cnu.mdi.splot.toolbar.PlotToolBar;
-import edu.cnu.mdi.splot.toolbar.ToolBarButton;
-import edu.cnu.mdi.splot.toolbar.ToolBarToggleButton;
 import edu.cnu.mdi.util.Environment;
 
 @SuppressWarnings("serial")
 public class PlotCanvas extends JComponent
-		implements MouseListener, MouseMotionListener, IRubberbanded, IToolBarListener, DataChangeListener {
+		implements MouseListener, MouseMotionListener, DataChangeListener {
 
 	public static final String DONEDRAWINGPROP = "Done Drawing";
 	public static final String TITLETEXTCHANGE = "Title Text";
@@ -109,14 +96,11 @@ public class PlotCanvas extends JComponent
 	// data drawer
 	private DataDrawer _dataDrawer;
 
-	// for rubberbanding
-	private Rubberband _rubberband;
-
 	// reusable point
 	public Point2D.Double _workPoint = new Point2D.Double();
 
-	// toolbar controlling plot
-	private PlotToolBar _toolbar;
+	// toolbar that owns this canvas
+	private BaseToolBar _toolBar;
 
 	/**
 	 * Create a plot canvas for plotting a dataset
@@ -643,8 +627,13 @@ public class PlotCanvas extends JComponent
 		notifyListeners(PlotChangeType.STOODUP);
 	}
 
+	// check if pointer tool is active
 	private boolean isPointer() {
-		return (_toolbar == null) || _toolbar.isDefaultActivated();
+		return (_toolBar == null) || _toolBar.isPointerActive();
+	}
+
+	public void setToolBar(BaseToolBar toolBar) {
+		_toolBar = toolBar;
 	}
 
 	/**
@@ -655,8 +644,6 @@ public class PlotCanvas extends JComponent
 	@Override
 	public void mousePressed(MouseEvent e) {
 
-		String command = toolbarCommand();
-
 		if (isPointer() && _parameters.isLegendDrawn() && _legend.contains(e.getPoint())) {
 			_legend.setDraggingPrimed(true);
 			_legend.setCurrentPoint(e.getPoint());
@@ -664,33 +651,6 @@ public class PlotCanvas extends JComponent
 			_extra.setDraggingPrimed(true);
 			_extra.setCurrentPoint(e.getPoint());
 		}
-
-		else {
-
-			if (PlotToolBar.BOXZOOM.equals(command) && (_rubberband == null)) {
-
-				if (getPlotData().getType() == PlotDataType.H1D) {
-
-					if (e.isShiftDown()) {
-						_rubberband = new Rubberband(this, this, Rubberband.Policy.YONLY);
-					} else {
-						_rubberband = new Rubberband(this, this, Rubberband.Policy.XONLY);
-					}
-
-				} else {
-					_rubberband = new Rubberband(this, this, Rubberband.Policy.RECTANGLE);
-				}
-				_rubberband.setActive(true);
-				_rubberband.startRubberbanding(e.getPoint());
-			}
-
-		}
-
-	}
-
-	// get the active toolbar toggle butto command
-	private String toolbarCommand() {
-		return (_toolbar != null) ? _toolbar.getActiveCommand() : PlotToolBar.POINTER;
 	}
 
 	/**
@@ -785,15 +745,6 @@ public class PlotCanvas extends JComponent
 		worldToLocal(p0, wp0);
 		worldToLocal(p1, wp1);
 
-		// Old version
-		// Point2D.Double wp0 = new Point2D.Double(wr.x, wr.y);
-		// Point2D.Double wp1 = new Point2D.Double(wr.x + wr.width, wr.y +
-		// wr.height);
-		// Point p0 = new Point();
-		// Point p1 = new Point();
-		// worldToLocal(p0, wp0);
-		// worldToLocal(p1, wp1);
-
 		int x = Math.min(p0.x, p1.x);
 		int y = Math.min(p0.y, p1.y);
 		int w = Math.abs(p1.x - p0.x);
@@ -801,33 +752,19 @@ public class PlotCanvas extends JComponent
 		r.setBounds(x, y, w, h);
 	}
 
-	// /**
-	// * The data set has changed, so we must redraw.
-	// *
-	// * @param dataset the dataset that changed.
-	// */
-	// @Override
-	// public void dataSetChanged(DataSet dataSet) {
-	// setWorldSystem();
-	// repaint();
-	// }
 
-	@Override
-	public void doneRubberbanding() {
-		_toolbar.resetDefaultSelection();
-		Rectangle rbrect = _rubberband.getRubberbandBounds();
-		zoomToRect(rbrect);
-	}
-	
+	/**
+	 * Zoom to a given rectangle in local coordinates
+	 *
+	 * @param rbrect the rectangle in local coordinates
+	 */
 	public void zoomToRect(Rectangle rbrect) {
 		if ((rbrect.width < 15) || (rbrect.height < 15)) {
 			return;
 		}
 
 		localToWorld(rbrect, _worldSystem);
-
-		_rubberband = null;
-		repaint();		
+		repaint();
 	}
 
 	/**
@@ -850,102 +787,7 @@ public class PlotCanvas extends JComponent
 		repaint();
 	}
 
-	@Override
-	public void buttonPressed(PlotToolBar toolbar, ToolBarButton button) {
-		_toolbar = toolbar;
-		doButtonAction(button.getActionCommand());
-	}
 
-	public void doButtonAction(String command) {
-		if (PlotToolBar.ZOOMIN.equals(command)) {
-			scale(0.85);
-		}
-		if (PlotToolBar.ZOOMOUT.equals(command)) {
-			scale(1. / 0.85);
-		}
-		if (PlotToolBar.WORLD.equals(command)) {
-			setWorldSystem();
-			repaint();
-		}
-		if (PlotToolBar.PRINT.equals(command)) {
-			print();
-		}
-
-		if (PlotToolBar.PNG.equals(command)) {
-			takePicture();
-		}
-	}
-
-	/**
-	 * Print
-	 */
-	public void print() {
-		PrintUtils.printComponent((_parent != null) ? _parent : this);
-	}
-
-	public File getSavePngFile() {
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("PNG File", "png", "PNG");
-
-		File selectedFile = null;
-		JFileChooser chooser = new JFileChooser(_dataFilePath);
-		chooser.setSelectedFile(null);
-		chooser.setFileFilter(filter);
-		int returnVal = chooser.showSaveDialog(this);
-		if (returnVal == JFileChooser.APPROVE_OPTION) {
-			selectedFile = chooser.getSelectedFile();
-			if (selectedFile != null) {
-
-				if (selectedFile.exists()) {
-					int answer = JOptionPane.showConfirmDialog(null,
-							selectedFile.getAbsolutePath() + "  already exists. Do you want to overwrite it?",
-							"Overwite Existing File?", JOptionPane.YES_NO_OPTION);
-
-					if (answer != JFileChooser.APPROVE_OPTION) {
-						selectedFile = null;
-					}
-				} // end file exists check
-			}
-		}
-
-		return selectedFile;
-	}
-
-	/**
-	 * Take a picture, sanve as png
-	 */
-	public void takePicture() {
-		try {
-
-			// try making a png
-			if (Environment.getInstance().getPngWriter() != null) {
-
-				File file = getSavePngFile();
-				if (file == null) {
-					return;
-				}
-
-				// Buffered image object to be written to depending on the view
-				// type
-				BufferedImage bi;
-
-				ImageOutputStream ios = ImageIO.createImageOutputStream(file);
-				Environment.getInstance().getPngWriter().setOutput(ios);
-
-				bi = GraphicsUtils.getComponentImage((_parent != null) ? _parent : this);
-
-				Environment.getInstance().getPngWriter().write(bi);
-				ios.close();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}
-
-	@Override
-	public void toggleButtonActivated(PlotToolBar toolbar, ToolBarToggleButton button) {
-		_toolbar = toolbar;
-	}
 
 	/**
 	 * Show the plot preferences dialog
@@ -977,17 +819,6 @@ public class PlotCanvas extends JComponent
 		return _plotTicks;
 	}
 
-	/**
-	 * Set which toggle button is selected
-	 */
-	public void setSelectedToggle(String s) {
-		if ((_parent != null) && (_parent instanceof PlotPanel)) {
-			PlotPanel ppan = (PlotPanel) _parent;
-			if (ppan._toolbar != null) {
-				ppan._toolbar.setSelectedToggle(s);
-			}
-		}
-	}
 
 	public PlotPanel plotPanel() {
 		if ((_parent != null) && (_parent instanceof PlotPanel)) {

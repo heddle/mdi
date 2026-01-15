@@ -704,40 +704,6 @@ public class WorldGraphicsUtils {
 
 	}
 
-	/**
-	 * Draw ghosted (etched) text at the given world point.
-	 *
-	 * @param g         the graphics context.
-	 * @param container the container on which it is rendered.
-	 * @param x         x coordinate of left of text.
-	 * @param y         y coordinate of text baseline.
-	 * @param text      the text to write.
-	 */
-	public static void drawWorldGhostText(Graphics g, IContainer container, double x, double y, String text) {
-		drawWorldGhostText(g, container, x, y, text, 0, 0);
-	}
-
-	/**
-	 * Draw ghosted (etched) text at the given world point.
-	 *
-	 * @param g         the graphics context.
-	 * @param container the container on which it is rendered.
-	 * @param x         x coordinate of left of text.
-	 * @param y         y coordinate of text baseline.
-	 * @param text      the text to write.
-	 * @param dh        additional horizontal offset.
-	 * @param dv        additional vertical offset.
-	 */
-	public static void drawWorldGhostText(Graphics g, IContainer container, double x, double y, String text, int dh,
-			int dv) {
-		if (text == null) {
-			return;
-		}
-
-		Point p = new Point();
-		container.worldToLocal(p, x, y);
-		TextUtils.drawGhostText(g, text, p.x + dh, p.y + dv);
-	}
 
 	/**
 	 * Draw text at the given world point.
@@ -759,42 +725,6 @@ public class WorldGraphicsUtils {
 		Point p = new Point();
 		container.worldToLocal(p, x, y);
 		g.drawString(text, p.x + dh, p.y + dv);
-	}
-
-	/**
-	 * Draw halo text at the given world point.
-	 *
-	 * @param g         the graphics context.
-	 * @param container the container on which it is rendered.
-	 * @param x         x coordinate of left of text.
-	 * @param y         y coordinate of text baseline.
-	 * @param text      the text to write.
-	 */
-	public static void drawWorldHaloText(Graphics g, IContainer container, double x, double y, String text) {
-		drawWorldHaloText(g, container, x, y, text, 0, 0);
-	}
-
-	/**
-	 * Draw halo text at the given world point.
-	 *
-	 * @param g         the graphics context.
-	 * @param container the container on which it is rendered.
-	 * @param x         x coordinate of left of text.
-	 * @param y         y coordinate of text baseline.
-	 * @param text      the text to write.
-	 * @param dh        additional horizontal offset.
-	 * @param dv        additional vertical offset.
-	 */
-	public static void drawWorldHaloText(Graphics g, IContainer container, double x, double y, String text, int dh,
-			int dv) {
-		if (text == null) {
-			return;
-		}
-
-		Point p = new Point();
-		container.worldToLocal(p, x, y);
-		TextUtils.drawHaloText(g, text, p.x + dh, p.y + dv);
-
 	}
 
 	/**
@@ -897,53 +827,6 @@ public class WorldGraphicsUtils {
 		}
 
 		return count;
-	}
-
-	/**
-	 * Get the convex hull of a path
-	 *
-	 * @param path the path in question
-	 * @return the convex hull
-	 */
-	public static Path2D getConvexHull(Path2D path) {
-		int count = getPathPointCount(path);
-		if (count < 4) {
-			return path;
-		}
-
-		Point2D.Double wp[] = new Point2D.Double[count];
-		int index = 0;
-		PathIterator pi = path.getPathIterator(null);
-
-		double coords[] = new double[6];
-		while (!pi.isDone()) {
-			int type = pi.currentSegment(coords);
-			switch (type) {
-			case PathIterator.SEG_MOVETO:
-			case PathIterator.SEG_LINETO:
-				wp[index] = new Point2D.Double(coords[0], coords[1]);
-				index++;
-				break;
-
-			// TODO curves
-			}
-			pi.next();
-		}
-
-		// now get convex hull
-		int n = MathUtils.getConvexHull(wp);
-		if (n < 3) {
-			return null;
-		}
-
-		Path2D newPath = new Path2D.Double();
-		newPath.moveTo(wp[0].x, wp[0].y);
-		for (int i = 1; i < n; i++) {
-			newPath.lineTo(wp[i].x, wp[i].y);
-		}
-		newPath.lineTo(wp[0].x, wp[0].y);
-
-		return newPath;
 	}
 
 	/**

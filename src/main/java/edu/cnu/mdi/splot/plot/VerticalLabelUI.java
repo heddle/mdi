@@ -19,14 +19,6 @@ import javax.swing.plaf.basic.BasicLabelUI;
  * <P>
  * Extends {@link BasicLabelUI}.
  * <P>
- * The only difference between the appearance of labels in the Basic and Metal
- * L&Fs is the manner in which diabled text is painted. As VerticalLabelUI does
- * not override the method paintDisabledText, this class can be adapted for
- * Metal L&F by extending MetalLabelUI instead of BasicLabelUI.
- * <P>
- * No other changes are required.
- *
- * @author Darryl
  */
 public class VerticalLabelUI extends BasicLabelUI {
 
@@ -35,8 +27,7 @@ public class VerticalLabelUI extends BasicLabelUI {
 	Rectangle verticalViewR = new Rectangle();
 	Rectangle verticalIconR = new Rectangle();
 	Rectangle verticalTextR = new Rectangle();
-	protected static VerticalLabelUI verticalLabelUI = new VerticalLabelUI();
-	private final static VerticalLabelUI SAFE_VERTICAL_LABEL_UI = new VerticalLabelUI();
+	private final static VerticalLabelUI VERTICAL_LABEL_UI = new VerticalLabelUI();
 
 	/**
 	 * Constructs a <code>VerticalLabelUI</code> with the default anticlockwise
@@ -59,11 +50,7 @@ public class VerticalLabelUI extends BasicLabelUI {
 	 * @see ComponentUI#createUI(javax.swing.JComponent)
 	 */
 	public static ComponentUI createUI(JComponent c) {
-		if (System.getSecurityManager() != null) {
-			return SAFE_VERTICAL_LABEL_UI;
-		} else {
-			return verticalLabelUI;
-		}
+		return VERTICAL_LABEL_UI;
 	}
 
 	/**

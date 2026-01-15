@@ -1,4 +1,4 @@
-package edu.cnu.mdi.splot.plot;
+package edu.cnu.mdi.util;
 
 import java.awt.Component;
 import java.awt.Graphics;

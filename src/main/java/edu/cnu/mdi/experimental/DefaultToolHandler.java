@@ -7,7 +7,7 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
-import edu.cnu.mdi.splot.plot.PrintUtils;
+import edu.cnu.mdi.util.PrintUtils;
 import edu.cnu.mdi.util.TakePicture;
 
 public class DefaultToolHandler implements IToolHandler {
@@ -19,9 +19,9 @@ public class DefaultToolHandler implements IToolHandler {
 
 	@Override
 	public void pointerRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
-		// no-op
+		
 	}
-
+	
 	@Override
 	public void boxZoomRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
 		// no-op
@@ -115,6 +115,7 @@ public class DefaultToolHandler implements IToolHandler {
 	public void print(AToolBar toolBar, Component canvas) {
 		PrintUtils.printComponent(canvas);
 	}
+
 	
 
 }

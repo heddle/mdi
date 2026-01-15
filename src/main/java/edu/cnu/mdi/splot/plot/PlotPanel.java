@@ -15,8 +15,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
+import edu.cnu.mdi.experimental.BaseToolBar;
 import edu.cnu.mdi.feedback.FeedbackPane;
-import edu.cnu.mdi.splot.toolbar.PlotToolBar;
+import edu.cnu.mdi.util.PrintUtils;
 
 @SuppressWarnings("serial")
 public class PlotPanel extends JPanel implements PropertyChangeListener {
@@ -40,7 +41,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 	public static int STANDARD = 0;
 
 	// toolbar
-	protected PlotToolBar _toolbar;
+	protected BaseToolBar _toolbar;
 
 	protected int _decorations;
 
@@ -113,18 +114,11 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 	// add the north component
 	private void addNorth() {
 		PlotParameters parameters = _canvas.getParameters();
+		
+		PlotToolHandler toolHandler = new PlotToolHandler(this);
+		_toolbar = toolHandler.getToolBar();
+		_canvas.setToolBar(_toolbar);
 
-		// toolbar
-		_toolbar = new PlotToolBar(_canvas) {
-			@Override
-			public void paint(Graphics g) {
-				// exclude from print
-				if (!PrintUtils.isPrinting()) {
-					super.paint(g);
-				}
-			}
-		};
-		_toolbar.addToolBarListener(_canvas);
 
 		JPanel npanel = new JPanel();
 		npanel.setOpaque(true);
@@ -259,13 +253,5 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 
 	}
 
-	/**
-	 * Set which toggle button is selected
-	 */
-	public void setSelectedToggle(String s) {
-		if (_toolbar != null) {
-			_toolbar.setSelectedToggle(s);
-		}
-	}
 
 }

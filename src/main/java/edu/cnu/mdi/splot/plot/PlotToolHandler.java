@@ -19,8 +19,6 @@ public class PlotToolHandler extends DefaultToolHandler {
 	// Toolbar that owns this tool handler
 	private BaseToolBar toolBar;
 
-	private PlotCanvas plotCanvas;
-
 	/**
 	 * Create a tool handler for the given plot panel.
 	 * 
@@ -28,7 +26,7 @@ public class PlotToolHandler extends DefaultToolHandler {
 	 */
 	public PlotToolHandler(PlotPanel plotPanel) {
 		Objects.requireNonNull(plotPanel, "plotPanel");
-		this.plotCanvas = plotPanel.getPlotCanvas();
+		PlotCanvas plotCanvas = plotPanel.getPlotCanvas();
 		Objects.requireNonNull(plotCanvas, "plotCanvas");
 		
 		//what is on the toolbar depends on type
@@ -36,14 +34,16 @@ public class PlotToolHandler extends DefaultToolHandler {
 		PlotDataType type = plotCanvas.getType();
 		if (type != PlotDataType.STRIP) {
 			bits = ToolBarBits.POINTERBUTTON | ToolBarBits.PLOTTOOLS;
+			bits = bits & ~ToolBarBits.UNDOZOOMBUTTON; //no undo zoom for now
 		}
 		else {
-			bits = ToolBarBits.PLOTTOOLS;
+			bits = ToolBarBits.POINTERBUTTON | ToolBarBits.PICVIEWSTOOLS;
 		}
 		
+		Rubberband.Policy pointerPolicy = Rubberband.Policy.NONE;
 		//histograms have x only policy
-		Rubberband.Policy policy = (type == PlotDataType.H1D) ? Rubberband.Policy.XONLY : Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT;
-		toolBar = new BaseToolBar(plotCanvas, this, bits, policy);
+		Rubberband.Policy boxZoomPolicy = (type == PlotDataType.H1D) ? Rubberband.Policy.XONLY : Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT;
+		toolBar = new BaseToolBar(plotCanvas, this, bits, pointerPolicy, boxZoomPolicy);
 	}
 	
 	/**
