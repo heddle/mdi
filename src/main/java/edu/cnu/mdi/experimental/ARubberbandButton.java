@@ -137,24 +137,6 @@ public abstract class ARubberbandButton extends JToggleButton
 	public abstract void rubberbanding(Rectangle bounds, Point[] vertices);
 	
 	/**
-	 * Handle a simple press (no rubber-banding).
-	 *
-	 * @param p point pressed
-	 */
-	public void simplePress(Point p) {
-		// Default is no-op
-	}
-	
-	/**
-	 * Hit test the given point to see if clicked on an object.
-	 * @param p point to test
-	 * @return true if hit and object, false if miss
-	 */
-	public boolean hitTest(Point p) {
-		return false;
-	}
-
-	/**
 	 * Cancel an in-progress rubber-band gesture.
 	 */
 	protected final void cancelRubberband() {

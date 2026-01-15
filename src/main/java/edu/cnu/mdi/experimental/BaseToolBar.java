@@ -43,7 +43,7 @@ public class BaseToolBar extends AToolBar {
 	private long bits;
 
 	// predefined rubberbanding toggle buttons
-	protected ARubberbandButton pointerButton;
+	protected ASelectionRubberbandButtonExp pointerButton;
 	protected ARubberbandButton boxZoomButton;
 	protected ARubberbandButton lineButton;
 	protected ARubberbandButton rectangleButton;
@@ -136,7 +136,7 @@ public class BaseToolBar extends AToolBar {
 	private void addPredefinedButtons() {
 		//pointer button
 		if (ToolBarBits.hasPointerButton(bits)) {
-		pointerButton = new ARubberbandButton(canvas, this, pointerPolicy, DEFAULT_MIN_SIZE_PX) {
+		pointerButton = new ASelectionRubberbandButtonExp(canvas, this, pointerPolicy, DEFAULT_MIN_SIZE_PX) {
 
 				@Override
 				public void rubberbanding(Rectangle bounds, Point[] vertices) {
@@ -144,7 +144,15 @@ public class BaseToolBar extends AToolBar {
 				}
 
 				@Override
-				public void simplePress(Point p) {
+				public void simplePress(Point p, boolean isAdd) {
+					// handle simple click with pointer tool
+					System.out.println("Pointer button simple press at: " + p + ", isAdd: " + isAdd);
+				}
+				
+				public Object doubleClickHitTest(Point p) {
+					// handle double click with pointer tool
+					System.out.println("Pointer button double click at: " + p);
+					return null;
 				}
 
 			};
@@ -163,10 +171,6 @@ public class BaseToolBar extends AToolBar {
 					handler.boxZoomRubberbanding(BaseToolBar.this, canvas, bounds);
 				}
 				
-				@Override
-				public void simplePress(Point p) {
-				}
-
 			};
 			configureButton(boxZoomButton, ToolBarBits.BOXZOOMBUTTON);
 			addToggle(boxZoomButton);
@@ -278,7 +282,6 @@ public class BaseToolBar extends AToolBar {
 				public void canvasClick(MouseEvent e) {
 					handler.recenter(BaseToolBar.this, canvas, e.getPoint());
 				}
-
 			};
 			configureButton(centerButton, ToolBarBits.CENTERBUTTON);
 			addToggle(centerButton);
@@ -295,11 +298,6 @@ public class BaseToolBar extends AToolBar {
 					System.out.println("Line button rubberbanded: " + vertices[0] + " to " + vertices[1]);
 					resetDefaultToggleButton();
 				}
-
-				@Override
-				public void simplePress(Point p) {
-				}
-
 			};
 			configureButton(lineButton, ToolBarBits.LINEBUTTON);
 			addToggle(lineButton);
@@ -315,11 +313,6 @@ public class BaseToolBar extends AToolBar {
 					System.out.println("Rectangle button rubberbanded: " + bounds);
 					resetDefaultToggleButton();
 				}
-				
-				@Override
-				public void simplePress(Point p) {
-				}
-
 			};
 			configureButton(rectangleButton, ToolBarBits.RECTANGLEBUTTON);
 			addToggle(rectangleButton);
@@ -336,11 +329,6 @@ public class BaseToolBar extends AToolBar {
 					System.out.println("Ellipse button rubberbanded: " + bounds);
 					resetDefaultToggleButton();
 				}
-				
-				@Override
-				public void simplePress(Point p) {
-				}
-
 			};
 			configureButton(ellipseButton, ToolBarBits.ELLIPSEBUTTON);
 			addToggle(ellipseButton);
@@ -356,11 +344,6 @@ public class BaseToolBar extends AToolBar {
 					System.out.println("RadArc button rubberbanded: " + bounds);
 					resetDefaultToggleButton();
 				}
-				
-				@Override
-				public void simplePress(Point p) {
-				}
-
 			};
 			configureButton(radArcButton, ToolBarBits.RADARCBUTTON);
 			addToggle(radArcButton);
@@ -376,11 +359,6 @@ public class BaseToolBar extends AToolBar {
 					System.out.println("Polygon button rubberbanded, num vert " + vertices.length);
 					resetDefaultToggleButton();
 				}
-				
-				@Override
-				public void simplePress(Point p) {
-				}
-
 			};
 			configureButton(polygonButton, ToolBarBits.POLYGONBUTTON);
 			addToggle(polygonButton);
@@ -396,11 +374,6 @@ public class BaseToolBar extends AToolBar {
 					System.out.println("Polyline button rubberbanded, num vert " + vertices.length);
 					resetDefaultToggleButton();
 				}
-				
-				@Override
-				public void simplePress(Point p) {
-				}
-
 			};
 			configureButton(polylineButton, ToolBarBits.POLYLINEBUTTON);
 			addToggle(polylineButton);
@@ -433,10 +406,6 @@ public class BaseToolBar extends AToolBar {
 					resetDefaultToggleButton();
 				}
 
-				@Override
-				public void simplePress(Point p) {
-				}
-				
 				@Override
 				public boolean approvePoint(Point p) {
 					return true;
