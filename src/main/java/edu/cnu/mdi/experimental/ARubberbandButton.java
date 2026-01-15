@@ -57,8 +57,6 @@ public abstract class ARubberbandButton extends JToggleButton
 	/** If true, rubberbanding starts on drag instead of press */
 	protected boolean startOnDrag;
 
-	private boolean dragPrimed;
-
 	/**
 	 * Create a rubber-band based tool.
 	 *
