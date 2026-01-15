@@ -1,0 +1,84 @@
+package edu.cnu.mdi.splot.plot;
+
+import java.awt.Component;
+import java.awt.Rectangle;
+import java.util.Objects;
+
+import edu.cnu.mdi.experimental.AToolBar;
+import edu.cnu.mdi.experimental.BaseToolBar;
+import edu.cnu.mdi.experimental.DefaultToolHandler;
+import edu.cnu.mdi.experimental.ToolBarBits;
+import edu.cnu.mdi.graphics.rubberband.Rubberband;
+import edu.cnu.mdi.splot.pdata.PlotDataType;
+
+
+public class PlotToolHandler extends DefaultToolHandler {
+	
+	private static final double ZOOM_FACTOR = 0.85;
+	
+	// Toolbar that owns this tool handler
+	private BaseToolBar toolBar;
+
+	private PlotCanvas plotCanvas;
+
+	/**
+	 * Create a tool handler for the given plot panel.
+	 * 
+	 * @param plotPanel Plot panel
+	 */
+	public PlotToolHandler(PlotPanel plotPanel) {
+		Objects.requireNonNull(plotPanel, "plotPanel");
+		this.plotCanvas = plotPanel.getPlotCanvas();
+		Objects.requireNonNull(plotCanvas, "plotCanvas");
+		
+		//what is on the toolbar depends on type
+		long bits = 0;
+		PlotDataType type = plotCanvas.getType();
+		if (type != PlotDataType.STRIP) {
+			bits = ToolBarBits.POINTERBUTTON | ToolBarBits.PLOTTOOLS;
+		}
+		else {
+			bits = ToolBarBits.PLOTTOOLS;
+		}
+		
+		//histograms have x only policy
+		Rubberband.Policy policy = (type == PlotDataType.H1D) ? Rubberband.Policy.XONLY : Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT;
+		toolBar = new BaseToolBar(plotCanvas, this, bits, policy);
+	}
+	
+	/**
+	 * Get the toolbar associated with this tool handler.
+	 * 
+	 * @return Toolbar
+	 */
+	public BaseToolBar getToolBar() {
+		return toolBar;
+	}
+	
+	@Override
+	public void boxZoomRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
+		PlotCanvas plotCanvas = (PlotCanvas) canvas;
+		plotCanvas.zoomToRect(bounds);
+	}
+
+	@Override
+	public void zoomIn(AToolBar toolBar, Component canvas) {
+		PlotCanvas plotCanvas = (PlotCanvas) canvas;
+		plotCanvas.scale(ZOOM_FACTOR);
+	}
+
+	@Override
+	public void zoomOut(AToolBar toolBar, Component canvas) {
+		PlotCanvas plotCanvas = (PlotCanvas) canvas;
+		plotCanvas.scale(1.0 / ZOOM_FACTOR);
+	}
+
+	@Override
+	public void resetZoom(AToolBar toolBar, Component canvas) {
+		PlotCanvas plotCanvas = (PlotCanvas) canvas;
+		plotCanvas.setWorldSystem();
+		plotCanvas.repaint();
+	}
+
+
+}

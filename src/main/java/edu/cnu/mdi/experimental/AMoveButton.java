@@ -9,6 +9,7 @@ import java.awt.event.MouseMotionListener;
 
 import javax.swing.JToggleButton;
 
+@SuppressWarnings("serial")
 public abstract class AMoveButton extends JToggleButton implements MouseListener, MouseMotionListener {
 
 	// Is a move operation in progress?
@@ -42,7 +43,6 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 	
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		
 	}
 
 	
@@ -62,6 +62,7 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 	
 	@Override
 	public void mousePressed(MouseEvent e) {
+		// mouse press ends move if in progress
 		endMove(e.getPoint());
 	}
 
@@ -83,6 +84,7 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 
 	@Override
 	public void mouseExited(MouseEvent e) {
+		// mouse exit ends move if in progress
 		endMove(e.getPoint());
 	}
 

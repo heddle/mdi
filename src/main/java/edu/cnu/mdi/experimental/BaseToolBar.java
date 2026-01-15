@@ -18,6 +18,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 
 import edu.cnu.mdi.graphics.ImageManager;
+import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.graphics.rubberband.Rubberband.Policy;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
@@ -55,9 +56,22 @@ public class BaseToolBar extends AToolBar {
 	//predefined click on canvas buttons
 	protected ASingleClickButton centerButton;
 	protected ASingleClickButton textButton;
+	
+	//buttons that use dragging
+	protected ADragButton panButton;
+	
+	//buttons that track movement
+	protected AMoveButton magnifyButton;
+	
+	//one shot buttons
+	protected AOneShotButton zoomInButton;
+	protected AOneShotButton zoomOutButton;
 
 	//handles the gestures and actions of the tools
 	protected IToolHandler handler;
+	
+	//what policy to use for box zoom
+	protected Rubberband.Policy boxZoomPolicy;
 
 	/**
 	 * Creates a new horizontal toolbar associated with a canvas.
@@ -70,8 +84,13 @@ public class BaseToolBar extends AToolBar {
 	 * creating the toolbar.
 	 */
 	public BaseToolBar(Component canvas, IToolHandler handler, long bits) {
-		this(canvas, handler, bits, HORIZONTAL);
+		this(canvas, handler, bits, HORIZONTAL, Policy.RECTANGLE_PRESERVE_ASPECT);
 	}
+	
+	public BaseToolBar(Component canvas, IToolHandler handler, long bits, Rubberband.Policy boxZoomPolicy) {
+		this(canvas, handler, bits, HORIZONTAL, boxZoomPolicy);
+	}
+
 
 	/**
 	 *
@@ -86,11 +105,12 @@ public class BaseToolBar extends AToolBar {
 	 * @param orientation the initial orientation -- it must be either
 	 *                    <code>HORIZONTAL</code> or <code>VERTICAL</code>
 	 */
-	public BaseToolBar(Component canvas, IToolHandler handler, long bits, int orientation) {
+	public BaseToolBar(Component canvas, IToolHandler handler, long bits, int orientation,  Rubberband.Policy boxZoomPolicy) {
 		super(orientation);
 		this.canvas = canvas;
 		this.bits = bits;
 		this.handler = handler;
+		this.boxZoomPolicy = boxZoomPolicy;
 		Objects.requireNonNull(canvas, "Canvas component cannot be null");
 		Objects.requireNonNull(handler, "Tool handler cannot be null");
 
@@ -123,7 +143,7 @@ public class BaseToolBar extends AToolBar {
 
 		//box_zoom button
 		if (ToolBarBits.hasBoxZoomButton(bits)) {
-			boxZoomButton = new ARubberbandButton(canvas, this, Policy.RECTANGLE_PRESERVE_ASPECT, DEFAULT_MIN_SIZE_PX) {
+			boxZoomButton = new ARubberbandButton(canvas, this, boxZoomPolicy, DEFAULT_MIN_SIZE_PX) {
 
 				@Override
 				public void rubberbanding(Rectangle bounds, Point[] vertices) {
@@ -134,10 +154,61 @@ public class BaseToolBar extends AToolBar {
 			configureButton(boxZoomButton, ToolBarBits.BOXZOOMBUTTON);
 			addToggle(boxZoomButton);
 		}
+		
+		//zoom in button
+		if (ToolBarBits.hasZoomInButton(bits)) {
+			zoomInButton = new AOneShotButton(canvas, this) {
 
+				@Override
+				public void performAction() {
+					handler.zoomIn(BaseToolBar.this, canvas);
+				}
+			};
+			configureButton(zoomInButton, ToolBarBits.ZOOMINBUTTON);
+			addButton(zoomInButton);
+		}
+		
+		//zoom out button
+		if (ToolBarBits.hasZoomOutButton(bits)) {
+			zoomOutButton = new AOneShotButton(canvas, this) {
+
+				@Override
+				public void performAction() {
+					handler.zoomOut(BaseToolBar.this, canvas);
+				}
+			};
+			configureButton(zoomOutButton, ToolBarBits.ZOOMOUTBUTTON);
+			addButton(zoomOutButton);
+		}
+		
+		//undo zoom button
+		if (ToolBarBits.hasUndoZoomButton(bits)) {
+			AOneShotButton undoZoomButton = new AOneShotButton(canvas, this) {
+
+				@Override
+				public void performAction() {
+					handler.undoZoom(BaseToolBar.this, canvas);
+				}
+			};
+			configureButton(undoZoomButton, ToolBarBits.UNDOZOOMBUTTON);
+			addButton(undoZoomButton);
+		}
+
+		//reset zoom button
+		if (ToolBarBits.hasResetZoomButton(bits)) {
+			AOneShotButton resetZoomButton = new AOneShotButton(canvas, this) {
+
+				@Override
+				public void performAction() {
+					handler.resetZoom(BaseToolBar.this, canvas);
+				}
+			};
+			configureButton(resetZoomButton, ToolBarBits.RESETZOOMBUTTON);
+			addButton(resetZoomButton);
+		}
 		//pan button
 		if (ToolBarBits.hasPanButton(bits)) {
-			ADragButton panButton = new ADragButton(canvas, this) {
+			panButton = new ADragButton(canvas, this) {
 				@Override
 				public void startDrag(Point start) {
 					handler.panStartDrag(BaseToolBar.this, canvas, start);
@@ -161,7 +232,7 @@ public class BaseToolBar extends AToolBar {
 		// magnify button
 		if (ToolBarBits.hasMagnifyButton(bits)) {
 			Dimension dimension = new Dimension(100, 100);
-			AMoveButton magnifyButton = new AMoveButton(canvas, this, dimension) {
+			magnifyButton = new AMoveButton(canvas, this, dimension) {
 
 				@Override
 				public void startMove(Point start) {
@@ -329,6 +400,58 @@ public class BaseToolBar extends AToolBar {
 			};
 			configureButton(connectorButton, ToolBarBits.CONNECTORBUTTON);
 			addToggle(connectorButton);
+		}
+		
+		//style button
+		if (ToolBarBits.hasStyleButton(bits)) {
+			AOneShotButton styleButton = new AOneShotButton(canvas, this) {
+
+				@Override
+				public void performAction() {
+					handler.styleEdit(BaseToolBar.this, canvas);
+				}
+			};
+			configureButton(styleButton, ToolBarBits.STYLEBUTTON);
+			addButton(styleButton);
+		}
+		
+		//delete button
+		if (ToolBarBits.hasDeleteButton(bits)) {
+			AOneShotButton deleteButton = new AOneShotButton(canvas, this) {
+
+				@Override
+				public void performAction() {
+					handler.delete(BaseToolBar.this, canvas);
+				}
+			};
+			configureButton(deleteButton, ToolBarBits.DELETEBUTTON);
+			addButton(deleteButton);
+		}
+		
+		//camera button
+		if (ToolBarBits.hasCameraButton(bits)) {
+			AOneShotButton cameraButton = new AOneShotButton(canvas, this) {
+
+				@Override
+				public void performAction() {
+					handler.captureImage(BaseToolBar.this, canvas);
+				}
+			};
+			configureButton(cameraButton, ToolBarBits.CAMERABUTTON);
+			addButton(cameraButton);
+		}
+		
+		//printer button
+		if (ToolBarBits.hasPrinterButton(bits)) {
+			AOneShotButton printerButton = new AOneShotButton(canvas, this) {
+
+				@Override
+				public void performAction() {
+					handler.print(BaseToolBar.this, canvas);
+				}
+			};
+			configureButton(printerButton, ToolBarBits.PRINTERBUTTON);
+			addButton(printerButton);
 		}
 
 		//status field

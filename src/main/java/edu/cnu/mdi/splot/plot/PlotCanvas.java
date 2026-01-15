@@ -816,6 +816,10 @@ public class PlotCanvas extends JComponent
 	public void doneRubberbanding() {
 		_toolbar.resetDefaultSelection();
 		Rectangle rbrect = _rubberband.getRubberbandBounds();
+		zoomToRect(rbrect);
+	}
+	
+	public void zoomToRect(Rectangle rbrect) {
 		if ((rbrect.width < 15) || (rbrect.height < 15)) {
 			return;
 		}
@@ -823,7 +827,7 @@ public class PlotCanvas extends JComponent
 		localToWorld(rbrect, _worldSystem);
 
 		_rubberband = null;
-		repaint();
+		repaint();		
 	}
 
 	/**

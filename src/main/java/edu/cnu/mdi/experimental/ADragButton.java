@@ -42,8 +42,12 @@ public abstract class ADragButton extends JToggleButton implements MouseListener
 	public void mouseClicked(MouseEvent e) {
 		
 	}
-
 	
+	/**
+	 * Check if point is contained within the canvas.
+	 * @param p Point to check
+	 * @return true if contained, false otherwise
+	 */
 	private boolean contained(Point p) {
 		return (p.x >= 0 && p.y >= 0 && p.x < canvas.getWidth() && p.y < canvas.getHeight());
 	}

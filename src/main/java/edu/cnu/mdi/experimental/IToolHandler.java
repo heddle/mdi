@@ -91,4 +91,68 @@ public interface IToolHandler {
 	 * @param center Point to recenter the canvas at
 	 */	
 	public void recenter(AToolBar toolBar, Component canvas, Point center);
+	
+	/**
+	 * Zoom in on the canvas.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas JComponent on which the zooming is occurring
+	 */
+	public void zoomIn(AToolBar toolBar, Component canvas);
+	
+	/**
+	 * Zoom out on the canvas.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas JComponent on which the zooming is occurring
+	 */
+	public void zoomOut(AToolBar toolBar, Component canvas);
+	
+	/**
+	 * Undo the last zoom operation on the canvas.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas JComponent on which the zooming is occurring
+	 */
+	public void undoZoom(AToolBar toolBar, Component canvas);
+	
+	/**
+	 * Reset the zoom on the canvas to the default state.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas JComponent on which the zooming is occurring
+	 */
+	public void resetZoom(AToolBar toolBar, Component canvas);
+	
+	/**
+	 * Edit the style of the selected objects on the canvas.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas JComponent on which the style editing is occurring
+	 */
+	public void styleEdit(AToolBar toolBar, Component canvas);
+	
+	/**
+	 * Delete the selected objects on the canvas.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas JComponent on which the deletion is occurring
+	 */
+	public void delete(AToolBar toolBar, Component canvas);
+	
+	/**
+	 * Capture an image of the canvas in a png file.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas JComponent from which the image is captured
+	 */
+	public void captureImage(AToolBar toolBar, Component canvas);
+	
+	/**
+	 * Print the canvas.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas JComponent to print
+	 */
+	public void print(AToolBar toolBar, Component canvas);
 }

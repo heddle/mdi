@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
@@ -99,6 +100,18 @@ public abstract class AToolBar extends JToolBar {
 		setFloatable(false);
 		putClientProperty("JToolBar.isRollover", true);
 
+	}
+
+	/**
+	 * Add a button to the toolbar.
+	 *
+	 * @param button the toggle to add (ignored if null).
+	 * @return the added button (for chaining), or null if the argument was null.
+	 */
+	public JButton addButton(JButton button) {
+		Objects.requireNonNull(button, "B button cannot be null.");
+		super.add(button);
+		return button;
 	}
 
 	/**

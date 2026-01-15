@@ -23,7 +23,7 @@ public class TestCanvas extends JFrame {
 	
 	public TestCanvas() {
 		setTitle("Test Canvas");
-		setSize(800, 600);
+		setSize(900, 600);
 		UIInit();
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
