@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
@@ -16,6 +17,19 @@ public class DefaultToolHandler implements IToolHandler {
 	private BufferedImage base;
 	private BufferedImage buffer;
 
+
+	@Override
+	public Object hitTest(AToolBar toolBar, Component canvas, Point p) {
+		return null;
+	}
+
+	@Override
+	public void pointerClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e) {
+	}
+
+	@Override
+	public void pointerDoubleClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e) {
+	}
 
 	@Override
 	public void pointerRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
@@ -57,17 +71,17 @@ public class DefaultToolHandler implements IToolHandler {
 	}
 
 	@Override
-	public void magnifyStartMove(AToolBar toolBar, Component canvas, Point start) {
+	public void magnifyStartMove(AToolBar toolBar, Component canvas, Point start, MouseEvent e) {
 		// no-op
 	}
 
 	@Override
-	public void magnifyUpdateMove(AToolBar toolBar, Component canvas, Point start, Point p) {
+	public void magnifyUpdateMove(AToolBar toolBar, Component canvas, Point start, Point p, MouseEvent e) {
 		// no-op
 	}
 
 	@Override
-	public void magnifyDoneMove(AToolBar toolBar, Component canvas, Point start, Point end) {
+	public void magnifyDoneMove(AToolBar toolBar, Component canvas, Point start, Point end, MouseEvent e) {
 		// no-op
 	}
 
@@ -115,7 +129,6 @@ public class DefaultToolHandler implements IToolHandler {
 	public void print(AToolBar toolBar, Component canvas) {
 		PrintUtils.printComponent(canvas);
 	}
-
 	
 
 }

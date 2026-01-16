@@ -63,7 +63,7 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 	@Override
 	public void mousePressed(MouseEvent e) {
 		// mouse press ends move if in progress
-		endMove(e.getPoint());
+		endMove(e.getPoint(), e);
 	}
 
 	@Override
@@ -71,10 +71,10 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 	}
 	
 	// Complete the move operation
-	private void endMove(Point end) {
+	private void endMove(Point end, MouseEvent e) {
 		moving = false;
 		toolBar.resetDefaultToggleButton();
-		doneMove(startPoint, end);
+		doneMove(startPoint, end, e);
 	    startPoint = null;
 	}
 
@@ -85,7 +85,7 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 	@Override
 	public void mouseExited(MouseEvent e) {
 		// mouse exit ends move if in progress
-		endMove(e.getPoint());
+		endMove(e.getPoint(), e);
 	}
 
 	@Override
@@ -100,17 +100,17 @@ public abstract class AMoveButton extends JToggleButton implements MouseListener
 			if (startPoint == null) {
 				startPoint = e.getPoint();
 				// System.out.println("Starting move at " + e.getPoint());
-				startMove(startPoint);
+				startMove(startPoint,  e);
 			} else {
 				System.out.println("Moving at " + e.getPoint());
-				updateMove(startPoint, e.getPoint());
+				updateMove(startPoint, e.getPoint(), e);
 			}
 		}
 
 	}
 	
-	public abstract void startMove(Point start);
-	public abstract void updateMove(Point start, Point p);
-	public abstract void doneMove(Point start, Point end);
+	public abstract void startMove(Point start, MouseEvent e);
+	public abstract void updateMove(Point start, Point p, MouseEvent e);
+	public abstract void doneMove(Point start, Point end, MouseEvent e);
 
 }

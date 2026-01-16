@@ -3,8 +3,19 @@ package edu.cnu.mdi.experimental;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 
 public interface IToolHandler {
+	
+	/**
+	 * Hit test at the given point on the canvas.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas  JComponent on which the hit test is occurring
+	 * @param p       Point to hit test
+	 * @return Object that was hit, or null if nothing was hit
+	 */
+	public Object hitTest(AToolBar toolBar, Component canvas, Point p);
 
 	/**
 	 * Handle pointer button rubberbanding with the given bounds.
@@ -14,6 +25,28 @@ public interface IToolHandler {
 	 * @param bounds Rectangle defining the rubberband area
 	 */
 	public void pointerRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds);
+	
+	/**
+	 * Handle pointer click on an object at the given point.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas JComponent on which the click is occurring
+	 * @param p      Point where the click occurred
+	 * @param obj    Object that was clicked or null if none
+	 * @param e      MouseEvent that triggered the click
+	 */
+	public void pointerClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e);
+	
+	/**
+	 * Handle pointer double click on an object at the given point.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas JComponent on which the double click is occurring
+	 * @param p      Point where the double click occurred
+	 * @param obj    Object that was double clicked or null if none
+	 * @param e      MouseEvent that triggered the click
+	 */
+	public void pointerDoubleClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e);
 	
 	/**
 	 * Handle box zoom rubberbanding with the given bounds.
@@ -60,8 +93,9 @@ public interface IToolHandler {
 	 * @param toolBar ToolBar that owns this tool
 	 * @param canvas JComponent on which the move is occurring
 	 * @param p      Starting point of the move
+	 * @param e      MouseEvent that triggered the start
 	 */
-	public void magnifyStartMove(AToolBar toolBar, Component canvas, Point start);
+	public void magnifyStartMove(AToolBar toolBar, Component canvas, Point start, MouseEvent e);
 	
 	/**
 	 * Handle an update during a magnify move operation.
@@ -70,8 +104,9 @@ public interface IToolHandler {
 	 * @param canvas JComponent on which the move is occurring
 	 * @param start  Overall tarting point of the move (not the previous point)
 	 * @param p      Current point during the move
+	 * @param e      MouseEvent that triggered the update
 	 */
-	public void magnifyUpdateMove(AToolBar toolBar, Component canvas, Point start, Point p);
+	public void magnifyUpdateMove(AToolBar toolBar, Component canvas, Point start, Point p, MouseEvent e);
 	
 	/**
 	 * Handle the end of a magnify move operation.
@@ -80,8 +115,9 @@ public interface IToolHandler {
 	 * @param canvas JComponent on which the move is occurring
 	 * @param start  Overall starting point of the move (not the previous point)
 	 * @param end    Ending point of the move
+	 * @param e      MouseEvent that ended the move
 	 */
-	public void magnifyDoneMove(AToolBar toolBar, Component canvas, Point start, Point end);
+	public void magnifyDoneMove(AToolBar toolBar, Component canvas, Point start, Point end, MouseEvent e);
 	
 	/**
 	 * Recenter the canvas at the given point.
@@ -155,4 +191,6 @@ public interface IToolHandler {
 	 * @param canvas JComponent to print
 	 */
 	public void print(AToolBar toolBar, Component canvas);
+	
+
 }
