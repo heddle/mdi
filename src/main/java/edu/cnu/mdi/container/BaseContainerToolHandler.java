@@ -3,13 +3,20 @@ package edu.cnu.mdi.container;
 import java.awt.Component;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+
+import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.component.MagnifyWindow;
 import edu.cnu.mdi.experimental.AToolBar;
 import edu.cnu.mdi.experimental.DefaultToolHandler;
+import edu.cnu.mdi.graphics.style.IStyled;
+import edu.cnu.mdi.graphics.style.Styled;
+import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
+import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.view.BaseView;
 
 public class BaseContainerToolHandler extends DefaultToolHandler {
@@ -48,10 +55,13 @@ public class BaseContainerToolHandler extends DefaultToolHandler {
 	 */
 	@Override
 	public void pointerClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e) {
-		boolean addModifier = isAddModifier(e);
-		System.out.println("Pointer click at " + p + " on object " + obj + ", addModifier=" + addModifier);
+		AItem item = container.getItemAtPoint(e.getPoint());
+		if (item != null && item.isEnabled() && item.isTrackable()) {
+			selectItemsFromClick(item, e);
+		}
+		container.setToolBarState();
 	}
-	
+
 	/**
 	 * Handle pointer double click on an object at the given point.
 	 * 
@@ -63,13 +73,28 @@ public class BaseContainerToolHandler extends DefaultToolHandler {
 	 */
 	@Override
 	public void pointerDoubleClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e) {
-		System.out.println("Pointer double click at " + p + " on object " + obj);
+		AItem item = container.getItemAtPoint(e.getPoint());
+		if (item != null && item.isEnabled() && item.isDoubleClickable()) {
+			item.doubleClicked(e);
+			return;
+		}
 	}
 
 	@Override
 	public void pointerRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
-		// TODO Auto-generated method stub
-		
+		container.selectAllItems(false);
+
+		ArrayList<AItem> enclosed = container.getEnclosedItems(bounds);
+		if (enclosed != null) {
+			for (AItem item : enclosed) {
+				if (item != null && !item.isLocked()) {
+					item.getLayer().selectItem(item, true);
+				}
+			}
+		}
+
+		container.setToolBarState();
+		container.refresh();
 	}
 
 	@Override
@@ -127,20 +152,57 @@ public class BaseContainerToolHandler extends DefaultToolHandler {
 
 	@Override
 	public void styleEdit(AToolBar toolBar, Component canvas) {
-		// TODO Auto-generated method stub
-		
-	}
+		List<AItem> selected = container.getSelectedItems();
+
+		if (selected == null || selected.isEmpty()) {
+			java.awt.Toolkit.getDefaultToolkit().beep();
+			return;
+		}
+
+		// seed from first selected item
+		IStyled seed = selected.get(0).getStyleSafe();
+		Styled edited = StyleEditorDialog.edit(container.getComponent(), seed, false);
+		if (edited == null) {
+			return;
+		}
+
+		for (AItem item : selected) {
+			item.setStyle(edited.copy()); // avoid shared mutable style objects
+			item.setDirty(true);
+		}
+
+		container.refresh();	}
 
 	@Override
 	public void delete(AToolBar toolBar, Component canvas) {
-		// TODO Auto-generated method stub
-		
+		container.deleteSelectedItems();
+		toolBar.resetDefaultToggleButton();
 	}
-	
-	// Check if the add modifier key is pressed (Shift, Ctrl, or Command)
-	private boolean isAddModifier(MouseEvent e) {
-		int m = e.getModifiersEx();
-		return e.isShiftDown() || (m & InputEvent.CTRL_DOWN_MASK) != 0 || (m & InputEvent.META_DOWN_MASK) != 0; // mac
+
+	/**
+	 * Select items based on a click.
+	 *
+	 * @param item clicked item (must not be null).
+	 * @param e    mouse event.
+	 */
+	private void selectItemsFromClick(AItem item, MouseEvent e) {
+
+		// Only left-click participates in selection changes.
+		// Clicking a locked or already-selected item: do nothing.
+		if (!SwingUtilities.isLeftMouseButton(e) || item.isLocked() || item.isSelected()) {
+			return;
+		}
+
+		// If Ctrl not held, deselect all first.
+		if (!e.isControlDown()) {
+			container.selectAllItems(false);
+		}
+
+		// Select the clicked item.
+		item.getLayer().selectItem(item, true);
+
+		container.setDirty(true);
+		container.refresh();
 	}
 
 }

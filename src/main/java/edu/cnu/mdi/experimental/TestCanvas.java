@@ -50,7 +50,7 @@ public class TestCanvas extends JFrame {
 		add(canvas, BorderLayout.CENTER);
 		
 		// add a toolbar
-		BaseToolBar toolBar = new BaseToolBar(canvas, new DefaultToolHandler(), ToolBarBits.EVERYTHING);
+		BaseToolBar toolBar = new BaseToolBar(canvas, new DefaultToolHandler(), ToolBits.EVERYTHING);
 		add(toolBar, BorderLayout.NORTH);
 		
 		canvas.addMouseMotionListener(new MouseMotionAdapter() {

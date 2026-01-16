@@ -808,6 +808,13 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	public void setToolBar(IContainerToolBar toolBar) {
 		_toolBar = toolBar;
 	}
+	
+	/**
+	 *  Check and set the toolbar state (e.g., button enable/disable)
+	 */
+	public void setToolBarState() {
+        //TODO implement with new toolbar
+	}
 
 	/**
 	 * Convert the mouse event location to a world point.

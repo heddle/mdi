@@ -1,6 +1,8 @@
 package edu.cnu.mdi.experimental;
 
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 
@@ -35,7 +37,15 @@ public abstract class AOneShotButton extends JButton {
 	protected AOneShotButton(Component canvas, AToolBar toolBar) {
 		this.toolBar = toolBar;
 		this.canvas = canvas;
-		addActionListener(e -> performAction());
+		
+		ActionListener al = new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				toolBar.resetDefaultToggleButton();
+				performAction();
+			}
+		};
+		addActionListener(al);
 	}
 
 	/**

@@ -3,7 +3,10 @@ package edu.cnu.mdi.experimental;
 import java.awt.Component;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Collections;
 import java.util.Enumeration;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import javax.swing.AbstractButton;
@@ -16,7 +19,8 @@ import javax.swing.SwingConstants;
 
 /**
  * A convenience {@link JToolBar} for toolbars that contain a mutually exclusive
- * set of {@link JToggleButton}s (i.e., a radio-button-like group).
+ * set of {@link JToggleButton}s (i.e., a radio-button-like group), plus optional
+ * one-shot buttons.
  * <p>
  * This class manages:
  * </p>
@@ -25,17 +29,27 @@ import javax.swing.SwingConstants;
  * <li>an optional default toggle button (selected when the active toggle is
  * turned off)</li>
  * <li>a selection-change hook for subclasses</li>
+ * <li>a registry of buttons by stable id for programmatic enable/disable</li>
  * </ul>
  *
- * <h2>Typical usage</h2>
- * 
+ * <h2>Button registry</h2>
+ * <p>
+ * Toolbars often need to enable/disable specific tools depending on application
+ * state (e.g., disable <em>Delete</em> when nothing is selected). Rather than
+ * forcing applications to keep references to every button instance, this class
+ * supports registering buttons under a stable string id and retrieving them
+ * later:
+ * </p>
+ *
  * <pre>{@code
- * BaseToolBar tb = new BaseToolBar();
- * tb.addToggle(pointerButton, true);
- * tb.addToggle(panButton, true);
- * tb.setDefaultToggleButton(pointerButton);
- * tb.resetDefaultSelection(); // activates default
+ * toolBar.setButtonEnabled("delete", hasSelection);
+ * toolBar.getButton("pointer", JToggleButton.class).setSelected(true);
  * }</pre>
+ *
+ * <p>
+ * For predefined buttons, you typically use {@link ToolBits#getId(long)} as
+ * the stable id. For application-defined buttons, choose your own ids.
+ * </p>
  *
  * <h2>Notes</h2>
  * <ul>
@@ -44,6 +58,10 @@ import javax.swing.SwingConstants;
  * <li>Only toggles added via {@link #addToggle(JToggleButton)} or
  * {@link #addToggle(JToggleButton, boolean)} are managed by the primary
  * group.</li>
+ * <li>The registry is populated by using the id-aware overloads
+ * {@link #addToggle(String, JToggleButton)} / {@link #addButton(String, JButton)}.
+ * If you call {@link #add(Component)} directly, you may register manually via
+ * {@link #registerButton(String, AbstractButton)}.</li>
  * </ul>
  *
  * @author heddle
@@ -51,30 +69,38 @@ import javax.swing.SwingConstants;
 @SuppressWarnings("serial")
 public abstract class AToolBar extends JToolBar {
 
+	/** Client property key used to store an id on a button. */
+	public static final String CLIENTPROP_TOOL_ID = "toolId";
+
 	/** Primary mutually-exclusive group for tool toggle buttons. */
 	protected final ButtonGroup toggleGroup = new ButtonGroup();
 
 	/** Optional default toggle button to activate when "no selection" occurs. */
 	private JToggleButton defaultToggleButton;
-	
+
 	/** Status field to display messages (may be null). */
 	protected JTextField statusField;
+
+	/**
+	 * Registry of toolbar buttons by stable id.
+	 * <p>
+	 * This includes both predefined buttons and application-added buttons.
+	 * </p>
+	 */
+	private final Map<String, AbstractButton> buttonsById = new LinkedHashMap<>();
 
 	/** Listener that watches selection changes on group-managed toggles. */
 	private final ItemListener toggleSelectionListener = new ItemListener() {
 		@Override
 		public void itemStateChanged(ItemEvent e) {
-			
 			if (!(e.getItemSelectable() instanceof JToggleButton)) {
 				return;
 			}
 
-
 			JToggleButton b = (JToggleButton) e.getItemSelectable();
-			
 
-			// Only respond to selection events; deselection is handled by the
-			// newly-selected button's selection event OR by resetDefaultSelection().
+			// Only respond to selection events; deselection is handled by the newly-selected
+			// button's selection event OR by resetDefaultToggleButton().
 			if (e.getStateChange() == ItemEvent.SELECTED) {
 				activeToggleButtonChanged(b);
 			}
@@ -89,9 +115,8 @@ public abstract class AToolBar extends JToolBar {
 	}
 
 	/**
-	 * Create a toolbar with the given name and orientation.
+	 * Create a toolbar with the given orientation.
 	 *
-	 * @param name        the toolbar name (used when undocked).
 	 * @param orientation {@link SwingConstants#HORIZONTAL} or
 	 *                    {@link SwingConstants#VERTICAL}.
 	 */
@@ -99,51 +124,209 @@ public abstract class AToolBar extends JToolBar {
 		super(orientation);
 		setFloatable(false);
 		putClientProperty("JToolBar.isRollover", true);
+	}
 
+	// ------------------------------------------------------------------------
+	// Registry API
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Register a toolbar button under a stable id.
+	 * <p>
+	 * This is used by the id-aware add methods. It is also safe for subclasses to
+	 * call directly if they add components via {@link #add(Component)}.
+	 * </p>
+	 * <p>
+	 * For debugging and tooling, this method also sets:
+	 * </p>
+	 * <ul>
+	 * <li>{@link AbstractButton#setName(String)} to the id</li>
+	 * <li>{@code button.putClientProperty("toolId", id)}</li>
+	 * </ul>
+	 *
+	 * @param id     stable identifier (non-blank).
+	 * @param button the button to register.
+	 * @return the same button (for chaining).
+	 * @throws NullPointerException     if id or button is null.
+	 * @throws IllegalArgumentException if id is blank or already used by a
+	 *                                  different button.
+	 */
+	protected <T extends AbstractButton> T registerButton(String id, T button) {
+		Objects.requireNonNull(id, "id");
+		Objects.requireNonNull(button, "button");
+
+		final String key = id.trim();
+		if (key.isEmpty()) {
+			throw new IllegalArgumentException("Button id cannot be blank.");
+		}
+
+		final AbstractButton existing = buttonsById.get(key);
+		if (existing != null && existing != button) {
+			throw new IllegalArgumentException("Duplicate button id: '" + key + "'");
+		}
+
+		buttonsById.put(key, button);
+
+		// Helpful metadata for debugging / UI inspection:
+		button.setName(key);
+		button.putClientProperty(CLIENTPROP_TOOL_ID, key);
+		return button;
 	}
 
 	/**
-	 * Add a button to the toolbar.
+	 * Remove a registered button from the registry by id.
+	 * <p>
+	 * This does not remove the button from the Swing component hierarchy. If you
+	 * dynamically remove tools, call this in addition to {@link #remove(Component)}.
+	 * </p>
 	 *
-	 * @param button the toggle to add (ignored if null).
-	 * @return the added button (for chaining), or null if the argument was null.
+	 * @param id the id to remove (null/blank are ignored).
+	 * @return the removed button, or {@code null} if none was registered.
 	 */
-	public JButton addButton(JButton button) {
-		Objects.requireNonNull(button, "B button cannot be null.");
+	public AbstractButton removeButton(String id) {
+		if (id == null) {
+			return null;
+		}
+		String key = id.trim();
+		if (key.isEmpty()) {
+			return null;
+		}
+		return buttonsById.remove(key);
+	}
+
+	/**
+	 * Look up a registered toolbar button by id.
+	 *
+	 * @param id the id used when adding/registering the button.
+	 * @return the button, or {@code null} if not found.
+	 */
+	public AbstractButton getButton(String id) {
+		if (id == null) {
+			return null;
+		}
+		String key = id.trim();
+		if (key.isEmpty()) {
+			return null;
+		}
+		return buttonsById.get(key);
+	}
+
+	/**
+	 * Look up a registered toolbar button by id and expected type.
+	 *
+	 * @param id   the id used when adding/registering the button.
+	 * @param type expected type.
+	 * @param <T>  type parameter.
+	 * @return the typed button, or {@code null} if not found or wrong type.
+	 */
+	public <T extends AbstractButton> T getButton(String id, Class<T> type) {
+		Objects.requireNonNull(type, "type");
+		final AbstractButton b = getButton(id);
+		return (b != null && type.isInstance(b)) ? type.cast(b) : null;
+	}
+
+	/**
+	 * Look up a registered toolbar button by id, throwing if missing.
+	 * <p>
+	 * This is handy in application wiring code where missing tools should be a
+	 * programming error rather than silently ignored.
+	 * </p>
+	 *
+	 * @param id   registered id (non-blank).
+	 * @param type expected type.
+	 * @param <T>  type parameter.
+	 * @return the typed button (never null).
+	 * @throws IllegalStateException if no button exists under that id, or the type is wrong.
+	 */
+	public <T extends AbstractButton> T requireButton(String id, Class<T> type) {
+		Objects.requireNonNull(type, "type");
+		AbstractButton b = getButton(id);
+		if (b == null) {
+			throw new IllegalStateException("No toolbar button registered with id '" + id + "'");
+		}
+		if (!type.isInstance(b)) {
+			throw new IllegalStateException("Toolbar button '" + id + "' is " + b.getClass().getName()
+					+ " but expected " + type.getName());
+		}
+		return type.cast(b);
+	}
+
+	/**
+	 * Enable or disable a registered button by id.
+	 *
+	 * @param id      button id.
+	 * @param enabled new enabled state.
+	 * @return {@code true} if the button was found and updated, {@code false} if
+	 *         no button is registered under that id.
+	 */
+	public boolean setButtonEnabled(String id, boolean enabled) {
+		final AbstractButton b = getButton(id);
+		if (b == null) {
+			return false;
+		}
+		b.setEnabled(enabled);
+		return true;
+	}
+
+	/**
+	 * Try to read the registered tool id from a button.
+	 *
+	 * @param button a button that may have been registered.
+	 * @return the id string, or {@code null} if not present.
+	 */
+	public static String getToolId(AbstractButton button) {
+		if (button == null) {
+			return null;
+		}
+		Object v = button.getClientProperty(CLIENTPROP_TOOL_ID);
+		return (v instanceof String s && !s.isBlank()) ? s : null;
+	}
+
+	/**
+	 * @return an unmodifiable view of the current button registry.
+	 */
+	public Map<String, AbstractButton> getButtonRegistryView() {
+		return Collections.unmodifiableMap(buttonsById);
+	}
+
+	// ------------------------------------------------------------------------
+	// Add helpers (id-aware)
+	// ------------------------------------------------------------------------
+
+	/**
+	 * Add a button to the toolbar and register it under the given id.
+	 *
+	 * @param id     stable identifier for later retrieval (non-blank).
+	 * @param button the button to add.
+	 * @return the added button (for chaining).
+	 * @throws NullPointerException     if id or button is null.
+	 * @throws IllegalArgumentException if id is blank or already used.
+	 */
+	public JButton addButton(String id, JButton button) {
+		Objects.requireNonNull(button, "button");
+		registerButton(id, button);
 		super.add(button);
 		return button;
 	}
 
 	/**
-	 * Add a toggle button to the toolbar and to the primary mutually-exclusive
-	 * group.
-	 * <p>
-	 * This is the common case for tool-selection toggles.
-	 * </p>
+	 * Add a toggle to the toolbar and register it under the given id.
 	 *
-	 * @param toggleButton the toggle to add (ignored if null).
-	 * @return the added toggle (for chaining), or null if the argument was null.
+	 * @param id           stable identifier for later retrieval (non-blank).
+	 * @param toggleButton the toggle to add.
+	 * @return the added toggle (for chaining).
 	 */
-	public JToggleButton addToggle(JToggleButton toggleButton) {
-		Objects.requireNonNull(toggleButton, "Toggle button cannot be null.");
-		return addToggle(toggleButton, true);
+	public JToggleButton addToggle(String id, JToggleButton toggleButton) {
+		return addToggle(id, toggleButton, true);
 	}
 
 	/**
 	 * Add a toggle button to the toolbar, optionally adding it to the primary
 	 * mutually-exclusive group.
-	 * <p>
-	 * If {@code toGroup} is true, the toggle is:
-	 * </p>
-	 * <ul>
-	 * <li>added to the {@link ButtonGroup} so it becomes mutually exclusive</li>
-	 * <li>registered with a listener so selection changes trigger
-	 * {@link #activeToggleButtonChanged(JToggleButton)}</li>
-	 * </ul>
 	 *
-	 * @param toggleButton the toggle to add (ignored if null).
+	 * @param toggleButton the toggle to add.
 	 * @param toGroup      if true, add to the primary mutually-exclusive group.
-	 * @return the added toggle (for chaining), or null if the argument was null.
+	 * @return the added toggle.
 	 */
 	public JToggleButton addToggle(JToggleButton toggleButton, boolean toGroup) {
 		Objects.requireNonNull(toggleButton, "Toggle button cannot be null.");
@@ -159,6 +342,23 @@ public abstract class AToolBar extends JToolBar {
 		}
 
 		return toggleButton;
+	}
+
+	/**
+	 * Add a toggle button to the toolbar, optionally adding it to the primary
+	 * mutually-exclusive group, and register it under the given id.
+	 *
+	 * @param id           stable identifier for later retrieval (non-blank).
+	 * @param toggleButton the toggle to add.
+	 * @param toGroup      if true, add to the primary mutually-exclusive group.
+	 * @return the added toggle (for chaining).
+	 * @throws NullPointerException     if id or toggleButton is null.
+	 * @throws IllegalArgumentException if id is blank or already used.
+	 */
+	public JToggleButton addToggle(String id, JToggleButton toggleButton, boolean toGroup) {
+		Objects.requireNonNull(toggleButton, "toggleButton");
+		registerButton(id, toggleButton);
+		return addToggle(toggleButton, toGroup);
 	}
 
 	/**
@@ -193,11 +393,6 @@ public abstract class AToolBar extends JToolBar {
 
 	/**
 	 * Get the default toggle button (if any).
-	 * <p>
-	 * The default is typically the pointer tool. It may be reselected if the user
-	 * "turns off" the active toggle or when {@link #resetDefaultSelection()} is
-	 * called.
-	 * </p>
 	 *
 	 * @return the default toggle button, or null.
 	 */
@@ -209,12 +404,11 @@ public abstract class AToolBar extends JToolBar {
 	 * Set the default toggle button.
 	 *
 	 * @param defaultToggleButton the default toggle (may be null).
-	 * @throws IllegalArgumentException if the button is not null but not
-	 * contained in this toolbar. It should be added to the toolbar first.
+	 * @throws IllegalArgumentException if the button is not null but not contained
+	 *                                  in this toolbar (it should be added first).
 	 */
 	public void setDefaultToggleButton(JToggleButton defaultToggleButton) {
 		if (defaultToggleButton != null) {
-			// Defensive: ensure it is actually part of this toolbar.
 			boolean found = false;
 			for (Component c : getComponents()) {
 				if (c == defaultToggleButton) {
@@ -242,12 +436,9 @@ public abstract class AToolBar extends JToolBar {
 			return;
 		}
 
-		// Selecting directly avoids extra ActionEvent semantics; the ButtonGroup
-		// will enforce exclusivity.
 		defaultToggleButton.setSelected(true);
 
 		// Ensure subclass hook runs even if selection state is unchanged.
-		// (If already selected, ItemListener may not fire.)
 		activeToggleButtonChanged(defaultToggleButton);
 	}
 
@@ -265,10 +456,10 @@ public abstract class AToolBar extends JToolBar {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Set the status text shown on the toolbar.
-	 * 
+	 *
 	 * @param text the status text to set.
 	 */
 	public void updateStatusText(String text) {
@@ -276,6 +467,4 @@ public abstract class AToolBar extends JToolBar {
 			statusField.setText(text);
 		}
 	}
-	
-
 }

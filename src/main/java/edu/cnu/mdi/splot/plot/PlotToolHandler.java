@@ -7,7 +7,7 @@ import java.util.Objects;
 import edu.cnu.mdi.experimental.AToolBar;
 import edu.cnu.mdi.experimental.BaseToolBar;
 import edu.cnu.mdi.experimental.DefaultToolHandler;
-import edu.cnu.mdi.experimental.ToolBarBits;
+import edu.cnu.mdi.experimental.ToolBits;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 
@@ -33,11 +33,11 @@ public class PlotToolHandler extends DefaultToolHandler {
 		long bits = 0;
 		PlotDataType type = plotCanvas.getType();
 		if (type != PlotDataType.STRIP) {
-			bits = ToolBarBits.POINTERBUTTON | ToolBarBits.PLOTTOOLS;
-			bits = bits & ~ToolBarBits.UNDOZOOMBUTTON; //no undo zoom for now
+			bits = ToolBits.POINTERBUTTON | ToolBits.PLOTTOOLS;
+			bits = bits & ~ToolBits.UNDOZOOMBUTTON; //no undo zoom for now
 		}
 		else {
-			bits = ToolBarBits.POINTERBUTTON | ToolBarBits.PICVIEWSTOOLS;
+			bits = ToolBits.POINTERBUTTON | ToolBits.PICVIEWSTOOLS;
 		}
 		
 		Rubberband.Policy pointerPolicy = Rubberband.Policy.NONE;
