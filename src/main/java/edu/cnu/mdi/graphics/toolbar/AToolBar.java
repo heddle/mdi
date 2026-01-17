@@ -1,4 +1,4 @@
-package edu.cnu.mdi.experimental;
+package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Component;
 import java.awt.event.ItemEvent;
@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import javax.swing.AbstractButton;
+import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JTextField;
@@ -467,4 +468,12 @@ public abstract class AToolBar extends JToolBar {
 			statusField.setText(text);
 		}
 	}
+	
+	public void spacer(int pixels) {
+		if (getOrientation() == SwingConstants.HORIZONTAL) {
+			add(Box.createHorizontalStrut(pixels));
+		} else {
+			add(Box.createVerticalStrut(pixels));
+		}
+	}	
 }

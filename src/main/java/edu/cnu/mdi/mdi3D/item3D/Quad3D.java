@@ -114,4 +114,21 @@ public class Quad3D extends Item3D {
 		Support3D.drawQuads(drawable, _coords, getFillColor(), getLineWidth(), _frame);
 	}
 
+	public float[] getCentroid() {
+		float cx = 0;
+		float cy = 0;
+		float cz = 0;
+		for (int i = 0; i < 4; i++) {
+			cx += _coords[3 * i];
+			cy += _coords[3 * i + 1];
+			cz += _coords[3 * i + 2];
+		}
+		return new float[] { cx / 4, cy / 4, cz / 4 };
+	}
+	
+	@Override
+	public float[] getSortPoint() {
+		return getCentroid();
+	}
+
 }

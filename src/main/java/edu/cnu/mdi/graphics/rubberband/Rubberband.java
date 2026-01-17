@@ -108,7 +108,7 @@ public final class Rubberband {
 			@Override
 			public void mousePressed(MouseEvent event) {
 
-				if (!isActive() || twoClickLineMode()) {
+				if (!isActive()) {
 					return;
 				}
 
@@ -119,6 +119,7 @@ public final class Rubberband {
 						if (event.getClickCount() == 2) {
 							endRubberbanding(event.getPoint());
 						} else {
+							System.out.println("adding point CCC");	
 							addPoint(_tempPoly, event.getX(), event.getY());
 						}
 					}
@@ -126,6 +127,7 @@ public final class Rubberband {
 					if (_tempPoly == null) {
 						startRubberbanding(event.getPoint());
 					} else {
+						System.out.println("adding point AAA");
 						addPoint(_tempPoly, event.getX(), event.getY());
 						if (_tempPoly.npoints == 3) {
 							endRubberbanding(event.getPoint());
@@ -136,12 +138,14 @@ public final class Rubberband {
 						startRubberbanding(event.getPoint());
 					} else {
 						// check if point is approved used by connection rubberbanding
-						if (!_rubberbanded.approvePoint(event.getPoint())) {
-							cancel();
+						if (twoClickLineMode() && !_rubberbanded.approvePoint(event.getPoint())) {
+							endRubberbanding(null);
 							return;
 						}
+						System.out.println("adding point BBB");
 						addPoint(_tempPoly, event.getX(), event.getY());
 						if (_tempPoly.npoints == 2) {
+							System.out.println("ending line rubberbanding");
 							endRubberbanding(event.getPoint());
 						}
 					}
@@ -337,6 +341,7 @@ public final class Rubberband {
 
 		case POLYLINE:
 			tpoly = new Polygon(_tempPoly.xpoints, _tempPoly.ypoints, _tempPoly.npoints);
+			System.out.println("adding point DDD");
 			addPoint(tpoly, _currentPt.x, _currentPt.y);
 			GraphicsUtils.drawHighlightedPolyline(g, tpoly.xpoints, tpoly.ypoints, tpoly.npoints, _highlightColor1,
 					_highlightColor2);
@@ -344,6 +349,7 @@ public final class Rubberband {
 
 		case POLYGON:
 			tpoly = new Polygon(_tempPoly.xpoints, _tempPoly.ypoints, _tempPoly.npoints);
+			System.out.println("adding point EEE");
 			addPoint(tpoly, _currentPt.x, _currentPt.y);
 			g.fillPolygon(tpoly);
 			GraphicsUtils.drawHighlightedShape(g, tpoly, _highlightColor1, _highlightColor2);
@@ -362,6 +368,9 @@ public final class Rubberband {
 	 * @param cp the new current point.
 	 */
 	private void modifyCurrentPoint(Point cp) {
+		if (cp == null) {
+			return;
+		}
 		Rectangle b = _component.getBounds();
 		if (_policy == Policy.RECTANGLE_PRESERVE_ASPECT) {
 			GraphicsUtils.rectangleARFixedAdjust(b, getStart(), cp);
@@ -435,14 +444,15 @@ public final class Rubberband {
 
 		_startPt.setLocation(anchorPt);
 		// check if point is approved used by connection rubberbanding
-		if (!_rubberbanded.approvePoint(anchorPt)) {
-			cancel();
+		if (twoClickLineMode() && !_rubberbanded.approvePoint(anchorPt)) {
+			endRubberbanding(null);
 			return;
 		}
 		_currentPt.setLocation(anchorPt);
 
 		if (polyMode() || radArcMode() || lineMode()) {
 			_tempPoly = new Polygon();
+			System.out.println("adding point GGG");
 			addPoint(_tempPoly, anchorPt.x, anchorPt.y);
 		}
 	}
@@ -537,8 +547,10 @@ public final class Rubberband {
 	 */
 	public void endRubberbanding(Point p) {
 
-		modifyCurrentPoint(p);
-		_currentPt.setLocation(p);
+		if (p != null) {
+			modifyCurrentPoint(p);
+			_currentPt.setLocation(p);
+		}
 		_image = null;
 		_backgroundImage = null;
 		_poly = _tempPoly;
@@ -596,9 +608,16 @@ public final class Rubberband {
 				return p;
 			}
 
+		case LINE:
+		case TWO_CLICK_LINE:
+			Point p[] = new Point[2];
+			p[0] = new Point(_startPt.x, _startPt.y);
+			p[1] = new Point(_currentPt.x, _currentPt.y);
+			return p;
+
 		default:
 			Rectangle r = getRubberbandBounds();
-			Point p[] = new Point[4];
+			p = new Point[4];
 			int left = r.x;
 			int top = r.y;
 			int right = left + r.width;

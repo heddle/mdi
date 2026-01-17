@@ -1,4 +1,4 @@
-package edu.cnu.mdi.graphics.toolbar;
+package edu.cnu.mdi.container;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -8,7 +8,6 @@ import java.awt.geom.Rectangle2D;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
 import edu.cnu.mdi.item.AItem;
@@ -19,13 +18,14 @@ import edu.cnu.mdi.item.PolygonItem;
 import edu.cnu.mdi.item.PolylineItem;
 import edu.cnu.mdi.item.RadArcItem;
 import edu.cnu.mdi.item.RectangleItem;
+
 /**
  * Support methods for drawing tools.
  *
  * @author heddle
  *
  */
-public class DrawingToolSupport {
+public class CreationSupport {
 
 	/**
 	 * From a given screen rectangle, create an ellipse item.
@@ -69,18 +69,17 @@ public class DrawingToolSupport {
 			public JPopupMenu createPopupMenu() {
 				JPopupMenu menu = super.createPopupMenu();
 				menu.addSeparator();
-				// Add custom menu items 
+				// Add custom menu items
 				addStyleEdit(menu, this);
 				return menu;
 			}
 		};
 	}
-	
+
 	private static void addStyleEdit(final JPopupMenu menu, final AItem item) {
 		JMenuItem styleMenuItem = new JMenuItem("Edit Style...");
 		styleMenuItem.addActionListener(e -> {
-			Styled edited = StyleEditorDialog.edit(item.getContainer().getComponent(), 
-					item.getStyle(), false);
+			Styled edited = StyleEditorDialog.edit(item.getContainer().getComponent(), item.getStyle(), false);
 			if (edited == null) {
 				return;
 			}
@@ -102,16 +101,29 @@ public class DrawingToolSupport {
 		IContainer container = layer.getContainer();
 		Rectangle2D.Double wr = new Rectangle2D.Double();
 		container.localToWorld(b, wr);
-		return new RectangleItem(layer, wr) {
+		RectangleItem item = new RectangleItem(layer, wr) {
 			@Override
 			public JPopupMenu createPopupMenu() {
 				JPopupMenu menu = super.createPopupMenu();
 				menu.addSeparator();
-				// Add custom menu items 
+				// Add custom menu items
 				addStyleEdit(menu, this);
 				return menu;
 			}
 		};
+		
+		defaultConfigureItem(item);
+		return item;
+	}
+	
+	private static void defaultConfigureItem(AItem item) {
+		item.setRightClickable(true);
+		item.setDraggable(true);
+		item.setSelectable(true);
+		item.setResizable(true);
+		item.setRotatable(true);
+		item.setDeletable(false);
+		item.setLocked(false);
 	}
 
 	/**
@@ -133,7 +145,7 @@ public class DrawingToolSupport {
 			public JPopupMenu createPopupMenu() {
 				JPopupMenu menu = super.createPopupMenu();
 				menu.addSeparator();
-				// Add custom menu items 
+				// Add custom menu items
 				addStyleEdit(menu, this);
 				return menu;
 			}
@@ -162,7 +174,7 @@ public class DrawingToolSupport {
 			public JPopupMenu createPopupMenu() {
 				JPopupMenu menu = super.createPopupMenu();
 				menu.addSeparator();
-				// Add custom menu items 
+				// Add custom menu items
 				addStyleEdit(menu, this);
 				return menu;
 			}
@@ -192,7 +204,7 @@ public class DrawingToolSupport {
 			public JPopupMenu createPopupMenu() {
 				JPopupMenu menu = super.createPopupMenu();
 				menu.addSeparator();
-				// Add custom menu items 
+				// Add custom menu items
 				addStyleEdit(menu, this);
 				return menu;
 			}
@@ -223,7 +235,7 @@ public class DrawingToolSupport {
 			public JPopupMenu createPopupMenu() {
 				JPopupMenu menu = super.createPopupMenu();
 				menu.addSeparator();
-				// Add custom menu items 
+				// Add custom menu items
 				addStyleEdit(menu, this);
 				return menu;
 			}
@@ -231,5 +243,4 @@ public class DrawingToolSupport {
 
 		return item;
 	}
-
 }

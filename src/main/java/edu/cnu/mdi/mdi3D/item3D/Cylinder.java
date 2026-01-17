@@ -21,6 +21,19 @@ public class Cylinder extends Item3D {
 	private boolean _extend;
 	private float _extensionFactor = 2;
 
+	/**
+	 * Constructor for a Cylinder item in 3D space.
+	 * 
+	 * @param panel3D The parent 3D panel
+	 * @param x1      X coordinate of one end
+	 * @param y1      Y coordinate of one end
+	 * @param z1      Z coordinate of one end
+	 * @param x2      X coordinate of the other end
+	 * @param y2      Y coordinate of the other end
+	 * @param z2      Z coordinate of the other end
+	 * @param radius  Radius of the cylinder
+	 * @param color   Color of the cylinder
+	 */
 	public Cylinder(Panel3D panel3D, float x1, float y1, float z1, float x2, float y2, float z2, float radius,
 			Color color) {
 		super(panel3D);
@@ -89,5 +102,11 @@ public class Cylinder extends Item3D {
 		_y2 = y2;
 		_z2 = z2;
 	}
+	
+	@Override
+	public float[] getSortPoint() {
+		return new float[] { (_x1 + _x2) / 2, (_y1 + _y2) / 2, (_z1 + _z2) / 2 };
+	}
+
 
 }

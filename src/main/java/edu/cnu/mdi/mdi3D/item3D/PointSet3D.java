@@ -42,8 +42,37 @@ public class PointSet3D extends Item3D {
 		Support3D.drawPoints(drawable, _coords, _color, _pointSize, _circular);
 	}
 
+	/**
+	 * Set the coordinates of the points.
+	 *
+	 * @param coords the points as [x1, y1, z1, ..., xn, yn, zn]
+	 */
 	public void setCoords(float[] coords) {
 		_coords = coords;
 	}
+	
+	/**
+	 * Get the coordinates of the points.
+	 *
+	 * @return the points as [x1, y1, z1, ..., xn, yn, zn]
+	 */
+	public float[] getCentroid() {
+		int n = _coords.length / 3;
+		float cx = 0;
+		float cy = 0;
+		float cz = 0;
+		for (int i = 0; i < n; i++) {
+			cx += _coords[3 * i];
+			cy += _coords[3 * i + 1];
+			cz += _coords[3 * i + 2];
+		}
+		return new float[] { cx / n, cy / n, cz / n };
+	}
+	
+	@Override
+	public float[] getSortPoint() {
+		return getCentroid();
+	}
+
 
 }

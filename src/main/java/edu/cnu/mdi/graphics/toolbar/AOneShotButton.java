@@ -1,12 +1,10 @@
-package edu.cnu.mdi.experimental;
+package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
-
-import edu.cnu.mdi.graphics.toolbar.ToolContext;
 
 /**
  * A non-toggle toolbar button that performs an immediate action (one-shot).

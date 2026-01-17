@@ -43,5 +43,11 @@ public class Cube extends Item3D {
 		float w = 2 * _halfLength;
 		Support3D.drawRectangularSolid(drawable, _xc, _yc, _zc, w, w, w, getFillColor(), 1, _frame);
 	}
+	
+	@Override
+	public float[] getSortPoint() {
+		return new float[] { _xc, _yc, _zc };
+	}
+
 
 }

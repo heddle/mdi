@@ -1,4 +1,4 @@
-package edu.cnu.mdi.experimental;
+package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Component;
 import java.awt.Graphics;
@@ -6,6 +6,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.util.List;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.util.PrintUtils;
@@ -35,6 +36,27 @@ public class DefaultToolHandler implements IToolHandler {
 	public void pointerRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
 		
 	}
+	
+	@Override
+	public void beginDragObject(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
+		
+	}
+	
+	@Override
+	public void dragObjectBy(AToolBar toolBar, Component canvas, Object obj, int dx, int dy, MouseEvent e) {
+		// no-op
+	}
+	
+	@Override
+	public void endDragObject(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
+		// no-op
+	}
+
+	@Override
+	public boolean doNotDrag(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
+		return false;
+	}
+
 	
 	@Override
 	public void boxZoomRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
@@ -130,5 +152,19 @@ public class DefaultToolHandler implements IToolHandler {
 		PrintUtils.printComponent(canvas);
 	}
 	
+	@Override
+	public void createConnection(AToolBar toolBar, Component canvas, Point start, Point end) {
+	}
+
+	
+	@Override
+	public boolean approveConnectionPoint(AToolBar toolBar, Component canvas, Point p) {
+		return false;
+	}
+	
+	@Override
+	public void createRectangle(AToolBar toolBar, Component canvas, Rectangle bounds) {
+		// no-op
+	}
 
 }

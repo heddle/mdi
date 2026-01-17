@@ -1,4 +1,4 @@
-package edu.cnu.mdi.experimental;
+package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

@@ -23,8 +23,8 @@ import javax.swing.JComponent;
 import javax.swing.Timer;
 import javax.swing.event.EventListenerList;
 
-import edu.cnu.mdi.experimental.BaseToolBar;
 import edu.cnu.mdi.feedback.FeedbackPane;
+import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.CurveChangeType;

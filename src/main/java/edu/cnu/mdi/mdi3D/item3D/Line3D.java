@@ -172,5 +172,11 @@ public class Line3D extends Item3D {
 			}
 		}
 	}
+	
+	@Override
+	public float[] getSortPoint() {
+		return new float[] { (_p0[0] + _p1[0]) / 2, (_p0[1] + _p1[1]) / 2, (_p0[2] + _p1[2]) / 2 };
+	}
+
 
 }

@@ -88,19 +88,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	protected Layer _layer;
 
 	/**
-	 * The parent of this item.
-	 */
-	protected AItem _parent;
-
-	/**
-	 * The children of this item. Children on only used for grouping items that are
-	 * possibly deleted together and possibly dragged together. Children are
-	 * selected, rotated and resized separately. When an item is deleted, all
-	 * descendants are deleted too, but not ancestors. Just like deleted a folder.
-	 */
-	protected ArrayList<AItem> _children;
-
-	/**
 	 * The style for this item.
 	 */
 	protected IStyled _style = new Styled();
@@ -649,8 +636,20 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 		this._style = style;
 	}
 
+	/**
+	 * Translate the item in world coordinates.
+	 *
+	 * @param dx the delta x in world coordinates.
+	 * @param dy the delta y in world coordinates.
+	 */
 	public abstract void translateWorld(double dx, double dy);
 
+	/**
+	 * Translate the item in local (pixel) coordinates.
+	 *
+	 * @param dx the delta x in local coordinates.
+	 * @param dy the delta y in local coordinates.
+	 */
 	public void translateLocal(int dx, int dy) {
 
 		if (dx == 0 && dy == 0) {
@@ -998,7 +997,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 *
 	 * @param itemModification the itemModification to set
 	 */
-	public void setModificationItem(ItemModification itemModification) {
+	public void setModification(ItemModification itemModification) {
 		_modification = itemModification;
 	}
 
@@ -1090,135 +1089,17 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	}
 
 	/**
-	 * Get the parent of this item (often it is <code>null</code>.
-	 *
-	 * @return the parent of this item (often it is <code>null</code>.
-	 */
-	public AItem getParent() {
-		return _parent;
-	}
-
-	/**
-	 * Set the parent of this item.
-	 *
-	 * @param parent the parent to set
-	 */
-	public void setParent(AItem parent) {
-		this._parent = parent;
-	}
-
-	/**
-	 * Get the children of this item, if any.
-	 *
-	 * @return the children of this item.
-	 */
-	public ArrayList<AItem> getChildren() {
-		return _children;
-	}
-
-	/**
-	 * Remove an item as a child of this item.
-	 *
-	 * @param child the child item to remove, leaving it an orphan (but not deleting
-	 *              it.) The child will still have a reference in some logical
-	 *              layer.
-	 */
-	public void removeChild(AItem child) {
-		if (child != null) {
-			if (_children != null) {
-				_children.remove(child);
-				child.setParent(null);
-			}
-		}
-	}
-
-	/**
-	 * Add an item as a child of this item.
-	 *
-	 * @param child the child item to add.
-	 */
-	public void addChild(AItem child) {
-		if (child != null) {
-			if (_children == null) {
-				_children = new ArrayList<>(10);
-			}
-			child.setParent(this);
-			_children.add(child);
-		}
-	}
-
-	/**
-	 * Removes and deletes all children. They will also be removed from their host
-	 * layer, so they are gone as far as this application is concerned.
-	 */
-	public void deleteAllChildren() {
-		if (_children == null || _children.isEmpty()) {
-			return;
-		}
-
-		// Iterate over a shallow copy to prevent concurrency issues
-		for (IDrawable drawable : new ArrayList<>(_children)) {
-			if (drawable instanceof AItem item) {
-				Layer layer = item.getLayer();
-				if (layer != null) {
-					layer.remove(item);
-				}
-			}
-		}
-
-		_children.clear();
-	}
-
-	/**
 	 * Called when the drawable is about to be removed from a layer.
 	 */
 	@Override
 	public void prepareForRemoval() {
-		// tell my parent I am no longer its child
-		if (_parent != null) {
-			_parent.removeChild(this);
 
-			_focus = null;
-			_lastDrawnPolygon = null;
-			_layer = null;
-			_path = null;
-			_secondaryPoints = null;
-			_style = null;
-		}
-
-		// remove my children
-		deleteAllChildren();
-	}
-
-	/**
-	 * Add descendants form a given item to a vector
-	 *
-	 * @param item the item in question
-	 * @param v    the vector, which should be instantiated.
-	 */
-	private static void addDescendants(AItem item, ArrayList<AItem> v) {
-		if (item.getChildren() != null) {
-			for (AItem child : item.getChildren()) {
-				v.add(child);
-				addDescendants(child, v);
-			}
-		}
-	}
-
-	/**
-	 * Get all descendants of this item. The vector returned does not include this
-	 * item itself--so if this item has no children, it returns <code>null</code>.
-	 *
-	 * @return all descendants of all generations of this item.
-	 */
-	public ArrayList<AItem> getAllDescendants() {
-		if (_children == null) {
-			return null;
-		}
-
-		ArrayList<AItem> allDescendents = new ArrayList<>(25);
-		AItem.addDescendants(this, allDescendents);
-		return allDescendents;
+		_focus = null;
+		_lastDrawnPolygon = null;
+		_layer = null;
+		_path = null;
+		_secondaryPoints = null;
+		_style = null;
 
 	}
 

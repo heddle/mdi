@@ -3,23 +3,32 @@ package edu.cnu.mdi.view.demo;
 import java.awt.Point;
 
 import edu.cnu.mdi.container.IContainer;
-import edu.cnu.mdi.graphics.toolbar.ToolContext;
-import edu.cnu.mdi.graphics.toolbar.button.ToolActionButton;
+import edu.cnu.mdi.graphics.toolbar.AOneShotButton;
+import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.util.Environment;
 
 @SuppressWarnings("serial")
-public class GridButton extends ToolActionButton {
+public class GridButton extends AOneShotButton {
+	
+	public static final String TOOL_ID = "GRID_BUTTON";
 
 	// the parent view being controlled
 	private NetworkLayoutDemoView view;
 
 	public GridButton(NetworkLayoutDemoView view) {
-		super(Environment.MDI_RESOURCE_PATH + "images/svg/grid.svg", "Snap to Grid");
+		super(view.getContainer().getComponent(), view.getToolBar());
+		
 		this.view = view;
+		String iconPath = Environment.MDI_RESOURCE_PATH + "images/svg/grid.svg";
+		String toolTip = "Snap to Grid";
+		
+		BaseToolBar toolBar = (BaseToolBar) view.getToolBar();
+		toolBar.configureButton(this, iconPath, toolTip);
+		toolBar.addButton(TOOL_ID, this);
 	}
 
 	@Override
-	protected void perform(ToolContext ctx) {
+	public void performAction() {
 		int gridSize = view.getGridDrawer().getGridSize();
 		IContainer container = view.getContainer();
 

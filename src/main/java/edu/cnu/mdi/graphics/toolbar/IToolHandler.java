@@ -1,4 +1,4 @@
-package edu.cnu.mdi.experimental;
+package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Component;
 import java.awt.Point;
@@ -47,6 +47,15 @@ public interface IToolHandler {
 	 * @param e      MouseEvent that triggered the click
 	 */
 	public void pointerDoubleClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e);
+	
+	
+	public void beginDragObject(AToolBar toolBar, Component canvas, Object obj, MouseEvent e);
+	
+	public void dragObjectBy(AToolBar toolBar, Component canvas, Object obj, int dx, int dy, MouseEvent e);
+	
+	public void endDragObject(AToolBar toolBar, Component canvas, Object obj, MouseEvent e);
+	
+	public boolean doNotDrag(AToolBar toolBar, Component canvas, Object obj, MouseEvent e);
 	
 	/**
 	 * Handle box zoom rubberbanding with the given bounds.
@@ -192,5 +201,29 @@ public interface IToolHandler {
 	 */
 	public void print(AToolBar toolBar, Component canvas);
 	
+	/**
+	 * Create a connection between two points.
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas  JComponent on which the connection is occurring
+	 * @param start Starting point of the connection
+	 * @param end   Ending point of the connection
+	 */
+	public void createConnection(AToolBar toolBar, Component canvas, Point start, Point end);
 
+	/**
+	 * Approve or reject a connection point.
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas  JComponent on which the connection is occurring
+	 * @param p Point to approve or reject
+	 * @return true to approve, false to reject
+	 */
+	public boolean approveConnectionPoint(AToolBar toolBar, Component canvas, Point p);
+	
+	/**
+	 * Create a rectangle with the given bounds.
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas  JComponent on which the rectangle is being created
+	 * @param bounds Rectangle defining the bounds of the new rectangle
+	 */
+	public void createRectangle(AToolBar toolBar, Component canvas, Rectangle bounds);
 }

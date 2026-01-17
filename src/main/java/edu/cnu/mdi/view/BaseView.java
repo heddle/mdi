@@ -47,6 +47,7 @@ import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.format.DoubleFormat;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
+import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
@@ -116,6 +117,9 @@ public class BaseView extends JInternalFrame
 
 	/** View popup menu  */
 	protected final ViewPopupMenu viewPopupMenu;
+	
+	/** Optional toolbar (if configured). */
+	private BaseToolBar toolBar;
 
 	/** Optional virtual window item (used by overview/minimap type views). */
 	protected VirtualWindowItem virtualItem;
@@ -681,13 +685,13 @@ public class BaseView extends JInternalFrame
 
 		final JComponent splitWestComponent;
 
-		final long toolbarBits;
+		final long toolBits;
 		final Rubberband.Policy boxZoomPolicy;
 
 		private ViewInitConfig(String title, String propName, boolean standardDecorations, boolean iconifiable,
 				boolean maximizable, boolean resizable, boolean closable, boolean scrollable, boolean visible, int left,
 				int top, int width, int height, Rectangle2D.Double worldSystem, Color background,
-				JComponent splitWestComponent, long toolbarBits, Rubberband.Policy boxZoomPolicy) {
+				JComponent splitWestComponent, long toolBits, Rubberband.Policy boxZoomPolicy) {
 			this.title = title;
 			this.propName = propName;
 			this.standardDecorations = standardDecorations;
@@ -704,7 +708,7 @@ public class BaseView extends JInternalFrame
 			this.worldSystem = worldSystem;
 			this.background = background;
 			this.splitWestComponent = splitWestComponent;
-			this.toolbarBits = toolbarBits;
+			this.toolBits = toolBits;
 			this.boxZoomPolicy = boxZoomPolicy;
 		}
 
@@ -904,14 +908,24 @@ public class BaseView extends JInternalFrame
 			}
 
 			// Optional toolbar.
-			if (cfg.toolbarBits > 0) {
-				BaseToolBar toolBar = new BaseToolBar(container, cfg.toolbarBits);
-				if (cfg.boxZoomPolicy != null) {
-					toolBar.setBoxZoomRubberbandPolicy(cfg.boxZoomPolicy);
+			if (cfg.toolBits > 0) {
+				view.toolBar = new BaseToolBar(container.getComponent(), null, 
+						cfg.toolBits, Rubberband.Policy.RECTANGLE, cfg.boxZoomPolicy);
+				view.getContentPane().add(view.toolBar, BorderLayout.NORTH);
+				if (container instanceof BaseContainer baseCont) {
+					baseCont.setToolBar(view.toolBar);
 				}
-				view.getContentPane().add(toolBar, BorderLayout.NORTH);
 			}
 		}
+	}
+	
+	/**
+	 * Returns the optional toolbar for this view.
+	 *
+	 * @return the toolbar, or null if none is configured.
+	 */
+	public AToolBar getToolBar() {
+		return toolBar;
 	}
 
 	/**
@@ -935,7 +949,7 @@ public class BaseView extends JInternalFrame
 
 					// Preferred path: toolbar's delete if present (keeps behavior consistent with
 					// UI).
-					if (container.getToolBar() instanceof BaseToolBar baseTb && baseTb.hasDeleteButton()) {
+					if (container.getToolBar() instanceof BaseToolBar baseTb && baseTb.hasDeleteTool()) {
 						baseTb.invokeDelete();
 						return;
 					}

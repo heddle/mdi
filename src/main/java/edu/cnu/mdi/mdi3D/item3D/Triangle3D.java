@@ -79,4 +79,11 @@ public class Triangle3D extends Item3D {
 		Support3D.drawTriangles(drawable, _coords, getFillColor(), getLineWidth(), _frame);
 	}
 
+	
+	@Override
+	public float[] getSortPoint() {
+		return new float[] { (_coords[0] + _coords[3] + _coords[6]) / 3, (_coords[1] + _coords[4] + _coords[7]) / 3,
+				(_coords[2] + _coords[5] + _coords[8]) / 3 };
+	}
+
 }

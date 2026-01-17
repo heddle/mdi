@@ -9,8 +9,7 @@ import java.util.List;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
-import edu.cnu.mdi.graphics.toolbar.DrawingToolSupport;
-import edu.cnu.mdi.graphics.toolbar.ToolBarBits;
+import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.swing.WindowPlacement;
 
@@ -48,13 +47,13 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 		int height = d.height;
 
 		// create the view
+		long toolBits = ToolBits.DRAWINGTOOLS;
 		view = new DrawingView(PropertySupport.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, width, height),
 				PropertySupport.WIDTH, width, // container width, not total view width
 				PropertySupport.HEIGHT, height, // container height, not total view width
-				PropertySupport.TOOLBARBITS, ToolBarBits.DRAWING, PropertySupport.VISIBLE, true,
+				PropertySupport.TOOLBARBITS, toolBits, PropertySupport.VISIBLE, true,
 				PropertySupport.PROPNAME, "DRAWING", PropertySupport.BACKGROUND, Color.white, PropertySupport.TITLE,
-				"Drawing View ", PropertySupport.STANDARDVIEWDECORATIONS, true, PropertySupport.CONTAINERCLASS,
-				DrawingToolSupport.class);
+				"Drawing View ", PropertySupport.STANDARDVIEWDECORATIONS, true);
 
 		view.pack();
 		return view;

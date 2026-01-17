@@ -67,7 +67,7 @@ public class MouseAdapter3D implements MouseListener, MouseMotionListener, Mouse
 
 		if (axis.length() > 0.0001f) {
 			axis.normalize();
-			_panel3D.rotate(axis, -angle);
+			_panel3D.rotate(axis, angle);
 		}
 
 		prevMouseX = x;

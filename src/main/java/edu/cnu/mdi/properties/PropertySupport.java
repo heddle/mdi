@@ -569,7 +569,7 @@ public class PropertySupport {
 		if ((val != null) && (val instanceof Rubberband.Policy)) {
 			return (Rubberband.Policy) val;
 		}
-		return null;
+		return Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT;
 	}
 
 	/**

@@ -238,29 +238,6 @@ public class Support3D {
 	}
 
 	/**
-	 * Prepare for transparent drawing
-	 *
-	 * @param drawable the OpenGL drawable
-	 */
-	public static void prepareForTransparent(GLAutoDrawable drawable) {
-		GL2 gl = drawable.getGL().getGL2();
-		gl.glDepthMask(false); // Disable depth writes for transparent
-		gl.glEnable(GL.GL_BLEND);
-		gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
-	}
-
-	/**
-	 * Prepare for opaque drawing
-	 *
-	 * @param drawable the OpenGL drawable
-	 */
-	public static void prepareForOpaque(GLAutoDrawable drawable) {
-		GL2 gl = drawable.getGL().getGL2();
-		gl.glDepthMask(true); // Enable depth writes for solid objects
-		gl.glDisable(GL.GL_BLEND);
-	}
-
-	/**
 	 * Draw a wire sphere
 	 *
 	 * @param drawable the OpenGL drawable

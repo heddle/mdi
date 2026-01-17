@@ -17,22 +17,6 @@ public class MapContainer extends BaseContainer {
 		setStandardPanning(false);
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void pan(int dh, int dv) {
-
-		Rectangle r = getBounds();
-		int xc = r.width / 2;
-		int yc = r.height / 2;
-
-		xc -= dh;
-		yc -= dv;
-
-		Point p = new Point(xc, yc);
-		recenter(p);
-	}
 
 	/**
 	 * {@inheritDoc}
@@ -97,7 +81,7 @@ public class MapContainer extends BaseContainer {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void locationUpdate(MouseEvent mouseEvent, boolean dragging) {
+	public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging) {
 		Point2D.Double wp = getLocation(mouseEvent);
 
 		if (_feedbackControl != null) {
@@ -112,7 +96,7 @@ public class MapContainer extends BaseContainer {
 					(ll.x >= 0) ? "E" : "W");
 
 			// Update toolbar text (if present)
-			_toolBar.setText(latLon);
+			_toolBar.updateStatusText(latLon);
 		}
 
 	}

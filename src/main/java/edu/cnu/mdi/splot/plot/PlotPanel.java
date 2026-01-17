@@ -15,8 +15,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-import edu.cnu.mdi.experimental.BaseToolBar;
 import edu.cnu.mdi.feedback.FeedbackPane;
+import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.util.PrintUtils;
 
 @SuppressWarnings("serial")

@@ -16,8 +16,8 @@ public class Sphere extends Item3D {
 	private float _y;
 	private float _z;
 	private Color _color;
-	private int _slices = 100; // Default resolution
-	private int _stacks = 100; // Default resolution
+	private int _slices = 32; // Default resolution
+	private int _stacks = 24; // Default resolution
 	private float[] _theta; // Polar angles [0, π]
 	private float[] _phi; // Azimuthal angles [-π, π]
 	private Color _gridColor = Color.BLACK; // Default gridline color
@@ -34,11 +34,22 @@ public class Sphere extends Item3D {
 	 */
 	public Sphere(Panel3D panel3D, float x, float y, float z, float radius, Color color) {
 		super(panel3D);
+		setCenter(x, y, z);
+		_radius = radius;
+		_color = color;
+	}
+
+	/**
+	 * Set the center of the sphere.
+	 *
+	 * @param x X coordinate
+	 * @param y Y coordinate
+	 * @param z Z coordinate
+	 */
+	public void setCenter(float x, float y, float z) {
 		_x = x;
 		_y = y;
 		_z = z;
-		_radius = radius;
-		_color = color;
 	}
 
 	/**
@@ -75,13 +86,11 @@ public class Sphere extends Item3D {
 
 	@Override
 	public void draw(GLAutoDrawable drawable) {
-		Support3D.prepareForOpaque(drawable);
 		Support3D.solidSphere(drawable, _x, _y, _z, _radius, _slices, _stacks, _color);
 
 		if (_theta != null || _phi != null) {
 			drawGridlines(drawable);
 		}
-		Support3D.prepareForTransparent(drawable);
 	}
 
 	/**
@@ -136,25 +145,36 @@ public class Sphere extends Item3D {
 	 */
 	private void drawThetaLines(GLAutoDrawable drawable) {
 		for (float theta : _theta) {
-			float[] coords = new float[(_stacks + 2) * 3]; // +1 for closure, +1 for array index safety
 
-			for (int i = 0; i <= _stacks; i++) {
-				float phi = (float) (-Math.PI + 2 * Math.PI * i / _stacks);
+			// We want (_stacks + 1) samples around the circle, plus 1 extra to close the
+			// loop.
+			final int n = _stacks + 1;
+			float[] coords = new float[(n + 1) * 3];
+
+			for (int i = 0; i < n; i++) {
+				float phi = (float) (-Math.PI + 2.0 * Math.PI * i / _stacks);
+
 				float x = _x + _radius * (float) (Math.sin(theta) * Math.cos(phi));
 				float y = _y + _radius * (float) (Math.sin(theta) * Math.sin(phi));
-				float z = _z + _radius * (float) Math.cos(theta);
+				float z = _z + _radius * (float) (Math.cos(theta));
 
 				coords[3 * i] = x;
 				coords[3 * i + 1] = y;
 				coords[3 * i + 2] = z;
 			}
 
-			// Close the loop by explicitly connecting the last point to the first
-			coords[3 * _stacks] = coords[0];
-			coords[3 * _stacks + 1] = coords[1];
-			coords[3 * _stacks + 2] = coords[2];
+			// Close loop: last point == first point
+			coords[3 * n] = coords[0];
+			coords[3 * n + 1] = coords[1];
+			coords[3 * n + 2] = coords[2];
 
 			Support3D.drawPolyLine(drawable, coords, _gridColor, 1.5f);
 		}
 	}
+
+	@Override
+	public float[] getSortPoint() {
+		return new float[] { _x, _y, _z };
+	}
+
 }

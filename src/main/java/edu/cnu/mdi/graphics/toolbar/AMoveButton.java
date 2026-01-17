@@ -1,4 +1,4 @@
-package edu.cnu.mdi.experimental;
+package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Component;
 import java.awt.Dimension;

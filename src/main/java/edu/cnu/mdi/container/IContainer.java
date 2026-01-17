@@ -14,7 +14,7 @@ import java.util.List;
 import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
-import edu.cnu.mdi.graphics.toolbar.IContainerToolBar;
+import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
@@ -250,14 +250,14 @@ public interface IContainer {
 	 *
 	 * @return this container's tool bar, or <code>null</code>.
 	 */
-	public IContainerToolBar getToolBar();
+	public AToolBar getToolBar();
 
 	/**
 	 * Set this container's tool bar.
 	 *
 	 * @param toolBar the new toolbar interface.
 	 */
-	public void setToolBar(IContainerToolBar toolBar);
+	public void setToolBar(AToolBar toolBar);
 
 	/**
 	 * Convenience method to update the location string in the toolbar.
@@ -265,7 +265,7 @@ public interface IContainer {
 	 * @param mouseEvent the causal event.
 	 * @param dragging   <code>true</code> if we are dragging
 	 */
-	public void locationUpdate(MouseEvent mouseEvent, boolean dragging);
+	public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging);
 
 	/**
 	 * Get the view (internal frame) that holds this container.

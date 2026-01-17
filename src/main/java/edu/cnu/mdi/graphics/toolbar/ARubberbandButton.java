@@ -1,4 +1,4 @@
-package edu.cnu.mdi.experimental;
+package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Component;
 import java.awt.Cursor;
@@ -114,12 +114,12 @@ public abstract class ARubberbandButton extends JToggleButton
 				return;
 			}
 
+			Point[] vertices = rb.getRubberbandVertices();
 			Rectangle bounds = rb.getRubberbandBounds();
 			if (!isValidBounds(bounds)) {
 				System.out.println("Rubberband bounds invalid: " + bounds);
 				return;
 			}
-			Point[] vertices = rb.getRubberbandVertices();
 			rubberbanding(bounds, vertices);
 
 			canvas.repaint();
@@ -169,12 +169,10 @@ public abstract class ARubberbandButton extends JToggleButton
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		System.out.println("Mouse moved: " + e.getPoint());
 	}
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
-		System.out.println("Mouse dragged: " + e.getPoint());
 		if (startOnDrag && rubberband == null) {
 			init(e);
 		}

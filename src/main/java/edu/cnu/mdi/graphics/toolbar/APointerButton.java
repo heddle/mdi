@@ -1,4 +1,4 @@
-package edu.cnu.mdi.experimental;
+package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Component;
 import java.awt.Cursor;
@@ -7,6 +7,7 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.List;
 import java.util.Objects;
 
 import javax.swing.JToggleButton;
@@ -15,7 +16,7 @@ import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.Rubberband;
 
 @SuppressWarnings("serial")
-public abstract class ASelectionRubberbandButton extends JToggleButton
+public abstract class APointerButton extends JToggleButton
 		implements MouseMotionListener, MouseListener, IRubberbanded {
 
 	private final int minSizePx;
@@ -38,9 +39,9 @@ public abstract class ASelectionRubberbandButton extends JToggleButton
 	private Point lastPt;
 
 	/** Object under cursor on press (if any). */
-	private Object hit;
+	private Object hitObject;
 
-	protected ASelectionRubberbandButton(Component canvas, AToolBar toolBar, Rubberband.Policy policy, int minSizePx) {
+	protected APointerButton(Component canvas, AToolBar toolBar, Rubberband.Policy policy, int minSizePx) {
 		Objects.requireNonNull(canvas, "canvas");
 		Objects.requireNonNull(toolBar, "toolBar");
 		Objects.requireNonNull(policy, "policy");
@@ -50,10 +51,12 @@ public abstract class ASelectionRubberbandButton extends JToggleButton
 		this.minSizePx = Math.max(1, minSizePx);
 	}
 
+	/** Get the rubberband policy for this tool. */
 	protected Rubberband.Policy rubberbandPolicy() {
 		return policy;
 	}
-
+	
+	/** Get the active cursor for this tool. */
 	protected Cursor activeCursor() {
 		if (policy == Rubberband.Policy.NONE) {
 			return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
@@ -64,18 +67,8 @@ public abstract class ASelectionRubberbandButton extends JToggleButton
 	/** Called when a rubberband gesture completes with valid bounds. */
 	public abstract void rubberbanding(Rectangle bounds, Point[] vertices);
 
-	/** Drag promoted to MOVING. */
-	protected void beginMove(Object obj, MouseEvent e) {
-	}
 
-	/** Move selection by pixel delta. */
-	protected void moveBy(int dx, int dy, MouseEvent e) {
-	}
-
-	/** End move. */
-	protected void endMove(MouseEvent e) {
-	}
-
+	/** Cancel any ongoing rubberband gesture. */
 	protected final void cancelRubberband() {
 		if (policy == Rubberband.Policy.NONE) {
 			return;
@@ -87,10 +80,14 @@ public abstract class ASelectionRubberbandButton extends JToggleButton
 		}
 	}
 
+	// ------ IRubberbanded interface methods ------
+	
+	// Validate rubberband bounds.
 	private boolean isValidBounds(Rectangle b) {
 		return (b != null) && (b.width >= minSizePx) && (b.height >= minSizePx);
 	}
 
+	// Check whether drag has passed threshold.
 	private boolean pastThreshold(Point a, Point b) {
 		int dx = b.x - a.x;
 		int dy = b.y - a.y;
@@ -169,8 +166,19 @@ public abstract class ASelectionRubberbandButton extends JToggleButton
 		pressPt = e.getPoint();
 		lastPt = pressPt;
 
-		hit = hitTest(pressPt);
-		mode = (hit != null) ? Mode.PRESS_ON_OBJECT : Mode.PRESS_ON_EMPTY;
+		hitObject = hitTest(pressPt);
+		
+		if ((hitObject != null) && e.isPopupTrigger()) {
+			// Right-click on object: treat as click, not drag.
+			clickObject(hitObject, e);
+			mode = Mode.IDLE;
+			pressPt = null;
+			lastPt = null;
+			hitObject = null;
+			return;
+		}
+		
+		mode = (hitObject != null) ? Mode.PRESS_ON_OBJECT : Mode.PRESS_ON_EMPTY;
 	}
 
 	@Override
@@ -189,8 +197,12 @@ public abstract class ASelectionRubberbandButton extends JToggleButton
 
 			// Promote to a drag mode.
 			if (mode == Mode.PRESS_ON_OBJECT) {
+				if (doNotDrag(hitObject,  e)) {
+					mode = Mode.IDLE;
+					return;
+				}
 				mode = Mode.MOVING;
-				beginMove(hit, e);
+				beginDragObject(hitObject, e);
 			} else {
 				mode = Mode.RUBBERBANDING;
 				beginRubberband(e);
@@ -201,7 +213,7 @@ public abstract class ASelectionRubberbandButton extends JToggleButton
 			int dx = p.x - lastPt.x;
 			int dy = p.y - lastPt.y;
 			if (dx != 0 || dy != 0) {
-				moveBy(dx, dy, e);
+				dragObjectBy(hitObject, dx, dy, e);
 				lastPt = p;
 				canvas.repaint();
 			}
@@ -218,11 +230,11 @@ public abstract class ASelectionRubberbandButton extends JToggleButton
 
 		try {
 			if (mode == Mode.PRESS_ON_OBJECT) {
-				clickObject(hit, e);
+				clickObject(hitObject, e);
 			} else if (mode == Mode.PRESS_ON_EMPTY) {
 				clickObject(null, e); // optional: treat empty click as "background click"
 			} else if (mode == Mode.MOVING) {
-				endMove(e);
+				endDragObject(hitObject, e);
 			} else if (mode == Mode.RUBBERBANDING) {
 				// Completion arrives via doneRubberbanding()
 			}
@@ -232,10 +244,11 @@ public abstract class ASelectionRubberbandButton extends JToggleButton
 			}
 			pressPt = null;
 			lastPt = null;
-			hit = null;
+			hitObject = null;
 		}
 	}
 
+	// start rubberbanding
 	private void beginRubberband(MouseEvent e) {
 		if (policy == Rubberband.Policy.NONE) {
 			return;
@@ -247,6 +260,8 @@ public abstract class ASelectionRubberbandButton extends JToggleButton
 		rubberband.setActive(true);
 		rubberband.startRubberbanding(pressPt != null ? pressPt : e.getPoint());
 	}
+	
+	
 
 	// ------ Interface methods for subclasses to override ------
 
@@ -262,4 +277,22 @@ public abstract class ASelectionRubberbandButton extends JToggleButton
 	/** Double-click on an object. */
 	protected void doubleClickObject(Object obj, MouseEvent e) {
 	}
+	
+	/** Drag promoted to MOVING. (Dragging an object or objects) */
+	protected void beginDragObject(Object obj, MouseEvent e) {
+	}
+
+	/** Move selection by pixel delta. */
+	protected void dragObjectBy(Object object, int dx, int dy, MouseEvent e) {
+	}
+
+	/** End move. */
+	protected void endDragObject(Object object, MouseEvent e) {
+	}
+	
+	/** Return true to prevent dragging of the given object. */
+	protected boolean doNotDrag(Object object, MouseEvent e) {
+		return false;
+	}
+
 }

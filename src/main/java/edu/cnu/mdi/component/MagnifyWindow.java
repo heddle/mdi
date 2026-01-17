@@ -22,7 +22,6 @@ import javax.swing.JWindow;
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
-import edu.cnu.mdi.graphics.toolbar.IContainerToolBar;
 
 /**
  * A floating magnifier window used to display a zoomed-in view of a
@@ -298,10 +297,6 @@ public class MagnifyWindow extends JWindow {
 			_magnifyWindow.setVisible(false);
 
 			if (_sourceContainer != null) {
-				IContainerToolBar tb = _sourceContainer.getToolBar();
-				if (tb != null) {
-					tb.resetDefaultSelection();
-				}
 				_sourceContainer = null;
 			}
 		}

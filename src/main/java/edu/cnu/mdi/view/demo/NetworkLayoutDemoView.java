@@ -13,7 +13,8 @@ import javax.swing.JPanel;
 import edu.cnu.mdi.app.DemoApp;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackPane;
-import edu.cnu.mdi.graphics.toolbar.IContainerToolBar;
+import edu.cnu.mdi.graphics.toolbar.AToolBar;
+import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.properties.PropertySupport;
@@ -77,7 +78,7 @@ public class NetworkLayoutDemoView extends BaseView {
 
 	// add the custom buttons to the toolbar
 	private void addToToolBar() {
-		IContainerToolBar tb = getContainer().getToolBar();
+		AToolBar tb = getContainer().getToolBar();
 		if (tb == null) {
 			return;
 		}
@@ -89,12 +90,21 @@ public class NetworkLayoutDemoView extends BaseView {
 		// one-shot buttons just perform an action when clicked
 		// they do not stay selected like toggle buttons
 		//
-		tb.addOneShot(new GridButton(this));
+		new GridButton(this);
 
 		// add a mutually exclusive toolbar toggle button for all known devices
 		for (EDeviceSymbol ds : EDeviceSymbol.values()) {
-			tb.addToolToggle(new PlaceDeviceTool(deviceLayer, ds), ds.iconPath, ds.toolTip);
+			new DeviceButton(this, ds);
 		}
+	}
+	
+	/**
+	 * Get the device layer where device items are placed.
+	 * 
+	 * @return the device layer
+	 */
+	public Layer getDeviceLayer() {
+		return deviceLayer;
 	}
 
 	// Provide feedback strings showing screen and world coordinates

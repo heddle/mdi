@@ -27,7 +27,8 @@ import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
-import edu.cnu.mdi.graphics.toolbar.IContainerToolBar;
+import edu.cnu.mdi.graphics.toolbar.AToolBar;
+import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.ItemChangeListener;
@@ -87,7 +88,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	protected List<Layer> _layers = new ArrayList<>();
 
 	/** Optional toolbar for this container. */
-	protected IContainerToolBar _toolBar;
+	protected AToolBar _toolBar;
 
 	/** Optional feedback(mouse-over) pane. */
 	protected FeedbackPane _feedbackPane;
@@ -136,24 +137,17 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/** Transform world -> local(screen). */
 	protected AffineTransform worldToLocal;
-
-	/**
-	 * Constructor for a container that does not live in a view.
-	 *
-	 * @param worldSystem the default world system (viewport)
-	 */
-	public BaseContainer(Rectangle2D.Double worldSystem) {
-		this(null, worldSystem);
-	}
+	
+	// Tool handler for this container
+	protected BaseToolHandler toolHandler;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param view        owning view (may be null)
 	 * @param worldSystem the default world system (viewport)
 	 */
-	public BaseContainer(BaseView view, Rectangle2D.Double worldSystem) {
-		_view = view;
+	public BaseContainer(Rectangle2D.Double worldSystem) {
+		
 		_feedbackControl = new FeedbackControl(this);
 
 		resetWorldSystem(worldSystem);
@@ -186,6 +180,15 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 		addComponentListener(componentAdapter);
 	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void setView(BaseView view) {
+		_view = view;
+	}
+
 
 	/**
 	 * Share the model with another container (used for magnification windows).
@@ -797,7 +800,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 * {@inheritDoc}
 	 */
 	@Override
-	public IContainerToolBar getToolBar() {
+	public AToolBar getToolBar() {
 		return _toolBar;
 	}
 
@@ -805,15 +808,23 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void setToolBar(IContainerToolBar toolBar) {
+	public void setToolBar(AToolBar toolBar) {
 		_toolBar = toolBar;
+		if (_toolBar != null) {
+			toolHandler = new BaseToolHandler(this);
+			((BaseToolBar)_toolBar).setHandler(toolHandler);
+		}
+
 	}
 	
 	/**
 	 *  Check and set the toolbar state (e.g., button enable/disable)
 	 */
 	public void setToolBarState() {
-        //TODO implement with new toolbar
+        if (_toolBar != null) {
+			//TODO: implement specific state changes based on selection
+
+		}
 	}
 
 	/**
@@ -836,12 +847,12 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void locationUpdate(MouseEvent mouseEvent, boolean dragging) {
+	public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging) {
 		Point2D.Double wp = getLocation(mouseEvent);
 
 		// Update toolbar text (if present)
 		if (_toolBar != null) {
-			_toolBar.setText(Point2DSupport.toString(wp));
+			_toolBar.updateStatusText(Point2DSupport.toString(wp));
 		}
 
 		// Update feedback (if present)
@@ -862,14 +873,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void setView(BaseView view) {
-		_view = view;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
 	public void itemChanged(Layer layer, AItem item, ItemChangeType type) {
 
 		switch (type) {
@@ -878,9 +881,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 		case SELECTED:
 		case DESELECTED:
-			if (_toolBar != null) {
-				_toolBar.updateButtonState();
-			}
+			setToolBarState();
 			break;
 
 		case DOUBLECLICKED:
