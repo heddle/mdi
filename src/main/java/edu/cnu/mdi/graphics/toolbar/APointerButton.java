@@ -202,7 +202,7 @@ public abstract class APointerButton extends JToggleButton
 					return;
 				}
 				mode = Mode.MOVING;
-				beginDragObject(hitObject, e);
+				beginDragObject(hitObject, pressPt, e);
 			} else {
 				mode = Mode.RUBBERBANDING;
 				beginRubberband(e);
@@ -279,7 +279,7 @@ public abstract class APointerButton extends JToggleButton
 	}
 	
 	/** Drag promoted to MOVING. (Dragging an object or objects) */
-	protected void beginDragObject(Object obj, MouseEvent e) {
+	protected void beginDragObject(Object obj, Point pressPoint, MouseEvent e) {
 	}
 
 	/** Move selection by pixel delta. */

@@ -49,7 +49,17 @@ public interface IToolHandler {
 	public void pointerDoubleClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e);
 	
 	
-	public void beginDragObject(AToolBar toolBar, Component canvas, Object obj, MouseEvent e);
+	/**
+	 * Handle beginning of a drag operation on an object.
+	 * 
+	 * @param toolBar ToolBar that owns this tool
+	 * @param canvas JComponent on which the drag is occurring
+	 * @param obj    Object being dragged
+	 * @param pressPoint Point where the drag started (this should be the 
+	 * initial mouse press point used to check modification triggers)
+	 * @param e MouseEvent that triggered the drag
+	 */
+	public void beginDragObject(AToolBar toolBar, Component canvas, Object obj, Point pressPoint, MouseEvent e);
 	
 	public void dragObjectBy(AToolBar toolBar, Component canvas, Object obj, int dx, int dy, MouseEvent e);
 	

@@ -241,8 +241,8 @@ public class BaseToolBar extends AToolBar {
 				
 				/** Drag promoted to MOVING. (Dragging an object or objects) */
 				@Override
-				protected void beginDragObject(Object obj, MouseEvent e) {
-					handler.beginDragObject(BaseToolBar.this, canvas, obj, e);
+				protected void beginDragObject(Object obj, Point pressPoint,  MouseEvent e) {
+					handler.beginDragObject(BaseToolBar.this, canvas, obj, pressPoint, e);
 				}
 
 				/** Move selection by pixel delta. */

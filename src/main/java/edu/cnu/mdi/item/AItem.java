@@ -759,23 +759,30 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 */
 	public void startModification() {
 
+		if (_modification == null) {
+			return;
+		}
+
 		IContainer container = _modification.getContainer();
 		Point smp = _modification.getStartMousePoint();
 
-		// check rotate first
+		// Defensive default
+		_modification.setType(ModificationType.DRAG);
+
+		// 1) Rotation has highest priority
 		if (inRotatePoint(container, smp)) {
 			_modification.setType(ModificationType.ROTATE);
 			return;
 		}
 
-		// is this a resize?
+		// 2) Resize (only if resizable and selected)
 		int index = inSelectPoint(container, smp, true);
 		if (index >= 0) {
 			_modification.setSelectIndex(index);
 			_modification.setType(ModificationType.RESIZE);
 			return;
 		}
-
+		// 3) Otherwise it's a drag
 		_modification.setType(ModificationType.DRAG);
 	}
 

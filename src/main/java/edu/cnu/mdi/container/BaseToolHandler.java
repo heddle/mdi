@@ -44,6 +44,10 @@ public class BaseToolHandler implements IToolHandler  {
 	//for modifying items
 	private AItem modifyItem;
 	private boolean modifying;
+	
+	// cached press point for the current drag gesture
+	private Point dragPressPoint;
+
 
 	
 	/**
@@ -152,11 +156,14 @@ public class BaseToolHandler implements IToolHandler  {
 	}
 	
 	@Override
-	public void beginDragObject(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
+	public void beginDragObject(AToolBar toolBar, Component canvas, Object obj, Point pressPoint, MouseEvent e) {
 
 		modifyItem = null;
 		modifying = false;
-		
+	
+	    // Cache a defensive copy (Point is mutable)
+	    dragPressPoint = (pressPoint == null) ? null : new Point(pressPoint);
+
 		if (obj instanceof AItem) {
 			AItem item = (AItem) obj;
 			if (item.isEnabled() && !item.isLocked() && item.isDraggable()) {
@@ -166,46 +173,62 @@ public class BaseToolHandler implements IToolHandler  {
 
 	@Override
 	public void dragObjectBy(AToolBar toolBar, Component canvas, Object obj, int dx, int dy, MouseEvent e) {
-			if (obj instanceof AItem) {
-			AItem item = (AItem) obj;
-			if (item.isTrackable()) {
-				if (!modifying) {
-					// first time through
-					modifyItem = item;
-					modifying = true;
-					Point p = e.getPoint();
-					ItemModification mod = new ItemModification(modifyItem, container, p, p,
-							e.isShiftDown(), e.isControlDown());
-					modifyItem.setModification(mod);
-					modifyItem.startModification();
-					
-				} //not modifying
-				if (modifying && modifyItem != null) {
-					ItemModification mod = modifyItem.getItemModification();
-					System.out.println("Mod type item: " + mod.getType());
-					if (mod != null) {
-						mod.setCurrentMousePoint(e.getPoint());
-					}
-					modifyItem.modify();
-				}
-			}
-		} //instanceof AItem
-	} // dragObjectBy
+
+	    if (!(obj instanceof AItem)) {
+	        return;
+	    }
+
+	    AItem item = (AItem) obj;
+	    if (!item.isTrackable()) {
+	        return;
+	    }
+
+	    if (!modifying) {
+	        modifyItem = item;
+	        modifying = true;
+
+	        Point current = e.getPoint();
+
+	        // Prefer explicit press point from beginDragObject; fall back to offset trick.
+	        Point press = (dragPressPoint != null)
+	                ? new Point(dragPressPoint)
+	                : new Point(current.x - dx, current.y - dy);
+
+	        ItemModification mod = new ItemModification(
+	                modifyItem,
+	                container,
+	                press,
+	                current,
+	                e.isShiftDown(),
+	                e.isControlDown()
+	        );
+
+	        modifyItem.setModification(mod);
+	        modifyItem.startModification();
+	    }
+
+	    if (modifyItem != null) {
+	        ItemModification mod = modifyItem.getItemModification();
+	        if (mod != null) {
+	            mod.setCurrentMousePoint(e.getPoint());
+	        }
+	        modifyItem.modify();
+	    }
+	}
+
 
 	@Override
 	public void endDragObject(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
-		
-		if (modifyItem != null) {
-			modifyItem.stopModification();
-			modifyItem.setModification(null);
-		}
-		modifyItem = null;
-		modifying = false;
-	}
 
-	@Override
-	public boolean doNotDrag(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
-		return false;
+	    if (modifyItem != null) {
+	        modifyItem.stopModification();
+	        // stopModification already nulls _modification in your AItem; this line is redundant:
+	        // modifyItem.setModification(null);
+	    }
+
+	    modifyItem = null;
+	    modifying = false;
+	    dragPressPoint = null;
 	}
 	
 
@@ -391,7 +414,11 @@ public class BaseToolHandler implements IToolHandler  {
 		container.setDirty(true);
 		container.refresh();
 	}
-	
+
+	@Override
+	public boolean doNotDrag(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
+		return false;
+	}
 
 }
 

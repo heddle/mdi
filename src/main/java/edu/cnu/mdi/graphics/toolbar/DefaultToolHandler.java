@@ -26,20 +26,22 @@ public class DefaultToolHandler implements IToolHandler {
 
 	@Override
 	public void pointerClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e) {
+		// no-op
 	}
 
 	@Override
 	public void pointerDoubleClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e) {
+		// no-op
 	}
 
 	@Override
 	public void pointerRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
-		
+		// no-op
 	}
 	
 	@Override
-	public void beginDragObject(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
-		
+	public void beginDragObject(AToolBar toolBar, Component canvas, Object obj, Point pressPoint, MouseEvent e) {
+		// no-op
 	}
 	
 	@Override
