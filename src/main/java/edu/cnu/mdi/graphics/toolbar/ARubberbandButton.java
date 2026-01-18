@@ -17,193 +17,205 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 /**
  * Base class for tools using a {@link Rubberband} bounds-based gesture (e.g.
  * rectangle, ellipse) on a component.
- * <p>
- * This base class handles:
- * </p>
- * <ul>
- * <li>starting a rubber-band gesture on mouse press</li>
- * <li>validating the rubber-band bounds</li>
- * <li>creating an item in the annotation list</li>
- * <li>clearing selection and returning to the default tool</li>
- * <li>cancelling an in-progress gesture when deselected</li>
- * </ul>
  *
- * <h2>Lifecycle note</h2> {@link #doneRubberbanding()} is invoked by
- * {@link Rubberband}. It may arrive after the tool has been deselected. To
- * avoid NPEs, this class snapshots required collaborators at the start of
- * {@code doneRubberbanding()} and clears instance fields early.
+ * <p>
+ * This version uses {@link GestureContext} to preserve the true press point and
+ * to provide modifier state to subclasses at completion time.
+ * </p>
  *
  * @author heddle
  */
 @SuppressWarnings("serial")
 public abstract class ARubberbandButton extends JToggleButton
-		implements MouseMotionListener, MouseListener, IRubberbanded {
+        implements MouseMotionListener, MouseListener, IRubberbanded {
 
-	/** Minimum width/height in pixels for a creation gesture to be accepted. */
-	private final int minSizePx;
+    /** Minimum width/height in pixels for a creation gesture to be accepted. */
+    private final int minSizePx;
 
-	/** Component that owns the current gesture (null when idle). */
-	protected Component canvas;
+    /** Component that owns the current gesture (null when idle). */
+    protected Component canvas;
 
-	/** Toolbar that owns this tool. */
-	protected AToolBar toolBar;
+    /** Toolbar that owns this tool. */
+    protected AToolBar toolBar;
 
-	/** Rubberband policy to use. */
-	protected Rubberband.Policy policy;
+    /** Rubberband policy to use. */
+    protected Rubberband.Policy policy;
 
-	/** Cached rubber band */
-	protected Rubberband rubberband;
+    /** Cached rubber band (null when idle). */
+    protected Rubberband rubberband;
 
-	/** If true, rubberbanding starts on drag instead of press */
-	protected boolean startOnDrag;
+    /** If true, rubberbanding starts on drag instead of press. */
+    protected boolean startOnDrag;
 
-	/**
-	 * Create a rubber-band based tool.
-	 *
-	 * @param canvas    component on which rubber-banding occurs.
-	 * @param toolBar   toolbar that owns this tool.
-	 * @param policy    rubber-band policy to use (e.g.,
-	 *                  {@link Rubberband.Policy#OVAL}).
-	 * @param minSizePx minimum pixel size for bounds to be considered valid.
-	 */
-	protected ARubberbandButton(Component canvas, AToolBar toolBar, Rubberband.Policy policy, int minSizePx) {
-		Objects.requireNonNull(canvas, "canvas");
-		Objects.requireNonNull(toolBar, "toolBar");
-		Objects.requireNonNull(policy, "policy");
-		this.canvas = canvas;
-		this.toolBar = toolBar;
-		this.policy = policy;
-		this.minSizePx = Math.max(1, minSizePx);
+    /** Context for the current gesture (null when idle). */
+    protected GestureContext gesture;
 
-		startOnDrag = (policy == Rubberband.Policy.RECTANGLE || policy == Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT);
-	}
+    /**
+     * Create a rubber-band based tool.
+     *
+     * @param canvas    component on which rubber-banding occurs.
+     * @param toolBar   toolbar that owns this tool.
+     * @param policy    rubber-band policy to use (e.g., {@link Rubberband.Policy#OVAL}).
+     * @param minSizePx minimum pixel size for bounds to be considered valid.
+     */
+    protected ARubberbandButton(Component canvas, AToolBar toolBar, Rubberband.Policy policy, int minSizePx) {
+        Objects.requireNonNull(canvas, "canvas");
+        Objects.requireNonNull(toolBar, "toolBar");
+        Objects.requireNonNull(policy, "policy");
+        this.canvas = canvas;
+        this.toolBar = toolBar;
+        this.policy = policy;
+        this.minSizePx = Math.max(1, minSizePx);
 
-	/**
-	 * @return rubber-band policy to use (e.g., {@link Rubberband.Policy#OVAL}).
-	 */
-	protected Rubberband.Policy rubberbandPolicy() {
-		return policy;
-	}
+        startOnDrag = (policy == Rubberband.Policy.RECTANGLE || policy == Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT);
+    }
 
-	/**
-	 * @return cursor to use while active. Default is crosshair.
-	 */
-	protected Cursor activeCursor() {
-		if (policy == Rubberband.Policy.NONE) {
-			return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
-		}
-		return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
-	}
+    /**
+     * @return rubber-band policy to use (e.g., {@link Rubberband.Policy#OVAL}).
+     */
+    protected Rubberband.Policy rubberbandPolicy() {
+        return policy;
+    }
 
-	/**
-	 * Called by {@link Rubberband} when the gesture completes. Creates an item if
-	 * bounds are valid, then returns to the default tool.
-	 */
-	@Override
-	public final void doneRubberbanding() {
-		if (policy == Rubberband.Policy.NONE) {
-			return;
-		}
-		// Snapshot fields first, then clear instance state.
-		final Rubberband rb = this.rubberband;
+    /**
+     * @return cursor to use while active. Default is crosshair.
+     */
+    protected Cursor activeCursor() {
+        if (policy == Rubberband.Policy.NONE) {
+            return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
+        }
+        return Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR);
+    }
 
-		this.rubberband = null;
+    /**
+     * Called by {@link Rubberband} when the gesture completes.
+     */
+    @Override
+    public final void doneRubberbanding() {
+        if (policy == Rubberband.Policy.NONE) {
+            return;
+        }
 
-		try {
-			if (rb == null) {
-				return;
-			}
+        // Snapshot fields first, then clear instance state early.
+        final Rubberband rb = this.rubberband;
+        final GestureContext gc = this.gesture;
+        
+        this.rubberband = null;
+        this.gesture = null;
+        
+        if (rb == null) {
+            return;
+        }
 
-			Point[] vertices = rb.getRubberbandVertices();
-			Rectangle bounds = rb.getRubberbandBounds();
-			if (!isValidBounds(bounds)) {
-				System.out.println("Rubberband bounds invalid: " + bounds);
-				return;
-			}
-			rubberbanding(bounds, vertices);
+        Point[] vertices = rb.getRubberbandVertices();
+        Rectangle bounds = rb.getRubberbandBounds();
 
-			canvas.repaint();
+        if (!isValidBounds(bounds)) {
+           return;
+        }
 
-		} finally {
-		}
-	}
+        rubberbanding(gc, bounds, vertices);
+        this.gesture = null;
+        canvas.repaint();
+    }
 
-	/**
-	 * Handle a completed rubber-band gesture with valid bounds.
-	 *
-	 * @param bounds   the rubber-band bounds
-	 * @param vertices the rubber-band vertices
-	 */
-	public abstract void rubberbanding(Rectangle bounds, Point[] vertices);
-	
-	/**
-	 * Cancel an in-progress rubber-band gesture.
-	 */
-	protected final void cancelRubberband() {
-		if (policy == Rubberband.Policy.NONE) {
-			return;
-		}
-		Rubberband rb = rubberband;
-		rubberband = null;
-		if (rb != null) {
-			rb.cancel();
-		}
-	}
+    /**
+     * Cancel an in-progress rubber-band gesture.
+     */
+    protected final void cancelRubberband() {
+        if (policy == Rubberband.Policy.NONE) {
+            return;
+        }
+        Rubberband rb = rubberband;
+        rubberband = null;
+        gesture = null;
+        if (rb != null) {
+            rb.cancel();
+        }
+    }
 
-	// checks minimum size of rubberband bounds
-	private boolean isValidBounds(Rectangle b) {
-		return (b != null) && (b.width >= minSizePx) && (b.height >= minSizePx);
-	}
+    // checks minimum size of rubberband bounds
+    private boolean isValidBounds(Rectangle b) {
+        return (b != null) && (b.width >= minSizePx) && (b.height >= minSizePx);
+    }
 
-	@Override
-	public void mouseClicked(MouseEvent e) {
-	}
+    @Override
+    public void mouseClicked(MouseEvent e) { }
 
-	@Override
-	public void mouseEntered(MouseEvent e) {
-	}
+    @Override
+    public void mouseEntered(MouseEvent e) { }
 
-	@Override
-	public void mouseExited(MouseEvent e) {
-	}
+    @Override
+    public void mouseExited(MouseEvent e) { }
 
-	@Override
-	public void mouseMoved(MouseEvent e) {
-	}
+    @Override
+    public void mouseMoved(MouseEvent e) { }
 
-	@Override
-	public void mouseDragged(MouseEvent e) {
-		if (startOnDrag && rubberband == null) {
-			init(e);
-		}
-	}
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        // Keep gesture current (modifiers may change mid-gesture)
+        if (gesture != null) {
+            gesture.update(e);
+        }
 
-	// initialize rubberbanding
-	private void init(MouseEvent e) {
-		if (policy == Rubberband.Policy.NONE) {
-			return;
-		}
-		if (rubberband == null) {
-			Rubberband.Policy policy = Objects.requireNonNull(rubberbandPolicy(), "rubberbandPolicy");
-			rubberband = new Rubberband(canvas, this, policy);
-		}
+        // For start-on-drag tools, initialize on first drag
+        if (startOnDrag && rubberband == null) {
+            init();
+        }
+    }
 
-		rubberband.setActive(true);
-		rubberband.startRubberbanding(e.getPoint());
-	}
+    // initialize rubberbanding, starting from the true press point
+    private void init() {
+        if (policy == Rubberband.Policy.NONE) {
+            return;
+        }
 
-	@Override
-	public void mousePressed(MouseEvent e) {
-		if (policy == Rubberband.Policy.NONE) {
-			return;
-		}
-		if (!startOnDrag && rubberband == null) {
-			init(e);
-		}
-	}
+        if (gesture == null) {
+            // This can happen if we never saw a press (unlikely), or if caller canceled early.
+            // Best effort: start from current mouse location isn't available here, so bail.
+            return;
+        }
 
-	@Override
-	public void mouseReleased(MouseEvent e) {
-	}
+        if (rubberband == null) {
+            Rubberband.Policy pol = Objects.requireNonNull(rubberbandPolicy(), "rubberbandPolicy");
+            rubberband = new Rubberband(canvas, this, pol);
+        }
 
+        rubberband.setActive(true);
+
+        // Critical: start from the press point, not the first drag point.
+        rubberband.startRubberbanding(gesture.getPressPoint());
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        if (policy == Rubberband.Policy.NONE) {
+            return;
+        }
+
+        // Create context at press time (true press point + initial modifiers).
+        // Rubberband creation gestures don't have a "target object", so target = null.
+        gesture = new GestureContext(toolBar, canvas, null, e.getPoint(), e);
+
+        if (!startOnDrag && rubberband == null) {
+            init();
+        }
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        // Keep final modifiers/current point available to doneRubberbanding subclass handler.
+        if (gesture != null) {
+            gesture.update(e);
+        }
+    }
+
+    /**
+     * Handle a completed rubber-band gesture with valid bounds.
+     *
+     * @param gesture  the gesture context captured at press time (may be null if gesture was lost/canceled)
+     * @param bounds   the rubber-band bounds
+     * @param vertices the rubber-band vertices
+     */
+    public abstract void rubberbanding(GestureContext gesture, Rectangle bounds, Point[] vertices);
 }

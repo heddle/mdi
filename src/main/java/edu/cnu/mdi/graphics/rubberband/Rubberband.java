@@ -119,7 +119,6 @@ public final class Rubberband {
 						if (event.getClickCount() == 2) {
 							endRubberbanding(event.getPoint());
 						} else {
-							System.out.println("adding point CCC");	
 							addPoint(_tempPoly, event.getX(), event.getY());
 						}
 					}
@@ -127,7 +126,6 @@ public final class Rubberband {
 					if (_tempPoly == null) {
 						startRubberbanding(event.getPoint());
 					} else {
-						System.out.println("adding point AAA");
 						addPoint(_tempPoly, event.getX(), event.getY());
 						if (_tempPoly.npoints == 3) {
 							endRubberbanding(event.getPoint());
@@ -142,10 +140,8 @@ public final class Rubberband {
 							endRubberbanding(null);
 							return;
 						}
-						System.out.println("adding point BBB");
 						addPoint(_tempPoly, event.getX(), event.getY());
 						if (_tempPoly.npoints == 2) {
-							System.out.println("ending line rubberbanding");
 							endRubberbanding(event.getPoint());
 						}
 					}
@@ -341,7 +337,6 @@ public final class Rubberband {
 
 		case POLYLINE:
 			tpoly = new Polygon(_tempPoly.xpoints, _tempPoly.ypoints, _tempPoly.npoints);
-			System.out.println("adding point DDD");
 			addPoint(tpoly, _currentPt.x, _currentPt.y);
 			GraphicsUtils.drawHighlightedPolyline(g, tpoly.xpoints, tpoly.ypoints, tpoly.npoints, _highlightColor1,
 					_highlightColor2);
@@ -349,7 +344,6 @@ public final class Rubberband {
 
 		case POLYGON:
 			tpoly = new Polygon(_tempPoly.xpoints, _tempPoly.ypoints, _tempPoly.npoints);
-			System.out.println("adding point EEE");
 			addPoint(tpoly, _currentPt.x, _currentPt.y);
 			g.fillPolygon(tpoly);
 			GraphicsUtils.drawHighlightedShape(g, tpoly, _highlightColor1, _highlightColor2);
@@ -452,7 +446,6 @@ public final class Rubberband {
 
 		if (polyMode() || radArcMode() || lineMode()) {
 			_tempPoly = new Polygon();
-			System.out.println("adding point GGG");
 			addPoint(_tempPoly, anchorPt.x, anchorPt.y);
 		}
 	}

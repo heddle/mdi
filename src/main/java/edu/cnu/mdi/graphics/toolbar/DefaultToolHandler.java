@@ -61,10 +61,10 @@ public class DefaultToolHandler implements IToolHandler {
 
 	
 	@Override
-	public void boxZoomRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
+	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
 		// no-op
 	}
-
+	
 	@Override
 	public void panStartDrag(AToolBar toolBar, Component canvas, Point start) {
 		base = GraphicsUtils.getComponentImage(canvas);
@@ -158,15 +158,23 @@ public class DefaultToolHandler implements IToolHandler {
 	public void createConnection(AToolBar toolBar, Component canvas, Point start, Point end) {
 	}
 
-	
 	@Override
 	public boolean approveConnectionPoint(AToolBar toolBar, Component canvas, Point p) {
 		return false;
 	}
 	
 	@Override
-	public void createRectangle(AToolBar toolBar, Component canvas, Rectangle bounds) {
+	public void createRectangle(GestureContext gc, Rectangle bounds) {
 		// no-op
 	}
-
+	
+	@Override
+	public void createEllipse(GestureContext gc, Rectangle bounds) {
+		// no-op
+	}
+	
+	@Override
+	public void createRadArc(GestureContext gc, Point[] vertices) {
+		// no-op
+	}
 }

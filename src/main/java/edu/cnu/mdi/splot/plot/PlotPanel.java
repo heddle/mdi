@@ -118,6 +118,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		PlotToolHandler toolHandler = new PlotToolHandler(this);
 		_toolbar = toolHandler.getToolBar();
 		_canvas.setToolBar(_toolbar);
+		_toolbar.setHandler(toolHandler);
 
 
 		JPanel npanel = new JPanel();

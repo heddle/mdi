@@ -70,11 +70,10 @@ public interface IToolHandler {
 	/**
 	 * Handle box zoom rubberbanding with the given bounds.
 	 * 
-	 * @param toolBar ToolBar that owns this tool
-	 * @param canvas JComponent on which the rubberbanding is occurring
+	 * @param gc     GestureContext for the rubberband gesture
 	 * @param bounds Rectangle defining the rubberband area
 	 */
-	public void boxZoomRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds);
+	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds);
 
 	/**
 	 * Handle the start of a pan drag operation.
@@ -231,9 +230,24 @@ public interface IToolHandler {
 	
 	/**
 	 * Create a rectangle with the given bounds.
-	 * @param toolBar ToolBar that owns this tool
-	 * @param canvas  JComponent on which the rectangle is being created
+	 * @param gc GestureContext for the rectangle creation gesture
 	 * @param bounds Rectangle defining the bounds of the new rectangle
 	 */
-	public void createRectangle(AToolBar toolBar, Component canvas, Rectangle bounds);
+	public void createRectangle(GestureContext gc, Rectangle bounds);
+	
+	/**
+	 * Create an ellipse with the given bounds.
+	 * @param gc GestureContext for the ellipse creation gesture
+	 * @param bounds Rectangle defining the bounds of the new ellipse
+	 */
+	public void createEllipse(GestureContext gc, Rectangle bounds);
+
+	/**
+	 * Create a radarc with the given bounds and vertices.
+	 * @param gc GestureContext for the radarc creation gesture
+	 * @param vertices Array of Points defining the vertices of the radarc.
+	 * The first point is the center, the second point defines the radius,
+	 * and the third point defines the arc angle.
+	 */
+	public void createRadArc(GestureContext gc, Point[] vertices);
 }

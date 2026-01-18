@@ -29,7 +29,7 @@ import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 public class EllipseItem extends PolygonItem {
 
 	/** Default number of segments used to approximate the ellipse path. */
-	private static final int DEFAULT_SEGMENTS = 36;
+	private static final int DEFAULT_SEGMENTS = 50;
 
 	/** Lower bound on width/height to avoid degeneracy. */
 	private static final double MIN_SIZE = 1.0e-9;

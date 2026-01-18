@@ -26,6 +26,32 @@ import edu.cnu.mdi.item.RectangleItem;
  *
  */
 public class CreationSupport {
+	
+	/**
+	 * From a given screen rectangle, create a rectangle item.
+	 *
+	 * @param layer the z layer to put the item on
+	 * @param b     the screen rectangle, probably from rubber banding.
+	 * @return the new item
+	 */
+	public static AItem createRectangleItem(Layer layer, Rectangle b) {
+		IContainer container = layer.getContainer();
+		Rectangle2D.Double wr = new Rectangle2D.Double();
+		container.localToWorld(b, wr);
+		RectangleItem item = new RectangleItem(layer, wr) {
+			@Override
+			public JPopupMenu createPopupMenu() {
+				JPopupMenu menu = super.createPopupMenu();
+				menu.addSeparator();
+				// Add custom menu items
+				addStyleEdit(menu, this);
+				return menu;
+			}
+		};
+		
+		defaultConfigureItem(item);
+		return item;
+	}
 
 	/**
 	 * From a given screen rectangle, create an ellipse item.
@@ -64,7 +90,7 @@ public class CreationSupport {
 		Point2D.Double center = new Point2D.Double();
 		container.localToWorld(pc, center);
 
-		return new EllipseItem(layer, width, height, 0.0, center) {
+		EllipseItem item = new EllipseItem(layer, width, height, 0.0, center) {
 			@Override
 			public JPopupMenu createPopupMenu() {
 				JPopupMenu menu = super.createPopupMenu();
@@ -74,8 +100,42 @@ public class CreationSupport {
 				return menu;
 			}
 		};
+		defaultConfigureItem(item);
+		return item;
+	}
+	
+	/**
+	 * Create a radarc item from the given parameters, probably obtained by
+	 * rubberbanding.
+	 *
+	 * @param layer    the z layer to put the item on
+	 * @param pc       the center of the arc
+	 * @param p1       the point at the end of the first leg. Thus pc->p1 determine
+	 *                 the radius.
+	 * @param arcAngle the opening angle COUNTERCLOCKWISE in degrees.
+	 * @return the new item
+	 */
+	public static AItem createRadArcItem(Layer layer, Point pc, Point p1, double arcAngle) {
+		IContainer container = layer.getContainer();
+		Point2D.Double wpc = new Point2D.Double();
+		Point2D.Double wp1 = new Point2D.Double();
+		container.localToWorld(pc, wpc);
+		container.localToWorld(p1, wp1);
+		RadArcItem item =  new RadArcItem(layer, wpc, wp1, arcAngle) {
+			@Override
+			public JPopupMenu createPopupMenu() {
+				JPopupMenu menu = super.createPopupMenu();
+				menu.addSeparator();
+				// Add custom menu items
+				addStyleEdit(menu, this);
+				return menu;
+			}
+		};
+		defaultConfigureItem(item);
+		return item;
 	}
 
+	// Add "Edit Style..." menu item to the given popup menu for the given item.
 	private static void addStyleEdit(final JPopupMenu menu, final AItem item) {
 		JMenuItem styleMenuItem = new JMenuItem("Edit Style...");
 		styleMenuItem.addActionListener(e -> {
@@ -90,39 +150,15 @@ public class CreationSupport {
 		menu.add(styleMenuItem);
 	}
 
-	/**
-	 * From a given screen rectangle, create a rectangle item.
-	 *
-	 * @param layer the z layer to put the item on
-	 * @param b     the screen rectangle, probably from rubber banding.
-	 * @return the new item
-	 */
-	public static AItem createRectangleItem(Layer layer, Rectangle b) {
-		IContainer container = layer.getContainer();
-		Rectangle2D.Double wr = new Rectangle2D.Double();
-		container.localToWorld(b, wr);
-		RectangleItem item = new RectangleItem(layer, wr) {
-			@Override
-			public JPopupMenu createPopupMenu() {
-				JPopupMenu menu = super.createPopupMenu();
-				menu.addSeparator();
-				// Add custom menu items
-				addStyleEdit(menu, this);
-				return menu;
-			}
-		};
-		
-		defaultConfigureItem(item);
-		return item;
-	}
 	
+	// Apply default configuration to the given item.
 	private static void defaultConfigureItem(AItem item) {
 		item.setRightClickable(true);
 		item.setDraggable(true);
 		item.setSelectable(true);
 		item.setResizable(true);
 		item.setRotatable(true);
-		item.setDeletable(false);
+		item.setDeletable(true);
 		item.setLocked(false);
 	}
 
@@ -152,34 +188,6 @@ public class CreationSupport {
 		};
 	}
 
-	/**
-	 * Create a radarc item from the given parameters, probably obtained by
-	 * rubberbanding.
-	 *
-	 * @param layer    the z layer to put the item on
-	 * @param pc       the center of the arc
-	 * @param p1       the point at the end of the first leg. Thus pc->p1 determine
-	 *                 the radius.
-	 * @param arcAngle the opening angle COUNTERCLOCKWISE in degrees.
-	 * @return the new item
-	 */
-	public static AItem createRadArcItem(Layer layer, Point pc, Point p1, double arcAngle) {
-		IContainer container = layer.getContainer();
-		Point2D.Double wpc = new Point2D.Double();
-		Point2D.Double wp1 = new Point2D.Double();
-		container.localToWorld(pc, wpc);
-		container.localToWorld(p1, wp1);
-		return new RadArcItem(layer, wpc, wp1, arcAngle) {
-			@Override
-			public JPopupMenu createPopupMenu() {
-				JPopupMenu menu = super.createPopupMenu();
-				menu.addSeparator();
-				// Add custom menu items
-				addStyleEdit(menu, this);
-				return menu;
-			}
-		};
-	}
 
 	/**
 	 * From a given screen polygon, create a polygon item.

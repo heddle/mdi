@@ -21,6 +21,7 @@ import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
+import edu.cnu.mdi.graphics.toolbar.GestureContext;
 import edu.cnu.mdi.graphics.toolbar.IToolHandler;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.ItemModification;
@@ -233,7 +234,7 @@ public class BaseToolHandler implements IToolHandler  {
 	
 
 	@Override
-	public void boxZoomRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
+	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
 		container.rubberBanded(bounds);
 	}
 
@@ -373,10 +374,61 @@ public class BaseToolHandler implements IToolHandler  {
 	}
 
 	@Override
-	public void createRectangle(AToolBar toolBar, Component canvas, Rectangle bounds) {
+	public void createRectangle(GestureContext gc, Rectangle bounds) {
 		CreationSupport.createRectangleItem(container.getAnnotationLayer(), bounds);
 	}
 
+	@Override
+	public void createEllipse(GestureContext gc, Rectangle bounds) {
+		CreationSupport.createEllipseItem(container.getAnnotationLayer(), bounds);
+	}
+	
+	@Override
+	public void createRadArc(GestureContext gc, Point[] pp) {
+
+				// Defensive (base guarantees length>=3, but RADARC expects exactly 3)
+				if (pp == null || pp.length != 3) {
+					return;
+				}
+
+				// Unpack points (screen coords)
+				double xc = pp[0].x;
+				double yc = pp[0].y;
+
+				double x1 = pp[1].x;
+				double y1 = pp[1].y;
+
+				double x2 = pp[2].x;
+				double y2 = pp[2].y;
+
+				// Vectors from center
+				double dx1 = x1 - xc;
+				double dy1 = y1 - yc;
+				double dx2 = x2 - xc;
+				double dy2 = y2 - yc;
+
+				double r1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+				double r2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+
+				// Legacy guard
+				if (r1 < 0.99 || r2 < 0.99) {
+					return ;
+				}
+
+				// Angle between radius vectors (clamped for numeric safety)
+				double cos = (dx1 * dx2 + dy1 * dy2) / (r1 * r2);
+				cos = Math.max(-1.0, Math.min(1.0, cos));
+				double aAngle = Math.acos(cos);
+
+
+				// Sign using 2D cross product (matches legacy sign logic)
+				if ((dx1 * dy2 - dx2 * dy1) > 0.0) {
+					aAngle = -aAngle;
+				}
+
+				double arcAngleDeg = Math.toDegrees(aAngle);
+				CreationSupport.createRadArcItem(container.getAnnotationLayer(), pp[0], pp[1], arcAngleDeg);
+	}
 	
 	@Override
 	public void captureImage(AToolBar toolBar, Component canvas) {

@@ -8,6 +8,7 @@ import edu.cnu.mdi.graphics.rubberband.Rubberband;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.DefaultToolHandler;
+import edu.cnu.mdi.graphics.toolbar.GestureContext;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 
@@ -56,8 +57,8 @@ public class PlotToolHandler extends DefaultToolHandler {
 	}
 	
 	@Override
-	public void boxZoomRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
-		PlotCanvas plotCanvas = (PlotCanvas) canvas;
+	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
+		PlotCanvas plotCanvas = (PlotCanvas) gc.getCanvas();
 		plotCanvas.zoomToRect(bounds);
 	}
 
