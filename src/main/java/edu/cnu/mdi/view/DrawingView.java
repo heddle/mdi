@@ -47,7 +47,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 		int height = d.height;
 
 		// create the view
-		long toolBits = ToolBits.DRAWINGTOOLS | ToolBits.ZOOMTOOLS;
+		long toolBits = ToolBits.DRAWINGTOOLS | ToolBits.ZOOMTOOLS | ToolBits.PAN;
 		view = new DrawingView(PropertySupport.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, width, height),
 				PropertySupport.WIDTH, width, // container width, not total view width
 				PropertySupport.HEIGHT, height, // container height, not total view width

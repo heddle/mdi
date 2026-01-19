@@ -4,7 +4,7 @@ import java.awt.Component;
 import java.awt.Rectangle;
 import java.util.Objects;
 
-import edu.cnu.mdi.graphics.rubberband.Rubberband;
+import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.DefaultToolHandler;
@@ -41,9 +41,9 @@ public class PlotToolHandler extends DefaultToolHandler {
 			bits = ToolBits.POINTER | ToolBits.PICVIEWSTOOLS;
 		}
 		
-		Rubberband.Policy pointerPolicy = Rubberband.Policy.NONE;
+		ARubberband.Policy pointerPolicy = ARubberband.Policy.NONE;
 		//histograms have x only policy
-		Rubberband.Policy boxZoomPolicy = (type == PlotDataType.H1D) ? Rubberband.Policy.XONLY : Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT;
+		ARubberband.Policy boxZoomPolicy = (type == PlotDataType.H1D) ? ARubberband.Policy.XONLY : ARubberband.Policy.RECTANGLE_PRESERVE_ASPECT;
 		toolBar = new BaseToolBar(plotCanvas, this, bits, pointerPolicy, boxZoomPolicy);
 	}
 	

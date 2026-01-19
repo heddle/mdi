@@ -9,7 +9,7 @@ import java.util.Properties;
 import javax.swing.JComponent;
 
 import edu.cnu.mdi.container.IContainer;
-import edu.cnu.mdi.graphics.rubberband.Rubberband;
+import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.ui.colors.X11Colors;
@@ -564,12 +564,12 @@ public class PropertySupport {
 	 * @param props the properties
 	 * @return the rubberband policy. On error return null.
 	 */
-	public static Rubberband.Policy getBoxZoomRubberbandPolicy(Properties props) {
+	public static ARubberband.Policy getBoxZoomRubberbandPolicy(Properties props) {
 		Object val = props.get(BOXZOOMRBPOLICY);
-		if ((val != null) && (val instanceof Rubberband.Policy)) {
-			return (Rubberband.Policy) val;
+		if ((val != null) && (val instanceof ARubberband.Policy)) {
+			return (ARubberband.Policy) val;
 		}
-		return Rubberband.Policy.RECTANGLE_PRESERVE_ASPECT;
+		return ARubberband.Policy.RECTANGLE_PRESERVE_ASPECT;
 	}
 
 	/**

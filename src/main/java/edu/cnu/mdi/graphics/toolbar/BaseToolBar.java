@@ -18,8 +18,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 
 import edu.cnu.mdi.graphics.ImageManager;
-import edu.cnu.mdi.graphics.rubberband.Rubberband;
-import edu.cnu.mdi.graphics.rubberband.Rubberband.Policy;
+import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
@@ -80,10 +79,10 @@ public class BaseToolBar extends AToolBar {
 	protected IToolHandler handler;
 
 	/** Policy to use for box zoom. */
-	protected final Rubberband.Policy boxZoomPolicy;
+	protected final ARubberband.Policy boxZoomPolicy;
 
 	/** Policy to use for pointer tool. */
-	protected final Rubberband.Policy pointerPolicy;
+	protected final ARubberband.Policy pointerPolicy;
 
 	// --- Active canvas listener tracking (O(1) swap) ---
 	private MouseListener activeMouseListener;
@@ -98,7 +97,8 @@ public class BaseToolBar extends AToolBar {
 	 *                See {@link ToolBits} for details.
 	 */
 	public BaseToolBar(Component canvas, IToolHandler handler, long bits) {
-		this(canvas, handler, bits, HORIZONTAL, Policy.RECTANGLE, Policy.RECTANGLE_PRESERVE_ASPECT);
+		this(canvas, handler, bits, HORIZONTAL, ARubberband.Policy.RECTANGLE, 
+				ARubberband.Policy.RECTANGLE_PRESERVE_ASPECT);
 	}
 
 	/**
@@ -112,7 +112,7 @@ public class BaseToolBar extends AToolBar {
 	 * @param boxZoomPolicy  the rubberband policy to use for the box zoom tool
 	 */
 	public BaseToolBar(Component canvas, IToolHandler handler, long bits,
-			Rubberband.Policy pointerPolicy, Rubberband.Policy boxZoomPolicy) {
+			ARubberband.Policy pointerPolicy, ARubberband.Policy boxZoomPolicy) {
 		this(canvas, handler, bits, HORIZONTAL, pointerPolicy, boxZoomPolicy);
 	}
 
@@ -127,7 +127,7 @@ public class BaseToolBar extends AToolBar {
 	 * @param boxZoomPolicy  the rubberband policy to use for the box zoom tool
 	 */
 	public BaseToolBar(Component canvas, IToolHandler handler, long bits, int orientation,
-			Rubberband.Policy pointerPolicy, Rubberband.Policy boxZoomPolicy) {
+			ARubberband.Policy pointerPolicy, ARubberband.Policy boxZoomPolicy) {
 
 		super(orientation);
 
@@ -137,6 +137,7 @@ public class BaseToolBar extends AToolBar {
 		this.pointerPolicy = Objects.requireNonNull(pointerPolicy, "pointerPolicy cannot be null");
 		this.boxZoomPolicy = Objects.requireNonNull(boxZoomPolicy, "boxZoomPolicy cannot be null");
 
+		this.handler = handler;
 		addPredefinedButtons();
 	}
 	
@@ -196,7 +197,7 @@ public class BaseToolBar extends AToolBar {
 	 * @return the created toggle tool
 	 */
 	private JToggleButton rubberbandTool(long bit,
-	                                     Rubberband.Policy policy,
+	                                     ARubberband.Policy policy,
 	                                     TriConsumer<GestureContext, Rectangle, Point[]> callback) {
 
 	    Objects.requireNonNull(policy, "policy");
@@ -354,10 +355,10 @@ public class BaseToolBar extends AToolBar {
 
 		// Drawing tools (rubberband)
 		if (ToolBits.hasLineButton(bits)) {
-			rubberbandTool(ToolBits.LINE, Policy.LINE, (gc, bounds, vertices) -> resetDefaultToggleButton());
+			rubberbandTool(ToolBits.LINE, ARubberband.Policy.LINE, (gc, bounds, vertices) -> resetDefaultToggleButton());
 		}
 		if (ToolBits.hasRectangleButton(bits)) {
-			JToggleButton rectangle = new ARubberbandButton(canvas, this, Policy.RECTANGLE, DEFAULT_MIN_SIZE_PX) {
+			JToggleButton rectangle = new ARubberbandButton(canvas, this, ARubberband.Policy.RECTANGLE, DEFAULT_MIN_SIZE_PX) {
 				@Override
 				public void rubberbanding(GestureContext gc, Rectangle bounds, Point[] vertices) {
 					handler.createRectangle(gc, bounds);
@@ -367,7 +368,7 @@ public class BaseToolBar extends AToolBar {
 			addStdToggle(ToolBits.RECTANGLE, rectangle);
 		}
 		if (ToolBits.hasEllipseButton(bits)) {
-			JToggleButton ellipse = new ARubberbandButton(canvas, this, Policy.OVAL, DEFAULT_MIN_SIZE_PX) {
+			JToggleButton ellipse = new ARubberbandButton(canvas, this, ARubberband.Policy.OVAL, DEFAULT_MIN_SIZE_PX) {
 				@Override
 				public void rubberbanding(GestureContext gc, Rectangle bounds, Point[] vertices) {
 					handler.createEllipse(gc, bounds);
@@ -377,7 +378,7 @@ public class BaseToolBar extends AToolBar {
 			addStdToggle(ToolBits.ELLIPSE, ellipse);
 		}
 		if (ToolBits.hasRadArcButton(bits)) {
-			JToggleButton radArc = new ARubberbandButton(canvas, this, Policy.RADARC, DEFAULT_MIN_SIZE_PX) {
+			JToggleButton radArc = new ARubberbandButton(canvas, this, ARubberband.Policy.RADARC, DEFAULT_MIN_SIZE_PX) {
 				@Override
 				public void rubberbanding(GestureContext gc, Rectangle bounds, Point[] vertices) {
 					handler.createRadArc(gc, vertices);
@@ -387,10 +388,10 @@ public class BaseToolBar extends AToolBar {
 			addStdToggle(ToolBits.RADARC, radArc);
 		}
 		if (ToolBits.hasPolygonButton(bits)) {
-			rubberbandTool(ToolBits.POLYGON, Policy.POLYGON, (gc, bounds, vertices) -> resetDefaultToggleButton());
+			rubberbandTool(ToolBits.POLYGON, ARubberband.Policy.POLYGON, (gc, bounds, vertices) -> resetDefaultToggleButton());
 		}
 		if (ToolBits.hasPolylineButton(bits)) {
-			rubberbandTool(ToolBits.POLYLINE, Policy.POLYLINE, (gc, bounds, vertices) -> resetDefaultToggleButton());
+			rubberbandTool(ToolBits.POLYLINE, ARubberband.Policy.POLYLINE, (gc, bounds, vertices) -> resetDefaultToggleButton());
 		}
 
 		// Text tool (toggle + single click)
@@ -407,7 +408,7 @@ public class BaseToolBar extends AToolBar {
 
 		// Connector tool (rubberband line + point-approval hook)
 		if (ToolBits.hasConnectorButton(bits)) {
-			JToggleButton connector = new ARubberbandButton(canvas, this, Policy.TWO_CLICK_LINE, DEFAULT_MIN_SIZE_PX) {
+			JToggleButton connector = new ARubberbandButton(canvas, this, ARubberband.Policy.TWO_CLICK_LINE, DEFAULT_MIN_SIZE_PX) {
 
 				@Override
 				public void rubberbanding(GestureContext gc, Rectangle bounds, Point[] vertices) {

@@ -46,7 +46,7 @@ import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.format.DoubleFormat;
-import edu.cnu.mdi.graphics.rubberband.Rubberband;
+import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.properties.PropertySupport;
@@ -686,12 +686,12 @@ public class BaseView extends JInternalFrame
 		final JComponent splitWestComponent;
 
 		final long toolBits;
-		final Rubberband.Policy boxZoomPolicy;
+		final ARubberband.Policy boxZoomPolicy;
 
 		private ViewInitConfig(String title, String propName, boolean standardDecorations, boolean iconifiable,
 				boolean maximizable, boolean resizable, boolean closable, boolean scrollable, boolean visible, int left,
 				int top, int width, int height, Rectangle2D.Double worldSystem, Color background,
-				JComponent splitWestComponent, long toolBits, Rubberband.Policy boxZoomPolicy) {
+				JComponent splitWestComponent, long toolBits, ARubberband.Policy boxZoomPolicy) {
 			this.title = title;
 			this.propName = propName;
 			this.standardDecorations = standardDecorations;
@@ -763,7 +763,7 @@ public class BaseView extends JInternalFrame
 			JComponent west = PropertySupport.getSplitWestComponent(props);
 
 			long bits = PropertySupport.getToolbarBits(props);
-			Rubberband.Policy policy = PropertySupport.getBoxZoomRubberbandPolicy(props);
+			ARubberband.Policy policy = PropertySupport.getBoxZoomRubberbandPolicy(props);
 
 			return new ViewInitConfig(title, propName, standardDecorations, iconifiable, maximizable, resizable,
 					closable, scrollable, visible, left, top, width, height, worldSystem, background, west, bits,
@@ -910,7 +910,7 @@ public class BaseView extends JInternalFrame
 			// Optional toolbar.
 			if (cfg.toolBits > 0) {
 				view.toolBar = new BaseToolBar(container.getComponent(), null, 
-						cfg.toolBits, Rubberband.Policy.RECTANGLE, cfg.boxZoomPolicy);
+						cfg.toolBits, ARubberband.Policy.RECTANGLE, cfg.boxZoomPolicy);
 				view.getContentPane().add(view.toolBar, BorderLayout.NORTH);
 				if (container instanceof BaseContainer baseCont) {
 					baseCont.setToolBar(view.toolBar);
