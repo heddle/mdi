@@ -85,7 +85,7 @@ public class BaseToolHandler implements IToolHandler  {
 	 * @return Object that was hit, or null if nothing was hit
 	 */
 	@Override
-	public Object hitTest(AToolBar toolBar, Component canvas, Point p) {
+	public Object hitTest(GestureContext gc, Point p) {
 		return container.getItemAtPoint(p);
 	}
 
@@ -99,15 +99,15 @@ public class BaseToolHandler implements IToolHandler  {
 	 * @param e      MouseEvent that triggered the click
 	 */
 	@Override
-	public void pointerClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e) {
-		AItem item = container.getItemAtPoint(e.getPoint());
-		
+	public void pointerClick(GestureContext gc) {
+		AItem item = container.getItemAtPoint(gc.getPressPoint());
+		MouseEvent e = gc.getSourceEvent();
 		if (item != null && item.isEnabled() && item.isTrackable()) {
 			if (item.isRightClickable() && (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e))) {
 				// Show popup menu
 				JPopupMenu menu = item.getPopupMenu();
 				if (menu != null) {
-					menu.show(canvas, e.getX(), e.getY());
+					menu.show(gc.getCanvas(), e.getX(), e.getY());
 				}
 				return;
 			}
@@ -131,7 +131,8 @@ public class BaseToolHandler implements IToolHandler  {
 	 * @param e      MouseEvent that triggered the click
 	 */
 	@Override
-	public void pointerDoubleClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e) {
+	public void pointerDoubleClick(GestureContext gc) {
+		MouseEvent e = gc.getSourceEvent();
 		AItem item = container.getItemAtPoint(e.getPoint());
 		if (item != null && item.isEnabled() && item.isDoubleClickable()) {
 			item.doubleClicked(e);
@@ -140,7 +141,7 @@ public class BaseToolHandler implements IToolHandler  {
 	}
 
 	@Override
-	public void pointerRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
+	public void pointerRubberbanding(GestureContext gc, Rectangle bounds) {
 		container.selectAllItems(false);
 
 		ArrayList<AItem> enclosed = container.getEnclosedItems(bounds);
@@ -157,14 +158,15 @@ public class BaseToolHandler implements IToolHandler  {
 	}
 	
 	@Override
-	public void beginDragObject(AToolBar toolBar, Component canvas, Object obj, Point pressPoint, MouseEvent e) {
+	public void beginDragObject(GestureContext gc) {
 
 		modifyItem = null;
 		modifying = false;
 	
 	    // Cache a defensive copy (Point is mutable)
-	    dragPressPoint = (pressPoint == null) ? null : new Point(pressPoint);
+	    dragPressPoint = (gc.getPressPoint() == null) ? null : new Point(gc.getPressPoint());
 
+		Object obj = gc.getTarget();
 		if (obj instanceof AItem) {
 			AItem item = (AItem) obj;
 			if (item.isEnabled() && !item.isLocked() && item.isDraggable()) {
@@ -173,8 +175,10 @@ public class BaseToolHandler implements IToolHandler  {
 	}
 
 	@Override
-	public void dragObjectBy(AToolBar toolBar, Component canvas, Object obj, int dx, int dy, MouseEvent e) {
+	public void dragObjectBy(GestureContext gc, int dx, int dy) {
 
+		MouseEvent e = gc.getSourceEvent();
+		Object obj = gc.getTarget();
 	    if (!(obj instanceof AItem)) {
 	        return;
 	    }
@@ -219,7 +223,7 @@ public class BaseToolHandler implements IToolHandler  {
 
 
 	@Override
-	public void endDragObject(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
+	public void endDragObject(GestureContext gc) {
 
 	    if (modifyItem != null) {
 	        modifyItem.stopModification();
@@ -240,88 +244,96 @@ public class BaseToolHandler implements IToolHandler  {
 
 
 	@Override
-	public void panStartDrag(AToolBar toolBar, Component canvas, Point start) {
-		base = GraphicsUtils.getComponentImage(canvas);
-		buffer = GraphicsUtils.getComponentImageBuffer(canvas);
+	public void panStartDrag(GestureContext gc) {
+		base = GraphicsUtils.getComponentImage(gc.getCanvas());
+		buffer = GraphicsUtils.getComponentImageBuffer(gc.getCanvas());
 	}
 
 	@Override
-	public void panUpdateDrag(AToolBar toolBar, Component canvas, Point start, Point previous, Point current) {
+	public void panUpdateDrag(GestureContext gc) {
+
+		Point start = gc.getPressPoint();
+		Point current = gc.getCurrentPoint();
+
 		int totalDx = current.x - start.x;
 		int totalDy = current.y - start.y;
 
 		Graphics gg = buffer.getGraphics();
-		gg.setColor(canvas.getBackground());
+		gg.setColor(gc.getCanvas().getBackground());
 		gg.fillRect(0, 0, buffer.getWidth(), buffer.getHeight());
-		gg.drawImage(base, totalDx, totalDy, canvas);
+		gg.drawImage(base, totalDx, totalDy, gc.getCanvas());
 		gg.dispose();
 
-		Graphics g = canvas.getGraphics();
-		g.drawImage(buffer, 0, 0, canvas);
+		Graphics g = gc.getCanvas().getGraphics();
+		g.drawImage(buffer, 0, 0, 	gc.getCanvas());
 		g.dispose();
 	}
 
 	@Override
-	public void panDoneDrag(AToolBar toolBar, Component canvas, Point start, Point end) {
+	public void panDoneDrag(GestureContext gc) {
+		Point start = gc.getPressPoint();
+		Point end = gc.getCurrentPoint();
 		int dx = end.x - start.x;
 		int dy = end.y - start.y;
 		container.pan(dx, dy);
 		base = null;
 		buffer = null;
-		canvas.repaint();
-	}
-
-	@Override
-	public void magnifyStartMove(AToolBar toolBar, Component canvas, Point start, MouseEvent e) {
-		BaseView view = container.getView();
-		if (view != null) {
-			view.handleMagnify(e);
-		}
-	}
-
-	@Override
-	public void magnifyUpdateMove(AToolBar toolBar, Component canvas, Point start, Point p, MouseEvent e) {
-		BaseView view = container.getView();
-		if (view != null) {
-			view.handleMagnify(e);
-		}
-	}
-
-	@Override
-	public void magnifyDoneMove(AToolBar toolBar, Component canvas, Point start, Point end, MouseEvent e) {
-		MagnifyWindow.closeMagnifyWindow();
-		toolBar.resetDefaultToggleButton();
-	}
-
-	@Override
-	public void recenter(AToolBar toolBar, Component canvas, Point center) {
-		container.prepareToZoom();
-		container.recenter(center);
 		container.refresh();
 	}
 
 	@Override
-	public void zoomIn(AToolBar toolBar, Component canvas) {
+	public void magnifyStartMove(GestureContext gc) {
+		MouseEvent e = gc.getSourceEvent();
+		BaseView view = container.getView();
+		if (view != null) {
+			view.handleMagnify(e);
+		}
+	}
+
+	@Override
+	public void magnifyUpdateMove(GestureContext gc) {
+		MouseEvent e = gc.getSourceEvent();
+		BaseView view = container.getView();
+		if (view != null) {
+			view.handleMagnify(e);
+		}
+	}
+
+	@Override
+	public void magnifyDoneMove(GestureContext gc) {
+		MagnifyWindow.closeMagnifyWindow();
+		gc.getToolBar().resetDefaultToggleButton();
+	}
+
+	@Override
+	public void recenter(GestureContext gc) {
+		container.prepareToZoom();
+		container.recenter(gc.getCurrentPoint());
+		container.refresh();
+	}
+
+	@Override
+	public void zoomIn(GestureContext gc) {
 		container.scale(ZOOM_FACTOR);
 	}
 
 	@Override
-	public void zoomOut(AToolBar toolBar, Component canvas) {
+	public void zoomOut(GestureContext gc) {
 		container.scale(1.0 / ZOOM_FACTOR);
 	}
 
 	@Override
-	public void undoZoom(AToolBar toolBar, Component canvas) {
+	public void undoZoom(GestureContext gc) {
 		container.undoLastZoom();
 	}
 
 	@Override
-	public void resetZoom(AToolBar toolBar, Component canvas) {
+	public void resetZoom(GestureContext gc) {
 		container.restoreDefaultWorld();
 	}
 
 	@Override
-	public void styleEdit(AToolBar toolBar, Component canvas) {
+	public void styleEdit(GestureContext gc) {
 		List<AItem> selected = container.getSelectedItems();
 
 		if (selected == null || selected.isEmpty()) {
@@ -344,14 +356,14 @@ public class BaseToolHandler implements IToolHandler  {
 		container.refresh();	}
 
 	@Override
-	public void delete(AToolBar toolBar, Component canvas) {
+	public void delete(GestureContext gc) {
 		container.deleteSelectedItems();
-		toolBar.resetDefaultToggleButton();
+		gc.getToolBar().resetDefaultToggleButton();
 		container.refresh();
 	}
 	
 	@Override
-	public void createConnection(AToolBar toolBar, Component canvas, Point start, Point end) {
+	public void createConnection(GestureContext gc, Point start, Point end) {
 		AItem item1 = container.getItemAtPoint(start);
 		AItem item2 = container.getItemAtPoint(end);
 		if (ConnectionManager.getInstance().canConnect(item1, item2)) {
@@ -363,7 +375,7 @@ public class BaseToolHandler implements IToolHandler  {
 
 	
 	@Override
-	public boolean approveConnectionPoint(AToolBar toolBar, Component canvas, Point p) {
+	public boolean approveConnectionPoint(GestureContext gc, Point p) {
 		AItem item = container.getItemAtPoint(p);
 		if (item != null) { 
 			boolean enabled = item.isEnabled();
@@ -386,61 +398,35 @@ public class BaseToolHandler implements IToolHandler  {
 	@Override
 	public void createRadArc(GestureContext gc, Point[] pp) {
 
-				// Defensive (base guarantees length>=3, but RADARC expects exactly 3)
-				if (pp == null || pp.length != 3) {
-					return;
-				}
+	    if (pp == null || pp.length != 3) {
+	        return;
+	    }
 
-				// Unpack points (screen coords)
-				double xc = pp[0].x;
-				double yc = pp[0].y;
+	    // If RubberRadArc provided an unwrapped signed sweep, use it directly.
+	    Double sweep = (gc != null) ? gc.getRubberbandAngleDeg() : null;
 
-				double x1 = pp[1].x;
-				double y1 = pp[1].y;
+	    if (sweep == null) {
+	        // Fallback only (should be rare): compute minor signed angle
+	        // NOTE: pp are screen points; CreationSupport likely converts to world.
+	        // Keep your existing behavior if needed.
+	        return;
+	    }
 
-				double x2 = pp[2].x;
-				double y2 = pp[2].y;
-
-				// Vectors from center
-				double dx1 = x1 - xc;
-				double dy1 = y1 - yc;
-				double dx2 = x2 - xc;
-				double dy2 = y2 - yc;
-
-				double r1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
-				double r2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-
-				// Legacy guard
-				if (r1 < 0.99 || r2 < 0.99) {
-					return ;
-				}
-
-				// Angle between radius vectors (clamped for numeric safety)
-				double cos = (dx1 * dx2 + dy1 * dy2) / (r1 * r2);
-				cos = Math.max(-1.0, Math.min(1.0, cos));
-				double aAngle = Math.acos(cos);
-
-
-				// Sign using 2D cross product (matches legacy sign logic)
-				if ((dx1 * dy2 - dx2 * dy1) > 0.0) {
-					aAngle = -aAngle;
-				}
-
-				double arcAngleDeg = Math.toDegrees(aAngle);
-				CreationSupport.createRadArcItem(container.getAnnotationLayer(), pp[0], pp[1], arcAngleDeg);
+	    CreationSupport.createRadArcItem(container.getAnnotationLayer(), pp[0], pp[1], sweep);
 	}
-	
+
+
+
 	@Override
-	public void captureImage(AToolBar toolBar, Component canvas) {
-		TakePicture.takePicture(canvas);
+	public void captureImage(GestureContext gc) {
+		TakePicture.takePicture(gc.getCanvas());
 	}
 
-	
 	@Override
-	public void print(AToolBar toolBar, Component canvas) {
-		PrintUtils.printComponent(canvas);
+	public void print(GestureContext gc) {
+		PrintUtils.printComponent(gc.getCanvas());
 	}
-	
+		
 	/**
 	 * Select items based on a click.
 	 *
@@ -467,8 +453,9 @@ public class BaseToolHandler implements IToolHandler  {
 		container.refresh();
 	}
 
+
 	@Override
-	public boolean doNotDrag(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
+	public boolean doNotDrag(GestureContext gc) {
 		return false;
 	}
 

@@ -5,108 +5,117 @@ import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.Objects;
 
 import javax.swing.JToggleButton;
 
+/**
+ * Toggle tool that drives a press-drag-release gesture.
+ * <p>
+ * Unlike {@link ARubberbandButton}, this class does not draw a rubberband.
+ * It simply tracks a gesture and calls abstract callbacks.
+ * </p>
+ *
+ * <h2>Containment</h2>
+ * <p>
+ * This tool ignores drags that leave the canvas bounds (as the original version did).
+ * </p>
+ */
 @SuppressWarnings("serial")
 public abstract class ADragButton extends JToggleButton implements MouseListener, MouseMotionListener {
 
-	// Is a drag operation in progress?
-	private boolean dragging = false;
-	
-	// Starting point of the drag
-	private Point startPoint = null;
-	
-	// Current point during the drag
-	private Point currentPoint = new Point();
-	
-	// Previous point during the drag
-	private Point previousPoint = new Point();
-	
-	/** Component that owns the current gesture (null when idle). */
-	protected Component canvas;
+    /** Canvas component (non-null). */
+    protected final Component canvas;
 
-	/** Toolbar that owns this tool. */
-	protected AToolBar toolBar;
-	
-	/**
-	 * Create a single-click button that performs an action when clicked.
-	 *
-	 */
-	public ADragButton(Component canvas, AToolBar toolBar) {
-		this.toolBar = toolBar;
-		this.canvas = canvas;
-	}
-	
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		
-	}
-	
-	/**
-	 * Check if point is contained within the canvas.
-	 * @param p Point to check
-	 * @return true if contained, false otherwise
-	 */
-	private boolean contained(Point p) {
-		return (p.x >= 0 && p.y >= 0 && p.x < canvas.getWidth() && p.y < canvas.getHeight());
-	}
-	
-	
-	@Override
-	public void mousePressed(MouseEvent e) {
-		startPoint = e.getPoint();
-		currentPoint.setLocation(startPoint);
-		previousPoint.setLocation(startPoint);
-		startDrag(startPoint);
-	}
+    /** Owning toolbar (non-null). */
+    protected final AToolBar toolBar;
 
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		if(dragging) {
-			endDrag();
-		}
-	}
-	
-	// Complete the drag operation
-	private void endDrag() {
-		dragging = false;
-		doneDrag(startPoint, currentPoint);
-	    startPoint = null;
-		currentPoint.setLocation(0, 0);
-		previousPoint.setLocation(0, 0);
-	}
+    /** Current gesture context (null when idle). */
+    protected GestureContext gesture;
 
-	@Override
-	public void mouseEntered(MouseEvent e) {
-	}
+    /** True if we have moved at least once while pressed. */
+    private boolean dragging;
 
-	@Override
-	public void mouseExited(MouseEvent e) {
+    /**
+     * Create a drag tool.
+     *
+     * @param canvas  canvas component (non-null)
+     * @param toolBar owning toolbar (non-null)
+     */
+    public ADragButton(Component canvas, AToolBar toolBar) {
+        this.canvas = Objects.requireNonNull(canvas, "canvas");
+        this.toolBar = Objects.requireNonNull(toolBar, "toolBar");
+    }
 
-	}
+    @Override public void mouseClicked(MouseEvent e) { }
+    @Override public void mouseEntered(MouseEvent e) { }
+    @Override public void mouseExited(MouseEvent e) { }
+    @Override public void mouseMoved(MouseEvent e) { }
 
-	@Override
-	public void mouseDragged(MouseEvent e) {
-		if (!contained(e.getPoint())) {
-			return;
-		}
-		dragging = true;
-		previousPoint.setLocation(currentPoint);
-		currentPoint.setLocation(e.getPoint());
-		if(previousPoint.equals(currentPoint)) {
-			return;
-		}
-		updateDrag(startPoint, previousPoint, currentPoint);		
-	}
+    @Override
+    public void mousePressed(MouseEvent e) {
+        gesture = new GestureContext(toolBar, canvas, null, e.getPoint(), e);
+        dragging = false;
+        startDrag(gesture);
+    }
 
-	@Override
-	public void mouseMoved(MouseEvent e) {
-	}
-	
-	public abstract void startDrag(Point start);
-	public abstract void updateDrag(Point start, Point previous, Point current);
-	public abstract void doneDrag(Point start, Point end);
-	
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        if (gesture == null) {
+            return;
+        }
+        if (!contained(e.getPoint())) {
+            return;
+        }
 
+        dragging = true;
+        gesture.update(e);
+        updateDrag(gesture);
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        if (gesture == null) {
+            return;
+        }
+
+        gesture.update(e);
+        if (dragging) {
+            doneDrag(gesture);
+        } else {
+            // still treat as a completed gesture (tools may ignore)
+            doneDrag(gesture);
+        }
+
+        gesture = null;
+        dragging = false;
+    }
+
+    /**
+     * Called once on mouse press.
+     *
+     * @param gc gesture context (non-null)
+     */
+    public abstract void startDrag(GestureContext gc);
+
+    /**
+     * Called during dragging (after at least one drag event).
+     *
+     * @param gc gesture context (non-null)
+     */
+    public abstract void updateDrag(GestureContext gc);
+
+    /**
+     * Called on release.
+     *
+     * @param gc gesture context (non-null)
+     */
+    public abstract void doneDrag(GestureContext gc);
+
+    /**
+     * Check if the point is within the canvas bounds.
+     */
+    private boolean contained(Point p) {
+        return (p.x >= 0 && p.y >= 0 && p.x < canvas.getWidth() && p.y < canvas.getHeight());
+    }
 }

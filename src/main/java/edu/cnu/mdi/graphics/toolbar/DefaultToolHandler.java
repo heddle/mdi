@@ -1,180 +1,183 @@
 package edu.cnu.mdi.graphics.toolbar;
 
-import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
-import java.util.List;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.util.PrintUtils;
 import edu.cnu.mdi.util.TakePicture;
 
 public class DefaultToolHandler implements IToolHandler {
-	
+
 	//for panning
 	private BufferedImage base;
 	private BufferedImage buffer;
 
 
-	@Override
-	public Object hitTest(AToolBar toolBar, Component canvas, Point p) {
-		return null;
-	}
 
-	@Override
-	public void pointerClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e) {
-		// no-op
-	}
 
-	@Override
-	public void pointerDoubleClick(AToolBar toolBar, Component canvas, Point p, Object obj, MouseEvent e) {
-		// no-op
-	}
-
-	@Override
-	public void pointerRubberbanding(AToolBar toolBar, Component canvas, Rectangle bounds) {
-		// no-op
-	}
-	
-	@Override
-	public void beginDragObject(AToolBar toolBar, Component canvas, Object obj, Point pressPoint, MouseEvent e) {
-		// no-op
-	}
-	
-	@Override
-	public void dragObjectBy(AToolBar toolBar, Component canvas, Object obj, int dx, int dy, MouseEvent e) {
-		// no-op
-	}
-	
-	@Override
-	public void endDragObject(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
-		// no-op
-	}
-
-	@Override
-	public boolean doNotDrag(AToolBar toolBar, Component canvas, Object obj, MouseEvent e) {
-		return false;
-	}
-
-	
-	@Override
-	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
-		// no-op
-	}
-	
-	@Override
-	public void panStartDrag(AToolBar toolBar, Component canvas, Point start) {
-		base = GraphicsUtils.getComponentImage(canvas);
-		buffer = GraphicsUtils.getComponentImageBuffer(canvas);
-	}
-
-	@Override
-	public void panUpdateDrag(AToolBar toolBar, Component canvas, Point start, Point previous, Point current) {
-		int totalDx = current.x - start.x;
-		int totalDy = current.y - start.y;
-
-		Graphics gg = buffer.getGraphics();
-		gg.setColor(canvas.getBackground());
-		gg.fillRect(0, 0, buffer.getWidth(), buffer.getHeight());
-		gg.drawImage(base, totalDx, totalDy, canvas);
-		gg.dispose();
-
-		Graphics g = canvas.getGraphics();
-		g.drawImage(buffer, 0, 0, canvas);
-		g.dispose();
-	}
-
-	@Override
-	public void panDoneDrag(AToolBar toolBar, Component canvas, Point start, Point end) {
-		base = null;
-		buffer = null;
-		canvas.repaint();
-	}
-
-	@Override
-	public void magnifyStartMove(AToolBar toolBar, Component canvas, Point start, MouseEvent e) {
-		// no-op
-	}
-
-	@Override
-	public void magnifyUpdateMove(AToolBar toolBar, Component canvas, Point start, Point p, MouseEvent e) {
-		// no-op
-	}
-
-	@Override
-	public void magnifyDoneMove(AToolBar toolBar, Component canvas, Point start, Point end, MouseEvent e) {
-		// no-op
-	}
-
-	@Override
-	public void recenter(AToolBar toolBar, Component canvas, Point center) {
-		toolBar.resetDefaultToggleButton();
-	}
-
-	@Override
-	public void zoomIn(AToolBar toolBar, Component canvas) {
-		// no-op
-	}
-
-	@Override
-	public void zoomOut(AToolBar toolBar, Component canvas) {
-		// no-op
-	}
-	
-	@Override
-	public void undoZoom(AToolBar toolBar, Component canvas) {
-		// no-op
-	}
-	
-	@Override
-	public void resetZoom(AToolBar toolBar, Component canvas) {
-		// no-op
-	}
-	
-	@Override
-	public void styleEdit(AToolBar toolBar, Component canvas) {
-		// no-op
-	}
-	
-	@Override
-	public void delete(AToolBar toolBar, Component canvas) {
-		// no-op
-	}
-	
-	@Override
-	public void captureImage(AToolBar toolBar, Component canvas) {
-		TakePicture.takePicture(canvas);
-	}
-	
-	@Override
-	public void print(AToolBar toolBar, Component canvas) {
-		PrintUtils.printComponent(canvas);
-	}
-	
-	@Override
-	public void createConnection(AToolBar toolBar, Component canvas, Point start, Point end) {
-	}
-
-	@Override
-	public boolean approveConnectionPoint(AToolBar toolBar, Component canvas, Point p) {
-		return false;
-	}
-	
 	@Override
 	public void createRectangle(GestureContext gc, Rectangle bounds) {
 		// no-op
 	}
-	
+
 	@Override
 	public void createEllipse(GestureContext gc, Rectangle bounds) {
 		// no-op
 	}
-	
+
 	@Override
 	public void createRadArc(GestureContext gc, Point[] vertices) {
+		// no-op
+	}
+
+	@Override
+	public Object hitTest(GestureContext gc, Point p) {
+		return null;
+	}
+
+	@Override
+	public void pointerRubberbanding(GestureContext gc, Rectangle bounds) {
+		// no-op
+	}
+
+	@Override
+	public void pointerClick(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void pointerDoubleClick(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void beginDragObject(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void dragObjectBy(GestureContext gc, int dx, int dy) {
+		// no-op
+	}
+
+	@Override
+	public void endDragObject(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public boolean doNotDrag(GestureContext gc) {
+		return false;
+	}
+
+	@Override
+	public void panStartDrag(GestureContext gc) {
+		base = GraphicsUtils.getComponentImage(gc.getCanvas());
+		buffer = GraphicsUtils.getComponentImageBuffer(gc.getCanvas());
+	}
+
+	@Override
+	public void panUpdateDrag(GestureContext gc) {
+
+		Point start = gc.getPressPoint();
+		Point current = gc.getCurrentPoint();
+
+		int totalDx = current.x - start.x;
+		int totalDy = current.y - start.y;
+
+		Graphics gg = buffer.getGraphics();
+		gg.setColor(gc.getCanvas().getBackground());
+		gg.fillRect(0, 0, buffer.getWidth(), buffer.getHeight());
+		gg.drawImage(base, totalDx, totalDy, gc.getCanvas());
+		gg.dispose();
+
+		Graphics g = gc.getCanvas().getGraphics();
+		g.drawImage(buffer, 0, 0, 	gc.getCanvas());
+		g.dispose();
+	}
+
+	@Override
+	public void panDoneDrag(GestureContext gc) {
+		base = null;
+		buffer = null;
+		gc.getCanvas().repaint();
+	}
+
+	@Override
+	public void magnifyStartMove(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void magnifyUpdateMove(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void magnifyDoneMove(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void recenter(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void zoomIn(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void zoomOut(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void undoZoom(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void resetZoom(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void styleEdit(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void delete(GestureContext gc) {
+		// no-op
+	}
+
+	@Override
+	public void captureImage(GestureContext gc) {
+		TakePicture.takePicture(gc.getCanvas());
+	}
+
+	@Override
+	public void print(GestureContext gc) {
+		PrintUtils.printComponent(gc.getCanvas());
+	}
+
+	@Override
+	public void createConnection(GestureContext gc, Point start, Point end) {
+		// no-op
+	}
+
+	@Override
+	public boolean approveConnectionPoint(GestureContext gc, Point p) {
+			return false;
+	}
+
+	@Override
+	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
 		// no-op
 	}
 }

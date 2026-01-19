@@ -49,7 +49,7 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 
 	protected Color fillColor = new Color(64, 64, 128, 64);
 	protected Color highlightColor1 = Color.black;
-	protected Color highlightColor2 = Color.white;
+	protected Color highlightColor2 = Color.lightGray;
 
 	protected final Policy policy;
 

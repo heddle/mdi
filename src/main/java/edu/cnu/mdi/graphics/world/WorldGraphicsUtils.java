@@ -292,6 +292,49 @@ public class WorldGraphicsUtils {
 		return r;
 	}
 
+	
+	/**
+	 * Signed angle (degrees) from v1=(wpc->wp1) to v2=(wpc->wp2) using atan2(cross, dot).
+	 * <p>
+	 * Returned range is {@code (-180, 180]}.
+	 * </p>
+	 */
+	public static double signedSweepDeg(Point2D.Double wpc, Point2D.Double wp1, Point2D.Double wp2) {
+		double x1 = wp1.x - wpc.x;
+		double y1 = wp1.y - wpc.y;
+		double x2 = wp2.x - wpc.x;
+		double y2 = wp2.y - wpc.y;
+
+		double dot = x1 * x2 + y1 * y2;
+		double cross = x1 * y2 - y1 * x2;
+
+		return Math.toDegrees(Math.atan2(cross, dot)); // (-180,180]
+	}
+
+	/**
+	 * Unwrap a signed angle measurement (in (-180,180]) so it varies continuously relative
+	 * to a previous unwrapped angle.
+	 *
+	 * @param prevUnwrapped previous angle, possibly outside (-180,180]
+	 * @param signedNow     new raw measurement in (-180,180]
+	 * @return new unwrapped angle (continuous)
+	 */
+	public static double unwrapSweepDeg(double prevUnwrapped, double signedNow) {
+
+		// Reduce prev to equivalent in (-180,180] for delta comparison
+		double prevWrapped = prevUnwrapped % 360.0;
+		if (prevWrapped <= -180.0) prevWrapped += 360.0;
+		if (prevWrapped > 180.0) prevWrapped -= 360.0;
+
+		double delta = signedNow - prevWrapped;
+
+		if (delta > 180.0) delta -= 360.0;
+		if (delta < -180.0) delta += 360.0;
+
+		return prevUnwrapped + delta;
+	}
+
+
 	/**
 	 * Draw a world radarc. This is something with an inner and outer radius and an
 	 * opening and closing angle.
@@ -1069,6 +1112,35 @@ public class WorldGraphicsUtils {
 		points[3] = new Point2D.Double(x2, y1);
 		return points;
 	}
+	
+	/**
+	 * Compute the CCW sweep angle (degrees) from the first leg (center->wp1)
+	 * to the second leg (center->wp2).
+	 * <p>
+	 * Returns a unique angle in {@code [0, 360)} so that major arcs are representable.
+	 * Example: a signed angle of -60 becomes 300.
+	 * </p>
+	 *
+	 * @param wpc center
+	 * @param wp1 endpoint of first leg (defines radius and start direction)
+	 * @param wp2 endpoint of second leg (defines end direction)
+	 * @return CCW sweep in degrees in {@code [0, 360)}
+	 */
+	public static double ccwSweepDeg(Point2D.Double wpc, Point2D.Double wp1, Point2D.Double wp2) {
+		double x1 = wp1.x - wpc.x;
+		double y1 = wp1.y - wpc.y;
+		double x2 = wp2.x - wpc.x;
+		double y2 = wp2.y - wpc.y;
+
+		double dot = x1 * x2 + y1 * y2;
+		double cross = x1 * y2 - y1 * x2;
+
+		double a = Math.toDegrees(Math.atan2(cross, dot)); // (-180,180]
+		if (a < 0.0) a += 360.0;
+		if (a >= 360.0) a -= 360.0; // numerical hygiene
+		return a;
+	}
+
 
 	/**
 	 * Get radarc points given some defining data

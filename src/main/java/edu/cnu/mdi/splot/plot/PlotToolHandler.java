@@ -63,20 +63,20 @@ public class PlotToolHandler extends DefaultToolHandler {
 	}
 
 	@Override
-	public void zoomIn(AToolBar toolBar, Component canvas) {
-		PlotCanvas plotCanvas = (PlotCanvas) canvas;
+	public void zoomIn(GestureContext gc) {
+		PlotCanvas plotCanvas = (PlotCanvas) gc.getCanvas();
 		plotCanvas.scale(ZOOM_FACTOR);
 	}
 
 	@Override
-	public void zoomOut(AToolBar toolBar, Component canvas) {
-		PlotCanvas plotCanvas = (PlotCanvas) canvas;
+	public void zoomOut(GestureContext gc) {
+		PlotCanvas plotCanvas = (PlotCanvas) gc.getCanvas();
 		plotCanvas.scale(1.0 / ZOOM_FACTOR);
 	}
 
 	@Override
-	public void resetZoom(AToolBar toolBar, Component canvas) {
-		PlotCanvas plotCanvas = (PlotCanvas) canvas;
+	public void resetZoom(GestureContext gc) {
+		PlotCanvas plotCanvas = (PlotCanvas) gc.getCanvas();
 		plotCanvas.setWorldSystem();
 		plotCanvas.repaint();
 	}

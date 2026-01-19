@@ -11,7 +11,9 @@ public class RadArcItem extends PolygonItem {
 
 	private Point2D.Double _center;
 	private Point2D.Double _leg; // endpoint of first radius leg (defines radius + direction)
-	private double _arcAngle; // signed, degrees
+
+	/** Arc opening angle COUNTERCLOCKWISE in degrees, in [0, 360). */
+	private double _arcAngle;
 
 	public RadArcItem(Layer layer, Point2D.Double wpc, Point2D.Double wp1, double arcAngle) {
 		super(layer, null);
@@ -34,33 +36,29 @@ public class RadArcItem extends PolygonItem {
 
 	@Override
 	protected void reshape() {
-		if (_modification == null) {
-			return;
-		}
+	    if (_modification == null) {
+	        return;
+	    }
 
-		int idx = _modification.getSelectIndex(); // 0=leg handle, 1=arc-end handle (matches your selection points)
-		Point2D.Double wp = _modification.getCurrentWorldPoint();
-		if (wp == null) {
-			return;
-		}
+	    int idx = _modification.getSelectIndex(); // 0=leg, 1=arc end
+	    Point2D.Double wp = _modification.getCurrentWorldPoint();
+	    if (wp == null) {
+	        return;
+	    }
 
-		if (idx == 0) {
-			// Dragging the first leg endpoint: change radius and direction
-			_leg = (Point2D.Double) wp.clone();
-		} else {
-			// Dragging arc end: change arc angle, keeping the first leg fixed
-			Point2D.Double v1 = Point2DSupport.pointDelta(_center, _leg);
-			Point2D.Double v2 = Point2DSupport.pointDelta(_center, wp);
+	    if (idx == 0) {
+	        _leg = (Point2D.Double) wp.clone();
+	    } else {
+	        // Compute minor signed measurement (-180,180]
+	        double signedNow = WorldGraphicsUtils.signedSweepDeg(_center, _leg, wp);
 
-			double dot = v1.x * v2.x + v1.y * v2.y;
-			double cross = Point2DSupport.cross(v1, v2);
-			_arcAngle = Math.toDegrees(Math.atan2(cross, dot)); // signed (-180,180]
-			// If you want allow >180 sweeps, keep your unwrap logic from earlier here.
-		}
+	        // Unwrap to keep continuity and allow >180 during drag
+	        _arcAngle = WorldGraphicsUtils.unwrapSweepDeg(_arcAngle, signedNow);
+	    }
 
-		rebuildPath();
+	    rebuildPath();
 	}
-
+	
 	@Override
 	public Point[] getSelectionPoints(IContainer container) {
 		if (_path == null || container == null) {
@@ -72,7 +70,6 @@ public class RadArcItem extends PolygonItem {
 			return null;
 		}
 
-		// Two handles: first leg endpoint and last arc endpoint
 		Point[] pp = new Point[2];
 		pp[0] = new Point();
 		container.worldToLocal(pp[0], wp[1]);
@@ -92,10 +89,9 @@ public class RadArcItem extends PolygonItem {
 			return null;
 		}
 
-		int mid = 1 + (wp.length - 2) / 2; // roughly halfway along the arc boundary
+		int mid = 1 + (wp.length - 2) / 2;
 		Point p = new Point();
 		container.worldToLocal(p, wp[mid]);
 		return p;
 	}
-
 }

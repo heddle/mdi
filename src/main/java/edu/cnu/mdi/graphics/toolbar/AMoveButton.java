@@ -1,116 +1,98 @@
 package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.util.Objects;
 
 import javax.swing.JToggleButton;
 
+/**
+ * Toggle tool that drives a hover-move gesture (no press required).
+ * <p>
+ * This is commonly used for magnify/inspect tools where the action follows the
+ * mouse while it is inside the canvas and stops when it exits.
+ * </p>
+ *
+ * <h2>Gesture lifetime</h2>
+ * <ul>
+ *   <li>On the first {@code mouseMoved} while idle, a new {@link GestureContext} is created.</li>
+ *   <li>Each subsequent move updates the context and calls {@link #updateMove(GestureContext)}.</li>
+ *   <li>On {@code mouseExited}, {@link #doneMove(GestureContext)} is called and the gesture ends.</li>
+ * </ul>
+ */
 @SuppressWarnings("serial")
-public abstract class AMoveButton extends JToggleButton implements MouseListener, MouseMotionListener {
+public abstract class AMoveButton extends JToggleButton implements MouseMotionListener, MouseListener {
 
-	// Is a move operation in progress?
-	private boolean moving = false;
-	
-	// Starting point of the drag
-	private Point startPoint = null;
+    /** Canvas component (non-null). */
+    protected final Component canvas;
 
-	/** Component that owns the current gesture (null when idle). */
-	protected Component canvas;
+    /** Owning toolbar (non-null). */
+    protected final AToolBar toolBar;
 
-	/** Toolbar that owns this tool. */
-	protected AToolBar toolBar;
-	
-	/** Dimension of the move area. */
-	protected Dimension size;
+    /** Current move gesture context (null when idle). */
+    protected GestureContext gesture;
 
-	/**
-	 * Create a single-click button that performs an action when clicked.
-	 * @param canvas Component on which the move is occurring
-	 * @param toolBar Toolbar that owns this tool
-	 * @param size Dimension of the move area. The entire area centered at the point
-	 * must be within the canvas to be valid. Use <code>null</code> to ignore.
-	 * 
-	 */
-	public AMoveButton(Component canvas, AToolBar toolBar, final Dimension size) {
-		this.toolBar = toolBar;
-		this.canvas = canvas;
-		this.size = size;
-	}
-	
-	@Override
-	public void mouseClicked(MouseEvent e) {
-	}
+    /**
+     * Create a hover-move tool.
+     *
+     * @param canvas  canvas component (non-null)
+     * @param toolBar owning toolbar (non-null)
+     */
+    public AMoveButton(Component canvas, AToolBar toolBar) {
+        this.canvas = Objects.requireNonNull(canvas, "canvas");
+        this.toolBar = Objects.requireNonNull(toolBar, "toolBar");
+    }
 
-	
-	/**
-	 * Check if point is contained within the canvas, considering size.
-	 * @param p Point to check
-	 * @return true if contained (including size), false otherwise
-	 */
-	private boolean contained(Point p) {
-		//contained if box centered at p with size dimension is fully within canvas
-		int halfWidth = (size == null ? 0 : size.width / 2);
-		int halfHeight = (size == null ? 0 : size.height / 2);
-		return (p.x - halfWidth >= 0 && p.y - halfHeight >=
-				0 && p.x + halfWidth < canvas.getWidth() && p.y + halfHeight < canvas.getHeight());
-	}
-	
-	
-	@Override
-	public void mousePressed(MouseEvent e) {
-		// mouse press ends move if in progress
-		endMove(e.getPoint(), e);
-	}
+    @Override public void mouseClicked(MouseEvent e) { }
+    @Override public void mousePressed(MouseEvent e) { }
+    @Override public void mouseReleased(MouseEvent e) { }
+    @Override public void mouseEntered(MouseEvent e) { }
 
-	@Override
-	public void mouseReleased(MouseEvent e) {
-	}
-	
-	// Complete the move operation
-	private void endMove(Point end, MouseEvent e) {
-		moving = false;
-		toolBar.resetDefaultToggleButton();
-		doneMove(startPoint, end, e);
-	    startPoint = null;
-	}
+    @Override
+    public void mouseExited(MouseEvent e) {
+        if (gesture != null) {
+            gesture.update(e);
+            doneMove(gesture);
+            gesture = null;
+        }
+    }
 
-	@Override
-	public void mouseEntered(MouseEvent e) {
-	}
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        // This tool is hover-driven; ignore drags.
+    }
 
-	@Override
-	public void mouseExited(MouseEvent e) {
-		// mouse exit ends move if in progress
-		endMove(e.getPoint(), e);
-	}
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        if (gesture == null) {
+            gesture = new GestureContext(toolBar, canvas, null, e.getPoint(), e);
+            startMove(gesture);
+        } else {
+            gesture.update(e);
+            updateMove(gesture);
+        }
+    }
 
-	@Override
-	public void mouseDragged(MouseEvent e) {
-	}
+    /**
+     * Called once at the start of the move gesture.
+     *
+     * @param gc gesture context (non-null)
+     */
+    public abstract void startMove(GestureContext gc);
 
-	@Override
-	public void mouseMoved(MouseEvent e) {
-		if (contained(e.getPoint())) {
-			moving = true;
+    /**
+     * Called on each move update after start.
+     *
+     * @param gc gesture context (non-null)
+     */
+    public abstract void updateMove(GestureContext gc);
 
-			if (startPoint == null) {
-				startPoint = e.getPoint();
-				// System.out.println("Starting move at " + e.getPoint());
-				startMove(startPoint,  e);
-			} else {
-				System.out.println("Moving at " + e.getPoint());
-				updateMove(startPoint, e.getPoint(), e);
-			}
-		}
-
-	}
-	
-	public abstract void startMove(Point start, MouseEvent e);
-	public abstract void updateMove(Point start, Point p, MouseEvent e);
-	public abstract void doneMove(Point start, Point end, MouseEvent e);
-
+    /**
+     * Called when the move gesture ends (mouse exits canvas).
+     *
+     * @param gc gesture context (non-null)
+     */
+    public abstract void doneMove(GestureContext gc);
 }

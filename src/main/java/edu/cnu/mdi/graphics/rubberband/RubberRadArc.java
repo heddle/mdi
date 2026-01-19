@@ -9,145 +9,206 @@ import java.awt.event.MouseEvent;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
 
-public class RubberRadArc extends AClickRubberband {
+public class RubberRadArc extends AClickRubberband implements IRubberbandAngleProvider {
 
-	public RubberRadArc(Component component, IRubberbanded rubberbanded) {
-		super(component, rubberbanded, Policy.RADARC);
-	}
+    // Unwrapped signed sweep (deg). Positive = CCW in math coords (y up).
+    private double sweepDeg = 0.0;
+    private double lastSignedDeg = 0.0;
+    private boolean sweepInit = false;
 
-	@Override
-	public void mousePressed(MouseEvent e) {
-		if (!isActive()) return;
+    public RubberRadArc(Component component, IRubberbanded rubberbanded) {
+        super(component, rubberbanded, Policy.RADARC);
+    }
 
-		final Point p = e.getPoint();
+    @Override
+    public void mousePressed(MouseEvent e) {
+        if (!isActive()) return;
 
-		// First click: center
-		if (tempPoly == null) {
-			if (!ensureStarted(p)) return;
-			return;
-		}
+        final Point p = e.getPoint();
 
-		// Second click: first leg endpoint
-		if (tempPoly.npoints == 1) {
-			addPoint(tempPoly, p.x, p.y);
-			return;
-		}
+        // First click: center
+        if (tempPoly == null) {
+            if (!ensureStarted(p)) return;
+            sweepInit = false;
+            return;
+        }
 
-		// Third click: SCALE to r1 before storing and ending
-		if (tempPoly.npoints == 2) {
-			Point scaled = scaleToFirstRadius(p);
-			addPoint(tempPoly, scaled.x, scaled.y);
-			currentPt.setLocation(scaled);
-			endRubberbanding(scaled);
-		}
-	}
+        // Second click: first leg endpoint
+        if (tempPoly.npoints == 1) {
+            addPoint(tempPoly, p.x, p.y);
+            sweepInit = false; // start tracking sweep after second click
+            return;
+        }
 
-	private Point scaleToFirstRadius(Point p) {
-		double xc = tempPoly.xpoints[0];
-		double yc = tempPoly.ypoints[0];
-		double x1 = tempPoly.xpoints[1];
-		double y1 = tempPoly.ypoints[1];
+        // Third click: SCALE to r1 before storing and ending
+        if (tempPoly.npoints == 2) {
+            Point scaled = scaleToFirstRadius(p);
+            addPoint(tempPoly, scaled.x, scaled.y);
+            currentPt.setLocation(scaled);
 
-		double dx1 = x1 - xc;
-		double dy1 = y1 - yc;
-		double r1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+            // Ensure sweepDeg reflects the final point.
+            updateSweepForCurrentPoint(scaled);
 
-		double dx2 = p.x - xc;
-		double dy2 = p.y - yc;
-		double r2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+            endRubberbanding(scaled);
+        }
+    }
 
-		if (r1 < 0.99 || r2 < 0.99) {
-			return new Point(p);
-		}
+    @Override
+    public double getRubberbandAngleDeg() {
+        return sweepDeg;
+    }
 
-		double scale = r1 / r2;
-		double xs = xc + dx2 * scale;
-		double ys = yc + dy2 * scale;
+    private Point scaleToFirstRadius(Point p) {
+        double xc = tempPoly.xpoints[0];
+        double yc = tempPoly.ypoints[0];
+        double x1 = tempPoly.xpoints[1];
+        double y1 = tempPoly.ypoints[1];
 
-		return new Point((int) Math.round(xs), (int) Math.round(ys));
-	}
+        double dx1 = x1 - xc;
+        double dy1 = y1 - yc;
+        double r1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
 
-	@Override
-	public boolean isGestureValid(int minSizePx) {
-		if (poly == null || poly.npoints < 3) return false;
-		Rectangle b = poly.getBounds();
-		return Math.max(b.width, b.height) >= minSizePx;
-	}
+        double dx2 = p.x - xc;
+        double dy2 = p.y - yc;
+        double r2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
 
-	@Override
-	protected Point[] computeVertices() {
-		Polygon p = (poly != null) ? poly : tempPoly;
-		if (p == null) return null;
-		Point[] pts = new Point[p.npoints];
-		for (int i = 0; i < p.npoints; i++) {
-			pts[i] = new Point(p.xpoints[i], p.ypoints[i]);
-		}
-		return pts;
-	}
+        if (r1 < 0.99 || r2 < 0.99) {
+            return new Point(p);
+        }
 
-	@Override
-	protected void draw(Graphics2D g) {
-		if (tempPoly == null || tempPoly.npoints < 1) return;
+        double scale = r1 / r2;
+        double xs = xc + dx2 * scale;
+        double ys = yc + dy2 * scale;
 
-		if (tempPoly.npoints == 1) {
-			GraphicsUtils.drawHighlightedLine(g,
-					tempPoly.xpoints[0], tempPoly.ypoints[0],
-					currentPt.x, currentPt.y,
-					highlightColor1, highlightColor2);
-			return;
-		}
+        return new Point((int) Math.round(xs), (int) Math.round(ys));
+    }
 
-		if (tempPoly.npoints == 2) {
+    @Override
+    public boolean isGestureValid(int minSizePx) {
+        if (poly == null || poly.npoints < 3) return false;
+        Rectangle b = poly.getBounds();
+        return Math.max(b.width, b.height) >= minSizePx;
+    }
 
-			double xc = tempPoly.xpoints[0];
-			double yc = tempPoly.ypoints[0];
-			double x1 = tempPoly.xpoints[1];
-			double y1 = tempPoly.ypoints[1];
+    @Override
+    protected Point[] computeVertices() {
+        Polygon p = (poly != null) ? poly : tempPoly;
+        if (p == null) return null;
+        Point[] pts = new Point[p.npoints];
+        for (int i = 0; i < p.npoints; i++) {
+            pts[i] = new Point(p.xpoints[i], p.ypoints[i]);
+        }
+        return pts;
+    }
 
-			Point scaled = scaleToFirstRadius(currentPt);
-			double x2 = scaled.x;
-			double y2 = scaled.y;
+    private void updateSweepForCurrentPoint(Point current) {
+        if (tempPoly == null || tempPoly.npoints != 2) return;
 
-			double dx1 = x1 - xc;
-			double dy1 = y1 - yc;
-			double dx2 = x2 - xc;
-			double dy2 = y2 - yc;
+        double xc = tempPoly.xpoints[0];
+        double yc = tempPoly.ypoints[0];
+        double x1 = tempPoly.xpoints[1];
+        double y1 = tempPoly.ypoints[1];
 
-			double r1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
-			double r2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+        Point scaled = scaleToFirstRadius(current);
+        double x2 = scaled.x;
+        double y2 = scaled.y;
 
-			if (r1 < 0.99 || r2 < 0.99) return;
+        // Screen deltas
+        double dx1s = x1 - xc;
+        double dy1s = y1 - yc;
+        double dx2s = x2 - xc;
+        double dy2s = y2 - yc;
 
-			double sAngle = Math.atan2(-dy1, dx1);
+        double r1 = Math.hypot(dx1s, dy1s);
+        double r2 = Math.hypot(dx2s, dy2s);
+        if (r1 < 0.99 || r2 < 0.99) return;
 
-			double aAngle = Math.acos((dx1 * dx2 + dy1 * dy2) / (r1 * r2));
-			if ((dx1 * dy2 - dx2 * dy1) > 0.0) {
-				aAngle = -aAngle;
-			}
+        // Convert to math coords (flip Y) so CCW is standard.
+        double dx1 = dx1s;
+        double dy1 = -dy1s;
+        double dx2 = dx2s;
+        double dy2 = -dy2s;
 
-			int startAngle = (int) Math.toDegrees(sAngle);
-			int arcAngle = (int) Math.toDegrees(aAngle);
+        double dot = dx1 * dx2 + dy1 * dy2;
+        double cross = dx1 * dy2 - dy1 * dx2;
 
-			int pixrad = (int) r1;
-			int size = (int) (2 * r1);
+        double signed = Math.toDegrees(Math.atan2(cross, dot)); // (-180, 180]
 
-			g.fillArc((int) xc - pixrad, (int) yc - pixrad, size, size, startAngle, arcAngle);
-			GraphicsUtils.drawHighlightedArc(g,
-					(int) xc - pixrad, (int) yc - pixrad, size, size,
-					startAngle, arcAngle,
-					highlightColor1, highlightColor2);
+        if (!sweepInit) {
+            sweepInit = true;
+            sweepDeg = signed;
+            lastSignedDeg = signed;
+            return;
+        }
 
-			GraphicsUtils.drawHighlightedLine(g,
-					(int) xc, (int) yc, (int) x1, (int) y1,
-					highlightColor1, highlightColor2);
-			GraphicsUtils.drawHighlightedLine(g,
-					(int) xc, (int) yc, (int) x2, (int) y2,
-					highlightColor1, highlightColor2);
-		}
-	}
+        // Unwrap across the -180/180 discontinuity for continuous dragging.
+        double delta = signed - lastSignedDeg;
+        if (delta > 180.0) delta -= 360.0;
+        if (delta < -180.0) delta += 360.0;
 
-	@Override
-	public Rectangle getRubberbandBounds() {
-		return (poly != null) ? poly.getBounds() : (tempPoly != null ? tempPoly.getBounds() : null);
-	}
+        sweepDeg += delta;
+        lastSignedDeg = signed;
+    }
+
+    @Override
+    protected void draw(Graphics2D g) {
+        if (tempPoly == null || tempPoly.npoints < 1) return;
+
+        if (tempPoly.npoints == 1) {
+            GraphicsUtils.drawHighlightedLine(g,
+                    tempPoly.xpoints[0], tempPoly.ypoints[0],
+                    currentPt.x, currentPt.y,
+                    highlightColor1, highlightColor2);
+            return;
+        }
+
+        if (tempPoly.npoints == 2) {
+
+            double xc = tempPoly.xpoints[0];
+            double yc = tempPoly.ypoints[0];
+            double x1 = tempPoly.xpoints[1];
+            double y1 = tempPoly.ypoints[1];
+
+            Point scaled = scaleToFirstRadius(currentPt);
+            double x2 = scaled.x;
+            double y2 = scaled.y;
+
+            double dx1 = x1 - xc;
+            double dy1 = y1 - yc;
+
+            double r1 = Math.hypot(dx1, dy1);
+            if (r1 < 0.99) return;
+
+            // Update sweep tracking based on current mouse point
+            updateSweepForCurrentPoint(currentPt);
+
+            // Start angle for Java2D: keep your original convention
+            double sAngle = Math.atan2(-dy1, dx1);
+            int startAngle = (int) Math.round(Math.toDegrees(sAngle));
+
+            // Use the unwrapped signed sweep (CW shows small CW sector, not complement)
+            int arcAngle = (int) Math.round(sweepDeg);
+
+            int pixrad = (int) r1;
+            int size = (int) Math.round(2 * r1);
+
+            g.fillArc((int) xc - pixrad, (int) yc - pixrad, size, size, startAngle, arcAngle);
+            GraphicsUtils.drawHighlightedArc(g,
+                    (int) xc - pixrad, (int) yc - pixrad, size, size,
+                    startAngle, arcAngle,
+                    highlightColor1, highlightColor2);
+
+            GraphicsUtils.drawHighlightedLine(g,
+                    (int) xc, (int) yc, (int) x1, (int) y1,
+                    highlightColor1, highlightColor2);
+            GraphicsUtils.drawHighlightedLine(g,
+                    (int) xc, (int) yc, (int) x2, (int) y2,
+                    highlightColor1, highlightColor2);
+        }
+    }
+
+    @Override
+    public Rectangle getRubberbandBounds() {
+        return (poly != null) ? poly.getBounds() : (tempPoly != null ? tempPoly.getBounds() : null);
+    }
 }
