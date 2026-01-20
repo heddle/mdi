@@ -12,7 +12,9 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.sim.SimulationEngineConfig;
+import edu.cnu.mdi.sim.ui.IconSimulationControlPanel;
 import edu.cnu.mdi.sim.ui.SimulationView;
+import edu.cnu.mdi.sim.ui.StandardSimIcons;
 import edu.cnu.mdi.util.Environment;
 
 /**
@@ -36,7 +38,6 @@ public class NetworkDeclutterDemoView extends SimulationView {
 	private final Icon serverIcon;
 	private final Icon clientIcon;
 	private int iconRadiusPx;
-
 	/**
 	 * Create a network layout demo view.
 	 *
@@ -45,10 +46,16 @@ public class NetworkDeclutterDemoView extends SimulationView {
 	public NetworkDeclutterDemoView(Object... keyVals) {
 		// Java 21: must call super(...) first. We build the simulation via a static
 		// helper.
-		super(createSimulation(), new SimulationEngineConfig(33, 250, 20, false), true, keyVals);
-
-		// Recover our concrete simulation type so we can access the model and attach
+		super(
+			    createSimulation(),
+			    new SimulationEngineConfig(33, 250, 20, false),
+			    true,
+			    (SimulationView.ControlPanelFactory) () ->
+			        new IconSimulationControlPanel(new StandardSimIcons()),
+			    keyVals
+			);		// Recover our concrete simulation type so we can access the model and attach
 		// engine callbacks.
+		
 		this.sim = (NetworkDeclutterSimulation) getSimulationEngine().getSimulation();
 		this.model = this.sim.getModel();
 

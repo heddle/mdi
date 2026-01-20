@@ -35,7 +35,7 @@ import edu.cnu.mdi.sim.SimulationState;
  * </p>
  */
 @SuppressWarnings("serial")
-public class SimulationControlPanel extends JPanel implements SimulationListener {
+public class SimulationControlPanel extends JPanel implements SimulationListener, ISimulationControlPanel {
 
 	private ISimulationHost host;
 
