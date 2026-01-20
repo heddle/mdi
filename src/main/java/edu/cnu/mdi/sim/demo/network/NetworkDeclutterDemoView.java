@@ -44,8 +44,7 @@ public class NetworkDeclutterDemoView extends SimulationView {
 	 * @param keyVals variable set of arguments.
 	 */
 	public NetworkDeclutterDemoView(Object... keyVals) {
-		// Java 21: must call super(...) first. We build the simulation via a static
-		// helper.
+		// must call super(...) first. We build the simulation via a static helper.
 		super(
 			    createSimulation(),
 			    new SimulationEngineConfig(33, 250, 20, false),
@@ -77,6 +76,7 @@ public class NetworkDeclutterDemoView extends SimulationView {
 		startSimulation();
 	}
 
+	// Helper to create the simulation instance
 	private static NetworkDeclutterSimulation createSimulation() {
 		NetworkModel m = NetworkModel.random(14, // servers
 				100, // clients

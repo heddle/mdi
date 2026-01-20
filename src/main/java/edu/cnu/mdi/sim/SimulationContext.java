@@ -12,19 +12,29 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class SimulationContext {
 
+	// Internal cancellation flag
 	private final AtomicBoolean cancelRequested = new AtomicBoolean(false);
 
+	// Internal bookkeeping
 	private volatile long startNanos;
 	private volatile long stepCount;
 
+	/**
+	 * Package-private constructor (owned by engine).
+	 */
 	SimulationContext() {
 		// package-private construction (owned by engine)
 	}
 
+	/**
+	 * Mark the simulation as started (internal use only).
+	 */
 	void markStarted() {
 		startNanos = System.nanoTime();
 	}
-
+	/**
+	 * Increment the step count (internal use only).
+	 */
 	void incrementStep() {
 		stepCount++;
 	}
