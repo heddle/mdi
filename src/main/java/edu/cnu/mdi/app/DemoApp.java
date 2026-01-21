@@ -30,6 +30,7 @@ import edu.cnu.mdi.mdi3D.panel.Support3D;
 import edu.cnu.mdi.mdi3D.view3D.PlainView3D;
 import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
+import edu.cnu.mdi.sim.simanneal.tspdemo.TspDemoView;
 import edu.cnu.mdi.splot.example.AnotherGaussian;
 import edu.cnu.mdi.splot.example.ErfTest;
 import edu.cnu.mdi.splot.example.ErfcTest;
@@ -104,6 +105,7 @@ public class DemoApp extends BaseMDIApplication {
 	private LogView logView;
 	private PlotView plotView;
 	private NetworkDeclutterDemoView networkDeclutterDemoView;
+	private TspDemoView tspDemoView;
 	private NetworkLayoutDemoView networkLayoutDemoView;
 
 	/**
@@ -174,6 +176,9 @@ public class DemoApp extends BaseMDIApplication {
 
 		// Network declutter demo view
 		networkDeclutterDemoView = createNetworkDeclutterDemoView();
+		
+		// TSP demo view
+		tspDemoView = createTspDemoView();
 
 		// Network layout demo view
 		networkLayoutDemoView = createNetworkLayoutDemoView();
@@ -237,9 +242,13 @@ public class DemoApp extends BaseMDIApplication {
 		// Column 2: plot view centered
 		virtualView.moveTo(plotView, 2, VirtualView.CENTER);
 
-		// Column 3: network declutter demo centered
-		virtualView.moveTo(networkDeclutterDemoView, 3, VirtualView.CENTER);
+		// Column 3: network declutter demo upper right
+		virtualView.moveTo(networkDeclutterDemoView, 3, VirtualView.UPPERRIGHT);
 		networkDeclutterDemoView.setVisible(true);
+		
+		// Column 3: TSP demo lower left
+		virtualView.moveTo(tspDemoView, 3, VirtualView.BOTTOMLEFT);
+		tspDemoView.setVisible(true);
 
 		// Column 4: network layout demo lower left
 		virtualView.moveTo(networkLayoutDemoView, 4, 0, -50, VirtualView.BOTTOMLEFT);
@@ -512,6 +521,18 @@ public class DemoApp extends BaseMDIApplication {
 				PropertySupport.FRACTION, 0.7, PropertySupport.ASPECT, 1.2, PropertySupport.VISIBLE, false,
 				PropertySupport.BACKGROUND, Color.white, PropertySupport.WORLDSYSTEM,
 				new Rectangle2D.Double(0.0, 0.0, 1, 1));
+		return view;
+	}
+	
+	/**
+	 * Create the TSP demo view.
+	 */
+	TspDemoView createTspDemoView() {
+		TspDemoView view = new TspDemoView(PropertySupport.TITLE,
+				"TSP Demo View", PropertySupport.PROPNAME, "TSPDEMO",
+				PropertySupport.FRACTION, 0.7, PropertySupport.ASPECT, 1.2, PropertySupport.VISIBLE, false,
+				PropertySupport.BACKGROUND, X11Colors.getX11Color("lavender blush"), PropertySupport.WORLDSYSTEM,
+				new Rectangle2D.Double(0.0,	 0.0, 1, 1));
 		return view;
 	}
 
