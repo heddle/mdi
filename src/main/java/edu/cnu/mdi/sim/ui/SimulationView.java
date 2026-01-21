@@ -66,7 +66,7 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	}
 
 	/** Hosted engine (never null). */
-	protected final SimulationEngine engine;
+	protected volatile SimulationEngine engine;
 
 	/** Optional control panel component (may be null). */
 	protected final JComponent controlPanel;
@@ -292,6 +292,55 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	/** Hook called when a refresh is requested (prior to repaint). */
 	protected void onSimulationRefresh(SimulationContext ctx) {
 	}
+	
+	/**
+	 * Replace the hosted engine with a new one.
+	 * <p>
+	 * This is primarily intended for demos that need to rebuild a simulation with
+	 * a different model size/parameters (e.g., TSP city count changes).
+	 * </p>
+	 * <p>
+	 * This method:
+	 * </p>
+	 * <ul>
+	 *   <li>removes this view as a listener from the old engine</li>
+	 *   <li>installs the new engine</li>
+	 *   <li>adds this view as a listener to the new engine</li>
+	 *   <li>rebinds the control panel if it supports {@link ISimulationControlPanel}</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * Must be called on the EDT.
+	 * </p>
+	 *
+	 * @param newEngine new engine (non-null)
+	 */
+	protected final void replaceEngine(SimulationEngine newEngine) {
+		Objects.requireNonNull(newEngine, "newEngine");
+
+		if (!javax.swing.SwingUtilities.isEventDispatchThread()) {
+			javax.swing.SwingUtilities.invokeLater(() -> replaceEngine(newEngine));
+			return;
+		}
+
+		SimulationEngine old = this.engine;
+		if (old != null) {
+			try { old.removeListener(this); } catch (Throwable ignored) {}
+		}
+
+		this.engine = newEngine;
+		this.engine.addListener(this);
+
+		// Rebind control panel if present
+		if (controlPanel instanceof edu.cnu.mdi.sim.ui.ISimulationControlPanel scp) {
+			try { scp.unbind(); } catch (Throwable ignored) {}
+			scp.bind(this);
+		}
+
+		// If you pack on initial control panel creation, do it again here
+		//pack();
+	}
+
 
 	// ------------------------------------------------------------------------
 	// Convenience

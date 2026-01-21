@@ -1,6 +1,7 @@
 package edu.cnu.mdi.sim.simanneal.tspdemo;
 
 import java.awt.BasicStroke;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -10,283 +11,370 @@ import java.util.Random;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
+import edu.cnu.mdi.sim.SimulationEngine;
 import edu.cnu.mdi.sim.SimulationEngineConfig;
+import edu.cnu.mdi.sim.SimulationState;
 import edu.cnu.mdi.sim.simanneal.AnnealingSchedule;
 import edu.cnu.mdi.sim.simanneal.GeometricAnnealingSchedule;
 import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingConfig;
 import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingSimulation;
 import edu.cnu.mdi.sim.simanneal.TemperatureHeuristic;
 import edu.cnu.mdi.sim.simanneal.heuristics.EnergyDistributionHeuristic;
-import edu.cnu.mdi.sim.ui.IconSimulationControlPanel;
 import edu.cnu.mdi.sim.ui.SimulationView;
-import edu.cnu.mdi.sim.ui.StandardSimIcons;
+import edu.cnu.mdi.splot.plot.ScatterPanel;
 
 /**
- * Traveling Salesperson (TSP) simulated annealing demo hosted in an MDI {@link SimulationView}.
+ * Traveling Salesperson (TSP) simulated annealing demo hosted in an MDI
+ * {@link SimulationView}.
  * <p>
- * This view uses the {@code edu.cnu.mdi.sim.simanneal} package with a TSP problem adapter and
- * displays the current best tour as annealing improves it.
+ * This view uses the {@code edu.cnu.mdi.sim.simanneal} package with a TSP
+ * problem adapter and displays the current best tour as annealing improves it.
  * </p>
  *
- * <h2>Rendering</h2>
- * <ul>
- *   <li>Draws the best tour as a closed polyline.</li>
- *   <li>Draws city locations as filled circles.</li>
- *   <li>Optionally draws a vertical "river" line if the model supports toggling.</li>
- * </ul>
- *
- * <h2>Simulation</h2>
+ * <h2>Controls</h2>
  * <p>
- * Uses {@link SimulatedAnnealingSimulation} with {@link TspAnnealingProblem} and a
- * {@link EnergyDistributionHeuristic} for initial temperature.
+ * The demo uses {@link TspDemoControlPanel}, which adds sliders for city count
+ * and river penalty plus a Reset button. These controls are enabled only in
+ * {@link SimulationState#READY} or {@link SimulationState#TERMINATED}.
  * </p>
  *
- * <h2>Constructor ordering</h2>
+ * <h2>Reset</h2>
  * <p>
- * Java requires {@code super(...)} to be the first statement. To allow the view to keep
- * references to the created {@link TspModel} and concrete simulation instance, this class
- * uses a small thread-local "bundle" created by {@link #createBundle()} and retrieved
- * immediately after {@code super(...)} returns.
+ * Reset rebuilds the model, problem, and simulation, and swaps a new
+ * {@link SimulationEngine} into the view. This is required because
+ * {@link SimulationEngine} holds its {@code Simulation} as a {@code final}
+ * field.
  * </p>
  */
 @SuppressWarnings("serial")
-public class TspDemoView extends SimulationView {
+public class TspDemoView extends SimulationView implements ITspDemoResettable {
 
-    /** Thread-local bundle used to pass created objects across the super(...) boundary. */
-    private static final ThreadLocal<Bundle> BUNDLE_TL = new ThreadLocal<>();
+	public static final int DEFAULT_NUM_CITY = 60;
+	public static final double DEFAULT_RIVER_PENALTY = 0.35;
 
-    /** Backing model (world coords in [0,1]). */
-    private final TspModel model;
+	/**
+	 * Thread-local bundle used to pass created objects across the super(...)
+	 * boundary.
+	 */
+	private static final ThreadLocal<Bundle> BUNDLE_TL = new ThreadLocal<>();
 
-    /** Concrete SA simulation instance used by this view. */
-    private final SimulatedAnnealingSimulation<TspSolution> sim;
+	/** Backing model (world coords in [0,1]). */
+	private volatile TspModel model;
 
-    /** Cached best tour snapshot for drawing (may be null until first improvement). */
-    private volatile int[] bestTourSnapshot;
+	/** Concrete SA simulation instance used by this view. */
+	private volatile SimulatedAnnealingSimulation<TspSolution> sim;
 
-    /** Cached city screen radius in pixels. */
-    private final int cityRadiusPx = 4;
+	/** Cached best tour snapshot for drawing. */
+	private volatile int[] bestTourSnapshot;
 
-    /**
-     * Create the TSP demo view.
-     *
-     * @param keyVals standard {@link edu.cnu.mdi.view.BaseView} key-value arguments
-     */
-    public TspDemoView(Object... keyVals) {
+	/** Cached city screen radius in pixels. */
+	private final int cityRadiusPx = 4;
 
-        // Create the simulation (and a bundle containing the model) via a helper.
-        // Must call super(...) first.
-        super(
-            createSimulationAndStashBundle(),
-            new SimulationEngineConfig(33, 250, 0, false),
-            true,
-            (SimulationView.ControlPanelFactory) () ->
-                new IconSimulationControlPanel(new StandardSimIcons()),
-            keyVals
-        );
+	/** RNG seed used for reproducible model generation (0L => nondeterministic). */
+	private static final long seed = 0L;
+	
+	private static ScatterPanel scatterPanel;
 
-        // Recover bundle created by createSimulationAndStashBundle().
-        Bundle b = BUNDLE_TL.get();
-        BUNDLE_TL.remove();
+	/**
+	 * Create the TSP demo view.
+	 *
+	 * @param keyVals standard {@link edu.cnu.mdi.view.BaseView} key-value arguments
+	 */
+	public TspDemoView(Object... keyVals) {
 
-        this.model = b.model;
+		// Must call super(...) first; create simulation + stash model bundle for
+		// retrieval.
+		super(createSimulationAndStashBundle(DEFAULT_NUM_CITY, DEFAULT_RIVER_PENALTY, seed),
+				new SimulationEngineConfig(33, 250, 0, false), true,
+				(SimulationView.ControlPanelFactory) TspDemoControlPanel::new, keyVals);
 
-        @SuppressWarnings("unchecked")
-        SimulatedAnnealingSimulation<TspSolution> s =
-            (SimulatedAnnealingSimulation<TspSolution>) getSimulationEngine().getSimulation();
-        this.sim = s;
+		scatterPanel = createScatterPanel();
+		add(scatterPanel, BorderLayout.EAST);
+		
+		
+		// Recover bundle created by createSimulationAndStashBundle().
+		Bundle b = BUNDLE_TL.get();
+		BUNDLE_TL.remove();
 
-        // Let the simulation post progress/messages/refresh through this view’s engine.
-        this.sim.setEngine(getSimulationEngine());
+		this.model = b.model;
 
-        // Install drawing hooks.
-        setBeforeDraw();
-        setAfterDraw();
+		@SuppressWarnings("unchecked")
+		SimulatedAnnealingSimulation<TspSolution> s = (SimulatedAnnealingSimulation<TspSolution>) getSimulationEngine()
+				.getSimulation();
+		this.sim = s;
 
-        // Initial view scale (cities are in [0,1]).
-        if (getContainer() != null) {
-            getContainer().scale(1.25);
-        }
+		// Allow sim to post progress/messages/refresh through this view’s engine.
+		this.sim.setEngine(getSimulationEngine());
 
-        // Start engine thread (paused until Run unless autoRun or startAndRun()).
-        startSimulation();
-    }
+		// Install drawing hooks.
+		setBeforeDraw();
+		setAfterDraw();
 
-    /**
-     * Create a simulation instance and stash a bundle (model + config) in a thread-local
-     * so the constructor can retrieve it after {@code super(...)} returns.
-     */
-    private static SimulatedAnnealingSimulation<TspSolution> createSimulationAndStashBundle() {
+		// Initial view scale (cities are in [0,1]).
+		if (getContainer() != null) {
+			getContainer().scale(1.25);
+		}
 
-        // ------------------------------------------------------------
-        // Model parameters (tweak as desired)
-        // ------------------------------------------------------------
-        long seed = 12345L;         // 0L for nondeterministic
-        Random rng = (seed == 0L) ? new Random() : new Random(seed);
+		pack();
+		// Start engine thread (paused until Run unless autoRun or startAndRun()).
+		startSimulation();
+	}
+	
+	private ScatterPanel createScatterPanel() {
+	    return new ScatterPanel("Traveling Salesperson Problem", "temperature", "energy (length)");
+	}
 
-        int cityCount = 60;
-        boolean includeRiver = true;
-        double riverPenalty = -.35;
+	/**
+	 * Create a simulation instance and stash a bundle (model) in a thread-local so
+	 * the constructor can retrieve it after {@code super(...)} returns.
+	 *
+	 * @param cityCount    number of cities
+	 * @param riverPenalty river penalty in [-1,1]
+	 * @param seed         RNG seed (0L for nondeterministic)
+	 * @return simulation instance
+	 */
+	private static SimulatedAnnealingSimulation<TspSolution> createSimulationAndStashBundle(int cityCount,
+			double riverPenalty, long seed) {
+		Random rng = (seed == 0L) ? new Random() : new Random(seed);
 
-        TspModel model = new TspModel(cityCount, includeRiver, riverPenalty, rng);
+		boolean includeRiver = true;
+		TspModel model = new TspModel(cityCount, includeRiver, riverPenalty, rng);
 
-        // ------------------------------------------------------------
-        // Annealing problem + sim config
-        // ------------------------------------------------------------
-        TspAnnealingProblem problem = new TspAnnealingProblem(model);
+		TspAnnealingProblem problem = new TspAnnealingProblem(model);
 
-        // Use defaults (you can override fields via your record "with" helpers, if you added them).
-        SimulatedAnnealingConfig cfg = SimulatedAnnealingConfig.defaults();
+		SimulatedAnnealingConfig cfg = SimulatedAnnealingConfig.defaults();
 
-        AnnealingSchedule schedule = new GeometricAnnealingSchedule();
+		AnnealingSchedule schedule = new GeometricAnnealingSchedule();
+		
 
-        TemperatureHeuristic<TspSolution> heuristic =
-            new EnergyDistributionHeuristic<>(300, 0.80, 1e-6);
+		TemperatureHeuristic<TspSolution> heuristic = new EnergyDistributionHeuristic<>(300, 0.80, 1e-6);
 
-        SimulatedAnnealingSimulation<TspSolution> sim =
-            new SimulatedAnnealingSimulation<>(problem, cfg, schedule, heuristic);
+		SimulatedAnnealingSimulation<TspSolution> sim = new SimulatedAnnealingSimulation<>(problem, cfg, schedule,
+				heuristic) {
+			protected void onAcceptedMove(double temperature, double energy) {
+				scatterPanel.add(temperature, energy);
+			}
+		};
+		
+		
 
-        // Stash bundle for constructor to recover
-        BUNDLE_TL.set(new Bundle(model));
+		BUNDLE_TL.set(new Bundle(model));
+		return sim;
+	}
 
-        return sim;
-    }
+	// -------------------------------------------------------------------------
+	// Reset hook (from TspDemoControlPanel)
+	// -------------------------------------------------------------------------
 
-    /** Install "before draw" hook: draw tour + (optional) river. */
-    private void setBeforeDraw() {
-        getContainer().setBeforeDraw(new DrawableAdapter() {
-            @Override
-            public void draw(Graphics2D g2, IContainer container) {
-                if (container == null) return;
+	@Override
+	public void requestReset(int cityCount, double riverPenalty) {
 
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		// Only honor reset in safe states.
+		SimulationState state = getSimulationEngine().getState();
+		boolean editable = (state == SimulationState.READY || state == SimulationState.TERMINATED);
+		if (!editable) {
+			// ignore (panel should already be disabled, but be defensive)
+			return;
+		}
 
-                // Draw optional river first (so it appears behind the tour).
-                drawRiverIfEnabled(g2, container);
+		// Build a new model/sim with the requested parameters.
+		SimulatedAnnealingSimulation<TspSolution> newSim = createSimulationAndStashBundle(cityCount, riverPenalty,
+				seed);
 
-                // Draw best tour (if available)
-                int[] tour = bestTourSnapshot;
-                if (tour == null || tour.length < 2) {
-                    // Try to seed snapshot from the current best solution (may be null early).
-                    TspSolution best = sim.getBestSolutionCopy();
-                    if (best != null && best.tour != null) {
-                        bestTourSnapshot = best.tour.clone();
-                        tour = bestTourSnapshot;
-                    }
-                }
+		Bundle b = BUNDLE_TL.get();
+		BUNDLE_TL.remove();
 
-                if (tour == null || tour.length < 2) return;
+		TspModel newModel = b.model;
 
-                // Tour polyline
-                g2.setColor(Color.RED.darker());
-                g2.setStroke(new BasicStroke(2f));
+		// Reuse the engine config (refresh/progress/yield/autRun) from the current
+		// engine.
+		SimulationEngineConfig engineCfg = getSimulationEngine().getConfig();
 
-                Point p0 = new Point();
-                Point p1 = new Point();
+		// Create a brand new engine (SimulationEngine holds a final Simulation).
+		SimulationEngine newEngine = new SimulationEngine(newSim, engineCfg);
 
-                for (int i = 0; i < tour.length; i++) {
-                    int a = tour[i];
-                    int b = tour[(i + 1) % tour.length];
+		// Swap engine into the view (requires the small SimulationView patch below).
+		replaceEngine(newEngine);
 
-                    var wa = model.cities[a];
-                    var wb = model.cities[b];
+		// Update local references.
+		this.model = newModel;
+		this.sim = newSim;
+		this.bestTourSnapshot = null;
 
-                    container.worldToLocal(p0, wa.x, wa.y);
-                    container.worldToLocal(p1, wb.x, wb.y);
+		// Let sim post through the new engine.
+		this.sim.setEngine(getSimulationEngine());
 
-                    g2.drawLine(p0.x, p0.y, p1.x, p1.y);
-                }
-            }
-        });
-    }
+		// Start new engine thread (paused in READY until Run).
+		startSimulation();
 
-    /** Install "after draw" hook: draw city markers. */
-    private void setAfterDraw() {
-        getContainer().setAfterDraw(new DrawableAdapter() {
-            @Override
-            public void draw(Graphics2D g2, IContainer container) {
-                if (container == null) return;
+		// Kick a refresh so the new city set appears immediately.
+		getSimulationEngine().requestRefresh();
+	}
 
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+	// -------------------------------------------------------------------------
+	// Drawing
+	// -------------------------------------------------------------------------
 
-                Point p = new Point();
+	/** Install "before draw" hook: draw tour + (optional) river. */
+	private void setBeforeDraw() {
+		getContainer().setBeforeDraw(new DrawableAdapter() {
+			@Override
+			public void draw(Graphics2D g2, IContainer container) {
+				if (container == null)
+					return;
 
-                // City markers
-                g2.setColor(Color.BLACK);
-                for (var c : model.cities) {
-                    container.worldToLocal(p, c.x, c.y);
-                    g2.fillOval(p.x - cityRadiusPx, p.y - cityRadiusPx, 2 * cityRadiusPx, 2 * cityRadiusPx);
-                }
-            }
-        });
-    }
+				TspModel m = model; // volatile snapshot
+				if (m == null)
+					return;
 
-    /**
-     * Attempt to draw a "river" line if the model supports it and it is enabled.
-     * <p>
-     * Supports either:
-     * <ul>
-     *   <li>a direct {@code boolean isRiverEnabled()} API, or</li>
-     *   <li>fallback: draw if {@code includeRiver} was true at construction (legacy behavior).</li>
-     * </ul>
-     * </p>
-     */
-    private void drawRiverIfEnabled(Graphics2D g2, IContainer container) {
-        boolean draw = isRiverEnabledReflective(model);
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // If no toggle API exists, fall back to "includeRiver" semantics (riverX is NaN otherwise).
-        if (!draw && !Double.isFinite(model.riverX)) return;
-        if (!draw && Double.isFinite(model.riverX)) {
-            // Legacy: includeRiver true but no toggle method; draw it.
-            draw = true;
-        }
-        if (!draw) return;
+				// Draw optional river first (behind tour).
+				drawRiverIfEnabled(g2, container, m);
 
-        double x = model.riverX;
-        if (!Double.isFinite(x)) return;
+				// Draw best tour (if available)
+				int[] tour = bestTourSnapshot;
+				if (tour == null || tour.length < 2) {
+					// Seed snapshot from current best solution (may be null early).
+					SimulatedAnnealingSimulation<TspSolution> s = sim;
+					if (s != null) {
+						TspSolution best = s.getBestSolutionCopy();
+						if (best != null && best.tour != null) {
+							bestTourSnapshot = best.tour.clone();
+							tour = bestTourSnapshot;
+						}
+					}
+				}
+				if (tour == null || tour.length < 2)
+					return;
 
-        g2.setColor(new Color(40, 90, 200));
-        g2.setStroke(new BasicStroke(1.5f));
+				g2.setColor(Color.RED.darker());
+				g2.setStroke(new BasicStroke(2f));
 
-        Point p0 = new Point();
-        Point p1 = new Point();
-        container.worldToLocal(p0, x, 0.0);
-        container.worldToLocal(p1, x, 1.0);
-        g2.drawLine(p0.x, p0.y, p1.x, p1.y);
-    }
+				Point p0 = new Point();
+				Point p1 = new Point();
 
-    /**
-     * Reflection helper to support a future {@code isRiverEnabled()} API without
-     * forcing it today.
-     */
-    private static boolean isRiverEnabledReflective(TspModel model) {
-        try {
-            Method m = model.getClass().getMethod("isRiverEnabled");
-            Object r = m.invoke(model);
-            return (r instanceof Boolean) ? ((Boolean) r).booleanValue() : false;
-        } catch (Throwable t) {
-            return false;
-        }
-    }
+				for (int i = 0; i < tour.length; i++) {
+					int a = tour[i];
+					int b = tour[(i + 1) % tour.length];
 
-    /**
-     * Called on the EDT when progress arrives. We use this to refresh the cached best tour
-     * snapshot so drawing doesn’t need to touch mutable simulation internals.
-     */
-    @Override
-    protected void onSimulationProgress(edu.cnu.mdi.sim.SimulationContext ctx, edu.cnu.mdi.sim.ProgressInfo progress) {
-        // Update best snapshot when it changes.
-        TspSolution best = sim.getBestSolutionCopy();
-        if (best != null && best.tour != null) {
-            bestTourSnapshot = best.tour.clone();
-        }
-    }
+					var wa = m.cities[a];
+					var wb = m.cities[b];
 
-    /** Simple bundle holding model references across the super(...) boundary. */
-    private static final class Bundle {
-        final TspModel model;
-        Bundle(TspModel model) {
-            this.model = model;
-        }
-    }
+					container.worldToLocal(p0, wa.x, wa.y);
+					container.worldToLocal(p1, wb.x, wb.y);
+
+					g2.drawLine(p0.x, p0.y, p1.x, p1.y);
+				}
+			}
+		});
+	}
+
+	/** Install "after draw" hook: draw city markers. */
+	private void setAfterDraw() {
+		getContainer().setAfterDraw(new DrawableAdapter() {
+			@Override
+			public void draw(Graphics2D g2, IContainer container) {
+				if (container == null)
+					return;
+
+				TspModel m = model; // volatile snapshot
+				if (m == null)
+					return;
+
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+				Point p = new Point();
+
+				g2.setColor(Color.BLACK);
+				for (var c : m.cities) {
+					container.worldToLocal(p, c.x, c.y);
+					g2.fillOval(p.x - cityRadiusPx, p.y - cityRadiusPx, 2 * cityRadiusPx, 2 * cityRadiusPx);
+				}
+			}
+		});
+	}
+
+	/**
+	 * Attempt to draw a "river" line if the model supports it and it is enabled.
+	 * <p>
+	 * Supports either:
+	 * </p>
+	 * <ul>
+	 * <li>a direct {@code boolean isRiverEnabled()} API, or</li>
+	 * <li>fallback: draw if {@code riverX} is finite (legacy behavior).</li>
+	 * </ul>
+	 *
+	 * @param g2        graphics
+	 * @param container container
+	 * @param m         model snapshot
+	 */
+	private void drawRiverIfEnabled(Graphics2D g2, IContainer container, TspModel m) {
+		boolean draw = isRiverEnabledReflective(m);
+
+		// If no toggle API exists, fall back to "riverX finite means it exists".
+		if (!draw && !Double.isFinite(m.riverX))
+			return;
+		if (!draw && Double.isFinite(m.riverX))
+			draw = true;
+		if (!draw)
+			return;
+
+		double x = m.riverX;
+		if (!Double.isFinite(x))
+			return;
+
+		g2.setColor(new Color(40, 90, 200));
+		g2.setStroke(new BasicStroke(1.5f));
+
+		Point p0 = new Point();
+		Point p1 = new Point();
+		container.worldToLocal(p0, x, 0.0);
+		container.worldToLocal(p1, x, 1.0);
+		g2.drawLine(p0.x, p0.y, p1.x, p1.y);
+	}
+
+	/**
+	 * Reflection helper to support a future {@code isRiverEnabled()} API without
+	 * forcing it today.
+	 *
+	 * @param model model
+	 * @return true if the model exposes and returns true from
+	 *         {@code isRiverEnabled()}
+	 */
+	private static boolean isRiverEnabledReflective(TspModel model) {
+		try {
+			Method m = model.getClass().getMethod("isRiverEnabled");
+			Object r = m.invoke(model);
+			return (r instanceof Boolean) ? ((Boolean) r).booleanValue() : false;
+		} catch (Throwable t) {
+			return false;
+		}
+	}
+
+	/**
+	 * Called on the EDT when progress arrives. We use this to refresh the cached
+	 * best tour snapshot so drawing doesn’t need to touch mutable simulation
+	 * internals.
+	 */
+	@Override
+	protected void onSimulationProgress(edu.cnu.mdi.sim.SimulationContext ctx, edu.cnu.mdi.sim.ProgressInfo progress) {
+		SimulatedAnnealingSimulation<TspSolution> s = sim;
+		if (s == null)
+			return;
+
+		TspSolution best = s.getBestSolutionCopy();
+		if (best != null && best.tour != null) {
+			bestTourSnapshot = best.tour.clone();
+		}
+	}
+
+	/** Simple bundle holding model references across the super(...) boundary. */
+	private static final class Bundle {
+		final TspModel model;
+
+		Bundle(TspModel model) {
+			this.model = model;
+		}
+	}
 }

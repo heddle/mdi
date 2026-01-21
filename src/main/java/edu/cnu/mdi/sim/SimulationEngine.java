@@ -65,6 +65,10 @@ public final class SimulationEngine {
 	public SimulationState getState() {
 		return state;
 	}
+	
+	public SimulationEngineConfig getConfig() {
+		return config;
+	}
 
 	/**
 	 * Get the shared simulation context.

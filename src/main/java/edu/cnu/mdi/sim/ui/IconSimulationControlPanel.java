@@ -2,6 +2,7 @@ package edu.cnu.mdi.sim.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.lang.reflect.Constructor;
 import java.util.Objects;
@@ -19,6 +20,7 @@ import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.SimulationContext;
 import edu.cnu.mdi.sim.SimulationListener;
 import edu.cnu.mdi.sim.SimulationState;
+import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
  * A more graphical variant of {@link SimulationControlPanel} that prefers icons and
@@ -60,6 +62,8 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 	public IconSimulationControlPanel(IconProvider icons) {
 		this.icons = Objects.requireNonNull(icons, "icons");
 
+		statusLabel.setFont(Fonts.smallFont);
+		messageLabel.setFont(Fonts.tinyFont);
 		setLayout(new BorderLayout(6, 6));
 
 		// Top: status
@@ -119,6 +123,10 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 
 		applyState(SimulationState.NEW, "unbound");
 		setIndeterminate(false, " ");
+		
+		Dimension size = getPreferredSize();
+		size.width = 300;
+		setPreferredSize(size);
 	}
 
 	public void bind(ISimulationHost host) {
