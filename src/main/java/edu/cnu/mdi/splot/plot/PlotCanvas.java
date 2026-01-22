@@ -487,37 +487,6 @@ public class PlotCanvas extends JComponent
 	    }
 	}
 
-	
-	// Get the transforms for world to local and vice versa
-	protected void XsetAffineTransforms() {
-		Rectangle bounds = getBounds();
-
-		if ((bounds == null) || (bounds.width < 1) || (bounds.height < 1)) {
-			_localToWorld = null;
-			_worldToLocal = null;
-			_activeBounds = null;
-			return;
-		}
-
-		setActiveBounds();
-
-		if (_worldSystem == null) {
-			return;
-		}
-
-		double scaleX = _worldSystem.width / _activeBounds.width;
-		double scaleY = _worldSystem.height / _activeBounds.height;
-
-		_localToWorld = AffineTransform.getTranslateInstance(_worldSystem.x, _worldSystem.getMaxY());
-		_localToWorld.concatenate(AffineTransform.getScaleInstance(scaleX, -scaleY));
-		_localToWorld.concatenate(AffineTransform.getTranslateInstance(-_activeBounds.x, -_activeBounds.y));
-
-		try {
-			_worldToLocal = _localToWorld.createInverse();
-		} catch (NoninvertibleTransformException e) {
-			e.printStackTrace();
-		}
-	}
 
 	/**
 	 * The mouse has been dragged over the plot canvas
@@ -551,7 +520,6 @@ public class PlotCanvas extends JComponent
 			_extra.setCurrentPoint(e.getPoint());
 			repaint();
 		}
-
 	}
 
 	/**

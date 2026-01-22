@@ -178,6 +178,8 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable {
 			// ignore (panel should already be disabled, but be defensive)
 			return;
 		}
+		
+		scatterPanel.clearData();
 
 		// Build a new model/sim with the requested parameters.
 		SimulatedAnnealingSimulation<TspSolution> newSim = createSimulationAndStashBundle(cityCount, riverPenalty,

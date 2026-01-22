@@ -17,8 +17,6 @@ public class ScatterPanel extends AReadyPlotPanel {
 	private String yLabel;
 	
 	private volatile Curve curve;
-	private final AtomicInteger appliedCount = new AtomicInteger();
-
 	
 	public ScatterPanel(String title, String xLabel, String yLabel) {
 		super();
@@ -65,6 +63,7 @@ public class ScatterPanel extends AReadyPlotPanel {
 		if (curve != null) {
 			curve.clearData();
 		}
+		canvas.repaint();
 	}
 	
 	public void add(double x, double y) {
