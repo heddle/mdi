@@ -121,7 +121,9 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable {
 	}
 	
 	private ScatterPanel createScatterPanel() {
-	    return new ScatterPanel("Traveling Salesperson Problem", "temperature", "energy (length)");
+		ScatterPanel scatterPanel = new ScatterPanel("Traveling Salesperson Problem", "temperature", "energy (length)");
+		scatterPanel.getPlotCanvas().getParameters().setReverseXaxis(true);
+		return scatterPanel;
 	}
 
 	/**

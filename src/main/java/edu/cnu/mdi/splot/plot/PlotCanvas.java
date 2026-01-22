@@ -432,8 +432,64 @@ public class PlotCanvas extends JComponent
 
 	}
 
+	// check if x axis is reversed, so xmin on right insteat of left
+	private boolean reverseX() {
+		return _parameters.isReverseXaxis();
+	}
+	
+	// check if y axis is reversed, so ymin on top instead of bottom
+	private boolean reverseY() {
+		return _parameters.isReverseYaxis();
+	}
+	
 	// Get the transforms for world to local and vice versa
 	protected void setAffineTransforms() {
+	    Rectangle bounds = getBounds();
+
+	    if ((bounds == null) || (bounds.width < 1) || (bounds.height < 1)) {
+	        _localToWorld = null;
+	        _worldToLocal = null;
+	        _activeBounds = null;
+	        return;
+	    }
+
+	    setActiveBounds();
+
+	    if (_worldSystem == null || _activeBounds == null ||
+	        _activeBounds.width < 1 || _activeBounds.height < 1) {
+	        return;
+	    }
+
+	    final boolean rx = reverseX();
+	    final boolean ry = reverseY();
+
+	    // Magnitudes
+	    final double sxMag = _worldSystem.width  / _activeBounds.width;
+	    final double syMag = _worldSystem.height / _activeBounds.height;
+
+	    // Choose which world edge maps to the local top-left of the active plot area
+	    final double tx = rx ? _worldSystem.getMaxX() : _worldSystem.getMinX();
+	    final double ty = ry ? _worldSystem.getMinY() : _worldSystem.getMaxY();
+
+	    // Sign controls axis direction on screen
+	    final double sx = rx ? -sxMag :  sxMag;
+	    final double sy = ry ?  syMag : -syMag;
+
+	    _localToWorld = AffineTransform.getTranslateInstance(tx, ty);
+	    _localToWorld.concatenate(AffineTransform.getScaleInstance(sx, sy));
+	    _localToWorld.concatenate(AffineTransform.getTranslateInstance(-_activeBounds.x, -_activeBounds.y));
+
+	    try {
+	        _worldToLocal = _localToWorld.createInverse();
+	    } catch (NoninvertibleTransformException e) {
+	        e.printStackTrace();
+	        _worldToLocal = null;
+	    }
+	}
+
+	
+	// Get the transforms for world to local and vice versa
+	protected void XsetAffineTransforms() {
 		Rectangle bounds = getBounds();
 
 		if ((bounds == null) || (bounds.width < 1) || (bounds.height < 1)) {

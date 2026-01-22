@@ -27,6 +27,9 @@ public class AxesTabPanel extends JPanel {
 
 	private final JCheckBox _includeXZero;
 	private final JCheckBox _includeYZero;
+	
+	private final JCheckBox _reverseX;
+	private final JCheckBox _reverseY;
 
 	private final JSpinner _decX;
 	private final JSpinner _expX;
@@ -34,7 +37,7 @@ public class AxesTabPanel extends JPanel {
 	private final JSpinner _expY;
 
 	// snapshot for deciding if world system must be recomputed
-	private boolean _xZero0, _yZero0;
+	private boolean _xZero0, _yZero0, _xReverse, _yReverse;
 	private int _decX0, _expX0, _decY0, _expY0;
 
 	public AxesTabPanel(PlotCanvas canvas) {
@@ -46,6 +49,11 @@ public class AxesTabPanel extends JPanel {
 
 		_xZero0 = _params.includeXZero();
 		_yZero0 = _params.includeYZero();
+		
+		_xReverse = _params.isReverseXaxis();
+		_yReverse = _params.isReverseYaxis();
+		
+		
 		_decX0 = _params.getNumDecimalX();
 		_expX0 = _params.getMinExponentX();
 		_decY0 = _params.getNumDecimalY();
@@ -55,6 +63,9 @@ public class AxesTabPanel extends JPanel {
 
 		_includeXZero = new JCheckBox("Include X=0 in auto limits", _xZero0);
 		_includeYZero = new JCheckBox("Include Y=0 in auto limits", _yZero0);
+		
+		_reverseX = new JCheckBox("Reverse X axis", _xReverse);
+		_reverseY = new JCheckBox("Reverse Y axis", _yReverse);
 
 		_decX = new JSpinner(new SpinnerNumberModel(_decX0, 0, 10, 1));
 		_expX = new JSpinner(new SpinnerNumberModel(_expX0, 0, 12, 1));
@@ -69,14 +80,21 @@ public class AxesTabPanel extends JPanel {
 		c.weightx = 1.0;
 
 		// Limits editor (your existing UI)
-		c.gridwidth = 2;
+		c.gridwidth = 1;
 		add(_limitsPanel, c);
 
 		// Include zero
 		c.gridy++;
 		add(_includeXZero, c);
+		c.gridx = 1;
+		add(_reverseX, c);
+		
+		c.gridx = 0;
 		c.gridy++;
 		add(_includeYZero, c);
+		c.gridx = 1;
+		add(_reverseY, c);
+		c.gridx = 0;
 
 		// Tick formatting block
 		c.gridy++;
@@ -113,6 +131,9 @@ public class AxesTabPanel extends JPanel {
 
 		_params.mustIncludeXZero(_includeXZero.isSelected());
 		_params.mustIncludeYZero(_includeYZero.isSelected());
+		
+		_params.setReverseXaxis(_reverseX.isSelected());
+		_params.setReverseYaxis(_reverseY.isSelected());
 
 		_params.setNumDecimalX(((Number) _decX.getValue()).intValue());
 		_params.setMinExponentX(((Number) _expX.getValue()).intValue());

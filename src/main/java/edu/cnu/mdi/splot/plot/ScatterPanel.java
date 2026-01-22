@@ -85,7 +85,7 @@ public class ScatterPanel extends AReadyPlotPanel {
 		dc.getStyle().setSymbolType(SymbolType.CIRCLE);
 		dc.getStyle().setSymbolSize(2);
 		dc.getStyle().setFillColor(fillColor);
-		dc.getStyle().setBorderColor(null);
+		dc.getStyle().setLineColor(null);
 
 		PlotParameters params = canvas.getParameters();
 		params.mustIncludeXZero(true);

@@ -18,6 +18,10 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * </pre>
  */
 public class PlotParameters {
+	
+	//reverse axes?
+	private boolean _reverseXaxis = false;
+	private boolean _reverseYaxis = false;
 
 	// for legend
 	private Font _textFont = Fonts.plainFontDelta(-2);
@@ -125,6 +129,43 @@ public class PlotParameters {
 		_extraStrings = extraStrings;
 		return this;
 	}
+	
+	/**
+	 * Check whether to reverse the x axis.
+	 * @return true if the x axis is reversed
+	 */
+	public boolean isReverseXaxis() {
+		return _reverseXaxis;
+	}
+	
+	/**
+	 * Set whether to reverse the x axis.
+	 * @param reverseXaxis true to reverse the x axis
+	 * @return this parameters instance (for chaining)
+	 */
+	public PlotParameters setReverseXaxis(boolean reverseXaxis) {
+		_reverseXaxis = reverseXaxis;
+		return this;
+	}
+	
+	/**
+	 * Check whether to reverse the y axis.
+	 * @return true if the y axis is reversed
+	 */
+	public boolean isReverseYaxis() {
+		return _reverseYaxis;
+	}
+	
+	/**
+	 * Set whether to reverse the y axis.
+	 * @param reverseYaxis true to reverse the y axis
+	 * @return this parameters instance (for chaining)
+	 */
+	public PlotParameters setReverseYaxis(boolean reverseYaxis) {
+		_reverseYaxis = reverseYaxis;
+		return this;
+	}
+	
 
 	/**
 	 * Check whether the extra text border is drawn.
