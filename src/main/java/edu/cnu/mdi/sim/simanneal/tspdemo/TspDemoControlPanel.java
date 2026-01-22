@@ -84,7 +84,7 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 	 * Reset button.
 	 * </p>
 	 */
-	private final boolean autoResetOnSliderRelease = true;
+	private final boolean autoResetOnSliderRelease = false;
 
 	/**
 	 * Construct a new TSP demo control panel with standard icons.
@@ -134,7 +134,7 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 
 		add(basePanel, BorderLayout.WEST);
 		add(sliderPanel, BorderLayout.CENTER);
-//		add(resetButton, BorderLayout.EAST);
+		add(resetButton, BorderLayout.EAST);
 
 		// Slider listeners
 		ChangeListener cl = new ChangeListener() {
@@ -267,8 +267,8 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		SimulationState state = host.getSimulationState();
 		boolean editable = (state == SimulationState.READY || state == SimulationState.TERMINATED);
 
-		// Enable Reset only when editable AND something changed.
-		resetButton.setEnabled(editable && dirty);
+		// Enable Reset only when editable
+		resetButton.setEnabled(editable);
 	}
 
 	private void maybeAutoReset() {

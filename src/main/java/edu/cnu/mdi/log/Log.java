@@ -14,7 +14,7 @@ public class Log {
 	// singleton
 	private static Log instance = null;
 
-	// List of feedback providers for the parent container
+	// List of log listeners
 	private EventListenerList _listenerList;
 
 	/**

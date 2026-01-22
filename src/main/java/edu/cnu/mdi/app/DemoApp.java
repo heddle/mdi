@@ -530,7 +530,7 @@ public class DemoApp extends BaseMDIApplication {
 	TspDemoView createTspDemoView() {
 		TspDemoView view = new TspDemoView(PropertySupport.TITLE,
 				"TSP Demo View", PropertySupport.PROPNAME, "TSPDEMO",
-				PropertySupport.FRACTION, 0.7, PropertySupport.ASPECT, 1.2, PropertySupport.VISIBLE, false,
+				PropertySupport.FRACTION, 0.6, PropertySupport.ASPECT, 1.2, PropertySupport.VISIBLE, false,
 				PropertySupport.BACKGROUND, X11Colors.getX11Color("lavender blush"), PropertySupport.WORLDSYSTEM,
 				new Rectangle2D.Double(0.0,	 0.0, 1, 1));
 		return view;

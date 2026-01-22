@@ -22,8 +22,8 @@ public class SymbolDraw {
 	 */
 
 	public static void drawSymbol(Graphics g, int x, int y, IStyled style) {
-
-		drawSymbol(g, x, y, style.getSymbolType(), style.getSymbolSize(), style.getLineColor(), style.getFillColor());
+		drawSymbol(g, x, y, style.getSymbolType(), style.getSymbolSize(), 
+				style.getLineColor(), style.getFillColor());
 	}
 
 	/**
@@ -54,8 +54,8 @@ public class SymbolDraw {
 	 * @param lineColor  the outline color.
 	 * @param fillColor  the fill color, which is not relevant for some symbols.
 	 */
-	public static void drawSymbol(Graphics g, int x, int y, SymbolType symbol, int symbolSize, Color lineColor,
-			Color fillColor) {
+	public static void drawSymbol(Graphics g, int x, int y, SymbolType symbol, 
+			int symbolSize, Color lineColor, Color fillColor) {
 
 		if (symbol == SymbolType.NOSYMBOL) {
 			return;

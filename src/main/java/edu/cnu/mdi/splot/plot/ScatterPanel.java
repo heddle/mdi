@@ -1,10 +1,10 @@
 package edu.cnu.mdi.splot.plot;
 
 import java.awt.Color;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
+import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
@@ -16,7 +16,11 @@ public class ScatterPanel extends AReadyPlotPanel {
 	private String xLabel;
 	private String yLabel;
 	
-	private volatile Curve curve;
+	private static final String ACCEPTED_CURVE = "Accepted";
+	private static final String BEST_CURVE = "Best";
+	
+	private volatile Curve accepted;
+	private volatile Curve best;
 	
 	public ScatterPanel(String title, String xLabel, String yLabel) {
 		super();
@@ -28,13 +32,11 @@ public class ScatterPanel extends AReadyPlotPanel {
 
 	@Override
 	public void plotChanged(PlotChangeType event) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	protected PlotData createPlotData() throws PlotDataException {
-		String[] curveNames = { "Data" };
+		String[] curveNames = { ACCEPTED_CURVE, BEST_CURVE };
 		return new PlotData(PlotDataType.XYXY, curveNames, null);
 	}
 
@@ -60,31 +62,47 @@ public class ScatterPanel extends AReadyPlotPanel {
 	}
 	
 	public void clearData() {
-		if (curve != null) {
-			curve.clearData();
+		for (ACurve curve : canvas.getPlotData().getCurves()) {
+			((Curve)curve).clearData();
 		}
 		canvas.repaint();
 	}
 	
-	public void add(double x, double y) {
-		if (curve != null) {
-			curve.add(x, y);
+	public void addAccepted(double x, double y) {
+		if (accepted != null) {
+			accepted.add(x, y);
+		}
+	}
+	
+	public void addBest(double x, double y) {
+		if (best != null) {
+			best.add(x, y);
 		}
 	}
 
 	@Override
 	public void setParameters() {
-		Color fillColor = Color.red;
+		Color acceptedColor = new Color(128, 128, 128, 10);
+		Color bestColor = Color.red;
 
 		PlotData plotData = canvas.getPlotData();
-		final Curve dc = (Curve) plotData.getFirstCurve();
-		curve = dc;
+		
+		accepted = (Curve) plotData.getCurve(ACCEPTED_CURVE);
+		best = (Curve) plotData.getCurve(BEST_CURVE);
+		
 
-		dc.setCurveMethod(CurveDrawingMethod.NONE);
-		dc.getStyle().setSymbolType(SymbolType.CIRCLE);
-		dc.getStyle().setSymbolSize(2);
-		dc.getStyle().setFillColor(fillColor);
-		dc.getStyle().setLineColor(null);
+		best.setCurveMethod(CurveDrawingMethod.CONNECT);
+		best.getStyle().setSymbolType(SymbolType.SQUARE);
+		best.getStyle().setSymbolSize(6);
+		best.getStyle().setFillColor(bestColor);
+		best.getStyle().setLineColor(Color.black);
+		
+		accepted.setCurveMethod(CurveDrawingMethod.NONE);
+		accepted.getStyle().setSymbolType(SymbolType.CIRCLE);
+		accepted.getStyle().setSymbolSize(2);
+		accepted.getStyle().setFillColor(acceptedColor);
+		accepted.getStyle().setLineColor(null);
+
 
 		PlotParameters params = canvas.getParameters();
 		params.mustIncludeXZero(true);

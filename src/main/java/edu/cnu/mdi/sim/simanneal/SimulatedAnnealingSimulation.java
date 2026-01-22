@@ -3,6 +3,8 @@ package edu.cnu.mdi.sim.simanneal;
 import java.util.Objects;
 import java.util.Random;
 
+import javax.swing.event.EventListenerList;
+
 import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.Simulation;
 import edu.cnu.mdi.sim.SimulationContext;
@@ -58,6 +60,8 @@ import edu.cnu.mdi.sim.SimulationEngine;
  * @param <S> concrete solution type for the annealing problem
  */
 public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implements Simulation {
+
+	private EventListenerList _listenerList;
 
 	/** The annealing problem (solution generator, energy function, and move generator). */
 	private final AnnealingProblem<S> problem;
@@ -314,12 +318,14 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 			if (dE > 0) {
 				uphillAccepted++;
 			}
-			 onAcceptedMove(T, currentE);
+			onAcceptedMove(T, currentE);
+			notifyListeners(T, currentE, 0); // accepted move
 
 			// Track best-so-far
 			if (currentE < bestE) {
 				bestE = currentE;
 				best = (S) current.copy();
+				notifyListeners(T, bestE, 1); // new best
 			}
 		} else {
 			// Revert rejected move (moves must support undo for correctness)
@@ -401,4 +407,63 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 	private static String fmt(double x) {
 		return String.format("%.4g", x);
 	}
+	
+	// notify listeners of message
+	private void notifyListeners(double temperature, double energy, int option) {
+
+		if (_listenerList == null) {
+			return;
+		}
+
+		// Guaranteed to return a non-null array
+		Object[] listeners = _listenerList.getListenerList();
+
+		// This weird loop is the bullet proof way of notifying all listeners.
+		// for (int i = listeners.length - 2; i >= 0; i -= 2) {
+		// order is flipped so it goes in order as added
+		for (int i = 0; i < listeners.length; i += 2) {
+			if (listeners[i] == IAcceptedMoveListener.class) {
+
+				IAcceptedMoveListener listener = (IAcceptedMoveListener) listeners[i + 1];
+
+				if (option == 1)
+					listener.newBest(temperature, energy);
+				else if (option == 0)
+					listener.acceptedMove(temperature, energy);
+
+			}
+		}
+	}
+	
+	/**
+	 * Add an AcceptedMoveListener.
+	 *
+	 * @param listener the AcceptedMoveListener to add.
+	 */
+	public void addAcceptedMoveListener(IAcceptedMoveListener listener) {
+
+		if (_listenerList == null) {
+			_listenerList = new EventListenerList();
+		}
+
+		// avoid adding duplicates
+		_listenerList.remove(IAcceptedMoveListener.class, listener);
+		_listenerList.add(IAcceptedMoveListener.class, listener);
+	}
+
+	/**
+	 * Remove an AcceptedMoveListener.
+	 *
+	 * @param listener the AcceptedMoveListener to remove.
+	 */
+
+	public void removeAcceptedMoveListener(IAcceptedMoveListener listener) {
+
+		if ((listener == null) || (_listenerList == null)) {
+			return;
+		}
+
+		_listenerList.remove(IAcceptedMoveListener.class, listener);
+	}
+
 }

@@ -51,8 +51,6 @@ public class SimpleDialog extends JDialog implements ActionListener {
 	// optional user supplied object to cache
 	protected Object _userObject;
 
-//	super("Plot Preferences", plotCanvas, true, APPLY, CLOSE)
-
 	/**
 	 * Create a SimpleDialog
 	 *

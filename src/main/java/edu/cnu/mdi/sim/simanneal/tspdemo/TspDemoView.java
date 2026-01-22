@@ -16,6 +16,7 @@ import edu.cnu.mdi.sim.SimulationEngineConfig;
 import edu.cnu.mdi.sim.SimulationState;
 import edu.cnu.mdi.sim.simanneal.AnnealingSchedule;
 import edu.cnu.mdi.sim.simanneal.GeometricAnnealingSchedule;
+import edu.cnu.mdi.sim.simanneal.IAcceptedMoveListener;
 import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingConfig;
 import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingSimulation;
 import edu.cnu.mdi.sim.simanneal.TemperatureHeuristic;
@@ -47,7 +48,7 @@ import edu.cnu.mdi.splot.plot.ScatterPanel;
  * </p>
  */
 @SuppressWarnings("serial")
-public class TspDemoView extends SimulationView implements ITspDemoResettable {
+public class TspDemoView extends SimulationView implements ITspDemoResettable, IAcceptedMoveListener {
 
 	public static final int DEFAULT_NUM_CITY = 60;
 	public static final double DEFAULT_RIVER_PENALTY = 0.35;
@@ -102,7 +103,9 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable {
 		SimulatedAnnealingSimulation<TspSolution> s = (SimulatedAnnealingSimulation<TspSolution>) getSimulationEngine()
 				.getSimulation();
 		this.sim = s;
+		this.sim.addAcceptedMoveListener(this);
 
+		
 		// Allow sim to post progress/messages/refresh through this view’s engine.
 		this.sim.setEngine(getSimulationEngine());
 
@@ -152,11 +155,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable {
 		TemperatureHeuristic<TspSolution> heuristic = new EnergyDistributionHeuristic<>(300, 0.80, 1e-6);
 
 		SimulatedAnnealingSimulation<TspSolution> sim = new SimulatedAnnealingSimulation<>(problem, cfg, schedule,
-				heuristic) {
-			protected void onAcceptedMove(double temperature, double energy) {
-				scatterPanel.add(temperature, energy);
-			}
-		};
+				heuristic);
 		
 		
 
@@ -184,6 +183,9 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable {
 		// Build a new model/sim with the requested parameters.
 		SimulatedAnnealingSimulation<TspSolution> newSim = createSimulationAndStashBundle(cityCount, riverPenalty,
 				seed);
+		
+		sim.removeAcceptedMoveListener(this);
+		newSim.addAcceptedMoveListener(this);
 
 		Bundle b = BUNDLE_TL.get();
 		BUNDLE_TL.remove();
@@ -380,5 +382,15 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable {
 		Bundle(TspModel model) {
 			this.model = model;
 		}
+	}
+
+	@Override
+	public void acceptedMove(double temperature, double energy) {
+		scatterPanel.addAccepted(temperature, energy);
+	}
+
+	@Override
+	public void newBest(double temperature, double energy) {
+		scatterPanel.addBest(temperature, energy);
 	}
 }

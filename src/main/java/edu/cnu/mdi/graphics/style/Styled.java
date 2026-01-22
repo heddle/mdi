@@ -153,9 +153,6 @@ public class Styled implements IStyled {
 
 	@Override
 	public Color getLineColor() {
-		if (_lineColor == null) {
-			return _borderColor;
-		}
 		return _lineColor;
 	}
 

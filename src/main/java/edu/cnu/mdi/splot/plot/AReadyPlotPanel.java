@@ -33,7 +33,7 @@ public abstract class AReadyPlotPanel extends JPanel implements PlotChangeListen
 		fillData();
 		setParameters();
 		plotPanel = new PlotPanel(canvas);
-		plotPanel.setPreferredSize(new Dimension(400, 700));
+		plotPanel.setPreferredSize(new Dimension(300, 500));
 		add(plotPanel, BorderLayout.CENTER);
 
 	}
