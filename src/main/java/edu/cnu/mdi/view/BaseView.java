@@ -15,6 +15,7 @@ import java.awt.event.ComponentListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Rectangle2D;
@@ -30,6 +31,7 @@ import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
+import javax.swing.JMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
@@ -465,6 +467,28 @@ public class BaseView extends JInternalFrame
 	public VirtualWindowItem getVirtualItem() {
 		return virtualItem;
 	}
+	
+	/**
+	 * Apply a focus-fix mouse listener to the given menu that selects the view
+	 * when the mouse enters the menu. This works around focus issues on some platforms
+	 * and look-and-feels. The symptom is that the view does not gain focus when the
+	 * menu is shown and you get a menu "flash".
+	 * 
+	 * @param menu the menu to apply the fix to.
+	 * @param view the view to select.
+	 */
+	public static void applyFocusFix(JMenu menu, BaseView view) {
+	    menu.addMouseListener(new MouseAdapter() {
+	        @Override
+	        public void mouseEntered(MouseEvent e) {
+	            try {
+	                if (view.isIcon()) view.setIcon(false); // Ensure it's not minimized
+	                if (!view.isSelected()) view.setSelected(true);
+	            } catch (Exception ex) { /* Vetoed */ }
+	        }
+	    });
+	}
+
 
 	// --------------------------------------------------------------------
 	// Magnify support

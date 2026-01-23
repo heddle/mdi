@@ -1,6 +1,5 @@
 package edu.cnu.mdi.container;
 
-import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -20,11 +19,11 @@ import edu.cnu.mdi.graphics.connection.ConnectionManager;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
-import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.GestureContext;
 import edu.cnu.mdi.graphics.toolbar.IToolHandler;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.ItemModification;
+import edu.cnu.mdi.item.TextItem;
 import edu.cnu.mdi.util.PrintUtils;
 import edu.cnu.mdi.util.TakePicture;
 import edu.cnu.mdi.view.BaseView;
@@ -341,6 +340,15 @@ public class BaseToolHandler implements IToolHandler  {
 			return;
 		}
 
+		// text items are special - cannot style multiple at once
+		// have their own editor
+		
+		if (selected.size() == 1 && selected.get(0) instanceof TextItem) {
+			TextItem item = (TextItem) selected.get(0);
+			item.edit();
+			return;
+		}
+
 		// seed from first selected item
 		IStyled seed = selected.get(0).getStyleSafe();
 		Styled edited = StyleEditorDialog.edit(container.getComponent(), seed, false);
@@ -353,8 +361,9 @@ public class BaseToolHandler implements IToolHandler  {
 			item.setDirty(true);
 		}
 
-		container.refresh();	}
-
+		container.refresh();
+	}
+	
 	@Override
 	public void delete(GestureContext gc) {
 		container.deleteSelectedItems();

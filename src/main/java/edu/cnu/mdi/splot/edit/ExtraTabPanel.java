@@ -11,6 +11,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
 import edu.cnu.mdi.component.CommonBorder;
+import edu.cnu.mdi.component.FontChoosePanel;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 import edu.cnu.mdi.ui.colors.ColorLabel;
@@ -26,7 +27,7 @@ public class ExtraTabPanel extends JPanel {
 	private final JCheckBox _draw;
 	private final JCheckBox _border;
 
-	private final FontSpecPanel _font;
+	private final FontChoosePanel _fontChooser;
 
 	private final ColorLabel _fill;
 	private final ColorLabel _text;
@@ -48,7 +49,7 @@ public class ExtraTabPanel extends JPanel {
 		_draw = new JCheckBox("Draw extra text block", _params.extraDrawing());
 		_border = new JCheckBox("Draw extra border", _params.isExtraBorder());
 
-		_font = new FontSpecPanel("Extra font", _params.getExtraFont());
+		_fontChooser = new FontChoosePanel("Extra text font", _params.getExtraFont());
 
 		JPanel colors = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
 		_fill = new ColorLabel((src, col) -> {
@@ -90,7 +91,7 @@ public class ExtraTabPanel extends JPanel {
 		c.gridx = 0;
 		c.gridy = row++;
 		c.gridwidth = 2;
-		add(_font, c);
+		add(_fontChooser, c);
 		c.gridx = 0;
 		c.gridy = row++;
 		c.gridwidth = 2;
@@ -111,7 +112,7 @@ public class ExtraTabPanel extends JPanel {
 		_params.setExtraDrawing(_draw.isSelected());
 		_params.setExtraBorder(_border.isSelected());
 
-		_params.setExtraFont(_font.getSelectedFont());
+		_params.setExtraFont(_fontChooser.getSelectedFont());
 		_params.setExtraBackground(_fill.getColor());
 		_params.setExtraForeground(_text.getColor());
 		_params.setExtraBorderColor(_stroke.getColor());

@@ -1,7 +1,6 @@
 package edu.cnu.mdi.component;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
@@ -95,7 +94,7 @@ public class TextEditPanel extends JPanel {
 		}, inStyle.getTextColor(), font, "Text");
 		
 		_stroke = new ColorLabel((src, col) -> {
-		}, inStyle.getBorderColor(), font, "Border");
+		}, inStyle.getLineColor(), font, "Border");
 		
 		panel.add(_fill);
 		panel.add(_text);

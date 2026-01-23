@@ -73,7 +73,7 @@ public class Styled implements IStyled {
 	public Styled(IStyled other) {
 		_fillColor = other.getFillColor();
 		_borderColor = other.getBorderColor();
-		_textColor = other.getLineColor();
+		_textColor = other.getTextColor();
 		_lineColor = other.getLineColor();
 		_lineStyle = other.getLineStyle();
 		_lineWidth = other.getLineWidth();
@@ -84,61 +84,11 @@ public class Styled implements IStyled {
 		_symbolSize = other.getSymbolSize();
 	}
 
-	/**
-	 * Create a Styled object
-	 *
-	 * @param fillColor    the fill color
-	 * @param borderColor  the symbol border color
-	 * @param fitLineColor the fit line color
-	 * @param auxLineColor the auxiliary line color
-	 * @param fitLineStyle the fit line style
-	 * @param auxLineStyle the auxiliary line style
-	 * @param fitLineWidth the line width for fits
-	 * @param fitLineWidth the line width for auxiliary lines
-	 * @param symbolType   the symbol type
-	 * @param symbolSize   the symbol size
-	 */
-	public Styled(Color fillColor, Color borderColor, Color fitLineColor, Color auxLineColor, LineStyle fitLineStyle,
-			LineStyle auxLineStyle, float fitLineWidth, float auxLineWidth, SymbolType symbolType, int symbolSize) {
-		_fillColor = fillColor;
-		_borderColor = borderColor;
-		_lineStyle = fitLineStyle;
-		_lineWidth = fitLineWidth;
-		_symbolType = symbolType;
-		_symbolSize = symbolSize;
-
-	}
 
 	public Styled copy() {
 		return new Styled(this);
 	}
 
-	/**
-	 * Create with all defaults but the given fill color.
-	 *
-	 * @param fillColor the fill color to user.
-	 */
-	public Styled(Color fillColor) {
-		_fillColor = fillColor;
-	}
-
-	/**
-	 * Create with all defaults but the given fill color. The link color is set a
-	 * little darker or lighter.
-	 *
-	 * @param fillColor       the fill color to user.
-	 * @param darkerLineColor if true/false make line color darker/lighter than fill
-	 *                        color.
-	 */
-	public Styled(Color fillColor, boolean darkerLineColor) {
-		_fillColor = fillColor;
-		if (darkerLineColor) {
-			_borderColor = fillColor.darker();
-		} else {
-			_borderColor = fillColor.brighter();
-		}
-
-	}
 
 	/**
 	 * Get the fill color for the symbols
@@ -205,8 +155,8 @@ public class Styled implements IStyled {
 	}
 
 	@Override
-	public void setLineColor(Color fitColor) {
-		_lineColor = fitColor;
+	public void setLineColor(Color lineColor) {
+		_lineColor = lineColor;
 	}
 
 	/**

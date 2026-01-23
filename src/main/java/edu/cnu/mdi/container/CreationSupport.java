@@ -3,6 +3,7 @@ package edu.cnu.mdi.container;
 import java.awt.Font;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ActionListener;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
@@ -151,19 +152,19 @@ public class CreationSupport {
 	 */
 	public static AItem createTextItem(Layer layer, Point location) {
 		IContainer container = layer.getContainer();
-		TextEditDialog labelDialog = new TextEditDialog();
-		WindowPlacement.centerComponent(labelDialog);
-		labelDialog.setVisible(true);
+		TextEditDialog textDialog = new TextEditDialog();
+		WindowPlacement.centerComponent(textDialog);
+		textDialog.setVisible(true);
 		
-		if (labelDialog.isCancelled()) {
+		if (textDialog.isCancelled()) {
 			return null;
 		}
 		
-		String resultString = UnicodeSupport.specialCharReplace(labelDialog.getText());
+		String resultString = UnicodeSupport.specialCharReplace(textDialog.getText());
 		if (resultString == null || resultString.isEmpty()) {
 			return null;
 		}
-		Font font = labelDialog.getSelectedFont();
+		Font font = textDialog.getSelectedFont();
 		if (font == null) {
 			font = Fonts.defaultFont;
 		}
@@ -171,23 +172,43 @@ public class CreationSupport {
 		container.localToWorld(location, wp);
 		// Create the item and place it on the annotation layer.
 		TextItem item = new TextItem(layer, wp, font, resultString,
-				labelDialog.getFillColor(), labelDialog.getLineColor(), labelDialog.getTextColor());
+				textDialog.getLineColor(), textDialog.getFillColor(), 
+				textDialog.getTextColor()) {
+			@Override
+			public JPopupMenu createPopupMenu() {
+				JPopupMenu menu = super.createPopupMenu();
+				menu.addSeparator();
+				// Add custom menu items
+				addStyleEdit(menu, this);
+				return menu;
+			}			
+		};
 		defaultConfigureItem(item);
+		item.setResizable(false); // Text items are not resizable by default.
 		return item;
 	}
 
 	// Add "Edit Style..." menu item to the given popup menu for the given item.
 	private static void addStyleEdit(final JPopupMenu menu, final AItem item) {
+		
 		JMenuItem styleMenuItem = new JMenuItem("Edit Style...");
-		styleMenuItem.addActionListener(e -> {
-			Styled edited = StyleEditorDialog.edit(item.getContainer().getComponent(), item.getStyle(), false);
-			if (edited == null) {
-				return;
+
+		ActionListener al = e -> {
+			// text items have their own style editor
+			if (item instanceof TextItem) {
+				TextItem textItem = (TextItem)item;
+				textItem.edit();
+			} else {
+				Styled edited = StyleEditorDialog.edit(item.getContainer().getComponent(), item.getStyle(), false);
+				if (edited == null) {
+					return;
+				}
+				item.setStyle(edited.copy());
 			}
-			item.setStyle(edited.copy());
 			item.setDirty(true);
 			item.getContainer().refresh();
-		});
+		};
+		styleMenuItem.addActionListener(al);
 		menu.add(styleMenuItem);
 	}
 

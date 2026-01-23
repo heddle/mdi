@@ -3,11 +3,15 @@ package edu.cnu.mdi.app;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.util.List;
 
 import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
 import com.jogamp.opengl.GLAutoDrawable;
@@ -46,6 +50,7 @@ import edu.cnu.mdi.splot.example.TwoLinesWithErrors;
 import edu.cnu.mdi.splot.plot.PlotView;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.util.Environment;
+import edu.cnu.mdi.view.BaseView;
 import edu.cnu.mdi.view.DrawingView;
 import edu.cnu.mdi.view.LogView;
 import edu.cnu.mdi.view.ViewManager;
@@ -420,8 +425,9 @@ public class DemoApp extends BaseMDIApplication {
 		final PlotView view = new PlotView(PropertySupport.TITLE, "Demo Plots", PropertySupport.PROPNAME, "PLOTVIEW",
 				PropertySupport.FRACTION, 0.7, PropertySupport.ASPECT, 1.2, PropertySupport.VISIBLE, true);
 
-		// add the examples menu
+		// add the examples menu and call "hack" to fix focus issues
 		JMenu examplesMenu = new JMenu("Gallery");
+		BaseView.applyFocusFix(examplesMenu, view);
 		view.getJMenuBar().add(examplesMenu);
 
 		JMenuItem gaussianItem = new JMenuItem("Gaussian Fit");
@@ -588,8 +594,8 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	public static void main(String[] args) {
 		EventQueue.invokeLater(() -> {
-
 			DemoApp frame = DemoApp.getInstance();
+			frame.restoreDefaultViewLocations();
 			frame.setVisible(true);
 		});
 	}
