@@ -47,12 +47,8 @@ public class TextItem extends RectangleItem {
 
 	// font for rendering
 	private Font _font = _defaultFont;
-
-	// text being rendered
-	private String _text;
-
-	// text foreground
-	private Color _textColor = Color.black;
+	
+	private String _lines[];
 
 	/**
 	 *
@@ -60,18 +56,18 @@ public class TextItem extends RectangleItem {
 	 * @param location  the location of the lower left
 	 * @param font      the font to use.
 	 * @param text      the text to display.
-	 * @param textColor the text foreground color.
 	 * @param fillColor the text background color.
 	 * @param lineColor the border color
+	 * @param textColor the text foreground color.
 	 */
-	public TextItem(Layer itemList, Point2D.Double location, Font font, String text, Color textColor, Color fillColor,
-			Color lineColor) {
+	public TextItem(Layer itemList, Point2D.Double location, Font font, String text, 
+			Color lineColor, Color fillColor, Color textColor) {
 		super(itemList, new Rectangle2D.Double(location.x, location.y, 1, 1));
 		setFont(font);
 		setText(text);
-		_textColor = textColor;
 		_style.setFillColor(fillColor);
 		_style.setLineColor(lineColor);
+		_style.setTextColor(textColor == null ? Color.BLACK : textColor);
 
 		_focus = location;
 		_resizePolicy = ResizePolicy.SCALEONLY;
@@ -87,8 +83,8 @@ public class TextItem extends RectangleItem {
 		FontMetrics fm = container.getComponent().getFontMetrics(_font);
 
 		Dimension size = getSize();
-		Font fitFont = justFitSize(_text, fm, size.width - 2 * MARGIN, size.height - 2 * MARGIN);
-		drawRotatedText(g, cp, _text, fitFont, _textColor, getAzimuth());
+		Font fitFont = justFitSize(getText(), fm, size.width - 2 * MARGIN, size.height - 2 * MARGIN);
+		drawRotatedText(g, cp, getText(), fitFont, _style.getTextColor(), getAzimuth());
 	}
 
 	// get the size of the rectangle from the last drawn polygon
@@ -186,7 +182,7 @@ public class TextItem extends RectangleItem {
 
 	// get the unrotated corner points of the text box
 	private Point2D.Double[] getUnrotatedPoints() {
-		Dimension size = sizeText(getContainer().getComponent(), _font, _text);
+		Dimension size = sizeText(getContainer().getComponent(), _font, getText());
 		Point2D.Double bl = new Point2D.Double(_focus.x - size.width / 2, _focus.y - size.height / 2);
 		Point2D.Double br = new Point2D.Double(_focus.x + size.width / 2, _focus.y - size.height / 2);
 		Point2D.Double tr = new Point2D.Double(_focus.x + size.width / 2, _focus.y + size.height / 2);
@@ -207,7 +203,9 @@ public class TextItem extends RectangleItem {
 		}
 
 		int width = 0;
-		int height = 0;
+		int height = 0;	
+		
+		
 		ArrayList<Snippet> snippets = Snippet.getSnippets(font, text, component);
 		for (Snippet s : snippets) {
 			Dimension size = s.size(component);
@@ -236,37 +234,20 @@ public class TextItem extends RectangleItem {
 	}
 
 	/**
-	 * @return the text
+	 * @return the text as a single line
 	 */
 	public String getText() {
-		return _text;
+		return String.join("\n", _lines);
 	}
 
 	/**
 	 * @param text the text to set
 	 */
 	public void setText(String text) {
-		_text = UnicodeSupport.specialCharReplace(text);
-		_text = text;
+		text = UnicodeSupport.specialCharReplace(text);
+		_lines = text.lines().toArray(String[]::new);
 	}
 
-	/**
-	 * Get the text foreground color
-	 *
-	 * @return the text foreground color
-	 */
-	public Color getTextColor() {
-		return _textColor;
-	}
-
-	/**
-	 * Set the text foreground color
-	 *
-	 * @param textForeground the text foreground color to set
-	 */
-	public void setTextColor(Color textForeground) {
-		_textColor = textForeground;
-	}
 
 	// get the world rectangle bounds
 	private static Rectangle2D.Double getWorldRectangle(IContainer container, Point2D.Double location, Font font,

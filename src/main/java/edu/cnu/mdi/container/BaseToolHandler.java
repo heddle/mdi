@@ -415,6 +415,11 @@ public class BaseToolHandler implements IToolHandler  {
 	    CreationSupport.createRadArcItem(container.getAnnotationLayer(), pp[0], pp[1], sweep);
 	}
 
+	@Override
+	public void createTextItem(Point location) {
+		CreationSupport.createTextItem(container.getAnnotationLayer(), location);
+		container.refresh();
+	}
 
 
 	@Override
@@ -458,6 +463,9 @@ public class BaseToolHandler implements IToolHandler  {
 	public boolean doNotDrag(GestureContext gc) {
 		return false;
 	}
+
+
+
 
 }
 

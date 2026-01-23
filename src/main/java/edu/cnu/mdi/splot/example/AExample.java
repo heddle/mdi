@@ -39,8 +39,10 @@ public abstract class AExample extends JFrame implements PlotChangeListener {
 	// the menus and items
 	protected SplotEditMenu menu;
 
+	// the menu bar
 	protected JMenuBar menuBar;
 
+	// headless mode
 	protected boolean headless = false;
 
 	public AExample() {

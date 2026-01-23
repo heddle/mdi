@@ -23,7 +23,7 @@ public class SymbolDraw {
 
 	public static void drawSymbol(Graphics g, int x, int y, IStyled style) {
 		drawSymbol(g, x, y, style.getSymbolType(), style.getSymbolSize(), 
-				style.getLineColor(), style.getFillColor());
+				style.getBorderColor(), style.getFillColor());
 	}
 
 	/**

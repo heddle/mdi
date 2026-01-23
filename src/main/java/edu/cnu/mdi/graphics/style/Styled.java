@@ -22,6 +22,9 @@ public class Styled implements IStyled {
 
 	// default line color is black
 	private Color _lineColor = Color.black;
+	
+	// default text color is black
+	private Color _textColor = Color.black;
 
 	// default fit line style is solid
 	private LineStyle _lineStyle = LineStyle.SOLID;
@@ -70,6 +73,7 @@ public class Styled implements IStyled {
 	public Styled(IStyled other) {
 		_fillColor = other.getFillColor();
 		_borderColor = other.getBorderColor();
+		_textColor = other.getLineColor();
 		_lineColor = other.getLineColor();
 		_lineStyle = other.getLineStyle();
 		_lineWidth = other.getLineWidth();
@@ -145,6 +149,25 @@ public class Styled implements IStyled {
 	public Color getFillColor() {
 		return _fillColor;
 	}
+	
+	/**
+	 * Set the color used for text.
+	 *
+	 * @param textColor the text color.
+	 */
+	public void setTextColor(Color textColor) {
+		_textColor = textColor;
+	}
+	
+	/**
+	 * Get the color used for text.
+	 *
+	 * @return the text color.
+	 */
+	public Color getTextColor() {
+		return _textColor;
+	}
+
 
 	@Override
 	public Color getBorderColor() {

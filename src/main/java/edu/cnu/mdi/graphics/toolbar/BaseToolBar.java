@@ -443,8 +443,7 @@ public class BaseToolBar extends AToolBar {
             JToggleButton text = new ASingleClickButton(canvas, this) {
                 @Override
                 public void canvasClick(MouseEvent e) {
-                    // Your app likely opens a text dialog and creates a text item.
-                    // This toolbar's job is to reset to pointer afterwards.
+                	handler.createTextItem(e.getPoint());
                     resetDefaultToggleButton();
                 }
             };

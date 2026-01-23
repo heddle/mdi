@@ -34,6 +34,11 @@ public class DefaultToolHandler implements IToolHandler {
 	}
 
 	@Override
+	public void createTextItem(Point location) {
+		// no-op
+	}
+	
+	@Override
 	public Object hitTest(GestureContext gc, Point p) {
 		return null;
 	}
@@ -180,4 +185,5 @@ public class DefaultToolHandler implements IToolHandler {
 	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
 		// no-op
 	}
+
 }

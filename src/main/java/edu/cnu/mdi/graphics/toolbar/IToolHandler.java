@@ -199,10 +199,18 @@ public interface IToolHandler {
     // Shape creation via rubberband tools
     // --------------------------------------------------------------------
 
-    /** @param gc gesture context (non-null) */
+    /** 
+     * Create a rectangle.
+     * @param gc gesture context (non-null) 
+     * @param bounds rectangle bounds (non-null)
+     */
     void createRectangle(GestureContext gc, Rectangle bounds);
 
-    /** @param gc gesture context (non-null) */
+    /**
+     * Create an ellipse.
+     * @param gc gesture context (non-null)
+     * @param bounds ellipse bounds (non-null)
+     */
     void createEllipse(GestureContext gc, Rectangle bounds);
 
     /**
@@ -221,4 +229,12 @@ public interface IToolHandler {
      * @param vertices gesture vertices (non-null)
      */
     void createRadArc(GestureContext gc, Point[] vertices);
+    
+    /**
+     * Create a text item at the given location.
+     * 
+     * @param gc
+     * @param location
+     */
+    void createTextItem(Point location);
 }

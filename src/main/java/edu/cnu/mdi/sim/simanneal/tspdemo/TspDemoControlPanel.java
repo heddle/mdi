@@ -116,10 +116,10 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		rPanel.setBorder(new CommonBorder("River Penalty or Bonus"));
 
 		citySlider = makeSlider(cPanel, MIN_CITIES, MAX_CITIES,
-				TspDemoView.DEFAULT_NUM_CITY, 4);
+				TspDemoView.DEFAULT_NUM_CITY, 5);
 
 		riverSlider = makeSlider(rPanel, -RIVER_SCALE, RIVER_SCALE,
-				100* (int) TspDemoView.DEFAULT_RIVER_PENALTY, 8);
+				100* (int) TspDemoView.DEFAULT_RIVER_PENALTY, 5);
 
 		JPanel rows = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
 		rows.add(cPanel);

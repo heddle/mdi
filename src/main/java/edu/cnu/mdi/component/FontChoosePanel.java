@@ -13,9 +13,13 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+
+import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
  * A dialog for a label and a font.
@@ -46,11 +50,6 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	private JList fontFamilyList;
 
 	/**
-	 * The font size list
-	 */
-	private JList fontSizeList;
-
-	/**
 	 * The return font.
 	 */
 	private Font returnFont;
@@ -60,9 +59,8 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	 */
 	private final Font inputFont;
 
-	// possible font sizes
-	private String fontSizes[] = { " 8 ", " 10 ", " 11 ", " 12 ", " 14 ", " 16 ", " 18 ", " 20 ", " 24 ", " 30 ",
-			" 36 ", " 40 ", " 48 ", " 60 ", " 72 " };
+	// Create the font size spinner
+	private JSpinner fontSpinner;
 
 	/**
 	 * The display area. Use a JLabel as the AWT label doesn't always honor
@@ -78,20 +76,22 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	/**
 	 * Construct a FontChooser -- Sets title and gets array of fonts on the system.
 	 * Builds a GUI to let the user choose one font at one size.
+	 * 
 	 * @param inFont the initial font to display.
 	 */
 	public FontChoosePanel(String title, Font inFont) {
-		inputFont = inFont;
+		inputFont = inFont == null ? Fonts.plainFontDelta(2) : inFont;
 		setLayout(new BorderLayout());
 
 		// add the components
 		JPanel top = new JPanel();
-		top.setLayout(new FlowLayout());
+		top.setLayout(new BorderLayout());
 
-		// create and add the scroll lists
+		// create and add the font scroll list
 		createScrollLists(top);
 		// add the checkboxes for bold and italics
-		top.add(createCheckBoxPanel());
+		top.add(createCheckBoxPanel(), BorderLayout.EAST);
+		top.add(createSizeSpinner(inputFont.getSize()), BorderLayout.SOUTH);
 
 		add(top, BorderLayout.WEST);
 
@@ -102,6 +102,19 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 
 		previewFont(); // ensure view is up to date!
 		setBorder(new CommonBorder(title));
+	}
+
+	private JPanel createSizeSpinner(int initialSize) {
+		JPanel sizePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+		JLabel sizeLabel = new JLabel("Size: ");
+		sizeLabel.setFont(Fonts.plainFontDelta(0));
+		sizePanel.add(sizeLabel);
+		initialSize = initialSize < 6 ? 6 : initialSize > 72 ? 72 : initialSize;
+		SpinnerNumberModel model = new SpinnerNumberModel(initialSize, 6, 72, 1);
+		fontSpinner = new JSpinner(model);
+		fontSpinner.addChangeListener(e -> previewFont());
+		sizePanel.add(fontSpinner);
+		return sizePanel;
 	}
 
 	/**
@@ -136,15 +149,7 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 		fontFamilyList.setSelectedValue(inputFont.getFamily(), true);
 		fontFamilyList.addListSelectionListener(this);
 
-		// /create the list of sizes
-		fontSizeList = new JList(fontSizes);
-		fontSizeList.setVisibleRowCount(8);
-		JScrollPane scrollPane2 = new JScrollPane(fontSizeList);
-		fontSizeList.setSelectedValue(" " + inputFont.getSize() + " ", true);
-		fontSizeList.addListSelectionListener(this);
-
-		panel.add(scrollPane1);
-		panel.add(scrollPane2);
+		panel.add(scrollPane1, BorderLayout.CENTER);
 	}
 
 	/**
@@ -153,11 +158,8 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	 * @return the font family selection list.
 	 */
 	private JList createFontList() {
-
 		String[] fontList = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-
 		JList list = new JList(fontList);
-
 		list.setVisibleRowCount(8);
 		return list;
 	}
@@ -168,8 +170,7 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	 */
 	protected void previewFont() {
 		String resultName = (String) (fontFamilyList.getSelectedValue());
-		String resultSizeName = (String) (fontSizeList.getSelectedValue());
-		int resultSize = Integer.parseInt(resultSizeName.trim());
+		int resultSize = ((Integer) fontSpinner.getValue());
 
 		boolean isBold = boldCb.isSelected();
 		boolean isItalic = italicCb.isSelected();
@@ -218,6 +219,5 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	public void itemStateChanged(ItemEvent ise) {
 		previewFont();
 	}
-
 
 }

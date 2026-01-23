@@ -34,6 +34,20 @@ public interface IStyled {
 	 * @param borderColor the border color.
 	 */
 	public void setBorderColor(Color borderColor);
+	
+	/**
+	 * Set the color used for text.
+	 *
+	 * @param textColor the text color.
+	 */
+	public void setTextColor(Color textColor);
+	
+	/**
+	 * Get the color used for text.
+	 *
+	 * @return the text color.
+	 */
+	public Color getTextColor();
 
 	/**
 	 * Get the color used for fits.

@@ -58,6 +58,7 @@ public class LegendTabPanel extends JPanel {
 
 	}
 
+	// Create the legend drawing options panel.
 	private JPanel legendDrawingPanel() {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -113,7 +114,7 @@ public class LegendTabPanel extends JPanel {
 		_params.setLegendBorder(_border.isSelected());
 		_params.setLegendLineLength(((Number) _lineLen.getValue()).intValue());
 
-		_params.setTextFont(_font.getSelectedFont());
+		_params.setLegendFont(_font.getSelectedFont());
 		_params.setTextBackground(_fill.getColor());
 		_params.setTextForeground(_text.getColor());
 		_params.setTextBorderColor(_stroke.getColor());

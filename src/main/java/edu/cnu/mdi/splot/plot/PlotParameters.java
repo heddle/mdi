@@ -273,7 +273,7 @@ public class PlotParameters {
 	 * @param font the legend font
 	 * @return this parameters instance (for chaining)
 	 */
-	public PlotParameters setTextFont(Font font) {
+	public PlotParameters setLegendFont(Font font) {
 		_textFont = font;
 		return this;
 	}

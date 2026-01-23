@@ -17,12 +17,12 @@ import edu.cnu.mdi.sim.SimulationState;
 import edu.cnu.mdi.sim.simanneal.AnnealingSchedule;
 import edu.cnu.mdi.sim.simanneal.GeometricAnnealingSchedule;
 import edu.cnu.mdi.sim.simanneal.IAcceptedMoveListener;
+import edu.cnu.mdi.sim.simanneal.EvsTPlotPanel;
 import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingConfig;
 import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingSimulation;
 import edu.cnu.mdi.sim.simanneal.TemperatureHeuristic;
 import edu.cnu.mdi.sim.simanneal.heuristics.EnergyDistributionHeuristic;
 import edu.cnu.mdi.sim.ui.SimulationView;
-import edu.cnu.mdi.splot.plot.ScatterPanel;
 
 /**
  * Traveling Salesperson (TSP) simulated annealing demo hosted in an MDI
@@ -74,7 +74,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 	/** RNG seed used for reproducible model generation (0L => nondeterministic). */
 	private static final long seed = 0L;
 	
-	private static ScatterPanel scatterPanel;
+	private static EvsTPlotPanel evtPlot;
 
 	/**
 	 * Create the TSP demo view.
@@ -89,8 +89,8 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 				new SimulationEngineConfig(33, 250, 0, false), true,
 				(SimulationView.ControlPanelFactory) TspDemoControlPanel::new, keyVals);
 
-		scatterPanel = createScatterPanel();
-		add(scatterPanel, BorderLayout.EAST);
+		evtPlot = createScatterPanel();
+		add(evtPlot, BorderLayout.EAST);
 		
 		
 		// Recover bundle created by createSimulationAndStashBundle().
@@ -123,8 +123,8 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 		startSimulation();
 	}
 	
-	private ScatterPanel createScatterPanel() {
-		ScatterPanel scatterPanel = new ScatterPanel("Traveling Salesperson Problem", "temperature", "energy (length)");
+	private EvsTPlotPanel createScatterPanel() {
+		EvsTPlotPanel scatterPanel = new EvsTPlotPanel("Traveling Salesperson Problem", "temperature", "energy (length)");
 		scatterPanel.getPlotCanvas().getParameters().setReverseXaxis(true);
 		return scatterPanel;
 	}
@@ -178,7 +178,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 			return;
 		}
 		
-		scatterPanel.clearData();
+		evtPlot.clearData();
 
 		// Build a new model/sim with the requested parameters.
 		SimulatedAnnealingSimulation<TspSolution> newSim = createSimulationAndStashBundle(cityCount, riverPenalty,
@@ -386,11 +386,11 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 
 	@Override
 	public void acceptedMove(double temperature, double energy) {
-		scatterPanel.addAccepted(temperature, energy);
+		evtPlot.addAccepted(temperature, energy);
 	}
 
 	@Override
 	public void newBest(double temperature, double energy) {
-		scatterPanel.addBest(temperature, energy);
+		evtPlot.addBest(temperature, energy);
 	}
 }

@@ -1,5 +1,6 @@
 package edu.cnu.mdi.container;
 
+import java.awt.Font;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -8,8 +9,11 @@ import java.awt.geom.Rectangle2D;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
+import edu.cnu.mdi.dialog.LabelDialog;
+import edu.cnu.mdi.dialog.TextEditDialog;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
+import edu.cnu.mdi.graphics.text.UnicodeSupport;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.EllipseItem;
 import edu.cnu.mdi.item.Layer;
@@ -18,6 +22,9 @@ import edu.cnu.mdi.item.PolygonItem;
 import edu.cnu.mdi.item.PolylineItem;
 import edu.cnu.mdi.item.RadArcItem;
 import edu.cnu.mdi.item.RectangleItem;
+import edu.cnu.mdi.item.TextItem;
+import edu.cnu.mdi.swing.WindowPlacement;
+import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
  * Support methods for drawing tools.
@@ -131,6 +138,40 @@ public class CreationSupport {
 				return menu;
 			}
 		};
+		defaultConfigureItem(item);
+		return item;
+	}
+	
+	/**
+	 * Create a text item at the given screen location.
+	 *
+	 * @param layer    the z layer to put the item on
+	 * @param location the screen location
+	 * @return the new item
+	 */
+	public static AItem createTextItem(Layer layer, Point location) {
+		IContainer container = layer.getContainer();
+		TextEditDialog labelDialog = new TextEditDialog();
+		WindowPlacement.centerComponent(labelDialog);
+		labelDialog.setVisible(true);
+		
+		if (labelDialog.isCancelled()) {
+			return null;
+		}
+		
+		String resultString = UnicodeSupport.specialCharReplace(labelDialog.getText());
+		if (resultString == null || resultString.isEmpty()) {
+			return null;
+		}
+		Font font = labelDialog.getSelectedFont();
+		if (font == null) {
+			font = Fonts.defaultFont;
+		}
+		Point2D.Double wp = new Point2D.Double();
+		container.localToWorld(location, wp);
+		// Create the item and place it on the annotation layer.
+		TextItem item = new TextItem(layer, wp, font, resultString,
+				labelDialog.getFillColor(), labelDialog.getLineColor(), labelDialog.getTextColor());
 		defaultConfigureItem(item);
 		return item;
 	}
