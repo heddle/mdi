@@ -231,6 +231,29 @@ public interface IToolHandler {
     void createRadArc(GestureContext gc, Point[] vertices);
     
     /**
+     * Create a polygon.
+     * @param gc gesture context (non-null)
+     * @param vertices polygon vertices (non-null)
+     */
+    void createPolygon(GestureContext gc, Point[] vertices);
+    
+    /**
+	 * Create a polyline.
+	 * @param gc gesture context (non-null)
+	 * @param vertices polyline vertices (non-null)
+	 */
+    void createPolyline(GestureContext gc, Point[] vertices);
+    
+    /**
+	 * Create a line between two points.
+	 * 
+	 * @param gc gesture context (non-null)
+	 * @param start start point
+	 * @param end end point
+	 */
+    void createLine(GestureContext gc, Point start, Point end);
+    
+    /**
      * Create a text item at the given location.
      * 
      * @param gc

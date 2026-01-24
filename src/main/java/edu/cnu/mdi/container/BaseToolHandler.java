@@ -164,13 +164,6 @@ public class BaseToolHandler implements IToolHandler  {
 	
 	    // Cache a defensive copy (Point is mutable)
 	    dragPressPoint = (gc.getPressPoint() == null) ? null : new Point(gc.getPressPoint());
-
-		Object obj = gc.getTarget();
-		if (obj instanceof AItem) {
-			AItem item = (AItem) obj;
-			if (item.isEnabled() && !item.isLocked() && item.isDraggable()) {
-			}
-		}
 	}
 
 	@Override
@@ -282,7 +275,7 @@ public class BaseToolHandler implements IToolHandler  {
 
 	@Override
 	public void magnifyStartMove(GestureContext gc) {
-		MouseEvent e = gc.getSourceEvent();
+		MouseEvent e = gc.getRecentEvent();
 		BaseView view = container.getView();
 		if (view != null) {
 			view.handleMagnify(e);
@@ -291,7 +284,7 @@ public class BaseToolHandler implements IToolHandler  {
 
 	@Override
 	public void magnifyUpdateMove(GestureContext gc) {
-		MouseEvent e = gc.getSourceEvent();
+		MouseEvent e = gc.getRecentEvent();
 		BaseView view = container.getView();
 		if (view != null) {
 			view.handleMagnify(e);
@@ -382,7 +375,6 @@ public class BaseToolHandler implements IToolHandler  {
 		}
 	}
 
-	
 	@Override
 	public boolean approveConnectionPoint(GestureContext gc, Point p) {
 		AItem item = container.getItemAtPoint(p);
@@ -403,6 +395,23 @@ public class BaseToolHandler implements IToolHandler  {
 	public void createEllipse(GestureContext gc, Rectangle bounds) {
 		CreationSupport.createEllipseItem(container.getAnnotationLayer(), bounds);
 	}
+	
+	@Override
+	public void createPolygon(GestureContext gc, Point[] vertices) {
+		CreationSupport.createPolygonItem(container.getAnnotationLayer(), vertices);
+		
+	}
+
+	@Override
+	public void createPolyline(GestureContext gc, Point[] vertices) {
+		CreationSupport.createPolylineItem(container.getAnnotationLayer(), vertices);
+	}
+
+	@Override
+	public void createLine(GestureContext gc, Point start, Point end) {
+		CreationSupport.createLineItem(container.getAnnotationLayer(), start, end);
+	}
+
 	
 	@Override
 	public void createRadArc(GestureContext gc, Point[] pp) {

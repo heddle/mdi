@@ -184,6 +184,9 @@ public class VirtualView extends BaseView
 		setBeforeDraw();
 		setAfterDraw();
 		
+		//headless pointer to drag VirtualViewItems
+		new HeadlessPointerTool(this);
+		
 		_instance = this;
 	}
 
@@ -674,8 +677,8 @@ public class VirtualView extends BaseView
 	public void mouseClicked(MouseEvent mouseEvent) {
 		switch (mouseEvent.getButton()) {
 		case MouseEvent.BUTTON1:
-			if (mouseEvent.getClickCount() > 1) {
-				handleDoubleClick(mouseEvent);
+			if (mouseEvent.getClickCount() == 1) {
+				handleClick(mouseEvent);
 			}
 			return;
 
@@ -688,12 +691,12 @@ public class VirtualView extends BaseView
 	}
 
 	/**
-	 * Handle a double-click on the virtual desktop.
+	 * Handle a click on the virtual desktop.
 	 * <p>
 	 * The clicked column becomes the current column by horizontally shifting all
 	 * views.
 	 */
-	private void handleDoubleClick(MouseEvent mouseEvent) {
+	private void handleClick(MouseEvent mouseEvent) {
 		Point rc = getRowCol(mouseEvent.getPoint());
 		int clickCol = rc.x;
 		if (clickCol == _currentCol) {

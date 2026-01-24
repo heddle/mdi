@@ -1,6 +1,8 @@
 package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Graphics;
+
+
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
@@ -9,14 +11,18 @@ import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.util.PrintUtils;
 import edu.cnu.mdi.util.TakePicture;
 
+/**
+ * Default tool handler that performs no actions except for panning,
+ * printing, and capturing images. It is intended as a base class for
+ * custom tool handlers. It can be used like an Adapter.
+ * 
+ * @author heddle
+ */
 public class DefaultToolHandler implements IToolHandler {
 
 	//for panning
 	private BufferedImage base;
 	private BufferedImage buffer;
-
-
-
 
 	@Override
 	public void createRectangle(GestureContext gc, Rectangle bounds) {
@@ -184,6 +190,18 @@ public class DefaultToolHandler implements IToolHandler {
 	@Override
 	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
 		// no-op
+	}
+
+	@Override
+	public void createPolygon(GestureContext gc, Point[] vertices) {
+	}
+
+	@Override
+	public void createPolyline(GestureContext gc, Point[] vertices) {
+	}
+
+	@Override
+	public void createLine(GestureContext gc, Point start, Point end) {
 	}
 
 }

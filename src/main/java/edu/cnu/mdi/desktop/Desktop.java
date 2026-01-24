@@ -70,8 +70,6 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 	// optional after drawer
 	private IDrawable _afterDraw;
 
-	private boolean mouseReleased = false;
-
 	// hack related to internal frame drag bug
 	private static Ping _ping;
 	private JInternalFrame _dragFrame;
@@ -112,7 +110,6 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 		}
 
 		_ping = new Ping(1000);
-		// use the ping to deal with hover
 		IPing pingListener = new IPing() {
 
 			@Override
@@ -124,6 +121,7 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 		_ping.addPingListener(pingListener);
 	}
 
+	// heartbeat to catch missed mouse released events during internal frame drags
 	private void heartbeat() {
 		if (_dragFrame == null) {
 			return;
@@ -405,12 +403,10 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		mouseReleased = false;
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		mouseReleased = true;
 		_dragFrame = null;
 		_lastDragTime = Long.MAX_VALUE;
 	}

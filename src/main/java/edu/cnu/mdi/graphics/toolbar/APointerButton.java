@@ -41,6 +41,14 @@ public abstract class APointerButton extends JToggleButton
     /** Object under cursor on press (if any). */
     private Object hitObject;
 
+    /**
+	 * Create a pointer button that supports rubberbanding.
+	 *
+	 * @param canvas    the component on which gestures occur
+	 * @param toolBar   the toolbar that owns this tool
+	 * @param policy    the rubberbanding policy for this tool
+	 * @param minSizePx minimum size (in pixels) for a valid rubberband gesture
+	 */
     protected APointerButton(Component canvas, AToolBar toolBar, ARubberband.Policy policy, int minSizePx) {
         Objects.requireNonNull(canvas, "canvas");
         Objects.requireNonNull(toolBar, "toolBar");
@@ -51,10 +59,18 @@ public abstract class APointerButton extends JToggleButton
         this.minSizePx = Math.max(1, minSizePx);
     }
 
+    /**
+     * Get the rubberbanding policy for this tool.
+     * @return the rubberbanding policy
+     */
     protected ARubberband.Policy rubberbandPolicy() {
         return policy;
     }
 
+    /** 
+	 * @return cursor to use while active. Default is crosshair or default cursor
+	 *         if no rubberbanding.
+	 */
     protected Cursor activeCursor() {
         if (policy == ARubberband.Policy.NONE) {
             return Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
@@ -76,6 +92,7 @@ public abstract class APointerButton extends JToggleButton
     }
 
 
+    // Check if the distance between two points exceeds the drag threshold
     private boolean pastThreshold(Point a, Point b) {
         int dx = b.x - a.x;
         int dy = b.y - a.y;

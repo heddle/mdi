@@ -500,16 +500,18 @@ public class BaseView extends JInternalFrame
 	 * @param me the triggering mouse event.
 	 */
 	public void handleMagnify(final MouseEvent me) {
-		final BaseView bview = this;
-
-		Runnable magRun = () -> {
-			IContainer cont = bview.getContainer();
-			if (cont instanceof BaseContainer) {
-				MagnifyWindow.magnify((BaseContainer) cont, me);
-			}
-		};
-
-		SwingUtilities.invokeLater(magRun);
+		
+		//check if on EDT thread
+		
+		if (!SwingUtilities.isEventDispatchThread()) {
+			SwingUtilities.invokeLater(() -> handleMagnify(me));
+			return;
+		}
+		
+		IContainer cont = getContainer();
+		if (cont instanceof BaseContainer) {
+			MagnifyWindow.magnify((BaseContainer) cont, me);
+		}
 
 		if (container != null) {
 			container.refresh();

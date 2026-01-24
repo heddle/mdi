@@ -1,6 +1,7 @@
 package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Component;
+import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -46,17 +47,30 @@ public abstract class AMoveButton extends JToggleButton implements MouseMotionLi
     }
 
     @Override public void mouseClicked(MouseEvent e) { }
-    @Override public void mousePressed(MouseEvent e) { }
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if (gesture != null) {
+			gesture.update(e);
+			toolBar.resetDefaultToggleButton();
+			doneMove(gesture);
+			gesture = null;
+		}
+    }
+    
+    
     @Override public void mouseReleased(MouseEvent e) { }
     @Override public void mouseEntered(MouseEvent e) { }
 
     @Override
     public void mouseExited(MouseEvent e) {
-        if (gesture != null) {
-            gesture.update(e);
-            doneMove(gesture);
-            gesture = null;
-        }
+    	if (!canvas.getBounds().contains(e.getPoint())) {
+	        if (gesture != null) {
+	            gesture.update(e);
+	            doneMove(gesture);
+	            gesture = null;
+	        }
+		}
     }
 
     @Override
@@ -64,16 +78,17 @@ public abstract class AMoveButton extends JToggleButton implements MouseMotionLi
         // This tool is hover-driven; ignore drags.
     }
 
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        if (gesture == null) {
-            gesture = new GestureContext(toolBar, canvas, null, e.getPoint(), e);
-            startMove(gesture);
-        } else {
-            gesture.update(e);
-            updateMove(gesture);
-        }
-    }
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		
+		if (gesture == null) {
+			gesture = new GestureContext(toolBar, canvas, null, e.getPoint(), e);
+			startMove(gesture);
+		} else {
+			gesture.update(e);
+			updateMove(gesture);
+		}
+	}
 
     /**
      * Called once at the start of the move gesture.

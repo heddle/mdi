@@ -25,6 +25,13 @@ public class VirtualWindowItem extends RectangleItem {
 	//margin for the virtual window border
 	private static final int del = 20;
 
+	/**
+	 * Create a virtual window item that represents a base view inside a virtual
+	 * view.
+	 *
+	 * @param vview    the virtual view this item is in.
+	 * @param baseView the base view this item represents.
+	 */
 	public VirtualWindowItem(VirtualView vview, BaseView baseView) {
 		super(vview.getContainer().getAnnotationLayer(), getWorldRect(baseView));
 		_vview = vview;
@@ -43,7 +50,7 @@ public class VirtualWindowItem extends RectangleItem {
 
 	/**
 	 * Called when the item was double clicked. The default implementation is to
-	 * edit the item's properties.
+	 * edit the item's properties. Here we want a no-op.
 	 *
 	 * @param mouseEvent the causal event.
 	 */
@@ -53,6 +60,7 @@ public class VirtualWindowItem extends RectangleItem {
 
 	/**
 	 * Sets whether this item is marked as selected.
+	 * Here we want a no-op.
 	 *
 	 * @param selected the new value of the flag.
 	 */
@@ -65,6 +73,7 @@ public class VirtualWindowItem extends RectangleItem {
 	 */
 	@Override
 	public void modify() {
+		System.out.println("Modifying virtual window item...");
 
 		if (_modification.getType() == ModificationType.DRAG) {
 			_path = (Path2D.Double) (_modification.getStartPath().clone());
@@ -98,6 +107,10 @@ public class VirtualWindowItem extends RectangleItem {
 	 */
 	@Override
 	public void stopModification() {
+		
+		if (_modification == null) {
+			return;
+		}
 		switch (_modification.getType()) {
 		case DRAG:
 

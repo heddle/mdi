@@ -321,20 +321,4 @@ public class SimpleDialog extends JDialog implements ActionListener {
 		setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 	}
 
-	public static void main(String arg[]) {
-		String closeout[] = { "OK", "Apply", "Cancel" };
-		SimpleDialog sd = new SimpleDialog("Sample Dialog", true, closeout) {
-
-			@Override
-			public void handleCommand(String command) {
-				if (!command.equals("Apply")) {
-					setVisible(false);
-				}
-			}
-		};
-
-		sd.setVisible(true);
-
-		System.exit(0);
-	}
 }

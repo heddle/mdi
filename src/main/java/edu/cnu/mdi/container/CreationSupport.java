@@ -238,7 +238,7 @@ public class CreationSupport {
 		Point2D.Double wp1 = new Point2D.Double();
 		container.localToWorld(p0, wp0);
 		container.localToWorld(p1, wp1);
-		return new LineItem(layer, wp0, wp1) {
+		LineItem item = new LineItem(layer, wp0, wp1) {
 			@Override
 			public JPopupMenu createPopupMenu() {
 				JPopupMenu menu = super.createPopupMenu();
@@ -248,6 +248,8 @@ public class CreationSupport {
 				return menu;
 			}
 		};
+		defaultConfigureItem(item);
+		return item;
 	}
 
 
@@ -269,7 +271,7 @@ public class CreationSupport {
 			container.localToWorld(pp[index], wp[index]);
 		}
 
-		return new PolygonItem(layer, wp) {
+		PolygonItem item = new PolygonItem(layer, wp) {
 			@Override
 			public JPopupMenu createPopupMenu() {
 				JPopupMenu menu = super.createPopupMenu();
@@ -279,6 +281,8 @@ public class CreationSupport {
 				return menu;
 			}
 		};
+		defaultConfigureItem(item);
+		return item;
 	}
 
 	/**
@@ -300,7 +304,7 @@ public class CreationSupport {
 			container.localToWorld(pp[index], wp[index]);
 		}
 
-		AItem item = new PolylineItem(layer, wp) {
+		PolylineItem item = new PolylineItem(layer, wp) {
 			@Override
 			public JPopupMenu createPopupMenu() {
 				JPopupMenu menu = super.createPopupMenu();
@@ -310,7 +314,7 @@ public class CreationSupport {
 				return menu;
 			}
 		};
-
+		defaultConfigureItem(item);
 		return item;
 	}
 }

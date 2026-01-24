@@ -795,6 +795,9 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * A modification such as a drag, resize or rotate has ended.
 	 */
 	public void stopModification() {
+		if (_modification == null) {
+			return;
+		}
 		switch (_modification.getType()) {
 		case DRAG:
 			_layer.notifyItemChangeListeners(this, ItemChangeType.MOVED);

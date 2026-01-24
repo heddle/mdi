@@ -288,7 +288,6 @@ public class MagnifyWindow extends JWindow {
 	 * Hides the magnify window if it is currently visible.
 	 */
 	public static void closeMagnifyWindow() {
-
 		if (_magnifyWindow == null) {
 			return;
 		}
