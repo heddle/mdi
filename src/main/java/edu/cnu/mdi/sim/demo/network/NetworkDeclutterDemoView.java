@@ -34,9 +34,11 @@ public class NetworkDeclutterDemoView extends SimulationView {
 	/** Simulation used by this view. */
 	private final NetworkDeclutterSimulation sim;
 
-	// Icons for servers and clients
+	// Icons for servers, printers and clients
 	private final Icon serverIcon;
 	private final Icon clientIcon;
+	private final Icon printerIcon;
+	private final int iconSize = 28;
 	private int iconRadiusPx;
 	/**
 	 * Create a network layout demo view.
@@ -47,7 +49,7 @@ public class NetworkDeclutterDemoView extends SimulationView {
 		// must call super(...) first. We build the simulation via a static helper.
 		super(
 			    createSimulation(),
-			    new SimulationEngineConfig(33, 250, 20, false),
+			    new SimulationEngineConfig(60, 250, 60, false),
 			    true,
 			    (SimulationView.ControlPanelFactory) () ->
 			        new IconSimulationControlPanel(new StandardSimIcons(), false),
@@ -63,8 +65,10 @@ public class NetworkDeclutterDemoView extends SimulationView {
 
 		// Load icons
 		String resPath = Environment.MDI_RESOURCE_PATH;
-		serverIcon = ImageManager.getInstance().loadUiIcon(resPath + "images/svg/server.svg", 32, 32);
-		clientIcon = ImageManager.getInstance().loadUiIcon(resPath + "images/svg/workstation.svg", 32, 32);
+		serverIcon = ImageManager.getInstance().loadUiIcon(resPath + "images/svg/server.svg", iconSize, iconSize);
+		clientIcon = ImageManager.getInstance().loadUiIcon(resPath + "images/svg/workstation.svg", iconSize, iconSize);
+		printerIcon = ImageManager.getInstance().loadUiIcon(resPath + "images/svg/printer.svg", iconSize, iconSize);
+		
 		iconRadiusPx = clientIcon.getIconWidth() / 2; // assuming square icons of same size
 
 		setAfterDraw();
@@ -80,6 +84,7 @@ public class NetworkDeclutterDemoView extends SimulationView {
 	private static NetworkDeclutterSimulation createSimulation() {
 		NetworkModel m = NetworkModel.random(14, // servers
 				100, // clients
+				5, // printers
 				new Random());
 
 		return new NetworkDeclutterSimulation(m);
@@ -93,15 +98,21 @@ public class NetworkDeclutterDemoView extends SimulationView {
 				Point pp0 = new Point();
 				Point pp1 = new Point();
 
-				g2.setColor(Color.black);
 
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				for (NetworkModel.Edge e : model.edges) {
-					NetworkModel.Node client = model.nodes.get(e.clientIndex);
-					NetworkModel.Node server = model.nodes.get(e.serverIndex);
+					Node node1 = e.node1;
+					Node node2 = e.node2;
+					
+					// draw lnks to printers in red
+					if (node2.type == Node.NodeType.PRINTER || node1.type == Node.NodeType.PRINTER) {
+						g2.setColor(Color.red);
+					} else {
+						g2.setColor(Color.black);
+					}
 
-					getContainer().worldToLocal(pp0, client.x, client.y);
-					getContainer().worldToLocal(pp1, server.x, server.y);
+					getContainer().worldToLocal(pp0, node1.x, node1.y);
+					getContainer().worldToLocal(pp1, node2.x, node2.y);
 
 					g2.drawLine(pp0.x, pp0.y, pp1.x, pp1.y);
 				}
@@ -116,10 +127,17 @@ public class NetworkDeclutterDemoView extends SimulationView {
 			public void draw(Graphics2D g2, IContainer container) {
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				Point pp = new Point();
-				for (NetworkModel.Node n : model.nodes) {
-					Icon icon = (n.type == NetworkModel.NodeType.SERVER) ? serverIcon : clientIcon;
+				for (Node n : model.servers) {
 					getContainer().worldToLocal(pp, n.x, n.y);
-					icon.paintIcon(getContainer().getComponent(), g2, pp.x - iconRadiusPx, pp.y - iconRadiusPx);
+					serverIcon.paintIcon(getContainer().getComponent(), g2, pp.x - iconRadiusPx, pp.y - iconRadiusPx);
+				}
+				for (Node n : model.clients) {
+					getContainer().worldToLocal(pp, n.x, n.y);
+					clientIcon.paintIcon(getContainer().getComponent(), g2, pp.x - iconRadiusPx, pp.y - iconRadiusPx);
+				}
+				for (Node n : model.printers) {
+					getContainer().worldToLocal(pp, n.x, n.y);
+					printerIcon.paintIcon(getContainer().getComponent(), g2, pp.x - iconRadiusPx, pp.y - iconRadiusPx);
 				}
 			}
 		});

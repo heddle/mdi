@@ -207,6 +207,26 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	 * </p>
 	 */
 	private double overlapBoost = 3.0;
+	
+	/**
+	 * Printer-specific reduction to equilibrium spring length.
+	 * <p>
+	 * Springs involving printers use {@code r0 * printerRBoost} as their
+	 * equilibrium length. This encourages printers to sit slightly closer
+	 * their clients.
+	 * </p>
+	 */
+	private double printerRBoost = 0.8;
+	
+	/**
+	 * Printer-specific increase to spring constant.
+	 * <p>
+	 * Springs involving printers use {@code k * printerKBoost} as their
+	 * stiffness. This makes printer connections stiffer, helping them
+	 * resist being pulled around by other forces.
+	 * </p>
+	 */
+	public double printerKBoost = 1.2;
 
 	/**
 	 * Per-component velocity clamp (world units per step).
@@ -237,7 +257,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	 * all.
 	 * </p>
 	 */
-	private int maxSteps = 8000;
+	private int maxSteps = 2000;
 
 	/**
 	 * Average node speed threshold for declaring the layout "settled".
@@ -313,44 +333,58 @@ public final class NetworkDeclutterSimulation implements Simulation {
 
 	@Override
 	public boolean step(SimulationContext ctx) {
+		
+		// return false if normal completion conditions met
+		
 		if (canceled || ctx.isCancelRequested()) {
 			return false;
 		}
 
 		step++;
 
-		int n = model.nodes.size();
-		double[] fx = new double[n];
-		double[] fy = new double[n];
+		//zero out forces
+		for (Node node : model.nodes) {
+			node.fx = 0.0;
+			node.fy = 0.0;
+		}
 
 		// 1) Springs on edges
 		for (NetworkModel.Edge e : model.edges) {
-			var c = model.nodes.get(e.clientIndex);
-			var s = model.nodes.get(e.serverIndex);
+			var node1 = e.node1;
+			var node2 = e.node2;
 
-			double dx = s.x - c.x;
-			double dy = s.y - c.y;
+			double dx = node2.x - node1.x;
+			double dy = node2.y - node1.y;
 			double r = Math.sqrt(dx * dx + dy * dy) + 1e-12;
+			
+			double rboost = 1.0;
+			double kboost = 1.0;
+			// boosts if one node is a printer
+			if (node1.type == Node.NodeType.PRINTER || node2.type == Node.NodeType.PRINTER) {
+				rboost = printerRBoost;
+				kboost = printerKBoost;
+			}
 
-			double f = k * (r - r0);
+			double f = kboost*k * (r - rboost*r0);
 			double ux = dx / r;
 			double uy = dy / r;
 
-			fx[e.clientIndex] += f * ux;
-			fy[e.clientIndex] += f * uy;
+			node1.fx += f * ux;
+			node1.fy += f * uy;
 
-			fx[e.serverIndex] -= f * ux;
-			fy[e.serverIndex] -= f * uy;
+			node2.fx -= f * ux;
+			node2.fy -= f * uy;
 		}
 
 		// 2) Repulsion (all pairs)
+		int n = model.nodes.size();
 		for (int i = 0; i < n; i++) {
-			var a = model.nodes.get(i);
+			var node1 = model.nodes.get(i);
 			for (int j = i + 1; j < n; j++) {
-				var b = model.nodes.get(j);
+				var node2 = model.nodes.get(j);
 
-				double dx = a.x - b.x;
-				double dy = a.y - b.y;
+				double dx = node1.x - node2.x;
+				double dy = node1.y - node2.y;
 
 				double r2 = dx * dx + dy * dy + eps;
 				double r = Math.sqrt(r2);
@@ -359,12 +393,12 @@ public final class NetworkDeclutterSimulation implements Simulation {
 				double strength = repulsionC;
 
 				// If either node is a server, boost repulsion for this pair.
-				if (a.type == NetworkModel.NodeType.SERVER || b.type == NetworkModel.NodeType.SERVER) {
+				if (node1.type == Node.NodeType.SERVER || node2.type ==Node.NodeType.SERVER) {
 					strength *= serverRepulsion;
 				}
 
 				// Overlap-aware boost when icons are too close
-				double minDist = a.worldRadius + b.worldRadius + overlapPad;
+				double minDist = node1.worldRadius + node2.worldRadius + overlapPad;
 				double minDist2 = minDist * minDist;
 				if (r2 < minDist2) {
 					strength *= overlapBoost;
@@ -374,18 +408,18 @@ public final class NetworkDeclutterSimulation implements Simulation {
 				double ux = dx / r;
 				double uy = dy / r;
 
-				fx[i] += inv * ux;
-				fy[i] += inv * uy;
-				fx[j] -= inv * ux;
-				fy[j] -= inv * uy;
+				node1.fx += inv * ux;
+				node1.fy += inv * uy;
+				node2.fx -= inv * ux;
+				node2.fy -= inv * uy;
 			}
 		}
 
 		// 3) Weak centering toward the middle
 		for (int i = 0; i < n; i++) {
 			var node = model.nodes.get(i);
-			fx[i] += -centerK * (node.x - 0.5);
-			fy[i] += -centerK * (node.y - 0.5);
+			node.fx += -centerK * (node.x - 0.5);
+			node.fy += -centerK * (node.y - 0.5);
 		}
 
 		// 4) Integrate + damping + clamp to unit-square
@@ -394,8 +428,8 @@ public final class NetworkDeclutterSimulation implements Simulation {
 		for (int i = 0; i < n; i++) {
 			var node = model.nodes.get(i);
 
-			node.vx = damping * node.vx + dt * fx[i];
-			node.vy = damping * node.vy + dt * fy[i];
+			node.vx = damping * node.vx + dt * node.fx;
+			node.vy = damping * node.vy + dt * node.fy;
 
 			node.vx = Math.max(-vmax, Math.min(vmax, node.vx));
 			node.vy = Math.max(-vmax, Math.min(vmax, node.vy));

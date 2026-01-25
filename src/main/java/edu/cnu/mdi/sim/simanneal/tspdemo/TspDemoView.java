@@ -86,7 +86,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 		// Must call super(...) first; create simulation + stash model bundle for
 		// retrieval.
 		super(createSimulationAndStashBundle(DEFAULT_NUM_CITY, DEFAULT_RIVER_PENALTY, seed),
-				new SimulationEngineConfig(33, 250, 0, false), true,
+				new SimulationEngineConfig(33, 250, 30, false), true,
 				(SimulationView.ControlPanelFactory) TspDemoControlPanel::new, keyVals);
 
 		evtPlot = createScatterPanel();

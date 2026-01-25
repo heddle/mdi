@@ -45,12 +45,17 @@ public final class SimulationEngine {
 	// Coalescing flags to avoid flooding the EDT.
 	private final AtomicBoolean refreshPending = new AtomicBoolean(false);
 	private final AtomicBoolean progressPending = new AtomicBoolean(false);
+	private final AtomicBoolean messagePending = new AtomicBoolean(false);
+
+	// Last posted payloads (coalesced).
+	private volatile ProgressInfo lastProgress;
+	private volatile String lastMessage;
 
 	/**
-	 * Create an engine for a simulation.
+	 * Create an engine.
 	 *
-	 * @param simulation simulation implementation (non-null)
-	 * @param config     engine config (non-null)
+	 * @param simulation computation plugin
+	 * @param config     engine configuration
 	 */
 	public SimulationEngine(Simulation simulation, SimulationEngineConfig config) {
 		this.simulation = Objects.requireNonNull(simulation, "simulation");
@@ -58,34 +63,9 @@ public final class SimulationEngine {
 	}
 
 	/**
-	 * Get the engine's current state.
+	 * Add a listener.
 	 *
-	 * @return current state
-	 */
-	public SimulationState getState() {
-		return state;
-	}
-
-	public SimulationEngineConfig getConfig() {
-		return config;
-	}
-
-	/**
-	 * Get the shared simulation context.
-	 *
-	 * @return context
-	 */
-	public SimulationContext getContext() {
-		return context;
-	}
-
-	/**
-	 * Add a listener for lifecycle/progress/refresh callbacks.
-	 * <p>
-	 * Listener methods are always invoked on the EDT.
-	 * </p>
-	 *
-	 * @param listener listener to add (ignored if null)
+	 * @param listener listener to add
 	 */
 	public void addListener(SimulationListener listener) {
 		if (listener != null) {
@@ -103,62 +83,52 @@ public final class SimulationEngine {
 	}
 
 	/**
-	 * Start the engine. Calling start multiple times is safe; only the first call
-	 * starts a thread.
+	 * Get the current state.
+	 *
+	 * @return state
+	 */
+	public SimulationState getState() {
+		return state;
+	}
+
+	/**
+	 * Start the engine. No-op if already started.
 	 */
 	public synchronized void start() {
 		if (simThread != null) {
 			return;
 		}
-		simThread = new Thread(this::runLoop, "SimulationThread");
+		stopRequested = false;
+		pauseRequested = false;
+
+		simThread = new Thread(this::runLoop, "SimulationEngine");
 		simThread.setDaemon(true);
 		simThread.start();
 	}
 
 	/**
-	 * Get the simulation instance being executed by this engine.
-	 * <p>
-	 * This is primarily useful for owners (e.g., views/controllers) that need
-	 * access to simulation-specific state for rendering or inspection. The returned
-	 * object is the same instance passed into
-	 * {@link #SimulationEngine(Simulation, SimulationEngineConfig)}.
-	 * </p>
-	 *
-	 * @return the simulation instance (never null)
-	 */
-	public Simulation getSimulation() {
-		return simulation;
-	}
-
-	/**
-	 * Request that the engine begin or continue running.
-	 * <p>
-	 * If paused, this resumes. If currently READY and autoRun is false, this starts
-	 * running.
-	 * </p>
-	 */
-	public void requestRun() {
-		pauseRequested = false;
-	}
-
-	/**
-	 * Request pause. The engine will enter {@link SimulationState#PAUSED} at the
-	 * next safe point.
+	 * Request a pause.
 	 */
 	public void requestPause() {
 		pauseRequested = true;
 	}
 
 	/**
-	 * Request resume from pause. Equivalent to {@link #requestRun()}.
+	 * Request resume from PAUSED (or start running from READY).
 	 */
 	public void requestResume() {
 		pauseRequested = false;
 	}
 
 	/**
-	 * Request a normal stop. The engine will terminate and call
-	 * {@link Simulation#shutdown(SimulationContext)}.
+	 * Alias for {@link #requestResume()}.
+	 */
+	public void requestRun() {
+		requestResume();
+	}
+
+	/**
+	 * Request stop (normal termination).
 	 */
 	public void requestStop() {
 		stopRequested = true;
@@ -166,97 +136,54 @@ public final class SimulationEngine {
 	}
 
 	/**
-	 * Request cancellation. This is cooperative:
-	 * <ul>
-	 * <li>{@link SimulationContext#isCancelRequested()} becomes true</li>
-	 * <li>{@link Simulation#cancel(SimulationContext)} is called on the simulation
-	 * thread</li>
-	 * </ul>
+	 * Request cancellation (cooperative).
 	 */
 	public void requestCancel() {
 		context.requestCancel();
-		postEDT(l -> l.onCancelRequested(context));
 		pauseRequested = false;
 	}
 
 	/**
-	 * Post a UI message to listeners on the EDT.
-	 *
-	 * @param message message text (ignored if null)
-	 */
-	public void postMessage(String message) {
-		if (message == null) {
-			return;
-		}
-		postEDT(l -> l.onMessage(context, message));
-	}
-
-	/**
-	 * Post a progress update to listeners on the EDT.
-	 * <p>
-	 * This method coalesces rapid calls (if many are posted quickly, the EDT will
-	 * receive the latest soon).
-	 * </p>
-	 *
-	 * @param progress progress payload (ignored if null)
-	 */
-	public void postProgress(ProgressInfo progress) {
-		if (progress == null) {
-			return;
-		}
-		// Coalesce: ensure at most one pending invokeLater at a time.
-		if (progressPending.compareAndSet(false, true)) {
-			SwingUtilities.invokeLater(() -> {
-				progressPending.set(false);
-				for (SimulationListener l : listeners) {
-					try {
-						l.onProgress(context, progress);
-					} catch (Throwable ignored) {
-						// listener exceptions must not break the EDT
-					}
-				}
-			});
-		}
-	}
-
-	/**
-	 * Request a graphics refresh event to listeners on the EDT.
-	 * <p>
-	 * This method is coalesced to prevent EDT flooding.
-	 * </p>
+	 * Request a UI refresh (coalesced).
 	 */
 	public void requestRefresh() {
 		if (refreshPending.compareAndSet(false, true)) {
-			SwingUtilities.invokeLater(() -> {
+			postEDT(l -> {
 				refreshPending.set(false);
-				for (SimulationListener l : listeners) {
-					try {
-						l.onRefresh(context);
-					} catch (Throwable ignored) {
-						// listener exceptions must not break the EDT
-					}
-				}
+				l.onRefresh(context);
 			});
 		}
 	}
 
 	/**
-	 * Request a transition into SWITCHING state, typically when changing internal
-	 * phases.
-	 * <p>
-	 * This can be used by the simulation owner (e.g., a controller) to annotate
-	 * major phases.
-	 * </p>
+	 * Post progress information to listeners (coalesced).
 	 *
-	 * @param reason human-readable reason (may be null)
+	 * @param info progress info
 	 */
-	public void markSwitching(String reason) {
-		transition(SimulationState.SWITCHING, reason);
+	public void postProgress(ProgressInfo info) {
+		lastProgress = info;
+		if (progressPending.compareAndSet(false, true)) {
+			postEDT(l -> {
+				progressPending.set(false);
+				l.onProgress(context, lastProgress);
+			});
+		}
 	}
 
-	// ------------------------------------------------------------------------
-	// Internal engine loop
-	// ------------------------------------------------------------------------
+	/**
+	 * Post a message to listeners (coalesced).
+	 *
+	 * @param message message
+	 */
+	public void postMessage(String message) {
+		lastMessage = message;
+		if (messagePending.compareAndSet(false, true)) {
+			postEDT(l -> {
+				messagePending.set(false);
+				l.onMessage(context, lastMessage);
+			});
+		}
+	}
 
 	private void runLoop() {
 		context.markStarted();
@@ -277,6 +204,11 @@ public final class SimulationEngine {
 
 			long lastRefresh = System.nanoTime();
 			long lastProgress = System.nanoTime();
+
+			// Cooperative yield: rate-limited. This avoids "sleep per step" which is
+			// catastrophic for fast inner loops (e.g., TSP annealing).
+			final long coopEveryNs = (config.cooperativeYieldMs > 0) ? (config.cooperativeYieldMs * 1_000_000L) : 0L;
+			long lastCoopYield = System.nanoTime();
 
 			while (!stopRequested) {
 
@@ -339,54 +271,75 @@ public final class SimulationEngine {
 					break;
 				}
 
-				// Optional cooperative yield
-				if (config.cooperativeYieldMs > 0) {
-					LockSupport.parkNanos(config.cooperativeYieldMs * 1_000_000L);
+				// Cooperative yield (rate-limited)
+				// NOTE: Thread.yield() is intentionally used instead of park/sleep:
+				// tiny parks in a hot loop can deschedule the thread and incur OS timer
+				// granularity delays that are orders of magnitude larger than requested.
+				if (coopEveryNs > 0 && (now - lastCoopYield) >= coopEveryNs) {
+					Thread.yield();
+					lastCoopYield = now;
 				}
 			}
 
 			// Termination
-			transition(SimulationState.TERMINATING,
-					context.isCancelRequested() ? "cancel" : (stopRequested ? "stop" : "complete"));
+			transition(SimulationState.TERMINATING, "stop/complete");
 			try {
 				simulation.shutdown(context);
 			} catch (Exception ignored) {
 				// best-effort
 			}
-
 			transition(SimulationState.TERMINATED, "done");
-			postEDT(l -> l.onDone(context));
 
-		} catch (Throwable t) {
-			state = SimulationState.FAILED;
-			postEDT(l -> l.onFail(context, t));
-		} finally {
-			simThread = null;
+		} catch (Exception ex) {
+			transition(SimulationState.FAILED, ex.toString());
+			postEDT(l -> l.onFail(context, ex));
 		}
 	}
+	
+	/**
+	 * Get the simulation instance.
+	 *
+	 * @return simulation
+	 */
+	public Simulation getSimulation() {
+		return simulation;
+	}
+	
+	/**
+	 * Get the engine configuration.
+	 *
+	 * @return config
+	 */
+	public SimulationEngineConfig getConfig() {
+		return config;
+	}
+	
+	/**
+	 * Get the simulation context.
+	 *
+	 * @return context
+	 */
+	public SimulationContext getContext() {
+		return context;
+	}
+	
 
-	private void transition(SimulationState to, String reason) {
-		SimulationState from = this.state;
-		this.state = to;
-		postEDT(l -> l.onStateChange(context, from, to, reason));
-
-		// State-specific lifecycle hooks
-		switch (to) {
-		case INITIALIZING -> postEDT(l -> l.onInit(context));
-		case READY -> postEDT(l -> l.onReady(context));
-		default -> {
-			// handled elsewhere
-		}
-		}
+	private void transition(SimulationState newState, String reason) {
+		SimulationState old = state;
+		state = newState;
+		postEDT(l -> l.onStateChange(context, old, newState, reason));
 	}
 
 	private void postEDT(java.util.function.Consumer<SimulationListener> call) {
+		if (listeners.isEmpty()) {
+			return;
+		}
 		SwingUtilities.invokeLater(() -> {
 			for (SimulationListener l : listeners) {
 				try {
 					call.accept(l);
-				} catch (Throwable ignored) {
-					// never let listener exceptions break the EDT
+				} catch (Exception ignored) {
+					// Listener failures are isolated.
 				}
 			}
 		});

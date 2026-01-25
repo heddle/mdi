@@ -20,72 +20,31 @@ import java.util.Random;
  */
 public final class NetworkModel {
 
-	/** Node category. */
-	public enum NodeType {
-		SERVER, CLIENT
-	}
-
 	/**
-	 * A node in the unit-square world.
-	 * <p>
-	 * The simulation updates position and velocity; the view updates
-	 * {@link #worldRadius} each draw based on icon pixel sizes and current
-	 * viewport.
-	 * </p>
-	 */
-	public static final class Node {
-
-		/** Unique node id within the model. */
-		public final int id;
-
-		/** Node type (server or client). */
-		public final NodeType type;
-
-		/** World position in the unit square. */
-		public double x, y;
-
-		/** World velocity in world-units per step. */
-		public double vx, vy;
-
-		/**
-		 * Approximate icon radius in world units.
-		 * <p>
-		 * This is set by the view each render pass. The simulation uses it for
-		 * overlap-aware repulsion and clamping so that icons remain on-screen.
-		 * </p>
-		 */
-		public double worldRadius;
-
-		Node(int id, NodeType type, double x, double y) {
-			this.id = id;
-			this.type = type;
-			this.x = x;
-			this.y = y;
-		}
-	}
-
-	/**
-	 * Directed edge from a client node to a server node.
+	 * Directed edge from a node to another node.
 	 * <p>
 	 * Indices refer to positions in {@link #nodes}.
 	 * </p>
 	 */
 	public static final class Edge {
 
-		/** Index of the client node in {@link #nodes}. */
-		public final int clientIndex;
+		/** One node */
+		public final Node node1;
 
-		/** Index of the server node in {@link #nodes}. */
-		public final int serverIndex;
+		/** Other node */
+		public final Node node2;
 
-		Edge(int clientIndex, int serverIndex) {
-			this.clientIndex = clientIndex;
-			this.serverIndex = serverIndex;
+		Edge(Node node1, Node node2) {
+			this.node1 = node1;
+			this.node2 = node2;
 		}
 	}
 
-	/** Nodes (servers first, then clients). */
-	public final List<Node> nodes = new ArrayList<>();
+	/** Nodes (servers, clients, printers). */
+	public final List<Node> servers = new ArrayList<>();
+	public final List<Node> clients = new ArrayList<>();
+	public final List<Node> printers = new ArrayList<>();
+	public final List<Node> nodes = new ArrayList<>(); //all nodes
 
 	/** Each client has exactly one edge to a server. */
 	public final List<Edge> edges = new ArrayList<>();
@@ -95,10 +54,14 @@ public final class NetworkModel {
 
 	/** Number of clients. */
 	public final int clientCount;
+	
+	/** Number of printers. */
+	public final int printerCount;
 
-	private NetworkModel(int serverCount, int clientCount) {
+	private NetworkModel(int serverCount, int clientCount, int printerCount) {
 		this.serverCount = serverCount;
 		this.clientCount = clientCount;
+		this.printerCount = printerCount;
 	}
 
 	/**
@@ -109,35 +72,65 @@ public final class NetworkModel {
 	 * @param rng         random generator (non-null)
 	 * @return a randomized model in world coordinates
 	 */
-	public static NetworkModel random(int serverCount, int clientCount, Random rng) {
-		if (serverCount < 1) {
-			throw new IllegalArgumentException("serverCount must be >= 1");
+	public static NetworkModel random(int serverCount, int clientCount, int printerCount, Random rng) {
+		if (serverCount < 4) {
+			throw new IllegalArgumentException("serverCount must be >= 4");
 		}
-		if (clientCount < 0) {
-			throw new IllegalArgumentException("clientCount must be >= 0");
+		if (clientCount < 6) {
+			throw new IllegalArgumentException("clientCount must be >= 6");
+		}
+		if (printerCount < 0) {
+			throw new IllegalArgumentException("printerCount must be >= 0");
 		}
 		if (rng == null) {
 			throw new IllegalArgumentException("rng must not be null");
 		}
 
-		NetworkModel m = new NetworkModel(serverCount, clientCount);
+		NetworkModel model = new NetworkModel(serverCount, clientCount, printerCount);
 
 		// Servers
 		for (int i = 0; i < serverCount; i++) {
-			m.nodes.add(new Node(i, NodeType.SERVER, rng.nextDouble(), rng.nextDouble()));
+			model.servers.add(new Node(i, Node.NodeType.SERVER, rng.nextDouble(), rng.nextDouble()));
 		}
-
-		// Clients + edges
+		
+		// Clients
 		for (int i = 0; i < clientCount; i++) {
-			int id = serverCount + i;
-			int clientIndex = serverCount + i;
+			model.clients.add(new Node(i, Node.NodeType.CLIENT, rng.nextDouble(), rng.nextDouble()));
+		}
+		
+		// Printers
+		for (int i = 0; i < printerCount; i++) {
+			model.printers.add(new Node(i, Node.NodeType.PRINTER, rng.nextDouble(), rng.nextDouble()));
+		}
+		
+		model.nodes.addAll(model.servers);
+		model.nodes.addAll(model.clients);
+		model.nodes.addAll(model.printers);
 
-			m.nodes.add(new Node(id, NodeType.CLIENT, rng.nextDouble(), rng.nextDouble()));
-
-			int serverIndex = rng.nextInt(serverCount);
-			m.edges.add(new Edge(clientIndex, serverIndex));
+		// client-server connections
+		for (Node client : model.clients) {
+			//assign every client to a random server
+			Node server = model.servers.get(rng.nextInt(serverCount));	
+			model.edges.add(new Edge(client, server));
+		}
+		
+		// printer connections
+		for (Node printer : model.printers) {
+			//assign every printer to some random (between 1 and 4) clients
+			int numClients = 1 + rng.nextInt(4);
+			// keep track for make sure assignments are unique
+			List<Node> assignedClients = new ArrayList<>();
+			for (int i = 0; i < numClients; i++) {
+				Node client;
+				do {
+					client = model.clients.get(rng.nextInt(clientCount));
+				} while (assignedClients.contains(client));
+				assignedClients.add(client);
+				model.edges.add(new Edge(client, printer));
+					
+			}
 		}
 
-		return m;
+		return model;
 	}
 }

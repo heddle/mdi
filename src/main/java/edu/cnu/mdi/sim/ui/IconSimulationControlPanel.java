@@ -198,7 +198,8 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 
 	@Override
 	public void onDone(SimulationContext ctx) {
-		messageLabel.setText("Done.");
+		messageLabel.setText("Done. " + ctx.getStepCount() + " steps in "
+				+ String.format("%.2f", ctx.getElapsedSeconds()) + " seconds.");
 		setIndeterminate(false, "Done");
 	}
 

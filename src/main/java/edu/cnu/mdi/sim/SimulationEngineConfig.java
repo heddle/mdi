@@ -29,10 +29,22 @@ public final class SimulationEngineConfig {
 	public final int progressIntervalMs;
 
 	/**
-	 * Optional cooperative yield/sleep on the simulation thread (milliseconds).
+	 * Cooperative-yield rate limit for the simulation thread (milliseconds).
 	 * <p>
-	 * Use this if you want to intentionally reduce CPU usage. Use 0 for maximum
-	 * speed.
+	 * <b>Important:</b> this value is <em>not</em> interpreted as "sleep this long
+	 * each step". Instead, it acts as a <em>minimum wall-clock interval</em> between
+	 * opportunities for the engine to yield CPU time.
+	 * </p>
+	 * <p>
+	 * The engine implements this by calling {@link Thread#yield()} at most once per
+	 * {@code cooperativeYieldMs}. This is intentionally light-weight: using
+	 * {@code park/sleep} in a tight simulation loop can deschedule the thread and
+	 * incur OS timer granularity delays (often orders of magnitude larger than the
+	 * requested duration), which can devastate performance.
+	 * </p>
+	 * <p>
+	 * Use 0 to disable cooperative yielding for maximum throughput. If you need to
+	 * intentionally reduce CPU usage, try small values such as 1–10 ms.
 	 * </p>
 	 */
 	public final int cooperativeYieldMs;
@@ -54,8 +66,8 @@ public final class SimulationEngineConfig {
 	 *                           periodic refresh)
 	 * @param progressIntervalMs progress interval in milliseconds (0 disables
 	 *                           periodic progress ping)
-	 * @param cooperativeYieldMs cooperative yield in milliseconds (0 disables
-	 *                           sleeping)
+	 * @param cooperativeYieldMs minimum interval between cooperative yields in
+	 *                           milliseconds (0 disables yielding)
 	 * @param autoRun            if true, RUNNING starts immediately after READY
 	 */
 	public SimulationEngineConfig(int refreshIntervalMs, int progressIntervalMs, int cooperativeYieldMs,
@@ -69,7 +81,7 @@ public final class SimulationEngineConfig {
 	/**
 	 * Reasonable defaults for interactive graphics.
 	 *
-	 * @return default config (refresh ~30 Hz, progress ~5 Hz, no sleep, autoRun
+	 * @return default config (refresh ~30 Hz, progress ~5 Hz, no yield, autoRun
 	 *         enabled)
 	 */
 	public static SimulationEngineConfig defaults() {
