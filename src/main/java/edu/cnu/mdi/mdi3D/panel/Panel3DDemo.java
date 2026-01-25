@@ -35,7 +35,7 @@ public class Panel3DDemo extends JFrame {
 		setBounds(200, 100, 900, 700);
 
 	}
-	
+
 	// Create a Panel3D with some items just for demo
 	private static Panel3D createPanel3D() {
 		final float xymax = 600f;

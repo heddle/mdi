@@ -41,7 +41,9 @@ public abstract class AClickRubberband extends ARubberband {
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		if (!isActive()) return;
+		if (!isActive()) {
+			return;
+		}
 		if (tempPoly != null) {
 			setCurrent(e.getPoint());
 		}

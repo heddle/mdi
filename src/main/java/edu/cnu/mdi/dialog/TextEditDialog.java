@@ -19,27 +19,27 @@ import edu.cnu.mdi.ui.fonts.Fonts;
 
 @SuppressWarnings("serial")
 public class TextEditDialog extends JDialog {
-	
+
 	// button labels
 	protected static final String CLOSE  = "Close";
 	protected static final String CANCEL = "Cancel";
-	
+
     private TextEditPanel textEditPanel;
-    
+
     private boolean cancelled;
-    
+
  	/**
 	 * Create a dialog for editing text with default title, empty initial text,
 	 * default style, and default font.
 	 */
 	public TextEditDialog() {
 		this("Edit Text", "", new Styled(), Fonts.plainFontDelta(2));
-		
-	} 
-	
+
+	}
+
 	/**
 	 * Create a dialog for editing text from the given TextItem.
-	 * 
+	 *
 	 * @param item the TextItem to edit
 	 */
 	public TextEditDialog(TextItem item) {
@@ -48,24 +48,24 @@ public class TextEditDialog extends JDialog {
 
 	/**
 	 * Create a dialog for editing text with the given initial text and style.
-	 * 
+	 *
 	 * @param title  the dialog title
 	 * @param inText the initial text content
 	 * @param inStyle the initial style to apply
 	 * @param inFont  the initial font to apply
 	 */
-	public TextEditDialog(String title, String inText, IStyled inStyle, 
+	public TextEditDialog(String title, String inText, IStyled inStyle,
 			Font inFont) {
 		setTitle(title == null ? "Edit Text" : title);
 		setModal(true);
-				
+
 		textEditPanel = new TextEditPanel(inText, inFont, inStyle);
 		add(textEditPanel, "Center");
 		JPanel buttonPanel = createButtonPanel();
 		add(buttonPanel, "South");
 		pack();
 	}
-	
+
 	/**
 	 * Get the selected font.
 	 * @return the selected font
@@ -73,7 +73,7 @@ public class TextEditDialog extends JDialog {
 	public Font getSelectedFont() {
 		return textEditPanel.getSelectedFont();
 	}
-	
+
 	/**
 	 * Get the selected style.
 	 * @return the selected style
@@ -81,7 +81,7 @@ public class TextEditDialog extends JDialog {
 	public IStyled getSelectedStyle() {
 		return textEditPanel.getSelectedStyle();
 	}
-	
+
 	/**
 	 * Get the selected fill color.
 	 * @return the selected fill color
@@ -89,7 +89,7 @@ public class TextEditDialog extends JDialog {
 	public Color getFillColor() {
 		return getSelectedStyle().getFillColor();
 	}
-	
+
 	/**
 	 * Get the selected text color.
 	 * @return the selected text color
@@ -97,7 +97,7 @@ public class TextEditDialog extends JDialog {
 	public Color getTextColor() {
 		return getSelectedStyle().getTextColor();
 	}
-	
+
 	/**
 	 * Get the selected line color.
 	 * @return the selected line color
@@ -105,7 +105,7 @@ public class TextEditDialog extends JDialog {
 	public Color getLineColor() {
 		return getSelectedStyle().getLineColor();
 	}
-	
+
 	/**
 	 * Create the button panel.
 	 */
@@ -142,36 +142,36 @@ public class TextEditDialog extends JDialog {
 
 	/**
 	 * Get the edited text.
-	 * 
+	 *
 	 * @return the edited text.
 	 */
 	public String getText() {
 		String text = textEditPanel.getEditedText();
 		return text == null ? "" : text;
 	}
-	
+
 	/**
 	 * Check if the dialog was cancelled.
-	 * 
+	 *
 	 * @return true if cancelled, false otherwise.
 	 */
 	public boolean isCancelled() {
 		return cancelled;
 	}
-	
+
 	/**
 	 * Update the given TextItem with the edited text, font, and style.
-	 * 
+	 *
 	 * @param item the TextItem to update.
 	 */
 	public void updateTextItem(TextItem item) {
 		if (item == null) {
 			return;
 		}
-			
+
 		item.setText(getText());
 		item.setFont(getSelectedFont());
-		item.setStyle(getSelectedStyle());		
+		item.setStyle(getSelectedStyle());
 	}
 
 }

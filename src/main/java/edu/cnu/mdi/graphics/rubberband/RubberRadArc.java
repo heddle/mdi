@@ -22,13 +22,17 @@ public class RubberRadArc extends AClickRubberband implements IRubberbandAnglePr
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (!isActive()) return;
+        if (!isActive()) {
+			return;
+		}
 
         final Point p = e.getPoint();
 
         // First click: center
         if (tempPoly == null) {
-            if (!ensureStarted(p)) return;
+            if (!ensureStarted(p)) {
+				return;
+			}
             sweepInit = false;
             return;
         }
@@ -85,7 +89,9 @@ public class RubberRadArc extends AClickRubberband implements IRubberbandAnglePr
 
     @Override
     public boolean isGestureValid(int minSizePx) {
-        if (poly == null || poly.npoints < 3) return false;
+        if (poly == null || poly.npoints < 3) {
+			return false;
+		}
         Rectangle b = poly.getBounds();
         return Math.max(b.width, b.height) >= minSizePx;
     }
@@ -93,7 +99,9 @@ public class RubberRadArc extends AClickRubberband implements IRubberbandAnglePr
     @Override
     protected Point[] computeVertices() {
         Polygon p = (poly != null) ? poly : tempPoly;
-        if (p == null) return null;
+        if (p == null) {
+			return null;
+		}
         Point[] pts = new Point[p.npoints];
         for (int i = 0; i < p.npoints; i++) {
             pts[i] = new Point(p.xpoints[i], p.ypoints[i]);
@@ -102,7 +110,9 @@ public class RubberRadArc extends AClickRubberband implements IRubberbandAnglePr
     }
 
     private void updateSweepForCurrentPoint(Point current) {
-        if (tempPoly == null || tempPoly.npoints != 2) return;
+        if (tempPoly == null || tempPoly.npoints != 2) {
+			return;
+		}
 
         double xc = tempPoly.xpoints[0];
         double yc = tempPoly.ypoints[0];
@@ -121,7 +131,9 @@ public class RubberRadArc extends AClickRubberband implements IRubberbandAnglePr
 
         double r1 = Math.hypot(dx1s, dy1s);
         double r2 = Math.hypot(dx2s, dy2s);
-        if (r1 < 0.99 || r2 < 0.99) return;
+        if (r1 < 0.99 || r2 < 0.99) {
+			return;
+		}
 
         // Convert to math coords (flip Y) so CCW is standard.
         double dx1 = dx1s;
@@ -143,8 +155,12 @@ public class RubberRadArc extends AClickRubberband implements IRubberbandAnglePr
 
         // Unwrap across the -180/180 discontinuity for continuous dragging.
         double delta = signed - lastSignedDeg;
-        if (delta > 180.0) delta -= 360.0;
-        if (delta < -180.0) delta += 360.0;
+        if (delta > 180.0) {
+			delta -= 360.0;
+		}
+        if (delta < -180.0) {
+			delta += 360.0;
+		}
 
         sweepDeg += delta;
         lastSignedDeg = signed;
@@ -152,7 +168,9 @@ public class RubberRadArc extends AClickRubberband implements IRubberbandAnglePr
 
     @Override
     protected void draw(Graphics2D g) {
-        if (tempPoly == null || tempPoly.npoints < 1) return;
+        if (tempPoly == null || tempPoly.npoints < 1) {
+			return;
+		}
 
         if (tempPoly.npoints == 1) {
             GraphicsUtils.drawHighlightedLine(g,
@@ -177,7 +195,9 @@ public class RubberRadArc extends AClickRubberband implements IRubberbandAnglePr
             double dy1 = y1 - yc;
 
             double r1 = Math.hypot(dx1, dy1);
-            if (r1 < 0.99) return;
+            if (r1 < 0.99) {
+				return;
+			}
 
             // Update sweep tracking based on current mouse point
             updateSweepForCurrentPoint(currentPt);

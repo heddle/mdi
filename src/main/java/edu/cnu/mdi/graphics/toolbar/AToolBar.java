@@ -468,12 +468,12 @@ public abstract class AToolBar extends JToolBar {
 			statusField.setText(text);
 		}
 	}
-	
+
 	public void spacer(int pixels) {
 		if (getOrientation() == SwingConstants.HORIZONTAL) {
 			add(Box.createHorizontalStrut(pixels));
 		} else {
 			add(Box.createVerticalStrut(pixels));
 		}
-	}	
+	}
 }

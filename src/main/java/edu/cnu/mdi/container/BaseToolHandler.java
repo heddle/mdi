@@ -29,10 +29,10 @@ import edu.cnu.mdi.util.TakePicture;
 import edu.cnu.mdi.view.BaseView;
 
 public class BaseToolHandler implements IToolHandler  {
-	
+
 	// Zoom factor for each zoom in/out action
 	private static final double ZOOM_FACTOR = 0.8;
-	
+
 	// for panning
 	//for panning
 	private BufferedImage base;
@@ -40,25 +40,25 @@ public class BaseToolHandler implements IToolHandler  {
 
 	// Container that owns this tool handler
 	private BaseContainer container;
-	
+
 	//for modifying items
 	private AItem modifyItem;
 	private boolean modifying;
-	
+
 	// cached press point for the current drag gesture
 	private Point dragPressPoint;
 
 
-	
+
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param container BaseContainer that owns this tool handler
 	 */
 	public BaseToolHandler(BaseContainer container) {
 		Objects.requireNonNull(container, "container");
 		this.container = container;
-		
+
 		MouseMotionListener mml = new MouseMotionListener() {
 			@Override
 			public void mouseMoved(MouseEvent e) {
@@ -72,12 +72,12 @@ public class BaseToolHandler implements IToolHandler  {
 		};
 		container.getComponent().addMouseMotionListener(mml);
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Hit test at the given point on the canvas.
-	 * 
+	 *
 	 * @param toolBar ToolBar that owns this tool
 	 * @param canvas  JComponent on which the hit test is occurring
 	 * @param p       Point to hit test
@@ -90,7 +90,7 @@ public class BaseToolHandler implements IToolHandler  {
 
 	/**
 	 * Handle pointer click on an object at the given point.
-	 * 
+	 *
 	 * @param toolBar ToolBar that owns this tool
 	 * @param canvas JComponent on which the click is occurring
 	 * @param p      Point where the click occurred
@@ -122,7 +122,7 @@ public class BaseToolHandler implements IToolHandler  {
 
 	/**
 	 * Handle pointer double click on an object at the given point.
-	 * 
+	 *
 	 * @param toolBar ToolBar that owns this tool
 	 * @param canvas JComponent on which the double click is occurring
 	 * @param p      Point where the double click occurred
@@ -155,13 +155,13 @@ public class BaseToolHandler implements IToolHandler  {
 		container.setToolBarState();
 		container.refresh();
 	}
-	
+
 	@Override
 	public void beginDragObject(GestureContext gc) {
 
 		modifyItem = null;
 		modifying = false;
-	
+
 	    // Cache a defensive copy (Point is mutable)
 	    dragPressPoint = (gc.getPressPoint() == null) ? null : new Point(gc.getPressPoint());
 	}
@@ -227,7 +227,7 @@ public class BaseToolHandler implements IToolHandler  {
 	    modifying = false;
 	    dragPressPoint = null;
 	}
-	
+
 
 	@Override
 	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
@@ -335,7 +335,7 @@ public class BaseToolHandler implements IToolHandler  {
 
 		// text items are special - cannot style multiple at once
 		// have their own editor
-		
+
 		if (selected.size() == 1 && selected.get(0) instanceof TextItem) {
 			TextItem item = (TextItem) selected.get(0);
 			item.edit();
@@ -356,14 +356,14 @@ public class BaseToolHandler implements IToolHandler  {
 
 		container.refresh();
 	}
-	
+
 	@Override
 	public void delete(GestureContext gc) {
 		container.deleteSelectedItems();
 		gc.getToolBar().resetDefaultToggleButton();
 		container.refresh();
 	}
-	
+
 	@Override
 	public void createConnection(GestureContext gc, Point start, Point end) {
 		AItem item1 = container.getItemAtPoint(start);
@@ -371,14 +371,14 @@ public class BaseToolHandler implements IToolHandler  {
 		if (ConnectionManager.getInstance().canConnect(item1, item2)) {
 			ConnectionManager.getInstance().connect(container.getConnectionLayer(), item1, item2);
 			container.refresh();
-			
+
 		}
 	}
 
 	@Override
 	public boolean approveConnectionPoint(GestureContext gc, Point p) {
 		AItem item = container.getItemAtPoint(p);
-		if (item != null) { 
+		if (item != null) {
 			boolean enabled = item.isEnabled();
             boolean connectable = item.isConnectable();
 			return enabled && connectable;
@@ -395,11 +395,11 @@ public class BaseToolHandler implements IToolHandler  {
 	public void createEllipse(GestureContext gc, Rectangle bounds) {
 		CreationSupport.createEllipseItem(container.getAnnotationLayer(), bounds);
 	}
-	
+
 	@Override
 	public void createPolygon(GestureContext gc, Point[] vertices) {
 		CreationSupport.createPolygonItem(container.getAnnotationLayer(), vertices);
-		
+
 	}
 
 	@Override
@@ -412,7 +412,7 @@ public class BaseToolHandler implements IToolHandler  {
 		CreationSupport.createLineItem(container.getAnnotationLayer(), start, end);
 	}
 
-	
+
 	@Override
 	public void createRadArc(GestureContext gc, Point[] pp) {
 
@@ -449,7 +449,7 @@ public class BaseToolHandler implements IToolHandler  {
 	public void print(GestureContext gc) {
 		PrintUtils.printComponent(gc.getCanvas());
 	}
-		
+
 	/**
 	 * Select items based on a click.
 	 *

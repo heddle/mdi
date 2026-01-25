@@ -25,7 +25,7 @@ public abstract class AOneShotButton extends JButton {
 
 	/** Toolbar that owns this tool. */
 	protected AToolBar toolBar;
-	
+
 	/**
 	 * Create a new action button.
 	 *
@@ -35,7 +35,7 @@ public abstract class AOneShotButton extends JButton {
 	protected AOneShotButton(Component canvas, AToolBar toolBar) {
 		this.toolBar = toolBar;
 		this.canvas = canvas;
-		
+
 		ActionListener al = new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {

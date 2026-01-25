@@ -1,13 +1,12 @@
 package edu.cnu.mdi.mapping;
 
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D.Double;
 
 import edu.cnu.mdi.container.BaseContainer;
-import edu.cnu.mdi.graphics.text.UnicodeSupport;
+import edu.cnu.mdi.graphics.text.UnicodeUtils;
 
 @SuppressWarnings("serial")
 public class MapContainer extends BaseContainer {
@@ -57,7 +56,7 @@ public class MapContainer extends BaseContainer {
 
 	/**
 	 * Convert local point to lat/lon point
-	 * 
+	 *
 	 * @param pp the local point
 	 * @param ll the lat/lon point
 	 */
@@ -69,7 +68,7 @@ public class MapContainer extends BaseContainer {
 
 	/**
 	 * Convert world point to lat/lon point
-	 * 
+	 *
 	 * @param ll the lat/lon point
 	 * @param wp the world point
 	 */
@@ -91,8 +90,8 @@ public class MapContainer extends BaseContainer {
 		if (_toolBar != null) {
 			Point2D.Double ll = new Point2D.Double();
 			worldToLatLon(ll, wp);
-			String latLon = String.format("%.2f%s %s, %.2f%s %s", Math.abs(Math.toDegrees(ll.y)), UnicodeSupport.DEGREE,
-					(ll.y >= 0) ? "N" : "S", Math.abs(Math.toDegrees(ll.x)), UnicodeSupport.DEGREE,
+			String latLon = String.format("%.2f%s %s, %.2f%s %s", Math.abs(Math.toDegrees(ll.y)), UnicodeUtils.DEGREE,
+					(ll.y >= 0) ? "N" : "S", Math.abs(Math.toDegrees(ll.x)), UnicodeUtils.DEGREE,
 					(ll.x >= 0) ? "E" : "W");
 
 			// Update toolbar text (if present)

@@ -49,7 +49,7 @@ public class Quad3D extends Item3D {
 	 * @param x4
 	 * @param y4
 	 * @param z4
-	 * 
+	 *
 	 * @param color     the quad color
 	 * @param lineWidth the line width
 	 * @param frame     frame the quad
@@ -80,7 +80,7 @@ public class Quad3D extends Item3D {
 
 	/**
 	 * Create a quad to serve as a constant z plane
-	 * 
+	 *
 	 * @param panel3d
 	 * @param z
 	 * @param size
@@ -125,7 +125,7 @@ public class Quad3D extends Item3D {
 		}
 		return new float[] { cx / 4, cy / 4, cz / 4 };
 	}
-	
+
 	@Override
 	public float[] getSortPoint() {
 		return getCentroid();

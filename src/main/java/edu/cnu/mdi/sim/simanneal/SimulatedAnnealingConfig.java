@@ -20,7 +20,7 @@ public record SimulatedAnnealingConfig(
                 0L
         );
     }
-    
+
     public SimulatedAnnealingConfig withProgressEverySteps(long steps) {
         return new SimulatedAnnealingConfig(
             this.maxSteps(),

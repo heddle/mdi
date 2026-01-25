@@ -47,7 +47,7 @@ public class ExtraTabPanel extends JPanel {
 		c.weightx = 1.0;
 
 		_draw = new JCheckBox("Draw extra text block", _params.extraDrawing());
-		_border = new JCheckBox("Draw extra border", _params.isExtraBorder());
+		_border = new JCheckBox("Draw extra text border", _params.extraBorder());
 
 		_fontChooser = new FontChoosePanel("Extra text font", _params.getExtraFont());
 

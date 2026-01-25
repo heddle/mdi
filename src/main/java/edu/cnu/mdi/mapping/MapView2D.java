@@ -17,7 +17,7 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
-import edu.cnu.mdi.graphics.text.UnicodeSupport;
+import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
 import edu.cnu.mdi.view.BaseView;
 
@@ -61,9 +61,9 @@ public class MapView2D extends BaseView implements MouseMotionListener {
 
 	// workspace and strings for feedback
 	private Point2D.Double _latLon = new Point2D.Double();
-	private static String _latPrefix = "$yellow$Lat (" + UnicodeSupport.SMALL_PHI + ")";
-	private static String _lonPrefix = "$yellow$Lon (" + UnicodeSupport.SMALL_LAMBDA + ")";
-	private static String _deg = UnicodeSupport.DEGREE;
+	private static String _latPrefix = "$yellow$Lat (" + UnicodeUtils.SMALL_PHI + ")";
+	private static String _lonPrefix = "$yellow$Lon (" + UnicodeUtils.SMALL_LAMBDA + ")";
+	private static String _deg = UnicodeUtils.DEGREE;
 
 	// default side panel width (control panel + feedback)
 	private static final int SIDE_PANEL_WIDTH = 220;

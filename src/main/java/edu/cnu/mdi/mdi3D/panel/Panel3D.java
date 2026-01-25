@@ -1,14 +1,9 @@
 package edu.cnu.mdi.mdi3D.panel;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.util.Vector;
 
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import com.jogamp.opengl.GL;
@@ -29,12 +24,7 @@ import com.jogamp.opengl.glu.GLU;
 import edu.cnu.mdi.mdi3D.adapter3D.KeyAdapter3D;
 import edu.cnu.mdi.mdi3D.adapter3D.KeyBindings3D;
 import edu.cnu.mdi.mdi3D.adapter3D.MouseAdapter3D;
-import edu.cnu.mdi.mdi3D.item3D.Axes3D;
-import edu.cnu.mdi.mdi3D.item3D.Cube;
-import edu.cnu.mdi.mdi3D.item3D.Cylinder;
 import edu.cnu.mdi.mdi3D.item3D.Item3D;
-import edu.cnu.mdi.mdi3D.item3D.PointSet3D;
-import edu.cnu.mdi.mdi3D.item3D.Triangle3D;
 
 @SuppressWarnings("serial")
 public class Panel3D extends JPanel implements GLEventListener {
@@ -147,7 +137,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 		rotateZ(angleZ);
 
 		createInitialItems();
-		
+
 	}
 
 	public void createInitialItems() {
@@ -253,8 +243,8 @@ public class Panel3D extends JPanel implements GLEventListener {
 
 	@Override
 	public void display(GLAutoDrawable drawable) {
-		
-		
+
+
 		final GL2 gl = drawable.getGL().getGL2();
 
 		gl.glEnable(GL.GL_DEPTH_TEST);
@@ -400,7 +390,7 @@ public class Panel3D extends JPanel implements GLEventListener {
 		}
 		gljpanel.display();
 	}
-	
+
 	/**
 	 * Adds the given item to the panel.
 	 */
@@ -567,7 +557,9 @@ public class Panel3D extends JPanel implements GLEventListener {
 	        float za = viewZ(a, R, sx, sy, sz, tx, ty, tz);
 	        float zb = viewZ(b, R, sx, sy, sz, tx, ty, tz);
 	        int c = Float.compare(za, zb);           // ascending: more negative first
-	        if (c != 0) return c;
+	        if (c != 0) {
+				return c;
+			}
 	        return Integer.compare(System.identityHashCode(a), System.identityHashCode(b));
 	    });	}
 

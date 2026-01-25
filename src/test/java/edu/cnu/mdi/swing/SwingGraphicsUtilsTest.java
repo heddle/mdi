@@ -75,7 +75,6 @@ public class SwingGraphicsUtilsTest {
      * has zero size.
      */
     @Test
-    @SuppressWarnings("deprecation")
     void createComponentImageBuffer_zeroSize_returnsNull() {
         Component c = new TestComponent(Color.BLACK, 0, 0);
         assertEquals(new Dimension(0, 0), c.getSize(), "Expected size 0x0");

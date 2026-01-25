@@ -21,14 +21,14 @@ import edu.cnu.mdi.container.IContainer;
  *
  * <h2>Forward projection</h2> From Snyder (spherical form), with Earth radius R
  * = 1:
- * 
+ *
  * <pre>
  *   k = sqrt( 2 / (1 + sin φ₀ sin φ + cos φ₀ cos φ cos(λ - λ₀)) )
  *
  *   x = k cos φ sin(λ - λ₀)
  *   y = k (cos φ₀ sin φ - sin φ₀ cos φ cos(λ - λ₀))
  * </pre>
- * 
+ *
  * where:
  * <ul>
  * <li>λ, φ are the input longitude and latitude (in radians)</li>
@@ -36,7 +36,7 @@ import edu.cnu.mdi.container.IContainer;
  * </ul>
  *
  * <h2>Inverse projection</h2>
- * 
+ *
  * <pre>
  *   ρ = sqrt(x² + y²)
  *   c = 2 asin(ρ / 2)
@@ -45,7 +45,7 @@ import edu.cnu.mdi.container.IContainer;
  *   λ = λ₀ + atan2( x sin c,
  *                   ρ cos φ₀ cos c - y sin φ₀ sin c )
  * </pre>
- * 
+ *
  * with the special case {@code ρ = 0} corresponding to the center point (λ₀,
  * φ₀).
  * <p>
@@ -102,7 +102,7 @@ public class LambertEqualAreaProjection implements IMapProjection {
 	 * Convenience constructor centered at (0, 0).
 	 * <p>
 	 * Equivalent to:
-	 * 
+	 *
 	 * <pre>
 	 * new LambertEqualAreaProjection(0.0, 0.0);
 	 * </pre>

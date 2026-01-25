@@ -13,7 +13,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.optim.SimpleVectorValueChecker;
 
-import edu.cnu.mdi.graphics.text.UnicodeSupport;
+import edu.cnu.mdi.graphics.text.UnicodeUtils;
 
 /**
  * Base class for least-squares fitters built on Apache Commons Math 3.x
@@ -43,33 +43,33 @@ import edu.cnu.mdi.graphics.text.UnicodeSupport;
  *
  * <h3>Chi-square note (Commons Math 3.6.1)</h3> {@code Optimum.getCost()}
  * returns {@code sqrt(sum r_i^2)}. Therefore:
- * 
+ *
  * <pre>
  * chiSquare = cost ^ 2
  * </pre>
- * 
+ *
  * If you supply weights as {@code 1/sigmaY^2} in a diagonal weight matrix, this
  * corresponds to the conventional weighted chi-square.
  */
 public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
 
 	// helpers from unicode
-	public static final String SUB0 = UnicodeSupport.SUB0;
-	public static final String SUB1 = UnicodeSupport.SUB1;
-	public static final String SUB2 = UnicodeSupport.SUB2;
-	public static final String SUBN = UnicodeSupport.SUBN;
-	public static final String SUP0 = UnicodeSupport.SUPER0;
-	public static final String SUP1 = UnicodeSupport.SUPER1;
-	public static final String SUP2 = UnicodeSupport.SUPER2;
-	public static final String SUPN = UnicodeSupport.SUPERN;
-	public static final String MU = UnicodeSupport.SMALL_MU;
-	public static final String SMALLSIG = UnicodeSupport.SMALL_SIGMA;
-	public static final String CAPSIG = UnicodeSupport.CAPITAL_SIGMA;
-	public static final String OMEGA = UnicodeSupport.SMALL_OMEGA;
-	public static final String PHI = UnicodeSupport.SMALL_PHI;
+	public static final String SUB0 = UnicodeUtils.SUB0;
+	public static final String SUB1 = UnicodeUtils.SUB1;
+	public static final String SUB2 = UnicodeUtils.SUB2;
+	public static final String SUBN = UnicodeUtils.SUBN;
+	public static final String SUP0 = UnicodeUtils.SUPER0;
+	public static final String SUP1 = UnicodeUtils.SUPER1;
+	public static final String SUP2 = UnicodeUtils.SUPER2;
+	public static final String SUPN = UnicodeUtils.SUPERN;
+	public static final String MU = UnicodeUtils.SMALL_MU;
+	public static final String SMALLSIG = UnicodeUtils.SMALL_SIGMA;
+	public static final String CAPSIG = UnicodeUtils.CAPITAL_SIGMA;
+	public static final String OMEGA = UnicodeUtils.SMALL_OMEGA;
+	public static final String PHI = UnicodeUtils.SMALL_PHI;
 
-	public String[] subArray = { SUB0, SUB1, SUB2, UnicodeSupport.SUB3, UnicodeSupport.SUB4, UnicodeSupport.SUB5,
-			UnicodeSupport.SUB6, UnicodeSupport.SUB7, UnicodeSupport.SUB8, UnicodeSupport.SUB9 };
+	public String[] subArray = { SUB0, SUB1, SUB2, UnicodeUtils.SUB3, UnicodeUtils.SUB4, UnicodeUtils.SUB5,
+			UnicodeUtils.SUB6, UnicodeUtils.SUB7, UnicodeUtils.SUB8, UnicodeUtils.SUB9 };
 
 	/** Optimizer used for the fit (often Levenberg-Marquardt). */
 	protected final LeastSquaresOptimizer optimizer;
@@ -363,7 +363,7 @@ public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
 
 	/**
 	 * Get the descriptive string getter for this fitter.
-	 * 
+	 *
 	 * @return the string getter
 	 */
 	public abstract IFitStringGetter getStringGetter();

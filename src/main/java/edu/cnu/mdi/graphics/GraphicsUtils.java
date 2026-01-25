@@ -41,8 +41,6 @@ import edu.cnu.mdi.graphics.text.Snippet;
  */
 public class GraphicsUtils {
 
-	private static String _dirname = null;
-
 	/**
 	 * One default color for highlighted drawing.
 	 */

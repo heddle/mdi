@@ -119,7 +119,7 @@ public class BaseView extends JInternalFrame
 
 	/** View popup menu  */
 	protected final ViewPopupMenu viewPopupMenu;
-	
+
 	/** Optional toolbar (if configured). */
 	private BaseToolBar toolBar;
 
@@ -467,13 +467,13 @@ public class BaseView extends JInternalFrame
 	public VirtualWindowItem getVirtualItem() {
 		return virtualItem;
 	}
-	
+
 	/**
 	 * Apply a focus-fix mouse listener to the given menu that selects the view
 	 * when the mouse enters the menu. This works around focus issues on some platforms
 	 * and look-and-feels. The symptom is that the view does not gain focus when the
 	 * menu is shown and you get a menu "flash".
-	 * 
+	 *
 	 * @param menu the menu to apply the fix to.
 	 * @param view the view to select.
 	 */
@@ -482,8 +482,12 @@ public class BaseView extends JInternalFrame
 	        @Override
 	        public void mouseEntered(MouseEvent e) {
 	            try {
-	                if (view.isIcon()) view.setIcon(false); // Ensure it's not minimized
-	                if (!view.isSelected()) view.setSelected(true);
+	                if (view.isIcon()) {
+						view.setIcon(false); // Ensure it's not minimized
+					}
+	                if (!view.isSelected()) {
+						view.setSelected(true);
+					}
 	            } catch (Exception ex) { /* Vetoed */ }
 	        }
 	    });
@@ -500,14 +504,14 @@ public class BaseView extends JInternalFrame
 	 * @param me the triggering mouse event.
 	 */
 	public void handleMagnify(final MouseEvent me) {
-		
+
 		//check if on EDT thread
-		
+
 		if (!SwingUtilities.isEventDispatchThread()) {
 			SwingUtilities.invokeLater(() -> handleMagnify(me));
 			return;
 		}
-		
+
 		IContainer cont = getContainer();
 		if (cont instanceof BaseContainer) {
 			MagnifyWindow.magnify((BaseContainer) cont, me);
@@ -935,7 +939,7 @@ public class BaseView extends JInternalFrame
 
 			// Optional toolbar.
 			if (cfg.toolBits > 0) {
-				view.toolBar = new BaseToolBar(container.getComponent(), null, 
+				view.toolBar = new BaseToolBar(container.getComponent(), null,
 						cfg.toolBits, ARubberband.Policy.RECTANGLE, cfg.boxZoomPolicy);
 				view.getContentPane().add(view.toolBar, BorderLayout.NORTH);
 				if (container instanceof BaseContainer baseCont) {
@@ -944,7 +948,7 @@ public class BaseView extends JInternalFrame
 			}
 		}
 	}
-	
+
 	/**
 	 * Returns the optional toolbar for this view.
 	 *

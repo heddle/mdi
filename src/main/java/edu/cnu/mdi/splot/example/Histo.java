@@ -64,7 +64,7 @@ public class Histo extends AExample {
 		style.setBorderColor(Color.black);
 
 		// basic example, not fitting
-		hc.setCurveMethod(CurveDrawingMethod.GAUSSIAN);
+		hc.setCurveDrawingMethod(CurveDrawingMethod.GAUSSIAN);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6);
 		params.setNumDecimalY(0);

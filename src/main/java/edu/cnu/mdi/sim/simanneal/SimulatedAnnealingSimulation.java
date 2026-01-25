@@ -355,13 +355,13 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 
 		return true;
 	}
-	
+
 	/** Current absolute temperature used in Metropolis acceptance (includes T0). */
 	public double getAbsoluteTemperature() {
 	    return temperatureAt(step); // or store lastT
 	}
 
-	
+
 	/**
 	 * Called after each accepted move.
 	 * <p>
@@ -407,7 +407,7 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 	private static String fmt(double x) {
 		return String.format("%.4g", x);
 	}
-	
+
 	// notify listeners of message
 	private void notifyListeners(double temperature, double energy, int option) {
 
@@ -426,15 +426,16 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 
 				IAcceptedMoveListener listener = (IAcceptedMoveListener) listeners[i + 1];
 
-				if (option == 1)
+				if (option == 1) {
 					listener.newBest(temperature, energy);
-				else if (option == 0)
+				} else if (option == 0) {
 					listener.acceptedMove(temperature, energy);
+				}
 
 			}
 		}
 	}
-	
+
 	/**
 	 * Add an AcceptedMoveListener.
 	 *

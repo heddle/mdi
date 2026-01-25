@@ -14,7 +14,6 @@ import edu.cnu.mdi.app.DemoApp;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
-import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.properties.PropertySupport;
@@ -37,7 +36,7 @@ public class NetworkLayoutDemoView extends BaseView {
 	 * Construct a Network Layout Demo View with the given properties. It is a demo,
 	 * not a serious application. It demonstrates placing network devices on a
 	 * canvas, with feedback and some custom toolbar buttons.
-	 * 
+	 *
 	 * @param keyVals key-value pairs for view properties. See how it is used in
 	 *                {@link DemoApp where this view is instantiated}.
 	 */
@@ -97,10 +96,10 @@ public class NetworkLayoutDemoView extends BaseView {
 			new DeviceButton(this, ds);
 		}
 	}
-	
+
 	/**
 	 * Get the device layer where device items are placed.
-	 * 
+	 *
 	 * @return the device layer
 	 */
 	public Layer getDeviceLayer() {
@@ -127,7 +126,7 @@ public class NetworkLayoutDemoView extends BaseView {
 
 	/**
 	 * Get the grid drawer used in this view.
-	 * 
+	 *
 	 * @return the grid drawer
 	 */
 	public GridDrawer getGridDrawer() {
@@ -136,7 +135,7 @@ public class NetworkLayoutDemoView extends BaseView {
 
 	/**
 	 * Get all the device items currently on the device layer.
-	 * 
+	 *
 	 * @return list of all device items
 	 */
 	public List<DeviceItem> getAllDevices() {

@@ -465,7 +465,7 @@ public abstract class Item3D {
 	 * Set the alpha of a color. If it already has the given alpha it just returns
 	 * the color. If not, it makes a new color with the same RGB components and the
 	 * new alpha
-	 * 
+	 *
 	 * @param color the color to change
 	 * @param alpha the alpha [0..255] 0 is transparent, 255 is opaque
 	 * @return the color
@@ -480,7 +480,7 @@ public abstract class Item3D {
 
 		return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
 	}
-	
+
 	/**
 	 * A representative point for transparent sorting, in world coordinates.
 	 * Default is origin. Override in items with a natural center (Sphere, Cube, Cylinder, etc.).

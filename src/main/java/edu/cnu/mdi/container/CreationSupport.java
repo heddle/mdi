@@ -10,11 +10,10 @@ import java.awt.geom.Rectangle2D;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
-import edu.cnu.mdi.dialog.LabelDialog;
 import edu.cnu.mdi.dialog.TextEditDialog;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
-import edu.cnu.mdi.graphics.text.UnicodeSupport;
+import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.EllipseItem;
 import edu.cnu.mdi.item.Layer;
@@ -34,7 +33,7 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  *
  */
 public class CreationSupport {
-	
+
 	/**
 	 * From a given screen rectangle, create a rectangle item.
 	 *
@@ -56,7 +55,7 @@ public class CreationSupport {
 				return menu;
 			}
 		};
-		
+
 		defaultConfigureItem(item);
 		return item;
 	}
@@ -111,7 +110,7 @@ public class CreationSupport {
 		defaultConfigureItem(item);
 		return item;
 	}
-	
+
 	/**
 	 * Create a radarc item from the given parameters, probably obtained by
 	 * rubberbanding.
@@ -142,7 +141,7 @@ public class CreationSupport {
 		defaultConfigureItem(item);
 		return item;
 	}
-	
+
 	/**
 	 * Create a text item at the given screen location.
 	 *
@@ -155,12 +154,12 @@ public class CreationSupport {
 		TextEditDialog textDialog = new TextEditDialog();
 		WindowPlacement.centerComponent(textDialog);
 		textDialog.setVisible(true);
-		
+
 		if (textDialog.isCancelled()) {
 			return null;
 		}
-		
-		String resultString = UnicodeSupport.specialCharReplace(textDialog.getText());
+
+		String resultString = UnicodeUtils.specialCharReplace(textDialog.getText());
 		if (resultString == null || resultString.isEmpty()) {
 			return null;
 		}
@@ -172,7 +171,7 @@ public class CreationSupport {
 		container.localToWorld(location, wp);
 		// Create the item and place it on the annotation layer.
 		TextItem item = new TextItem(layer, wp, font, resultString,
-				textDialog.getLineColor(), textDialog.getFillColor(), 
+				textDialog.getLineColor(), textDialog.getFillColor(),
 				textDialog.getTextColor()) {
 			@Override
 			public JPopupMenu createPopupMenu() {
@@ -181,7 +180,7 @@ public class CreationSupport {
 				// Add custom menu items
 				addStyleEdit(menu, this);
 				return menu;
-			}			
+			}
 		};
 		defaultConfigureItem(item);
 		item.setResizable(false); // Text items are not resizable by default.
@@ -190,7 +189,7 @@ public class CreationSupport {
 
 	// Add "Edit Style..." menu item to the given popup menu for the given item.
 	private static void addStyleEdit(final JPopupMenu menu, final AItem item) {
-		
+
 		JMenuItem styleMenuItem = new JMenuItem("Edit Style...");
 
 		ActionListener al = e -> {
@@ -212,7 +211,7 @@ public class CreationSupport {
 		menu.add(styleMenuItem);
 	}
 
-	
+
 	// Apply default configuration to the given item.
 	private static void defaultConfigureItem(AItem item) {
 		item.setRightClickable(true);

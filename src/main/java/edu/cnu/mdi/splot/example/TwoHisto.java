@@ -73,12 +73,12 @@ public class TwoHisto extends AExample {
 
 		style1.setFillColor(new Color(196, 196, 196, 64));
 		style1.setBorderColor(Color.black);
-		hc1.setCurveMethod(CurveDrawingMethod.GAUSSIAN);
+		hc1.setCurveDrawingMethod(CurveDrawingMethod.GAUSSIAN);
 
 		style2.setFillColor(new Color(196, 196, 196, 64));
 		style2.setLineColor(Color.red);
 		style2.setBorderColor(Color.red);
-		hc2.setCurveMethod(CurveDrawingMethod.GAUSSIAN);
+		hc2.setCurveDrawingMethod(CurveDrawingMethod.GAUSSIAN);
 
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6);

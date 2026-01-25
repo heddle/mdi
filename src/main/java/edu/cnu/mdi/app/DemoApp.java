@@ -3,15 +3,11 @@ package edu.cnu.mdi.app;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Font;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
-import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.util.List;
 
 import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
 import com.jogamp.opengl.GLAutoDrawable;
@@ -36,6 +32,7 @@ import edu.cnu.mdi.properties.PropertySupport;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
 import edu.cnu.mdi.sim.simanneal.tspdemo.TspDemoView;
 import edu.cnu.mdi.splot.example.AnotherGaussian;
+import edu.cnu.mdi.splot.example.CubicLogLog;
 import edu.cnu.mdi.splot.example.ErfTest;
 import edu.cnu.mdi.splot.example.ErfcTest;
 import edu.cnu.mdi.splot.example.Gaussian;
@@ -147,8 +144,8 @@ public class DemoApp extends BaseMDIApplication {
 	public static DemoApp getInstance() {
 		if (INSTANCE == null) {
 			INSTANCE = new DemoApp(PropertySupport.TITLE, "Demo Application of MDI Views",
-					PropertySupport.BACKGROUNDIMAGE, 
-					Environment.MDI_RESOURCE_PATH + "images/mdilogo.png", 
+					PropertySupport.BACKGROUNDIMAGE,
+					Environment.MDI_RESOURCE_PATH + "images/mdilogo.png",
 					PropertySupport.FRACTION, 0.8);
 		}
 		return INSTANCE;
@@ -181,7 +178,7 @@ public class DemoApp extends BaseMDIApplication {
 
 		// Network declutter demo view
 		networkDeclutterDemoView = createNetworkDeclutterDemoView();
-		
+
 		// TSP demo view
 		tspDemoView = createTspDemoView();
 
@@ -250,7 +247,7 @@ public class DemoApp extends BaseMDIApplication {
 		// Column 3: network declutter demo upper right
 		virtualView.moveTo(networkDeclutterDemoView, 3, VirtualView.UPPERRIGHT);
 		networkDeclutterDemoView.setVisible(true);
-		
+
 		// Column 3: TSP demo lower left
 		virtualView.moveTo(tspDemoView, 3, VirtualView.BOTTOMLEFT);
 		tspDemoView.setVisible(true);
@@ -390,7 +387,7 @@ public class DemoApp extends BaseMDIApplication {
 							float ymoon = zmoon * (float) Math.sin(tilt);
 							float zt = zmoon * (float) Math.cos(tilt);
 							moon.setCenter(xmoon, ymoon, zt);
-							
+
 							t *= periodFact; // faster orbit for satellite
 							float xsat = satOrbitalRad * (float) Math.cos(t);
 							float zsat = satOrbitalRad * (float)Math.sin(t);
@@ -431,7 +428,8 @@ public class DemoApp extends BaseMDIApplication {
 		view.getJMenuBar().add(examplesMenu);
 
 		JMenuItem gaussianItem = new JMenuItem("Gaussian Fit");
-		JMenuItem anotheGaussianItem = new JMenuItem("Another Gaussian");
+		JMenuItem anotherGaussianItem = new JMenuItem("Another Gaussian");
+		JMenuItem logItem = new JMenuItem("Log-log Plot");
 		JMenuItem erfcItem = new JMenuItem("Erfc Fit");
 		JMenuItem erfItem = new JMenuItem("Erf Fit");
 		JMenuItem histoItem = new JMenuItem("Histogram");
@@ -448,8 +446,13 @@ public class DemoApp extends BaseMDIApplication {
 			view.switchToExample(example);
 		});
 
-		anotheGaussianItem.addActionListener(e -> {
+		anotherGaussianItem.addActionListener(e -> {
 			AnotherGaussian example = new AnotherGaussian(true);
+			view.switchToExample(example);
+		});
+		
+		logItem.addActionListener(e -> {
+			CubicLogLog example = new CubicLogLog(true);
 			view.switchToExample(example);
 		});
 
@@ -504,7 +507,8 @@ public class DemoApp extends BaseMDIApplication {
 		});
 
 		examplesMenu.add(gaussianItem);
-		examplesMenu.add(anotheGaussianItem);
+		examplesMenu.add(anotherGaussianItem);
+		examplesMenu.add(logItem);
 		examplesMenu.add(erfcItem);
 		examplesMenu.add(erfItem);
 		examplesMenu.add(histoItem);
@@ -529,7 +533,7 @@ public class DemoApp extends BaseMDIApplication {
 				new Rectangle2D.Double(0.0, 0.0, 1, 1));
 		return view;
 	}
-	
+
 	/**
 	 * Create the TSP demo view.
 	 */

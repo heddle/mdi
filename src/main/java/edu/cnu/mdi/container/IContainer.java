@@ -57,7 +57,7 @@ public interface IContainer {
 
 	/**
 	 * Get the default user content layer for this container.
-	 * 
+	 *
 	 * @return the default user content layer (never null after construction)
 	 */
 	public Layer getDefaultLayer();
@@ -156,7 +156,7 @@ public interface IContainer {
 	/**
 	 * Reset the world system to a new value. Resets the default and previous world
 	 * systems as well.
-	 * 
+	 *
 	 * @param worldSystem the new world system.
 	 */
 	public void resetWorldSystem(Rectangle2D.Double worldSystem);

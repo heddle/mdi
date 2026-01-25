@@ -303,7 +303,7 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 			CurveDrawingMethod fitType = ecb.getSelectedEnum();
 
 			if (curve.getCurveDrawingMethod() != fitType) {
-				curve.setCurveMethod(fitType);
+				curve.setCurveDrawingMethod(fitType);
 				_fitPanel.fitSpecific(curve.getCurveDrawingMethod());
 
 				_fitPanel.reconfigure(curve);
@@ -401,21 +401,18 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 
 		// Symbol
 		if (_stylePanel.getSymbolSelector() != null) {
-			@SuppressWarnings("unchecked")
 			EnumComboBox<SymbolType> cb = _stylePanel.getSymbolSelector();
 			cb.setSelectedItem(curve.getStyle().getSymbolType());
 		}
 
 		// Line style
 		if (_stylePanel.getBorderSelector() != null) {
-			@SuppressWarnings("unchecked")
 			EnumComboBox<LineStyle> cb = _stylePanel.getBorderSelector();
 			cb.setSelectedItem(curve.getStyle().getLineStyle());
 		}
 
 		// Fit / drawing method
 		if (_fitPanel.getFitSelector() != null) {
-			@SuppressWarnings("unchecked")
 			EnumComboBox<CurveDrawingMethod> cb = _fitPanel.getFitSelector();
 			cb.setSelectedItem(curve.getCurveDrawingMethod());
 		}

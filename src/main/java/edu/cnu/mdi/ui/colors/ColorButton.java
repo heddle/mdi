@@ -16,7 +16,7 @@ import javax.swing.JButton;
  */
 @SuppressWarnings("serial")
 public class ColorButton extends JButton {
-	
+
 	private Color color;
 
 	public ColorButton(String label, Color initial) {

@@ -5,10 +5,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -17,7 +15,7 @@ import javax.swing.SwingConstants;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.dialog.TextEditDialog;
-import edu.cnu.mdi.graphics.text.UnicodeSupport;
+import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.swing.WindowPlacement;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.TextUtils;
@@ -43,7 +41,7 @@ public class TextItem extends RectangleItem {
 
 	// makes the bounds bigger than the text by a bit
 	private static final int MARGIN = 4;
-	
+
 	private static final float LINESIZE = 1.0f;
 
 	// default font
@@ -54,7 +52,7 @@ public class TextItem extends RectangleItem {
 
 	// when text is multi-line, holds the lines
 	private String _lines[];
-	
+
 	// the text alignment
 	private int alignment = SwingConstants.LEFT;
 
@@ -88,22 +86,22 @@ public class TextItem extends RectangleItem {
 
 		Point cp = new Point();
 		container.worldToLocal(cp, _focus);
-		TextUtils.drawRotatedText(g, cp, getText(), _font, _style.getTextColor(), 
+		TextUtils.drawRotatedText(g, cp, getText(), _font, _style.getTextColor(),
 				getAzimuth(), alignment);
 	}
-	
+
 	/**
 	 * Get the text alignment.
-	 * 
+	 *
 	 * @return the alignment (SwingConstants.LEFT, CENTER, RIGHT)
 	 */
 	public int getAlignment() {
 		return alignment;
 	}
-	
+
 	/**
 	 * Set the text alignment.
-	 * 
+	 *
 	 * @param alignment the alignment (SwingConstants.LEFT, CENTER, RIGHT)
 	 */
 	public void setAlignment(int alignment) {
@@ -122,24 +120,24 @@ public class TextItem extends RectangleItem {
 		Point2D.Double tl = new Point2D.Double(_focus.x - size.width / 2, _focus.y + size.height / 2);
 		return new Point2D.Double[] { bl, br, tr, tl };
 	}
-	
+
 	public Point2D.Double[] getRotatedPoints(double azimuthDegrees) {
 	    // 1. Get the unrotated corners
 	    Point2D.Double[] points = getUnrotatedPoints();
-	    
+
 	    // 2. Create the rotation transform
 	    // Note: Use negative degrees for counter-clockwise rotation in standard AWT
 	    double angleInRadians = Math.toRadians(-azimuthDegrees);
 	    AffineTransform at = AffineTransform.getRotateInstance(angleInRadians, _focus.x, _focus.y);
-	    
+
 	    // 3. Transform the points
 	    Point2D.Double[] rotatedPoints = new Point2D.Double[points.length];
 	    at.transform(points, 0, rotatedPoints, 0, points.length);
-	    
+
 	    return rotatedPoints;
 	}
 
-	
+
 	/**
 	 * Edit the text item.
 	 */
@@ -147,7 +145,7 @@ public class TextItem extends RectangleItem {
 		TextEditDialog dialog = new TextEditDialog(this);
 		WindowPlacement.centerComponent(dialog);
 		dialog.setVisible(true);
-		
+
 		if (dialog.isCancelled()) {
 			return;
 		}
@@ -185,7 +183,7 @@ public class TextItem extends RectangleItem {
 	 * @param text the text to set
 	 */
 	public void setText(String text) {
-		text = UnicodeSupport.specialCharReplace(text);
+		text = UnicodeUtils.specialCharReplace(text);
 		_lines = text.lines().toArray(String[]::new);
 	}
 

@@ -13,7 +13,7 @@ import java.awt.geom.Point2D;
  * </p>
  * <p>
  * Typical usage:
- * 
+ *
  * <pre>
  * IMapProjection mercator = ProjectionFactory.create(EProjection.MERCATOR, MapTheme.light());
  *

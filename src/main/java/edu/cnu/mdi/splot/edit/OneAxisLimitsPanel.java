@@ -9,10 +9,13 @@ import java.text.NumberFormat;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import edu.cnu.mdi.component.EnumComboBox;
+import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.PlotData;
+import edu.cnu.mdi.splot.pdata.Snapshot;
 import edu.cnu.mdi.splot.plot.LimitsMethod;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
@@ -54,12 +57,6 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 	// plot parameters
 	private PlotParameters _params;
 
-	/**
-	 * Edit the axes limits
-	 * 
-	 * @param canvas the plot canvas
-	 * @param axis   which axis
-	 */
 	public OneAxisLimitsPanel(PlotCanvas canvas, Axis axis) {
 		_canvas = canvas;
 		_params = _canvas.getParameters();
@@ -82,9 +79,6 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 			_method1 = _params.getXLimitsMethod();
 			_min1 = _params.getManualXMin();
 			_max1 = _params.getManualXMax();
-
-			_dataMin = _dataSet.xMin();
-			_dataMax = _dataSet.xMax();
 			label = new JLabel("X axis method");
 			break;
 
@@ -92,12 +86,11 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 			_method1 = _params.getYLimitsMethod();
 			_min1 = _params.getManualYMin();
 			_max1 = _params.getManualYMax();
-
-			_dataMin = _dataSet.yMin();
-			_dataMax = _dataSet.yMax();
 			label = new JLabel("Y axis method");
 			break;
 		}
+
+		computeDataLimits();
 
 		double dataDel = 0.05 * (_dataMax - _dataMin);
 		if (Double.isNaN(_min1)) {
@@ -112,6 +105,54 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 		add(p, BorderLayout.NORTH);
 	}
 
+	private void computeDataLimits() {
+		boolean wantLog = wantLogForAxis();
+
+		// Default to PlotData extrema
+		double fallbackMin = (_axis == Axis.X) ? _dataSet.xMin() : _dataSet.yMin();
+		double fallbackMax = (_axis == Axis.X) ? _dataSet.xMax() : _dataSet.yMax();
+
+		if (!wantLog) {
+			_dataMin = fallbackMin;
+			_dataMax = fallbackMax;
+			return;
+		}
+
+		// For log: find minPositive/maxPositive across all curves
+		double minPos = Double.POSITIVE_INFINITY;
+		double maxPos = Double.NEGATIVE_INFINITY;
+
+		for (ACurve c : _dataSet.getCurves()) {
+			Snapshot s = c.snapshot();
+			double[] arr = (_axis == Axis.X) ? s.x : s.y;
+			if (arr == null) {
+				continue;
+			}
+			for (double v : arr) {
+				if (v > 0.0 && Double.isFinite(v)) {
+					if (v < minPos) minPos = v;
+					if (v > maxPos) maxPos = v;
+				}
+			}
+		}
+
+		if (minPos != Double.POSITIVE_INFINITY && maxPos != Double.NEGATIVE_INFINITY) {
+			_dataMin = minPos;
+			_dataMax = maxPos;
+		} else {
+			// No positive data — keep sane fallback so UI remains usable.
+			_dataMin = fallbackMin;
+			_dataMax = fallbackMax;
+		}
+	}
+
+	private boolean wantLogForAxis() {
+		if (_axis == Axis.X) {
+			return _params.getXScale() == PlotParameters.AxisScale.LOG10;
+		}
+		return _params.getYScale() == PlotParameters.AxisScale.LOG10;
+	}
+
 	private void addCenter() {
 		JPanel p = new JPanel();
 		p.setLayout(new GridLayout(2, 1, 4, 4));
@@ -121,7 +162,6 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 		_minTF = createTF(_min1);
 		spMin.add(_minTF);
 		spMin.add(new JLabel(_axis.name() + "min (manual)"));
-		// spMin.add(Box.createHorizontalStrut(8));
 
 		JPanel spMax = new JPanel();
 		spMax.setLayout(new FlowLayout(FlowLayout.LEFT, 8, 4));
@@ -132,17 +172,13 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 		p.add(spMin);
 		p.add(spMax);
 		add(p, BorderLayout.CENTER);
-
 	}
 
 	private void fix() {
-
 		_minTF.setEnabled(_method1 == LimitsMethod.MANUALLIMITS);
 		_maxTF.setEnabled(_method1 == LimitsMethod.MANUALLIMITS);
-
 	}
 
-	// add the method combo box
 	private void addCombo(JPanel p) {
 		_methodSelector = LimitsMethod.getComboBox(_method1);
 		_methodSelector.addActionListener(this);
@@ -157,13 +193,14 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 		JFormattedTextField tf = new JFormattedTextField(numberFormat);
 		tf.setValue(defValue);
 		tf.setColumns(8);
-
 		return tf;
-
 	}
 
 	/** apply changes */
 	public void apply() {
+
+		boolean wantLog = wantLogForAxis();
+
 		switch (_axis) {
 		case X:
 			_params.setXLimitsMethod(_method1);
@@ -171,6 +208,18 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 			if (_method1 == LimitsMethod.MANUALLIMITS) {
 				_min1 = getValue(_minTF, _min1);
 				_max1 = getValue(_maxTF, _max1);
+
+				if (wantLog && (_min1 <= 0.0 || _max1 <= 0.0)) {
+					JOptionPane.showMessageDialog(
+							this,
+							"Log scale requires Xmin and Xmax to be > 0.\n"
+									+ "Your values were: Xmin=" + _min1 + ", Xmax=" + _max1 + "\n\n"
+									+ "Manual limits were not applied.",
+							"Invalid Manual Limits",
+							JOptionPane.WARNING_MESSAGE);
+					return;
+				}
+
 				_params.setXRange(_min1, _max1);
 			}
 			break;
@@ -180,15 +229,25 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 			if (_method1 == LimitsMethod.MANUALLIMITS) {
 				_min1 = getValue(_minTF, _min1);
 				_max1 = getValue(_maxTF, _max1);
+
+				if (wantLog && (_min1 <= 0.0 || _max1 <= 0.0)) {
+					JOptionPane.showMessageDialog(
+							this,
+							"Log scale requires Ymin and Ymax to be > 0.\n"
+									+ "Your values were: Ymin=" + _min1 + ", Ymax=" + _max1 + "\n\n"
+									+ "Manual limits were not applied.",
+							"Invalid Manual Limits",
+							JOptionPane.WARNING_MESSAGE);
+					return;
+				}
+
 				_params.setYRange(_min1, _max1);
 			}
 			break;
 		}
-
 	}
 
 	private double getValue(JFormattedTextField tf, double v) {
-
 		try {
 			return Double.parseDouble(tf.getText());
 		} catch (Exception e) {
@@ -199,7 +258,6 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-
 		LimitsMethod method = (LimitsMethod) _methodSelector.getSelectedEnum();
 		if (method == _method1) {
 			return;
@@ -208,5 +266,4 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 		_method1 = method;
 		fix();
 	}
-
 }

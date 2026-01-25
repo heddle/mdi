@@ -42,7 +42,7 @@ public class Vector3f {
 
 	/**
 	 * Get the length of the vector
-	 * 
+	 *
 	 * @return the length
 	 */
 	public float length() {

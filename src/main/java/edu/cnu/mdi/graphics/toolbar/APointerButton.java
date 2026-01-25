@@ -67,7 +67,7 @@ public abstract class APointerButton extends JToggleButton
         return policy;
     }
 
-    /** 
+    /**
 	 * @return cursor to use while active. Default is crosshair or default cursor
 	 *         if no rubberbanding.
 	 */
@@ -135,11 +135,7 @@ public abstract class APointerButton extends JToggleButton
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if (policy == ARubberband.Policy.NONE || canvas == null) {
-            return;
-        }
-
-        if (e.getClickCount() != 2) {
+        if (policy == ARubberband.Policy.NONE || canvas == null || (e.getClickCount() != 2)) {
             return;
         }
 

@@ -292,7 +292,7 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	/** Hook called when a refresh is requested (prior to repaint). */
 	protected void onSimulationRefresh(SimulationContext ctx) {
 	}
-	
+
 	/**
 	 * Replace the hosted engine with a new one.
 	 * <p>

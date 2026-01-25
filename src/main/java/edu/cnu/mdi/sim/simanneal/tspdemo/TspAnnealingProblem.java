@@ -20,7 +20,9 @@ public final class TspAnnealingProblem implements AnnealingProblem<TspSolution> 
     public TspSolution randomSolution(Random rng) {
         TspSolution sol = new TspSolution(model);
         sol.tour = new int[model.cityCount];
-        for (int i = 0; i < model.cityCount; i++) sol.tour[i] = i;
+        for (int i = 0; i < model.cityCount; i++) {
+			sol.tour[i] = i;
+		}
         shuffle(sol.tour, rng);
         return sol;
     }

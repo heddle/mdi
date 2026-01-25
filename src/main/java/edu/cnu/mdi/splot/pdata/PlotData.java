@@ -154,7 +154,7 @@ public class PlotData implements CurveChangeListener {
 
 	/**
 	 * Create empty plot data with one default curve.
-	 * 
+	 *
 	 * @return empty plot data
 	 */
 	public static PlotData emptyData() {
@@ -173,7 +173,7 @@ public class PlotData implements CurveChangeListener {
 
 	/**
 	 * Convenience method to determine if this is histogram plot data.
-	 * 
+	 *
 	 * @return true if histogram plot data
 	 */
 	public boolean isHistoData() {
@@ -186,7 +186,7 @@ public class PlotData implements CurveChangeListener {
 
 	/**
 	 * Determine if this is strip chart plot data.
-	 * 
+	 *
 	 * @return true if strip chart plot data
 	 */
 	public boolean isStripData() {
@@ -221,7 +221,7 @@ public class PlotData implements CurveChangeListener {
 
 	/**
 	 * Convenience: get a curve by name.
-	 * 
+	 *
 	 * @param name the curve name
 	 * @return the curve with the given name, or null if not found
 	 */
@@ -236,7 +236,7 @@ public class PlotData implements CurveChangeListener {
 
 	/**
 	 * Convenience: get the first curve. Often there is only one.
-	 * 
+	 *
 	 * @return the first curve, or null if there are no curves
 	 */
 	public ACurve getFirstCurve() {
@@ -248,7 +248,7 @@ public class PlotData implements CurveChangeListener {
 
 	/**
 	 * Determine if this is histogram plot data.
-	 * 
+	 *
 	 * @return true if histogram plot data
 	 */
 	public boolean isHistogramData() {

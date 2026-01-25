@@ -206,7 +206,7 @@ public class Curve extends ACurve {
 	// --------------------------------------------------------------------
 	// Immediate append API (NOW THREAD-SAFE)
 	// --------------------------------------------------------------------
-	
+
 	/**
 	 * Append a point and fire a DATA change event.
 	 * <p>

@@ -1,6 +1,6 @@
 package edu.cnu.mdi.graphics.text;
 
-public class UnicodeSupport {
+public class UnicodeUtils {
 
 	// subscripts and superscripts
 	public static final String SUB0 = "\u2080";
@@ -40,6 +40,7 @@ public class UnicodeSupport {
 
 	public static final String SUPERPLUS = "\u207A";
 	public static final String SUPERMINUS = "\u207B";
+	public static final String SUBMINUS = "\u208B";
 	public static final String DEGREE = "\u00B0";
 	public static final String TIMES = "\u2715";
 	public static final String PLUSMINUS = "\u00B1";
@@ -246,6 +247,107 @@ public class UnicodeSupport {
 
 		s = s.replace("\\dagger", DAGGER);
 		return s;
+	}
+	
+	/**
+	 * Get the subscript string for the given integer.
+	 * 
+	 * @param n the integer
+	 * @return the subscript string
+	 */
+	public static String getSubscript(int n, boolean isNegative) {
+		StringBuilder sb = new StringBuilder();
+		String numStr = Integer.toString(n);
+		for (int i = 0; i < numStr.length(); i++) {
+			char c = numStr.charAt(i);
+			switch (c) {
+			case '0':
+				sb.append(SUB0);
+				break;
+			case '1':
+				sb.append(SUB1);
+				break;
+			case '2':
+				sb.append(SUB2);
+				break;
+			case '3':
+				sb.append(SUB3);
+				break;
+			case '4':
+				sb.append(SUB4);
+				break;
+			case '5':
+				sb.append(SUB5);
+				break;
+			case '6':
+				sb.append(SUB6);
+				break;
+			case '7':
+				sb.append(SUB7);
+				break;
+			case '8':
+				sb.append(SUB8);
+				break;
+			case '9':
+				sb.append(SUB9);
+				break;
+			}
+		}
+		
+		if (isNegative) {
+			sb.insert(0, SUBMINUS);
+		}
+		return sb.toString();
+	}
+	
+	/**
+	 * Get the superscript string for the given integer.
+	 * 
+	 * @param n the integer
+	 * @return the superscript string
+	 */
+	public static String getSuperscript(int n, boolean isNegative) {
+		StringBuilder sb = new StringBuilder();
+		String numStr = Integer.toString(n);
+		for (int i = 0; i < numStr.length(); i++) {
+			char c = numStr.charAt(i);
+			switch (c) {
+			case '0':
+				sb.append(SUPER0);
+				break;
+			case '1':
+				sb.append(SUPER1);
+				break;
+			case '2':
+				sb.append(SUPER2);
+				break;
+			case '3':
+				sb.append(SUPER3);
+				break;
+			case '4':
+				sb.append(SUPER4);
+				break;
+			case '5':
+				sb.append(SUPER5);
+				break;
+			case '6':
+				sb.append(SUPER6);
+				break;
+			case '7':
+				sb.append(SUPER7);
+				break;
+			case '8':
+				sb.append(SUPER8);
+				break;
+			case '9':
+				sb.append(SUPER9);
+				break;
+			}
+		}
+		if (isNegative) {
+			sb.insert(0, SUPERMINUS);
+		}
+		return sb.toString();
 	}
 
 }

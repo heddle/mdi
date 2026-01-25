@@ -18,14 +18,14 @@ import edu.cnu.mdi.splot.pdata.FitVectors;
  *
  * <p>
  * Model:
- * 
+ *
  * <pre>
  *   y(x) = c0 + c1 x + c2 x^2 + ... + cN x^N
  * </pre>
  *
  * <p>
  * Returned parameter ordering:
- * 
+ *
  * <pre>
  * params[k] = c_k
  * </pre>
@@ -190,13 +190,13 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
 	 *
 	 * <p>
 	 * Value:
-	 * 
+	 *
 	 * <pre>
 	 *   y_i = sum_{k=0..deg} c_k x_i^k
 	 * </pre>
-	 * 
+	 *
 	 * Jacobian row i:
-	 * 
+	 *
 	 * <pre>
 	 *   [ 1, x, x^2, ..., x^deg ]
 	 * </pre>

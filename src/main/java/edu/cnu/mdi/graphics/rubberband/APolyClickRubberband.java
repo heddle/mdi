@@ -30,7 +30,9 @@ public abstract class APolyClickRubberband extends AClickRubberband {
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		if (!isActive()) return;
+		if (!isActive()) {
+			return;
+		}
 
 		Point p = e.getPoint();
 

@@ -114,7 +114,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 	// add the north component
 	private void addNorth() {
 		PlotParameters parameters = _canvas.getParameters();
-		
+
 		PlotToolHandler toolHandler = new PlotToolHandler(this);
 		_toolbar = toolHandler.getToolBar();
 		_canvas.setToolBar(_toolbar);

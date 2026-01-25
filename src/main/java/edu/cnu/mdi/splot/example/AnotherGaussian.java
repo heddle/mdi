@@ -71,7 +71,7 @@ public class AnotherGaussian extends AExample {
 
 		// symbol border color
 		curve.getStyle().setBorderColor(X11Colors.getX11Color("dark red"));
-		curve.setCurveMethod(CurveDrawingMethod.GAUSSIAN);
+		curve.setCurveDrawingMethod(CurveDrawingMethod.GAUSSIAN);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6).setNumDecimalY(2);
 

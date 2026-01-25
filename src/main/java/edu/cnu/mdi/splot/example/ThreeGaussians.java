@@ -89,11 +89,11 @@ public class ThreeGaussians extends AExample {
 
 		// symbol border color
 		plotData.getCurve(0).getStyle().setBorderColor(Color.darkGray);
-		plotData.getCurve(0).setCurveMethod(CurveDrawingMethod.GAUSSIANS);
+		plotData.getCurve(0).setCurveDrawingMethod(CurveDrawingMethod.GAUSSIANS);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6).setNumDecimalY(2);
-		params.mustIncludeXZero(true);
-		params.mustIncludeYZero(true);
+		params.includeXZero(true);
+		params.includeYZero(true);
 
 		String extra[] = { "This is an extra string", "This is a longer extra string",
 				"This is an even longer extra string", "This box, like the Legend, is draggable." };

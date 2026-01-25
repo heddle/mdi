@@ -129,6 +129,7 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 	 *
 	 * @param host the simulation host (non-null)
 	 */
+	@Override
 	public void bind(ISimulationHost host) {
 		this.host = Objects.requireNonNull(host, "host");
 		host.getSimulationEngine().addListener(this);
@@ -143,6 +144,7 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 	 * After unbinding, the panel becomes inert until bound again.
 	 * </p>
 	 */
+	@Override
 	public void unbind() {
 		if (host != null) {
 			host.getSimulationEngine().removeListener(this);

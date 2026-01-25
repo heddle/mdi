@@ -83,7 +83,7 @@ public class Gaussian extends AExample {
 
 		// symbol border color
 		plotData.getCurve(0).getStyle().setBorderColor(Color.darkGray);
-		plotData.getCurve(0).setCurveMethod(CurveDrawingMethod.GAUSSIAN);
+		plotData.getCurve(0).setCurveDrawingMethod(CurveDrawingMethod.GAUSSIAN);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6).setNumDecimalY(2);
 		String extra[] = { "Use the Edit Plot -> Curves..", "to change fit, colors, etc.",

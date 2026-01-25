@@ -111,7 +111,7 @@ public class Snippet {
 	public static ArrayList<Snippet> getSnippets(Font baseFont, String cstr, Component component) {
 
 		// port your old UnicodeSupport here
-		cstr = UnicodeSupport.specialCharReplace(cstr);
+		cstr = UnicodeUtils.specialCharReplace(cstr);
 
 		if (baseFont == null || cstr == null || component == null) {
 			return null;

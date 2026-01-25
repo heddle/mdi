@@ -117,7 +117,7 @@ public final class Fonts {
 	public static Font plainFontDelta(int sizeDelta) {
 		return deriveFromBase(Font.PLAIN, sizeDelta);
 	}
-	
+
 	/**
 	 * Convenience method to derive a bold font from BASE_UI_FONT using a size
 	 * delta (in points) relative to base.

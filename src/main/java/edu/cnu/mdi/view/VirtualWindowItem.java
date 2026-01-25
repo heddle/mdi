@@ -21,7 +21,7 @@ public class VirtualWindowItem extends RectangleItem {
 	private VirtualView _vview;
 
 	private BaseView _baseView;
-	
+
 	//margin for the virtual window border
 	private static final int del = 20;
 
@@ -73,7 +73,6 @@ public class VirtualWindowItem extends RectangleItem {
 	 */
 	@Override
 	public void modify() {
-		System.out.println("Modifying virtual window item...");
 
 		if (_modification.getType() == ModificationType.DRAG) {
 			_path = (Path2D.Double) (_modification.getStartPath().clone());
@@ -107,7 +106,7 @@ public class VirtualWindowItem extends RectangleItem {
 	 */
 	@Override
 	public void stopModification() {
-		
+
 		if (_modification == null) {
 			return;
 		}
@@ -116,7 +115,6 @@ public class VirtualWindowItem extends RectangleItem {
 
 			Point p = _modification.getCurrentMousePoint();
 			if (!_vview.getContainer().getComponent().getBounds().contains(p)) {
-				System.err.println("Cant drag out of vv!");
 				_vview.getContainer().refresh();
 				break;
 			}
@@ -173,7 +171,7 @@ public class VirtualWindowItem extends RectangleItem {
 
 		wr.x = offset.x + bvBounds.x + del;
 		wr.y = offset.y + world.y + world.height - (bvBounds.y + bvBounds.height) - del;
-		
+
 		wr.width = bvBounds.width - 2*del;
 		wr.height = bvBounds.height - 2*del;
 

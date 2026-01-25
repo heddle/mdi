@@ -10,6 +10,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
+import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
@@ -69,7 +70,7 @@ public class PlotTicks {
 			return;
 		}
 
-		Rectangle.Double world = _plotCanvas.getWorld();
+		Rectangle.Double world = _plotCanvas.getDataWorld();
 		if (world == null) {
 			return;
 		}
@@ -82,23 +83,37 @@ public class PlotTicks {
 		double xmax = world.getMaxX();
 		double ymax = world.getMaxY();
 
-		double delx = (xmax - xmin) / (numMajorTickX + 1);
-		double dely = (ymax - ymin) / (numMajorTickY + 1);
+		boolean xLog = _plotCanvas.isXLogActive();
+		boolean yLog = _plotCanvas.isYLogActive();
 
-		// major ticks
-		drawXTicks(g, xmin, xmax, world.getCenterY(), majorTickLen, numMajorTickX, ab, true);
-		drawYTicks(g, ymin, ymax, world.getCenterX(), majorTickLen, numMajorTickY, ab, true);
-
-		// minor ticks
-		for (int i = 0; i <= numMajorTickX; i++) {
-			double xxmin = xmin + i * delx;
-			drawXTicks(g, xxmin, xxmin + delx, world.getCenterY(), minorTickLen, numMinorTickX, ab, false);
+		// Major ticks
+		if (xLog) {
+			drawLogXTicks(g, xmin, xmax, world.getCenterY(), ab);
+		} else {
+			drawXTicks(g, xmin, xmax, world.getCenterY(), majorTickLen, numMajorTickX, ab, true);
 		}
 
-		// minor ticks
-		for (int i = 0; i <= numMajorTickY; i++) {
-			double yymin = ymin + i * dely;
-			drawYTicks(g, yymin, yymin + dely, world.getCenterX(), minorTickLen, numMinorTickY, ab, false);
+		if (yLog) {
+			drawLogYTicks(g, ymin, ymax, world.getCenterX(), ab);
+		} else {
+			drawYTicks(g, ymin, ymax, world.getCenterX(), majorTickLen, numMajorTickY, ab, true);
+		}
+
+		// Minor ticks for linear only (log draws its own minors)
+		if (!xLog) {
+			double delx = (xmax - xmin) / (numMajorTickX + 1);
+			for (int i = 0; i <= numMajorTickX; i++) {
+				double xxmin = xmin + i * delx;
+				drawXTicks(g, xxmin, xxmin + delx, world.getCenterY(), minorTickLen, numMinorTickX, ab, false);
+			}
+		}
+
+		if (!yLog) {
+			double dely = (ymax - ymin) / (numMajorTickY + 1);
+			for (int i = 0; i <= numMajorTickY; i++) {
+				double yymin = ymin + i * dely;
+				drawYTicks(g, yymin, yymin + dely, world.getCenterX(), minorTickLen, numMinorTickY, ab, false);
+			}
 		}
 
 	}
@@ -142,6 +157,98 @@ public class PlotTicks {
 		} // for
 
 	}
+	
+	private void drawLogXTicks(Graphics g, double xmin, double xmax, double yc, Rectangle ab) {
+		if (xmin <= 0 || xmax <= 0) {
+			return;
+		}
+
+		FontMetrics fm = _plotCanvas.getFontMetrics(_tickFont);
+
+		int t = ab.y;
+		int b = t + ab.height;
+		int sb = b + fm.getHeight();
+
+		int n0 = (int) Math.ceil(Math.log10(xmin));
+		int n1 = (int) Math.floor(Math.log10(xmax));
+
+		Point _pp = this._pp;
+		Point2D.Double _wp = this._wp;
+
+		for (int n = n0; n <= n1; n++) {
+			double decade = Math.pow(10.0, n);
+
+			// Major tick
+			_wp.setLocation(decade, yc);
+			_plotCanvas.worldToLocal(_pp, _wp);
+			g.drawLine(_pp.x, b, _pp.x, b - majorTickLen);
+			g.drawLine(_pp.x, t, _pp.x, t + majorTickLen);
+
+			// Label
+			String label = "10" + UnicodeUtils.getSuperscript(n, n < 0);
+
+			int sw = fm.stringWidth(label);
+			g.drawString(label, _pp.x - sw / 2, sb);
+
+			// Minor ticks (2..9)
+			for (int m = 2; m <= 9; m++) {
+				double v = m * decade;
+				if (v < xmin || v > xmax) {
+					continue;
+				}
+				_wp.setLocation(v, yc);
+				_plotCanvas.worldToLocal(_pp, _wp);
+				g.drawLine(_pp.x, b, _pp.x, b - minorTickLen);
+				g.drawLine(_pp.x, t, _pp.x, t + minorTickLen);
+			}
+		}
+	}
+
+	private void drawLogYTicks(Graphics g, double ymin, double ymax, double xc, Rectangle ab) {
+		if (ymin <= 0 || ymax <= 0) {
+			return;
+		}
+
+		FontMetrics fm = _plotCanvas.getFontMetrics(_tickFont);
+
+		int l = ab.x;
+		int r = l + ab.width;
+		int sb = l - 6; // a little left of axis
+
+		int n0 = (int) Math.ceil(Math.log10(ymin));
+		int n1 = (int) Math.floor(Math.log10(ymax));
+
+		Point _pp = this._pp;
+		Point2D.Double _wp = this._wp;
+
+		for (int n = n0; n <= n1; n++) {
+			double decade = Math.pow(10.0, n);
+
+			// Major tick
+			_wp.setLocation(xc, decade);
+			_plotCanvas.worldToLocal(_pp, _wp);
+			g.drawLine(l, _pp.y, l + majorTickLen, _pp.y);
+			g.drawLine(r, _pp.y, r - majorTickLen, _pp.y);
+
+			// Label (rotated like your linear y labels)
+			String label = "10" + UnicodeUtils.getSuperscript(n, n < 0);
+			int sw = fm.stringWidth(label);
+			GraphicsUtils.drawRotatedText((Graphics2D) g, label, _tickFont, sb, _pp.y + sw / 2, 0, 0, -90);
+
+			// Minor ticks (2..9)
+			for (int m = 2; m <= 9; m++) {
+				double v = m * decade;
+				if (v < ymin || v > ymax) {
+					continue;
+				}
+				_wp.setLocation(xc, v);
+				_plotCanvas.worldToLocal(_pp, _wp);
+				g.drawLine(l, _pp.y, l + minorTickLen, _pp.y);
+				g.drawLine(r, _pp.y, r - minorTickLen, _pp.y);
+			}
+		}
+	}
+
 
 	// draw x tick marks
 	private void drawXTicks(Graphics g, double xmin, double xmax, double yc, int ticklen, int numtick, Rectangle ab,

@@ -13,7 +13,7 @@ import java.util.List;
 import javax.swing.SwingConstants;
 
 public class TextUtils {
-	
+
 	/**
 	 * Draws rotated multi-line text with specified alignment.
 	 * @param g the Graphics context
@@ -24,7 +24,7 @@ public class TextUtils {
 	 * @param theta the rotation angle in degrees
 	 * @param align Use SwingConstants.LEFT, CENTER, or RIGHT
 	 */
-	public static void drawRotatedText(Graphics g, Point cp, String s, 
+	public static void drawRotatedText(Graphics g, Point cp, String s,
 	        Font font, Color tcolor, double theta, int align) {
 	    Graphics2D g2d = (Graphics2D) g.create();
 
@@ -40,7 +40,7 @@ public class TextUtils {
 	    // Apply transformations
 	    g2d.translate(cp.x, cp.y);
 	    g2d.rotate(Math.toRadians(theta));
-	    
+
 	    // Calculate max width for the whole block
 	    int maxWidth = 0;
 	    for (String line : lines) {
@@ -76,7 +76,7 @@ public class TextUtils {
 
 	    g2d.dispose();
 	}
-	
+
 	/**
 	 * Calculate the bounding rectangle for a block of text with given margins and line spacing.
 	 *
@@ -89,14 +89,14 @@ public class TextUtils {
 	 * @param lineSpacing the line spacing factor (1.0 = normal, >1.0 = more space)
 	 * @return the bounding Rectangle for the text block
 	 */
-	public static Rectangle textBounds(String text, FontMetrics fm, 
-            int leftMargin, int rightMargin, 
-            int topMargin, int bottomMargin, 
+	public static Rectangle textBounds(String text, FontMetrics fm,
+            int leftMargin, int rightMargin,
+            int topMargin, int bottomMargin,
             float lineSpacing) {
 		String lines[] = text.lines().toArray(String[]::new);
 		return textBounds(lines, fm, leftMargin, rightMargin, topMargin, bottomMargin, lineSpacing);
 	}
-	
+
 	/**
 	 * Calculate the bounding rectangle for a block of text with given margins and line spacing.
 	 *
@@ -109,17 +109,17 @@ public class TextUtils {
 	 * @param lineSpacing the line spacing factor (1.0 = normal, >1.0 = more space)
 	 * @return the bounding Rectangle for the text block
 	 */
-	public static Rectangle textBounds(String[] lines, FontMetrics fm, 
-	                            int leftMargin, int rightMargin, 
-	                            int topMargin, int bottomMargin, 
+	public static Rectangle textBounds(String[] lines, FontMetrics fm,
+	                            int leftMargin, int rightMargin,
+	                            int topMargin, int bottomMargin,
 	                            float lineSpacing) {
-	    
+
 	    // 1. Reasonable Clamps (Safety measures for 2026 standards)
 	    leftMargin = Math.max(0, Math.min(leftMargin, 500));
 	    rightMargin = Math.max(0, Math.min(rightMargin, 500));
 	    topMargin = Math.max(0, Math.min(topMargin, 500));
 	    bottomMargin = Math.max(0, Math.min(bottomMargin, 500));
-	    
+
 	    // Clamp lineSpacing: 1.0 is standard; below 0.5 is unreadable
 	    lineSpacing = Math.max(0.5f, Math.min(lineSpacing, 3.0f));
 
@@ -147,9 +147,9 @@ public class TextUtils {
 
 	    // 4. Return Final Bounds
 	    return new Rectangle(
-	        0, 
-	        0, 
-	        maxWidth + leftMargin + rightMargin, 
+	        0,
+	        0,
+	        maxWidth + leftMargin + rightMargin,
 	        totalTextHeight + topMargin + bottomMargin
 	    );
 	}

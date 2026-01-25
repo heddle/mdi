@@ -23,7 +23,7 @@ public class Cylinder extends Item3D {
 
 	/**
 	 * Constructor for a Cylinder item in 3D space.
-	 * 
+	 *
 	 * @param panel3D The parent 3D panel
 	 * @param x1      X coordinate of one end
 	 * @param y1      Y coordinate of one end
@@ -49,7 +49,7 @@ public class Cylinder extends Item3D {
 
 	/**
 	 * Set whether we draw the cylinder longer than its defining center line.
-	 * 
+	 *
 	 * @param extend if <code>true</code> draw the cylinder longer than its defining
 	 *               center line.
 	 */
@@ -59,7 +59,7 @@ public class Cylinder extends Item3D {
 
 	/**
 	 * If drawing extended, what factor to extend by
-	 * 
+	 *
 	 * @param extensionFactor the extension factor
 	 */
 	public void setExtensionFactor(float extensionFactor) {
@@ -102,7 +102,7 @@ public class Cylinder extends Item3D {
 		_y2 = y2;
 		_z2 = z2;
 	}
-	
+
 	@Override
 	public float[] getSortPoint() {
 		return new float[] { (_x1 + _x2) / 2, (_y1 + _y2) / 2, (_z1 + _z2) / 2 };

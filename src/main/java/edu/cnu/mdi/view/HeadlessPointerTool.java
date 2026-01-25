@@ -173,11 +173,7 @@ public class HeadlessPointerTool implements MouseListener, MouseMotionListener {
 	@Override
 	public void mouseDragged(MouseEvent e) {
 
-		if (!SwingUtilities.isLeftMouseButton(e)) {
-			return;
-		}
-
-		if ((_hitItem == null) || (_pressPt == null) || (_lastPt == null)) {
+		if (!SwingUtilities.isLeftMouseButton(e) || (_hitItem == null) || (_pressPt == null) || (_lastPt == null)) {
 			return;
 		}
 

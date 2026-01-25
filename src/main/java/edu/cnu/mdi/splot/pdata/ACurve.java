@@ -57,7 +57,7 @@ import edu.cnu.mdi.splot.spline.CubicSpline;
  * <p>
  * For streaming / DAQ scenarios, the recommended pattern is:
  * </p>
- * 
+ *
  * <pre>
  * producer threads → enqueue points (lock-free queue) → EDT drains → curve.add(...)
  * </pre>
@@ -368,7 +368,7 @@ public abstract class ACurve {
 	 *
 	 * @param method method (null treated as NONE)
 	 */
-	public void setCurveMethod(CurveDrawingMethod method) {
+	public void setCurveDrawingMethod(CurveDrawingMethod method) {
 		curveMethod = (method == null) ? CurveDrawingMethod.NONE : method;
 		markStyleChanged();
 	}

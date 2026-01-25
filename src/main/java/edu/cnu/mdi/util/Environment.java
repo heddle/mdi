@@ -35,7 +35,7 @@ import javax.imageio.ImageWriter;
  * The class is implemented as a simple, lazily-initialized singleton.
  */
 public final class Environment {
-	
+
 	//resourcde path prefix for MDI owned resources
 	public static final String MDI_RESOURCE_PATH = "/edu/cnu/mdi/";
 
@@ -56,6 +56,7 @@ public final class Environment {
 	private final String osName;
 	private final String tempDirectory;
 	private final String classPath;
+	private String dataDirectory;
 
 	// cached host address
 	private String hostAddress;
@@ -80,6 +81,7 @@ public final class Environment {
 		osName = getSystemProperty("os.name");
 		tempDirectory = getSystemProperty("java.io.tmpdir");
 		classPath = getSystemProperty("java.class.path");
+		dataDirectory = getSystemProperty("user.home");
 
 		// any PNG image writers?
 		ImageWriter writer = null;
@@ -126,6 +128,7 @@ public final class Environment {
 	// Basic properties
 	// ------------------------------------------------------------------------
 
+	// safe system property access
 	private String getSystemProperty(String key) {
 		try {
 			return System.getProperty(key);
@@ -135,26 +138,75 @@ public final class Environment {
 		}
 	}
 
+	/*
+	 * Get the JVM class path
+	 * @return the class path
+	 */
 	public String getClassPath() {
 		return classPath;
 	}
 
+	/**
+	 * Returns the current working directory.
+	 *
+	 * @return the current working directory
+	 */
 	public String getCurrentWorkingDirectory() {
 		return currentWorkingDirectory;
 	}
 
+	/**
+	 * Returns the user's home directory.
+	 *
+	 * @return the home directory
+	 */
 	public String getHomeDirectory() {
 		return homeDirectory;
 	}
 
+	/**
+	 * Returns the operating system name.
+	 *
+	 * @return the OS name
+	 */
 	public String getOsName() {
 		return osName;
 	}
+	
+	/**
+	 * Returns the data directory. this is where
+	 * application data files (e.g., plots) were most recently stored
+	 *
+	 * @return the data directory
+	 */
+	public String getDataDirectory() {
+		return dataDirectory;
+	}
+	
+	/**
+	 * Sets the data directory.This is where
+	 * application data files (e.g., plots) were most recently stored.
+	 *
+	 * @param dataDirectory the data directory to set
+	 */
+	public void setDataDirectory(String dataDirectory) {
+		this.dataDirectory = dataDirectory;
+	}
 
+	/**
+	 * Returns a unique temporary directory.
+	 *
+	 * @return a unique temp directory
+	 */
 	public String getTempDirectory() {
 		return tempDirectory;
 	}
 
+	/**
+	 * Returns the user name of the current user.
+	 *
+	 * @return the user name
+	 */
 	public String getUserName() {
 		return userName;
 	}
@@ -182,14 +234,29 @@ public final class Environment {
 	// OS helpers
 	// ------------------------------------------------------------------------
 
+	/**
+	 * Returns {@code true} if the current operating system is a Linux variant.
+	 *
+	 * @return {@code true} if running on Linux
+	 */
 	public boolean isLinux() {
 		return osName != null && osName.toLowerCase(Locale.ENGLISH).contains("linux");
 	}
 
+	/**
+	 * Returns {@code true} if the current operating system is a Windows variant.
+	 *
+	 * @return {@code true} if running on Windows
+	 */
 	public boolean isWindows() {
 		return osName != null && osName.toLowerCase(Locale.ENGLISH).contains("windows");
 	}
 
+	/**
+	 * Returns {@code true} if the current operating system is a macOS variant.
+	 *
+	 * @return {@code true} if running on macOS
+	 */
 	public boolean isMac() {
 		return osName != null && osName.toLowerCase(Locale.ENGLISH).startsWith("mac");
 	}
@@ -212,6 +279,11 @@ public final class Environment {
 		return transform.getScaleX();
 	}
 
+	/**
+	 * Returns the available graphics devices (monitors).
+	 *
+	 * @return array of graphics devices
+	 */
 	public GraphicsDevice[] getGraphicsDevices() {
 		GraphicsEnvironment g = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		return g.getScreenDevices();
@@ -221,6 +293,11 @@ public final class Environment {
 	// PNG writer
 	// ------------------------------------------------------------------------
 
+	/**
+	 * Returns an ImageIO PNG image writer, or {@code null} if none is available.
+	 *
+	 * @return PNG image writer, or {@code null}
+	 */
 	public ImageWriter getPngWriter() {
 		return pngWriter;
 	}

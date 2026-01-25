@@ -76,7 +76,7 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	/**
 	 * Construct a FontChooser -- Sets title and gets array of fonts on the system.
 	 * Builds a GUI to let the user choose one font at one size.
-	 * 
+	 *
 	 * @param inFont the initial font to display.
 	 */
 	public FontChoosePanel(String title, Font inFont) {

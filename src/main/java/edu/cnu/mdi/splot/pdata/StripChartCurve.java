@@ -106,7 +106,7 @@ public class StripChartCurve extends ACurve {
 		yData = new DataColumn();
 
 		// Stair-step drawing is typical for strip charts.
-		setCurveMethod(CurveDrawingMethod.STAIRS);
+		setCurveDrawingMethod(CurveDrawingMethod.STAIRS);
 		setCapacity(capacity);
 		setIntervalMs(intervalMs);
 

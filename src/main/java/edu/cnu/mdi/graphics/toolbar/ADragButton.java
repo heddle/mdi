@@ -61,10 +61,7 @@ public abstract class ADragButton extends JToggleButton implements MouseListener
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if (gesture == null) {
-            return;
-        }
-        if (!contained(e.getPoint())) {
+        if ((gesture == null) || !contained(e.getPoint())) {
             return;
         }
 

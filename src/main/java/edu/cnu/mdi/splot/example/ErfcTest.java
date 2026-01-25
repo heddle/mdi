@@ -72,7 +72,7 @@ public class ErfcTest extends AExample {
 	public void setParameters() {
 		PlotData plotData = canvas.getPlotData();
 		Curve curve = (Curve) plotData.getFirstCurve();
-		curve.setCurveMethod(CurveDrawingMethod.ERFC);
+		curve.setCurveDrawingMethod(CurveDrawingMethod.ERFC);
 		PlotParameters params = canvas.getParameters();
 		params.addPlotLine(new HorizontalLine(canvas, 0));
 		params.addPlotLine(new HorizontalLine(canvas, 1));

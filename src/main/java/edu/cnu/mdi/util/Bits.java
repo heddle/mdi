@@ -34,7 +34,7 @@ public final class Bits {
 	 * <p>
 	 * Example: to test whether bit 5 is set:
 	 * </p>
-	 * 
+	 *
 	 * <pre>
 	 * Bits.check(bits, 1L << 5);
 	 * </pre>
@@ -154,7 +154,7 @@ public final class Bits {
 	 *
 	 * <p>
 	 * This method is equivalent to:
-	 * 
+	 *
 	 * <pre>
 	 * 63 - Long.numberOfLeadingZeros(bits)
 	 * </pre>

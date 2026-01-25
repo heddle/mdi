@@ -99,13 +99,13 @@ public class TwoLinesWithErrors extends AExample {
 		PlotData plotData = canvas.getPlotData();
 		Collection<ACurve> curves = plotData.getCurves();
 		for (ACurve dc : curves) {
-			dc.setCurveMethod(CurveDrawingMethod.POLYNOMIAL);
+			dc.setCurveDrawingMethod(CurveDrawingMethod.POLYNOMIAL);
 		}
 
 		// many options controlled via plot parameters
 		PlotParameters params = canvas.getParameters();
-		params.mustIncludeXZero(true);
-		params.mustIncludeYZero(true);
+		params.includeXZero(true);
+		params.includeYZero(true);
 	}
 
 	public static void main(String arg[]) {

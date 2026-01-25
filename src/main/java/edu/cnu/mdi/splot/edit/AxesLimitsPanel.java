@@ -16,7 +16,7 @@ public class AxesLimitsPanel extends JPanel {
 
 	/**
 	 * Create the panel for editing the axes limits
-	 * 
+	 *
 	 * @param canvas
 	 */
 	public AxesLimitsPanel(PlotCanvas canvas) {

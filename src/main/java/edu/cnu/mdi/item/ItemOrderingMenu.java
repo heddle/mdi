@@ -22,9 +22,9 @@ public class ItemOrderingMenu extends JMenu implements ActionListener {
 	/**
 	 * Used to get from resource bundle
 	 */
-	protected static String moveNames[] = { "Move to Front of Layer {0}", 
+	protected static String moveNames[] = { "Move to Front of Layer {0}",
 			"Move to Back of Layer {0}",
-			"Move Forward in Layer {0}", 
+			"Move Forward in Layer {0}",
 			"Move Backward in Layer {0}" };
 
 	protected static final int BRINGTOFRONT = 0;

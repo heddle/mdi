@@ -47,7 +47,7 @@ public class StripChart extends AExample implements Evaluator {
 			StripChartCurve sc = (StripChartCurve) ds.getFirstCurve();
 			sc.stop();
 			break;
-			
+
 		case STOODUP:
 			// nothing to do
 			break;
@@ -77,7 +77,7 @@ public class StripChart extends AExample implements Evaluator {
 	public void setParameters() {
 		PlotData ds = canvas.getPlotData();
 		StripChartCurve sc = (StripChartCurve) ds.getFirstCurve();
-		sc.setCurveMethod(CurveDrawingMethod.STAIRS);
+		sc.setCurveDrawingMethod(CurveDrawingMethod.STAIRS);
 		IStyled style = sc.getStyle();
 		style.setLineColor(Color.red);
 		style.setFillColor(new Color(128, 0, 0, 48));
@@ -86,7 +86,7 @@ public class StripChart extends AExample implements Evaluator {
 		params.setMinExponentY(6);
 		params.setNumDecimalY(2);
 		params.setXLimitsMethod(LimitsMethod.USEDATALIMITS);
-		params.mustIncludeYZero(true);
+		params.includeYZero(true);
 	}
 
 	@Override

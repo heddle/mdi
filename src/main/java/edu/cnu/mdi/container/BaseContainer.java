@@ -137,7 +137,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/** Transform world -> local(screen). */
 	protected AffineTransform worldToLocal;
-	
+
 	// Tool handler for this container
 	protected BaseToolHandler toolHandler;
 
@@ -147,7 +147,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	 * @param worldSystem the default world system (viewport)
 	 */
 	public BaseContainer(Rectangle2D.Double worldSystem) {
-		
+
 		_feedbackControl = new FeedbackControl(this);
 
 		resetWorldSystem(worldSystem);
@@ -180,7 +180,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 		addComponentListener(componentAdapter);
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -213,7 +213,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 	/**
 	 * Get the default user content layer.
-	 * 
+	 *
 	 * @return the default user content layer (never null after construction)
 	 */
 	@Override
@@ -816,7 +816,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		}
 
 	}
-	
+
 	/**
 	 *  Check and set the toolbar state (e.g., button enable/disable)
 	 */

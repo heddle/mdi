@@ -61,7 +61,7 @@ public class StraightLine extends AExample {
 		// symbol border color
 		Curve curve = (Curve) plotData.getCurve(0);
 		curve.getStyle().setBorderColor(Color.darkGray);
-		curve.setCurveMethod(CurveDrawingMethod.POLYNOMIAL);
+		curve.setCurveDrawingMethod(CurveDrawingMethod.POLYNOMIAL);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6).setNumDecimalY(2).setMinExponentX(6).setNumDecimalX(3);
 	}

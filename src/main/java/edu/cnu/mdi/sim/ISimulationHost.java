@@ -12,7 +12,7 @@ package edu.cnu.mdi.sim;
  * </p>
  *
  * <h2>Typical Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * public class IsingModelView extends BaseView

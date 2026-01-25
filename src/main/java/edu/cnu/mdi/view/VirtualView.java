@@ -183,10 +183,10 @@ public class VirtualView extends BaseView
 		// Drawers that highlight current column and show debug dividers.
 		setBeforeDraw();
 		setAfterDraw();
-		
+
 		//headless pointer to drag VirtualViewItems
 		new HeadlessPointerTool(this);
-		
+
 		_instance = this;
 	}
 

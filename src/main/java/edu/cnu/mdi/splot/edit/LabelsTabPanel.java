@@ -2,12 +2,14 @@ package edu.cnu.mdi.splot.edit;
 
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import edu.cnu.mdi.component.CommonBorder;
+import edu.cnu.mdi.component.FontChoosePanel;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
@@ -17,19 +19,17 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 @SuppressWarnings("serial")
 public class LabelsTabPanel extends JPanel {
 
-	private final PlotCanvas _canvas;
 	private final PlotParameters _params;
 
 	private final JTextField _titleTF;
 	private final JTextField _xLabelTF;
 	private final JTextField _yLabelTF;
 
-	private final FontSpecPanel _titleFont;
-	private final FontSpecPanel _axesFont;
-	private final FontSpecPanel _statusFont;
+	private FontChoosePanel _titleFont;
+	private FontChoosePanel _axesFont;
+	private FontChoosePanel _statusFont;
 
 	public LabelsTabPanel(PlotCanvas canvas) {
-		_canvas = canvas;
 		_params = canvas.getParameters();
 
 		setBorder(new CommonBorder("Labels"));
@@ -69,23 +69,25 @@ public class LabelsTabPanel extends JPanel {
 
 		c.gridx = 0;
 		c.gridy = row;
-		c.gridwidth = 2;
-		_titleFont = new FontSpecPanel("Title font", _params.getTitleFont());
-		add(_titleFont, c);
-		row++;
-
-		c.gridx = 0;
-		c.gridy = row;
-		_axesFont = new FontSpecPanel("Axes label font", _params.getAxesFont());
-		add(_axesFont, c);
-		row++;
-
-		c.gridx = 0;
-		c.gridy = row;
-		_statusFont = new FontSpecPanel("Status font", _params.getStatusFont());
-		add(_statusFont, c);
+		c.gridwidth = 3;
+		
+		JPanel fontPanel = createFontPanel();
+		add(fontPanel, c);
 	}
 
+	// create the font selection panel
+	private JPanel createFontPanel() {
+		JPanel fontPanel = new JPanel();
+		fontPanel.setLayout(new GridLayout(1, 3, 10, 10));
+		_titleFont = new FontChoosePanel("Title font", _params.getTitleFont());
+		_axesFont = new FontChoosePanel("Axes label font", _params.getAxesFont());
+		_statusFont = new FontChoosePanel("Status font", _params.getStatusFont());
+		
+		fontPanel.add(_titleFont);
+		fontPanel.add(_axesFont);
+		fontPanel.add(_statusFont);
+		return fontPanel;
+	}
 	public void apply() {
 		_params.setPlotTitle(_titleTF.getText());
 		_params.setXLabel(_xLabelTF.getText());

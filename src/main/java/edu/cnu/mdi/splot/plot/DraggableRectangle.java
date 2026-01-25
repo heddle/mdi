@@ -3,6 +3,7 @@ package edu.cnu.mdi.splot.plot;
 import java.awt.Point;
 import java.awt.Rectangle;
 
+@SuppressWarnings("serial")
 public class DraggableRectangle extends Rectangle implements Draggable {
 
 	// are we being dragged

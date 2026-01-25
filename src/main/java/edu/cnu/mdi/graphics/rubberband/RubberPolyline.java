@@ -21,7 +21,9 @@ public class RubberPolyline extends APolyClickRubberband {
 
 	@Override
 	public boolean isGestureValid(int minSizePx) {
-		if (poly == null || poly.npoints < 2) return false;
+		if (poly == null || poly.npoints < 2) {
+			return false;
+		}
 		Rectangle b = poly.getBounds();
 		return Math.max(b.width, b.height) >= minSizePx;
 	}
@@ -29,7 +31,9 @@ public class RubberPolyline extends APolyClickRubberband {
 	@Override
 	protected Point[] computeVertices() {
 		Polygon p = (poly != null) ? poly : tempPoly;
-		if (p == null) return null;
+		if (p == null) {
+			return null;
+		}
 
 		Point[] pts = new Point[p.npoints];
 		for (int i = 0; i < p.npoints; i++) {
@@ -40,7 +44,9 @@ public class RubberPolyline extends APolyClickRubberband {
 
 	@Override
 	protected void draw(Graphics2D g) {
-		if (tempPoly == null || tempPoly.npoints < 1) return;
+		if (tempPoly == null || tempPoly.npoints < 1) {
+			return;
+		}
 
 		Polygon tpoly = new Polygon(tempPoly.xpoints, tempPoly.ypoints, tempPoly.npoints);
 		addPoint(tpoly, currentPt.x, currentPt.y);

@@ -221,7 +221,9 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 	 * Default: clamp to component bounds (old Rubberband behavior).
 	 */
 	protected void modifyCurrentPoint(Point cp) {
-		if (cp == null) return;
+		if (cp == null) {
+			return;
+		}
 		Rectangle b = component.getBounds();
 		cp.x = Math.max(1, Math.min(b.x + b.width - 1, cp.x));
 		cp.y = Math.max(1, Math.min(b.y + b.height - 1, cp.y));
@@ -249,7 +251,9 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 	/** Default vertices are bounds corners; subclasses override for line/poly. */
 	protected Point[] computeVertices() {
 		Rectangle r = getRubberbandBounds();
-		if (r == null) return null;
+		if (r == null) {
+			return null;
+		}
 		int left = r.x;
 		int top = r.y;
 		int right = left + r.width;

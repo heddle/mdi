@@ -229,7 +229,7 @@ public interface IMapProjection {
 	/**
 	 * Test to see if the line between two longitudes crosses the seam (the line at
 	 * the central longitude). This is a test for the dreaded wrapping problem.
-	 * 
+	 *
 	 * @param lon1 one longitude in radians
 	 * @param lon2 the other longitude in radians
 	 * @return {@code true} if the line between the two longitudes crosses the seam;

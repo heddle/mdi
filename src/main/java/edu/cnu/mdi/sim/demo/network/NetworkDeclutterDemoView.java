@@ -54,7 +54,7 @@ public class NetworkDeclutterDemoView extends SimulationView {
 			    keyVals
 			);		// Recover our concrete simulation type so we can access the model and attach
 		// engine callbacks.
-		
+
 		this.sim = (NetworkDeclutterSimulation) getSimulationEngine().getSimulation();
 		this.model = this.sim.getModel();
 

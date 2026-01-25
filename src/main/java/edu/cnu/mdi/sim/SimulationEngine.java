@@ -65,7 +65,7 @@ public final class SimulationEngine {
 	public SimulationState getState() {
 		return state;
 	}
-	
+
 	public SimulationEngineConfig getConfig() {
 		return config;
 	}

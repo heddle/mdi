@@ -16,9 +16,6 @@ import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingConfig;
 import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingSimulation;
 import edu.cnu.mdi.sim.simanneal.TemperatureHeuristic;
 import edu.cnu.mdi.sim.simanneal.heuristics.EnergyDistributionHeuristic;
-import edu.cnu.mdi.sim.simanneal.tspdemo.TspAnnealingProblem;
-import edu.cnu.mdi.sim.simanneal.tspdemo.TspModel;
-import edu.cnu.mdi.sim.simanneal.tspdemo.TspSolution;
 
 /**
  * Console-only (no UI) runner for the TSP simulated annealing demo.
@@ -120,8 +117,9 @@ public final class TspHeadlessRunner {
 				long step = ctx.getStepCount();
 
 				// Throttle printing
-				if (step == lastPrintedStep)
+				if (step == lastPrintedStep) {
 					return;
+				}
 				lastPrintedStep = step;
 
 				// Print a compact line occasionally

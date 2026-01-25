@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import javax.swing.JToggleButton;
 
+@SuppressWarnings("serial")
 public abstract class ASingleClickButton  extends JToggleButton implements MouseListener {
 
 	/** Component that owns the current gesture (null when idle). */
@@ -15,7 +16,7 @@ public abstract class ASingleClickButton  extends JToggleButton implements Mouse
 
 	/** Toolbar that owns this tool. */
 	protected AToolBar toolBar;
-	
+
 	/**
 	 * Create a single-click button that performs an action when clicked.
 	 *
@@ -28,7 +29,7 @@ public abstract class ASingleClickButton  extends JToggleButton implements Mouse
 	@Override
 	public void mouseClicked(MouseEvent e) {
 	}
-	
+
 	/**
 	 * @return cursor to use while active. Default is crosshair.
 	 */
@@ -57,7 +58,7 @@ public abstract class ASingleClickButton  extends JToggleButton implements Mouse
 	public void mouseExited(MouseEvent e) {
 		// No action needed on mouse exit
 	}
-	
+
 	public abstract void canvasClick(MouseEvent e);
 
 }

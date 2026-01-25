@@ -58,7 +58,7 @@ public class RadArcItem extends PolygonItem {
 
 	    rebuildPath();
 	}
-	
+
 	@Override
 	public Point[] getSelectionPoints(IContainer container) {
 		if (_path == null || container == null) {

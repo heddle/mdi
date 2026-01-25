@@ -15,7 +15,7 @@ import edu.cnu.mdi.container.IContainer;
  *
  * <p>
  * <b>Typical usage:</b>
- * 
+ *
  * <pre>
  * class GridOverlay extends DrawableAdapter {
  *     {@literal @}Override

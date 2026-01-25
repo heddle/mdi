@@ -17,12 +17,12 @@ import edu.cnu.mdi.container.IContainer;
  * <p>
  * Uses a practical latitude cutoff (±85°) to avoid infinite Y at the poles.
  * Projection-space coordinates:
- * 
+ *
  * <pre>
  *     x = λ
  *     y = ln(tan(π/4 + φ/2))
  * </pre>
- * 
+ *
  * where λ is longitude and φ is latitude in radians.
  */
 public class MercatorProjection implements IMapProjection {
@@ -90,7 +90,7 @@ public class MercatorProjection implements IMapProjection {
 	/**
 	 * Test to see if the line between two longitudes crosses the seam (the line at
 	 * the central longitude). This is a test for the dreaded wrapping problem.
-	 * 
+	 *
 	 * @param lon1 one longitude in radians
 	 * @param lon2 the other longitude in radians
 	 * @return {@code true} if the line between the two longitudes crosses the seam;

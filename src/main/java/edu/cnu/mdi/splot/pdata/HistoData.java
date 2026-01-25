@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import edu.cnu.mdi.graphics.text.UnicodeSupport;
+import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.splot.plot.DoubleFormat;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
@@ -214,6 +214,30 @@ public class HistoData {
 	}
 
 	/**
+	 * Replace the histogram counts by copying from {@code countsSrc}.
+	 * <p>
+	 * Intended for deserialization / persistence only.
+	 * </p>
+	 *
+	 * @param countsSrc  counts array (length must equal {@link #getNumberBins()})
+	 * @param underCount underflow count
+	 * @param overCount  overflow count
+	 * @throws IllegalArgumentException if countsSrc length mismatches
+	 */
+	public void setCountsForDeserialization(long[] countsSrc, long underCount, long overCount) {
+	    if (countsSrc == null || countsSrc.length != counts.length) {
+	        throw new IllegalArgumentException("countsSrc length mismatch: expected " + counts.length);
+	    }
+	    synchronized (this) { // or synchronized(lock) if you have one; this is fine too
+	        System.arraycopy(countsSrc, 0, counts, 0, counts.length);
+	        this.underCount = underCount;
+	        this.overCount = overCount;
+	        this.stats = null; // invalidate cached stats
+	    }
+	}
+
+
+	/**
 	 * Add many values to the histogram.
 	 * <p>
 	 * This is a bulk variant of {@link #add(double)} that invalidates cached
@@ -353,11 +377,11 @@ public class HistoData {
 	public String statStr() {
 		double[] res = getBasicStatistics();
 		if (rmsInHistoLegend) {
-			return String.format(UnicodeSupport.SMALL_MU + ": %-4.2g rms: %-4.2g under: %d over: %d", res[0], res[2],
+			return String.format(UnicodeUtils.SMALL_MU + ": %-4.2g rms: %-4.2g under: %d over: %d", res[0], res[2],
 					underCount, overCount);
 		}
 		return String.format(
-				UnicodeSupport.SMALL_MU + ": %-4.2g " + UnicodeSupport.SMALL_SIGMA + ": %-4.2g under: %d over: %d",
+				UnicodeUtils.SMALL_MU + ": %-4.2g " + UnicodeUtils.SMALL_SIGMA + ": %-4.2g under: %d over: %d",
 				res[0], res[1], underCount, overCount);
 	}
 

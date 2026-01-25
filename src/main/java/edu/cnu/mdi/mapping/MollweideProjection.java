@@ -16,16 +16,16 @@ import edu.cnu.mdi.container.IContainer;
  * Mollweide equal-area projection (spherical Earth, R = 1).
  * <p>
  * Forward equations (Snyder):
- * 
+ *
  * <pre>
  *   Solve for θ from:  2θ + sin(2θ) = π sin φ
  *
  *   x = 2√2 / π * (λ - λ₀) cos θ
  *   y = √2 * sin θ
  * </pre>
- * 
+ *
  * Inverse:
- * 
+ *
  * <pre>
  *   θ = arcsin(y / √2)
  *   φ = arcsin( (2θ + sin(2θ)) / π )
@@ -127,7 +127,7 @@ public class MollweideProjection implements IMapProjection {
 	/**
 	 * Test to see if the line between two longitudes crosses the seam (the line at
 	 * the central longitude). This is a test for the dreaded wrapping problem.
-	 * 
+	 *
 	 * @param lon1 one longitude in radians
 	 * @param lon2 the other longitude in radians
 	 * @return {@code true} if the line between the two longitudes crosses the seam;

@@ -9,7 +9,7 @@ import edu.cnu.mdi.util.Environment;
 
 @SuppressWarnings("serial")
 public class GridButton extends AOneShotButton {
-	
+
 	public static final String TOOL_ID = "GRID_BUTTON";
 
 	// the parent view being controlled
@@ -17,11 +17,11 @@ public class GridButton extends AOneShotButton {
 
 	public GridButton(NetworkLayoutDemoView view) {
 		super(view.getContainer().getComponent(), view.getToolBar());
-		
+
 		this.view = view;
 		String iconPath = Environment.MDI_RESOURCE_PATH + "images/svg/grid.svg";
 		String toolTip = "Snap to Grid";
-		
+
 		BaseToolBar toolBar = (BaseToolBar) view.getToolBar();
 		toolBar.configureButton(this, iconPath, toolTip);
 		toolBar.addButton(TOOL_ID, this);

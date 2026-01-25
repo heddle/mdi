@@ -163,9 +163,9 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 	private JSlider makeSlider(JPanel panel, int min, int max,
 			int initial, int majorTick) {
 		JSlider slider = new JSlider(min, max, initial);
-		
+
 		slider.setPreferredSize(new Dimension(140, 38));
-		
+
 		majorTick = (max-min)/majorTick;
 		slider.setMajorTickSpacing(majorTick);
 		slider.setMinorTickSpacing(0);

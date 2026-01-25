@@ -2,9 +2,6 @@ package edu.cnu.mdi.splot.edit;
 
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
@@ -51,7 +48,7 @@ public class LegendTabPanel extends JPanel {
 		legendDrawingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		_font.setAlignmentX(Component.LEFT_ALIGNMENT);
 		colors.setAlignmentX(Component.LEFT_ALIGNMENT);
-		
+
 		add(legendDrawingPanel);
 		add(_font);
 		add(colors);

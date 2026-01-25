@@ -21,12 +21,12 @@ import edu.cnu.mdi.container.IContainer;
  * Displays the hemisphere centered at (λ₀, φ₀) as a perspective projection onto
  * a plane. Earth is modeled as a unit sphere so the projected domain is the
  * unit disk:
- * 
+ *
  * <pre>
  *     x = R cos φ sin(λ - λ₀)
  *     y = R (cos φ₀ sin φ - sin φ₀ cos φ cos(λ - λ₀))
  * </pre>
- * 
+ *
  * with {@code x^2 + y^2 ≤ R^2}.
  */
 public class OrthographicProjection implements IMapProjection {

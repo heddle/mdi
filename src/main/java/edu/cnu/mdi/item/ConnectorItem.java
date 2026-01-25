@@ -76,7 +76,7 @@ public class ConnectorItem extends PolylineItem {
 
 	/**
 	 * Get the starting item this connector is anchored to.
-	 * 
+	 *
 	 * @return the start item
 	 */
 	public AItem getStartItem() {
@@ -85,7 +85,7 @@ public class ConnectorItem extends PolylineItem {
 
 	/**
 	 * Get the ending item this connector is anchored to.
-	 * 
+	 *
 	 * @return the end item
 	 */
 	public AItem getEndItem() {

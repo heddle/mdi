@@ -74,7 +74,7 @@ public class ExtraText extends DraggableRectangle {
 			ys += fm.getHeight();
 		}
 
-		if (_params.isExtraBorder()) {
+		if (_params.extraBorder()) {
 			g.setColor(_params.getExtraBorderColor());
 			g.drawRect(x, y, width, height);
 		}

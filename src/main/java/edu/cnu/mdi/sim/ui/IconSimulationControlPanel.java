@@ -114,27 +114,41 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 		add(bottom, BorderLayout.SOUTH);
 
 		// Actions (no-op until bound)
-		startBtn.addActionListener(e -> { if (host != null) host.startSimulation(); });
-		runBtn.addActionListener(e -> { if (host != null) host.runSimulation(); });
-		pauseBtn.addActionListener(e -> { if (host != null) host.pauseSimulation(); });
-		resumeBtn.addActionListener(e -> { if (host != null) host.resumeSimulation(); });
-		stopBtn.addActionListener(e -> { if (host != null) host.stopSimulation(); });
-		cancelBtn.addActionListener(e -> { if (host != null) host.cancelSimulation(); });
+		startBtn.addActionListener(e -> { if (host != null) {
+			host.startSimulation();
+		} });
+		runBtn.addActionListener(e -> { if (host != null) {
+			host.runSimulation();
+		} });
+		pauseBtn.addActionListener(e -> { if (host != null) {
+			host.pauseSimulation();
+		} });
+		resumeBtn.addActionListener(e -> { if (host != null) {
+			host.resumeSimulation();
+		} });
+		stopBtn.addActionListener(e -> { if (host != null) {
+			host.stopSimulation();
+		} });
+		cancelBtn.addActionListener(e -> { if (host != null) {
+			host.cancelSimulation();
+		} });
 
 		applyState(SimulationState.NEW, "unbound");
 		setIndeterminate(false, " ");
-		
+
 		Dimension size = getPreferredSize();
 		size.width = 300;
 		setPreferredSize(size);
 	}
 
+	@Override
 	public void bind(ISimulationHost host) {
 		this.host = Objects.requireNonNull(host, "host");
 		host.getSimulationEngine().addListener(this);
 		applyState(host.getSimulationState(), "bound");
 	}
 
+	@Override
 	public void unbind() {
 		if (host != null) {
 			host.getSimulationEngine().removeListener(this);
@@ -202,7 +216,9 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 
 	@Override
 	public void onProgress(SimulationContext ctx, ProgressInfo progress) {
-		if (progress == null) return;
+		if (progress == null) {
+			return;
+		}
 
 		if (progress.indeterminate) {
 			setIndeterminate(true, progress.message == null ? "Working…" : progress.message);

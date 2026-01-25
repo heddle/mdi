@@ -16,29 +16,29 @@ import edu.cnu.mdi.ui.fonts.Fonts;
 
 @SuppressWarnings("serial")
 public class EvsTPlotPanel extends AReadyPlotPanel {
-	
+
 	// plot title and labels
 	private String title;
 	private String xLabel;
 	private String yLabel;
-	
+
 	// curve names
 	private static final String ACCEPTED_CURVE = "Accepted";
 	private static final String BEST_CURVE = "Best";
-	
+
 	// curves
 	private volatile Curve accepted;
 	private volatile Curve best;
-	
+
 	//simple throttle for accepted points
 	private boolean throttleAccepted;
-	
+
 	//accepted count if choose to throttle accepted plot
 	private long acceptedCount = 0;
-	
+
 	// stride for accepted points, e.g., plot every 10th accepted point
 	private int acceptedStride = 1;
-	
+
 	/**
 	 * Constructor. Uses default throttling of accepted points (true).
 	 * @param title the plot title
@@ -48,7 +48,7 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 	public EvsTPlotPanel(String title, String xLabel, String yLabel) {
 		this(title, xLabel, yLabel, true);
 	}
-	
+
 	/**
 	 * Constructor
 	 * @param title the plot title
@@ -65,7 +65,7 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 		dataSetup();
 	}
 
-	
+
 	/**
 	 * Set whether to throttle accepted points
 	 * @param throttle true to throttle, false to plot all accepted points
@@ -73,7 +73,7 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 	public void setThrottleAccepted(boolean throttle) {
 		this.throttleAccepted = throttle;
 	}
-	
+
 	@Override
 	public void plotChanged(PlotChangeType event) {
 	}
@@ -107,14 +107,18 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 		acceptedCount = 0;
 		canvas.repaint();
 	}
-	
+
 	public void addAccepted(double x, double y) {
 		if (accepted != null) {
 			acceptedCount++;
-				
-			if (acceptedCount > 25000 && acceptedStride < 20) acceptedStride = 20;
-		    else if (acceptedCount > 12000 && acceptedStride < 10) acceptedStride = 10;
-		    else if (acceptedCount > 3000 && acceptedStride < 5)  acceptedStride = 5;
+
+			if (acceptedCount > 25000 && acceptedStride < 20) {
+				acceptedStride = 20;
+			} else if (acceptedCount > 12000 && acceptedStride < 10) {
+				acceptedStride = 10;
+			} else if (acceptedCount > 3000 && acceptedStride < 5) {
+				acceptedStride = 5;
+			}
 			if (throttleAccepted && (acceptedCount % acceptedStride != 0)) {
 				return;
 			}
@@ -122,7 +126,7 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 
 		}
 	}
-	
+
 	public void addBest(double x, double y) {
 		if (best != null) {
 			best.add(x, y);
@@ -135,19 +139,19 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 		Color bestColor = Color.red;
 
 		PlotData plotData = canvas.getPlotData();
-		
+
 		accepted = (Curve) plotData.getCurve(ACCEPTED_CURVE);
 		best = (Curve) plotData.getCurve(BEST_CURVE);
-		
 
-		best.setCurveMethod(CurveDrawingMethod.CONNECT);
+
+		best.setCurveDrawingMethod(CurveDrawingMethod.CONNECT);
 		best.getStyle().setSymbolType(SymbolType.SQUARE);
 		best.getStyle().setSymbolSize(6);
 		best.getStyle().setFillColor(bestColor);
 		best.getStyle().setLineColor(Color.black);
 		best.getStyle().setBorderColor(Color.black);
-	
-		accepted.setCurveMethod(CurveDrawingMethod.NONE);
+
+		accepted.setCurveDrawingMethod(CurveDrawingMethod.NONE);
 		accepted.getStyle().setSymbolType(SymbolType.CIRCLE);
 		accepted.getStyle().setSymbolSize(2);
 		accepted.getStyle().setFillColor(acceptedColor);
@@ -155,8 +159,8 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 
 
 		PlotParameters params = canvas.getParameters();
-		params.mustIncludeXZero(true);
-		params.mustIncludeYZero(true);
+		params.includeXZero(true);
+		params.includeYZero(true);
 		params.setTitleFont(Fonts.plainFontDelta(1));
 		params.setLegendDrawing(false);
 	}

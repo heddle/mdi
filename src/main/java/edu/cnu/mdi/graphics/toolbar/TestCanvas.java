@@ -11,6 +11,7 @@ import java.awt.event.MouseMotionAdapter;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.UIManager;
+import javax.swing.WindowConstants;
 
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
@@ -18,26 +19,26 @@ import edu.cnu.mdi.ui.fonts.Fonts;
 
 @SuppressWarnings("serial")
 public class TestCanvas extends JFrame {
-	
+
 	private final JComponent canvas;
-	
+
 	public TestCanvas() {
 		setTitle("Test Canvas");
 		setSize(900, 600);
 		UIInit();
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+
 		canvas = new JComponent() {
 			@Override
 			protected void paintComponent(Graphics g) {
 				super.paintComponent(g);
 				Rectangle r = getBounds();
-				
+
 				int del = 2;
 				for (int x = 0; x < 1+r.width/del  ; x++) {
 					for (int y = 0; y < 1+r.height/del ; y++) {
-						Color c = new Color	(x % 256, 
-											 y % 256, 
+						Color c = new Color	(x % 256,
+											 y % 256,
 											 (x*y) % 256);
 						g.setColor(c);
 						g.fillRect(x*del, y*del, del, del);
@@ -48,11 +49,11 @@ public class TestCanvas extends JFrame {
 		canvas.setBackground(Color.pink);
 		canvas.setOpaque(true);
 		add(canvas, BorderLayout.CENTER);
-		
+
 		// add a toolbar
 		BaseToolBar toolBar = new BaseToolBar(canvas, new DefaultToolHandler(), ToolBits.EVERYTHING);
 		add(toolBar, BorderLayout.NORTH);
-		
+
 		canvas.addMouseMotionListener(new MouseMotionAdapter() {
 			@Override
 			public void mouseMoved(MouseEvent e) {
@@ -60,7 +61,7 @@ public class TestCanvas extends JFrame {
 			}
 		});
 	}
-	
+
     //initialize the FlatLaf UI
 	private void UIInit() {
 		FlatIntelliJLaf.setup();
@@ -70,7 +71,7 @@ public class TestCanvas extends JFrame {
 		UIManager.put("TabbedPane.showTabSeparators", true);
 		Fonts.refresh();
 	}
-	
+
 	/**
 	 * Launch the test frame.
 	 *

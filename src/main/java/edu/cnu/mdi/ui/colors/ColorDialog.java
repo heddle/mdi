@@ -35,7 +35,7 @@ public class ColorDialog extends JDialog {
 		pack();
 		setLocationRelativeTo(owner);
 	}
-	
+
 	/**
 	 * Show the color dialog
 	 *

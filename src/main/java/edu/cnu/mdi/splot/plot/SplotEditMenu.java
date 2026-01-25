@@ -12,7 +12,7 @@ import edu.cnu.mdi.dialog.DialogUtils;
 import edu.cnu.mdi.splot.edit.CurveEditorDialog;
 
 /**
- * This class creates and manages the menus for sPlot.
+ * This class creates and manages the edit plot for sPlot.
  *
  * @author heddle
  *
@@ -29,8 +29,6 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 	protected JMenuItem _prefItem;
 	protected JMenuItem _curveItem;
 
-	protected JCheckBoxMenuItem _showExtraCB;
-
 	/**
 	 * Create a set of menus and items for sPlot
 	 *
@@ -43,8 +41,6 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 		_plotCanvas = canvas;
 		_prefItem = addMenuItem("Preferences...", 'P', this);
 		_curveItem = addMenuItem("Curves...", 'C', this);
-		addSeparator();
-		_showExtraCB = addMenuCheckBox("Show any Extra Text", this, canvas.getParameters().extraDrawing());
 	}
 
 	/**
@@ -97,16 +93,12 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 		if (source == _prefItem) {
 			_plotCanvas.showPreferencesEditor();
 		}
-
 		else if (source == _curveItem) {
 			CurveEditorDialog cd = new CurveEditorDialog(_plotCanvas);
 			DialogUtils.centerDialog(cd);
 			cd.selectFirstCurve();
 			cd.setVisible(true);
-		} else if (source == _showExtraCB) {
-			_plotCanvas.getParameters().setExtraDrawing(_showExtraCB.isSelected());
-			_plotCanvas.repaint();
-		}
+		} 
 	}
 
 	/**

@@ -18,31 +18,31 @@ public class TextEditPanel extends JPanel {
 
 	//cached original text (immutable)
 	public final String inText;
-	
+
 	//cached original style (immutable)
 	public final Styled inStyle;
-	
+
 	//cached original font (immutable)
 	public final Font inFont;
-	
+
 	//text area for editing
 	private JTextArea textArea;
-	
+
 	//font selection panel
 	private FontChoosePanel fontPanel;
-	
+
 	//color labels
 	private ColorLabel _fill;
 	private ColorLabel _text;
 	private ColorLabel _stroke;
-	
+
 	//output text style
 	private Styled outStyle;
 
-	
+
 	/**
 	 * Create a panel for editing text with the given initial text and style.
-	 * 
+	 *
 	 * @param text  the initial text content
 	 * @param style the initial style to apply
 	 */
@@ -53,19 +53,19 @@ public class TextEditPanel extends JPanel {
 			text = "";
 		}
 		Objects.requireNonNull(style, "style");
-		
+
 		//cache inputs
 		inText = new String(text);
 		inFont = font; //fonts are immutable
 		inStyle = new Styled(style);
 		outStyle = new Styled(style);
-		
+
 		setLayout(new BorderLayout());
 		createTextArea();
 		createFontArea();
 		createColorPanel();
 	}
-	
+
 	//create the text area
 	private void createTextArea() {
 		textArea = new JTextArea(6, 20);
@@ -75,7 +75,7 @@ public class TextEditPanel extends JPanel {
 		textArea.setFont(Fonts.plainFontDelta(0));
 		add(textArea, BorderLayout.NORTH);
 	}
-	
+
 	//create the font selection area
 	private void createFontArea() {
 		fontPanel = new FontChoosePanel("Font Selection", inFont);
@@ -88,14 +88,14 @@ public class TextEditPanel extends JPanel {
 		JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 0));
 		_fill = new ColorLabel((src, col) -> {
 		}, inStyle.getFillColor(), font, "Fill");
-		
-		
+
+
 		_text = new ColorLabel((src, col) -> {
 		}, inStyle.getTextColor(), font, "Text");
-		
+
 		_stroke = new ColorLabel((src, col) -> {
 		}, inStyle.getLineColor(), font, "Border");
-		
+
 		panel.add(_fill);
 		panel.add(_text);
 		panel.add(_stroke);
@@ -103,28 +103,28 @@ public class TextEditPanel extends JPanel {
 		add(panel, BorderLayout.SOUTH);
 		return panel;
 	}
-	
+
 	/**
 	 * Get the selected font.
-	 * 
+	 *
 	 * @return the selected font.
 	 */
 	public Font getSelectedFont() {
 		return fontPanel.getSelectedFont();
 	}
-	
+
 	/**
 	 * Get the edited text.
-	 * 
+	 *
 	 * @return the edited text.
 	 */
 	public String getEditedText() {
 		return textArea.getText();
 	}
-	
+
 	/**
 	 * Get the edited text style.
-	 * 
+	 *
 	 * @return the edited text style.
 	 */
 	public IStyled getSelectedStyle() {
@@ -134,7 +134,7 @@ public class TextEditPanel extends JPanel {
 		return outStyle;
 	}
 
-	
+
 	/**
 	 * Returns the insets to use for this panel.
 	 * <p>
@@ -149,5 +149,5 @@ public class TextEditPanel extends JPanel {
 		Insets def = super.getInsets();
 		return new Insets(def.top + 2, def.left + 2, def.bottom + 2, def.right + 2);
 	}
-	
+
 }

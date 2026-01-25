@@ -19,9 +19,7 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.LineStyle;
-import edu.cnu.mdi.util.MathUtils;
 import edu.cnu.mdi.util.Point2DSupport;
-import edu.cnu.mdi.util.TextUtils;
 
 /**
  * Drawing methods for world based objects.
@@ -292,7 +290,7 @@ public class WorldGraphicsUtils {
 		return r;
 	}
 
-	
+
 	/**
 	 * Signed angle (degrees) from v1=(wpc->wp1) to v2=(wpc->wp2) using atan2(cross, dot).
 	 * <p>
@@ -323,13 +321,21 @@ public class WorldGraphicsUtils {
 
 		// Reduce prev to equivalent in (-180,180] for delta comparison
 		double prevWrapped = prevUnwrapped % 360.0;
-		if (prevWrapped <= -180.0) prevWrapped += 360.0;
-		if (prevWrapped > 180.0) prevWrapped -= 360.0;
+		if (prevWrapped <= -180.0) {
+			prevWrapped += 360.0;
+		}
+		if (prevWrapped > 180.0) {
+			prevWrapped -= 360.0;
+		}
 
 		double delta = signedNow - prevWrapped;
 
-		if (delta > 180.0) delta -= 360.0;
-		if (delta < -180.0) delta += 360.0;
+		if (delta > 180.0) {
+			delta -= 360.0;
+		}
+		if (delta < -180.0) {
+			delta += 360.0;
+		}
 
 		return prevUnwrapped + delta;
 	}
@@ -1112,7 +1118,7 @@ public class WorldGraphicsUtils {
 		points[3] = new Point2D.Double(x2, y1);
 		return points;
 	}
-	
+
 	/**
 	 * Compute the CCW sweep angle (degrees) from the first leg (center->wp1)
 	 * to the second leg (center->wp2).
@@ -1136,8 +1142,12 @@ public class WorldGraphicsUtils {
 		double cross = x1 * y2 - y1 * x2;
 
 		double a = Math.toDegrees(Math.atan2(cross, dot)); // (-180,180]
-		if (a < 0.0) a += 360.0;
-		if (a >= 360.0) a -= 360.0; // numerical hygiene
+		if (a < 0.0) {
+			a += 360.0;
+		}
+		if (a >= 360.0) {
+			a -= 360.0; // numerical hygiene
+		}
 		return a;
 	}
 
@@ -1535,7 +1545,7 @@ public class WorldGraphicsUtils {
 
 	/**
 	 * Obtain the point on a segment p1 to p2 that is closest to given point wp
-	 * 
+	 *
 	 * @param p1 one end of the segment
 	 * @param p2 other end of the segment
 	 * @param wp the point in question

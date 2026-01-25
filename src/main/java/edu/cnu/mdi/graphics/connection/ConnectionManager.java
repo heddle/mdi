@@ -42,7 +42,7 @@ public class ConnectionManager implements ItemChangeListener {
 
 	/**
 	 * Get the singleton instance.
-	 * 
+	 *
 	 * @return the connection manager
 	 */
 	public static ConnectionManager getInstance() {

@@ -13,10 +13,11 @@ import edu.cnu.mdi.splot.pdata.PlotDataException;
 /**
  * An abstract plot panel that is ready to use once the data is filled
  * and the parameters are set.
- * 
- * @author heddle  
- * 
+ *
+ * @author heddle
+ *
  */
+@SuppressWarnings("serial")
 public abstract class AReadyPlotPanel extends JPanel implements PlotChangeListener {
 
 	// the plot canvas
@@ -30,7 +31,7 @@ public abstract class AReadyPlotPanel extends JPanel implements PlotChangeListen
 
 	// the menu bar
 	protected JMenuBar menuBar;
-	
+
 	private final boolean includeMenu;
 
 	public AReadyPlotPanel(boolean includeMenu) {
@@ -40,14 +41,14 @@ public abstract class AReadyPlotPanel extends JPanel implements PlotChangeListen
 		setBackground(java.awt.Color.white);
 		setOpaque(true);
 	}
-	
+
 	@Override
 	public Insets getInsets() {
 		Insets def = super.getInsets();
 		return new Insets(def.top + 2, def.left + 2, def.bottom + 2, def.right + 2);
 	}
 
-	
+
 	/**
 	 * Set up the data structures
 	 */
@@ -65,14 +66,14 @@ public abstract class AReadyPlotPanel extends JPanel implements PlotChangeListen
 			menuBar.add(menu);
 			add(menuBar, BorderLayout.NORTH);
 		}
-		
+
 		//set the plot parameters
 		setParameters();
 		plotPanel = new PlotPanel(canvas);
 		plotPanel.setPreferredSize(new Dimension(300, 500));
 		add(plotPanel, BorderLayout.CENTER);
 	}
-	
+
 	/**
 	 * Get the plot canvas
 	 *
@@ -108,13 +109,13 @@ public abstract class AReadyPlotPanel extends JPanel implements PlotChangeListen
 	 */
 	protected abstract String getXAxisLabel();
 
-	/** Get the y axis label 
+	/** Get the y axis label
 	 * @return the y axis label
 	 */
 	protected abstract String getYAxisLabel();
 
 	/** Get the plot title
-	 * @return the plot title 
+	 * @return the plot title
 	 */
 	protected abstract String getPlotTitle();
 

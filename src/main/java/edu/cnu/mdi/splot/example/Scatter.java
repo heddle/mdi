@@ -73,11 +73,11 @@ public class Scatter extends AExample {
 	// Stress / DAQ knobs
 	// --------------------------------------------------------------------
 
-	
+
 	public Scatter(boolean headless) {
 		super(headless);
 	}
-	
+
 	/**
 	 * Number of concurrent producer threads simulating independent acquisition
 	 * sources.
@@ -152,7 +152,7 @@ public class Scatter extends AExample {
 		final Curve dc = (Curve) plotData.getFirstCurve();
 		curve = dc;
 
-		dc.setCurveMethod(CurveDrawingMethod.POLYNOMIAL);
+		dc.setCurveDrawingMethod(CurveDrawingMethod.POLYNOMIAL);
 		dc.getStyle().setSymbolType(SymbolType.CIRCLE);
 		dc.getStyle().setSymbolSize(4);
 		dc.getStyle().setFillColor(fillColor);
@@ -161,8 +161,8 @@ public class Scatter extends AExample {
 		dc.getStyle().setLineWidth(2.0f);
 
 		PlotParameters params = canvas.getParameters();
-		params.mustIncludeXZero(true);
-		params.mustIncludeYZero(true);
+		params.includeXZero(true);
+		params.includeYZero(true);
 		params.addPlotLine(new HorizontalLine(canvas, 0));
 		params.addPlotLine(new VerticalLine(canvas, 0));
 		params.setLegendDrawing(true);
@@ -242,7 +242,7 @@ public class Scatter extends AExample {
 			});
 		}
 	}
-	
+
 	@Override
 	public void plotChanged(PlotChangeType type) {
 		switch (type) {

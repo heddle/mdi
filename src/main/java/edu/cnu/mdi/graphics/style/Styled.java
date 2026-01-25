@@ -22,7 +22,7 @@ public class Styled implements IStyled {
 
 	// default line color is black
 	private Color _lineColor = Color.black;
-	
+
 	// default text color is black
 	private Color _textColor = Color.black;
 
@@ -99,21 +99,23 @@ public class Styled implements IStyled {
 	public Color getFillColor() {
 		return _fillColor;
 	}
-	
+
 	/**
 	 * Set the color used for text.
 	 *
 	 * @param textColor the text color.
 	 */
+	@Override
 	public void setTextColor(Color textColor) {
 		_textColor = textColor;
 	}
-	
+
 	/**
 	 * Get the color used for text.
 	 *
 	 * @return the text color.
 	 */
+	@Override
 	public Color getTextColor() {
 		return _textColor;
 	}

@@ -61,7 +61,7 @@ import edu.cnu.mdi.sim.SimulationEngine;
  * <p>
  * Velocity is updated with damping:
  * </p>
- * 
+ *
  * <pre>
  * v <- damping * v + dt * F
  * x <- x + v

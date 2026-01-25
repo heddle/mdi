@@ -139,7 +139,6 @@ public class PointSetPanel3D extends Panel3D {
 		setItem.addPointSet(name2, Color.blue, 10, false);
 
 		GrowablePointSet gps1 = setItem.findByName(name1);
-		GrowablePointSet gps2 = setItem.findByName(name2);
 
 		for (int i = 0; i < 100; i++) {
 			float x = (float) (-xymax + 2 * xymax * Math.random());
@@ -148,8 +147,6 @@ public class PointSetPanel3D extends Panel3D {
 
 			gps1.add(x, y, z);
 		}
-
-//		p3d.refresh();
 
 		try {
 			Thread.sleep(10);

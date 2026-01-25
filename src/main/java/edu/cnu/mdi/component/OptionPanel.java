@@ -22,11 +22,11 @@ import javax.swing.JPanel;
  * multi-column layout suitable for use in MDI views.
  * <p>
  * The options are specified via an array of arrays of strings:
- * 
+ *
  * <pre>
  * { { "Option 1", "true", "false" }, { "Option 2", "true", "true" } }
  * </pre>
- * 
+ *
  * where each inner array contains:
  * <ul>
  * <li>label: the checkbox label (index 0)</li>

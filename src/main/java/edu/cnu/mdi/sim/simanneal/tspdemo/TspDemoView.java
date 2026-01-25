@@ -15,9 +15,9 @@ import edu.cnu.mdi.sim.SimulationEngine;
 import edu.cnu.mdi.sim.SimulationEngineConfig;
 import edu.cnu.mdi.sim.SimulationState;
 import edu.cnu.mdi.sim.simanneal.AnnealingSchedule;
+import edu.cnu.mdi.sim.simanneal.EvsTPlotPanel;
 import edu.cnu.mdi.sim.simanneal.GeometricAnnealingSchedule;
 import edu.cnu.mdi.sim.simanneal.IAcceptedMoveListener;
-import edu.cnu.mdi.sim.simanneal.EvsTPlotPanel;
 import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingConfig;
 import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingSimulation;
 import edu.cnu.mdi.sim.simanneal.TemperatureHeuristic;
@@ -73,7 +73,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 
 	/** RNG seed used for reproducible model generation (0L => nondeterministic). */
 	private static final long seed = 0L;
-	
+
 	private static EvsTPlotPanel evtPlot;
 
 	/**
@@ -91,8 +91,8 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 
 		evtPlot = createScatterPanel();
 		add(evtPlot, BorderLayout.EAST);
-		
-		
+
+
 		// Recover bundle created by createSimulationAndStashBundle().
 		Bundle b = BUNDLE_TL.get();
 		BUNDLE_TL.remove();
@@ -105,7 +105,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 		this.sim = s;
 		this.sim.addAcceptedMoveListener(this);
 
-		
+
 		// Allow sim to post progress/messages/refresh through this view’s engine.
 		this.sim.setEngine(getSimulationEngine());
 
@@ -122,7 +122,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 		// Start engine thread (paused until Run unless autoRun or startAndRun()).
 		startSimulation();
 	}
-	
+
 	private EvsTPlotPanel createScatterPanel() {
 		EvsTPlotPanel scatterPanel = new EvsTPlotPanel("Traveling Salesperson Problem", "temperature", "energy (length)");
 		scatterPanel.getPlotCanvas().getParameters().setReverseXaxis(true);
@@ -150,14 +150,14 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 		SimulatedAnnealingConfig cfg = SimulatedAnnealingConfig.defaults();
 
 		AnnealingSchedule schedule = new GeometricAnnealingSchedule();
-		
+
 
 		TemperatureHeuristic<TspSolution> heuristic = new EnergyDistributionHeuristic<>(300, 0.80, 1e-6);
 
 		SimulatedAnnealingSimulation<TspSolution> sim = new SimulatedAnnealingSimulation<>(problem, cfg, schedule,
 				heuristic);
-		
-		
+
+
 
 		BUNDLE_TL.set(new Bundle(model));
 		return sim;
@@ -177,13 +177,13 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 			// ignore (panel should already be disabled, but be defensive)
 			return;
 		}
-		
+
 		evtPlot.clearData();
 
 		// Build a new model/sim with the requested parameters.
 		SimulatedAnnealingSimulation<TspSolution> newSim = createSimulationAndStashBundle(cityCount, riverPenalty,
 				seed);
-		
+
 		sim.removeAcceptedMoveListener(this);
 		newSim.addAcceptedMoveListener(this);
 
@@ -226,12 +226,14 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 		getContainer().setBeforeDraw(new DrawableAdapter() {
 			@Override
 			public void draw(Graphics2D g2, IContainer container) {
-				if (container == null)
+				if (container == null) {
 					return;
+				}
 
 				TspModel m = model; // volatile snapshot
-				if (m == null)
+				if (m == null) {
 					return;
+				}
 
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -251,8 +253,9 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 						}
 					}
 				}
-				if (tour == null || tour.length < 2)
+				if (tour == null || tour.length < 2) {
 					return;
+				}
 
 				g2.setColor(Color.RED.darker());
 				g2.setStroke(new BasicStroke(2f));
@@ -281,12 +284,14 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 		getContainer().setAfterDraw(new DrawableAdapter() {
 			@Override
 			public void draw(Graphics2D g2, IContainer container) {
-				if (container == null)
+				if (container == null) {
 					return;
+				}
 
 				TspModel m = model; // volatile snapshot
-				if (m == null)
+				if (m == null) {
 					return;
+				}
 
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -319,16 +324,20 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 		boolean draw = isRiverEnabledReflective(m);
 
 		// If no toggle API exists, fall back to "riverX finite means it exists".
-		if (!draw && !Double.isFinite(m.riverX))
+		if (!draw && !Double.isFinite(m.riverX)) {
 			return;
-		if (!draw && Double.isFinite(m.riverX))
+		}
+		if (!draw && Double.isFinite(m.riverX)) {
 			draw = true;
-		if (!draw)
+		}
+		if (!draw) {
 			return;
+		}
 
 		double x = m.riverX;
-		if (!Double.isFinite(x))
+		if (!Double.isFinite(x)) {
 			return;
+		}
 
 		g2.setColor(new Color(40, 90, 200));
 		g2.setStroke(new BasicStroke(1.5f));
@@ -366,8 +375,9 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 	@Override
 	protected void onSimulationProgress(edu.cnu.mdi.sim.SimulationContext ctx, edu.cnu.mdi.sim.ProgressInfo progress) {
 		SimulatedAnnealingSimulation<TspSolution> s = sim;
-		if (s == null)
+		if (s == null) {
 			return;
+		}
 
 		TspSolution best = s.getBestSolutionCopy();
 		if (best != null && best.tour != null) {

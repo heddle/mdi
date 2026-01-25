@@ -1,6 +1,5 @@
 package edu.cnu.mdi.splot.fit;
 
-import java.util.Arrays;
 import java.util.Objects;
 
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
@@ -13,24 +12,22 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Pair;
 
-import edu.cnu.mdi.splot.pdata.FitVectors;
-
 /**
  * Fit a sum of Gaussians (optionally with a constant baseline).
  *
  * <h3>Model</h3>
- * 
+ *
  * <pre>
  * y(x) = sum_{k=0..m-1} A_k * exp(-(x - mu_k)^2 / (2*sigma_k^2))  +  B   (if includeBaseline)
  * y(x) = sum_{k=0..m-1} A_k * exp(-(x - mu_k)^2 / (2*sigma_k^2))        (otherwise)
  * </pre>
  *
  * <h3>Parameter vector</h3> For each component k, parameters appear in blocks:
- * 
+ *
  * <pre>
  *   A_k, mu_k, sigma_k
  * </pre>
- * 
+ *
  * followed by baseline B if enabled.
  *
  * <p>
@@ -50,7 +47,7 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
 
 	/**
 	 * Create a MultiGaussianFitter.
-	 * 
+	 *
 	 * @param m               number of Gaussian components (must be >= 1)
 	 * @param includeBaseline true to include constant baseline term
 	 */
@@ -193,10 +190,6 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
 
 	private static int idxSigma(int k) {
 		return 3 * k + 2;
-	}
-
-	private int idxB() {
-		return 3 * m;
 	}
 
 	/** Analytic model + Jacobian for sum of Gaussians (+ optional baseline). */
@@ -473,42 +466,5 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
 		return this;
 	}
 
-	// --------------------- test main -----------------------
-	public static void main(String arg[]) {
-		final double[] mu = { 1.2, 3.3 };
-		final double[] sigma = { 0.3, 0.2 };
-		final double[] A = { 2.0, 1.1 };
-		final double B = 0.5;
-		int n = 100;
-		int numGauss = A.length;
 
-		Evaluator eval = (double x) -> {
-			double sum = 0;
-			for (int k = 0; k < numGauss; k++) {
-				double dx = x - mu[k];
-				double z = dx / sigma[k];
-				sum += A[k] * Math.exp(-0.5 * z * z);
-			}
-			sum += B;
-			return sum;
-		};
-
-		FitVectors testData = FitVectors.testData(eval, -1.0, 7.0, n, 4.0, 5.0);
-		MultiGaussianFitter fitter = new MultiGaussianFitter(numGauss, true);
-		FitResult result = fitter.fit(testData.x, testData.y, testData.w);
-		System.out.println("True parameters: ");
-		System.out.print(" A = " + Arrays.toString(A) + "\n");
-		System.out.print(" mu = " + Arrays.toString(mu) + "\n");
-		System.out.print(" sigma = " + Arrays.toString(sigma) + "\n");
-		System.out.println(" B = " + B);
-		System.out.println(result);
-
-		// print data and fit values
-		for (int i = 0; i < (n - 1); i += 10) {
-			double xv = testData.x[i];
-			double yv = result.evaluator.value(xv);
-			System.out.printf("x=%.3f fit y=%.3f data y=%.3f%n", xv, yv, testData.y[i]);
-		}
-
-	}
 }

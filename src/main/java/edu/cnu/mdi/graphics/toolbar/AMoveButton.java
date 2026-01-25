@@ -1,7 +1,6 @@
 package edu.cnu.mdi.graphics.toolbar;
 
 import java.awt.Component;
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -57,8 +56,8 @@ public abstract class AMoveButton extends JToggleButton implements MouseMotionLi
 			gesture = null;
 		}
     }
-    
-    
+
+
     @Override public void mouseReleased(MouseEvent e) { }
     @Override public void mouseEntered(MouseEvent e) { }
 
@@ -80,7 +79,7 @@ public abstract class AMoveButton extends JToggleButton implements MouseMotionLi
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		
+
 		if (gesture == null) {
 			gesture = new GestureContext(toolBar, canvas, null, e.getPoint(), e);
 			startMove(gesture);

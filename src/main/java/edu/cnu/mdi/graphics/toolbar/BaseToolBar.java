@@ -219,28 +219,6 @@ public class BaseToolBar extends AToolBar {
 		void accept(A a, B b, C c);
 	}
 
-	/**
-	 * Create and add a rubberband tool (toggle) with a callback.
-	 *
-	 * @param bit      predefined tool bit
-	 * @param policy   rubberband policy
-	 * @param callback callback invoked when the rubberband completes
-	 * @return the created toggle tool
-	 */
-	private JToggleButton rubberbandTool(long bit, ARubberband.Policy policy,
-			TriConsumer<GestureContext, Rectangle, Point[]> callback) {
-
-		Objects.requireNonNull(policy, "policy");
-		Objects.requireNonNull(callback, "callback");
-
-		JToggleButton b = new ARubberbandButton(canvas, this, policy, DEFAULT_MIN_SIZE_PX) {
-			@Override
-			public void rubberbanding(GestureContext gc, Rectangle bounds, Point[] vertices) {
-				callback.accept(gc, bounds, vertices);
-			}
-		};
-		return addStdToggle(bit, b);
-	}
 
 	// ------------------------------------------------------------------------
 	// Predefined buttons
@@ -442,7 +420,7 @@ public class BaseToolBar extends AToolBar {
 		}
 
 		if (ToolBits.hasPolygonButton(bits)) {
-			
+
 			JToggleButton polygon = new ARubberbandButton(canvas, this, ARubberband.Policy.POLYGON,
 					DEFAULT_MIN_SIZE_PX) {
 				@Override

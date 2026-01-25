@@ -96,10 +96,7 @@ public abstract class ARubberbandButton extends JToggleButton
         rubberband = null;
         gesture = null;
 
-        if (rb == null || gc == null) {
-            return;
-        }
-        if (!rb.isGestureValid(minSizePx)) {
+        if (rb == null || gc == null || !rb.isGestureValid(minSizePx)) {
             return;
         }
 
@@ -164,13 +161,15 @@ public abstract class ARubberbandButton extends JToggleButton
     }
 
     private void init(MouseEvent e) {
-        if (policy == ARubberband.Policy.NONE) return;
-        if (gesture == null) return;
-        if (rubberband != null) return;
+        if ((policy == ARubberband.Policy.NONE) || (gesture == null) || (rubberband != null)) {
+			return;
+		}
 
         ARubberband.Policy pol = Objects.requireNonNull(rubberbandPolicy(), "rubberbandPolicy");
         rubberband = RubberbandFactory.create(canvas, this, pol);
-        if (rubberband == null) return;
+        if (rubberband == null) {
+			return;
+		}
 
         rubberband.setActive(true);
 

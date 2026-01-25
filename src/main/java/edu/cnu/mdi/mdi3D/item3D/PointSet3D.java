@@ -50,7 +50,7 @@ public class PointSet3D extends Item3D {
 	public void setCoords(float[] coords) {
 		_coords = coords;
 	}
-	
+
 	/**
 	 * Get the coordinates of the points.
 	 *
@@ -68,7 +68,7 @@ public class PointSet3D extends Item3D {
 		}
 		return new float[] { cx / n, cy / n, cz / n };
 	}
-	
+
 	@Override
 	public float[] getSortPoint() {
 		return getCentroid();

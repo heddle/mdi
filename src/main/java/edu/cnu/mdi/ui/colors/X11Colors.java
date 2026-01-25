@@ -17,7 +17,7 @@ import java.util.Map;
  * </ul>
  *
  * Example:
- * 
+ *
  * <pre>
  * Color c1 = X11Colors.getX11Color("Deep Sky Blue");
  * Color c2 = X11Colors.getX11Color("deep sky blue", 128); // half transparent

@@ -5,7 +5,7 @@ import java.util.stream.IntStream;
 
 import org.apache.commons.math3.linear.RealMatrix;
 
-import edu.cnu.mdi.graphics.text.UnicodeSupport;
+import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.util.SmartDoubleFormatter;
 
 /**
@@ -18,9 +18,9 @@ import edu.cnu.mdi.util.SmartDoubleFormatter;
 public final class FitResult {
 
 	// helpers from unicode
-	public static final String CHI = UnicodeSupport.SMALL_CHI;
-	public static final String CHISQ = CHI + UnicodeSupport.SUPER2;
-	public static final String PLUSMINUS = UnicodeSupport.PLUSMINUS;
+	public static final String CHI = UnicodeUtils.SMALL_CHI;
+	public static final String CHISQ = CHI + UnicodeUtils.SUPER2;
+	public static final String PLUSMINUS = UnicodeUtils.PLUSMINUS;
 
 	/** Best-fit parameters. Interpretation depends on the model. */
 	public final double[] params;
@@ -91,7 +91,7 @@ public final class FitResult {
 
 	/**
 	 * Set the evaluator.
-	 * 
+	 *
 	 * @param evaluator
 	 */
 	public void setEvaluator(Evaluator evaluator) {
@@ -173,7 +173,7 @@ public final class FitResult {
 
 	/**
 	 * Single-line text summary of the fit result.
-	 * 
+	 *
 	 * @return single-line string
 	 */
 	public String singleLineSummary() {

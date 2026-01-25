@@ -76,28 +76,72 @@ public final class ToolBits {
 	 * @return a stable id string (never null). Unknown bits map to {@code "bit_<value>"}.
 	 */
 	public static String getId(long buttonBit) {
-		if (buttonBit == POINTER)   return "pointer";
-		if (buttonBit == ELLIPSE)   return "ellipse";
-		if (buttonBit == TEXT)      return "text";
-		if (buttonBit == RECTANGLE) return "rectangle";
-		if (buttonBit == POLYGON)   return "polygon";
-		if (buttonBit == LINE)      return "line";
-		if (buttonBit == STYLEB)     return "style";
-		if (buttonBit == DELETE)    return "delete";
-		if (buttonBit == CENTER)    return "center";
-		if (buttonBit == UNDOZOOM)  return "undoZoom";
-		if (buttonBit == RADARC)    return "radArc";
-		if (buttonBit == POLYLINE)  return "polyline";
-		if (buttonBit == MAGNIFY)   return "magnify";
-		if (buttonBit == BOXZOOM)   return "boxZoom";
-		if (buttonBit == PAN)       return "pan";
-		if (buttonBit == CONNECTOR) return "connector";
-		if (buttonBit == ZOOMIN)    return "zoomIn";
-		if (buttonBit == ZOOMOUT)   return "zoomOut";
-		if (buttonBit == RESETZOOM) return "resetZoom";
-		if (buttonBit == CAMERA)    return "camera";
-		if (buttonBit == PRINTER)   return "printer";
-		if (buttonBit == STATUS)     return "status";
+		if (buttonBit == POINTER) {
+			return "pointer";
+		}
+		if (buttonBit == ELLIPSE) {
+			return "ellipse";
+		}
+		if (buttonBit == TEXT) {
+			return "text";
+		}
+		if (buttonBit == RECTANGLE) {
+			return "rectangle";
+		}
+		if (buttonBit == POLYGON) {
+			return "polygon";
+		}
+		if (buttonBit == LINE) {
+			return "line";
+		}
+		if (buttonBit == STYLEB) {
+			return "style";
+		}
+		if (buttonBit == DELETE) {
+			return "delete";
+		}
+		if (buttonBit == CENTER) {
+			return "center";
+		}
+		if (buttonBit == UNDOZOOM) {
+			return "undoZoom";
+		}
+		if (buttonBit == RADARC) {
+			return "radArc";
+		}
+		if (buttonBit == POLYLINE) {
+			return "polyline";
+		}
+		if (buttonBit == MAGNIFY) {
+			return "magnify";
+		}
+		if (buttonBit == BOXZOOM) {
+			return "boxZoom";
+		}
+		if (buttonBit == PAN) {
+			return "pan";
+		}
+		if (buttonBit == CONNECTOR) {
+			return "connector";
+		}
+		if (buttonBit == ZOOMIN) {
+			return "zoomIn";
+		}
+		if (buttonBit == ZOOMOUT) {
+			return "zoomOut";
+		}
+		if (buttonBit == RESETZOOM) {
+			return "resetZoom";
+		}
+		if (buttonBit == CAMERA) {
+			return "camera";
+		}
+		if (buttonBit == PRINTER) {
+			return "printer";
+		}
+		if (buttonBit == STATUS) {
+			return "status";
+		}
 		return "bit_" + buttonBit;
 	}
 

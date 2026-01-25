@@ -19,7 +19,7 @@ public class ControlPanel extends JPanel {
 
 	/**
 	 * Construct a control panel for the given view.
-	 * 
+	 *
 	 * @param view the view to control
 	 */
 	public ControlPanel(NetworkLayoutDemoView view) {

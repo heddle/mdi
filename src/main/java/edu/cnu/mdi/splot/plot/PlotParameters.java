@@ -19,6 +19,18 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  */
 public class PlotParameters {
 	
+	// --------------------------------------------------------------------
+	// Axis scale (linear vs log)
+	// --------------------------------------------------------------------
+	public static enum AxisScale {
+		LINEAR,
+		LOG10
+	}
+	
+	// axis scales
+	private AxisScale _xScale = AxisScale.LINEAR;
+	private AxisScale _yScale = AxisScale.LINEAR;
+
 	//reverse axes?
 	private boolean _reverseXaxis = false;
 	private boolean _reverseYaxis = false;
@@ -36,8 +48,8 @@ public class PlotParameters {
 	private Color _extraBorderColor = Color.black;
 
 	// force include zero on plots?
-	private boolean _includeYzero = false;
-	private boolean _includeXzero = false;
+	private boolean _includeYZero = false;
+	private boolean _includeXZero = false;
 
 	// how axis limits are determined
 	private LimitsMethod _xLimitsMethod = LimitsMethod.ALGORITHMICLIMITS;
@@ -94,8 +106,8 @@ public class PlotParameters {
 	 * @param incZero the flag
 	 * @return this parameters instance (for chaining)
 	 */
-	public PlotParameters mustIncludeXZero(boolean incZero) {
-		_includeXzero = incZero;
+	public PlotParameters includeXZero(boolean incZero) {
+		_includeXZero = incZero;
 		return this;
 	}
 
@@ -105,9 +117,62 @@ public class PlotParameters {
 	 * @param incZero the flag
 	 * @return this parameters instance (for chaining)
 	 */
-	public PlotParameters mustIncludeYZero(boolean incZero) {
-		_includeYzero = incZero;
+	public PlotParameters includeYZero(boolean incZero) {
+		_includeYZero = incZero;
 		return this;
+	}
+	
+	/** @return x-axis scale (linear or log10). */
+	public AxisScale getXScale() {
+		return _xScale;
+	}
+
+	
+	/**
+	 * Set the x-axis scale.
+	 * Requests that the owning canvas recompute the world system.
+	 *
+	 * @param scale new scale (null treated as LINEAR)
+	 * @return this parameters instance (for chaining)
+	 */
+	public PlotParameters setXScale(AxisScale scale) {
+		AxisScale ns = (scale == null) ? AxisScale.LINEAR : scale;
+		if (_xScale != ns) {
+			_xScale = ns;
+			_canvas.setWorldSystem();
+		}
+		return this;
+	}
+
+	/** @return y-axis scale (linear or log10). */
+	public AxisScale getYScale() {
+		return _yScale;
+	}
+
+	/**
+	 * Set the y-axis scale.
+	 * Requests that the owning canvas recompute the world system.
+	 *
+	 * @param scale new scale (null treated as LINEAR)
+	 * @return this parameters instance (for chaining)
+	 */
+	public PlotParameters setYScale(AxisScale scale) {
+		AxisScale ns = (scale == null) ? AxisScale.LINEAR : scale;
+		if (_yScale != ns) {
+			_yScale = ns;
+			_canvas.setWorldSystem();
+		}
+		return this;
+	}
+
+	/** Convenience: @return true if x axis is log10. */
+	public boolean isXLog() {
+		return _xScale == AxisScale.LOG10;
+	}
+
+	/** Convenience: @return true if y axis is log10. */
+	public boolean isYLog() {
+		return _yScale == AxisScale.LOG10;
 	}
 
 	/**
@@ -129,7 +194,7 @@ public class PlotParameters {
 		_extraStrings = extraStrings;
 		return this;
 	}
-	
+
 	/**
 	 * Check whether to reverse the x axis.
 	 * @return true if the x axis is reversed
@@ -137,7 +202,7 @@ public class PlotParameters {
 	public boolean isReverseXaxis() {
 		return _reverseXaxis;
 	}
-	
+
 	/**
 	 * Set whether to reverse the x axis.
 	 * @param reverseXaxis true to reverse the x axis
@@ -147,7 +212,7 @@ public class PlotParameters {
 		_reverseXaxis = reverseXaxis;
 		return this;
 	}
-	
+
 	/**
 	 * Check whether to reverse the y axis.
 	 * @return true if the y axis is reversed
@@ -155,7 +220,7 @@ public class PlotParameters {
 	public boolean isReverseYaxis() {
 		return _reverseYaxis;
 	}
-	
+
 	/**
 	 * Set whether to reverse the y axis.
 	 * @param reverseYaxis true to reverse the y axis
@@ -165,14 +230,14 @@ public class PlotParameters {
 		_reverseYaxis = reverseYaxis;
 		return this;
 	}
-	
+
 
 	/**
 	 * Check whether the extra text border is drawn.
 	 *
 	 * @return {@code true} if the extra text border is drawn
 	 */
-	public boolean isExtraBorder() {
+	public boolean extraBorder() {
 		return _extraBorder;
 	}
 
@@ -456,7 +521,7 @@ public class PlotParameters {
 	 * @return {@code true} if we should include {@code x = 0}
 	 */
 	public boolean includeXZero() {
-		return _includeXzero;
+		return _includeXZero;
 	}
 
 	/**
@@ -465,7 +530,7 @@ public class PlotParameters {
 	 * @return {@code true} if we should include {@code y = 0}
 	 */
 	public boolean includeYZero() {
-		return _includeYzero;
+		return _includeYZero;
 	}
 
 	/**

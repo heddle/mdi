@@ -15,7 +15,7 @@ import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
 /**
- * Tab for axis behavior: limits, include-zero, tick formatting.
+ * Tab for axis behavior: limits, scaling (linear/log), include-zero, tick formatting.
  */
 @SuppressWarnings("serial")
 public class AxesTabPanel extends JPanel {
@@ -27,9 +27,12 @@ public class AxesTabPanel extends JPanel {
 
 	private final JCheckBox _includeXZero;
 	private final JCheckBox _includeYZero;
-	
+
 	private final JCheckBox _reverseX;
 	private final JCheckBox _reverseY;
+
+	private final JCheckBox _logX;
+	private final JCheckBox _logY;
 
 	private final JSpinner _decX;
 	private final JSpinner _expX;
@@ -37,8 +40,13 @@ public class AxesTabPanel extends JPanel {
 	private final JSpinner _expY;
 
 	// snapshot for deciding if world system must be recomputed
-	private boolean _xZero0, _yZero0, _xReverse, _yReverse;
-	private int _decX0, _expX0, _decY0, _expY0;
+	private final boolean _xZero0, _yZero0;
+	private final boolean _xLog0, _yLog0;
+
+	@SuppressWarnings("unused")
+	private final boolean _xReverse0, _yReverse0;
+	@SuppressWarnings("unused")
+	private final int _decX0, _expX0, _decY0, _expY0;
 
 	public AxesTabPanel(PlotCanvas canvas) {
 		_canvas = canvas;
@@ -49,11 +57,13 @@ public class AxesTabPanel extends JPanel {
 
 		_xZero0 = _params.includeXZero();
 		_yZero0 = _params.includeYZero();
-		
-		_xReverse = _params.isReverseXaxis();
-		_yReverse = _params.isReverseYaxis();
-		
-		
+
+		_xReverse0 = _params.isReverseXaxis();
+		_yReverse0 = _params.isReverseYaxis();
+
+		_xLog0 = (_params.getXScale() == PlotParameters.AxisScale.LOG10);
+		_yLog0 = (_params.getYScale() == PlotParameters.AxisScale.LOG10);
+
 		_decX0 = _params.getNumDecimalX();
 		_expX0 = _params.getMinExponentX();
 		_decY0 = _params.getNumDecimalY();
@@ -63,9 +73,16 @@ public class AxesTabPanel extends JPanel {
 
 		_includeXZero = new JCheckBox("Include X=0 in auto limits", _xZero0);
 		_includeYZero = new JCheckBox("Include Y=0 in auto limits", _yZero0);
-		
-		_reverseX = new JCheckBox("Reverse X axis", _xReverse);
-		_reverseY = new JCheckBox("Reverse Y axis", _yReverse);
+
+		_reverseX = new JCheckBox("Reverse X axis", _xReverse0);
+		_reverseY = new JCheckBox("Reverse Y axis", _yReverse0);
+
+		_logX = new JCheckBox("Log X (base 10)", _xLog0);
+		_logY = new JCheckBox("Log Y (base 10)", _yLog0);
+
+		// When log is selected, include-zero is meaningless/invalid.
+		_logX.addActionListener(e -> updateForLogSelection());
+		_logY.addActionListener(e -> updateForLogSelection());
 
 		_decX = new JSpinner(new SpinnerNumberModel(_decX0, 0, 10, 1));
 		_expX = new JSpinner(new SpinnerNumberModel(_expX0, 0, 12, 1));
@@ -79,59 +96,95 @@ public class AxesTabPanel extends JPanel {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 1.0;
 
-		// Limits editor (your existing UI)
-		c.gridwidth = 1;
+		// Limits editor
+		c.gridwidth = 2;
 		add(_limitsPanel, c);
 
-		// Include zero
+		c.gridwidth = 1;
+
+		// Row: include-zero + reverse (X)
 		c.gridy++;
+		c.gridx = 0;
 		add(_includeXZero, c);
 		c.gridx = 1;
 		add(_reverseX, c);
-		
-		c.gridx = 0;
+
+		// Row: include-zero + reverse (Y)
 		c.gridy++;
+		c.gridx = 0;
 		add(_includeYZero, c);
 		c.gridx = 1;
 		add(_reverseY, c);
+
+		// Row: log toggles
+		c.gridy++;
 		c.gridx = 0;
+		add(_logX, c);
+		c.gridx = 1;
+		add(_logY, c);
 
 		// Tick formatting block
 		c.gridy++;
-		c.gridwidth = 1;
+		c.gridx = 0;
 		add(new JLabel("X ticks: decimals"), c);
 		c.gridx = 1;
 		add(_decX, c);
 
-		c.gridx = 0;
 		c.gridy++;
+		c.gridx = 0;
 		add(new JLabel("X ticks: sci exponent threshold"), c);
 		c.gridx = 1;
 		add(_expX, c);
 
-		c.gridx = 0;
 		c.gridy++;
+		c.gridx = 0;
 		add(new JLabel("Y ticks: decimals"), c);
 		c.gridx = 1;
 		add(_decY, c);
 
-		c.gridx = 0;
 		c.gridy++;
+		c.gridx = 0;
 		add(new JLabel("Y ticks: sci exponent threshold"), c);
 		c.gridx = 1;
 		add(_expY, c);
+
+		// initial enforcement
+		updateForLogSelection();
+	}
+
+	private void updateForLogSelection() {
+		boolean xlog = _logX.isSelected();
+		boolean ylog = _logY.isSelected();
+
+		// log axes cannot include zero (and really shouldn't auto-include 0 anyway)
+		_includeXZero.setEnabled(!xlog);
+		if (xlog) {
+			_includeXZero.setSelected(false);
+		}
+
+		_includeYZero.setEnabled(!ylog);
+		if (ylog) {
+			_includeYZero.setSelected(false);
+		}
 	}
 
 	/**
+	 * Apply changes.
+	 *
 	 * @return true if changes require recomputing the world system
 	 */
 	public boolean apply() {
 
+		// Apply limits/methods first (may set manual ranges)
 		_limitsPanel.apply();
 
-		_params.mustIncludeXZero(_includeXZero.isSelected());
-		_params.mustIncludeYZero(_includeYZero.isSelected());
-		
+		// Apply scale before include-zero, since include-zero is disabled in log mode.
+		_params.setXScale(_logX.isSelected() ? PlotParameters.AxisScale.LOG10 : PlotParameters.AxisScale.LINEAR);
+		_params.setYScale(_logY.isSelected() ? PlotParameters.AxisScale.LOG10 : PlotParameters.AxisScale.LINEAR);
+
+		_params.includeXZero(_includeXZero.isSelected());
+		_params.includeYZero(_includeYZero.isSelected());
+
 		_params.setReverseXaxis(_reverseX.isSelected());
 		_params.setReverseYaxis(_reverseY.isSelected());
 
@@ -140,10 +193,12 @@ public class AxesTabPanel extends JPanel {
 		_params.setNumDecimalY(((Number) _decY.getValue()).intValue());
 		_params.setMinExponentY(((Number) _expY.getValue()).intValue());
 
-		// If include-zero toggles, world limits may change.
-		boolean axisAffectsWorld = (_xZero0 != _includeXZero.isSelected()) || (_yZero0 != _includeYZero.isSelected());
+		// Recompute world system if:
+		//  - include-zero toggled (linear only)
+		//  - log scale toggled (either axis)
+		boolean includeZeroChanged = (_xZero0 != _includeXZero.isSelected()) || (_yZero0 != _includeYZero.isSelected());
+		boolean scaleChanged = (_xLog0 != _logX.isSelected()) || (_yLog0 != _logY.isSelected());
 
-		// Tick formatting doesn’t require setWorldSystem(), just repaint.
-		return axisAffectsWorld;
+		return includeZeroChanged || scaleChanged;
 	}
 }

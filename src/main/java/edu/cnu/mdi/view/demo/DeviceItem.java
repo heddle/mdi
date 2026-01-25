@@ -91,7 +91,7 @@ public class DeviceItem extends RectangleItem {
 
 	/**
 	 * Create a device item centered at given point in local container coordinates
-	 * 
+	 *
 	 * @param layer  the z layer to add the device to
 	 * @param p      the point in local screen coordinates
 	 * @param symbol the device symbol to use
