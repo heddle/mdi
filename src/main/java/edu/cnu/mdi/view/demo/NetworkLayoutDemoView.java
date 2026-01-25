@@ -16,7 +16,7 @@ import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
-import edu.cnu.mdi.properties.PropertySupport;
+import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.view.BaseView;
 
@@ -41,7 +41,7 @@ public class NetworkLayoutDemoView extends BaseView {
 	 *                {@link DemoApp where this view is instantiated}.
 	 */
 	public NetworkLayoutDemoView(Object... keyVals) {
-		super(PropertySupport.fromKeyValues(keyVals));
+		super(PropertyUtils.fromKeyValues(keyVals));
 		deviceLayer = new Layer(getContainer(), "Devices");
 		getContainer().getFeedbackControl().addFeedbackProvider(this);
 		addToToolBar();

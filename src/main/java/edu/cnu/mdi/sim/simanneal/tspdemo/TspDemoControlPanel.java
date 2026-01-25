@@ -1,8 +1,8 @@
 package edu.cnu.mdi.sim.simanneal.tspdemo;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
@@ -14,6 +14,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import edu.cnu.mdi.component.CommonBorder;
+import edu.cnu.mdi.graphics.SliderFactory;
 import edu.cnu.mdi.sim.ISimulationHost;
 import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.SimulationContext;
@@ -60,9 +61,10 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 
 	/** Default max cities. */
 	public static final int MAX_CITIES = 500;
-
-	/** River penalty slider scale: -100..+100 maps to -1.00..+1.00. */
-	private static final int RIVER_SCALE = 100;
+	
+	//for the float based river slider
+	private final static int RIVER_NUM_DECIMALS = 2;
+	private final static int RIVER_SCALE = (int) Math.pow(10, RIVER_NUM_DECIMALS);
 
 	private final IconSimulationControlPanel basePanel;
 
@@ -102,24 +104,28 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		super(new BorderLayout(8, 0));
 		Objects.requireNonNull(icons, "icons");
 
-		basePanel = new IconSimulationControlPanel(icons);
+		basePanel = new IconSimulationControlPanel(icons, false);
 
 		// -------- Sliders panel (center) --------
 		JPanel sliderPanel = new JPanel();
 		sliderPanel.setLayout(new BorderLayout(0,0));
-		sliderPanel.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
+		sliderPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
 
 		// Cities row
 		JPanel cPanel = new JPanel();
 		cPanel.setBorder(new CommonBorder("Number Cities"));
 		JPanel rPanel = new JPanel();
-		rPanel.setBorder(new CommonBorder("River Penalty or Bonus"));
-
-		citySlider = makeSlider(cPanel, MIN_CITIES, MAX_CITIES,
-				TspDemoView.DEFAULT_NUM_CITY, 5);
-
-		riverSlider = makeSlider(rPanel, -RIVER_SCALE, RIVER_SCALE,
-				100* (int) TspDemoView.DEFAULT_RIVER_PENALTY, 5);
+		rPanel.setBorder(new CommonBorder("River Crossing Penalty or Bonus"));
+		
+		Font font = Fonts.tinyFont;
+		
+		int tickSpace = (MAX_CITIES - MIN_CITIES) / 5;
+		citySlider  = SliderFactory.createLabeledSlider(cPanel, MIN_CITIES, MAX_CITIES, 
+				TspDemoView.DEFAULT_NUM_CITY, tickSpace, font, true);
+		
+		
+		float fTickSpace = 0.4f;
+		riverSlider = SliderFactory.createLabeledSlider(rPanel, -1f, 1f, TspDemoView.DEFAULT_RIVER_PENALTY, fTickSpace, font, true, RIVER_NUM_DECIMALS);
 
 		JPanel rows = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
 		rows.add(cPanel);
@@ -160,21 +166,31 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 
 
 	//make a slider
-	private JSlider makeSlider(JPanel panel, int min, int max,
-			int initial, int majorTick) {
-		JSlider slider = new JSlider(min, max, initial);
-
-		slider.setPreferredSize(new Dimension(140, 38));
-
-		majorTick = (max-min)/majorTick;
-		slider.setMajorTickSpacing(majorTick);
-		slider.setMinorTickSpacing(0);
-		slider.setPaintTicks(true);
-		slider.setPaintLabels(true);
-		slider.setFont(Fonts.tinyFont);
-		panel.add(slider);
-		return slider;
-	}
+//	private JSlider makeSlider(JPanel panel, int min, int max,
+//			int initial, int majorTick) {
+//		panel.setLayout(new BorderLayout(0, 0));
+//		JSlider slider = new JSlider(min, max, initial);
+//		JLabel valueLabel = new JLabel("Value: " + slider.getValue());
+//
+//		slider.setPreferredSize(new Dimension(140, 38));
+//		
+//		slider.addChangeListener(e -> {
+//		    // Updates the label in real-time as the knob moves
+//		    valueLabel.setText("Value: " + slider.getValue());
+//		});
+//
+//
+//		majorTick = (max-min)/majorTick;
+//		slider.setMajorTickSpacing(majorTick);
+//		slider.setMinorTickSpacing(0);
+//		slider.setPaintTicks(true);
+//		slider.setPaintLabels(true);
+//		slider.setFont(Fonts.tinyFont);
+//		valueLabel.setFont(Fonts.tinyFont);
+//		panel.add(slider, BorderLayout.CENTER);
+//		panel.add(valueLabel, BorderLayout.NORTH);
+//		return slider;
+//	}
 
 	@Override
 	public void bind(ISimulationHost host) {

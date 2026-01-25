@@ -51,7 +51,7 @@ import edu.cnu.mdi.format.DoubleFormat;
 import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
-import edu.cnu.mdi.properties.PropertySupport;
+import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
 
 /**
@@ -93,7 +93,7 @@ public class BaseView extends JInternalFrame
 	 * <p>
 	 * IMPORTANT: persistence keys should not be derived from the window title
 	 * because titles change. This value is set from
-	 * {@link PropertySupport#getPropName(Properties)} when available, otherwise a
+	 * {@link PropertyUtils#getPropName(Properties)} when available, otherwise a
 	 * reasonable fallback is used.
 	 * </p>
 	 */
@@ -133,12 +133,12 @@ public class BaseView extends JInternalFrame
 
 	/**
 	 * Construct a BaseView from key/value pairs consumed by
-	 * {@link PropertySupport#fromKeyValues(Object...)}.
+	 * {@link PropertyUtils#fromKeyValues(Object...)}.
 	 *
 	 * @param keyVals alternating key/value pairs.
 	 */
 	public BaseView(Object... keyVals) {
-		this(PropertySupport.fromKeyValues(keyVals));
+		this(PropertyUtils.fromKeyValues(keyVals));
 	}
 
 	/**
@@ -646,7 +646,7 @@ public class BaseView extends JInternalFrame
 	 * @return the parsed boolean value, or false if missing/invalid.
 	 */
 	public boolean checkBooleanProperty(String key) {
-		return PropertySupport.getBoolean(properties, key, false);
+		return PropertyUtils.getBoolean(properties, key, false);
 	}
 
 	/**
@@ -666,7 +666,7 @@ public class BaseView extends JInternalFrame
 	 * @return the parsed integer value, or -1 if missing/invalid.
 	 */
 	public int getIntProperty(String key) {
-		return PropertySupport.getInt(properties, key, -1);
+		return PropertyUtils.getInt(properties, key, -1);
 	}
 
 	/**
@@ -762,7 +762,7 @@ public class BaseView extends JInternalFrame
 	/**
 	 * Immutable parsed configuration for initializing a {@link BaseView}.
 	 * <p>
-	 * All reads from {@link PropertySupport} happen here, so the rest of the
+	 * All reads from {@link PropertyUtils} happen here, so the rest of the
 	 * constructor can act on a stable configuration object.
 	 * </p>
 	 */
@@ -822,35 +822,35 @@ public class BaseView extends JInternalFrame
 		}
 
 		static ViewInitConfig from(Properties props) {
-			String title = PropertySupport.getTitle(props);
+			String title = PropertyUtils.getTitle(props);
 			if (title == null) {
 				title = "A View";
 			}
 
-			boolean standardDecorations = PropertySupport.getStandardViewDecorations(props);
-			boolean iconifiable = PropertySupport.getIconifiable(props);
-			boolean maximizable = PropertySupport.getMaximizable(props);
-			boolean resizable = PropertySupport.getResizable(props);
-			boolean closable = PropertySupport.getClosable(props);
+			boolean standardDecorations = PropertyUtils.getStandardViewDecorations(props);
+			boolean iconifiable = PropertyUtils.getIconifiable(props);
+			boolean maximizable = PropertyUtils.getMaximizable(props);
+			boolean resizable = PropertyUtils.getResizable(props);
+			boolean closable = PropertyUtils.getClosable(props);
 
-			boolean scrollable = PropertySupport.getScrollable(props);
-			boolean visible = PropertySupport.getVisible(props);
+			boolean scrollable = PropertyUtils.getScrollable(props);
+			boolean visible = PropertyUtils.getVisible(props);
 
-			String propName = PropertySupport.getPropName(props);
+			String propName = PropertyUtils.getPropName(props);
 
-			int left = PropertySupport.getLeft(props);
-			int top = PropertySupport.getTop(props);
+			int left = PropertyUtils.getLeft(props);
+			int top = PropertyUtils.getTop(props);
 
-			int width = Math.max(100, PropertySupport.getWidth(props));
-			int height = Math.max(100, PropertySupport.getHeight(props));
+			int width = Math.max(100, PropertyUtils.getWidth(props));
+			int height = Math.max(100, PropertyUtils.getHeight(props));
 
 			// Support "fraction + aspect ratio" sizing (legacy feature).
-			double fraction = PropertySupport.getFraction(props);
+			double fraction = PropertyUtils.getFraction(props);
 			if (Double.isFinite(fraction) && (fraction > 0.0) && (fraction < 1.0)) {
 				BaseMDIApplication app = BaseMDIApplication.getApplication();
 				if (app != null) {
 					Dimension appSize = app.getSize();
-					double aspect = PropertySupport.getAspectRatio(props);
+					double aspect = PropertyUtils.getAspectRatio(props);
 					height = (int) (fraction * appSize.height);
 					width = (int) (height * aspect);
 				}
@@ -861,14 +861,14 @@ public class BaseView extends JInternalFrame
 			left = p.x;
 			top = p.y;
 
-			Rectangle2D.Double worldSystem = PropertySupport.getWorldSystem(props);
+			Rectangle2D.Double worldSystem = PropertyUtils.getWorldSystem(props);
 
-			Color background = PropertySupport.getBackground(props);
+			Color background = PropertyUtils.getBackground(props);
 
-			JComponent west = PropertySupport.getSplitWestComponent(props);
+			JComponent west = PropertyUtils.getSplitWestComponent(props);
 
-			long bits = PropertySupport.getToolbarBits(props);
-			ARubberband.Policy policy = PropertySupport.getBoxZoomRubberbandPolicy(props);
+			long bits = PropertyUtils.getToolbarBits(props);
+			ARubberband.Policy policy = PropertyUtils.getBoxZoomRubberbandPolicy(props);
 
 			return new ViewInitConfig(title, propName, standardDecorations, iconifiable, maximizable, resizable,
 					closable, scrollable, visible, left, top, width, height, worldSystem, background, west, bits,
@@ -942,14 +942,14 @@ public class BaseView extends JInternalFrame
 
 		static IContainer resolveContainer(Properties props, Rectangle2D.Double worldSystem) {
 			// If a container instance is explicitly provided, use it.
-			IContainer fromProps = PropertySupport.getContainer(props);
+			IContainer fromProps = PropertyUtils.getContainer(props);
 			if (fromProps != null) {
 				return fromProps;
 			}
 
 			// If a container class is specified, instantiate it using the expected
 			// constructor signature.
-			Object containerClassObj = props.get(PropertySupport.CONTAINERCLASS);
+			Object containerClassObj = props.get(PropertyUtils.CONTAINERCLASS);
 			if (containerClassObj instanceof Class<?> rawClass && IContainer.class.isAssignableFrom(rawClass)) {
 
 				@SuppressWarnings("unchecked")

@@ -42,7 +42,6 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 	}
 
 	private ISimulationHost host;
-	private final IconProvider icons;
 
 	private final JLabel statusLabel = new JLabel("State: NEW");
 	private final JLabel messageLabel = new JLabel(" ");
@@ -59,8 +58,8 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 	private final JButton stopBtn;
 	private final JButton cancelBtn;
 
-	public IconSimulationControlPanel(IconProvider icons) {
-		this.icons = Objects.requireNonNull(icons, "icons");
+	public IconSimulationControlPanel(IconProvider icons, boolean includeStartButton) {
+		Objects.requireNonNull(icons, "icons");
 
 		statusLabel.setFont(Fonts.smallFont);
 		messageLabel.setFont(Fonts.tinyFont);
@@ -83,14 +82,20 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 		JToolBar tb = new JToolBar();
 		tb.setFloatable(false);
 
-		startBtn  = toolButton(icons.start(),  "Start (initialize)");
+		if (includeStartButton) {
+			startBtn = toolButton(icons.start(), "Start (initialize)");
+		} else {
+			startBtn = null;
+		}
 		runBtn    = toolButton(icons.run(),    "Run");
-		pauseBtn  = toolButton(icons.pause(),  "Pause");
+		pauseBtn = toolButton(icons.pause(), "Pause");
 		resumeBtn = toolButton(icons.resume(), "Resume");
-		stopBtn   = toolButton(icons.stop(),   "Stop");
+		stopBtn = toolButton(icons.stop(), "Stop");
 		cancelBtn = toolButton(icons.cancel(), "Cancel");
 
-		tb.add(startBtn);
+		if (includeStartButton) {
+			tb.add(startBtn);
+		}
 		tb.add(runBtn);
 		tb.addSeparator();
 		tb.add(pauseBtn);
@@ -114,9 +119,14 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 		add(bottom, BorderLayout.SOUTH);
 
 		// Actions (no-op until bound)
-		startBtn.addActionListener(e -> { if (host != null) {
-			host.startSimulation();
-		} });
+		if (includeStartButton) {
+			startBtn.setEnabled(false);
+			startBtn.addActionListener(e -> {
+				if (host != null) {
+					host.startSimulation();
+				}
+			});
+		}
 		runBtn.addActionListener(e -> { if (host != null) {
 			host.runSimulation();
 		} });
@@ -253,7 +263,9 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 
 		boolean bound = (host != null);
 
-		startBtn.setEnabled(bound && state != SimulationState.TERMINATED && state != SimulationState.FAILED);
+		if (startBtn != null) {
+			startBtn.setEnabled(bound && state != SimulationState.TERMINATED && state != SimulationState.FAILED);
+		}
 		runBtn.setEnabled(bound && (state == SimulationState.READY || state == SimulationState.PAUSED));
 		pauseBtn.setEnabled(bound && state == SimulationState.RUNNING);
 		resumeBtn.setEnabled(bound && state == SimulationState.PAUSED);

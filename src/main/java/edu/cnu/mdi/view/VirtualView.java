@@ -30,7 +30,7 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.item.AItem;
-import edu.cnu.mdi.properties.PropertySupport;
+import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.Environment;
@@ -161,7 +161,7 @@ public class VirtualView extends BaseView
 	 * @param keyVals variable set of property key-value arguments
 	 */
 	private VirtualView(Object... keyVals) {
-		super(PropertySupport.fromKeyValues(keyVals));
+		super(PropertyUtils.fromKeyValues(keyVals));
 
 		// Track views added/removed after we are created.
 		ViewManager.getInstance().addViewListener(this);
@@ -442,11 +442,11 @@ public class VirtualView extends BaseView
 			height += 23;
 		}
 
-		VirtualView view = new VirtualView(PropertySupport.WORLDSYSTEM, world, PropertySupport.WIDTH, width,
-				PropertySupport.HEIGHT, height, PropertySupport.VISIBLE, true, PropertySupport.BACKGROUND, Color.white,
-				PropertySupport.TITLE, VVTITLE, PropertySupport.STANDARDVIEWDECORATIONS, false,
-				PropertySupport.ICONIFIABLE, false, PropertySupport.RESIZABLE, false, PropertySupport.MAXIMIZABLE,
-				false, PropertySupport.PROPNAME, "VVView", PropertySupport.CLOSABLE, false);
+		VirtualView view = new VirtualView(PropertyUtils.WORLDSYSTEM, world, PropertyUtils.WIDTH, width,
+				PropertyUtils.HEIGHT, height, PropertyUtils.VISIBLE, true, PropertyUtils.BACKGROUND, Color.white,
+				PropertyUtils.TITLE, VVTITLE, PropertyUtils.STANDARDVIEWDECORATIONS, false,
+				PropertyUtils.ICONIFIABLE, false, PropertyUtils.RESIZABLE, false, PropertyUtils.MAXIMIZABLE,
+				false, PropertyUtils.PROPNAME, "VVView", PropertyUtils.CLOSABLE, false);
 
 		view._offsets = new Point[_numcol];
 

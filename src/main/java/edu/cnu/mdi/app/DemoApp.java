@@ -28,7 +28,7 @@ import edu.cnu.mdi.mdi3D.item3D.Sphere;
 import edu.cnu.mdi.mdi3D.panel.Panel3D;
 import edu.cnu.mdi.mdi3D.panel.Support3D;
 import edu.cnu.mdi.mdi3D.view3D.PlainView3D;
-import edu.cnu.mdi.properties.PropertySupport;
+import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
 import edu.cnu.mdi.sim.simanneal.tspdemo.TspDemoView;
 import edu.cnu.mdi.splot.example.AnotherGaussian;
@@ -143,10 +143,10 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	public static DemoApp getInstance() {
 		if (INSTANCE == null) {
-			INSTANCE = new DemoApp(PropertySupport.TITLE, "Demo Application of MDI Views",
-					PropertySupport.BACKGROUNDIMAGE,
+			INSTANCE = new DemoApp(PropertyUtils.TITLE, "Demo Application of MDI Views",
+					PropertyUtils.BACKGROUNDIMAGE,
 					Environment.MDI_RESOURCE_PATH + "images/mdilogo.png",
-					PropertySupport.FRACTION, 0.8);
+					PropertyUtils.FRACTION, 0.8);
 		}
 		return INSTANCE;
 	}
@@ -282,10 +282,10 @@ public class DemoApp extends BaseMDIApplication {
 		final float thetay = 45f;
 		final float thetaz = 45f;
 
-		PlainView3D view3D = new PlainView3D(PropertySupport.TITLE, "Sample 3D View", PropertySupport.ANGLE_X, thetax,
-				PropertySupport.ANGLE_Y, thetay, PropertySupport.ANGLE_Z, thetaz, PropertySupport.DIST_X, xdist,
-				PropertySupport.DIST_Y, ydist, PropertySupport.DIST_Z, zdist, PropertySupport.LEFT, 0,
-				PropertySupport.TOP, 0, PropertySupport.FRACTION, 0.75, PropertySupport.ASPECT, 1.25) {
+		PlainView3D view3D = new PlainView3D(PropertyUtils.TITLE, "Sample 3D View", PropertyUtils.ANGLE_X, thetax,
+				PropertyUtils.ANGLE_Y, thetay, PropertyUtils.ANGLE_Z, thetaz, PropertyUtils.DIST_X, xdist,
+				PropertyUtils.DIST_Y, ydist, PropertyUtils.DIST_Z, zdist, PropertyUtils.LEFT, 0,
+				PropertyUtils.TOP, 0, PropertyUtils.FRACTION, 0.75, PropertyUtils.ASPECT, 1.25) {
 
 			@Override
 			protected Panel3D make3DPanel(float angleX, float angleY, float angleZ, float xDist, float yDist,
@@ -419,8 +419,8 @@ public class DemoApp extends BaseMDIApplication {
 	 * Create the demo plot view.
 	 */
 	PlotView createPlotView() {
-		final PlotView view = new PlotView(PropertySupport.TITLE, "Demo Plots", PropertySupport.PROPNAME, "PLOTVIEW",
-				PropertySupport.FRACTION, 0.7, PropertySupport.ASPECT, 1.2, PropertySupport.VISIBLE, true);
+		final PlotView view = new PlotView(PropertyUtils.TITLE, "Demo Plots", PropertyUtils.PROPNAME, "PLOTVIEW",
+				PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT, 1.2, PropertyUtils.VISIBLE, true);
 
 		// add the examples menu and call "hack" to fix focus issues
 		JMenu examplesMenu = new JMenu("Gallery");
@@ -526,10 +526,10 @@ public class DemoApp extends BaseMDIApplication {
 	 * Create the network declutter demo view.
 	 */
 	NetworkDeclutterDemoView createNetworkDeclutterDemoView() {
-		NetworkDeclutterDemoView view = new NetworkDeclutterDemoView(PropertySupport.TITLE,
-				"Network Declutter Demo View", PropertySupport.PROPNAME, "NETWORKDECLUTTERDEMO",
-				PropertySupport.FRACTION, 0.7, PropertySupport.ASPECT, 1.2, PropertySupport.VISIBLE, false,
-				PropertySupport.BACKGROUND, Color.white, PropertySupport.WORLDSYSTEM,
+		NetworkDeclutterDemoView view = new NetworkDeclutterDemoView(PropertyUtils.TITLE,
+				"Network Declutter Demo View", PropertyUtils.PROPNAME, "NETWORKDECLUTTERDEMO",
+				PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT, 1.2, PropertyUtils.VISIBLE, false,
+				PropertyUtils.BACKGROUND, Color.white, PropertyUtils.WORLDSYSTEM,
 				new Rectangle2D.Double(0.0, 0.0, 1, 1));
 		return view;
 	}
@@ -538,10 +538,10 @@ public class DemoApp extends BaseMDIApplication {
 	 * Create the TSP demo view.
 	 */
 	TspDemoView createTspDemoView() {
-		TspDemoView view = new TspDemoView(PropertySupport.TITLE,
-				"TSP Demo View", PropertySupport.PROPNAME, "TSPDEMO",
-				PropertySupport.FRACTION, 0.6, PropertySupport.ASPECT, 1.2, PropertySupport.VISIBLE, false,
-				PropertySupport.BACKGROUND, X11Colors.getX11Color("lavender blush"), PropertySupport.WORLDSYSTEM,
+		TspDemoView view = new TspDemoView(PropertyUtils.TITLE,
+				"TSP Demo View", PropertyUtils.PROPNAME, "TSPDEMO",
+				PropertyUtils.FRACTION, 0.6, PropertyUtils.ASPECT, 1.2, PropertyUtils.VISIBLE, false,
+				PropertyUtils.BACKGROUND, X11Colors.getX11Color("lavender blush"), PropertyUtils.WORLDSYSTEM,
 				new Rectangle2D.Double(0.0,	 0.0, 1, 1));
 		return view;
 	}
@@ -552,10 +552,10 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	private NetworkLayoutDemoView createNetworkLayoutDemoView() {
 		long toolBits = ToolBits.NAVIGATIONTOOLS | ToolBits.DELETE | ToolBits.CONNECTOR;
-		NetworkLayoutDemoView view = new NetworkLayoutDemoView(PropertySupport.FRACTION, 0.7, PropertySupport.ASPECT,
-				1.2, PropertySupport.TOOLBARBITS, toolBits,
-				PropertySupport.VISIBLE, false, PropertySupport.PROPNAME, "NETWORKLAYOUTDEMO",
-				PropertySupport.BACKGROUND, X11Colors.getX11Color("alice blue"), PropertySupport.TITLE,
+		NetworkLayoutDemoView view = new NetworkLayoutDemoView(PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT,
+				1.2, PropertyUtils.TOOLBARBITS, toolBits,
+				PropertyUtils.VISIBLE, false, PropertyUtils.PROPNAME, "NETWORKLAYOUTDEMO",
+				PropertyUtils.BACKGROUND, X11Colors.getX11Color("alice blue"), PropertyUtils.TITLE,
 				"Network Layout Demo View ");
 		return view;
 	}
@@ -586,9 +586,9 @@ public class DemoApp extends BaseMDIApplication {
 
 		long toolBits = ToolBits.CENTER | ToolBits.ZOOMTOOLS | ToolBits.DRAWINGTOOLS | ToolBits.MAGNIFY ;
 
-		return new MapView2D(PropertySupport.TITLE, "Sample 2D Map View", PropertySupport.PROPNAME, "MAPVIEW2D",
-				PropertySupport.FRACTION, 0.6, PropertySupport.ASPECT, 1.5, PropertySupport.CONTAINERCLASS,
-				MapContainer.class, PropertySupport.TOOLBARBITS, toolBits);
+		return new MapView2D(PropertyUtils.TITLE, "Sample 2D Map View", PropertyUtils.PROPNAME, "MAPVIEW2D",
+				PropertyUtils.FRACTION, 0.6, PropertyUtils.ASPECT, 1.5, PropertyUtils.CONTAINERCLASS,
+				MapContainer.class, PropertyUtils.TOOLBARBITS, toolBits);
 	}
 
 	/**

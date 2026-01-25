@@ -10,7 +10,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
-import edu.cnu.mdi.properties.PropertySupport;
+import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.splot.example.AExample;
 import edu.cnu.mdi.splot.io.PlotFileFilter;
 import edu.cnu.mdi.splot.io.PlotIO;
@@ -47,7 +47,7 @@ public class PlotView extends BaseView {
 	}
 
 	public PlotView(Object... keyVals) {
-		super(PropertySupport.fromKeyValues(keyVals));
+		super(PropertyUtils.fromKeyValues(keyVals));
 		add(createPlotPanel());
 
 		// IMPORTANT: create menu bar BEFORE adding menus

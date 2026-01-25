@@ -9,7 +9,7 @@ import javax.swing.Box;
 import javax.swing.JMenuBar;
 
 import edu.cnu.mdi.mdi3D.panel.Panel3D;
-import edu.cnu.mdi.properties.PropertySupport;
+import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.view.BaseView;
 
 @SuppressWarnings("serial")
@@ -22,17 +22,17 @@ public abstract class PlainView3D extends BaseView implements ActionListener {
 	protected final Panel3D _panel3D;
 
 	public PlainView3D(Object... keyVals) {
-		super(PropertySupport.fromKeyValues(keyVals));
+		super(PropertyUtils.fromKeyValues(keyVals));
 		_menuBar = new JMenuBar();
 		setJMenuBar(_menuBar);
 		addMenus();
 
-		float angleX = PropertySupport.getFloat(properties, PropertySupport.ANGLE_X);
-		float angleY = PropertySupport.getFloat(properties, PropertySupport.ANGLE_Y);
-		float angleZ = PropertySupport.getFloat(properties, PropertySupport.ANGLE_Z);
-		float xDist = PropertySupport.getFloat(properties, PropertySupport.DIST_X);
-		float yDist = PropertySupport.getFloat(properties, PropertySupport.DIST_Y);
-		float zDist = PropertySupport.getFloat(properties, PropertySupport.DIST_Z);
+		float angleX = PropertyUtils.getFloat(properties, PropertyUtils.ANGLE_X);
+		float angleY = PropertyUtils.getFloat(properties, PropertyUtils.ANGLE_Y);
+		float angleZ = PropertyUtils.getFloat(properties, PropertyUtils.ANGLE_Z);
+		float xDist = PropertyUtils.getFloat(properties, PropertyUtils.DIST_X);
+		float yDist = PropertyUtils.getFloat(properties, PropertyUtils.DIST_Y);
+		float zDist = PropertyUtils.getFloat(properties, PropertyUtils.DIST_Z);
 		setLayout(new BorderLayout(1, 1));
 		_panel3D = make3DPanel(angleX, angleY, angleZ, xDist, yDist, zDist);
 

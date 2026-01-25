@@ -50,7 +50,7 @@ public class NetworkDeclutterDemoView extends SimulationView {
 			    new SimulationEngineConfig(33, 250, 20, false),
 			    true,
 			    (SimulationView.ControlPanelFactory) () ->
-			        new IconSimulationControlPanel(new StandardSimIcons()),
+			        new IconSimulationControlPanel(new StandardSimIcons(), false),
 			    keyVals
 			);		// Recover our concrete simulation type so we can access the model and attach
 		// engine callbacks.

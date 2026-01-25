@@ -10,7 +10,7 @@ import java.util.List;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
-import edu.cnu.mdi.properties.PropertySupport;
+import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.swing.WindowPlacement;
 
 /**
@@ -28,7 +28,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 	 * @param keyVals variable set of arguments.
 	 */
 	private DrawingView(Object... keyVals) {
-		super(PropertySupport.fromKeyValues(keyVals));
+		super(PropertyUtils.fromKeyValues(keyVals));
 		getContainer().getFeedbackControl().addFeedbackProvider(this);
 	}
 
@@ -48,12 +48,12 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 
 		// create the view
 		long toolBits = ToolBits.DRAWINGTOOLS | ToolBits.ZOOMTOOLS | ToolBits.PAN;
-		view = new DrawingView(PropertySupport.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, width, height),
-				PropertySupport.WIDTH, width, // container width, not total view width
-				PropertySupport.HEIGHT, height, // container height, not total view width
-				PropertySupport.TOOLBARBITS, toolBits, PropertySupport.VISIBLE, true,
-				PropertySupport.PROPNAME, "DRAWING", PropertySupport.BACKGROUND, Color.white, PropertySupport.TITLE,
-				"Drawing View ", PropertySupport.STANDARDVIEWDECORATIONS, true);
+		view = new DrawingView(PropertyUtils.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, width, height),
+				PropertyUtils.WIDTH, width, // container width, not total view width
+				PropertyUtils.HEIGHT, height, // container height, not total view width
+				PropertyUtils.TOOLBARBITS, toolBits, PropertyUtils.VISIBLE, true,
+				PropertyUtils.PROPNAME, "DRAWING", PropertyUtils.BACKGROUND, Color.white, PropertyUtils.TITLE,
+				"Drawing View ", PropertyUtils.STANDARDVIEWDECORATIONS, true);
 
 		view.pack();
 		return view;

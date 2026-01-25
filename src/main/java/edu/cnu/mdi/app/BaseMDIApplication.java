@@ -20,7 +20,7 @@ import javax.swing.UIManager;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
 import edu.cnu.mdi.desktop.Desktop;
-import edu.cnu.mdi.properties.PropertySupport;
+import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.swing.WindowPlacement;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.ui.menu.FileMenu;
@@ -87,7 +87,7 @@ public class BaseMDIApplication extends JFrame {
         //set the application name
         Environment.setApplicationName(getClass().getSimpleName());
 
-        _properties = PropertySupport.fromKeyValues(keyVals);
+        _properties = PropertyUtils.fromKeyValues(keyVals);
 
         // --------------------------------------------------------------------
         // Menu bar and menu manager
@@ -106,13 +106,13 @@ public class BaseMDIApplication extends JFrame {
         // --------------------------------------------------------------------
         // Frame attributes
         // --------------------------------------------------------------------
-        Color background = PropertySupport.getBackground(_properties);
-        String backgroundImage = PropertySupport.getBackgroundImage(_properties);
-        String title = PropertySupport.getTitle(_properties);
-        boolean maximize = PropertySupport.getMaximize(_properties);
-        double screenFraction = PropertySupport.getFraction(_properties);
-        int width = PropertySupport.getWidth(_properties);
-        int height = PropertySupport.getHeight(_properties);
+        Color background = PropertyUtils.getBackground(_properties);
+        String backgroundImage = PropertyUtils.getBackgroundImage(_properties);
+        String title = PropertyUtils.getTitle(_properties);
+        boolean maximize = PropertyUtils.getMaximize(_properties);
+        double screenFraction = PropertyUtils.getFraction(_properties);
+        int width = PropertyUtils.getWidth(_properties);
+        int height = PropertyUtils.getHeight(_properties);
 
         setTitle(title != null ? title : "MDI Application");
 

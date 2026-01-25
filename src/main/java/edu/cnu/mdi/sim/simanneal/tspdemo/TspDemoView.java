@@ -51,7 +51,7 @@ import edu.cnu.mdi.sim.ui.SimulationView;
 public class TspDemoView extends SimulationView implements ITspDemoResettable, IAcceptedMoveListener {
 
 	public static final int DEFAULT_NUM_CITY = 60;
-	public static final double DEFAULT_RIVER_PENALTY = 0.35;
+	public static final float DEFAULT_RIVER_PENALTY = 0.35f;
 
 	/**
 	 * Thread-local bundle used to pass created objects across the super(...)
