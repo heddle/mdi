@@ -7,6 +7,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JRadioButtonMenuItem;
 
+@SuppressWarnings("serial")
 public class MapProjectionMenu extends JMenu {
 
 	private EProjection currentProjection = EProjection.MOLLWEIDE; // Default selection

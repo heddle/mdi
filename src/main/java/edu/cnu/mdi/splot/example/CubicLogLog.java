@@ -70,7 +70,7 @@ public class CubicLogLog extends AExample {
 		for (int i = 0; i < n; i++) {
 
 			// nominal log-spaced x
-			double t = (n == 1) ? 0.5 : (double) i / (n - 1);
+			double t = (double) i / (n - 1);
 			double logx = logMin + t * (logMax - logMin);
 
 			// small random jitter in log space (keeps x positive)

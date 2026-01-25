@@ -266,9 +266,12 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 	public void loadConfigurationFile() {
 
 		File file = Environment.getInstance().getConfigurationFile();
+		if (file == null) {
+			return;
+		}
 
 		try {
-			if ((file != null) && file.exists() && file.canRead()) {
+			if (file.exists() && file.canRead()) {
 				try {
 					FileInputStream fis = new FileInputStream(file);
 					_properties = new Properties();
@@ -322,6 +325,9 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 	public void writeConfigurationFile() {
 
 		File file = Environment.getInstance().getConfigurationFile();
+		if (file == null) {
+			return;
+		}
 
 		if (file.exists()) {
 			int answer = JOptionPane.showConfirmDialog(null,
@@ -353,6 +359,8 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 			try {
 				properties.storeToXML(fos, null);
 				fos.close();
+				JOptionPane.showMessageDialog(null, "Your configuration was saved to: " + file.getAbsolutePath(), 
+                        "Success", JOptionPane.INFORMATION_MESSAGE);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -368,6 +376,9 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 	public void deleteConfigurationFile() {
 
 		File file = Environment.getInstance().getConfigurationFile();
+		if (file == null) {
+			return;
+		}
 
 		if (file.exists()) {
 			int answer = JOptionPane.showConfirmDialog(null, "Confim delete operation (this can not be undone).",
@@ -377,6 +388,8 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 				return;
 			}
 			file.delete();
+			JOptionPane.showMessageDialog(null, "Your configuration file was deleted.", 
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 

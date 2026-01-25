@@ -176,6 +176,7 @@ public class BaseView extends JInternalFrame
 			this.container = resolveContainer(cfg.worldSystem);
 			this.container.setView(this);
 			ViewContentBuilder.build(this, cfg);
+			installViewPopupTrigger();
 			ViewKeyBindings.installDeleteBinding(this);
 			pack();
 		} else {
@@ -189,7 +190,6 @@ public class BaseView extends JInternalFrame
 		}
 
 		if ((this.container != null) && this.container instanceof BaseContainer) {
-			getViewPopupMenu().addSeparator();
 			getViewPopupMenu().add(LayerInspectorDialog.createMenuItem(this));
 		}
 
@@ -300,20 +300,95 @@ public class BaseView extends JInternalFrame
 		return viewPopupMenu;
 	}
 
+	
 	/**
-	 * Add a "quick zoom" preset to the view popup menu.
-	 *
-	 * @param title the menu label.
-	 * @param xmin  world xmin.
-	 * @param ymin  world ymin.
-	 * @param xmax  world xmax.
-	 * @param ymax  world ymax.
+	 * Install a right-click popup trigger on the view's canvas so that the view popup
+	 * menu appears even when no toolbar tool is selected.
+	 * <p>
+	 * This handles platform differences where popup triggers may fire on either
+	 * {@code mousePressed} (macOS) or {@code mouseReleased} (Windows/Linux).
+	 * The popup is only shown when the click is <em>not</em> on an item; item-level
+	 * popups (handled elsewhere) take precedence.
+	 * </p>
 	 */
-	public void addQuickZoom(String title, double xmin, double ymin, double xmax, double ymax) {
-		viewPopupMenu.addQuickZoom(title, xmin, ymin, xmax, ymax);
-	}
+	private void installViewPopupTrigger() {
 
-	/**
+		if (container == null) {
+			return;
+		}
+
+		final Component canvas = container.getComponent();
+		if (canvas == null) {
+			return;
+		}
+
+		// Canvas listener: right-click on empty space -> view popup.
+		canvas.addMouseListener(new MouseAdapter() {
+
+			private void maybeShow(MouseEvent e) {
+				if (e == null || !e.isPopupTrigger()) {
+					return;
+				}
+
+				// If the click is on an item, let item-level logic handle it.
+				if (container.getItemAtPoint(e.getPoint()) != null) {
+					return;
+				}
+
+				ViewPopupMenu menu = getViewPopupMenu();
+				if (menu != null) {
+					menu.show(e.getComponent(), e.getX(), e.getY());
+				}
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				maybeShow(e);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				maybeShow(e);
+			}
+		});
+
+		// If scrollable, also listen on the viewport; translate point to canvas coords.
+		if (scrollPane != null && scrollPane.getViewport() != null) {
+
+			final Component viewport = scrollPane.getViewport();
+
+			viewport.addMouseListener(new MouseAdapter() {
+
+				private void maybeShow(MouseEvent e) {
+					if (e == null || !e.isPopupTrigger()) {
+						return;
+					}
+
+					Point p = SwingUtilities.convertPoint(viewport, e.getPoint(), canvas);
+
+					if (container.getItemAtPoint(p) != null) {
+						return;
+					}
+
+					ViewPopupMenu menu = getViewPopupMenu();
+					if (menu != null) {
+						menu.show(viewport, e.getX(), e.getY());
+					}
+				}
+
+				@Override
+				public void mousePressed(MouseEvent e) {
+					maybeShow(e);
+				}
+
+				@Override
+				public void mouseReleased(MouseEvent e) {
+					maybeShow(e);
+				}
+			});
+		}
+	}
+/**
 	 * @return {@code true} if this view wraps its container in a
 	 *         {@link JScrollPane}.
 	 */

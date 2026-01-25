@@ -25,6 +25,7 @@ import edu.cnu.mdi.swing.WindowPlacement;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.ui.menu.FileMenu;
 import edu.cnu.mdi.ui.menu.MenuManager;
+import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.view.ViewManager;
 
 /**
@@ -82,6 +83,9 @@ public class BaseMDIApplication extends JFrame {
 
         // Initialize FlatLaf LookAndFeel
         UIInit();
+        
+        //set the application name
+        Environment.setApplicationName(getClass().getSimpleName());
 
         _properties = PropertySupport.fromKeyValues(keyVals);
 

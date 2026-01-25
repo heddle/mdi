@@ -65,7 +65,7 @@ public final class Environment {
 	private final ImageWriter pngWriter;
 
 	// application name (derived lazily)
-	private String applicationName;
+	private static String _applicationName;
 
 	// preferences
 	private final Properties properties;
@@ -301,42 +301,32 @@ public final class Environment {
 	public ImageWriter getPngWriter() {
 		return pngWriter;
 	}
-
+	
 	// ------------------------------------------------------------------------
 	// Application name and configuration
 	// ------------------------------------------------------------------------
 
 	/**
-	 * Attempts to infer a simple application name. By default this is the simple
-	 * name of the class that appears at the bottom of the stack trace for thread id
-	 * 1, converted to lower case. If this cannot be determined, {@code null} is
-	 * returned.
+	 * Returns the application name. This is used to derive configuration and
+	 * preference file names.
 	 *
-	 * @return the inferred application name, or {@code null} if unavailable
+	 * @return the application name, or {@code null} if not set
 	 */
-	public synchronized String getApplicationName() {
-		if (applicationName != null) {
-			return applicationName;
+	public static String getApplicationName() {
+		return _applicationName;
+	}
+	
+	/**
+	 * Sets the application name. This is used to derive configuration and
+	 * preference file names. Set by basemdiapplication then never changed
+	 *
+	 * @param applicationName the application name to set
+	 */
+	public static void setApplicationName(String applicationName) {
+//set by basemdiapplication then never changed
+		if (_applicationName == null) {
+			_applicationName = applicationName;
 		}
-
-		try {
-			ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-			ThreadInfo info = bean.getThreadInfo(1, Integer.MAX_VALUE);
-			if (info != null) {
-				StackTraceElement[] stackTrace = info.getStackTrace();
-				if (stackTrace != null && stackTrace.length > 0) {
-					String fqcn = stackTrace[stackTrace.length - 1].getClassName();
-					int index = fqcn.lastIndexOf('.');
-					applicationName = (index >= 0 ? fqcn.substring(index + 1) : fqcn).toLowerCase(Locale.ENGLISH);
-					LOGGER.info("Application name: " + applicationName);
-				}
-			}
-		} catch (Exception e) {
-			LOGGER.log(Level.FINE, "Could not determine application name.", e);
-			applicationName = null;
-		}
-
-		return applicationName;
 	}
 
 	/**

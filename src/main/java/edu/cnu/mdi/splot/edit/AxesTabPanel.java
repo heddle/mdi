@@ -43,9 +43,7 @@ public class AxesTabPanel extends JPanel {
 	private final boolean _xZero0, _yZero0;
 	private final boolean _xLog0, _yLog0;
 
-	@SuppressWarnings("unused")
 	private final boolean _xReverse0, _yReverse0;
-	@SuppressWarnings("unused")
 	private final int _decX0, _expX0, _decY0, _expY0;
 
 	public AxesTabPanel(PlotCanvas canvas) {

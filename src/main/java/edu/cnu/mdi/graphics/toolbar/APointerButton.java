@@ -167,6 +167,18 @@ public abstract class APointerButton extends JToggleButton
             return;
         }
 
+
+        // On some platforms (notably macOS), popup triggers fire on mousePressed
+        // rather than mouseReleased. Ensure the view-level popup is reachable
+        // when right-clicking on empty space (obj == null).
+        if ((hitObject == null) && e.isPopupTrigger()) {
+            clickObject(null, e);
+            mode = Mode.IDLE;
+            pressPt = null;
+            lastPt = null;
+            hitObject = null;
+            return;
+        }
         mode = (hitObject != null) ? Mode.PRESS_ON_OBJECT : Mode.PRESS_ON_EMPTY;
     }
 
