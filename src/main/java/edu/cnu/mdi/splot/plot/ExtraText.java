@@ -10,6 +10,7 @@ import java.awt.Rectangle;
  * @author heddle
  *
  */
+@SuppressWarnings("serial")
 public class ExtraText extends DraggableRectangle {
 
 	// the owner plot panel

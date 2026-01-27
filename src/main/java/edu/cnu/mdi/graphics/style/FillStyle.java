@@ -8,7 +8,7 @@ public enum FillStyle {
 	/**
 	 * A map for the names of the fill styles.
 	 */
-	public static EnumMap<FillStyle, String> names = new EnumMap<>(FillStyle.class);
+	public static final EnumMap<FillStyle, String> names = new EnumMap<>(FillStyle.class);
 
 	static {
 		names.put(EMPTY, "Empty");
@@ -55,7 +55,7 @@ public enum FillStyle {
 	 * @return the string array of nice names for display.
 	 */
 	public static String[] getNames() {
-		String strArray[] = new String[names.size()];
+		String[] strArray = new String[names.size()];
 		int i = 0;
 		for (FillStyle fs : values()) {
 			strArray[i] = names.get(fs);

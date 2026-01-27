@@ -5,6 +5,7 @@ import java.awt.BorderLayout;
 import edu.cnu.mdi.dialog.SimpleDialog;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 
+@SuppressWarnings("serial")
 public class CurveEditorDialog extends SimpleDialog {
 
 	// the plot canvas

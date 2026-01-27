@@ -41,6 +41,7 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 		Icon cancel();
 	}
 
+	// the host is typically a subclass of SimulationView
 	private ISimulationHost host;
 
 	private final JLabel statusLabel = new JLabel("State: NEW");

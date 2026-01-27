@@ -420,17 +420,4 @@ public class CubicSpline implements Evaluator {
 		return y2;
 	}
 
-	/**
-	 * Insert a value into a list while de-duplicating against existing values
-	 * within {@code eps}. The list may be in any order; we simply avoid adding
-	 * near-duplicates.
-	 */
-	private static void addDedupSorted(List<Double> values, double v, double eps) {
-		for (double existing : values) {
-			if (Math.abs(existing - v) <= eps) {
-				return;
-			}
-		}
-		values.add(v);
-	}
 }

@@ -85,7 +85,8 @@ public class BaseMDIApplication extends JFrame {
         UIInit();
         
         //set the application name
-        Environment.setApplicationName(getClass().getSimpleName());
+        String applicationId = getApplicationId();
+        Environment.setApplicationName(applicationId);
 
         _properties = PropertyUtils.fromKeyValues(keyVals);
 
@@ -150,6 +151,15 @@ public class BaseMDIApplication extends JFrame {
 
         instance = this;
     }
+    
+    /** Return a stable application ID for use in persistence, etc. By default
+     * this is the fully-qualified class name of the class containing
+     * main(), which is presumably a subclass.The subclass may override this to
+	 * provide a different (simpler) ID if desired.
+     */
+    protected String getApplicationId() {
+        return getClass().getName(); // fully-qualified is most stable/unique
+    } 
 
     //initialize the FlatLaf UI
 	private void UIInit() {

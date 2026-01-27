@@ -423,9 +423,6 @@ public class Layer extends ArrayList<AItem> {
 	 */
 	public void selectItem(AItem item, boolean select) {
 
-		if (item instanceof edu.cnu.mdi.item.ConnectorItem) {
-			System.out.println("Layer: selectItem: " + item.getName() + " select=" + select);
-		}
 		if (_locked) {
 			return;
 		}

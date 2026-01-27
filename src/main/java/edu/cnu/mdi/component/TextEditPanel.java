@@ -14,6 +14,7 @@ import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.ui.colors.ColorLabel;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
+@SuppressWarnings("serial")
 public class TextEditPanel extends JPanel {
 
 	//cached original text (immutable)

@@ -11,7 +11,13 @@ import javax.swing.Icon;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
+import edu.cnu.mdi.sim.ProgressInfo;
+import edu.cnu.mdi.sim.SimulationContext;
+import edu.cnu.mdi.sim.SimulationEngine;
 import edu.cnu.mdi.sim.SimulationEngineConfig;
+import edu.cnu.mdi.sim.SimulationListener;
+import edu.cnu.mdi.sim.SimulationState;
+import edu.cnu.mdi.sim.simanneal.tspdemo.TspDemoControlPanel;
 import edu.cnu.mdi.sim.ui.IconSimulationControlPanel;
 import edu.cnu.mdi.sim.ui.SimulationView;
 import edu.cnu.mdi.sim.ui.StandardSimIcons;
@@ -26,13 +32,18 @@ import edu.cnu.mdi.util.Environment;
  * </p>
  */
 @SuppressWarnings("serial")
-public class NetworkDeclutterDemoView extends SimulationView {
+public class NetworkDeclutterDemoView extends SimulationView implements IResettable {
+
+	// Default parameters for random network
+	public static final int DEFAULT_NUM_SERVERS = 14;
+	public static final int DEFAULT_NUM_CLIENTS = 100;
+	public static final int DEFAULT_NUM_PRINTERS = 5;
 
 	/** Model used by this view (world coords). */
-	private final NetworkModel model;
+	private NetworkModel model;
 
 	/** Simulation used by this view. */
-	private final NetworkDeclutterSimulation sim;
+	private NetworkDeclutterSimulation sim;
 
 	// Icons for servers, printers and clients
 	private final Icon serverIcon;
@@ -40,6 +51,7 @@ public class NetworkDeclutterDemoView extends SimulationView {
 	private final Icon printerIcon;
 	private final int iconSize = 28;
 	private int iconRadiusPx;
+
 	/**
 	 * Create a network layout demo view.
 	 *
@@ -47,14 +59,13 @@ public class NetworkDeclutterDemoView extends SimulationView {
 	 */
 	public NetworkDeclutterDemoView(Object... keyVals) {
 		// must call super(...) first. We build the simulation via a static helper.
-		super(
-			    createSimulation(),
-			    new SimulationEngineConfig(60, 250, 60, false),
-			    true,
-			    (SimulationView.ControlPanelFactory) () ->
-			        new IconSimulationControlPanel(new StandardSimIcons(), false),
-			    keyVals
-			);		// Recover our concrete simulation type so we can access the model and attach
+		super(createSimulation(), new SimulationEngineConfig(60, 250, 60, false), true,
+				(SimulationView.ControlPanelFactory) NetworkDeclutterControlPanel::new, keyVals); // Recover our
+																									// concrete
+																									// simulation type
+																									// so we can access
+																									// the model and
+																									// attach
 		// engine callbacks.
 
 		this.sim = (NetworkDeclutterSimulation) getSimulationEngine().getSimulation();
@@ -68,7 +79,7 @@ public class NetworkDeclutterDemoView extends SimulationView {
 		serverIcon = ImageManager.getInstance().loadUiIcon(resPath + "images/svg/server.svg", iconSize, iconSize);
 		clientIcon = ImageManager.getInstance().loadUiIcon(resPath + "images/svg/workstation.svg", iconSize, iconSize);
 		printerIcon = ImageManager.getInstance().loadUiIcon(resPath + "images/svg/printer.svg", iconSize, iconSize);
-		
+
 		iconRadiusPx = clientIcon.getIconWidth() / 2; // assuming square icons of same size
 
 		setAfterDraw();
@@ -79,12 +90,38 @@ public class NetworkDeclutterDemoView extends SimulationView {
 		// Start engine thread (remains paused until Run unless you call startAndRun()).
 		startSimulation();
 	}
+	
+	@Override
+	protected void onSimulationRefresh(SimulationContext ctx) {
+	    super.onSimulationRefresh(ctx);
+
+	    NetworkDeclutterSimulation nds = sim;
+
+	    NetworkDeclutterSimulation.Diagnostics d;
+	    while ((d = nds.getDiagnosticsSamples().poll()) != null) {
+
+	        int step = d.step;
+	        
+	        System.out.printf("Step %d: total=%.3f potential=%.3f kinetic=%.3f avgSpeed=%.3f Frms=%.3f vmaxFrac=%.3f%n",
+	                step, d.total(), d.potential(), d.kinetic, d.avgSpeed, d.Frms, d.vmaxHitFraction);
+
+//	        energyChart.addPoint("Total", step, d.total());
+//	        energyChart.addPoint("Potential", step, d.potential());
+//	        energyChart.addPoint("Kinetic", step, d.Kinetic);
+
+	        // Optional but VERY informative:
+//	        energyChart.addPoint("avgSpeed", step, d.avgSpeed);
+//	        energyChart.addPoint("Frms", step, d.Frms);
+//	        energyChart.addPoint("vmaxFrac", step, d.vmaxHitFraction);
+	    }
+	}
+
 
 	// Helper to create the simulation instance
 	private static NetworkDeclutterSimulation createSimulation() {
-		NetworkModel m = NetworkModel.random(14, // servers
-				100, // clients
-				5, // printers
+		NetworkModel m = NetworkModel.random(DEFAULT_NUM_SERVERS, // servers
+				DEFAULT_NUM_CLIENTS, // clients
+				DEFAULT_NUM_PRINTERS, // printers
 				new Random());
 
 		return new NetworkDeclutterSimulation(m);
@@ -98,12 +135,11 @@ public class NetworkDeclutterDemoView extends SimulationView {
 				Point pp0 = new Point();
 				Point pp1 = new Point();
 
-
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				for (NetworkModel.Edge e : model.edges) {
 					Node node1 = e.node1;
 					Node node2 = e.node2;
-					
+
 					// draw lnks to printers in red
 					if (node2.type == Node.NodeType.PRINTER || node1.type == Node.NodeType.PRINTER) {
 						g2.setColor(Color.red);
@@ -141,6 +177,40 @@ public class NetworkDeclutterDemoView extends SimulationView {
 				}
 			}
 		});
+	}
+
+
+	@Override
+	public void requestReset(int numServers, int numClients, int numPrinters) {
+
+		// Keep a handle to the old sim in case you later add listeners you want to
+		// detach.
+		final NetworkDeclutterSimulation oldSim = this.sim;
+
+		requestEngineReset(
+				// Build a brand-new simulation/model.
+				() -> new NetworkDeclutterSimulation(
+						NetworkModel.random(numServers, numClients, numPrinters, new java.util.Random())),
+
+				// After-swap hook: update local refs and rebind sim->engine.
+				(SimulationEngine newEngine) -> {
+
+					NetworkDeclutterSimulation newSim = (NetworkDeclutterSimulation) newEngine.getSimulation();
+
+					this.sim = newSim;
+					this.model = newSim.getModel();
+
+					// Let sim post through the new engine.
+					this.sim.setEngine(newEngine);
+
+					// If you later add sim listeners (like in TSP), detach from oldSim here and
+					// attach to newSim.
+					// if (oldSim != null) { ... }
+				},
+
+				true, // autoStart: start the new engine thread (will sit in READY until Run)
+				true // refresh: show the new random network immediately
+		);
 	}
 
 }

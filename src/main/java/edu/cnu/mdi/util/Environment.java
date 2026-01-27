@@ -6,20 +6,11 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,9 +33,6 @@ public final class Environment {
 	// the logger
 	private static final Logger LOGGER = Logger.getLogger(Environment.class.getName());
 
-	/** Separator used when storing simple string lists as a single value. */
-	private static final String LIST_SEPARATOR = "$$";
-
 	/** The singleton instance. */
 	private static Environment instance;
 
@@ -66,9 +54,6 @@ public final class Environment {
 
 	// application name (derived lazily)
 	private static String _applicationName;
-
-	// preferences
-	private final Properties properties;
 
 	/**
 	 * Private constructor for the singleton. Gathers system information and
@@ -94,17 +79,6 @@ public final class Environment {
 			LOGGER.log(Level.WARNING, "Unable to locate PNG ImageWriter.", t);
 		}
 		pngWriter = writer;
-
-		// load preferences (if any)
-		properties = new Properties();
-		File prefFile = getPreferencesFile();
-		if (prefFile.exists() && prefFile.isFile()) {
-			try (FileInputStream in = new FileInputStream(prefFile)) {
-				properties.loadFromXML(in);
-			} catch (IOException e) {
-				LOGGER.log(Level.WARNING, "Failed to load preferences from " + prefFile, e);
-			}
-		}
 
 	}
 
@@ -172,7 +146,7 @@ public final class Environment {
 	public String getOsName() {
 		return osName;
 	}
-	
+
 	/**
 	 * Returns the data directory. this is where
 	 * application data files (e.g., plots) were most recently stored
@@ -182,7 +156,7 @@ public final class Environment {
 	public String getDataDirectory() {
 		return dataDirectory;
 	}
-	
+
 	/**
 	 * Sets the data directory.This is where
 	 * application data files (e.g., plots) were most recently stored.
@@ -301,7 +275,7 @@ public final class Environment {
 	public ImageWriter getPngWriter() {
 		return pngWriter;
 	}
-	
+
 	// ------------------------------------------------------------------------
 	// Application name and configuration
 	// ------------------------------------------------------------------------
@@ -315,7 +289,7 @@ public final class Environment {
 	public static String getApplicationName() {
 		return _applicationName;
 	}
-	
+
 	/**
 	 * Sets the application name. This is used to derive configuration and
 	 * preference file names. Set by basemdiapplication then never changed
@@ -323,10 +297,18 @@ public final class Environment {
 	 * @param applicationName the application name to set
 	 */
 	public static void setApplicationName(String applicationName) {
-//set by basemdiapplication then never changed
-		if (_applicationName == null) {
-			_applicationName = applicationName;
-		}
+	    if (applicationName == null) {
+	        return;
+	    }
+	    applicationName = applicationName.trim();
+	    if (applicationName.isEmpty()) {
+	        return;
+	    }
+
+	    // Only block changes if we already have a non-empty name.
+	    if (_applicationName == null || _applicationName.trim().isEmpty()) {
+	        _applicationName = applicationName;
+	    }
 	}
 
 	/**
@@ -339,138 +321,30 @@ public final class Environment {
 	 *         unknown
 	 */
 	public File getConfigurationFile() {
-		String aname = getApplicationName();
-		if (aname == null || homeDirectory == null) {
-			return null;
-		}
+	    String aname = getApplicationName();
+	    if ((homeDirectory == null) || (aname == null)) {
+	        return null;
+	    }
+	    aname = aname.trim();
+	    if (aname.isEmpty()) {
+	        return null;
+	    }
 
-		boolean windows = isWindows();
-		String baseName = windows ? aname + ".xml" : "." + aname + ".xml";
-		try {
-			return new File(homeDirectory, baseName);
-		} catch (Exception e) {
-			LOGGER.log(Level.WARNING, "Could not create configuration file.", e);
-			return null;
-		}
+	    final boolean windows = isWindows();
+
+	    // Sanitize to something safe for filenames (optional but smart)
+	    // e.g. strip spaces and path separators
+	    aname = aname.replaceAll("[\\\\/\\s:]+", "_");
+
+	    final String baseName = windows ? (aname + ".xml") : ("." + aname + ".xml");
+	    try {
+	        return new File(homeDirectory, baseName);
+	    } catch (Exception e) {
+	        LOGGER.log(Level.WARNING, "Could not create configuration file.", e);
+	        return null;
+	    }
 	}
 
-	/**
-	 * Returns the file used to store {@link #getProperties() preferences}. The file
-	 * is created in the user's home directory and uses an XML
-	 * {@link java.util.Properties} format.
-	 */
-	private File getPreferencesFile() {
-		String aname = getApplicationName();
-		if (aname == null || homeDirectory == null) {
-			// fall back to a generic name
-			return new File("mdi.preferences.xml");
-		}
-		return new File(homeDirectory, "." + aname + ".pref.xml");
-	}
-
-	// ------------------------------------------------------------------------
-	// Preferences
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Returns the raw preferences backing store. The returned instance is live;
-	 * modifications are not written to disk until {@link #flushPreferences()} is
-	 * called.
-	 *
-	 * @return the properties used as preferences
-	 */
-	public Properties getProperties() {
-		return properties;
-	}
-
-	/**
-	 * Returns the preference associated with the given key, or {@code null} if no
-	 * such preference exists.
-	 */
-	public String getPreference(String key) {
-		return (key == null ? null : properties.getProperty(key));
-	}
-
-	/**
-	 * Stores a single preference value and immediately writes the preferences file
-	 * to disk.
-	 *
-	 * @param key   the preference key (must not be {@code null})
-	 * @param value the value to store (must not be {@code null})
-	 */
-	public void savePreference(String key, String value) {
-		if (key == null || value == null) {
-			return;
-		}
-		properties.setProperty(key, value);
-		flushPreferences();
-	}
-
-	/**
-	 * Saves a list of string values under the given key. The list is stored as a
-	 * single, separator-encoded string. An empty or {@code null} list clears the
-	 * preference.
-	 *
-	 * @param key    the preference key
-	 * @param values the values to store
-	 */
-	public void savePreferenceList(String key, List<String> values) {
-		if (key == null) {
-			return;
-		}
-		if (values == null || values.isEmpty()) {
-			properties.remove(key);
-			flushPreferences();
-			return;
-		}
-
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < values.size(); i++) {
-			sb.append(values.get(i));
-			if (i < values.size() - 1) {
-				sb.append(LIST_SEPARATOR);
-			}
-		}
-		savePreference(key, sb.toString());
-	}
-
-	/**
-	 * Returns the preference identified by {@code key} as a list of strings. The
-	 * value is split using the list separator.
-	 *
-	 * @param key the preference key
-	 * @return a list of values, or {@code null} if the preference does not exist
-	 */
-	public List<String> getPreferenceList(String key) {
-		String raw = getPreference(key);
-		if (raw == null || raw.isEmpty()) {
-			return null;
-		}
-		String[] tokens = raw.split(java.util.regex.Pattern.quote(LIST_SEPARATOR));
-		List<String> result = new ArrayList<>(tokens.length);
-		for (String token : tokens) {
-			if (!token.isEmpty()) {
-				result.add(token);
-			}
-		}
-		return result.isEmpty() ? null : result;
-	}
-
-	/**
-	 * Writes the current preferences to disk. This is automatically invoked by the
-	 * {@code savePreference} methods.
-	 */
-	public synchronized void flushPreferences() {
-		File file = getPreferencesFile();
-		if (file == null) {
-			return;
-		}
-		try (FileOutputStream out = new FileOutputStream(file)) {
-			properties.storeToXML(out, "mdi preferences");
-		} catch (IOException e) {
-			LOGGER.log(Level.WARNING, "Failed to write preferences to " + file, e);
-		}
-	}
 
 	// ------------------------------------------------------------------------
 	// Utility methods

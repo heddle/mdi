@@ -14,7 +14,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.InvalidPropertiesFormatException;
 import java.util.Properties;
 
 import javax.swing.ImageIcon;
@@ -70,9 +69,7 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 	// optional after drawer
 	private IDrawable _afterDraw;
 
-	// hack related to internal frame drag bug
-	private static Ping _ping;
-	private JInternalFrame _dragFrame;
+    private JInternalFrame _dragFrame;
 	private long _lastDragTime = Long.MAX_VALUE;
 	private int _lastX;
 	private int _lastY;
@@ -109,7 +106,8 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 			}
 		}
 
-		_ping = new Ping(1000);
+        // hack related to internal frame drag bug
+        Ping _ping = new Ping(1000);
 		IPing pingListener = new IPing() {
 
 			@Override
@@ -261,62 +259,76 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
 	}
 
 	/**
-	 * Load the configuration file that preserves the an arrangement of views.
+	 * Load the configuration file that preserves an arrangement of views.
+	 * <p>
+	 * If the file does not exist, cannot be read, or cannot be parsed, this is a no-op.
+	 * </p>
 	 */
 	public void loadConfigurationFile() {
+		
+		Log log = Log.getInstance();
 
-		File file = Environment.getInstance().getConfigurationFile();
-		if (file == null) {
-			return;
-		}
+	    final File file = Environment.getInstance().getConfigurationFile();
 
-		try {
-			if (file.exists() && file.canRead()) {
-				try {
-					FileInputStream fis = new FileInputStream(file);
-					_properties = new Properties();
-					try {
-						_properties.loadFromXML(fis);
-					} catch (InvalidPropertiesFormatException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					try {
-						fis.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					Log.getInstance().info("Loaded a configuration file from [" + file.getPath() + "]");
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-				}
-			} else {
-				Log log = Log.getInstance();
-				if (log != null) {
-					Log.getInstance().info("Did not load a configuration file.");
-				}
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	    if ((file == null) || !file.exists() || !file.isFile() || !file.canRead()) {
+	        // Treat as "no config" and do nothing.
+	        _properties = null;
+	        if (log != null) {
+	            log.info("Did not load a configuration file.");
+	        }
+	        return;
+	    }
+
+	    final Properties loaded = new Properties();
+	    try (FileInputStream fis = new FileInputStream(file)) {
+	        loaded.loadFromXML(fis);
+	    } catch (Exception e) {
+	        // Parse/read failed -> do not apply partial/empty config.
+	        _properties = null;
+	        if (log != null) {
+	            log.warning("Failed to load configuration file from [" + file.getPath() + "]: " + e.getMessage());
+	        }
+	        return;
+	    }
+
+	    // If it's empty, treat as "no config".
+	    if (loaded.isEmpty()) {
+	        _properties = null;
+	        if (log != null) {
+	            log.info("Configuration file was empty; ignoring [" + file.getPath() + "]");
+	        }
+	        return;
+	    }
+
+	    _properties = loaded;
+	    Log.getInstance().info("Loaded a configuration file from [" + file.getPath() + "]");
 	}
 
+
 	/**
-	 * configure the views based on the properties (which were read-in by
-	 * loadConfigurationFile)
+	 * Configure the views based on the properties (which were read-in by
+	 * loadConfigurationFile).
+	 * <p>
+	 * If no configuration was loaded (or it was empty), this is a no-op.
+	 * </p>
 	 */
 	public void configureViews() {
-		JInternalFrame[] frames = getAllFrames();
-		if (frames != null) {
-			for (JInternalFrame frame : frames) {
-				if (frame instanceof BaseView) {
-					BaseView view = (BaseView) frame;
-					view.setFromProperties(_properties);
-				}
 
-			}
-		}
+	    // If no config was loaded, do nothing.
+	    if (_properties == null || _properties.isEmpty()) {
+	        return;
+	    }
+
+	    JInternalFrame[] frames = getAllFrames();
+	    if (frames == null) {
+	        return;
+	    }
+
+	    for (JInternalFrame frame : frames) {
+	        if (frame instanceof BaseView) {
+	            ((BaseView) frame).setFromProperties(_properties);
+	        }
+	    }
 	}
 
 	/**

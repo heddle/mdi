@@ -94,7 +94,7 @@ public class DemoApp extends BaseMDIApplication {
 	private final boolean enableVirtualDesktop = true;
 
 	/** Number of "columns"/cells in the virtual desktop. */
-	private final int virtualDesktopCols = 6;
+	private final int virtualDesktopCols = 7;
 
 	// -------------------------------------------------------------------------
 	// Sample views used by the demo. None are meant to be completely realistic.
@@ -186,6 +186,11 @@ public class DemoApp extends BaseMDIApplication {
 		networkLayoutDemoView = createNetworkLayoutDemoView();
 
 	}
+	
+	@Override
+    protected String getApplicationId() {
+        return "mdiDemoApp";
+    } 
 
 	/**
 	 * Runs once after the outer frame is showing and Swing layout has stabilized.
@@ -209,6 +214,9 @@ public class DemoApp extends BaseMDIApplication {
 		// Apply persisted configuration last, so saved layouts override demo defaults.
 		Desktop.getInstance().loadConfigurationFile();
 		Desktop.getInstance().configureViews();
+
+		Log.getInstance().info("Application name = " + Environment.getApplicationName());
+		Log.getInstance().info("Config file = " + Environment.getInstance().getConfigurationFile());
 
 		Log.getInstance().info("DemoApp is ready.");
 	}
@@ -238,26 +246,26 @@ public class DemoApp extends BaseMDIApplication {
 		virtualView.moveTo(mapView, 0, VirtualView.BOTTOMRIGHT);
 		virtualView.moveTo(drawingView, 0, VirtualView.TOPCENTER);
 
-		// Column 1: 3D centered
-		virtualView.moveTo(view3D, 1, VirtualView.CENTER);
+		// Column 1: plot view centered
+		virtualView.moveTo(plotView, 1, VirtualView.CENTER);
 
-		// Column 2: plot view centered
-		virtualView.moveTo(plotView, 2, VirtualView.CENTER);
-
-		// Column 3: network declutter demo upper right
-		virtualView.moveTo(networkDeclutterDemoView, 3, VirtualView.UPPERRIGHT);
+		// Column 2: network declutter demo center
+		virtualView.moveTo(networkDeclutterDemoView, 2, VirtualView.CENTER);
 		networkDeclutterDemoView.setVisible(true);
 
-		// Column 3: TSP demo lower left
-		virtualView.moveTo(tspDemoView, 3, VirtualView.BOTTOMLEFT);
+		// Column 3: TSP demo center
+		virtualView.moveTo(tspDemoView, 3, VirtualView.CENTER);
 		tspDemoView.setVisible(true);
 
 		// Column 4: network layout demo lower left
 		virtualView.moveTo(networkLayoutDemoView, 4, 0, -50, VirtualView.BOTTOMLEFT);
 		networkLayoutDemoView.setVisible(true);
 
-		// column 5: log view upper left (is not vis by default)
-		virtualView.moveTo(logView, 5, VirtualView.UPPERLEFT);
+		// Column 5: 3D centered
+		virtualView.moveTo(view3D, 5, VirtualView.CENTER);
+
+	// column 6: log view upper left (is not vis by default)
+		virtualView.moveTo(logView, 6, VirtualView.UPPERLEFT);
 
 	}
 
@@ -419,13 +427,13 @@ public class DemoApp extends BaseMDIApplication {
 	 * Create the demo plot view.
 	 */
 	PlotView createPlotView() {
-		final PlotView view = new PlotView(PropertyUtils.TITLE, "Demo Plots", PropertyUtils.PROPNAME, "PLOTVIEW",
+		final PlotView view = new PlotView(PropertyUtils.TITLE, "Demo Plots", 
 				PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT, 1.2, PropertyUtils.VISIBLE, true);
 
 		// add the examples menu and call "hack" to fix focus issues
 		JMenu examplesMenu = new JMenu("Gallery");
 		BaseView.applyFocusFix(examplesMenu, view);
-		view.getJMenuBar().add(examplesMenu);
+		view.getJMenuBar().add(examplesMenu, 1); // after File menu
 
 		JMenuItem gaussianItem = new JMenuItem("Gaussian Fit");
 		JMenuItem anotherGaussianItem = new JMenuItem("Another Gaussian");
@@ -527,7 +535,7 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	NetworkDeclutterDemoView createNetworkDeclutterDemoView() {
 		NetworkDeclutterDemoView view = new NetworkDeclutterDemoView(PropertyUtils.TITLE,
-				"Network Declutter Demo View", PropertyUtils.PROPNAME, "NETWORKDECLUTTERDEMO",
+				"Network Declutter Demo View",
 				PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT, 1.2, PropertyUtils.VISIBLE, false,
 				PropertyUtils.BACKGROUND, Color.white, PropertyUtils.WORLDSYSTEM,
 				new Rectangle2D.Double(0.0, 0.0, 1, 1));
@@ -539,7 +547,7 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	TspDemoView createTspDemoView() {
 		TspDemoView view = new TspDemoView(PropertyUtils.TITLE,
-				"TSP Demo View", PropertyUtils.PROPNAME, "TSPDEMO",
+				"TSP Demo View", 
 				PropertyUtils.FRACTION, 0.6, PropertyUtils.ASPECT, 1.2, PropertyUtils.VISIBLE, false,
 				PropertyUtils.BACKGROUND, X11Colors.getX11Color("lavender blush"), PropertyUtils.WORLDSYSTEM,
 				new Rectangle2D.Double(0.0,	 0.0, 1, 1));
@@ -554,7 +562,7 @@ public class DemoApp extends BaseMDIApplication {
 		long toolBits = ToolBits.NAVIGATIONTOOLS | ToolBits.DELETE | ToolBits.CONNECTOR;
 		NetworkLayoutDemoView view = new NetworkLayoutDemoView(PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT,
 				1.2, PropertyUtils.TOOLBARBITS, toolBits,
-				PropertyUtils.VISIBLE, false, PropertyUtils.PROPNAME, "NETWORKLAYOUTDEMO",
+				PropertyUtils.VISIBLE, false, 
 				PropertyUtils.BACKGROUND, X11Colors.getX11Color("alice blue"), PropertyUtils.TITLE,
 				"Network Layout Demo View ");
 		return view;
@@ -586,7 +594,7 @@ public class DemoApp extends BaseMDIApplication {
 
 		long toolBits = ToolBits.CENTER | ToolBits.ZOOMTOOLS | ToolBits.DRAWINGTOOLS | ToolBits.MAGNIFY ;
 
-		return new MapView2D(PropertyUtils.TITLE, "Sample 2D Map View", PropertyUtils.PROPNAME, "MAPVIEW2D",
+		return new MapView2D(PropertyUtils.TITLE, "Sample 2D Map View",
 				PropertyUtils.FRACTION, 0.6, PropertyUtils.ASPECT, 1.5, PropertyUtils.CONTAINERCLASS,
 				MapContainer.class, PropertyUtils.TOOLBARBITS, toolBits);
 	}

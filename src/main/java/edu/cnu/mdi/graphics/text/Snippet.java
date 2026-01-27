@@ -14,7 +14,7 @@ import edu.cnu.mdi.graphics.GraphicsUtils;
 /**
  * A snippet of text with its own font and relative offset, used for LaTeX-like
  * compound strings. Parsed via backslash control codes.
- *
+ * <p>
  * Controls (at start of a token after '\'): n : newline d : reset to base font
  * b : turn on bold B : turn off bold i : turn on italic I : turn off italic p :
  * plain (no bold/italic) _ : subscript (smaller, shifted down) ^ : superscript
@@ -135,7 +135,7 @@ public class Snippet {
 			if (!slashSet && isDelimiter(s)) {
 				slashSet = true;
 			} else {
-				if (slashSet && s.length() > 0) {
+				if (slashSet && !s.isEmpty()) {
 					char firstChar = s.charAt(0);
 
 					if (NEWLINE == firstChar) {

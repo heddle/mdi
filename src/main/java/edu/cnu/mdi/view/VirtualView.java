@@ -446,7 +446,7 @@ public class VirtualView extends BaseView
 				PropertyUtils.HEIGHT, height, PropertyUtils.VISIBLE, true, PropertyUtils.BACKGROUND, Color.white,
 				PropertyUtils.TITLE, VVTITLE, PropertyUtils.STANDARDVIEWDECORATIONS, false,
 				PropertyUtils.ICONIFIABLE, false, PropertyUtils.RESIZABLE, false, PropertyUtils.MAXIMIZABLE,
-				false, PropertyUtils.PROPNAME, "VVView", PropertyUtils.CLOSABLE, false);
+				false, PropertyUtils.CLOSABLE, false);
 
 		view._offsets = new Point[_numcol];
 

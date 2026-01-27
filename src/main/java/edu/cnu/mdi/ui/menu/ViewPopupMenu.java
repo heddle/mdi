@@ -6,18 +6,15 @@ import edu.cnu.mdi.view.BaseView;
 
 public class ViewPopupMenu extends JPopupMenu {
 
-	// base view owner
-	private BaseView _view;
-
-	/**
+    /**
 	 * The view's popup menu
 	 * @param view
 	 */
 	public ViewPopupMenu(BaseView view) {
 		super("Options");
 		setLightWeightPopupEnabled(false);
-		_view = view;
+        // base view owner
 
-	}
+    }
 
 }

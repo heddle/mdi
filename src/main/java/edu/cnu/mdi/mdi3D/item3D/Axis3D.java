@@ -14,27 +14,26 @@ import edu.cnu.mdi.mdi3D.panel.Panel3D;
 public class Axis3D extends Line3D {
 
 	// the type of axis
-	private AxisType _type;
+	private final AxisType _type;
 
 	// length of major ticks
 	private static final float MAJTICKLENFRAC = 0.01f;
-	private float _tickLen;
-	private int _numTick;
+	private final float _tickLen;
+	private final int _numTick;
 	private Line3D _lines1[];
-	private Line3D _lines2[];
 
-	// number of decimals for tick mark labels
+    // number of decimals for tick mark labels
 	// skip if negative
-	private int _numDec;
+	private final int _numDec;
 
 	// limits and step
-	private float _valMin;
-	private float _valMax;
+	private final float _valMin;
+	private final float _valMax;
 	private float _del;
 	private float _vals[];
 
 	// offset to shift axis (hack)
-	private float _offset;
+	private final float _offset;
 
 	/** possible types of axes */
 	public enum AxisType {
@@ -45,7 +44,7 @@ public class Axis3D extends Line3D {
 	private TextRenderer _renderer;
 
 	// if null will use default
-	private String _label;
+	private final String _label;
 
 	/**
 	 * Create a coordinate axis
@@ -111,7 +110,7 @@ public class Axis3D extends Line3D {
 
 		_vals = new float[_numTick];
 		_lines1 = new Line3D[_numTick];
-		_lines2 = new Line3D[_numTick];
+        Line3D[] _lines2 = new Line3D[_numTick];
 
 		_vals[0] = _valMin;
 		_vals[_numTick - 1] = _valMax;

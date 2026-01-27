@@ -65,11 +65,7 @@ public class Triangle3D extends Item3D {
 		_coords[8] = z3;
 		_frame = frame;
 
-		// test triangulation
-//	_coords = Support3D.triangulateTriangle(_coords, 4);
-//	System.err.println("Coords len: " + _coords.length);
-
-		setFillColor(color);
+        setFillColor(color);
 
 		setLineWidth(lineWidth);
 	}

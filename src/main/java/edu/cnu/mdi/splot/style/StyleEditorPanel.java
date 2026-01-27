@@ -91,8 +91,7 @@ public class StyleEditorPanel extends JPanel {
 		if (_symbolSelector != null) {
 			Dimension dim1 = _symbolSelector.getPreferredSize();
 			Dimension dim2 = _fitLineStyleSelector.getPreferredSize();
-			int mw = Math.max(dim1.width, dim2.width);
-			dim1.width = mw;
+            dim1.width = Math.max(dim1.width, dim2.width);
 			_symbolSelector.setPreferredSize(dim1);
 			_fitLineStyleSelector.setPreferredSize(dim1);
 		}
@@ -201,7 +200,7 @@ public class StyleEditorPanel extends JPanel {
 	}
 
 	/**
-	 * Set the choices
+	 * Set the choices in the style editor
 	 *
 	 * @param style the new choices
 	 */
@@ -224,6 +223,9 @@ public class StyleEditorPanel extends JPanel {
 			}
 			if (_symbolSizeSelector != null) {
 				_symbolSizeSelector.setValue(style.getSymbolSize());
+			}
+			if (_lineSizeSelector != null) {
+				_lineSizeSelector.setValue((int)(style.getLineWidth() * 2));
 			}
 		}
 	}

@@ -20,8 +20,7 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 @SuppressWarnings("serial")
 public class AxesTabPanel extends JPanel {
 
-	private final PlotCanvas _canvas;
-	private final PlotParameters _params;
+    private final PlotParameters _params;
 
 	private final AxesLimitsPanel _limitsPanel;
 
@@ -43,12 +42,8 @@ public class AxesTabPanel extends JPanel {
 	private final boolean _xZero0, _yZero0;
 	private final boolean _xLog0, _yLog0;
 
-	private final boolean _xReverse0, _yReverse0;
-	private final int _decX0, _expX0, _decY0, _expY0;
-
-	public AxesTabPanel(PlotCanvas canvas) {
-		_canvas = canvas;
-		_params = canvas.getParameters();
+    public AxesTabPanel(PlotCanvas canvas) {
+        _params = canvas.getParameters();
 
 		setBorder(new CommonBorder("Axes"));
 		setLayout(new GridBagLayout());
@@ -56,18 +51,18 @@ public class AxesTabPanel extends JPanel {
 		_xZero0 = _params.includeXZero();
 		_yZero0 = _params.includeYZero();
 
-		_xReverse0 = _params.isReverseXaxis();
-		_yReverse0 = _params.isReverseYaxis();
+        boolean _xReverse0 = _params.isReverseXaxis();
+        boolean _yReverse0 = _params.isReverseYaxis();
 
 		_xLog0 = (_params.getXScale() == PlotParameters.AxisScale.LOG10);
 		_yLog0 = (_params.getYScale() == PlotParameters.AxisScale.LOG10);
 
-		_decX0 = _params.getNumDecimalX();
-		_expX0 = _params.getMinExponentX();
-		_decY0 = _params.getNumDecimalY();
-		_expY0 = _params.getMinExponentY();
+        int _decX0 = _params.getNumDecimalX();
+        int _expX0 = _params.getMinExponentX();
+        int _decY0 = _params.getNumDecimalY();
+        int _expY0 = _params.getMinExponentY();
 
-		_limitsPanel = new AxesLimitsPanel(_canvas);
+		_limitsPanel = new AxesLimitsPanel(canvas);
 
 		_includeXZero = new JCheckBox("Include X=0 in auto limits", _xZero0);
 		_includeYZero = new JCheckBox("Include Y=0 in auto limits", _yZero0);

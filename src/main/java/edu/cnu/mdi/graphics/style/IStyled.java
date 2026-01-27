@@ -12,42 +12,42 @@ public interface IStyled {
 	 *
 	 * @return the fill color.
 	 */
-	public Color getFillColor();
+    Color getFillColor();
 
 	/**
 	 * Set the color used for fill the interior area.
 	 *
 	 * @param fillColor the fill color.
 	 */
-	public void setFillColor(Color fillColor);
+    void setFillColor(Color fillColor);
 
 	/**
 	 * Get the color used for symbol borders.
 	 *
 	 * @return the symbol border color.
 	 */
-	public Color getBorderColor();
+    Color getBorderColor();
 
 	/**
 	 * Set the color used for symbol borders.
 	 *
 	 * @param borderColor the border color.
 	 */
-	public void setBorderColor(Color borderColor);
+    void setBorderColor(Color borderColor);
 
 	/**
 	 * Set the color used for text.
 	 *
 	 * @param textColor the text color.
 	 */
-	public void setTextColor(Color textColor);
+    void setTextColor(Color textColor);
 
 	/**
 	 * Get the color used for text.
 	 *
 	 * @return the text color.
 	 */
-	public Color getTextColor();
+    Color getTextColor();
 
 	/**
 	 * Get the color used for fits.
@@ -55,7 +55,7 @@ public interface IStyled {
 	 * @return the fit line color.
 	 */
 
-	public Color getLineColor();
+    Color getLineColor();
 
 	/**
 	 * Get the color used for auxiliary lines.
@@ -63,112 +63,112 @@ public interface IStyled {
 	 * @return the auxiliary line color.
 	 */
 
-	public Color getAuxLineColor();
+    Color getAuxLineColor();
 
 	/**
 	 * Set the color used for the fit drawing.
 	 *
 	 * @param fitColor the fit color.
 	 */
-	public void setLineColor(Color fitColor);
+    void setLineColor(Color fitColor);
 
 	/**
 	 * Set the color used for auxiliary lines.
 	 *
 	 * @param auxColor the auxiliary line color.
 	 */
-	public void setAuxLineColor(Color auxColor);
+    void setAuxLineColor(Color auxColor);
 
 	/**
 	 * Get the style used for drawing fits.
 	 *
 	 * @return the line style for fits.
 	 */
-	public LineStyle getLineStyle();
+    LineStyle getLineStyle();
 
 	/**
 	 * Get the style used for drawing fits.
 	 *
 	 * @return the line style for fits.
 	 */
-	public LineStyle getAuxLineStyle();
+    LineStyle getAuxLineStyle();
 
 	/**
 	 * Set the style used for drawing fits.
 	 *
 	 * @param lineStyle the fit line style.
 	 */
-	public void setLineStyle(LineStyle lineStyle);
+    void setLineStyle(LineStyle lineStyle);
 
 	/**
 	 * Set the style used for drawing auxiliary lines.
 	 *
 	 * @param lineStyle the auxiliary line style.
 	 */
-	public void setAuxLineStyle(LineStyle lineStyle);
+    void setAuxLineStyle(LineStyle lineStyle);
 
 	/**
 	 * Get the symbol used for drawing points.
 	 *
 	 * @return the symbol used for drawing points.
 	 */
-	public SymbolType getSymbolType();
+    SymbolType getSymbolType();
 
 	/**
 	 * Set the symbol used for drawing points.
 	 *
 	 * @param symbolType the symbol used for drawing points.
 	 */
-	public void setSymbolType(SymbolType symbolType);
+    void setSymbolType(SymbolType symbolType);
 
 	/**
 	 * Get the line width for drawing fits.
 	 *
 	 * @return the fit line width in pixels.
 	 */
-	public float getLineWidth();
+    float getLineWidth();
 
 	/**
 	 * Get the line width for drawing auxiliary lines.
 	 *
 	 * @return the auxiliary line width in pixels.
 	 */
-	public float getAuxLineWidth();
+    float getAuxLineWidth();
 
 	/**
 	 * Set the line width for drawing fit lines.
 	 *
 	 * @param lineWidth the line width in pixels.
 	 */
-	public void setLineWidth(float lineWidth);
+    void setLineWidth(float lineWidth);
 
 	/**
 	 * Set the line width for drawing auxiliary lines.
 	 *
 	 * @param lineWidth the auxiliary line width in pixels.
 	 */
-	public void setAuxLineWidth(float lineWidth);
+    void setAuxLineWidth(float lineWidth);
 
 	/**
 	 * Get the symbol size (full width) in pixels.
 	 *
 	 * @return the symbol size (full width) in pixels.
 	 */
-	public int getSymbolSize();
+    int getSymbolSize();
 
 	/**
 	 * Set symbol size (full width) in pixels.
 	 *
 	 * @param symbolSize symbol size (full width) in pixels.
 	 */
-	public void setSymbolSize(int symbolSize);
+    void setSymbolSize(int symbolSize);
 
 	/**
 	 * Get the stroke used for drawing fits.
 	 *
 	 * @return the stroke used for drawing fits.
 	 */
-	public default BasicStroke getStroke() {
+	default BasicStroke getStroke() {
 		return GraphicsUtils.getStroke(getLineWidth(), getLineStyle());
 	}
 }

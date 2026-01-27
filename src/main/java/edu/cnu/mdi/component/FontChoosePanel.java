@@ -157,9 +157,9 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	 *
 	 * @return the font family selection list.
 	 */
-	private JList createFontList() {
+	private JList<?> createFontList() {
 		String[] fontList = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-		JList list = new JList(fontList);
+		JList<?> list = new JList(fontList);
 		list.setVisibleRowCount(8);
 		return list;
 	}

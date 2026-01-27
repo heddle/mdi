@@ -54,11 +54,7 @@ public class PlotCanvas extends JComponent
 	// used to fire property changes. Transient.
 	private long drawCount = 0;
 
-	// default values for margins
-	private int _topMargin = 10;
-	private int _rightMargin = 10;
-
-	// for saving files
+    // for saving files
 	private static String _dataFilePath;
 
 	// the bounds of the plot
@@ -469,8 +465,11 @@ public class PlotCanvas extends JComponent
 			}
 
 			left += leftMargin;
-			top += _topMargin;
-			right -= _rightMargin;
+            // default values for margins
+            int _topMargin = 10;
+            top += _topMargin;
+            int _rightMargin = 10;
+            right -= _rightMargin;
 			bottom -= bottomMargin;
 
 			if (_activeBounds == null) {

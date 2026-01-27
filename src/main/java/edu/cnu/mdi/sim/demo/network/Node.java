@@ -2,6 +2,11 @@ package edu.cnu.mdi.sim.demo.network;
 
 public class Node {
 
+	/** Node category. */
+	public enum NodeType {
+		SERVER, CLIENT, PRINTER
+	}
+
 	/** Unique node id within the model. */
 	public final int id;
 
@@ -38,10 +43,6 @@ public class Node {
 		this.type = type;
 		this.x = x;
 		this.y = y;
-	}
-	/** Node category. */
-	public enum NodeType {
-		SERVER, CLIENT, PRINTER
 	}
 
 }

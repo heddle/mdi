@@ -91,6 +91,10 @@ import edu.cnu.mdi.sim.SimulationEngine;
  * </ul>
  */
 public final class NetworkDeclutterSimulation implements Simulation {
+	
+	private static final double REPULSION_EPS = 1.0e-4;
+	private static final double OVERLAP_PAD = 0.01;
+	private static final double PRINTER_RBOOST = 0.8;
 
 	/** Network model updated in-place by this simulation. */
 	private final NetworkModel model;
@@ -157,14 +161,14 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	 */
 	private double damping = 0.90;
 
-	/**
+    /**
 	 * Time step scaling applied to forces when updating velocity.
 	 * <p>
 	 * This acts like a global gain on all forces. Most demos leave this at 1.0 and
 	 * tune {@link #k} and {@link #repulsionC} instead.
 	 * </p>
 	 */
-	private double dt = 1.0;
+	private double dt = 0.1;
 
 	/**
 	 * Weak centering ("gravity") strength toward the world center (0.5,0.5).
@@ -176,30 +180,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	 */
 	private double centerK = 0.15;
 
-	/**
-	 * Softening constant for repulsion distance-squared computation.
-	 * <p>
-	 * Repulsion uses {@code r2 = dx^2 + dy^2 + eps}. This prevents division by zero
-	 * and reduces extreme impulses at very small separation.
-	 * <p>
-	 * If you see occasional “teleport” jumps or flashing long edges, increasing
-	 * {@code eps} is often the best first fix.
-	 * </p>
-	 */
-	private double eps = 1.0e-4;
-
-	/**
-	 * Extra spacing added on top of the sum of icon radii when determining “overlap
-	 * proximity”.
-	 * <p>
-	 * If two nodes are closer than
-	 * {@code a.worldRadius + b.worldRadius + overlapPad}, we treat them as
-	 * “overlapping” and increase repulsion by {@link #overlapBoost}.
-	 * </p>
-	 */
-	private double overlapPad = 0.01;
-
-	/**
+    /**
 	 * Repulsion multiplier applied when nodes are within the overlap threshold.
 	 * <p>
 	 * This helps quickly resolve icon overlaps without needing a globally huge
@@ -207,18 +188,8 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	 * </p>
 	 */
 	private double overlapBoost = 3.0;
-	
-	/**
-	 * Printer-specific reduction to equilibrium spring length.
-	 * <p>
-	 * Springs involving printers use {@code r0 * printerRBoost} as their
-	 * equilibrium length. This encourages printers to sit slightly closer
-	 * their clients.
-	 * </p>
-	 */
-	private double printerRBoost = 0.8;
-	
-	/**
+
+    /**
 	 * Printer-specific increase to spring constant.
 	 * <p>
 	 * Springs involving printers use {@code k * printerKBoost} as their
@@ -259,14 +230,11 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	 */
 	private int maxSteps = 2000;
 
+	
 	/**
-	 * Average node speed threshold for declaring the layout "settled".
-	 * <p>
-	 * After {@link #minSteps}, if the mean speed (averaged across all nodes) falls
-	 * below this value, the simulation stops.
-	 * </p>
+	 * Force threshold for declaring the layout "settled".
 	 */
-	private double settleVel = r0 / 3.3;
+	private double settleForce = 0.010;
 
 	// -------------------------------------------------------------------------
 	// Bookkeeping / framework integration
@@ -280,6 +248,14 @@ public final class NetworkDeclutterSimulation implements Simulation {
 
 	/** Optional engine used for posting progress/messages/refresh. */
 	private SimulationEngine engine;
+	
+	/** Queue of energy samples collected during the simulation. */
+	private final java.util.concurrent.ConcurrentLinkedQueue<EnergySample> energySamples = new java.util.concurrent.ConcurrentLinkedQueue<>();
+
+	/** Buffered per-step diagnostics samples (drained by the view on refresh). */
+	private final java.util.concurrent.ConcurrentLinkedQueue<Diagnostics> diagnosticsSamples =
+	        new java.util.concurrent.ConcurrentLinkedQueue<>();
+
 
 	/**
 	 * Create a decluttering simulation for the given model.
@@ -333,138 +309,178 @@ public final class NetworkDeclutterSimulation implements Simulation {
 
 	@Override
 	public boolean step(SimulationContext ctx) {
-		
-		// return false if normal completion conditions met
-		
-		if (canceled || ctx.isCancelRequested()) {
-			return false;
-		}
 
-		step++;
+	    // return false if normal completion conditions met
 
-		//zero out forces
-		for (Node node : model.nodes) {
-			node.fx = 0.0;
-			node.fy = 0.0;
-		}
+	    if (canceled || ctx.isCancelRequested()) {
+	        return false;
+	    }
 
-		// 1) Springs on edges
-		for (NetworkModel.Edge e : model.edges) {
-			var node1 = e.node1;
-			var node2 = e.node2;
+	    step++;
 
-			double dx = node2.x - node1.x;
-			double dy = node2.y - node1.y;
-			double r = Math.sqrt(dx * dx + dy * dy) + 1e-12;
-			
-			double rboost = 1.0;
-			double kboost = 1.0;
-			// boosts if one node is a printer
-			if (node1.type == Node.NodeType.PRINTER || node2.type == Node.NodeType.PRINTER) {
-				rboost = printerRBoost;
-				kboost = printerKBoost;
-			}
+	    // zero out forces
+	    for (Node node : model.nodes) {
+	        node.fx = 0.0;
+	        node.fy = 0.0;
+	    }
 
-			double f = kboost*k * (r - rboost*r0);
-			double ux = dx / r;
-			double uy = dy / r;
+	    // 1) Springs on edges
+	    for (NetworkModel.Edge e : model.edges) {
+	        var node1 = e.node1;
+	        var node2 = e.node2;
 
-			node1.fx += f * ux;
-			node1.fy += f * uy;
+	        double dx = node2.x - node1.x;
+	        double dy = node2.y - node1.y;
+	        double r = Math.sqrt(dx * dx + dy * dy) + 1e-12;
 
-			node2.fx -= f * ux;
-			node2.fy -= f * uy;
-		}
+	        double rboost = 1.0;
+	        double kboost = 1.0;
 
-		// 2) Repulsion (all pairs)
-		int n = model.nodes.size();
-		for (int i = 0; i < n; i++) {
-			var node1 = model.nodes.get(i);
-			for (int j = i + 1; j < n; j++) {
-				var node2 = model.nodes.get(j);
+	        // boosts if one node is a printer
+	        if (node1.type == Node.NodeType.PRINTER || node2.type == Node.NodeType.PRINTER) {
+	            // Printer-specific reduction to equilibrium spring length.
+	            rboost = PRINTER_RBOOST;
+	            kboost = printerKBoost;
+	        }
 
-				double dx = node1.x - node2.x;
-				double dy = node1.y - node2.y;
+	        // f>0 pulls endpoints together; 
+	        //f<0 pushes apart (rest length rboost*r0)
+	        double f = kboost * k * (r - rboost * r0);
+	        double ux = dx / r;
+	        double uy = dy / r;
 
-				double r2 = dx * dx + dy * dy + eps;
-				double r = Math.sqrt(r2);
+	        node1.fx += f * ux;
+	        node1.fy += f * uy;
 
-				// Base repulsion strength
-				double strength = repulsionC;
+	        node2.fx -= f * ux;
+	        node2.fy -= f * uy;
+	    }
 
-				// If either node is a server, boost repulsion for this pair.
-				if (node1.type == Node.NodeType.SERVER || node2.type ==Node.NodeType.SERVER) {
-					strength *= serverRepulsion;
-				}
+	    // 2) Repulsion (all pairs)
+	    int n = model.nodes.size();
+	    for (int i = 0; i < n; i++) {
+	        var node1 = model.nodes.get(i);
+	        for (int j = i + 1; j < n; j++) {
+	            var node2 = model.nodes.get(j);
 
-				// Overlap-aware boost when icons are too close
-				double minDist = node1.worldRadius + node2.worldRadius + overlapPad;
-				double minDist2 = minDist * minDist;
-				if (r2 < minDist2) {
-					strength *= overlapBoost;
-				}
+	            double dx = node1.x - node2.x;
+	            double dy = node1.y - node2.y;
 
-				double inv = strength / r2;
-				double ux = dx / r;
-				double uy = dy / r;
+	            // Softening constant for repulsion distance-squared computation.
+	            double r2 = dx * dx + dy * dy + REPULSION_EPS;
+	            double r = Math.sqrt(r2);
 
-				node1.fx += inv * ux;
-				node1.fy += inv * uy;
-				node2.fx -= inv * ux;
-				node2.fy -= inv * uy;
-			}
-		}
+	            // Base repulsion strength
+	            double strength = repulsionC;
 
-		// 3) Weak centering toward the middle
-		for (int i = 0; i < n; i++) {
-			var node = model.nodes.get(i);
-			node.fx += -centerK * (node.x - 0.5);
-			node.fy += -centerK * (node.y - 0.5);
-		}
+	            // If either node is a server, boost repulsion for this pair.
+	            if (node1.type == Node.NodeType.SERVER || node2.type == Node.NodeType.SERVER) {
+	                strength *= serverRepulsion;
+	            }
 
-		// 4) Integrate + damping + clamp to unit-square
-		double speedSum = 0.0;
+	            // Overlap-aware boost when icons are too close
+	            double minDist = node1.worldRadius + node2.worldRadius + OVERLAP_PAD;
+	            double minDist2 = minDist * minDist;
+	            if (r2 < minDist2) {
+	                strength *= overlapBoost;
+	            }
 
-		for (int i = 0; i < n; i++) {
-			var node = model.nodes.get(i);
+	            double inv = strength / r2;
+	            double ux = dx / r;
+	            double uy = dy / r;
 
-			node.vx = damping * node.vx + dt * node.fx;
-			node.vy = damping * node.vy + dt * node.fy;
+	            node1.fx += inv * ux;
+	            node1.fy += inv * uy;
+	            node2.fx -= inv * ux;
+	            node2.fy -= inv * uy;
+	        }
+	    }
 
-			node.vx = Math.max(-vmax, Math.min(vmax, node.vx));
-			node.vy = Math.max(-vmax, Math.min(vmax, node.vy));
+	    // 3) Weak centering toward the middle
+	    for (int i = 0; i < n; i++) {
+	        var node = model.nodes.get(i);
+	        node.fx += -centerK * (node.x - 0.5);
+	        node.fy += -centerK * (node.y - 0.5);
+	    }
+	    
+	    //compute rms force
+	    double f2sum = 0.0;
+	    for (var node : model.nodes) {
+	        f2sum += node.fx * node.fx + node.fy * node.fy;
+	    }
+	    double FrmsNow = Math.sqrt(f2sum / Math.max(1, n));
 
-			node.x += node.vx;
-			node.y += node.vy;
+	 // 4) Integrate + damping + clamp to unit-square
+	    double speedSum = 0.0;
+	    int vmaxHits = 0;
 
-			double rad = Math.max(0.0, node.worldRadius);
-			node.x = Math.max(rad, Math.min(1.0 - rad, node.x));
-			node.y = Math.max(rad, Math.min(1.0 - rad, node.y));
+	    for (int i = 0; i < n; i++) {
+	        var node = model.nodes.get(i);
 
-			speedSum += Math.sqrt(node.vx * node.vx + node.vy * node.vy);
-		}
+	        // Velocity update with damping
+	        node.vx = damping * node.vx + dt * node.fx;
+	        node.vy = damping * node.vy + dt * node.fy;
 
-		double avgSpeed = speedSum / Math.max(1, n);
+	        // Clamp by magnitude (speed), not per-component.
+	        // This avoids the artificial ~sqrt(2)*vmax speed floor you were seeing.
+	        double v2 = node.vx * node.vx + node.vy * node.vy;
+	        double vmax2 = vmax * vmax;
+	        if (v2 > vmax2) {
+	            double v = Math.sqrt(v2);
+	            double s = vmax / (v + 1e-12);
+	            node.vx *= s;
+	            node.vy *= s;
+	            vmaxHits++;
+	        }
 
-		if (engine != null && (step % 10 == 0)) {
-			double frac = 1.0 - Math.min(1.0, avgSpeed / 0.01);
-			engine.postProgress(ProgressInfo.determinate(frac, "Relaxing… step " + step));
-		}
+	        node.x += node.vx;
+	        node.y += node.vy;
 
-		if (engine != null && (step % 2 == 0)) {
-			engine.requestRefresh();
-		}
+	        double rad = Math.max(0.0, node.worldRadius);
+	        node.x = Math.max(rad, Math.min(1.0 - rad, node.x));
+	        node.y = Math.max(rad, Math.min(1.0 - rad, node.y));
 
-		if (step >= minSteps && avgSpeed < settleVel) {
-			if (engine != null) {
-				engine.postMessage("Settled.");
-				engine.postProgress(ProgressInfo.determinate(1.0, "Settled"));
-				engine.requestRefresh();
-			}
-			return false;
-		}
+	        speedSum += Math.sqrt(node.vx * node.vx + node.vy * node.vy);
+	    }
 
-		return step < maxSteps;
+	    double avgSpeed = speedSum / Math.max(1, n);
+
+	    // Collect diagnostics/energy samples every 5 steps (uses avgSpeed + vmaxHits).
+	    if (step % 5 == 0) {
+	    	Diagnostics d = computeDiagnostics(avgSpeed, vmaxHits, FrmsNow);
+	    	diagnosticsSamples.add(d);
+	    }
+
+	    if (engine != null && (step % 10 == 0)) {
+	    	double frac = 1.0 - Math.min(1.0, avgSpeed / (5.0 * settleVel()));
+	        engine.postProgress(ProgressInfo.determinate(frac, "Relaxing… step " + step));
+	    }
+
+	    if (engine != null && (step % 2 == 0)) {
+	        engine.requestRefresh();
+	    }
+
+	    if (step >= minSteps && avgSpeed < settleVel() && FrmsNow < settleForce) {
+
+	        if (engine != null) {
+	            engine.postMessage("Settled.");
+	            engine.postProgress(ProgressInfo.determinate(1.0, "Settled"));
+	            engine.requestRefresh();
+	        }
+	        return false;
+	    }
+	    return step < maxSteps;
+	}
+	
+	/**
+	 * Average node speed threshold for declaring the layout "settled".
+	 * <p>
+	 * After {@link #minSteps}, if the mean speed (averaged across all nodes) falls
+	 * below this value, the simulation stops.
+	 * </p>
+	 */
+	private double settleVel() {
+		return r0 / 25.0;
 	}
 
 	@Override
@@ -475,4 +491,297 @@ public final class NetworkDeclutterSimulation implements Simulation {
 			engine.postProgress(ProgressInfo.indeterminate("Canceling…"));
 		}
 	}
+	
+	/**
+	 * Get the queue of diagnostics samples collected during the simulation.
+	 * 
+	 * @return the diagnostics samples queue
+	 */
+	public java.util.concurrent.ConcurrentLinkedQueue<Diagnostics> getDiagnosticsSamples() {
+	    return diagnosticsSamples;
+	}
+
+	
+	/**
+	 * Get the current simulation step index.
+	 *
+	 * @return the step (0-based)
+	 */
+	public int getStep() {
+	    return step;
+	}
+
+	/**
+	 * Get the queue of energy samples collected during the simulation.
+	 * 
+	 * @return the energy samples queue
+	 */
+	public java.util.concurrent.ConcurrentLinkedQueue<EnergySample> getEnergySamples() {
+	    return energySamples;
+	}
+	
+	/**
+	 * Compute a pseudo-energy diagnostic for the current layout.
+	 * <p>
+	 * This is not a conserved physical energy (due to damping, clamping,
+	 * velocity caps, and piecewise forces), but it is a useful monotone-ish
+	 * objective for diagnosing convergence and tuning parameters.
+	 * </p>
+	 */
+	public Energy computeEnergy() {
+
+	    double Uspring = 0.0;
+	    double Urep = 0.0;
+	    double Ucenter = 0.0;
+	    double K = 0.0;
+
+	    // --- spring energy ---
+	    for (NetworkModel.Edge e : model.edges) {
+	        var a = e.node1;
+	        var b = e.node2;
+
+	        double dx = b.x - a.x;
+	        double dy = b.y - a.y;
+	        double r = Math.sqrt(dx * dx + dy * dy) + 1e-12;
+
+	        double rboost = 1.0;
+	        double kboost = 1.0;
+
+	        if (a.type == Node.NodeType.PRINTER || b.type == Node.NodeType.PRINTER) {
+	            rboost = 0.8;
+	            kboost = printerKBoost;
+	        }
+
+	        double dr = r - rboost * r0;
+	        Uspring += 0.5 * (k * kboost) * dr * dr;
+	    }
+
+	    // --- repulsion energy ---
+	    int n = model.nodes.size();
+	    double eps = 1.0e-4;
+
+	    for (int i = 0; i < n; i++) {
+	        var a = model.nodes.get(i);
+	        for (int j = i + 1; j < n; j++) {
+	            var b = model.nodes.get(j);
+
+	            double dx = a.x - b.x;
+	            double dy = a.y - b.y;
+	            double r2 = dx * dx + dy * dy + eps;
+	            double r = Math.sqrt(r2);
+
+	            double strength = repulsionC;
+	            if (a.type == Node.NodeType.SERVER || b.type == Node.NodeType.SERVER) {
+	                strength *= serverRepulsion;
+	            }
+
+	            double minDist = a.worldRadius + b.worldRadius + 0.01;
+	            if (r2 < minDist * minDist) {
+	                strength *= overlapBoost;
+	            }
+
+	            // Potential ~ strength / r
+	            Urep += strength / r;
+	        }
+	    }
+
+	    // --- centering energy ---
+	    for (var node : model.nodes) {
+	        double dx = node.x - 0.5;
+	        double dy = node.y - 0.5;
+	        Ucenter += 0.5 * centerK * (dx * dx + dy * dy);
+	    }
+
+	    // --- kinetic energy ---
+	    for (var node : model.nodes) {
+	        K += 0.5 * (node.vx * node.vx + node.vy * node.vy);
+	    }
+
+	    return new Energy(Uspring, Urep, Ucenter, K);
+	}
+
+	/**
+	 * Energy sample at a given simulation step.
+	 */
+	public static final class EnergySample {
+	    public final int step;
+	    public final Energy energy;
+	    public EnergySample(int step, Energy energy) {
+	    	this.step = step; 
+	    	this.energy = energy; }
+	}
+	
+	/**
+	 * Compute diagnostics for the current model state.
+	 * <p>
+	 * Note: Energies are "pseudo-energies" for tuning/monitoring; the dynamics are
+	 * not Hamiltonian due to damping, clamping, velocity caps, and piecewise forces.
+	 * </p>
+	 *
+	 * @param avgSpeed optional average speed computed during integration step; if
+	 *                 unknown, pass {@code Double.NaN} and it will be recomputed
+	 * @param vmaxHitCount optional count of nodes that hit the velocity clamp during
+	 *                     integration; if unknown, pass {@code -1} and it will be
+	 *                     recomputed (slower)
+	 */
+	public Diagnostics computeDiagnostics(double avgSpeed, int vmaxHitCount, double FrmsNow) {
+
+	    // ---- energies ----
+	    double Uspring = 0.0;
+	    double Urep = 0.0;
+	    double Ucenter = 0.0;
+	    double K = 0.0;
+
+	    // spring energy (edges)
+	    for (NetworkModel.Edge e : model.edges) {
+	        var a = e.node1;
+	        var b = e.node2;
+
+	        double dx = b.x - a.x;
+	        double dy = b.y - a.y;
+	        double r = Math.sqrt(dx * dx + dy * dy) + 1e-12;
+
+	        double rboost = 1.0;
+	        double kboost = 1.0;
+	        if (a.type == Node.NodeType.PRINTER || b.type == Node.NodeType.PRINTER) {
+	            rboost = 0.8;
+	            kboost = printerKBoost;
+	        }
+
+	        double dr = r - rboost * r0;
+	        Uspring += 0.5 * (k * kboost) * dr * dr;
+	    }
+
+	    // repulsion energy (all pairs)
+	    int n = model.nodes.size();
+	    double eps = 1.0e-4;
+	    double overlapPad = 0.01;
+
+	    for (int i = 0; i < n; i++) {
+	        var a = model.nodes.get(i);
+	        for (int j = i + 1; j < n; j++) {
+	            var b = model.nodes.get(j);
+
+	            double dx = a.x - b.x;
+	            double dy = a.y - b.y;
+	            double r2 = dx * dx + dy * dy + eps;
+	            double r = Math.sqrt(r2);
+
+	            double strength = repulsionC;
+	            if (a.type == Node.NodeType.SERVER || b.type == Node.NodeType.SERVER) {
+	                strength *= serverRepulsion;
+	            }
+
+	            double minDist = a.worldRadius + b.worldRadius + overlapPad;
+	            if (r2 < minDist * minDist) {
+	                strength *= overlapBoost;
+	            }
+
+	            // Potential ~ strength / r for force ~ strength / r^2
+	            Urep += strength / r;
+	        }
+	    }
+
+	    // centering potential
+	    for (var node : model.nodes) {
+	        double dx = node.x - 0.5;
+	        double dy = node.y - 0.5;
+	        Ucenter += 0.5 * centerK * (dx * dx + dy * dy);
+	    }
+
+	    // kinetic
+	    for (var node : model.nodes) {
+	        K += 0.5 * (node.vx * node.vx + node.vy * node.vy);
+	    }
+
+
+	    // ---- avg speed + clamp fraction ----
+	    if (Double.isNaN(avgSpeed)) {
+	        double speedSum = 0.0;
+	        for (var node : model.nodes) {
+	            speedSum += Math.sqrt(node.vx * node.vx + node.vy * node.vy);
+	        }
+	        avgSpeed = speedSum / Math.max(1, n);
+	    }
+
+		if (vmaxHitCount < 0) {
+			// recompute (slower, but still O(N))
+			vmaxHitCount = 0;
+			final double tol = 1e-12;
+			for (var node : model.nodes) {
+				double v2 = node.vx * node.vx + node.vy * node.vy;
+				if (v2 >= (vmax - tol) * (vmax - tol)) {
+					vmaxHitCount++;
+				}
+			}
+		}
+
+	    double vmaxFrac = vmaxHitCount / (double) Math.max(1, n);
+
+	    return new Diagnostics(step, Uspring, Urep, Ucenter, K, avgSpeed, FrmsNow, vmaxFrac);
+	}
+
+	
+	/** 
+	 * Energy diagnostics for the current simulation state.
+	 */
+	public static final class Energy {
+	    public final double spring;
+	    public final double repulsion;
+	    public final double center;
+	    public final double kinetic;
+
+	    public Energy(double spring, double repulsion, double center, double kinetic) {
+	        this.spring = spring;
+	        this.repulsion = repulsion;
+	        this.center = center;
+	        this.kinetic = kinetic;
+	    }
+
+	    public double potential() {
+	        return spring + repulsion + center;
+	    }
+
+	    public double total() {
+	        return potential() + kinetic;
+	    }
+	}
+
+	/** Per-step diagnostics useful for plots and tuning. */
+	public static final class Diagnostics {
+	    public final int step;
+
+	    // Energies (pseudo-energy)
+	    public final double Uspring;
+	    public final double Urepulsion;
+	    public final double Ucenter;
+	    public final double kinetic;
+
+	    // Derived
+	    public final double avgSpeed;
+	    public final double Frms;
+	    public final double vmaxHitFraction;
+
+	    public Diagnostics(int step,
+	                       double Uspring, double Urepulsion, double Ucenter, double Kinetic,
+	                       double avgSpeed, double Frms, double vmaxHitFraction) {
+	        this.step = step;
+	        this.Uspring = Uspring;
+	        this.Urepulsion = Urepulsion;
+	        this.Ucenter = Ucenter;
+	        this.kinetic = Kinetic;
+	        this.avgSpeed = avgSpeed;
+	        this.Frms = Frms;
+	        this.vmaxHitFraction = vmaxHitFraction;
+	    }
+
+	    public double potential() {
+	        return Uspring + Urepulsion + Ucenter;
+	    }
+
+	    public double total() {
+	        return potential() + kinetic;
+	    }
+	}
+
 }

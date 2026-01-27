@@ -27,10 +27,7 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 		X, Y
 	}
 
-	// the plot canvas
-	private PlotCanvas _canvas;
-
-	// which axis
+    // which axis
 	private Axis _axis;
 
 	// current method
@@ -58,9 +55,9 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 	private PlotParameters _params;
 
 	public OneAxisLimitsPanel(PlotCanvas canvas, Axis axis) {
-		_canvas = canvas;
-		_params = _canvas.getParameters();
-		_dataSet = _canvas.getPlotData();
+        // the plot canvas
+        _params = canvas.getParameters();
+		_dataSet = canvas.getPlotData();
 		_axis = axis;
 		setLayout(new BorderLayout(4, 4));
 

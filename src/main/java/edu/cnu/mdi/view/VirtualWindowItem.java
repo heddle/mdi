@@ -18,9 +18,9 @@ import edu.cnu.mdi.item.RectangleItem;
 public class VirtualWindowItem extends RectangleItem {
 
 	// lives on the virtual view
-	private VirtualView _vview;
+	private final VirtualView _vview;
 
-	private BaseView _baseView;
+	private final BaseView _baseView;
 
 	//margin for the virtual window border
 	private static final int del = 20;

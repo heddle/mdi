@@ -350,10 +350,10 @@ public class CurveDrawer {
 
 		wp.setLocation(plotData.xMin(), ymid);
 		plotCanvas.worldToLocal(pp, wp);
-		int xsmin = pp.x;
+		int xsmin;
 		wp.setLocation(plotData.xMax(), ymid);
 		plotCanvas.worldToLocal(pp, wp);
-		int xsmax = pp.x;
+		int xsmax;
 
 		xsmin = rect.x;
 		xsmax = rect.x + rect.width;
@@ -373,14 +373,13 @@ public class CurveDrawer {
 			}
 		}
 
-		Graphics2D g2 = g;
-		Object oldAA = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        Object oldAA = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		g.draw(poly);
 		// restore
 		if (oldAA != null) {
-			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAA);
+			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAA);
 		}
 	}
 

@@ -26,9 +26,7 @@ public class PlotPreferencesDialog extends SimpleDialog {
 	protected static final String APPLY = "Apply";
 	protected static final String CLOSE = "Close";
 
-	private JTabbedPane _tabs;
-
-	private LabelsTabPanel _labelsPanel;
+    private LabelsTabPanel _labelsPanel;
 	private AxesTabPanel _axesPanel;
 	private LegendTabPanel _legendPanel;
 	private ExtraTabPanel _extraPanel;
@@ -51,7 +49,7 @@ public class PlotPreferencesDialog extends SimpleDialog {
 	 * Build the tabbed editor in the dialog center.
 	 */
 	protected Component addCenter() {
-		_tabs = new JTabbedPane();
+        JTabbedPane _tabs = new JTabbedPane();
 
 		_labelsPanel = new LabelsTabPanel(_plotCanvas);
 		_axesPanel = new AxesTabPanel(_plotCanvas);

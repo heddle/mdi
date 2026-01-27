@@ -11,8 +11,8 @@ import edu.cnu.mdi.splot.plot.PlotCanvas;
 public class AxesLimitsPanel extends JPanel {
 
 	// the two panels for t x and y axes
-	private OneAxisLimitsPanel xPanel;
-	private OneAxisLimitsPanel yPanel;
+	private final OneAxisLimitsPanel xPanel;
+	private final OneAxisLimitsPanel yPanel;
 
 	/**
 	 * Create the panel for editing the axes limits

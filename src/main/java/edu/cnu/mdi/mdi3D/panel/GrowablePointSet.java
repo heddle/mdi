@@ -3,6 +3,7 @@ package edu.cnu.mdi.mdi3D.panel;
 import java.awt.Color;
 import java.util.ArrayList;
 
+@SuppressWarnings("serial")
 public class GrowablePointSet extends ArrayList<Vector3f> {
 
 	private float[] _array;

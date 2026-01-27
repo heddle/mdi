@@ -58,7 +58,7 @@ public class ConnectionManager implements ItemChangeListener {
 
 	/**
 	 * Determine whether two items can be connected.
-	 *
+	 * <p>
 	 * Rules:
 	 * <ul>
 	 * <li>neither item is null</li>

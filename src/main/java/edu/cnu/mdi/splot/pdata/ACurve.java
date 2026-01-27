@@ -648,7 +648,7 @@ public abstract class ACurve {
 	 * @param operation operation name used in the exception message
 	 * @throws IllegalStateException if not on EDT
 	 */
-	protected static final void requireEdt(String operation) {
+	protected static void requireEdt(String operation) {
 		if (!SwingUtilities.isEventDispatchThread()) {
 			throw new IllegalStateException(operation + " must be called on the Swing EDT. "
 					+ "For background threads, use enqueue(...) + drainPendingOnEDT(...).");

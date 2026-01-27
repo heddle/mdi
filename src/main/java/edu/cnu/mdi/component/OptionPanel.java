@@ -117,7 +117,7 @@ public class OptionPanel extends JPanel {
 	private int _rowHeight;
 	private int _maxRows;
 
-	/**
+    /**
 	 * Creates an {@code OptionPanel}.
 	 *
 	 * @param listener     listener notified when any checkbox changes state; may be

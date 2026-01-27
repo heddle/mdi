@@ -19,7 +19,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Rectangle2D;
-import java.beans.PropertyVetoException;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Properties;
@@ -155,10 +154,6 @@ public class BaseView extends JInternalFrame
 		// Parse configuration exactly once.
 		final ViewInitConfig cfg = ViewInitConfig.from(this.properties);
 
-		// Establish a stable persistence prefix early.
-		// Use the configured propName if present; otherwise fall back to title; then
-		// class name.
-		this.VIEWPROPNAME = stablePropName(cfg);
 
 		// Frame decorations and basic state.
 		FrameConfigurer.apply(this, cfg);
@@ -199,24 +194,6 @@ public class BaseView extends JInternalFrame
 		}
 	}
 
-	/**
-	 * Choose a stable property-name prefix for persistence.
-	 * <p>
-	 * Preference order: explicit propName property, then title, then simple class
-	 * name.
-	 * </p>
-	 */
-	private String stablePropName(ViewInitConfig cfg) {
-		String pn = cfg.propName;
-		if (pn != null && !pn.isBlank()) {
-			return pn.trim();
-		}
-		String t = cfg.title;
-		if (t != null && !t.isBlank()) {
-			return t.trim();
-		}
-		return getClass().getSimpleName();
-	}
 
 	// --------------------------------------------------------------------
 	// Container creation (public/protected API preserved)
@@ -768,7 +745,6 @@ public class BaseView extends JInternalFrame
 	 */
 	private static final class ViewInitConfig {
 		final String title;
-		final String propName;
 
 		final boolean standardDecorations;
 		final boolean iconifiable;
@@ -793,12 +769,11 @@ public class BaseView extends JInternalFrame
 		final long toolBits;
 		final ARubberband.Policy boxZoomPolicy;
 
-		private ViewInitConfig(String title, String propName, boolean standardDecorations, boolean iconifiable,
+		private ViewInitConfig(String title, boolean standardDecorations, boolean iconifiable,
 				boolean maximizable, boolean resizable, boolean closable, boolean scrollable, boolean visible, int left,
 				int top, int width, int height, Rectangle2D.Double worldSystem, Color background,
 				JComponent splitWestComponent, long toolBits, ARubberband.Policy boxZoomPolicy) {
 			this.title = title;
-			this.propName = propName;
 			this.standardDecorations = standardDecorations;
 			this.iconifiable = iconifiable;
 			this.maximizable = maximizable;
@@ -836,7 +811,6 @@ public class BaseView extends JInternalFrame
 			boolean scrollable = PropertyUtils.getScrollable(props);
 			boolean visible = PropertyUtils.getVisible(props);
 
-			String propName = PropertyUtils.getPropName(props);
 
 			int left = PropertyUtils.getLeft(props);
 			int top = PropertyUtils.getTop(props);
@@ -870,7 +844,7 @@ public class BaseView extends JInternalFrame
 			long bits = PropertyUtils.getToolbarBits(props);
 			ARubberband.Policy policy = PropertyUtils.getBoxZoomRubberbandPolicy(props);
 
-			return new ViewInitConfig(title, propName, standardDecorations, iconifiable, maximizable, resizable,
+			return new ViewInitConfig(title, standardDecorations, iconifiable, maximizable, resizable,
 					closable, scrollable, visible, left, top, width, height, worldSystem, background, west, bits,
 					policy);
 		}
@@ -1080,64 +1054,67 @@ public class BaseView extends JInternalFrame
 	 */
 	private static final class ViewPersistence {
 
-		static void applyToView(BaseView view, Properties props) {
-			if (props == null) {
-				return;
-			}
+		public static void applyToView(BaseView view, Properties props) {
+		    if (view == null || props == null || props.isEmpty()) {
+		        return;
+		    }
 
-			String prefixBase = view.getPropertyName();
-			if (prefixBase == null || prefixBase.isBlank()) {
-				// last-resort fallback (shouldn't happen after construction)
-				prefixBase = view.getTitle();
-			}
-			if (prefixBase == null || prefixBase.isBlank()) {
-				return;
-			}
+		    String prefix = view.getPropertyName();     // whatever you use
+		    String dotted = prefix + ".";               // new style
+            // old style (no dot)
 
-			String dotted = prefixBase + ".";
+            // ---- Visible: APPLY ONLY IF PRESENT ----
+		    Boolean vis = getBooleanIfPresent(props,
+		            dotted + "visible",
+		            prefix + "visible");
+		    if (vis != null) {
+		        view.setVisible(vis);
+		    }
 
-			// Bounds
-			Rectangle viewRect = rectangleFromProperties(dotted, props);
-			if (viewRect == null) {
-				// legacy without dot (very old)
-				viewRect = rectangleFromProperties(prefixBase, props);
-			}
-			if (viewRect != null) {
-				view.setBounds(viewRect);
+		    // ---- Bounds: apply only if all coords present ----
+		    Integer x = getIntIfPresent(props, dotted + "x", prefix + "x");
+		    Integer y = getIntIfPresent(props, dotted + "y", prefix + "y");
+		    Integer w = getIntIfPresent(props, dotted + "w", prefix + "w");
+		    Integer h = getIntIfPresent(props, dotted + "h", prefix + "h");
 
-				// World window
-				if (view.container != null) {
-					Rectangle2D.Double wr = worldRectangleFromProperties(dotted, props);
-					if (wr == null) {
-						wr = worldRectangleFromProperties(prefixBase, props);
-					}
-					if (wr != null) {
-						view.container.zoom(wr.getMinX(), wr.getMaxX(), wr.getMinY(), wr.getMaxY());
-					}
-				}
-			}
+		    if (x != null && y != null && w != null && h != null) {
+		        // Optional: clamp sanity to avoid off-screen / negative sizes
+		        if (w > 0 && h > 0) {
+		            view.setBounds(x, y, w, h);
+		        }
+		    }
 
-			boolean vis = readBoolean(props, dotted + "visible", prefixBase + "visible", false);
+		    // ---- Maximized: support misspelling, apply only if present ----
+		    Boolean max = getBooleanIfPresent(props,
+		            dotted + "maximized",
+		            dotted + "maxmized",      // historical typo
+		            prefix + "maximized",
+		            prefix + "maxmized");
+		    if (max != null) {
+		        try {
+		            view.setMaximum(max);
+		        } catch (Exception ignore) {
+		        }
+		    }
 
-			boolean ontop = readBoolean(props, dotted + "ontop", prefixBase + "ontop", false);
+		    // ---- On top (if you have it) ----
+		 // ---- On top (bring to front now; not "always on top") ----
+		    Boolean ontop = getBooleanIfPresent(props,
+		            dotted + "ontop",
+		            prefix + "ontop");
+		    if (Boolean.TRUE.equals(ontop)) {
+		        try {
+		            // Bring to front within the desktop
+		            view.moveToFront();
 
-			// Support both correct and legacy misspelling
-			boolean maximized = readBoolean(props, dotted + "maximized", dotted + "maxmized", false);
-			maximized = maximized || readBoolean(props, prefixBase + "maximized", prefixBase + "maxmized", false);
-
-			view.setVisible(vis);
-
-			if (ontop) {
-				view.toFront();
-			}
-			if (maximized) {
-				try {
-					view.setMaximum(true);
-				} catch (PropertyVetoException e) {
-					e.printStackTrace();
-				}
-			}
+		            // Optional: make it the selected internal frame (usually what users mean)
+		            view.setSelected(true);
+		        } catch (Exception ignore) {
+		            // ignore PropertyVetoException etc.
+		        }
+		    }
 		}
+
 
 		static Properties captureFromView(BaseView view) {
 			Properties props = new Properties();
@@ -1192,61 +1169,31 @@ public class BaseView extends JInternalFrame
 
 			return props;
 		}
-
-		private static boolean readBoolean(Properties props, String key1, String key2, boolean defVal) {
-			String v = props.getProperty(key1);
-			if (v == null) {
-				v = props.getProperty(key2);
-			}
-			return (v == null) ? defVal : Boolean.parseBoolean(v);
+		
+		private static String firstPresent(Properties p, String... keys) {
+		    if (p == null) return null;
+		    for (String k : keys) {
+		        String v = p.getProperty(k);
+		        if (v != null) return v;
+		    }
+		    return null;
 		}
 
-		private static Rectangle2D.Double worldRectangleFromProperties(String prefix, Properties properties) {
-			String xminStr = properties.getProperty(prefix + "xmin");
-			String yminStr = properties.getProperty(prefix + "ymin");
-			String xmaxStr = properties.getProperty(prefix + "xmax");
-			String ymaxStr = properties.getProperty(prefix + "ymax");
-
-			if (xminStr == null || yminStr == null || xmaxStr == null || ymaxStr == null) {
-				return null;
-			}
-
-			try {
-				double xmin = Double.parseDouble(xminStr);
-				double ymin = Double.parseDouble(yminStr);
-				double xmax = Double.parseDouble(xmaxStr);
-				double ymax = Double.parseDouble(ymaxStr);
-				return new Rectangle2D.Double(xmin, ymin, xmax - xmin, ymax - ymin);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
-			}
+		private static Boolean getBooleanIfPresent(Properties p, String... keys) {
+		    String v = firstPresent(p, keys);
+		    return (v == null) ? null : Boolean.parseBoolean(v.trim());
 		}
 
-		private static Rectangle rectangleFromProperties(String prefix, Properties properties) {
-			String xStr = properties.getProperty(prefix + "x");
-			String yStr = properties.getProperty(prefix + "y");
-			String wStr = properties.getProperty(prefix + "width");
-			String hStr = properties.getProperty(prefix + "height");
-
-			if (xStr == null || yStr == null || wStr == null || hStr == null) {
-				return null;
-			}
-
-			try {
-				int x = Integer.parseInt(xStr);
-				int y = Integer.parseInt(yStr);
-				int w = Integer.parseInt(wStr);
-				int h = Integer.parseInt(hStr);
-
-				if (w <= 2 || h <= 2) {
-					return null;
-				}
-				return new Rectangle(x, y, w, h);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return null;
-			}
+		private static Integer getIntIfPresent(Properties p, String... keys) {
+		    String v = firstPresent(p, keys);
+		    if (v == null) return null;
+		    try {
+		        return Integer.parseInt(v.trim());
+		    } catch (NumberFormatException nfe) {
+		        return null;
+		    }
 		}
+
+
 	}
 }

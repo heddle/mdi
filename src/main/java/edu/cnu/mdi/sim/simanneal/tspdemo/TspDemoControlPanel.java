@@ -60,22 +60,26 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 	public static final int MIN_CITIES = 10;
 
 	/** Default max cities. */
-	public static final int MAX_CITIES = 500;
+	public static final int MAX_CITIES = 1000;
 	
 	//for the float based river slider
 	private final static int RIVER_NUM_DECIMALS = 2;
 	private final static int RIVER_SCALE = (int) Math.pow(10, RIVER_NUM_DECIMALS);
 
+	// Base panel with buttons + progress
 	private final IconSimulationControlPanel basePanel;
 
+	// Sliders
 	private final JSlider citySlider;
-
 	private final JSlider riverSlider;
 
-	private final JButton resetButton;
+	// Reset button resets the demo with current parameters
+	private JButton resetButton;
 
+	// the host is typically a subclass of SimulationView
 	private ISimulationHost host;
 
+	// Dirty flag to track whether parameters have changed since last reset
 	private volatile boolean dirty;
 
 	/**
@@ -104,8 +108,14 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		super(new BorderLayout(8, 0));
 		Objects.requireNonNull(icons, "icons");
 
+		// Base panel (left) has the standard media icons
 		basePanel = new IconSimulationControlPanel(icons, false);
+		add(basePanel, BorderLayout.WEST);
 
+		// Reset button (right)
+		addResetButton();
+
+		
 		// -------- Sliders panel (center) --------
 		JPanel sliderPanel = new JPanel();
 		sliderPanel.setLayout(new BorderLayout(0,0));
@@ -121,11 +131,11 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		
 		int tickSpace = (MAX_CITIES - MIN_CITIES) / 5;
 		citySlider  = SliderFactory.createLabeledSlider(cPanel, MIN_CITIES, MAX_CITIES, 
-				TspDemoView.DEFAULT_NUM_CITY, tickSpace, font, true);
+				TspDemoView.DEFAULT_NUM_CITY, tickSpace, 0, font, true);
 		
 		
 		float fTickSpace = 0.4f;
-		riverSlider = SliderFactory.createLabeledSlider(rPanel, -1f, 1f, TspDemoView.DEFAULT_RIVER_PENALTY, fTickSpace, font, true, RIVER_NUM_DECIMALS);
+		riverSlider = SliderFactory.createLabeledSlider(rPanel, -1f, 1f, TspDemoView.DEFAULT_RIVER_PENALTY, fTickSpace, 0f, font, true, RIVER_NUM_DECIMALS);
 
 		JPanel rows = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
 		rows.add(cPanel);
@@ -133,14 +143,8 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 
 		sliderPanel.add(rows, BorderLayout.CENTER);
 
-		// Reset button (right)
-		resetButton = new JButton("Reset");
-		resetButton.setEnabled(false);
-		resetButton.addActionListener(e -> requestResetFromHost());
 
-		add(basePanel, BorderLayout.WEST);
 		add(sliderPanel, BorderLayout.CENTER);
-		add(resetButton, BorderLayout.EAST);
 
 		// Slider listeners
 		ChangeListener cl = new ChangeListener() {
@@ -162,37 +166,23 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		};
 		citySlider.addChangeListener(cl);
 		riverSlider.addChangeListener(cl);
+		
+		setBorder(BorderFactory.createEtchedBorder());
 	}
 
+	// add the reset button on the right
+	private void addResetButton() {
+		// put the reset button (East) on a panel to keep it from stretching
+		resetButton = new JButton("Reset");
+		resetButton.setEnabled(false);
+		JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 20));
+		btnPanel.add(resetButton);
+		btnPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+		resetButton.addActionListener(e -> requestResetFromHost());
+		add(btnPanel, BorderLayout.EAST);
+	}
 
-	//make a slider
-//	private JSlider makeSlider(JPanel panel, int min, int max,
-//			int initial, int majorTick) {
-//		panel.setLayout(new BorderLayout(0, 0));
-//		JSlider slider = new JSlider(min, max, initial);
-//		JLabel valueLabel = new JLabel("Value: " + slider.getValue());
-//
-//		slider.setPreferredSize(new Dimension(140, 38));
-//		
-//		slider.addChangeListener(e -> {
-//		    // Updates the label in real-time as the knob moves
-//		    valueLabel.setText("Value: " + slider.getValue());
-//		});
-//
-//
-//		majorTick = (max-min)/majorTick;
-//		slider.setMajorTickSpacing(majorTick);
-//		slider.setMinorTickSpacing(0);
-//		slider.setPaintTicks(true);
-//		slider.setPaintLabels(true);
-//		slider.setFont(Fonts.tinyFont);
-//		valueLabel.setFont(Fonts.tinyFont);
-//		panel.add(slider, BorderLayout.CENTER);
-//		panel.add(valueLabel, BorderLayout.NORTH);
-//		return slider;
-//	}
-
-	@Override
+    @Override
 	public void bind(ISimulationHost host) {
 		this.host = Objects.requireNonNull(host, "host");
 
@@ -266,6 +256,7 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		// no-op (base panel handles progress UI)
 	}
 
+	// based on simulation state, enable/disable our controls
 	private void applyState(SimulationState state) {
 		boolean editable = (state == SimulationState.READY || state == SimulationState.TERMINATED);
 
@@ -275,6 +266,7 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		updateResetEnabled();
 	}
 
+	// Enable Reset only when in editable state
 	private void updateResetEnabled() {
 		if (host == null) {
 			resetButton.setEnabled(false);
@@ -301,6 +293,7 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		requestResetFromHost();
 	}
 
+	// Request reset from host if it implements ITspDemoResettable
 	private void requestResetFromHost() {
 		if (host == null) {
 			return;

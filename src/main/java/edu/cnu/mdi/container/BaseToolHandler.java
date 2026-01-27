@@ -39,7 +39,7 @@ public class BaseToolHandler implements IToolHandler  {
 	private BufferedImage buffer;
 
 	// Container that owns this tool handler
-	private BaseContainer container;
+	private final BaseContainer container;
 
 	//for modifying items
 	private AItem modifyItem;

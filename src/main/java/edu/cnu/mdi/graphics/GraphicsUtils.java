@@ -26,7 +26,6 @@ import java.util.Hashtable;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.SwingUtilities;
 
@@ -44,12 +43,12 @@ public class GraphicsUtils {
 	/**
 	 * One default color for highlighted drawing.
 	 */
-	public static Color highlightColor1 = Color.red;
+	public static final Color highlightColor1 = Color.red;
 
 	/**
 	 * Second default color for highlighted drawing.
 	 */
-	public static Color highlightColor2 = Color.yellow;
+	public static final Color highlightColor2 = Color.yellow;
 
 	/**
 	 * Slop value for checking line selection
@@ -59,7 +58,7 @@ public class GraphicsUtils {
 	/**
 	 * Stipple used for highlight drawing.
 	 */
-	final private static float DASH[] = { 8.0f };
+	final private static float[] DASH = { 8.0f };
 
 	/**
 	 * A stroke used for highlight drawing.
@@ -111,7 +110,7 @@ public class GraphicsUtils {
 	 * aren't created over and over again. There should not be many--each linewidth
 	 * and solid or dashed combination--probably no more than six or eight.
 	 */
-	protected static Hashtable<String, BasicStroke> strokes = new Hashtable<>();
+	protected static final Hashtable<String, BasicStroke> strokes = new Hashtable<>();
 
 	/**
 	 * Set component to small size variant. Probably only works on Mac.
@@ -194,26 +193,25 @@ public class GraphicsUtils {
 		}
 
 		if (stroke == null) { // not in hashtable
-			float fLineWidth = lineWidth;
-			if (lineStyle.equals(LineStyle.SOLID)) {
+            if (lineStyle.equals(LineStyle.SOLID)) {
 				stroke = new BasicStroke(lineWidth, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
 			} else if (lineStyle.equals(LineStyle.DASH)) {
-				stroke = new BasicStroke(fLineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
+				stroke = new BasicStroke(lineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
 						new float[] { 10.0f, 10.0f }, 0.0f);
 			} else if (lineStyle.equals(LineStyle.DOT_DASH)) {
-				stroke = new BasicStroke(fLineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
+				stroke = new BasicStroke(lineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
 						new float[] { 4.0f, 4.0f, 10.0f, 4.0f }, 0.0f);
 			} else if (lineStyle.equals(LineStyle.DOT)) {
-				stroke = new BasicStroke(fLineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
+				stroke = new BasicStroke(lineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
 						new float[] { 4.0f, 4f }, 0.0f);
 			} else if (lineStyle.equals(LineStyle.DOUBLE_DASH)) {
-				stroke = new BasicStroke(fLineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
+				stroke = new BasicStroke(lineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
 						new float[] { 10.0f, 4.0f, 10.0f, 10.0f }, 0.0f);
 			} else if (lineStyle.equals(LineStyle.LONG_DASH)) {
-				stroke = new BasicStroke(fLineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
+				stroke = new BasicStroke(lineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
 						new float[] { 15.0f, 15.0f }, 0.0f);
 			} else if (lineStyle.equals(LineStyle.LONG_DOT_DASH)) {
-				stroke = new BasicStroke(fLineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
+				stroke = new BasicStroke(lineWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 8.0f,
 						new float[] { 6.0f, 4.0f, 15.0f, 4.0f }, 0.0f);
 			} else {
 				stroke = new BasicStroke(lineWidth);
@@ -244,7 +242,7 @@ public class GraphicsUtils {
 	 * @return points corresponding to the corners.
 	 */
 	public static Point[] rectangleToPoints(Rectangle rect) {
-		Point pp[] = new Point[4];
+		Point[] pp = new Point[4];
 		int l = rect.x;
 		int t = rect.y;
 		int r = l + rect.width;
@@ -272,8 +270,7 @@ public class GraphicsUtils {
 		if ((size.width < 1) || (size.height < 1)) {
 			return null;
 		}
-		BufferedImage myImage = new BufferedImage(size.width, size.height, Transparency.TRANSLUCENT);
-		return myImage;
+        return new BufferedImage(size.width, size.height, Transparency.TRANSLUCENT);
 	}
 
 	/**
@@ -292,8 +289,7 @@ public class GraphicsUtils {
 			return null;
 		}
 
-		BufferedImage myImage = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
-		return myImage;
+        return new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
 	}
 
 	/**
@@ -582,10 +578,10 @@ public class GraphicsUtils {
 	static public void drawSimple3DDiamond(Graphics g, Rectangle r, Color fc, boolean outsie) {
 		Color tc;
 		Color bc;
-		int x[] = new int[4];
-		int y[] = new int[4];
-		int xp[] = new int[3];
-		int yp[] = new int[3];
+		int[] x = new int[4];
+		int[] y = new int[4];
+		int[] xp = new int[3];
+		int[] yp = new int[3];
 
 		// choose tc & bc to generate outsies or insies
 
@@ -964,7 +960,7 @@ public class GraphicsUtils {
 	 * @param n the number of points to draw.
 	 */
 
-	public static void drawHighlightedPolyline(Graphics g, int x[], int y[], int n) {
+	public static void drawHighlightedPolyline(Graphics g, int[] x, int[] y, int n) {
 		drawHighlightedPolyline(g, x, y, n, highlightColor1, highlightColor2);
 	}
 
@@ -979,7 +975,7 @@ public class GraphicsUtils {
 	 * @param color2 the other color for the alternating dash.
 	 */
 
-	public static void drawHighlightedPolyline(Graphics g, int x[], int y[], int n, Color color1, Color color2) {
+	public static void drawHighlightedPolyline(Graphics g, int[] x, int[] y, int n, Color color1, Color color2) {
 
 		Graphics2D g2 = (Graphics2D) g;
 
@@ -1064,37 +1060,26 @@ public class GraphicsUtils {
 			return false;
 		}
 
-		double x = px;
-		double y = py;
+        double t;
 
-		double x1 = startx;
-		double y1 = starty;
-
-		double t;
-		double dx = delx;
-		double dy = dely;
-
-		if (fdelx > fdely) {
-			t = (x - x1) / dx;
+        if (fdelx > fdely) {
+			t = ((double) px - (double) startx) / (double) delx;
 			if ((t < 0.0) || (t > 1.0)) {
 				return false;
 			}
 
-			double yt = y1 + t * dy;
+			double yt = (double) starty + t * (double) dely;
 
-			if (Math.abs(yt - y) < SELECTRES) {
-				return true;
-
-			}
+            return Math.abs(yt - (double) py) < SELECTRES;
 		} else {
-			t = (y - y1) / dy;
+			t = ((double) py - (double) starty) / (double) dely;
 			if ((t < 0.0) || (t > 1.0)) {
 				return false;
 			}
 
-			double xt = x1 + t * dx;
+			double xt = (double) startx + t * (double) delx;
 
-			if (Math.abs(xt - x) < SELECTRES) {
+			if (Math.abs(xt - (double) px) < SELECTRES) {
 				return true;
 
 			}
@@ -1315,14 +1300,17 @@ public class GraphicsUtils {
 			hex = hex.substring(1);
 		}
 
-		while (hex.length() < 6) {
-			hex += "0";
+        StringBuilder hexBuilder = new StringBuilder(hex);
+        while (hexBuilder.length() < 6) {
+			hexBuilder.append("0");
 		}
-		while (hex.length() < 8) {
-			hex += "f";
+        StringBuilder hexBuilder1 = new StringBuilder(hexBuilder.toString());
+        while (hexBuilder1.length() < 8) {
+			hexBuilder1.append("f");
 		}
+        hex = hexBuilder1.toString();
 
-		try {
+        try {
 			int r = Integer.parseInt(hex.substring(0, 2), 16);
 			int g = Integer.parseInt(hex.substring(2, 4), 16);
 			int b = Integer.parseInt(hex.substring(4, 6), 16);
@@ -1347,8 +1335,8 @@ public class GraphicsUtils {
 
 		Container container = component.getParent();
 		while (container != null) {
-			if ((container instanceof JInternalFrame) || (container instanceof JFrame) || (container instanceof JDialog)
-					|| (container instanceof Window)) {
+			if ((container instanceof JInternalFrame) || (container instanceof JDialog)
+                    || (container instanceof Window)) {
 				return container;
 			}
 

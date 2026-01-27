@@ -15,15 +15,13 @@ import edu.cnu.mdi.view.BaseView;
 @SuppressWarnings("serial")
 public abstract class PlainView3D extends BaseView implements ActionListener {
 
-	// the menu bar
-	private final JMenuBar _menuBar;
-
-	// the 3D panel
+    // the 3D panel
 	protected final Panel3D _panel3D;
 
 	public PlainView3D(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
-		_menuBar = new JMenuBar();
+        // the menu bar
+        JMenuBar _menuBar = new JMenuBar();
 		setJMenuBar(_menuBar);
 		addMenus();
 

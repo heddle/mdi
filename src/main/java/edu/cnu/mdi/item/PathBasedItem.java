@@ -369,8 +369,7 @@ public class PathBasedItem extends AItem {
 		Point2D.Double wp = WorldGraphicsUtils.getPathPointAt(0, _path);
 		Point pp = new Point();
 		container.worldToLocal(pp, wp);
-		Rectangle r = new Rectangle(pp.x - 8, pp.y - 8, 16, 16);
-		return r;
+        return new Rectangle(pp.x - 8, pp.y - 8, 16, 16);
 	}
 
 	@Override

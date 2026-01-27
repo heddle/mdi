@@ -10,9 +10,9 @@ import java.awt.Color;
  */
 public class Styled implements IStyled {
 
-	private static Color _defFillColor = new Color(0, 0, 255, 128);
-	private static Color _defBorderColor = new Color(192, 192, 192, 128);
-	private static Color _defAuxLineColor = new Color(160, 160, 160, 144);
+	private static final Color _defFillColor = new Color(0, 0, 255, 128);
+	private static final Color _defBorderColor = new Color(192, 192, 192, 128);
+	private static final Color _defAuxLineColor = new Color(160, 160, 160, 144);
 
 	// default fill color half-alpha blue
 	private Color _fillColor = _defFillColor;
@@ -49,8 +49,8 @@ public class Styled implements IStyled {
 	private int _symbolSize = 8;
 
 	// for random combinations
-	private static final Color _colors[] = { Color.black, Color.red, Color.blue, Color.gray };
-	private static final SymbolType _symbols[] = { SymbolType.SQUARE, SymbolType.CIRCLE, SymbolType.DIAMOND,
+	private static final Color[] _colors = { Color.black, Color.red, Color.blue, Color.gray };
+	private static final SymbolType[] _symbols = { SymbolType.SQUARE, SymbolType.CIRCLE, SymbolType.DIAMOND,
 			SymbolType.CROSS, SymbolType.DOWNTRIANGLE, SymbolType.UPTRIANGLE };
 
 	/**
@@ -184,8 +184,7 @@ public class Styled implements IStyled {
 	/**
 	 * Set the symbol type
 	 *
-	 * @param lineWidth the new symbol type
-	 */
+     */
 	@Override
 	public void setSymbolType(SymbolType symbolType) {
 		_symbolType = symbolType;

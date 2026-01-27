@@ -3,8 +3,9 @@ package edu.cnu.mdi.splot.plot;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.Toolkit;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.Hashtable;
 
 import javax.swing.JLabel;
@@ -22,15 +23,18 @@ import edu.cnu.mdi.ui.fonts.Fonts;
 public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 
 	// the underlying slider
-	private JSlider _slider;
+	private final JSlider _slider;
 
 	// underlying text field
-	private JTextField _textField;
+	private final JTextField _textField;
 
-	private int _defaultValue;
+	private final int _defaultValue;
 
 	private static Font _smallFont = Fonts.plainFontDelta(-3);
-	private static Font _tinyFont = Fonts.plainFontDelta(-4);
+	private static Font _tinyFont  = Fonts.plainFontDelta(-4);
+
+	// Prevent recursive updates (slider -> text -> slider loops)
+	private boolean _syncing;
 
 	/**
 	 * Create a TextFieldSlider
@@ -47,6 +51,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 	 */
 	public TextFieldSlider(int min, int max, int value, Font font, int minorTickSpacing, String labels[],
 			int sliderWidth, int textFieldWidth, String borderTitle) {
+
 		_defaultValue = value;
 
 		_slider = new JSlider(SwingConstants.HORIZONTAL, min, max, value);
@@ -82,20 +87,16 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 		_textField = new JTextField(valueString(sliderValueToRealValue()));
 		_textField.setFont(font);
 
-		KeyAdapter keyAdapter = new KeyAdapter() {
-			@Override
-			public void keyReleased(KeyEvent kev) {
-				if (kev.getKeyCode() == KeyEvent.VK_ENTER) {
-					try {
-						double val = Double.parseDouble(_textField.getText());
-						_slider.setValue(realValueToSliderValue(val));
-					} catch (Exception e) {
+		// Commit on Enter (ActionListener is the correct Swing idiom)
+		_textField.addActionListener(e -> commitTextToSlider());
 
-					}
-				}
+		// Commit on focus lost (handles "type then click OK/Close" scenarios)
+		_textField.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				commitTextToSlider();
 			}
-		};
-		_textField.addKeyListener(keyAdapter);
+		});
 
 		if (textFieldWidth > 0) {
 			Dimension d = _textField.getPreferredSize();
@@ -111,7 +112,6 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 		if (borderTitle != null) {
 			setBorder(new CommonBorder(borderTitle));
 		}
-
 	}
 
 	@Override
@@ -130,11 +130,67 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 
 	@Override
 	public void stateChanged(ChangeEvent arg0) {
-		if (_textField != null) {
-			_textField.setText(valueString(sliderValueToRealValue()));
+		if (_syncing) {
+			return;
 		}
+
+		if (_textField != null) {
+			_syncing = true;
+			try {
+				_textField.setText(valueString(sliderValueToRealValue()));
+			} finally {
+				_syncing = false;
+			}
+		}
+
 		if (!_slider.getValueIsAdjusting()) {
 			valueChanged();
+		}
+	}
+
+	/**
+	 * Parse the text field and update the slider. If parsing fails, revert the text
+	 * field back to the current slider-derived value.
+	 */
+	private void commitTextToSlider() {
+		if (_syncing || !_textField.isEnabled()) {
+			return;
+		}
+
+		String txt = _textField.getText();
+		if (txt == null) {
+			revertTextField();
+			return;
+		}
+
+		txt = txt.trim();
+		if (txt.isEmpty()) {
+			revertTextField();
+			return;
+		}
+
+		try {
+			double val = Double.parseDouble(txt);
+
+			// Convert to slider value; clamp just in case mapping overshoots.
+			int sv = realValueToSliderValue(val);
+			sv = Math.max(_slider.getMinimum(), Math.min(_slider.getMaximum(), sv));
+
+			// Setting the slider will update the text field (via stateChanged)
+			_slider.setValue(sv);
+
+		} catch (Exception ex) {
+			Toolkit.getDefaultToolkit().beep();
+			revertTextField();
+		}
+	}
+
+	private void revertTextField() {
+		_syncing = true;
+		try {
+			_textField.setText(valueString(sliderValueToRealValue()));
+		} finally {
+			_syncing = false;
 		}
 	}
 
@@ -168,7 +224,7 @@ public abstract class TextFieldSlider extends JPanel implements ChangeListener {
 
 	/**
 	 * This is called when the value changes, with by the slider or by entering text
-	 * into the text field and hitting return.
+	 * into the text field and hitting return (or leaving the field).
 	 */
 	public abstract void valueChanged();
 

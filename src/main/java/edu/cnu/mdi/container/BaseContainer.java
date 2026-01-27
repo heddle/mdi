@@ -130,7 +130,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	/**
 	 * Feedback control for mouse-over feedback providers.
 	 */
-	protected FeedbackControl _feedbackControl;
+	protected final FeedbackControl _feedbackControl;
 
 	/** Transform local(screen) -> world. */
 	protected AffineTransform localToWorld;

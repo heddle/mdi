@@ -14,10 +14,11 @@ public class SliderFactory {
 	 * @param max The maximum value of the slider.
 	 * @param initial The initial value of the slider.
 	 * @param majorTick The major tick spacing for the slider.
+	 * @param minorTick The minor tick spacing for the slider, or 0 for none.
 	 * @param font The font to use for the slider and label.
 	 */
 	public static JSlider createLabeledSlider(Container parent, int min, int max, 
-			int initial, int majorTick, Font font,
+			int initial, int majorTick, int minorTick, Font font,
 			boolean showValue) {
        
         // Create a container for this specific slider group
@@ -26,6 +27,9 @@ public class SliderFactory {
 
         // Configure Slider
         slider.setMajorTickSpacing(majorTick);
+        if (minorTick > 0) {
+			slider.setMinorTickSpacing(minorTick);
+		}
         slider.setPaintTicks(true);
         slider.setPaintLabels(true);
         slider.setFont(font);
@@ -59,11 +63,12 @@ public class SliderFactory {
 	 * @param max The maximum value of the slider.
 	 * @param initial The initial value of the slider.
 	 * @param majorTick The major tick spacing for the slider.
+	 * @param minorTick The minor tick spacing for the slider, or 0 for none.
 	 * @param font The font to use for the slider and label.
 	 * @param numDec The number of decimal places to display.
 	 */
 	  public static JSlider createLabeledSlider(Container parent, float min, float max, 
-	            float initial, float majorTick, Font font,
+	            float initial, float majorTick, float minorTick, Font font,
 	            boolean showValue, int numDec) {
 	        
 	        // 1. Calculate scaling factor (e.g., 2 decimal places = 100)
@@ -74,12 +79,16 @@ public class SliderFactory {
 	        int iMax = Math.round(max * scale);
 	        int iInitial = Math.round(initial * scale);
 	        int iTick = Math.round(majorTick * scale);
+	        int iMinorTick = Math.round(minorTick * scale);
 
 	        JPanel wrapper = new JPanel(new BorderLayout(5, 5));
 	        JSlider slider = new JSlider(iMin, iMax, iInitial);
 
 	        // 3. Setup Ticks and Labels
 	        slider.setMajorTickSpacing(iTick);
+	        if (iMinorTick > 0) {
+	            slider.setMinorTickSpacing(iMinorTick);
+	        }
 	        slider.setPaintTicks(true);
 	        slider.setPaintLabels(true);
 	        slider.setFont(font);

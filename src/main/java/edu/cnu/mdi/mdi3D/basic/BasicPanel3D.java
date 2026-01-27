@@ -7,10 +7,11 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 import com.jogamp.opengl.awt.GLJPanel;
 
+@SuppressWarnings("serial")
 public class BasicPanel3D extends GLJPanel implements GLEventListener {
 
 	// the preferred size
-	private Dimension _preferredSize;
+	private final Dimension _preferredSize;
 
 	public BasicPanel3D(Dimension preferredSize) {
 		_preferredSize = (preferredSize != null) ? preferredSize : new Dimension(600, 400);

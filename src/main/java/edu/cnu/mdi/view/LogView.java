@@ -19,7 +19,7 @@ public class LogView extends BaseView {
 	public LogView(int width, int height, boolean visible) {
 		super(PropertyUtils.TITLE, "Log", PropertyUtils.ICONIFIABLE, true, PropertyUtils.MAXIMIZABLE, true,
 				PropertyUtils.CLOSABLE, true, PropertyUtils.RESIZABLE, true, PropertyUtils.WIDTH, width,
-				PropertyUtils.PROPNAME, "LOGVIEW", PropertyUtils.HEIGHT, height, PropertyUtils.VISIBLE, visible);
+				PropertyUtils.HEIGHT, height, PropertyUtils.VISIBLE, visible);
 		add(new SimpleLogPane());
 	}
 

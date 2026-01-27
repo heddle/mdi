@@ -41,7 +41,7 @@ public class DoubleFormat {
 		}
 
 		String patternStr = pattern.toString();
-		DecimalFormat df = null;
+		DecimalFormat df;
 		df = (formats.get(patternStr));
 
 		if (df == null) {

@@ -31,6 +31,7 @@ import edu.cnu.mdi.sim.SimulationState;
  * </ul>
  * </p>
  */
+@SuppressWarnings("serial")
 public class DemoSimulationFrame extends JFrame {
 
 	/**

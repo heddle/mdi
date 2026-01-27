@@ -74,6 +74,15 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	/** Default control panel factory: the standard text-button panel. */
 	private static final ControlPanelFactory DEFAULT_FACTORY = SimulationControlPanel::new;
 
+	// -------------------------------------------------------------------------
+	// Shared reset support (centralized pattern for demos)
+	// -------------------------------------------------------------------------
+
+	private volatile java.util.function.Supplier<edu.cnu.mdi.sim.Simulation> _pendingResetSimSupplier;
+	private volatile java.util.function.Consumer<edu.cnu.mdi.sim.SimulationEngine> _pendingResetAfterSwap;
+	private volatile boolean _pendingResetAutoStart;
+	private volatile boolean _pendingResetRefresh;
+
 	/**
 	 * Construct a simulation view using default engine configuration and including
 	 * the default control panel.
@@ -162,7 +171,23 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 
 	@Override
 	public void onStateChange(SimulationContext ctx, SimulationState from, SimulationState to, String reason) {
-		onSimulationStateChange(ctx, from, to, reason);
+
+	    // If a reset is pending, complete it once the current engine is fully stopped.
+	    if ((to == SimulationState.TERMINATED || to == SimulationState.FAILED) && _pendingResetSimSupplier != null) {
+	        java.util.function.Supplier<Simulation> supplier = _pendingResetSimSupplier;
+	        java.util.function.Consumer<SimulationEngine> after = _pendingResetAfterSwap;
+	        boolean autoStart = _pendingResetAutoStart;
+	        boolean refresh = _pendingResetRefresh;
+
+	        // Clear first (defensive against re-entrancy)
+	        _pendingResetSimSupplier = null;
+	        _pendingResetAfterSwap = null;
+
+	        doEngineResetNow(supplier, after, autoStart, refresh);
+	        // fall through to hook
+	    }
+
+	    onSimulationStateChange(ctx, from, to, reason);
 	}
 
 	@Override
@@ -336,10 +361,143 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 			try { scp.unbind(); } catch (Throwable ignored) {}
 			scp.bind(this);
 		}
-
-		// If you pack on initial control panel creation, do it again here
-		//pack();
 	}
+	
+	/**
+	 * Centralized reset pattern:
+	 * <ul>
+	 *   <li>Reuse current engine config</li>
+	 *   <li>Stop old engine if needed</li>
+	 *   <li>Swap to a brand new engine (SimulationEngine holds a final Simulation)</li>
+	 *   <li>Optionally auto-start and refresh</li>
+	 * </ul>
+	 *
+	 * @param simSupplier builds a brand-new Simulation
+	 * @param afterSwap   optional hook invoked after replaceEngine(newEngine) (may be null)
+	 * @param autoStart   if true, calls startSimulation() after the swap
+	 * @param refresh     if true, requests a refresh on the new engine after the swap
+	 */
+	protected final void requestEngineReset(
+	        java.util.function.Supplier<edu.cnu.mdi.sim.Simulation> simSupplier,
+	        java.util.function.Consumer<edu.cnu.mdi.sim.SimulationEngine> afterSwap,
+	        boolean autoStart,
+	        boolean refresh) {
+
+	    java.util.Objects.requireNonNull(simSupplier, "simSupplier");
+
+	    final SimulationEngine e = getSimulationEngine();
+	    if (e == null) {
+	        return;
+	    }
+
+	    SimulationState state = e.getState();
+
+	    // "Safe" means we can swap immediately without needing to stop a running thread.
+	    boolean safe = (state == SimulationState.NEW
+	            || state == SimulationState.READY
+	            || state == SimulationState.TERMINATED
+	            || state == SimulationState.FAILED);
+
+	    if (safe) {
+	        doEngineResetNow(simSupplier, afterSwap, autoStart, refresh);
+	        return;
+	    }
+
+	    // Defer swap until engine reaches TERMINATED/FAILED
+	    _pendingResetSimSupplier = simSupplier;
+	    _pendingResetAfterSwap = afterSwap;
+	    _pendingResetAutoStart = autoStart;
+	    _pendingResetRefresh = refresh;
+
+	    if (state != SimulationState.TERMINATING) {
+	        e.requestStop();
+	    }
+	}
+
+	/**
+	 * Immediately performs a simulation engine reset by constructing and swapping in
+	 * a brand-new {@link SimulationEngine} backed by a new {@link Simulation}.
+	 * <p>
+	 * This method is the final step of the shared reset workflow initiated by
+	 * {@link #requestEngineReset(java.util.function.Supplier, java.util.function.Consumer, boolean, boolean)}.
+	 * It assumes that the current engine is in a <em>safe</em> state (i.e., not running)
+	 * and therefore does <strong>not</strong> attempt to stop or synchronize with an
+	 * active engine thread.
+	 * </p>
+	 *
+	 * <h3>Reset contract</h3>
+	 * <ul>
+	 *   <li>The current engine's {@link SimulationEngineConfig} is reused verbatim.</li>
+	 *   <li>A new {@link Simulation} is obtained from {@code simSupplier}.</li>
+	 *   <li>A new {@link SimulationEngine} is constructed and atomically installed
+	 *       via {@link #replaceEngine(SimulationEngine)}.</li>
+	 *   <li>The previous engine is abandoned; callers must ensure it is already
+	 *       terminated or has never been started.</li>
+	 *   <li>The optional {@code afterSwap} hook is invoked <em>after</em> the engine
+	 *       replacement, allowing view-specific rewiring (model references,
+	 *       listeners, sim-to-engine binding, etc.).</li>
+	 *   <li>If {@code autoStart} is {@code true}, the new engine thread is started
+	 *       (entering {@link SimulationState#READY} until Run is requested).</li>
+	 *   <li>If {@code refresh} is {@code true}, a refresh request is issued so the
+	 *       new simulation state is immediately visible.</li>
+	 * </ul>
+	 *
+	 * <h3>Threading</h3>
+	 * <p>
+	 * This method must execute on the Swing Event Dispatch Thread (EDT). If invoked
+	 * from a non-EDT thread, it will automatically marshal itself onto the EDT before
+	 * performing the reset.
+	 * </p>
+	 *
+	 * <h3>Usage notes</h3>
+	 * <ul>
+	 *   <li>This method should not be called directly by demos; use
+	 *       {@code requestEngineReset(...)} instead, which safely handles running
+	 *       engines by stopping them first and deferring the swap until termination.</li>
+	 *   <li>The supplied {@code Simulation} instance should be <em>brand new</em>
+	 *       and must not be shared with any other engine.</li>
+	 * </ul>
+	 *
+	 * @param simSupplier supplies a brand-new {@link Simulation} instance
+	 * @param afterSwap optional hook invoked after the new engine is installed
+	 *                  (may be {@code null})
+	 * @param autoStart if {@code true}, automatically starts the new engine thread
+	 * @param refresh if {@code true}, requests a refresh after the swap so the
+	 *                new simulation state is rendered immediately
+	 */	private void doEngineResetNow(
+	        java.util.function.Supplier<edu.cnu.mdi.sim.Simulation> simSupplier,
+	        java.util.function.Consumer<edu.cnu.mdi.sim.SimulationEngine> afterSwap,
+	        boolean autoStart,
+	        boolean refresh) {
+
+	    if (!javax.swing.SwingUtilities.isEventDispatchThread()) {
+	        javax.swing.SwingUtilities.invokeLater(() -> doEngineResetNow(simSupplier, afterSwap, autoStart, refresh));
+	        return;
+	    }
+
+	    final SimulationEngine oldEngine = getSimulationEngine();
+	    if (oldEngine == null) {
+	        return;
+	    }
+
+	    final SimulationEngineConfig cfg = oldEngine.getConfig();
+	    final Simulation newSim = simSupplier.get();
+	    final SimulationEngine newEngine = new SimulationEngine(newSim, cfg);
+
+	    replaceEngine(newEngine);
+
+	    if (afterSwap != null) {
+	        afterSwap.accept(newEngine);
+	    }
+
+	    if (autoStart) {
+	        startSimulation();
+	    }
+	    if (refresh) {
+	        newEngine.requestRefresh();
+	    }
+	}
+
 
 
 	// ------------------------------------------------------------------------

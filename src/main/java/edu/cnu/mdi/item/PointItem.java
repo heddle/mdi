@@ -187,8 +187,7 @@ public class PointItem extends AItem {
 		container.worldToLocal(p, _focus);
 		int size = _style.getSymbolSize();
 		int size2 = size / 2;
-		Rectangle r = new Rectangle(p.x - size2, p.y - size2, size, size);
-		return r;
+        return new Rectangle(p.x - size2, p.y - size2, size, size);
 	}
 
 	/**

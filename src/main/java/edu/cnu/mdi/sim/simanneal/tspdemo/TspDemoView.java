@@ -50,7 +50,7 @@ import edu.cnu.mdi.sim.ui.SimulationView;
 @SuppressWarnings("serial")
 public class TspDemoView extends SimulationView implements ITspDemoResettable, IAcceptedMoveListener {
 
-	public static final int DEFAULT_NUM_CITY = 60;
+	public static final int DEFAULT_NUM_CITY = 100;
 	public static final float DEFAULT_RIVER_PENALTY = 0.35f;
 
 	/**
@@ -86,8 +86,10 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 		// Must call super(...) first; create simulation + stash model bundle for
 		// retrieval.
 		super(createSimulationAndStashBundle(DEFAULT_NUM_CITY, DEFAULT_RIVER_PENALTY, seed),
-				new SimulationEngineConfig(33, 250, 30, false), true,
-				(SimulationView.ControlPanelFactory) TspDemoControlPanel::new, keyVals);
+				new SimulationEngineConfig(33, 250, 30, false), 
+				true,
+				(SimulationView.ControlPanelFactory) TspDemoControlPanel::new, 
+				keyVals);
 
 		evtPlot = createScatterPanel();
 		add(evtPlot, BorderLayout.EAST);
@@ -170,52 +172,50 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 	@Override
 	public void requestReset(int cityCount, double riverPenalty) {
 
-		// Only honor reset in safe states.
-		SimulationState state = getSimulationEngine().getState();
-		boolean editable = (state == SimulationState.READY || state == SimulationState.TERMINATED);
-		if (!editable) {
-			// ignore (panel should already be disabled, but be defensive)
-			return;
-		}
+	    // Clear plot immediately (even if we end up deferring the swap until TERMINATED).
+	    evtPlot.clearData();
 
-		evtPlot.clearData();
+	    // Capture current sim so we can detach listeners when we actually swap.
+	    final SimulatedAnnealingSimulation<TspSolution> oldSim = this.sim;
 
-		// Build a new model/sim with the requested parameters.
-		SimulatedAnnealingSimulation<TspSolution> newSim = createSimulationAndStashBundle(cityCount, riverPenalty,
-				seed);
+	    // Centralized reset (stops engine first if needed; swaps immediately only in safe states).
+	    requestEngineReset(
+	        // Build a brand-new simulation; this also stashes the Bundle in BUNDLE_TL.
+	        () -> createSimulationAndStashBundle(cityCount, riverPenalty, seed),
 
-		sim.removeAcceptedMoveListener(this);
-		newSim.addAcceptedMoveListener(this);
+	        // After-swap hook: rewire everything that is view-specific.
+	        (SimulationEngine newEngine) -> {
 
-		Bundle b = BUNDLE_TL.get();
-		BUNDLE_TL.remove();
+	            // Pull the bundle that createSimulationAndStashBundle() stashed.
+	            Bundle b = BUNDLE_TL.get();
+	            BUNDLE_TL.remove();
 
-		TspModel newModel = b.model;
+	            @SuppressWarnings("unchecked")
+	            SimulatedAnnealingSimulation<TspSolution> newSim =
+	                    (SimulatedAnnealingSimulation<TspSolution>) newEngine.getSimulation();
 
-		// Reuse the engine config (refresh/progress/yield/autRun) from the current
-		// engine.
-		SimulationEngineConfig engineCfg = getSimulationEngine().getConfig();
+	            TspModel newModel = b.model;
 
-		// Create a brand new engine (SimulationEngine holds a final Simulation).
-		SimulationEngine newEngine = new SimulationEngine(newSim, engineCfg);
+	            // Move the accepted-move listener from old sim to new sim.
+	            if (oldSim != null) {
+	                oldSim.removeAcceptedMoveListener(this);
+	            }
+	            newSim.addAcceptedMoveListener(this);
 
-		// Swap engine into the view (requires the small SimulationView patch below).
-		replaceEngine(newEngine);
+	            // Update local references.
+	            this.model = newModel;
+	            this.sim = newSim;
+	            this.bestTourSnapshot = null;
 
-		// Update local references.
-		this.model = newModel;
-		this.sim = newSim;
-		this.bestTourSnapshot = null;
+	            // Let sim post through the new engine.
+	            this.sim.setEngine(newEngine);
+	        },
 
-		// Let sim post through the new engine.
-		this.sim.setEngine(getSimulationEngine());
-
-		// Start new engine thread (paused in READY until Run).
-		startSimulation();
-
-		// Kick a refresh so the new city set appears immediately.
-		getSimulationEngine().requestRefresh();
+	        true,  // autoStart (matches prior behavior)
+	        true   // refresh (matches prior behavior)
+	    );
 	}
+
 
 	// -------------------------------------------------------------------------
 	// Drawing

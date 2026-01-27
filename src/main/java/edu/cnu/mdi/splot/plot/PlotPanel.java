@@ -248,9 +248,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 			_xLabel.setFont(font);
 			_yLabel.setFont(font);
 		} else if (PlotCanvas.STATUSFONTCHANGE.equals(evt.getPropertyName())) {
-			// Font font = (Font) evt.getNewValue();
-			// _status.setFont(font);
-		}
+        }
 
 	}
 

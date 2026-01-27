@@ -346,7 +346,6 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 			int lwidth = (Integer) evt.getNewValue();
 			float fwidth = (lwidth / 2.f);
 			IStyled style = curve.getStyle();
-			System.err.println("Setting line width to: " + fwidth);
 			if (style.getLineWidth() != fwidth) {
 				style.setLineWidth(fwidth);
 				_plotCanvas.repaint();

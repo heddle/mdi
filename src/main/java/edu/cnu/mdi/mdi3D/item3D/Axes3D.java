@@ -10,11 +10,7 @@ import edu.cnu.mdi.mdi3D.panel.Support3D;
 
 public class Axes3D extends Item3D {
 
-	private Axis3D _xAxisItem;
-	private Axis3D _yAxisItem;
-	private Axis3D _zAxisItem;
-
-	/**
+    /**
 	 * A set of Cartesian axes
 	 *
 	 * @param panel3D   the owner 3D panel
@@ -57,12 +53,12 @@ public class Axes3D extends Item3D {
 		super(panel3D);
 
 		try {
-			_xAxisItem = new Axis3D(panel3D, Axis3D.AxisType.X_AXIS, (labels == null) ? null : labels[0], limits[0],
-					limits[1], 0f, color, lineWidth, numTicksX, tickColor, textColor, font, numDec);
-			_yAxisItem = new Axis3D(panel3D, Axis3D.AxisType.Y_AXIS, (labels == null) ? null : labels[1], limits[2],
-					limits[3], 0f, color, lineWidth, numTicksY, tickColor, textColor, font, numDec);
-			_zAxisItem = new Axis3D(panel3D, Axis3D.AxisType.Z_AXIS, (labels == null) ? null : labels[2], limits[4],
-					limits[5], zoff, color, lineWidth, numTicksZ, tickColor, textColor, font, numDec);
+            Axis3D _xAxisItem = new Axis3D(panel3D, Axis3D.AxisType.X_AXIS, (labels == null) ? null : labels[0], limits[0],
+                    limits[1], 0f, color, lineWidth, numTicksX, tickColor, textColor, font, numDec);
+            Axis3D _yAxisItem = new Axis3D(panel3D, Axis3D.AxisType.Y_AXIS, (labels == null) ? null : labels[1], limits[2],
+                    limits[3], 0f, color, lineWidth, numTicksY, tickColor, textColor, font, numDec);
+            Axis3D _zAxisItem = new Axis3D(panel3D, Axis3D.AxisType.Z_AXIS, (labels == null) ? null : labels[2], limits[4],
+                    limits[5], zoff, color, lineWidth, numTicksZ, tickColor, textColor, font, numDec);
 
 			addChild(_xAxisItem);
 			addChild(_yAxisItem);
