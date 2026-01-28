@@ -58,6 +58,10 @@ public class TspModel {
 
     /**
      * Distance between two cities including optional river penalty.
+     * Note: because of the river penalty, this "distance"  can
+     * be negative!!!
+     * @param cityA index of first city
+     * @param cityB index of second city
      */
     public double getDistance(int cityA, int cityB) {
         Point2D.Double a = cities[cityA];
@@ -70,7 +74,7 @@ public class TspModel {
                               (a.x > riverX && b.x < riverX);
             if (crosses) {
                 d += riverPenalty;
-            }
+             }
         }
         return d;
     }

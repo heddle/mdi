@@ -5,13 +5,23 @@ import edu.cnu.mdi.splot.plot.MultiplotPanel;
 @SuppressWarnings("serial")
 public class DiagnosticPlotPanel extends MultiplotPanel {
 
+	// the individual plots
 	private EnergyVsStep energyVsStep;
+	private ConvergenceVsStep convergenceVsStep;
+	private MinPairwiseSeparation minPairwiseDistanceVsStep;
 
+	/**
+	 * Create the diagnostic plot panel.This will contain multiple plots.
+	 */
 	public DiagnosticPlotPanel() {
 		super(true);
 		energyVsStep = new EnergyVsStep();
+		convergenceVsStep = new ConvergenceVsStep();
+		minPairwiseDistanceVsStep = new MinPairwiseSeparation();
 
 		addPlot("Energy Vs Step", energyVsStep);
+		addPlot("Convergence Metrics Vs Step", convergenceVsStep);
+		addPlot("Min Pairwise Separation Vs Step", minPairwiseDistanceVsStep);
 	}
 
 
@@ -21,19 +31,9 @@ public class DiagnosticPlotPanel extends MultiplotPanel {
 	 * @param d diagnostic data (from the simulation)
 	 */
 	protected void newDiagnosticData(NetworkDeclutterSimulation.Diagnostics d) {
-        int step = d.step;
-
          energyVsStep.updatePlot(d);
-
-//        energyChart.addPoint("Total", step, d.total());
-//        energyChart.addPoint("Potential", step, d.potential());
-//        energyChart.addPoint("Kinetic", step, d.Kinetic);
-
-        // Optional but VERY informative:
-//        energyChart.addPoint("avgSpeed", step, d.avgSpeed);
-//        energyChart.addPoint("Frms", step, d.Frms);
-//        energyChart.addPoint("vmaxFrac", step, d.vmaxHitFraction);
-
+         convergenceVsStep.updatePlot(d);
+         minPairwiseDistanceVsStep.updatePlot(d);
 	}
 
 

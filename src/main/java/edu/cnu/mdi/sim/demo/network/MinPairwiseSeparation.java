@@ -8,53 +8,38 @@ import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
+import edu.cnu.mdi.splot.plot.HorizontalLine;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotPanel;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
-@SuppressWarnings("serial")
-public class EnergyVsStep extends PlotPanel {
-	
-	private static final String TITLE = "Potential (pseudo)Energy vs. Step";
+public class MinPairwiseSeparation extends PlotPanel {
+
+	private static final String TITLE = "Min Pairwise Separation vs. Step";
 	private static final String XLABEL = "Simulation Step";
-	private static final String YLABEL = "pseudoEnergy";
+	private static final String YLABEL = "Separation";
 	
-	private static final String SPRING_CURVE = "Spring";
-	private static final String REPULSION_CURVE = "Repulsion";
-	private static final String CENTER_CURVE = "Center";
-	private static final String TOTAL_CURVE = "Total";
-	
-	private static final String[] CURVE_NAMES = {
-			SPRING_CURVE,
-			REPULSION_CURVE,
-			CENTER_CURVE,
-			TOTAL_CURVE
-	};
+	private static final String SEPARATION_CURVE = "Separation";
+
+	private static final String[] CURVE_NAMES = { SEPARATION_CURVE };
 	
 	// the curves
-	private final Curve springCurve;
-	private final Curve repulsionCurve;
-	private final Curve centerCurve;
-	private final Curve totalCurve;
+	private final Curve separationCurve;
 	
-	/**
-	 * Create the Energy vs Step plot panel.
-	 */
-	public EnergyVsStep() {
+	public MinPairwiseSeparation() {
 		super(createCanvas());
 		
 		PlotData plotData = getPlotCanvas().getPlotData();
-		this.springCurve = (Curve) plotData.getCurve(SPRING_CURVE);
-		this.repulsionCurve = (Curve) plotData.getCurve(REPULSION_CURVE);
-		this.centerCurve = (Curve) plotData.getCurve(CENTER_CURVE);
-		this.totalCurve = (Curve) plotData.getCurve(TOTAL_CURVE);
+		this.separationCurve = (Curve) plotData.getCurve(SEPARATION_CURVE);
 		
 		//set the plot parameters for plot and curves
 		setParameters();
+
+
 	}
-	
+
 	// set plot parameters
 	private void setParameters() {
 		PlotParameters params = getPlotCanvas().getParameters();
@@ -63,18 +48,11 @@ public class EnergyVsStep extends PlotPanel {
 		params.setXScale(PlotParameters.AxisScale.LOG10);
 		params.setNumDecimalX(0);
 		params.setTitleFont(Fonts.plainFontDelta(2));
+		params.addPlotLine(new HorizontalLine(getPlotCanvas(), 1));
 		
-		setCurveStyle(springCurve, SymbolType.CIRCLE, 
+		setCurveStyle(separationCurve, SymbolType.CIRCLE, 
 				X11Colors.getX11Color("Cadet Blue"), Color.blue);
-		
-		setCurveStyle(repulsionCurve, SymbolType.CIRCLE, 
-				X11Colors.getX11Color("Light Coral"), Color.red);
-		
-		setCurveStyle(centerCurve, SymbolType.CIRCLE,
-				X11Colors.getX11Color("Dark Goldenrod"), Color.black);
-		
-		setCurveStyle(totalCurve, SymbolType.SQUARE,
-				X11Colors.getX11Color("Dark Olive Green"), Color.green.darker());
+
 	}
 	
 	//helper method to set curve style
@@ -92,10 +70,7 @@ public class EnergyVsStep extends PlotPanel {
 	 * @param d diagnostic data (from the simulation)
 	 */
 	protected void updatePlot(NetworkDeclutterSimulation.Diagnostics d) {
-		springCurve.add(d.step, d.Uspring);
-		repulsionCurve.add(d.step, d.Urepulsion);
-		centerCurve.add(d.step, d.Ucenter);
-		totalCurve.add(d.step, d.total());
+		separationCurve.add(d.step, d.minPairwiseSeparation);
 	}
 	
 	// create the plot canvas
@@ -110,5 +85,4 @@ public class EnergyVsStep extends PlotPanel {
 		}
 		return null;
 	}
-
 }

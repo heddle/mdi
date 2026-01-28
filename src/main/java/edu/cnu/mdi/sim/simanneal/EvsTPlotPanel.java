@@ -12,6 +12,7 @@ import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.AReadyPlotPanel;
 import edu.cnu.mdi.splot.plot.PlotChangeType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
+import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 @SuppressWarnings("serial")
@@ -123,20 +124,21 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 				return;
 			}
 			accepted.add(x, y);
-
+			canvas.repaint();
 		}
 	}
 
 	public void addBest(double x, double y) {
 		if (best != null) {
 			best.add(x, y);
+			canvas.repaint();
 		}
 	}
 
 	@Override
 	public void setParameters() {
 		Color acceptedColor = new Color(128, 128, 128, 10);
-		Color bestColor = Color.red;
+		Color bestColor = X11Colors.getX11Color("red", 128);
 
 		PlotData plotData = canvas.getPlotData();
 
@@ -146,10 +148,10 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 
 		best.setCurveDrawingMethod(CurveDrawingMethod.CONNECT);
 		best.getStyle().setSymbolType(SymbolType.SQUARE);
-		best.getStyle().setSymbolSize(6);
+		best.getStyle().setSymbolSize(4);
 		best.getStyle().setFillColor(bestColor);
 		best.getStyle().setLineColor(Color.black);
-		best.getStyle().setBorderColor(Color.black);
+		best.getStyle().setBorderColor(X11Colors.getX11Color("dark red"));
 
 		accepted.setCurveDrawingMethod(CurveDrawingMethod.NONE);
 		accepted.getStyle().setSymbolType(SymbolType.CIRCLE);
@@ -161,6 +163,7 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 		PlotParameters params = canvas.getParameters();
 		params.includeXZero(true);
 		params.includeYZero(true);
+		params.setXScale(PlotParameters.AxisScale.LOG10);
 		params.setTitleFont(Fonts.plainFontDelta(1));
 		params.setLegendDrawing(false);
 	}

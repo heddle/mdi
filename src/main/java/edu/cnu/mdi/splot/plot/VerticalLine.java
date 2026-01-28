@@ -22,12 +22,12 @@ public class VerticalLine extends PlotLine {
 
 	@Override
 	public double getY0() {
-		return _canvas.getWorld().getMinY();
+		return _canvas.getDataWorld().getMinY();
 	}
 
 	@Override
 	public double getY1() {
-		return _canvas.getWorld().getMaxY();
+		return _canvas.getDataWorld().getMaxY();
 	}
 
 }

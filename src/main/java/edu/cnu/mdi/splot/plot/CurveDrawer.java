@@ -106,7 +106,7 @@ public class CurveDrawer {
 			for (int i = 0; i < x.length; i++) {
 
 				// draw sigmaY error bars
-				if (ysig != null) {
+				if ((ysig != null) && (ysig[i] > 0.0)) {
 					double y0 = y[i] - ysig[i];
 					double y1 = y[i] + ysig[i];
 					wp.setLocation(x[i], y0);

@@ -77,12 +77,37 @@ public abstract class PlotLine {
 				p0.x, p0.y, p1.x, p1.y);
 	}
 
+	/**
+	 * Get the starting x coordinate
+	 *
+	 * @return the starting x coordinate
+	 */
 	public abstract double getX0();
 
+	/**
+	 * Get the ending x coordinate
+	 *
+	 * @return the ending x coordinate
+	 */
 	public abstract double getX1();
 
+	/**
+	 * Get the starting y coordinate
+	 *
+	 * @return the starting y coordinate
+	 */
 	public abstract double getY0();
 
+	/**
+	 * Get the ending y coordinate
+	 *
+	 * @return the ending y coordinate
+	 */
 	public abstract double getY1();
+	
+	@Override
+	public String toString() {
+		return "PlotLine: (" + getX0() + ", " + getY0() + ") to (" + getX1() + ", " + getY1() + ")";	
+	}
 
 }

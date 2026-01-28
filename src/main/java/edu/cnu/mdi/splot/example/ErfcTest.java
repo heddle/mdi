@@ -74,7 +74,6 @@ public class ErfcTest extends AExample {
 		Curve curve = (Curve) plotData.getFirstCurve();
 		curve.setCurveDrawingMethod(CurveDrawingMethod.ERFC);
 		PlotParameters params = canvas.getParameters();
-		params.addPlotLine(new HorizontalLine(canvas, 0));
 		params.addPlotLine(new HorizontalLine(canvas, 1));
 		curve.getStyle().setFillColor(new Color(0, 0, 240, 128));
 		String extra[] = { "Sample annotation string", "Sample annotation string",

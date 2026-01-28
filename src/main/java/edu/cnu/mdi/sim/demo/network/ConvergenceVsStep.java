@@ -15,66 +15,51 @@ import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 @SuppressWarnings("serial")
-public class EnergyVsStep extends PlotPanel {
-	
-	private static final String TITLE = "Potential (pseudo)Energy vs. Step";
+public class ConvergenceVsStep extends PlotPanel {
+	private static final String TITLE = "Convergence Metrics vs. Step";
 	private static final String XLABEL = "Simulation Step";
-	private static final String YLABEL = "pseudoEnergy";
-	
-	private static final String SPRING_CURVE = "Spring";
-	private static final String REPULSION_CURVE = "Repulsion";
-	private static final String CENTER_CURVE = "Center";
-	private static final String TOTAL_CURVE = "Total";
-	
-	private static final String[] CURVE_NAMES = {
-			SPRING_CURVE,
-			REPULSION_CURVE,
-			CENTER_CURVE,
-			TOTAL_CURVE
-	};
+	private static final String YLABEL = "Metrics";
+
+	private static final String SPEED_CURVE = "Average Speed";
+	private static final String FRMS_CURVE = "Force RMS";
+	private static final String RATIO_CURVE = "Force RMS / Avg Speed (diagnostic)";
+
+	private static final String[] CURVE_NAMES = { SPEED_CURVE, FRMS_CURVE, RATIO_CURVE };
 	
 	// the curves
-	private final Curve springCurve;
-	private final Curve repulsionCurve;
-	private final Curve centerCurve;
-	private final Curve totalCurve;
-	
+	private final Curve speedCurve;
+	private final Curve frmsCurve;
+	private final Curve ratioCurve;
+
 	/**
-	 * Create the Energy vs Step plot panel.
+	 * Create the Convergence metrics vs Step plot panel.
 	 */
-	public EnergyVsStep() {
+	public ConvergenceVsStep() {
 		super(createCanvas());
 		
 		PlotData plotData = getPlotCanvas().getPlotData();
-		this.springCurve = (Curve) plotData.getCurve(SPRING_CURVE);
-		this.repulsionCurve = (Curve) plotData.getCurve(REPULSION_CURVE);
-		this.centerCurve = (Curve) plotData.getCurve(CENTER_CURVE);
-		this.totalCurve = (Curve) plotData.getCurve(TOTAL_CURVE);
-		
+		this.speedCurve = (Curve) plotData.getCurve(SPEED_CURVE);
+		this.frmsCurve = (Curve) plotData.getCurve(FRMS_CURVE);
+		this.ratioCurve = (Curve) plotData.getCurve(RATIO_CURVE);
+
 		//set the plot parameters for plot and curves
 		setParameters();
+
 	}
 	
 	// set plot parameters
 	private void setParameters() {
 		PlotParameters params = getPlotCanvas().getParameters();
-		
-		//x axis is logarithmic scale
+
+		// x axis is logarithmic scale
 		params.setXScale(PlotParameters.AxisScale.LOG10);
+		params.setYScale(PlotParameters.AxisScale.LOG10);
 		params.setNumDecimalX(0);
 		params.setTitleFont(Fonts.plainFontDelta(2));
-		
-		setCurveStyle(springCurve, SymbolType.CIRCLE, 
-				X11Colors.getX11Color("Cadet Blue"), Color.blue);
-		
-		setCurveStyle(repulsionCurve, SymbolType.CIRCLE, 
-				X11Colors.getX11Color("Light Coral"), Color.red);
-		
-		setCurveStyle(centerCurve, SymbolType.CIRCLE,
-				X11Colors.getX11Color("Dark Goldenrod"), Color.black);
-		
-		setCurveStyle(totalCurve, SymbolType.SQUARE,
-				X11Colors.getX11Color("Dark Olive Green"), Color.green.darker());
+
+		setCurveStyle(speedCurve, SymbolType.CIRCLE, null, Color.black);
+		setCurveStyle(frmsCurve, SymbolType.SQUARE, X11Colors.getX11Color("Light Coral"), Color.red);
+		setCurveStyle(ratioCurve, SymbolType.DIAMOND, X11Colors.getX11Color("Medium Sea Green", 128), Color.green);
 	}
 	
 	//helper method to set curve style
@@ -84,7 +69,6 @@ public class EnergyVsStep extends PlotPanel {
 		style.setFillColor(symbolColor);
 		style.setBorderColor(symbolBorder);
 	}
-
 	
 	/**
 	 * Update the plot with new diagnostic data.
@@ -92,12 +76,11 @@ public class EnergyVsStep extends PlotPanel {
 	 * @param d diagnostic data (from the simulation)
 	 */
 	protected void updatePlot(NetworkDeclutterSimulation.Diagnostics d) {
-		springCurve.add(d.step, d.Uspring);
-		repulsionCurve.add(d.step, d.Urepulsion);
-		centerCurve.add(d.step, d.Ucenter);
-		totalCurve.add(d.step, d.total());
+		speedCurve.add(d.step, d.avgSpeed);
+		frmsCurve.add(d.step, d.Frms);
+		ratioCurve.add(d.step, d.Frms / (1.0e-12 + d.avgSpeed));
 	}
-	
+
 	// create the plot canvas
 	private static PlotCanvas createCanvas() {
 		
@@ -110,5 +93,6 @@ public class EnergyVsStep extends PlotPanel {
 		}
 		return null;
 	}
+
 
 }

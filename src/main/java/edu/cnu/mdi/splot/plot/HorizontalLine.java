@@ -12,12 +12,12 @@ public class HorizontalLine extends PlotLine {
 
 	@Override
 	public double getX0() {
-		return _canvas.getWorld().getMinX();
+		return _canvas.getDataWorld().getMinX();
 	}
 
 	@Override
 	public double getX1() {
-		return _canvas.getWorld().getMaxX();
+		return _canvas.getDataWorld().getMaxX();
 	}
 
 	@Override

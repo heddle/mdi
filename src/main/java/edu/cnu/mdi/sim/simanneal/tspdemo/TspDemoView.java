@@ -74,7 +74,8 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 	/** RNG seed used for reproducible model generation (0L => nondeterministic). */
 	private static final long seed = 0L;
 
-	private static EvsTPlotPanel evtPlot;
+	/** Energy vs. Temperature plot panel. */
+	private EvsTPlotPanel evtPlot;
 
 	/**
 	 * Create the TSP demo view.
@@ -85,15 +86,23 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 
 		// Must call super(...) first; create simulation + stash model bundle for
 		// retrieval.
-		super(createSimulationAndStashBundle(DEFAULT_NUM_CITY, DEFAULT_RIVER_PENALTY, seed),
-				new SimulationEngineConfig(33, 250, 30, false), 
-				true,
-				(SimulationView.ControlPanelFactory) TspDemoControlPanel::new, 
-				keyVals);
+		super(
+			    createSimulationAndStashBundle(DEFAULT_NUM_CITY, DEFAULT_RIVER_PENALTY, seed),
+			    new SimulationEngineConfig(33, 250, 30, false),
+			    true,
+			    (SimulationView.ControlPanelFactory) TspDemoControlPanel::new,
 
-		evtPlot = createScatterPanel();
-		add(evtPlot, BorderLayout.EAST);
+			    // diagnostics enabled
+			    true,
+			    TspDemoView::createScatterPanel,
 
+			    // initial split fraction (left/main)
+			    0.6,
+
+			    keyVals
+			);
+		// Grab the diagnostics component that SimulationView installed on the right
+		this.evtPlot = (EvsTPlotPanel) getDiagnosticsComponent();	
 
 		// Recover bundle created by createSimulationAndStashBundle().
 		Bundle b = BUNDLE_TL.get();
@@ -125,12 +134,12 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 		startSimulation();
 	}
 
-	private EvsTPlotPanel createScatterPanel() {
-		EvsTPlotPanel scatterPanel = new EvsTPlotPanel("Traveling Salesperson Problem", "temperature", "energy (length)");
-		scatterPanel.getPlotCanvas().getParameters().setReverseXaxis(true);
-		return scatterPanel;
+	private static EvsTPlotPanel createScatterPanel() {
+	    EvsTPlotPanel scatterPanel =
+	        new EvsTPlotPanel("Traveling Salesperson Problem", "temperature", "energy");
+	    scatterPanel.getPlotCanvas().getParameters().setReverseXaxis(true);
+	    return scatterPanel;
 	}
-
 	/**
 	 * Create a simulation instance and stash a bundle (model) in a thread-local so
 	 * the constructor can retrieve it after {@code super(...)} returns.

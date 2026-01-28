@@ -717,11 +717,32 @@ public final class NetworkDeclutterSimulation implements Simulation {
 		}
 
 	    double vmaxFrac = vmaxHitCount / (double) Math.max(1, n);
+	    
+	    // ---- min pairwise separation ----
+	    double minSep = minPairwiseSeparation();
 
-	    return new Diagnostics(step, Uspring, Urep, Ucenter, K, avgSpeed, FrmsNow, vmaxFrac);
+	    return new Diagnostics(step, Uspring, Urep, Ucenter, K, avgSpeed, FrmsNow, vmaxFrac, minSep);
 	}
 
-	
+	// compute minimum pairwise separation ratio
+	private double minPairwiseSeparation() {
+		double minSep = Double.POSITIVE_INFINITY;
+		int n = model.nodes.size();
+		for (int i = 0; i < n; i++) {
+			var a = model.nodes.get(i);
+			for (int j = i + 1; j < n; j++) {
+				var b = model.nodes.get(j);
+				double dx = a.x - b.x;
+				double dy = a.y - b.y;
+				double r = Math.sqrt(dx * dx + dy * dy);
+				r /= a.worldRadius + b.worldRadius + OVERLAP_PAD;
+				if (r < minSep) {
+					minSep = r;
+				}
+			}
+		}
+		return minSep;
+	}
 	/** 
 	 * Energy diagnostics for the current simulation state.
 	 */
@@ -761,10 +782,11 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	    public final double avgSpeed;
 	    public final double Frms;
 	    public final double vmaxHitFraction;
+	    public final double minPairwiseSeparation;
 
 	    public Diagnostics(int step,
 	                       double Uspring, double Urepulsion, double Ucenter, double Kinetic,
-	                       double avgSpeed, double Frms, double vmaxHitFraction) {
+	                       double avgSpeed, double Frms, double vmaxHitFraction, double minPairwiseSeparation) {
 	        this.step = step;
 	        this.Uspring = Uspring;
 	        this.Urepulsion = Urepulsion;
@@ -773,6 +795,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	        this.avgSpeed = avgSpeed;
 	        this.Frms = Frms;
 	        this.vmaxHitFraction = vmaxHitFraction;
+	        this.minPairwiseSeparation = minPairwiseSeparation;
 	    }
 
 	    /**

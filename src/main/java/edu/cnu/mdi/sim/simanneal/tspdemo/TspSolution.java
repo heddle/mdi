@@ -28,13 +28,13 @@ public class TspSolution implements AnnealingSolution {
      * Compute full tour length (closed loop).
      */
     public double getTourLength() {
-        double L = 0.0;
+        double length = 0.0;
         for (int i = 0; i < tour.length; i++) {
             int a = tour[i];
             int b = tour[(i + 1) % tour.length];
-            L += model.getDistance(a, b);
+            length += model.getDistance(a, b);
         }
-        return L;
+        return length;
     }
 
     /**
