@@ -325,6 +325,7 @@ public class HistoCurve extends ACurve {
 	 * pattern.
 	 * </p>
 	 */
+	@Override
 	public void clearData() {
 		requireEdt("HistoCurve.clearData");
 		histoData.clear();

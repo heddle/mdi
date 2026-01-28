@@ -6,8 +6,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
@@ -27,6 +25,7 @@ import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
+import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.CurveChangeType;
 import edu.cnu.mdi.splot.pdata.DataChangeListener;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
@@ -102,6 +101,9 @@ public class PlotCanvas extends JComponent
 
 	// toolbar that owns this canvas
 	private BaseToolBar _toolBar;
+	
+	// swing timer for fixing world system
+	private final Timer _timer;
 
 	/**
 	 * Create a plot canvas for plotting a dataset
@@ -145,23 +147,33 @@ public class PlotCanvas extends JComponent
 		addMouseListener(this);
 		addMouseMotionListener(this);
 
-		// every canvas has a swing timer
 		int delay = 1000; // milliseconds
-		ActionListener taskPerformer = new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent evt) {
-				if (_needsRedraw) {
-					if (_needsRescale) {
-						setWorldSystem();
-					}
-					repaint();
-				}
-				_needsRescale = false;
-				_needsRedraw = false;
-			}
-		};
-		new Timer(delay, taskPerformer).start();
+	    _timer = new Timer(delay, evt -> onTimer());
+	    _timer.setCoalesce(true); // good for bursty updates
+	}
+	
+	// timer action
+	private void onTimer() {
+	    if (_needsRedraw) {
+	        if (_needsRescale) {
+	            setWorldSystem();
+	        }
+	        repaint();
+	        _needsRedraw = false;
+	        _needsRescale = false;
+	    }
+	}
+	
+	@Override
+	public void addNotify() {
+	    super.addNotify();
+	    // optional: start here rather than constructor
+	}
 
+	@Override
+	public void removeNotify() {
+	    if (_timer != null) _timer.stop();
+	    super.removeNotify();
 	}
 
 	/**
@@ -206,12 +218,22 @@ public class PlotCanvas extends JComponent
 	 * @param plotData the new dataset
 	 */
 	protected void setPlotData(PlotData plotData) {
+	    if (plotData == null) {
+	        plotData = PlotData.emptyData();
+	    }
 
-		_plotData = plotData;
+	    // remove from old
+	    if (_plotData != null) {
+	        _plotData.removeDataChangeListener(this);
+	    }
 
-		plotData.removeDataChangeListener(this);
-		plotData.addDataChangeListener(this);
-		repaint();
+	    _plotData = plotData;
+
+	    // add to new
+	    _plotData.addDataChangeListener(this);
+
+	    setWorldSystem();
+	    repaint();
 	}
 
 	/**
@@ -222,6 +244,17 @@ public class PlotCanvas extends JComponent
 	public PlotData getPlotData() {
 		return _plotData;
 	}
+	
+	/**
+	 * Clear all data from all curves
+	 * Use with caution!
+	 */
+	public void clearData() {
+		for (ACurve curve : getPlotData().getCurves()) {
+			curve.clearData();
+		}
+	}
+
 
 	/**
 	 * Get the world boundary
@@ -771,15 +804,18 @@ public class PlotCanvas extends JComponent
 	 * The plot is being shutdown
 	 */
 	public void shutDown() {
-		notifyListeners(PlotChangeType.SHUTDOWN);
+	    if (_timer != null) _timer.stop();
+	    notifyListeners(PlotChangeType.SHUTDOWN);
 	}
+	
 	/**
 	 * The plot is being stood up
 	 */
 	public void standUp() {
-		notifyListeners(PlotChangeType.STOODUP);
+	    if (_timer != null) _timer.start();
+	    notifyListeners(PlotChangeType.STOODUP);
 	}
-
+	
 	// check if pointer tool is active
 	private boolean isPointer() {
 		return (_toolBar == null) || _toolBar.isPointerActive();
@@ -981,7 +1017,7 @@ public class PlotCanvas extends JComponent
 	@Override
 	public void dataSetChanged(PlotData plotData, ACurve curve, CurveChangeType type) {
 		setWorldSystem();
-		needsRedraw(false);
+		needsRedraw(true);
 	}
 
 	@Override

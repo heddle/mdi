@@ -183,6 +183,20 @@ public abstract class ACurve {
 	 * @return curve length
 	 */
 	public abstract int length();
+	
+	/**
+	 * Clear all data from this curve and fire a DATA change event.
+	 * <p>
+	 * Thread-safe: may be called from any thread. If called off the EDT, the clear
+	 * is performed later on the EDT and coalesced with other scheduled drains.
+	 * </p>
+	 * <p>
+	 * Note: this also clears any queued (not-yet-applied) points so the curve truly
+	 * becomes empty.
+	 * </p>
+	 */
+	public abstract void clearData();
+
 
 	/**
 	 * Hook: subclasses may override to provide an appropriate fitter for the

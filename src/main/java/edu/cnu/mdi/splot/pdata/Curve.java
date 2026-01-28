@@ -371,6 +371,7 @@ public class Curve extends ACurve {
 	 * becomes empty.
 	 * </p>
 	 */
+	@Override
 	public void clearData() {
 		if (!javax.swing.SwingUtilities.isEventDispatchThread()) {
 			// Make the curve truly empty: discard not-yet-applied points.

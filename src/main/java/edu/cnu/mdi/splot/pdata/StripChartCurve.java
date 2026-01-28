@@ -299,10 +299,11 @@ public class StripChartCurve extends ACurve {
 	 * queued samples are also discarded so the curve becomes truly empty.
 	 * </p>
 	 */
-	public void clear() {
+	@Override
+	public void clearData() {
 		if (!SwingUtilities.isEventDispatchThread()) {
 			pending.clear();
-			SwingUtilities.invokeLater(this::clear);
+			SwingUtilities.invokeLater(this::clearData);
 			return;
 		}
 
@@ -598,4 +599,5 @@ public class StripChartCurve extends ACurve {
 			this.y = y;
 		}
 	}
+
 }
