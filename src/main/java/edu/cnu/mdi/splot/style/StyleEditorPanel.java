@@ -100,8 +100,8 @@ public class StyleEditorPanel extends JPanel {
 		borderPanel.add(_fitLineColor);
 
 		if (type != PlotDataType.H1D) {
-			String labels[] = { "4", "8", "12", "16", "20", "24", "28" };
-			_symbolSizeSelector = new TextFieldSlider(4, 28, 8, _font, 1, labels, 180, 40, "Symbol Size") {
+			String labels[] = {"2", "4", "6", "8", "10", "12", "14" };
+			_symbolSizeSelector = new TextFieldSlider(2, 14, 8, _font, 1, labels, 180, 40, "Symbol Size") {
 
 				@Override
 				public double sliderValueToRealValue() {

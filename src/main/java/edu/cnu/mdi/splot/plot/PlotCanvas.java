@@ -25,7 +25,6 @@ import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
-import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.CurveChangeType;
 import edu.cnu.mdi.splot.pdata.DataChangeListener;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
@@ -36,8 +35,7 @@ import edu.cnu.mdi.splot.pdata.Snapshot;
 import edu.cnu.mdi.util.Environment;
 
 @SuppressWarnings("serial")
-public class PlotCanvas extends JComponent
-		implements MouseListener, MouseMotionListener, DataChangeListener {
+public class PlotCanvas extends JComponent implements MouseListener, MouseMotionListener, DataChangeListener {
 
 	public static final String DONEDRAWINGPROP = "Done Drawing";
 	public static final String TITLETEXTCHANGE = "Title Text";
@@ -53,7 +51,7 @@ public class PlotCanvas extends JComponent
 	// used to fire property changes. Transient.
 	private long drawCount = 0;
 
-    // for saving files
+	// for saving files
 	private static String _dataFilePath;
 
 	// the bounds of the plot
@@ -96,12 +94,9 @@ public class PlotCanvas extends JComponent
 	// data drawer
 	private DataDrawer _dataDrawer;
 
-	// reusable point
-	public Point2D.Double _workPoint = new Point2D.Double();
-
 	// toolbar that owns this canvas
 	private BaseToolBar _toolBar;
-	
+
 	// swing timer for fixing world system
 	private final Timer _timer;
 
@@ -148,32 +143,33 @@ public class PlotCanvas extends JComponent
 		addMouseMotionListener(this);
 
 		int delay = 1000; // milliseconds
-	    _timer = new Timer(delay, evt -> onTimer());
-	    _timer.setCoalesce(true); // good for bursty updates
+		_timer = new Timer(delay, evt -> onTimer());
+		_timer.setCoalesce(true); // good for bursty updates
 	}
-	
+
 	// timer action
 	private void onTimer() {
-	    if (_needsRedraw) {
-	        if (_needsRescale) {
-	            setWorldSystem();
-	        }
-	        repaint();
-	        _needsRedraw = false;
-	        _needsRescale = false;
-	    }
+		if (_needsRedraw) {
+			if (_needsRescale) {
+				setWorldSystem();
+			}
+			repaint();
+			_needsRedraw = false;
+			_needsRescale = false;
+		}
 	}
-	
+
 	@Override
 	public void addNotify() {
-	    super.addNotify();
-	    // optional: start here rather than constructor
+		super.addNotify();
+		// optional: start here rather than constructor
 	}
 
 	@Override
 	public void removeNotify() {
-	    if (_timer != null) _timer.stop();
-	    super.removeNotify();
+		if (_timer != null)
+			_timer.stop();
+		super.removeNotify();
 	}
 
 	/**
@@ -218,22 +214,22 @@ public class PlotCanvas extends JComponent
 	 * @param plotData the new dataset
 	 */
 	protected void setPlotData(PlotData plotData) {
-	    if (plotData == null) {
-	        plotData = PlotData.emptyData();
-	    }
+		if (plotData == null) {
+			plotData = PlotData.emptyData();
+		}
 
-	    // remove from old
-	    if (_plotData != null) {
-	        _plotData.removeDataChangeListener(this);
-	    }
+		// remove from old
+		if (_plotData != null) {
+			_plotData.removeDataChangeListener(this);
+		}
 
-	    _plotData = plotData;
+		_plotData = plotData;
 
-	    // add to new
-	    _plotData.addDataChangeListener(this);
+		// add to new
+		_plotData.addDataChangeListener(this);
 
-	    setWorldSystem();
-	    repaint();
+		setWorldSystem();
+		repaint();
 	}
 
 	/**
@@ -244,17 +240,15 @@ public class PlotCanvas extends JComponent
 	public PlotData getPlotData() {
 		return _plotData;
 	}
-	
+
 	/**
-	 * Clear all data from all curves
-	 * Use with caution!
+	 * Clear all data from all curves Use with caution!
 	 */
 	public void clearData() {
 		for (ACurve curve : getPlotData().getCurves()) {
 			curve.clearData();
 		}
 	}
-
 
 	/**
 	 * Get the world boundary
@@ -264,160 +258,170 @@ public class PlotCanvas extends JComponent
 	public Rectangle.Double getWorld() {
 		return _worldSystem;
 	}
-	
-	   public void setWorldSystem() {
 
-	        if (_worldSystem == null) {
-	            return;
-	        }
+	public void setWorldSystem() {
 
-	        if (_plotData == null) {
-	            _worldSystem.setFrame(0, 0, 1, 1);
-	            return;
-	        }
+		if (_worldSystem == null) {
+			return;
+		}
 
-	        double xmin = _plotData.xMin();
-	        if (Double.isNaN(xmin)) {
-	            return;
-	        }
+		if (_plotData == null) {
+			_worldSystem.setFrame(0, 0, 1, 1);
+			return;
+		}
 
-	        double xmax = _plotData.xMax();
-	        double ymin = _plotData.yMin();
-	        double ymax = _plotData.yMax();
+		double xmin = _plotData.xMin();
+		if (Double.isNaN(xmin)) {
+			return;
+		}
 
-	        PlotParameters params = getParameters();
+		double xmax = _plotData.xMax();
+		double ymin = _plotData.yMin();
+		double ymax = _plotData.yMax();
 
-	        LimitsMethod xMethod = params.getXLimitsMethod();
-	        LimitsMethod yMethod = params.getYLimitsMethod();
+		PlotParameters params = getParameters();
 
-	        final boolean xLogRequested = (params.getXScale() == PlotParameters.AxisScale.LOG10);
-	        final boolean yLogRequested = (params.getYScale() == PlotParameters.AxisScale.LOG10);
+		LimitsMethod xMethod = params.getXLimitsMethod();
+		LimitsMethod yMethod = params.getYLimitsMethod();
 
-	        // -------------------------------------------------------------
-	        // X bounds: if log requested, use positive-only data bounds and
-	        // DO NOT call NiceScale (which often rounds down to 0).
-	        // -------------------------------------------------------------
-	        switch (xMethod) {
-	        case MANUALLIMITS:
-	            xmin = params.getManualXMin();
-	            xmax = params.getManualXMax();
-	            break;
+		final boolean xLogRequested = (params.getXScale() == PlotParameters.AxisScale.LOG10);
+		final boolean yLogRequested = (params.getYScale() == PlotParameters.AxisScale.LOG10);
 
-	        case ALGORITHMICLIMITS:
-	            if (xLogRequested) {
-	                double[] mm = positiveDataMinMax(true);
-	                if (mm != null) {
-	                    xmin = mm[0];
-	                    xmax = mm[1];
-	                } // else keep fallback values; log will deactivate later
-	            } else {
-	                NiceScale ns = new NiceScale(xmin, xmax, _plotTicks.getNumMajorTickX() + 2, params.includeXZero());
-	                xmin = ns.getNiceMin();
-	                xmax = ns.getNiceMax();
-	            }
-	            break;
+		// -------------------------------------------------------------
+		// X bounds: if log requested, use positive-only data bounds and
+		// DO NOT call NiceScale (which often rounds down to 0).
+		// -------------------------------------------------------------
+		switch (xMethod) {
+		case MANUALLIMITS:
+			xmin = params.getManualXMin();
+			xmax = params.getManualXMax();
+			break;
 
-	        case USEDATALIMITS:
-	            if (xLogRequested) {
-	                double[] mm = positiveDataMinMax(true);
-	                if (mm != null) {
-	                    xmin = mm[0];
-	                    xmax = mm[1];
-	                }
-	            }
-	            break;
-	        }
+		case ALGORITHMICLIMITS:
+			if (xLogRequested) {
+				double[] mm = positiveDataMinMax(true);
+				if (mm != null) {
+					xmin = mm[0];
+					xmax = mm[1];
+				} // else keep fallback values; log will deactivate later
+			} else {
+				NiceScale ns = new NiceScale(xmin, xmax, _plotTicks.getNumMajorTickX() + 2, params.includeXZero());
+				xmin = ns.getNiceMin();
+				xmax = ns.getNiceMax();
+			}
+			break;
 
-	        // -------------------------------------------------------------
-	        // Y bounds: same logic
-	        // -------------------------------------------------------------
-	        switch (yMethod) {
-	        case MANUALLIMITS:
-	            ymin = params.getManualYMin();
-	            ymax = params.getManualYMax();
-	            break;
+		case USEDATALIMITS:
+			if (xLogRequested) {
+				double[] mm = positiveDataMinMax(true);
+				if (mm != null) {
+					xmin = mm[0];
+					xmax = mm[1];
+				}
+			}
+			break;
+		}
 
-	        case ALGORITHMICLIMITS:
-	            if (yLogRequested) {
-	                double[] mm = positiveDataMinMax(false);
-	                if (mm != null) {
-	                    ymin = mm[0];
-	                    ymax = mm[1];
-	                }
-	            } else {
-	                NiceScale ns = new NiceScale(ymin, ymax, _plotTicks.getNumMajorTickY() + 2, params.includeYZero());
-	                ymin = ns.getNiceMin();
-	                ymax = ns.getNiceMax();
-	            }
-	            break;
+		// -------------------------------------------------------------
+		// Y bounds: same logic
+		// -------------------------------------------------------------
+		switch (yMethod) {
+		case MANUALLIMITS:
+			ymin = params.getManualYMin();
+			ymax = params.getManualYMax();
+			break;
 
-	        case USEDATALIMITS:
-	            if (yLogRequested) {
-	                double[] mm = positiveDataMinMax(false);
-	                if (mm != null) {
-	                    ymin = mm[0];
-	                    ymax = mm[1];
-	                }
-	            }
-	            break;
-	        }
+		case ALGORITHMICLIMITS:
+			if (yLogRequested) {
+				double[] mm = positiveDataMinMax(false);
+				if (mm != null) {
+					ymin = mm[0];
+					ymax = mm[1];
+				}
+			} else {
+				NiceScale ns = new NiceScale(ymin, ymax, _plotTicks.getNumMajorTickY() + 2, params.includeYZero());
+				ymin = ns.getNiceMin();
+				ymax = ns.getNiceMax();
+			}
+			break;
 
-	        // Guard invalids
-	        if (!Double.isFinite(xmin) || !Double.isFinite(xmax) || !Double.isFinite(ymin) || !Double.isFinite(ymax)) {
-	            _worldSystem.setFrame(0, 0, 1, 1);
-	            return;
-	        }
+		case USEDATALIMITS:
+			if (yLogRequested) {
+				double[] mm = positiveDataMinMax(false);
+				if (mm != null) {
+					ymin = mm[0];
+					ymax = mm[1];
+				}
+			}
+			break;
+		}
 
-	        // Ensure min <= max
-	        if (xmax < xmin) { double t = xmin; xmin = xmax; xmax = t; }
-	        if (ymax < ymin) { double t = ymin; ymin = ymax; ymax = t; }
+		// Guard invalids
+		if (!Double.isFinite(xmin) || !Double.isFinite(xmax) || !Double.isFinite(ymin) || !Double.isFinite(ymax)) {
+			_worldSystem.setFrame(0, 0, 1, 1);
+			return;
+		}
 
-	        // Expand any zero/near-zero range (log-safe)
-	        double dx = xmax - xmin;
-	        if (Math.abs(dx) < 1.0e-12) {
-	            if (xLogRequested && xmin > 0.0 && xmax > 0.0) {
-	                xmin /= 1.1;
-	                xmax *= 1.1;
-	            } else {
-	                double pad = (Math.abs(xmin) > 0) ? (0.01 * Math.abs(xmin)) : 1.0;
-	                xmin -= pad;
-	                xmax += pad;
-	            }
-	        }
+		// Ensure min <= max
+		if (xmax < xmin) {
+			double t = xmin;
+			xmin = xmax;
+			xmax = t;
+		}
+		if (ymax < ymin) {
+			double t = ymin;
+			ymin = ymax;
+			ymax = t;
+		}
 
-	        double dy = ymax - ymin;
-	        if (Math.abs(dy) < 1.0e-12) {
-	            if (yLogRequested && ymin > 0.0 && ymax > 0.0) {
-	                ymin /= 1.1;
-	                ymax *= 1.1;
-	            } else {
-	                double pad = (Math.abs(ymin) > 0) ? (0.01 * Math.abs(ymin)) : 1.0;
-	                ymin -= pad;
-	                ymax += pad;
-	            }
-	        }
+		// Expand any zero/near-zero range (log-safe)
+		double dx = xmax - xmin;
+		if (Math.abs(dx) < 1.0e-12) {
+			if (xLogRequested && xmin > 0.0 && xmax > 0.0) {
+				xmin /= 1.1;
+				xmax *= 1.1;
+			} else {
+				double pad = (Math.abs(xmin) > 0) ? (0.01 * Math.abs(xmin)) : 1.0;
+				xmin -= pad;
+				xmax += pad;
+			}
+		}
 
-	        // Enable log only if final data range is strictly positive
-	        _xLogActive = xLogRequested && (xmin > 0.0) && (xmax > 0.0);
-	        _yLogActive = yLogRequested && (ymin > 0.0) && (ymax > 0.0);
+		double dy = ymax - ymin;
+		if (Math.abs(dy) < 1.0e-12) {
+			if (yLogRequested && ymin > 0.0 && ymax > 0.0) {
+				ymin /= 1.1;
+				ymax *= 1.1;
+			} else {
+				double pad = (Math.abs(ymin) > 0) ? (0.01 * Math.abs(ymin)) : 1.0;
+				ymin -= pad;
+				ymax += pad;
+			}
+		}
 
-	        // Convert bounds to world space (log space if active)
-	        double wxmin = _xLogActive ? Math.floor(log10(xmin)) : xmin;
-	        double wxmax = _xLogActive ? Math.ceil(log10(xmax)) : xmax;
-	        double wymin = _yLogActive ? Math.floor(log10(ymin)) : ymin;
-	        double wymax = _yLogActive ? Math.ceil(log10(ymax)) : ymax;
+		// Enable log only if final data range is strictly positive
+		_xLogActive = xLogRequested && (xmin > 0.0) && (xmax > 0.0);
+		_yLogActive = yLogRequested && (ymin > 0.0) && (ymax > 0.0);
 
-	        if (!Double.isFinite(wxmin) || !Double.isFinite(wxmax) || !Double.isFinite(wymin) || !Double.isFinite(wymax)) {
-	            _worldSystem.setFrame(0, 0, 1, 1);
-	            return;
-	        }
-	        if (wxmax <= wxmin) wxmax = wxmin + 1.0;
-	        if (wymax <= wymin) wymax = wymin + 1.0;
+		// Convert bounds to world space (log space if active)
+		double wxmin = _xLogActive ? Math.floor(log10(xmin)) : xmin;
+		double wxmax = _xLogActive ? Math.ceil(log10(xmax)) : xmax;
+		double wymin = _yLogActive ? Math.floor(log10(ymin)) : ymin;
+		double wymax = _yLogActive ? Math.ceil(log10(ymax)) : ymax;
 
-	        _worldSystem.setFrame(wxmin, wymin, wxmax - wxmin, wymax - wymin);
+		if (!Double.isFinite(wxmin) || !Double.isFinite(wxmax) || !Double.isFinite(wymin) || !Double.isFinite(wymax)) {
+			_worldSystem.setFrame(0, 0, 1, 1);
+			return;
+		}
+		if (wxmax <= wxmin)
+			wxmax = wxmin + 1.0;
+		if (wymax <= wymin)
+			wymax = wymin + 1.0;
 
-	        setAffineTransforms();
-	    }
+		_worldSystem.setFrame(wxmin, wymin, wxmax - wxmin, wymax - wymin);
+
+		setAffineTransforms();
+	}
 
 	/**
 	 * Paint the canvas
@@ -498,11 +502,11 @@ public class PlotCanvas extends JComponent
 			}
 
 			left += leftMargin;
-            // default values for margins
-            int _topMargin = 10;
-            top += _topMargin;
-            int _rightMargin = 10;
-            right -= _rightMargin;
+			// default values for margins
+			int _topMargin = 10;
+			top += _topMargin;
+			int _rightMargin = 10;
+			right -= _rightMargin;
 			bottom -= bottomMargin;
 
 			if (_activeBounds == null) {
@@ -522,7 +526,7 @@ public class PlotCanvas extends JComponent
 	private boolean reverseY() {
 		return _parameters.isReverseYaxis();
 	}
-	
+
 	private static double log10(double v) {
 		return Math.log(v) / Math.log(10.0);
 	}
@@ -535,120 +539,107 @@ public class PlotCanvas extends JComponent
 		return _yLogActive;
 	}
 
-	private double xDataToWorld(double x) {
-		return _xLogActive ? log10(x) : x;
+
+	/**
+	 * Get the visible bounds in *data* space (not log space). Used by tick
+	 * generation and any UI that wants real values.
+	 */
+	public Rectangle2D.Double getDataWorld() {
+		if (_worldSystem == null) {
+			return null;
+		}
+		double xmin = xWorldToData(_worldSystem.getMinX());
+		double xmax = xWorldToData(_worldSystem.getMaxX());
+		double ymin = yWorldToData(_worldSystem.getMinY());
+		double ymax = yWorldToData(_worldSystem.getMaxY());
+
+		double x0 = Math.min(xmin, xmax);
+		double y0 = Math.min(ymin, ymax);
+		double w = Math.abs(xmax - xmin);
+		double h = Math.abs(ymax - ymin);
+
+		return new Rectangle2D.Double(x0, y0, w, h);
 	}
 
-	private double yDataToWorld(double y) {
-		return _yLogActive ? log10(y) : y;
+	/**
+	 * Find min/max strictly positive values on an axis across all curves.
+	 * 
+	 * @param xAxis true for x, false for y
+	 * @return {minPos, maxPos} or null if no positive finite values exist
+	 */
+	private double[] positiveDataMinMax(boolean xAxis) {
+		if (_plotData == null) {
+			return null;
+		}
+
+		double minPos = Double.POSITIVE_INFINITY;
+		double maxPos = Double.NEGATIVE_INFINITY;
+
+		for (ACurve c : _plotData.getCurves()) {
+			Snapshot s = c.snapshot();
+			double[] arr = xAxis ? s.x : s.y;
+			if (arr == null)
+				continue;
+
+			for (double v : arr) {
+				if (v > 0.0 && Double.isFinite(v)) {
+					if (v < minPos)
+						minPos = v;
+					if (v > maxPos)
+						maxPos = v;
+				}
+			}
+		}
+
+		if (minPos == Double.POSITIVE_INFINITY || maxPos == Double.NEGATIVE_INFINITY) {
+			return null;
+		}
+		return new double[] { minPos, maxPos };
 	}
-
-	private double xWorldToData(double wx) {
-		return _xLogActive ? Math.pow(10.0, wx) : wx;
-	}
-
-	private double yWorldToData(double wy) {
-		return _yLogActive ? Math.pow(10.0, wy) : wy;
-	}
-
-	  /**
-     * Get the visible bounds in *data* space (not log space).
-     * Used by tick generation and any UI that wants real values.
-     */
-    public Rectangle2D.Double getDataWorld() {
-        if (_worldSystem == null) {
-            return null;
-        }
-        double xmin = xWorldToData(_worldSystem.getMinX());
-        double xmax = xWorldToData(_worldSystem.getMaxX());
-        double ymin = yWorldToData(_worldSystem.getMinY());
-        double ymax = yWorldToData(_worldSystem.getMaxY());
-
-        double x0 = Math.min(xmin, xmax);
-        double y0 = Math.min(ymin, ymax);
-        double w = Math.abs(xmax - xmin);
-        double h = Math.abs(ymax - ymin);
-
-        return new Rectangle2D.Double(x0, y0, w, h);
-    }
-    
-    /**
-     * Find min/max strictly positive values on an axis across all curves.
-     * @param xAxis true for x, false for y
-     * @return {minPos, maxPos} or null if no positive finite values exist
-     */
-    private double[] positiveDataMinMax(boolean xAxis) {
-        if (_plotData == null) {
-            return null;
-        }
-
-        double minPos = Double.POSITIVE_INFINITY;
-        double maxPos = Double.NEGATIVE_INFINITY;
-
-        for (ACurve c : _plotData.getCurves()) {
-            Snapshot s = c.snapshot();
-            double[] arr = xAxis ? s.x : s.y;
-            if (arr == null) continue;
-
-            for (double v : arr) {
-                if (v > 0.0 && Double.isFinite(v)) {
-                    if (v < minPos) minPos = v;
-                    if (v > maxPos) maxPos = v;
-                }
-            }
-        }
-
-        if (minPos == Double.POSITIVE_INFINITY || maxPos == Double.NEGATIVE_INFINITY) {
-            return null;
-        }
-        return new double[] { minPos, maxPos };
-    }
 
 	// Get the transforms for world to local and vice versa
 	protected void setAffineTransforms() {
-	    Rectangle bounds = getBounds();
+		Rectangle bounds = getBounds();
 
-	    if ((bounds == null) || (bounds.width < 1) || (bounds.height < 1)) {
-	        _localToWorld = null;
-	        _worldToLocal = null;
-	        _activeBounds = null;
-	        return;
-	    }
+		if ((bounds == null) || (bounds.width < 1) || (bounds.height < 1)) {
+			_localToWorld = null;
+			_worldToLocal = null;
+			_activeBounds = null;
+			return;
+		}
 
-	    setActiveBounds();
+		setActiveBounds();
 
-	    if (_worldSystem == null || _activeBounds == null ||
-	        _activeBounds.width < 1 || _activeBounds.height < 1) {
-	        return;
-	    }
+		if (_worldSystem == null || _activeBounds == null || _activeBounds.width < 1 || _activeBounds.height < 1) {
+			return;
+		}
 
-	    final boolean rx = reverseX();
-	    final boolean ry = reverseY();
+		final boolean rx = reverseX();
+		final boolean ry = reverseY();
 
-	    // Magnitudes
-	    final double sxMag = _worldSystem.width  / _activeBounds.width;
-	    final double syMag = _worldSystem.height / _activeBounds.height;
+		// Magnitudes
+		final double sxMag = _worldSystem.width / _activeBounds.width;
+		final double syMag = _worldSystem.height / _activeBounds.height;
 
-	    // Choose which world edge maps to the local top-left of the active plot area
-	    final double tx = rx ? _worldSystem.getMaxX() : _worldSystem.getMinX();
-	    final double ty = ry ? _worldSystem.getMinY() : _worldSystem.getMaxY();
+		// Choose which world edge maps to the local top-left of the active plot area
+		final double tx = rx ? _worldSystem.getMaxX() : _worldSystem.getMinX();
+		final double ty = ry ? _worldSystem.getMinY() : _worldSystem.getMaxY();
 
-	    // Sign controls axis direction on screen
-	    final double sx = rx ? -sxMag :  sxMag;
-	    final double sy = ry ?  syMag : -syMag;
+		// Sign controls axis direction on screen
+		final double sx = rx ? -sxMag : sxMag;
+		final double sy = ry ? syMag : -syMag;
 
-	    _localToWorld = AffineTransform.getTranslateInstance(tx, ty);
-	    _localToWorld.concatenate(AffineTransform.getScaleInstance(sx, sy));
-	    _localToWorld.concatenate(AffineTransform.getTranslateInstance(-_activeBounds.x, -_activeBounds.y));
+		_localToWorld = AffineTransform.getTranslateInstance(tx, ty);
+		_localToWorld.concatenate(AffineTransform.getScaleInstance(sx, sy));
+		_localToWorld.concatenate(AffineTransform.getTranslateInstance(-_activeBounds.x, -_activeBounds.y));
 
-	    try {
-	        _worldToLocal = _localToWorld.createInverse();
-	    } catch (NoninvertibleTransformException e) {
-	        e.printStackTrace();
-	        _worldToLocal = null;
-	    }
+		try {
+			_worldToLocal = _localToWorld.createInverse();
+		} catch (NoninvertibleTransformException e) {
+			e.printStackTrace();
+			_worldToLocal = null;
+		}
 	}
-
 
 	/**
 	 * The mouse has been dragged over the plot canvas
@@ -702,7 +693,6 @@ public class PlotCanvas extends JComponent
 			return;
 		}
 
-		Point pp = e.getPoint();
 		FeedbackPane feedback = plotPanel().getFeedbackPane();
 
 		if ((_activeBounds == null) || (_worldSystem == null)) {
@@ -710,12 +700,11 @@ public class PlotCanvas extends JComponent
 		}
 
 		feedback.clear();
-		// location string
 
-		pp.x -= _activeBounds.x;
-		pp.y -= _activeBounds.y;
-		localToWorld(pp, _workPoint);
-		feedback.append(String.format("(x, y) = (%7.2g, %-7.2g)", _workPoint.x, _workPoint.y));
+		Point pp = e.getPoint();
+		Point2D.Double dataPoint = new Point2D.Double();
+		localToData(pp, dataPoint);
+		feedback.append(String.format("(x, y) = (%7.2g, %-7.2g)", dataPoint.x, dataPoint.y));
 
 		if (_plotData.isXYData()) {
 			List<ACurve> curves = _plotData.getVisibleCurves();
@@ -738,7 +727,7 @@ public class PlotCanvas extends JComponent
 			for (ACurve curve : curves) {
 				HistoCurve hc = (HistoCurve) curve;
 				HistoData hd = hc.getHistoData();
-				String cStr = HistoData.statusString(this, hd, pp, _workPoint);
+				String cStr = HistoData.statusString(this, hd, pp, dataPoint);
 				String fitSummary = curve.getFitSummary();
 				if (fitSummary != null) {
 					cStr += " " + fitSummary;
@@ -804,18 +793,20 @@ public class PlotCanvas extends JComponent
 	 * The plot is being shutdown
 	 */
 	public void shutDown() {
-	    if (_timer != null) _timer.stop();
-	    notifyListeners(PlotChangeType.SHUTDOWN);
+		if (_timer != null)
+			_timer.stop();
+		notifyListeners(PlotChangeType.SHUTDOWN);
 	}
-	
+
 	/**
 	 * The plot is being stood up
 	 */
 	public void standUp() {
-	    if (_timer != null) _timer.start();
-	    notifyListeners(PlotChangeType.STOODUP);
+		if (_timer != null)
+			_timer.start();
+		notifyListeners(PlotChangeType.STOODUP);
 	}
-	
+
 	// check if pointer tool is active
 	private boolean isPointer() {
 		return (_toolBar == null) || _toolBar.isPointerActive();
@@ -876,70 +867,6 @@ public class PlotCanvas extends JComponent
 	public void mouseExited(MouseEvent e) {
 	}
 
-	  public void localToWorld(Point pp, Point.Double wp) {
-	        if (_localToWorld != null) {
-	            _localToWorld.transform(pp, wp);
-	            // convert back to *data* if log active
-	            wp.x = xWorldToData(wp.x);
-	            wp.y = yWorldToData(wp.y);
-	        }
-	    }
-
-	/**
-	 * This converts a screen or pixel rectangle to a world rectangle.
-	 *
-	 * @param pr contains the local (screen-pixel) rectangle.
-	 * @param wr will hold the resultant world rectangle.
-	 */
-	public void localToWorld(Rectangle pr, Rectangle2D.Double wr) {
-		if (_localToWorld != null) {
-			int l = pr.x;
-			int t = pr.y;
-			int r = l + pr.width;
-			int b = t + pr.height;
-			Point pplt = new Point(l, t);
-			Point pprb = new Point(r, b);
-			Point.Double wplt = new Point.Double();
-			Point.Double wprb = new Point.Double();
-			_localToWorld.transform(pplt, wplt);
-			_localToWorld.transform(pprb, wprb);
-			wr.x = Math.min(wplt.x, wprb.x);
-			wr.y = Math.min(wplt.y, wprb.y);
-			wr.width = Math.abs(wplt.x - wprb.x);
-			wr.height = Math.abs(wplt.y - wprb.y);
-		}
-	}
-
-    public void worldToLocal(Point pp, Point.Double wp) {
-        if (_worldToLocal != null) {
-
-            // interpret wp as *data* coordinates
-            if ((_xLogActive && wp.x <= 0.0) || (_yLogActive && wp.y <= 0.0)) {
-                pp.setLocation(Integer.MIN_VALUE / 4, Integer.MIN_VALUE / 4);
-                return;
-            }
-
-            Point2D.Double wsrc = new Point2D.Double(xDataToWorld(wp.x), yDataToWorld(wp.y));
-            _worldToLocal.transform(wsrc, pp);
-        }
-    }	
-	public void worldToLocal(Rectangle r, Rectangle.Double wr) {
-		// New version to accommodate world with x decreasing right
-		Point2D.Double wp0 = new Point2D.Double(wr.getMinX(), wr.getMinY());
-		Point2D.Double wp1 = new Point2D.Double(wr.getMaxX(), wr.getMaxY());
-		Point p0 = new Point();
-		Point p1 = new Point();
-		worldToLocal(p0, wp0);
-		worldToLocal(p1, wp1);
-
-		int x = Math.min(p0.x, p1.x);
-		int y = Math.min(p0.y, p1.y);
-		int w = Math.abs(p1.x - p0.x);
-		int h = Math.abs(p1.y - p0.y);
-		r.setBounds(x, y, w, h);
-	}
-
-
 	/**
 	 * Zoom to a given rectangle in local coordinates
 	 *
@@ -950,7 +877,8 @@ public class PlotCanvas extends JComponent
 			return;
 		}
 
-		localToWorld(rbrect, _worldSystem);
+		localToWorldRaw(rbrect, _worldSystem);
+		setAffineTransforms();
 		repaint();
 	}
 
@@ -973,8 +901,6 @@ public class PlotCanvas extends JComponent
 		_worldSystem.setFrame(x, y, w, h);
 		repaint();
 	}
-
-
 
 	/**
 	 * Show the plot preferences dialog
@@ -1006,7 +932,6 @@ public class PlotCanvas extends JComponent
 		return _plotTicks;
 	}
 
-
 	public PlotPanel plotPanel() {
 		if ((_parent != null) && (_parent instanceof PlotPanel)) {
 			return (PlotPanel) _parent;
@@ -1022,8 +947,274 @@ public class PlotCanvas extends JComponent
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		// TODO Auto-generated method stub
+	}
 
+	/*
+	 * ========================= Coordinate systems in PlotCanvas =========================
+	 *
+	 * PlotCanvas uses three coordinate systems:
+	 *
+	 * 1) Local (pixel) coordinates
+	 *    - Swing component coordinates: (0,0) is the top-left of the component.
+	 *    - Mouse events and painting happen in this space.
+	 *
+	 * 2) Raw World coordinates (internal world)
+	 *    - This is the coordinate system stored in _worldSystem and used by the affine transforms.
+	 *    - IMPORTANT: when log axes are active, raw world is in log10(data) space.
+	 *      Example: if x-data is 100, raw-world x is log10(100) = 2.
+	 *    - This is the correct space for rubber-band zooming and for storing the visible window.
+	 *
+	 * 3) Data coordinates
+	 *    - These are the "real" data values shown to the user and stored in curves.
+	 *    - Data coordinates are ALWAYS in linear units (even when log axes are active).
+	 *    - Conversion between data and raw-world happens at the boundary:
+	 *        data -> raw world : log10(data)    (only if log active)
+	 *        raw world -> data : pow(10, world) (only if log active)
+	 *
+	 * Naming rule used below:
+	 *   - *Raw* methods produce/consume raw-world coordinates (log10-space if active).
+	 *   - *Data* methods produce/consume data coordinates (always linear values).
+	 *
+	 * Usage rules:
+	 *   - For rubber-band zoom: localToWorldRaw(Rectangle, ...) then assign into _worldSystem.
+	 *   - For mouse readout / status text: localToData(Point, ...) so you display real values.
+	 *   - For drawing curves: worldToLocal(Point, dataPoint) where the input is data; the method
+	 *     handles the log conversion internally.
+	 * ===================================================================================
+	 */
+
+	// -------- transformation methods ---------
+
+	/**
+	 * Convert a local (pixel) point to the internal <b>raw world</b> coordinates.
+	 * <p>
+	 * Raw world is the coordinate system used by {@link #_worldSystem}. When log scaling
+	 * is active, raw world coordinates are in log10(data) space.
+	 * </p>
+	 * <p>
+	 * Use this when you need to manipulate {@link #_worldSystem} directly (e.g. zoom),
+	 * or when you need the internal world-space for debugging.
+	 * </p>
+	 *
+	 * @param p  local pixel point (component coordinates)
+	 * @param wp output point filled with raw world coordinates (log10-space if active)
+	 */
+	public void localToWorldRaw(Point p, Point2D.Double wp) {
+	    if (wp == null) {
+	        throw new IllegalArgumentException("wp must not be null");
+	    }
+	    if (_localToWorld == null || p == null) {
+	        return;
+	    }
+	    _localToWorld.transform(p, wp);
+	}
+
+	/**
+	 * Convert a local (pixel) rectangle to an internal <b>raw world</b> rectangle.
+	 * <p>
+	 * This is the correct conversion for rubberband zooming because {@link #_worldSystem}
+	 * is stored in raw world coordinates (log10-space when log axes are active).
+	 * </p>
+	 *
+	 * @param pr local (pixel) rectangle (component coordinates)
+	 * @param wr output rectangle filled with raw world bounds (log10-space if active)
+	 */
+	public void localToWorldRaw(Rectangle pr, Rectangle2D.Double wr) {
+	    if (wr == null) {
+	        throw new IllegalArgumentException("wr must not be null");
+	    }
+	    if (_localToWorld == null || pr == null) {
+	        return;
+	    }
+
+	    // Two corners in local space
+	    Point p0 = new Point(pr.x, pr.y);
+	    Point p1 = new Point(pr.x + pr.width, pr.y + pr.height);
+
+	    Point2D.Double w0 = new Point2D.Double();
+	    Point2D.Double w1 = new Point2D.Double();
+
+	    _localToWorld.transform(p0, w0);
+	    _localToWorld.transform(p1, w1);
+
+	    double xmin = Math.min(w0.x, w1.x);
+	    double xmax = Math.max(w0.x, w1.x);
+	    double ymin = Math.min(w0.y, w1.y);
+	    double ymax = Math.max(w0.y, w1.y);
+
+	    wr.setFrame(xmin, ymin, xmax - xmin, ymax - ymin);
+	}
+
+	/**
+	 * Convert a local (pixel) point to <b>data</b> coordinates.
+	 * <p>
+	 * Data coordinates are the real values (always linear units). When log axes are active,
+	 * this method converts from raw-world log10 space back into data space.
+	 * </p>
+	 * <p>
+	 * Use this for mouse readouts, hit tests in data space, and any UI that reports
+	 * "real" x/y values.
+	 * </p>
+	 *
+	 * @param p  local pixel point (component coordinates)
+	 * @param dp output point filled with data coordinates (linear units)
+	 */
+	public void localToData(Point p, Point2D.Double dp) {
+	    if (dp == null) {
+	        throw new IllegalArgumentException("dp must not be null");
+	    }
+	    if (_localToWorld == null || p == null) {
+	        return;
+	    }
+
+	    // dp becomes RAW world (log10-space if active)
+	    _localToWorld.transform(p, dp);
+
+	    // RAW world -> DATA
+	    dp.x = xWorldToData(dp.x);
+	    dp.y = yWorldToData(dp.y);
+	}
+
+	/**
+	 * Convert a local (pixel) rectangle to <b>data</b> coordinates.
+	 * <p>
+	 * This converts the pixel rectangle to raw-world first (log10-space if active),
+	 * then converts the bounds back into data space.
+	 * </p>
+	 * <p>
+	 * Use this when you want to interpret a rubberband selection in terms of data values.
+	 * Do <b>not</b> use this to update {@link #_worldSystem}; for zoom you want raw world.
+	 * </p>
+	 *
+	 * @param pr local (pixel) rectangle (component coordinates)
+	 * @param dr output rectangle filled with data-space bounds (linear units)
+	 */
+	public void localToData(Rectangle pr, Rectangle2D.Double dr) {
+	    if (dr == null) {
+	        throw new IllegalArgumentException("dr must not be null");
+	    }
+	    if (_localToWorld == null || pr == null) {
+	        return;
+	    }
+
+	    Rectangle2D.Double wr = new Rectangle2D.Double();
+	    localToWorldRaw(pr, wr); // RAW world (log10-space if active)
+
+	    double xmin = xWorldToData(wr.getMinX());
+	    double xmax = xWorldToData(wr.getMaxX());
+	    double ymin = yWorldToData(wr.getMinY());
+	    double ymax = yWorldToData(wr.getMaxY());
+
+	    dr.x = Math.min(xmin, xmax);
+	    dr.y = Math.min(ymin, ymax);
+	    dr.width  = Math.abs(xmax - xmin);
+	    dr.height = Math.abs(ymax - ymin);
+	}
+
+	/**
+	 * Convert a <b>data</b> coordinate to local (pixel) coordinates.
+	 * <p>
+	 * Input is data-space (linear units). If log axes are active, the method converts
+	 * data -> raw-world via log10(data) before applying the affine transform.
+	 * </p>
+	 *
+	 * @param pp output local pixel point (component coordinates)
+	 * @param dp input data point (linear units)
+	 * @return true if conversion succeeded; false if log axes are active and input
+	 *         contains non-positive values (invalid for log scale) or transforms are unavailable
+	 */
+	public boolean worldToLocal(Point pp, Point2D.Double dp) {
+	    if (_worldToLocal == null || pp == null || dp == null) {
+	        return false;
+	    }
+
+	    // Reject invalid data for log axes
+	    if ((_xLogActive && dp.x <= 0.0) || (_yLogActive && dp.y <= 0.0)) {
+	        return false;
+	    }
+
+	    Point2D.Double wsrc = new Point2D.Double(xDataToWorld(dp.x), yDataToWorld(dp.y));
+	    _worldToLocal.transform(wsrc, pp);
+	    return true;
+	}
+
+	/**
+	 * Convert a <b>data</b> rectangle to a local (pixel) rectangle.
+	 * <p>
+	 * The input rectangle is in data-space (linear units). If log axes are active,
+	 * conversion uses log10 internally.
+	 * </p>
+	 * <p>
+	 * IMPORTANT: This method can fail in log mode if any bound is non-positive. In that case
+	 * the return value is false and {@code r} is left unchanged.
+	 * </p>
+	 *
+	 * @param r  output local pixel rectangle (component coordinates)
+	 * @param dr input data rectangle (linear units)
+	 * @return true if conversion succeeded; false if invalid for log scale or transforms missing
+	 */
+	public boolean worldToLocal(Rectangle r, Rectangle2D.Double dr) {
+	    if (r == null || dr == null) {
+	        return false;
+	    }
+
+	    Point2D.Double d0 = new Point2D.Double(dr.getMinX(), dr.getMinY());
+	    Point2D.Double d1 = new Point2D.Double(dr.getMaxX(), dr.getMaxY());
+
+	    Point p0 = new Point();
+	    Point p1 = new Point();
+
+	    if (!worldToLocal(p0, d0) || !worldToLocal(p1, d1)) {
+	        return false;
+	    }
+
+	    int x = Math.min(p0.x, p1.x);
+	    int y = Math.min(p0.y, p1.y);
+	    int w = Math.abs(p1.x - p0.x);
+	    int h = Math.abs(p1.y - p0.y);
+
+	    r.setBounds(x, y, w, h);
+	    return true;
+	}
+
+	/**
+	 * Data -> raw-world conversion for X.
+	 * <p>
+	 * When log axes are active, raw world is log10(data).
+	 * </p>
+	 */
+	private double xDataToWorld(double x) {
+	    return _xLogActive ? log10(x) : x;
+	}
+
+	/**
+	 * Data -> raw-world conversion for Y.
+	 * <p>
+	 * When log axes are active, raw world is log10(data).
+	 * </p>
+	 */
+	private double yDataToWorld(double y) {
+	    return _yLogActive ? log10(y) : y;
+	}
+
+	/**
+	 * Raw-world -> data conversion for X.
+	 * <p>
+	 * When log axes are active, data is 10^(rawWorld).
+	 * </p>
+	 */
+	private double xWorldToData(double wx) {
+	    return _xLogActive ? Math.pow(10.0, wx) : wx;
+	}
+
+	/**
+	 * Raw-world -> data conversion for Y.
+	 * <p>
+	 * When log axes are active, data is 10^(rawWorld).
+	 * </p>
+	 */
+	private double yWorldToData(double wy) {
+	    return _yLogActive ? Math.pow(10.0, wy) : wy;
 	}
 
 }

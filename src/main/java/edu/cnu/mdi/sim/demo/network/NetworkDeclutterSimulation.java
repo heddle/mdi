@@ -775,10 +775,18 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	        this.vmaxHitFraction = vmaxHitFraction;
 	    }
 
+	    /**
+	     * Get the total potential energy.
+	     * @return the potential energy
+	     */
 	    public double potential() {
 	        return Uspring + Urepulsion + Ucenter;
 	    }
 
+	    /**
+	     * Get the total energy (potential + kinetic).
+	     * @return the total energy
+	     */
 	    public double total() {
 	        return potential() + kinetic;
 	    }

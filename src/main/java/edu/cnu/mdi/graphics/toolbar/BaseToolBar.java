@@ -544,8 +544,6 @@ public class BaseToolBar extends AToolBar {
 		}
 
 		button.setPreferredSize(DEFAULT_BUTTON_SIZE);
-		button.setMinimumSize(DEFAULT_BUTTON_SIZE);
-		button.setMaximumSize(DEFAULT_BUTTON_SIZE);
 	}
 
 	/**
@@ -690,10 +688,6 @@ public class BaseToolBar extends AToolBar {
 			deleteButton.doClick();
 		}
 	}
-
-	// ------------------------------------------------------------------------
-	// Status field (restored)
-	// ------------------------------------------------------------------------
 
 	/**
 	 * Create the status text field shown on the toolbar.

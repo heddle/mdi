@@ -849,10 +849,12 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	@Override
 	public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging) {
 		Point2D.Double wp = getLocation(mouseEvent);
+		Point pp = mouseEvent.getPoint();
 
 		// Update toolbar text (if present)
 		if (_toolBar != null) {
-			_toolBar.updateStatusText(Point2DSupport.toString(wp));
+			String statusText=String.format("Local: (%d, %d) World: (%.2f, %.2f)", pp.x, pp.y, wp.x, wp.y);
+			_toolBar.updateStatusText(statusText);
 		}
 
 		// Update feedback (if present)

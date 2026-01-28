@@ -592,7 +592,7 @@ public class DemoApp extends BaseMDIApplication {
 			e.printStackTrace();
 		}
 
-		long toolBits = ToolBits.CENTER | ToolBits.ZOOMTOOLS | ToolBits.DRAWINGTOOLS | ToolBits.MAGNIFY ;
+		long toolBits =  ToolBits.STATUS | ToolBits.CENTER | ToolBits.ZOOMTOOLS | ToolBits.DRAWINGTOOLS | ToolBits.MAGNIFY ;
 
 		return new MapView2D(PropertyUtils.TITLE, "Sample 2D Map View",
 				PropertyUtils.FRACTION, 0.6, PropertyUtils.ASPECT, 1.5, PropertyUtils.CONTAINERCLASS,

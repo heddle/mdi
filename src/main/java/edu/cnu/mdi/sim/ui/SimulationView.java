@@ -1,9 +1,14 @@
 package edu.cnu.mdi.sim.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
 import java.util.Objects;
 
 import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.container.IContainer;
@@ -22,17 +27,21 @@ import edu.cnu.mdi.view.BaseView;
  * <p>
  * This class is the "MDI bridge" for the MDI-agnostic simulation framework: the
  * simulation engine knows nothing about views/containers, while this view knows
- * how to repaint an {@link IContainer} on refresh and optionally hosts a
- * control panel at {@link BorderLayout#SOUTH}.
+ * how to repaint an {@link IContainer} on refresh and optionally hosts UI
+ * components (control panel, diagnostics).
  * </p>
  *
  * <h2>Layout</h2>
  * <p>
  * {@link BaseView} already installs the container component in
  * {@link BorderLayout#CENTER} (or inside a split pane), and may add a toolbar
- * in {@link BorderLayout#NORTH}. This class adds the optional control panel at
- * {@link BorderLayout#SOUTH}.
+ * in {@link BorderLayout#NORTH}. This class adds:
  * </p>
+ * <ul>
+ * <li>Optional control panel in {@link BorderLayout#SOUTH}</li>
+ * <li>Optional diagnostics component on the right, installed by wrapping the
+ * current CENTER component in a {@link JSplitPane}</li>
+ * </ul>
  *
  * <h2>Threading</h2>
  * <p>
@@ -41,28 +50,26 @@ import edu.cnu.mdi.view.BaseView;
  * {@link #onRefresh(SimulationContext)} safely repaints the container
  * component.
  * </p>
- *
- * <h2>Typical Usage</h2>
- *
- * <pre>{@code
- * public class IsingModelView extends SimulationView {
- *     public IsingModelView(Object... keyVals) {
- *         super(new IsingSimulation(), SimulationEngineConfig.defaults(), SimulationControlPanel::new, keyVals);
- *         startAndRun(); // optional
- *     }
- * }
- * }</pre>
  */
 @SuppressWarnings("serial")
 public class SimulationView extends BaseView implements ISimulationHost, SimulationListener {
 
 	/**
-	 * Factory for creating a simulation control panel component.
-	 * Demos can supply different factories to change the UI without subclassing views.
+	 * Factory for creating a simulation control panel component. Demos can supply
+	 * different factories to change the UI without subclassing views.
 	 */
 	@FunctionalInterface
 	public interface ControlPanelFactory {
 		JComponent createControlPanel();
+	}
+
+	/**
+	 * Factory for creating an optional diagnostics component (e.g.,
+	 * plots/inspector) that will appear on the right side of a split pane.
+	 */
+	@FunctionalInterface
+	public interface DiagnosticFactory {
+		JComponent createDiagnostics();
 	}
 
 	/** Hosted engine (never null). */
@@ -71,8 +78,17 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	/** Optional control panel component (may be null). */
 	protected final JComponent controlPanel;
 
+	/** Optional diagnostics component (may be null). */
+	protected final JComponent diagnostics;
+
+	/** If diagnostics is installed, this is the split pane (else null). */
+	protected final JSplitPane diagnosticsSplitPane;
+
 	/** Default control panel factory: the standard text-button panel. */
 	private static final ControlPanelFactory DEFAULT_FACTORY = SimulationControlPanel::new;
+
+	/** Default diagnostics split fraction (main/left portion). */
+	private static final double DEFAULT_DIAG_SPLIT_FRACTION = 0.72;
 
 	// -------------------------------------------------------------------------
 	// Shared reset support (centralized pattern for demos)
@@ -83,6 +99,10 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	private volatile boolean _pendingResetAutoStart;
 	private volatile boolean _pendingResetRefresh;
 
+	// -------------------------------------------------------------------------
+	// Constructors
+	// -------------------------------------------------------------------------
+
 	/**
 	 * Construct a simulation view using default engine configuration and including
 	 * the default control panel.
@@ -91,37 +111,29 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	 * @param keyVals    standard {@link BaseView} key-value arguments
 	 */
 	public SimulationView(Simulation simulation, Object... keyVals) {
-		this(simulation,
-		     SimulationEngineConfig.defaults(),
-		     true,
-		     DEFAULT_FACTORY,
-		     keyVals);
+		this(simulation, SimulationEngineConfig.defaults(), true, DEFAULT_FACTORY, false, null,
+				DEFAULT_DIAG_SPLIT_FRACTION, keyVals);
 	}
+
 	/**
-	 * Construct a simulation view with optional inclusion of the default control panel.
+	 * Construct a simulation view with optional inclusion of the default control
+	 * panel.
 	 *
 	 * @param simulation          the simulation to run (non-null)
 	 * @param config              engine configuration (non-null)
-	 * @param includeControlPanel if true, creates and adds the default control panel at SOUTH
+	 * @param includeControlPanel if true, creates and adds the default control
+	 *                            panel at SOUTH
 	 * @param keyVals             standard {@link BaseView} key-value arguments
 	 */
-	public SimulationView(Simulation simulation,
-			SimulationEngineConfig config,
-			boolean includeControlPanel,
+	public SimulationView(Simulation simulation, SimulationEngineConfig config, boolean includeControlPanel,
 			Object... keyVals) {
 
-		this(simulation,
-		     config,
-		     includeControlPanel,
-		     DEFAULT_FACTORY,
-		     keyVals);
+		this(simulation, config, includeControlPanel, DEFAULT_FACTORY, false, null, DEFAULT_DIAG_SPLIT_FRACTION,
+				keyVals);
 	}
+
 	/**
 	 * Construct a simulation view with a caller-provided control panel factory.
-	 * <p>
-	 * If {@code includeControlPanel} is true and {@code factory} is null, the
-	 * default factory ({@link SimulationControlPanel}) is used.
-	 * </p>
 	 *
 	 * @param simulation          the simulation to run (non-null)
 	 * @param config              engine configuration (non-null)
@@ -132,6 +144,32 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	public SimulationView(Simulation simulation, SimulationEngineConfig config, boolean includeControlPanel,
 			ControlPanelFactory factory, Object... keyVals) {
 
+		this(simulation, config, includeControlPanel, factory, false, null, DEFAULT_DIAG_SPLIT_FRACTION, keyVals);
+	}
+
+	/**
+	 * Construct a simulation view with optional control panel and optional
+	 * diagnostics panel.
+	 *
+	 * @param simulation           the simulation to run (non-null)
+	 * @param config               engine configuration (non-null)
+	 * @param includeControlPanel  if true, creates and adds a control panel at
+	 *                             SOUTH
+	 * @param controlPanelFactory  factory used to create the control panel
+	 *                             component (may be null if includeControlPanel is
+	 *                             false)
+	 * @param includeDiagnostics   if true, installs a right-side diagnostics
+	 *                             component via a split pane
+	 * @param diagnosticFactory    factory used to create the diagnostics component
+	 *                             (required if includeDiagnostics is true)
+	 * @param initialSplitFraction fraction of width given to the main (left)
+	 *                             component on startup (0..1)
+	 * @param keyVals              standard {@link BaseView} key-value arguments
+	 */
+	public SimulationView(Simulation simulation, SimulationEngineConfig config, boolean includeControlPanel,
+			ControlPanelFactory controlPanelFactory, boolean includeDiagnostics, DiagnosticFactory diagnosticFactory,
+			double initialSplitFraction, Object... keyVals) {
+
 		super(keyVals);
 
 		Objects.requireNonNull(simulation, "simulation");
@@ -140,24 +178,102 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 		engine = new SimulationEngine(simulation, config);
 		engine.addListener(this);
 
+		// --- Control panel ---
 		if (includeControlPanel) {
-			ControlPanelFactory f = (factory != null) ? factory : DEFAULT_FACTORY;
+			ControlPanelFactory f = (controlPanelFactory != null) ? controlPanelFactory : DEFAULT_FACTORY;
 
 			JComponent cp = f.createControlPanel();
 			controlPanel = cp;
 
-			// Bind if the panel supports it (keeps this class independent of the panel type)
 			if (cp instanceof ISimulationControlPanel scp) {
 				scp.bind(this);
 			}
 
 			add(cp, BorderLayout.SOUTH);
-
-			// pack to account for new SOUTH component
-			pack();
 		} else {
 			controlPanel = null;
 		}
+
+		// --- Diagnostics (right-side split) ---
+		if (includeDiagnostics) {
+			Objects.requireNonNull(diagnosticFactory, "diagnosticFactory");
+			double frac = clamp01(initialSplitFraction);
+
+			JComponent diag = diagnosticFactory.createDiagnostics();
+			diagnostics = diag;
+
+			diagnosticsSplitPane = installDiagnosticsSplit(diag, frac);
+		} else {
+			diagnostics = null;
+			diagnosticsSplitPane = null;
+		}
+
+		// Pack after structural changes (SOUTH and/or split pane)
+		pack();
+	}
+
+	private static double clamp01(double x) {
+		if (Double.isNaN(x))
+			return DEFAULT_DIAG_SPLIT_FRACTION;
+		return Math.max(0.0, Math.min(1.0, x));
+	}
+
+	/**
+	 * Wrap the current CENTER component in a horizontal split pane, placing
+	 * {@code diag} on the right. If no CENTER component exists, this method does
+	 * nothing and returns null.
+	 *
+	 * @param diag         diagnostics component (non-null)
+	 * @param mainFraction fraction of width given to the main (left) side (0..1)
+	 * @return the created split pane, or null if no CENTER component was found
+	 */
+	private JSplitPane installDiagnosticsSplit(JComponent diag, double mainFraction) {
+		Objects.requireNonNull(diag, "diag");
+
+		Container cp = getContentPane();
+		if (!(cp.getLayout() instanceof BorderLayout bl)) {
+			// Unexpected layout; best effort: do nothing
+			return null;
+		}
+
+		java.awt.Component center = bl.getLayoutComponent(cp, BorderLayout.CENTER);
+		if (center == null) {
+			return null;
+		}
+
+		// Remove old center and replace with split pane.
+		cp.remove(center);
+
+		Component left = center;
+		
+		JSplitPane sp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, diag);
+
+		// Divider location based on fraction needs a realized size; set it after
+		// layout.
+		SwingUtilities.invokeLater(() -> {
+			try {
+				sp.setDividerLocation(mainFraction);
+			} catch (Throwable ignored) {
+				// Some LAFs can throw if not displayable yet; resizeWeight still makes it
+				// reasonable.
+			}
+		});
+
+		cp.add(sp, BorderLayout.CENTER);
+		cp.revalidate();
+		cp.repaint();
+		
+
+
+		return sp;
+	}
+
+	/**
+	 * Get the diagnostics component, if any.
+	 * @return the diagnostics component, or null if none
+	 */
+	protected JComponent getDiagnosticsComponent() {
+		return diagnostics;
 	}
 
 	@Override
@@ -172,22 +288,22 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	@Override
 	public void onStateChange(SimulationContext ctx, SimulationState from, SimulationState to, String reason) {
 
-	    // If a reset is pending, complete it once the current engine is fully stopped.
-	    if ((to == SimulationState.TERMINATED || to == SimulationState.FAILED) && _pendingResetSimSupplier != null) {
-	        java.util.function.Supplier<Simulation> supplier = _pendingResetSimSupplier;
-	        java.util.function.Consumer<SimulationEngine> after = _pendingResetAfterSwap;
-	        boolean autoStart = _pendingResetAutoStart;
-	        boolean refresh = _pendingResetRefresh;
+		// If a reset is pending, complete it once the current engine is fully stopped.
+		if ((to == SimulationState.TERMINATED || to == SimulationState.FAILED) && _pendingResetSimSupplier != null) {
+			java.util.function.Supplier<Simulation> supplier = _pendingResetSimSupplier;
+			java.util.function.Consumer<SimulationEngine> after = _pendingResetAfterSwap;
+			boolean autoStart = _pendingResetAutoStart;
+			boolean refresh = _pendingResetRefresh;
 
-	        // Clear first (defensive against re-entrancy)
-	        _pendingResetSimSupplier = null;
-	        _pendingResetAfterSwap = null;
+			// Clear first (defensive against re-entrancy)
+			_pendingResetSimSupplier = null;
+			_pendingResetAfterSwap = null;
 
-	        doEngineResetNow(supplier, after, autoStart, refresh);
-	        // fall through to hook
-	    }
+			doEngineResetNow(supplier, after, autoStart, refresh);
+			// fall through to hook
+		}
 
-	    onSimulationStateChange(ctx, from, to, reason);
+		onSimulationStateChange(ctx, from, to, reason);
 	}
 
 	@Override
@@ -242,13 +358,6 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 
 	/**
 	 * Default refresh behavior for MDI: repaint the container component.
-	 * <p>
-	 * The container is available via {@link BaseView#getContainer()}.
-	 * </p>
-	 * <p>
-	 * If this view has no container, this falls back to repainting the frame
-	 * content.
-	 * </p>
 	 */
 	@Override
 	public void onRefresh(SimulationContext ctx) {
@@ -258,7 +367,6 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 		if (cont != null && cont.getComponent() != null) {
 			cont.getComponent().repaint();
 		} else {
-			// e.g., a container-less view: repaint the internal frame's content
 			repaint();
 		}
 	}
@@ -267,79 +375,47 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	// Overridable hooks (all called on EDT)
 	// ------------------------------------------------------------------------
 
-	/** Hook called on any state change. */
 	protected void onSimulationStateChange(SimulationContext ctx, SimulationState from, SimulationState to,
 			String reason) {
 	}
 
-	/** Hook called when initialization begins. */
 	protected void onSimulationInit(SimulationContext ctx) {
 	}
 
-	/**
-	 * Hook called when initialization completes and the simulation becomes ready.
-	 */
 	protected void onSimulationReady(SimulationContext ctx) {
 	}
 
-	/** Hook called when the simulation begins running. */
 	protected void onSimulationRun(SimulationContext ctx) {
 	}
 
-	/** Hook called when the simulation resumes from pause. */
 	protected void onSimulationResume(SimulationContext ctx) {
 	}
 
-	/** Hook called when the simulation pauses. */
 	protected void onSimulationPause(SimulationContext ctx) {
 	}
 
-	/** Hook called when the simulation terminates normally. */
 	protected void onSimulationDone(SimulationContext ctx) {
 	}
 
-	/** Hook called when the simulation fails. */
 	protected void onSimulationFail(SimulationContext ctx, Throwable error) {
 	}
 
-	/** Hook called when cancel is requested. */
 	protected void onSimulationCancelRequested(SimulationContext ctx) {
 	}
 
-	/** Hook called when a UI message is posted. */
 	protected void onSimulationMessage(SimulationContext ctx, String message) {
 	}
 
-	/** Hook called when progress is posted. */
 	protected void onSimulationProgress(SimulationContext ctx, ProgressInfo progress) {
 	}
 
-	/** Hook called when a refresh is requested (prior to repaint). */
 	protected void onSimulationRefresh(SimulationContext ctx) {
 	}
 
-	/**
-	 * Replace the hosted engine with a new one.
-	 * <p>
-	 * This is primarily intended for demos that need to rebuild a simulation with
-	 * a different model size/parameters (e.g., TSP city count changes).
-	 * </p>
-	 * <p>
-	 * This method:
-	 * </p>
-	 * <ul>
-	 *   <li>removes this view as a listener from the old engine</li>
-	 *   <li>installs the new engine</li>
-	 *   <li>adds this view as a listener to the new engine</li>
-	 *   <li>rebinds the control panel if it supports {@link ISimulationControlPanel}</li>
-	 * </ul>
-	 *
-	 * <p>
-	 * Must be called on the EDT.
-	 * </p>
-	 *
-	 * @param newEngine new engine (non-null)
-	 */
+	// ------------------------------------------------------------------------
+	// Engine replacement / reset (unchanged)
+	// ------------------------------------------------------------------------
+
 	protected final void replaceEngine(SimulationEngine newEngine) {
 		Objects.requireNonNull(newEngine, "newEngine");
 
@@ -350,166 +426,91 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 
 		SimulationEngine old = this.engine;
 		if (old != null) {
-			try { old.removeListener(this); } catch (Throwable ignored) {}
+			try {
+				old.removeListener(this);
+			} catch (Throwable ignored) {
+			}
 		}
 
 		this.engine = newEngine;
 		this.engine.addListener(this);
 
-		// Rebind control panel if present
 		if (controlPanel instanceof edu.cnu.mdi.sim.ui.ISimulationControlPanel scp) {
-			try { scp.unbind(); } catch (Throwable ignored) {}
+			try {
+				scp.unbind();
+			} catch (Throwable ignored) {
+			}
 			scp.bind(this);
 		}
 	}
-	
-	/**
-	 * Centralized reset pattern:
-	 * <ul>
-	 *   <li>Reuse current engine config</li>
-	 *   <li>Stop old engine if needed</li>
-	 *   <li>Swap to a brand new engine (SimulationEngine holds a final Simulation)</li>
-	 *   <li>Optionally auto-start and refresh</li>
-	 * </ul>
-	 *
-	 * @param simSupplier builds a brand-new Simulation
-	 * @param afterSwap   optional hook invoked after replaceEngine(newEngine) (may be null)
-	 * @param autoStart   if true, calls startSimulation() after the swap
-	 * @param refresh     if true, requests a refresh on the new engine after the swap
-	 */
-	protected final void requestEngineReset(
-	        java.util.function.Supplier<edu.cnu.mdi.sim.Simulation> simSupplier,
-	        java.util.function.Consumer<edu.cnu.mdi.sim.SimulationEngine> afterSwap,
-	        boolean autoStart,
-	        boolean refresh) {
 
-	    java.util.Objects.requireNonNull(simSupplier, "simSupplier");
+	protected final void requestEngineReset(java.util.function.Supplier<edu.cnu.mdi.sim.Simulation> simSupplier,
+			java.util.function.Consumer<edu.cnu.mdi.sim.SimulationEngine> afterSwap, boolean autoStart,
+			boolean refresh) {
 
-	    final SimulationEngine e = getSimulationEngine();
-	    if (e == null) {
-	        return;
-	    }
+		java.util.Objects.requireNonNull(simSupplier, "simSupplier");
 
-	    SimulationState state = e.getState();
+		final SimulationEngine e = getSimulationEngine();
+		if (e == null) {
+			return;
+		}
 
-	    // "Safe" means we can swap immediately without needing to stop a running thread.
-	    boolean safe = (state == SimulationState.NEW
-	            || state == SimulationState.READY
-	            || state == SimulationState.TERMINATED
-	            || state == SimulationState.FAILED);
+		SimulationState state = e.getState();
 
-	    if (safe) {
-	        doEngineResetNow(simSupplier, afterSwap, autoStart, refresh);
-	        return;
-	    }
+		boolean safe = (state == SimulationState.NEW || state == SimulationState.READY
+				|| state == SimulationState.TERMINATED || state == SimulationState.FAILED);
 
-	    // Defer swap until engine reaches TERMINATED/FAILED
-	    _pendingResetSimSupplier = simSupplier;
-	    _pendingResetAfterSwap = afterSwap;
-	    _pendingResetAutoStart = autoStart;
-	    _pendingResetRefresh = refresh;
+		if (safe) {
+			doEngineResetNow(simSupplier, afterSwap, autoStart, refresh);
+			return;
+		}
 
-	    if (state != SimulationState.TERMINATING) {
-	        e.requestStop();
-	    }
+		_pendingResetSimSupplier = simSupplier;
+		_pendingResetAfterSwap = afterSwap;
+		_pendingResetAutoStart = autoStart;
+		_pendingResetRefresh = refresh;
+
+		if (state != SimulationState.TERMINATING) {
+			e.requestStop();
+		}
 	}
 
-	/**
-	 * Immediately performs a simulation engine reset by constructing and swapping in
-	 * a brand-new {@link SimulationEngine} backed by a new {@link Simulation}.
-	 * <p>
-	 * This method is the final step of the shared reset workflow initiated by
-	 * {@link #requestEngineReset(java.util.function.Supplier, java.util.function.Consumer, boolean, boolean)}.
-	 * It assumes that the current engine is in a <em>safe</em> state (i.e., not running)
-	 * and therefore does <strong>not</strong> attempt to stop or synchronize with an
-	 * active engine thread.
-	 * </p>
-	 *
-	 * <h3>Reset contract</h3>
-	 * <ul>
-	 *   <li>The current engine's {@link SimulationEngineConfig} is reused verbatim.</li>
-	 *   <li>A new {@link Simulation} is obtained from {@code simSupplier}.</li>
-	 *   <li>A new {@link SimulationEngine} is constructed and atomically installed
-	 *       via {@link #replaceEngine(SimulationEngine)}.</li>
-	 *   <li>The previous engine is abandoned; callers must ensure it is already
-	 *       terminated or has never been started.</li>
-	 *   <li>The optional {@code afterSwap} hook is invoked <em>after</em> the engine
-	 *       replacement, allowing view-specific rewiring (model references,
-	 *       listeners, sim-to-engine binding, etc.).</li>
-	 *   <li>If {@code autoStart} is {@code true}, the new engine thread is started
-	 *       (entering {@link SimulationState#READY} until Run is requested).</li>
-	 *   <li>If {@code refresh} is {@code true}, a refresh request is issued so the
-	 *       new simulation state is immediately visible.</li>
-	 * </ul>
-	 *
-	 * <h3>Threading</h3>
-	 * <p>
-	 * This method must execute on the Swing Event Dispatch Thread (EDT). If invoked
-	 * from a non-EDT thread, it will automatically marshal itself onto the EDT before
-	 * performing the reset.
-	 * </p>
-	 *
-	 * <h3>Usage notes</h3>
-	 * <ul>
-	 *   <li>This method should not be called directly by demos; use
-	 *       {@code requestEngineReset(...)} instead, which safely handles running
-	 *       engines by stopping them first and deferring the swap until termination.</li>
-	 *   <li>The supplied {@code Simulation} instance should be <em>brand new</em>
-	 *       and must not be shared with any other engine.</li>
-	 * </ul>
-	 *
-	 * @param simSupplier supplies a brand-new {@link Simulation} instance
-	 * @param afterSwap optional hook invoked after the new engine is installed
-	 *                  (may be {@code null})
-	 * @param autoStart if {@code true}, automatically starts the new engine thread
-	 * @param refresh if {@code true}, requests a refresh after the swap so the
-	 *                new simulation state is rendered immediately
-	 */	private void doEngineResetNow(
-	        java.util.function.Supplier<edu.cnu.mdi.sim.Simulation> simSupplier,
-	        java.util.function.Consumer<edu.cnu.mdi.sim.SimulationEngine> afterSwap,
-	        boolean autoStart,
-	        boolean refresh) {
+	private void doEngineResetNow(java.util.function.Supplier<edu.cnu.mdi.sim.Simulation> simSupplier,
+			java.util.function.Consumer<edu.cnu.mdi.sim.SimulationEngine> afterSwap, boolean autoStart,
+			boolean refresh) {
 
-	    if (!javax.swing.SwingUtilities.isEventDispatchThread()) {
-	        javax.swing.SwingUtilities.invokeLater(() -> doEngineResetNow(simSupplier, afterSwap, autoStart, refresh));
-	        return;
-	    }
+		if (!javax.swing.SwingUtilities.isEventDispatchThread()) {
+			javax.swing.SwingUtilities.invokeLater(() -> doEngineResetNow(simSupplier, afterSwap, autoStart, refresh));
+			return;
+		}
 
-	    final SimulationEngine oldEngine = getSimulationEngine();
-	    if (oldEngine == null) {
-	        return;
-	    }
+		final SimulationEngine oldEngine = getSimulationEngine();
+		if (oldEngine == null) {
+			return;
+		}
 
-	    final SimulationEngineConfig cfg = oldEngine.getConfig();
-	    final Simulation newSim = simSupplier.get();
-	    final SimulationEngine newEngine = new SimulationEngine(newSim, cfg);
+		final SimulationEngineConfig cfg = oldEngine.getConfig();
+		final Simulation newSim = simSupplier.get();
+		final SimulationEngine newEngine = new SimulationEngine(newSim, cfg);
 
-	    replaceEngine(newEngine);
+		replaceEngine(newEngine);
 
-	    if (afterSwap != null) {
-	        afterSwap.accept(newEngine);
-	    }
+		if (afterSwap != null) {
+			afterSwap.accept(newEngine);
+		}
 
-	    if (autoStart) {
-	        startSimulation();
-	    }
-	    if (refresh) {
-	        newEngine.requestRefresh();
-	    }
+		if (autoStart) {
+			startSimulation();
+		}
+		if (refresh) {
+			newEngine.requestRefresh();
+		}
 	}
-
-
 
 	// ------------------------------------------------------------------------
 	// Convenience
 	// ------------------------------------------------------------------------
 
-	/**
-	 * Convenience method to start the engine (if needed) and request run.
-	 * <p>
-	 * Safe to call from any thread; it marshals to the EDT if necessary.
-	 * </p>
-	 */
 	public final void startAndRun() {
 		if (SwingUtilities.isEventDispatchThread()) {
 			startSimulation();

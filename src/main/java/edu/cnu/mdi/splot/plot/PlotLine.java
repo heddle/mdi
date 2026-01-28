@@ -60,9 +60,18 @@ public abstract class PlotLine {
 	 */
 	public void draw(Graphics g) {
 		wp.setLocation(getX0(), getY0());
-		_canvas.worldToLocal(p0, wp);
+		
+		boolean goodPoint;
+		goodPoint = _canvas.worldToLocal(p0, wp);
+		if (!goodPoint) {
+			return;
+		}
 		wp.setLocation(getX1(), getY1());
-		_canvas.worldToLocal(p1, wp);
+		
+		goodPoint =_canvas.worldToLocal(p1, wp);
+		if (!goodPoint) {
+			return;
+		}
 
 		GraphicsUtils.drawStyleLine(g, _style.getAuxLineColor(), _style.getAuxLineWidth(), _style.getAuxLineStyle(),
 				p0.x, p0.y, p1.x, p1.y);

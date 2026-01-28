@@ -360,9 +360,12 @@ public class CurveDrawer {
 
 		for (int ix = xsmin; ix <= xsmax + rect.width; ix++) {
 			pp.setLocation(ix, iy);
-			plotCanvas.localToWorld(pp, wp);
+			plotCanvas.localToData(pp, wp);
 			wp.y = ivg.value(wp.x);
-			plotCanvas.worldToLocal(pp, wp);
+			boolean goodPoint = plotCanvas.worldToLocal(pp, wp);
+			if (!goodPoint) {
+				continue;
+			}
 
 			if (poly == null) {
 				poly = new Path2D.Float();

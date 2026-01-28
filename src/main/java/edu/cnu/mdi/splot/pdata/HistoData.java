@@ -1017,21 +1017,26 @@ public class HistoData {
 
 			if (bin == 0) {
 				wp.setLocation(xmin, 0);
-				canvas.worldToLocal(pp, wp);
-				poly.addPoint(pp.x, pp.y);
+				
+				if (canvas.worldToLocal(pp, wp)) {
+					poly.addPoint(pp.x, pp.y);
+				}
 			}
 
 			wp.setLocation(xmin, y);
-			canvas.worldToLocal(pp, wp);
-			poly.addPoint(pp.x, pp.y);
+			if (canvas.worldToLocal(pp, wp)) {
+				poly.addPoint(pp.x, pp.y);
+			}
 			wp.setLocation(xmax, y);
-			canvas.worldToLocal(pp, wp);
-			poly.addPoint(pp.x, pp.y);
+			if (canvas.worldToLocal(pp, wp)) {
+				poly.addPoint(pp.x, pp.y);
+			}
 
 			if (bin == (histo.getNumberBins() - 1)) {
 				wp.setLocation(xmax, 0);
-				canvas.worldToLocal(pp, wp);
-				poly.addPoint(pp.x, pp.y);
+				if (canvas.worldToLocal(pp, wp)) {
+					poly.addPoint(pp.x, pp.y);
+				}
 			}
 		}
 		return poly;

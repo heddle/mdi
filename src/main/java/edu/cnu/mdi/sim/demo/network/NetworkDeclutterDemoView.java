@@ -11,16 +11,10 @@ import javax.swing.Icon;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
-import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.SimulationContext;
 import edu.cnu.mdi.sim.SimulationEngine;
 import edu.cnu.mdi.sim.SimulationEngineConfig;
-import edu.cnu.mdi.sim.SimulationListener;
-import edu.cnu.mdi.sim.SimulationState;
-import edu.cnu.mdi.sim.simanneal.tspdemo.TspDemoControlPanel;
-import edu.cnu.mdi.sim.ui.IconSimulationControlPanel;
 import edu.cnu.mdi.sim.ui.SimulationView;
-import edu.cnu.mdi.sim.ui.StandardSimIcons;
 import edu.cnu.mdi.util.Environment;
 
 /**
@@ -52,6 +46,9 @@ public class NetworkDeclutterDemoView extends SimulationView implements IResetta
 	private final int iconSize = 28;
 	private int iconRadiusPx;
 
+	// Diagnostic plots
+	private DiagnosticPlotPanel plots;
+
 	/**
 	 * Create a network layout demo view.
 	 *
@@ -59,12 +56,23 @@ public class NetworkDeclutterDemoView extends SimulationView implements IResetta
 	 */
 	public NetworkDeclutterDemoView(Object... keyVals) {
 		// must call super(...) first. We build the simulation via a static helper.
-		super(createSimulation(), new SimulationEngineConfig(60, 250, 60, false), true,
-				(SimulationView.ControlPanelFactory) NetworkDeclutterControlPanel::new, keyVals); // Recover our
-																									// concrete
+		super(
+		        createSimulation(),
+		        new SimulationEngineConfig(60, 250, 60, false),
+		        true,
+		        (SimulationView.ControlPanelFactory) NetworkDeclutterControlPanel::new,
+
+		        // enable diagnostics
+		        true,
+		        DiagnosticPlotPanel::new,
+
+		        // split fraction
+		        0.7,
+
+		        keyVals
+		    );																									// concrete
 																									// simulation type
-																									// so we can access
-																									// the model and
+		this.plots = (DiagnosticPlotPanel) getDiagnosticsComponent();
 																									// attach
 		// engine callbacks.
 
@@ -87,10 +95,11 @@ public class NetworkDeclutterDemoView extends SimulationView implements IResetta
 
 		getContainer().scale(1.1); // initial zoom
 
+		pack();
 		// Start engine thread (remains paused until Run unless you call startAndRun()).
 		startSimulation();
 	}
-	
+
 	@Override
 	protected void onSimulationRefresh(SimulationContext ctx) {
 	    super.onSimulationRefresh(ctx);
@@ -99,20 +108,7 @@ public class NetworkDeclutterDemoView extends SimulationView implements IResetta
 
 	    NetworkDeclutterSimulation.Diagnostics d;
 	    while ((d = nds.getDiagnosticsSamples().poll()) != null) {
-
-	        int step = d.step;
-	        
-	        System.out.printf("Step %d: total=%.3f potential=%.3f kinetic=%.3f avgSpeed=%.3f Frms=%.3f vmaxFrac=%.3f%n",
-	                step, d.total(), d.potential(), d.kinetic, d.avgSpeed, d.Frms, d.vmaxHitFraction);
-
-//	        energyChart.addPoint("Total", step, d.total());
-//	        energyChart.addPoint("Potential", step, d.potential());
-//	        energyChart.addPoint("Kinetic", step, d.Kinetic);
-
-	        // Optional but VERY informative:
-//	        energyChart.addPoint("avgSpeed", step, d.avgSpeed);
-//	        energyChart.addPoint("Frms", step, d.Frms);
-//	        energyChart.addPoint("vmaxFrac", step, d.vmaxHitFraction);
+	        plots.newDiagnosticData(d);
 	    }
 	}
 
@@ -183,9 +179,8 @@ public class NetworkDeclutterDemoView extends SimulationView implements IResetta
 	@Override
 	public void requestReset(int numServers, int numClients, int numPrinters) {
 
-		// Keep a handle to the old sim in case you later add listeners you want to
-		// detach.
-		final NetworkDeclutterSimulation oldSim = this.sim;
+		// Clear diagnostic plots
+		plots.clearAllPlots();
 
 		requestEngineReset(
 				// Build a brand-new simulation/model.
