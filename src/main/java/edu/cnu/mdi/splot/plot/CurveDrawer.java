@@ -110,14 +110,14 @@ public class CurveDrawer {
 					double y0 = y[i] - ysig[i];
 					double y1 = y[i] + ysig[i];
 					wp.setLocation(x[i], y0);
-					canvas.worldToLocal(p0, wp);
+					canvas.dataToScreen(p0, wp);
 					wp.setLocation(x[i], y1);
-					canvas.worldToLocal(p1, wp);
+					canvas.dataToScreen(p1, wp);
 					g.drawLine(p0.x, p0.y, p1.x, p1.y);
 				}
 
 				wp.setLocation(x[i], y[i]);
-				canvas.worldToLocal(p0, wp);
+				canvas.dataToScreen(p0, wp);
 				SymbolDraw.drawSymbol(g, p0.x, p0.y, style);
 
 			}
@@ -210,9 +210,9 @@ public class CurveDrawer {
 					double ymin = y[bin] - err[bin];
 					double ymax = y[bin] + err[bin];
 					wp.setLocation(x[bin], ymin);
-					canvas.worldToLocal(p0, wp);
+					canvas.dataToScreen(p0, wp);
 					wp.setLocation(x[bin], ymax);
-					canvas.worldToLocal(p1, wp);
+					canvas.dataToScreen(p1, wp);
 					g.drawLine(p0.x, p0.y, p1.x, p1.y);
 					g.drawLine(p0.x - 2, p0.y, p0.x + 2, p0.y);
 					g.drawLine(p1.x - 2, p1.y, p1.x + 2, p1.y);
@@ -265,11 +265,11 @@ public class CurveDrawer {
 
 		case CONNECT: // simple connections
 			wp.setLocation(x[0], y[0]);
-			canvas.worldToLocal(p0, wp);
+			canvas.dataToScreen(p0, wp);
 
 			for (int i = 1; i < x.length; i++) {
 				wp.setLocation(x[i], y[i]);
-				canvas.worldToLocal(p1, wp);
+				canvas.dataToScreen(p1, wp);
 				g2.drawLine(p0.x, p0.y, p1.x, p1.y);
 				p0.setLocation(p1);
 			}
@@ -277,14 +277,14 @@ public class CurveDrawer {
 
 		case STAIRS:
 			wp.setLocation(x[0], y[0]);
-			canvas.worldToLocal(p0, wp);
+			canvas.dataToScreen(p0, wp);
 
 			Rectangle rr = canvas.getActiveBounds();
 			int bottom = rr.y + rr.height;
 
 			for (int i = 1; i < x.length; i++) {
 				wp.setLocation(x[i], y[i]);
-				canvas.worldToLocal(p1, wp);
+				canvas.dataToScreen(p1, wp);
 
 				g2.setColor(style.getFillColor());
 				g.fillRect(p0.x, p0.y, p1.x - p0.x, bottom - p0.y);
@@ -349,10 +349,10 @@ public class CurveDrawer {
 		double ymid = 0.5 * (plotData.yMin() + plotData.yMax());
 
 		wp.setLocation(plotData.xMin(), ymid);
-		plotCanvas.worldToLocal(pp, wp);
+		plotCanvas.dataToScreen(pp, wp);
 		int xsmin;
 		wp.setLocation(plotData.xMax(), ymid);
-		plotCanvas.worldToLocal(pp, wp);
+		plotCanvas.dataToScreen(pp, wp);
 		int xsmax;
 
 		xsmin = rect.x;
@@ -360,9 +360,9 @@ public class CurveDrawer {
 
 		for (int ix = xsmin; ix <= xsmax + rect.width; ix++) {
 			pp.setLocation(ix, iy);
-			plotCanvas.localToData(pp, wp);
+			plotCanvas.screenToData(pp, wp);
 			wp.y = ivg.value(wp.x);
-			boolean goodPoint = plotCanvas.worldToLocal(pp, wp);
+			boolean goodPoint = plotCanvas.dataToScreen(pp, wp);
 			if (!goodPoint) {
 				continue;
 			}

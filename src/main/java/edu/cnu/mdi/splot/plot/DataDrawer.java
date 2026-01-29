@@ -56,11 +56,16 @@ public class DataDrawer {
 				line.draw(g);
 			}
 		}
-
-		Collection<ACurve> curves = plotData.getCurves();
-		for (ACurve curve : curves) {
-			if (curve.isVisible()) {
-				CurveDrawer.drawCurve(g, _plotCanvas, curve);
+		
+		if (plotData.isHisto2DData()) {
+			System.out.println("Drawing heatmap");
+			HeatmapDrawer.drawHeatmap(g, _plotCanvas, plotData.getHisto2DData());
+		} else {
+			Collection<ACurve> curves = plotData.getCurves();
+			for (ACurve curve : curves) {
+				if (curve.isVisible()) {
+					CurveDrawer.drawCurve(g, _plotCanvas, curve);
+				}
 			}
 		}
 

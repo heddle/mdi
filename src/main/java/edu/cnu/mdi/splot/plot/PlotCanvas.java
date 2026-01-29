@@ -68,9 +68,9 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	private boolean _xLogActive = false;
 	private boolean _yLogActive = false;
 
-	// convert from screen to data
-	protected AffineTransform _localToWorld;
-	protected AffineTransform _worldToLocal;
+	// convert from screen to raw world and vice versa
+	protected AffineTransform _screenToRawWorld;
+	protected AffineTransform _rawWorldToScreen;
 
 	// dataset being plotted
 	protected PlotData _plotData;
@@ -548,10 +548,10 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 		if (_worldSystem == null) {
 			return null;
 		}
-		double xmin = xWorldToData(_worldSystem.getMinX());
-		double xmax = xWorldToData(_worldSystem.getMaxX());
-		double ymin = yWorldToData(_worldSystem.getMinY());
-		double ymax = yWorldToData(_worldSystem.getMaxY());
+		double xmin = xRawWorldToData(_worldSystem.getMinX());
+		double xmax = xRawWorldToData(_worldSystem.getMaxX());
+		double ymin = yRawWorldToData(_worldSystem.getMinY());
+		double ymax = yRawWorldToData(_worldSystem.getMaxY());
 
 		double x0 = Math.min(xmin, xmax);
 		double y0 = Math.min(ymin, ymax);
@@ -602,8 +602,8 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 		Rectangle bounds = getBounds();
 
 		if ((bounds == null) || (bounds.width < 1) || (bounds.height < 1)) {
-			_localToWorld = null;
-			_worldToLocal = null;
+			_screenToRawWorld = null;
+			_rawWorldToScreen = null;
 			_activeBounds = null;
 			return;
 		}
@@ -629,15 +629,15 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 		final double sx = rx ? -sxMag : sxMag;
 		final double sy = ry ? syMag : -syMag;
 
-		_localToWorld = AffineTransform.getTranslateInstance(tx, ty);
-		_localToWorld.concatenate(AffineTransform.getScaleInstance(sx, sy));
-		_localToWorld.concatenate(AffineTransform.getTranslateInstance(-_activeBounds.x, -_activeBounds.y));
+		_screenToRawWorld = AffineTransform.getTranslateInstance(tx, ty);
+		_screenToRawWorld.concatenate(AffineTransform.getScaleInstance(sx, sy));
+		_screenToRawWorld.concatenate(AffineTransform.getTranslateInstance(-_activeBounds.x, -_activeBounds.y));
 
 		try {
-			_worldToLocal = _localToWorld.createInverse();
+			_rawWorldToScreen = _screenToRawWorld.createInverse();
 		} catch (NoninvertibleTransformException e) {
 			e.printStackTrace();
-			_worldToLocal = null;
+			_rawWorldToScreen = null;
 		}
 	}
 
@@ -703,7 +703,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 
 		Point pp = e.getPoint();
 		Point2D.Double dataPoint = new Point2D.Double();
-		localToData(pp, dataPoint);
+		screenToData(pp, dataPoint);
 		feedback.append(String.format("(x, y) = (%7.2g, %-7.2g)", dataPoint.x, dataPoint.y));
 
 		if (_plotData.isXYData()) {
@@ -877,7 +877,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 			return;
 		}
 
-		localToWorldRaw(rbrect, _worldSystem);
+		screenToRawWorld(rbrect, _worldSystem);
 		setAffineTransforms();
 		repaint();
 	}
@@ -954,7 +954,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 *
 	 * PlotCanvas uses three coordinate systems:
 	 *
-	 * 1) Local (pixel) coordinates
+	 * 1) Local (screen) coordinates
 	 *    - Swing component coordinates: (0,0) is the top-left of the component.
 	 *    - Mouse events and painting happen in this space.
 	 *
@@ -976,9 +976,9 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 *   - *Data* methods produce/consume data coordinates (always linear values).
 	 *
 	 * Usage rules:
-	 *   - For rubber-band zoom: localToWorldRaw(Rectangle, ...) then assign into _worldSystem.
-	 *   - For mouse readout / status text: localToData(Point, ...) so you display real values.
-	 *   - For drawing curves: worldToLocal(Point, dataPoint) where the input is data; the method
+	 *   - For rubber-band zoom: screenToRawWorld(Rectangle, ...) then assign into _worldSystem.
+	 *   - For mouse readout / status text: screenToData(Point, ...) so you display real values.
+	 *   - For drawing curves: dataToScreen(screenPt, dataPoint) where the input is data; the method
 	 *     handles the log conversion internally.
 	 * ===================================================================================
 	 */
@@ -986,7 +986,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	// -------- transformation methods ---------
 
 	/**
-	 * Convert a local (pixel) point to the internal <b>raw world</b> coordinates.
+	 * Convert a local (screen) point to the internal <b>raw world</b> coordinates.
 	 * <p>
 	 * Raw world is the coordinate system used by {@link #_worldSystem}. When log scaling
 	 * is active, raw world coordinates are in log10(data) space.
@@ -996,57 +996,60 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 * or when you need the internal world-space for debugging.
 	 * </p>
 	 *
-	 * @param p  local pixel point (component coordinates)
-	 * @param wp output point filled with raw world coordinates (log10-space if active)
+	 * @param screenPoint screen (pixel) point (component coordinates)
+	 * @param rawPoint output point filled with raw world coordinates (log10-space if active)
 	 */
-	public void localToWorldRaw(Point p, Point2D.Double wp) {
-	    if (wp == null) {
-	        throw new IllegalArgumentException("wp must not be null");
+	public void screenToRawWorld(Point screenPoint, Point2D.Double rawPoint) {
+	    if (rawPoint == null) {
+	        throw new IllegalArgumentException("rawpoint must not be null");
 	    }
-	    if (_localToWorld == null || p == null) {
+	    if (screenPoint == null) {
+	        throw new IllegalArgumentException("screenPoint must not be null");
+	    }
+	    if (_screenToRawWorld == null) {
 	        return;
 	    }
-	    _localToWorld.transform(p, wp);
+	    _screenToRawWorld.transform(screenPoint, rawPoint);
 	}
 
 	/**
-	 * Convert a local (pixel) rectangle to an internal <b>raw world</b> rectangle.
+	 * Convert a screen (pixel) rectangle to an internal <b>raw world</b> rectangle.
 	 * <p>
 	 * This is the correct conversion for rubberband zooming because {@link #_worldSystem}
 	 * is stored in raw world coordinates (log10-space when log axes are active).
 	 * </p>
 	 *
-	 * @param pr local (pixel) rectangle (component coordinates)
-	 * @param wr output rectangle filled with raw world bounds (log10-space if active)
+	 * @param screenRect screen (pixel) rectangle (component coordinates)
+	 * @param rawRect output rectangle filled with raw world bounds (log10-space if active)
 	 */
-	public void localToWorldRaw(Rectangle pr, Rectangle2D.Double wr) {
-	    if (wr == null) {
-	        throw new IllegalArgumentException("wr must not be null");
+	public void screenToRawWorld(Rectangle screenRect, Rectangle2D.Double rawRect) {
+	    if (rawRect == null) {
+	        throw new IllegalArgumentException("rawRect must not be null");
 	    }
-	    if (_localToWorld == null || pr == null) {
+	    if (_screenToRawWorld == null || screenRect == null) {
 	        return;
 	    }
 
-	    // Two corners in local space
-	    Point p0 = new Point(pr.x, pr.y);
-	    Point p1 = new Point(pr.x + pr.width, pr.y + pr.height);
+	    // Two corners in screen (pixel) space
+	    Point p0 = new Point(screenRect.x, screenRect.y);
+	    Point p1 = new Point(screenRect.x + screenRect.width, screenRect.y + screenRect.height);
 
 	    Point2D.Double w0 = new Point2D.Double();
 	    Point2D.Double w1 = new Point2D.Double();
 
-	    _localToWorld.transform(p0, w0);
-	    _localToWorld.transform(p1, w1);
+	    _screenToRawWorld.transform(p0, w0);
+	    _screenToRawWorld.transform(p1, w1);
 
 	    double xmin = Math.min(w0.x, w1.x);
 	    double xmax = Math.max(w0.x, w1.x);
 	    double ymin = Math.min(w0.y, w1.y);
 	    double ymax = Math.max(w0.y, w1.y);
 
-	    wr.setFrame(xmin, ymin, xmax - xmin, ymax - ymin);
+	    rawRect.setFrame(xmin, ymin, xmax - xmin, ymax - ymin);
 	}
 
 	/**
-	 * Convert a local (pixel) point to <b>data</b> coordinates.
+	 * Convert a screen (pixel) point to <b>data</b> coordinates.
 	 * <p>
 	 * Data coordinates are the real values (always linear units). When log axes are active,
 	 * this method converts from raw-world log10 space back into data space.
@@ -1056,29 +1059,29 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 * "real" x/y values.
 	 * </p>
 	 *
-	 * @param p  local pixel point (component coordinates)
-	 * @param dp output point filled with data coordinates (linear units)
+	 * @param screenPoint  local screen point (component coordinates)
+	 * @param dataPoint output point filled with data coordinates (linear units)
 	 */
-	public void localToData(Point p, Point2D.Double dp) {
-	    if (dp == null) {
-	        throw new IllegalArgumentException("dp must not be null");
+	public void screenToData(Point screenPoint, Point2D.Double dataPoint) {
+	    if (dataPoint == null) {
+	        throw new IllegalArgumentException("dataPoint must not be null");
 	    }
-	    if (_localToWorld == null || p == null) {
+	    if (_screenToRawWorld == null || screenPoint == null) {
 	        return;
 	    }
 
 	    // dp becomes RAW world (log10-space if active)
-	    _localToWorld.transform(p, dp);
+	    _screenToRawWorld.transform(screenPoint, dataPoint);
 
 	    // RAW world -> DATA
-	    dp.x = xWorldToData(dp.x);
-	    dp.y = yWorldToData(dp.y);
+	    dataPoint.x = xRawWorldToData(dataPoint.x);
+	    dataPoint.y = yRawWorldToData(dataPoint.y);
 	}
 
 	/**
-	 * Convert a local (pixel) rectangle to <b>data</b> coordinates.
+	 * Convert a screen (pixel) rectangle to <b>data</b> coordinates.
 	 * <p>
-	 * This converts the pixel rectangle to raw-world first (log10-space if active),
+	 * This converts the screen rectangle to raw-world first (log10-space if active),
 	 * then converts the bounds back into data space.
 	 * </p>
 	 * <p>
@@ -1086,60 +1089,75 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 * Do <b>not</b> use this to update {@link #_worldSystem}; for zoom you want raw world.
 	 * </p>
 	 *
-	 * @param pr local (pixel) rectangle (component coordinates)
-	 * @param dr output rectangle filled with data-space bounds (linear units)
+	 * @param screenRect screen (pixel) rectangle (component coordinates)
+	 * @param dataRect output rectangle filled with data-space bounds (linear units)
 	 */
-	public void localToData(Rectangle pr, Rectangle2D.Double dr) {
-	    if (dr == null) {
-	        throw new IllegalArgumentException("dr must not be null");
+	public void screenToData(Rectangle screenRect, Rectangle2D.Double dataRect) {
+	    if (dataRect == null) {
+	        throw new IllegalArgumentException("dataRect must not be null");
 	    }
-	    if (_localToWorld == null || pr == null) {
+	    if (_screenToRawWorld == null || screenRect == null) {
 	        return;
 	    }
 
 	    Rectangle2D.Double wr = new Rectangle2D.Double();
-	    localToWorldRaw(pr, wr); // RAW world (log10-space if active)
+	    screenToRawWorld(screenRect, wr); // RAW world (log10-space if active)
 
-	    double xmin = xWorldToData(wr.getMinX());
-	    double xmax = xWorldToData(wr.getMaxX());
-	    double ymin = yWorldToData(wr.getMinY());
-	    double ymax = yWorldToData(wr.getMaxY());
+	    double xmin = xRawWorldToData(wr.getMinX());
+	    double xmax = xRawWorldToData(wr.getMaxX());
+	    double ymin = yRawWorldToData(wr.getMinY());
+	    double ymax = yRawWorldToData(wr.getMaxY());
 
-	    dr.x = Math.min(xmin, xmax);
-	    dr.y = Math.min(ymin, ymax);
-	    dr.width  = Math.abs(xmax - xmin);
-	    dr.height = Math.abs(ymax - ymin);
+	    dataRect.x = Math.min(xmin, xmax);
+	    dataRect.y = Math.min(ymin, ymax);
+	    dataRect.width  = Math.abs(xmax - xmin);
+	    dataRect.height = Math.abs(ymax - ymin);
 	}
 
 	/**
-	 * Convert a <b>data</b> coordinate to local (pixel) coordinates.
+	 * Convert a <b>data</b> coordinate to screen (pixel) coordinates.
 	 * <p>
 	 * Input is data-space (linear units). If log axes are active, the method converts
 	 * data -> raw-world via log10(data) before applying the affine transform.
 	 * </p>
 	 *
-	 * @param pp output local pixel point (component coordinates)
-	 * @param dp input data point (linear units)
+	 * @param screenPt output local screen point (component coordinates)
+	 * @param dataPoint input data point (linear units)
 	 * @return true if conversion succeeded; false if log axes are active and input
 	 *         contains non-positive values (invalid for log scale) or transforms are unavailable
 	 */
-	public boolean worldToLocal(Point pp, Point2D.Double dp) {
-	    if (_worldToLocal == null || pp == null || dp == null) {
+	public boolean dataToScreen(Point screenPt, Point2D.Double dataPoint) {
+	    if (_rawWorldToScreen == null || screenPt == null || dataPoint == null) {
+	        return false;
+	    }
+
+	    // Reject NaN/Inf early
+	    if (!Double.isFinite(dataPoint.x) || !Double.isFinite(dataPoint.y)) {
 	        return false;
 	    }
 
 	    // Reject invalid data for log axes
-	    if ((_xLogActive && dp.x <= 0.0) || (_yLogActive && dp.y <= 0.0)) {
+	    if ((_xLogActive && dataPoint.x <= 0.0) || (_yLogActive && dataPoint.y <= 0.0)) {
 	        return false;
 	    }
 
-	    Point2D.Double wsrc = new Point2D.Double(xDataToWorld(dp.x), yDataToWorld(dp.y));
-	    _worldToLocal.transform(wsrc, pp);
+	    Point2D.Double wsrc = new Point2D.Double(
+	            xDataToRawWorld(dataPoint.x),
+	            yDataToRawWorld(dataPoint.y));
+
+	    // Transform in double space, then round to pixel coords
+	    Point2D.Double dst = new Point2D.Double();
+	    _rawWorldToScreen.transform(wsrc, dst);
+
+	    screenPt.x = (int) Math.round(dst.x);
+	    screenPt.y = (int) Math.round(dst.y);
+
 	    return true;
 	}
+	
 
 	/**
-	 * Convert a <b>data</b> rectangle to a local (pixel) rectangle.
+	 * Convert a <b>data</b> rectangle to a screen (pixel) rectangle.
 	 * <p>
 	 * The input rectangle is in data-space (linear units). If log axes are active,
 	 * conversion uses log10 internally.
@@ -1149,22 +1167,22 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 * the return value is false and {@code r} is left unchanged.
 	 * </p>
 	 *
-	 * @param r  output local pixel rectangle (component coordinates)
-	 * @param dr input data rectangle (linear units)
+	 * @param screenRect  output screen (pixel) rectangle (component coordinates)
+	 * @param dataRect input data rectangle (linear units)
 	 * @return true if conversion succeeded; false if invalid for log scale or transforms missing
 	 */
-	public boolean worldToLocal(Rectangle r, Rectangle2D.Double dr) {
-	    if (r == null || dr == null) {
+	public boolean dataToScreen(Rectangle screenRect, Rectangle2D.Double dataRect) {
+	    if (screenRect == null || dataRect == null) {
 	        return false;
 	    }
 
-	    Point2D.Double d0 = new Point2D.Double(dr.getMinX(), dr.getMinY());
-	    Point2D.Double d1 = new Point2D.Double(dr.getMaxX(), dr.getMaxY());
+	    Point2D.Double d0 = new Point2D.Double(dataRect.getMinX(), dataRect.getMinY());
+	    Point2D.Double d1 = new Point2D.Double(dataRect.getMaxX(), dataRect.getMaxY());
 
 	    Point p0 = new Point();
 	    Point p1 = new Point();
 
-	    if (!worldToLocal(p0, d0) || !worldToLocal(p1, d1)) {
+	    if (!dataToScreen(p0, d0) || !dataToScreen(p1, d1)) {
 	        return false;
 	    }
 
@@ -1172,9 +1190,72 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	    int y = Math.min(p0.y, p1.y);
 	    int w = Math.abs(p1.x - p0.x);
 	    int h = Math.abs(p1.y - p0.y);
+	    
+	    w = Math.max(w, 1);
+	    h = Math.max(h, 1);
 
-	    r.setBounds(x, y, w, h);
+	    screenRect.setBounds(x, y, w, h);
 	    return true;
+	}
+	
+	/**
+	 * Convert a <b>data</b> rectangle to a screen (pixel) rectangle.
+	 * <p>
+	 * The input rectangle is in data-space (linear units). If log axes are active,
+	 * conversion uses log10 internally.
+	 * </p>
+	 * <p>
+	 * IMPORTANT: This method can fail in log mode if any bound is non-positive. In that case
+	 * the return value is null.
+	 * </p>
+	 *
+	 * @param dataX0 data-space x0 (linear units)
+	 * @param dataY0 data-space y0 (linear units)
+	 * @param dataX1 data-space x1 (linear units)
+	 * @param dataY1 data-space y1 (linear units)
+	 * @return screen (pixel) rectangle (component coordinates), or null if invalid for log scale
+	 */
+	public Rectangle dataToScreen(double dataX0, double dataY0, double dataX1, double dataY1) {
+	    Point2D.Double d0 = new Point2D.Double(dataX0, dataY0);
+	    Point2D.Double d1 = new Point2D.Double(dataX1, dataY1);
+
+	    Point p0 = new Point();
+	    Point p1 = new Point();
+
+	    if (!dataToScreen(p0, d0) || !dataToScreen(p1, d1)) {
+	        return null;
+	    }
+
+	    int x = Math.min(p0.x, p1.x);
+	    int y = Math.min(p0.y, p1.y);
+	    int w = Math.abs(p1.x - p0.x);
+	    int h = Math.abs(p1.y - p0.y);
+	    
+	    w = Math.max(w, 1);
+	    h = Math.max(h, 1);
+
+	    return new Rectangle(x, y, w, h);
+	}
+	
+	/**
+	 * Convert a <b>data</b> point to screen (pixel) coordinates.
+	 * <p>
+	 * Input is data-space (linear units). If log axes are active, the method converts
+	 * data -> raw-world via log10(data) before applying the affine transform.
+	 * </p>
+	 *
+	 * @param dataX input data x (linear units)
+	 * @param dataY input data y (linear units)
+	 * @return screen (pixel) point (component coordinates), or null if invalid for log scale
+	 */
+	public Point dataToScreen(double dataX, double dataY) {
+	    Point2D.Double d = new Point2D.Double(dataX, dataY);
+	    Point p = new Point();
+	    if (dataToScreen(p, d)) {
+	        return p;
+	    } else {
+	        return null;
+	    }
 	}
 
 	/**
@@ -1183,8 +1264,8 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 * When log axes are active, raw world is log10(data).
 	 * </p>
 	 */
-	private double xDataToWorld(double x) {
-	    return _xLogActive ? log10(x) : x;
+	private double xDataToRawWorld(double xData) {
+	    return _xLogActive ? log10(xData) : xData;
 	}
 
 	/**
@@ -1193,8 +1274,8 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 * When log axes are active, raw world is log10(data).
 	 * </p>
 	 */
-	private double yDataToWorld(double y) {
-	    return _yLogActive ? log10(y) : y;
+	private double yDataToRawWorld(double yData) {
+	    return _yLogActive ? log10(yData) : yData;
 	}
 
 	/**
@@ -1203,8 +1284,8 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 * When log axes are active, data is 10^(rawWorld).
 	 * </p>
 	 */
-	private double xWorldToData(double wx) {
-	    return _xLogActive ? Math.pow(10.0, wx) : wx;
+	private double xRawWorldToData(double xRaw) {
+	    return _xLogActive ? Math.pow(10.0, xRaw) : xRaw;
 	}
 
 	/**
@@ -1213,8 +1294,8 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 * When log axes are active, data is 10^(rawWorld).
 	 * </p>
 	 */
-	private double yWorldToData(double wy) {
-	    return _yLogActive ? Math.pow(10.0, wy) : wy;
+	private double yRawWorldToData(double yRaw) {
+	    return _yLogActive ? Math.pow(10.0, yRaw) : yRaw;
 	}
 
 }

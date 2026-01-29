@@ -11,8 +11,11 @@ import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
 
 import edu.cnu.mdi.component.CommonBorder;
+import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
+import edu.cnu.mdi.ui.colors.ColorMapSelectorPanel;
+import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
  * Tab for axis behavior: limits, scaling (linear/log), include-zero, tick formatting.
@@ -32,6 +35,8 @@ public class AxesTabPanel extends JPanel {
 
 	private final JCheckBox _logX;
 	private final JCheckBox _logY;
+	private final JCheckBox _logZ;          // heatmap only
+	private final ColorMapSelectorPanel _colorMapPanel; // heatmap only
 
 	private final JSpinner _decX;
 	private final JSpinner _expX;
@@ -41,9 +46,12 @@ public class AxesTabPanel extends JPanel {
 	// snapshot for deciding if world system must be recomputed
 	private final boolean _xZero0, _yZero0;
 	private final boolean _xLog0, _yLog0;
+	
+	private final PlotDataType _plotDataType;
 
     public AxesTabPanel(PlotCanvas canvas) {
         _params = canvas.getParameters();
+        _plotDataType = canvas.getPlotData().getType();
 
 		setBorder(new CommonBorder("Axes"));
 		setLayout(new GridBagLayout());
@@ -72,6 +80,12 @@ public class AxesTabPanel extends JPanel {
 
 		_logX = new JCheckBox("Log X (base 10)", _xLog0);
 		_logY = new JCheckBox("Log Y (base 10)", _yLog0);
+		_logZ = new JCheckBox("Log Z (heatmap)");
+		_logZ.setToolTipText("Applies to heatmap/2D histogram intensity only");
+		_logZ.setSelected(_params.isLogZ());
+		
+		//color map for heatmap
+		_colorMapPanel = new ColorMapSelectorPanel();
 
 		// When log is selected, include-zero is meaningless/invalid.
 		_logX.addActionListener(e -> updateForLogSelection());
@@ -115,6 +129,23 @@ public class AxesTabPanel extends JPanel {
 		add(_logX, c);
 		c.gridx = 1;
 		add(_logY, c);
+		
+		// Row: log Z (heatmap only)
+		// add Log Z in a new column
+		c.gridx = 2;
+		// a small inset so it doesn't jam against _logY
+		int oldLeft = c.insets.left;
+		c.insets = new Insets(c.insets.top, 12, c.insets.bottom, c.insets.right);
+		add(_logZ, c);
+		c.gridy -= 2;
+		JLabel cmLabel = new JLabel("Color Map (heatmap)");
+		cmLabel.setFont(Fonts.defaultFont);
+		add(cmLabel, c);
+		c.gridy++;
+		add(_colorMapPanel, c);
+		c.gridy++;
+		c.insets = new Insets(c.insets.top, oldLeft, c.insets.bottom, c.insets.right); // res
+		
 
 		// Tick formatting block
 		c.gridy++;
@@ -159,6 +190,10 @@ public class AxesTabPanel extends JPanel {
 		if (ylog) {
 			_includeYZero.setSelected(false);
 		}
+		
+		// log Z and colormap only for heatmaps
+		_logZ.setEnabled(_plotDataType == PlotDataType.H2D);
+		_colorMapPanel.setEnabled(_plotDataType == PlotDataType.H2D);
 	}
 
 	/**
@@ -174,6 +209,8 @@ public class AxesTabPanel extends JPanel {
 		// Apply scale before include-zero, since include-zero is disabled in log mode.
 		_params.setXScale(_logX.isSelected() ? PlotParameters.AxisScale.LOG10 : PlotParameters.AxisScale.LINEAR);
 		_params.setYScale(_logY.isSelected() ? PlotParameters.AxisScale.LOG10 : PlotParameters.AxisScale.LINEAR);
+
+		_params.setLogZ(_logZ.isSelected());
 
 		_params.includeXZero(_includeXZero.isSelected());
 		_params.includeYZero(_includeYZero.isSelected());

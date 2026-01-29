@@ -143,7 +143,7 @@ public class PlotTicks {
 		for (int i = 1; i <= (numtick + 1); i++) {
 			double value = xmin + (i - 0.5) * delx;
 			_wp.setLocation(value, yc);
-			_plotCanvas.worldToLocal(_pp, _wp);
+			_plotCanvas.dataToScreen(_pp, _wp);
 			g.drawLine(_pp.x, b, _pp.x, b - ticklen);
 			g.drawLine(_pp.x, t, _pp.x, t + ticklen);
 
@@ -180,7 +180,7 @@ public class PlotTicks {
 
 			// Major tick
 			_wp.setLocation(decade, yc);
-			_plotCanvas.worldToLocal(_pp, _wp);
+			_plotCanvas.dataToScreen(_pp, _wp);
 			g.drawLine(_pp.x, b, _pp.x, b - majorTickLen);
 			g.drawLine(_pp.x, t, _pp.x, t + majorTickLen);
 
@@ -197,7 +197,7 @@ public class PlotTicks {
 					continue;
 				}
 				_wp.setLocation(v, yc);
-				_plotCanvas.worldToLocal(_pp, _wp);
+				_plotCanvas.dataToScreen(_pp, _wp);
 				g.drawLine(_pp.x, b, _pp.x, b - minorTickLen);
 				g.drawLine(_pp.x, t, _pp.x, t + minorTickLen);
 			}
@@ -226,7 +226,7 @@ public class PlotTicks {
 
 			// Major tick
 			_wp.setLocation(xc, decade);
-			_plotCanvas.worldToLocal(_pp, _wp);
+			_plotCanvas.dataToScreen(_pp, _wp);
 			g.drawLine(l, _pp.y, l + majorTickLen, _pp.y);
 			g.drawLine(r, _pp.y, r - majorTickLen, _pp.y);
 
@@ -242,7 +242,7 @@ public class PlotTicks {
 					continue;
 				}
 				_wp.setLocation(xc, v);
-				_plotCanvas.worldToLocal(_pp, _wp);
+				_plotCanvas.dataToScreen(_pp, _wp);
 				g.drawLine(l, _pp.y, l + minorTickLen, _pp.y);
 				g.drawLine(r, _pp.y, r - minorTickLen, _pp.y);
 			}
@@ -273,7 +273,7 @@ public class PlotTicks {
 		for (int i = 1; i <= numtick; i++) {
 			double value = xmin + i * delx;
 			_wp.setLocation(value, yc);
-			_plotCanvas.worldToLocal(_pp, _wp);
+			_plotCanvas.dataToScreen(_pp, _wp);
 			g.drawLine(_pp.x, b, _pp.x, b - ticklen);
 			g.drawLine(_pp.x, t, _pp.x, t + ticklen);
 
@@ -306,7 +306,7 @@ public class PlotTicks {
 			if ((i > 0) && (i < numtick + 1)) {
 				double value = ymin + i * dely;
 				_wp.setLocation(xc, value);
-				_plotCanvas.worldToLocal(_pp, _wp);
+				_plotCanvas.dataToScreen(_pp, _wp);
 				g.drawLine(l, _pp.y, l + ticklen, _pp.y);
 				g.drawLine(r, _pp.y, r - ticklen, _pp.y);
 				if (drawVal) {

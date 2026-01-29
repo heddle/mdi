@@ -62,13 +62,13 @@ public abstract class PlotLine {
 		wp.setLocation(getX0(), getY0());
 		
 		boolean goodPoint;
-		goodPoint = _canvas.worldToLocal(p0, wp);
+		goodPoint = _canvas.dataToScreen(p0, wp);
 		if (!goodPoint) {
 			return;
 		}
 		wp.setLocation(getX1(), getY1());
 		
-		goodPoint =_canvas.worldToLocal(p1, wp);
+		goodPoint =_canvas.dataToScreen(p1, wp);
 		if (!goodPoint) {
 			return;
 		}

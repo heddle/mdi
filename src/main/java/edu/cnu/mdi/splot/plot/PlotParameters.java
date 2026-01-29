@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.util.Vector;
 
+import edu.cnu.mdi.ui.colors.ScientificColorMaps;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
@@ -30,6 +31,11 @@ public class PlotParameters {
 	// axis scales
 	private AxisScale _xScale = AxisScale.LINEAR;
 	private AxisScale _yScale = AxisScale.LINEAR;
+	
+	// Z scale (for heatmaps / 2D histograms)
+	private boolean _logZ = false;
+	private Color[] _zScale = ScientificColorMaps.VIRIDIS;
+
 
 	//reverse axes?
 	private boolean _reverseXaxis = false;
@@ -99,6 +105,39 @@ public class PlotParameters {
 	public PlotParameters(PlotCanvas canvas) {
 		_canvas = canvas;
 	}
+	
+	/**
+	 * Check whether Z values (heatmap intensity) are displayed on a log10 scale.
+	 * Applies to heatmap/2D histogram rendering only.
+	 *
+	 * @return true if log10 scaling is used for Z/intensity
+	 */
+	public boolean isLogZ() {
+	    return _logZ;
+	}
+	
+	/**
+	 * Get the color scale for Z values (heatmap intensity).
+	 * Applies to heatmap/2D histogram rendering only.
+	 *
+	 * @return the Z color scale
+	 */
+	public Color[] getZScale() {
+	    return _zScale;
+	}
+
+	/**
+	 * Set whether Z values (heatmap intensity) are displayed on a log10 scale.
+	 * Applies to heatmap/2D histogram rendering only.
+	 *
+	 * @param logZ true for log10 scaling of Z/intensity
+	 * @return this parameters instance (for chaining)
+	 */
+	public PlotParameters setLogZ(boolean logZ) {
+	    _logZ = logZ;
+	    return this;
+	}
+
 
 	/**
 	 * Force the plot to include {@code x = 0} when determining x-axis limits.
