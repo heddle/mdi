@@ -16,6 +16,7 @@ import edu.cnu.mdi.splot.io.PlotFileFilter;
 import edu.cnu.mdi.splot.io.PlotIO;
 import edu.cnu.mdi.splot.io.RecentPlotFiles;
 import edu.cnu.mdi.splot.io.RecentPlotsMenu;
+import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.view.BaseView;
 
@@ -233,6 +234,12 @@ public class PlotView extends BaseView {
 			if (_plotCanvas != null) {
 				_plotCanvas.shutDown();
 			}
+			
+			PlotData plotData = newCanvas.getPlotData();
+			System.out.println("Loaded plot type = " + plotData.getType());
+			System.out.println("Has curves = " + plotData.getCurves().size());
+			System.out.println("Has H2D = " + (plotData.getHisto2DData() != null));
+
 
 			// Stand up and install new plot
 			newCanvas.standUp();
@@ -277,6 +284,10 @@ public class PlotView extends BaseView {
 	}
 
 	private void doSave(boolean forceSaveAs) {
+		System.out.println("SAVE plot type = " + _plotCanvas.getPlotData().getType());
+		System.out.println("SAVE curves = " + _plotCanvas.getPlotData().getCurves().size());
+		System.out.println("SAVE has H2D = " + (_plotCanvas.getPlotData().getHisto2DData() != null));
+
 		File target = _currentPlotFile;
 
 		if (forceSaveAs || target == null) {

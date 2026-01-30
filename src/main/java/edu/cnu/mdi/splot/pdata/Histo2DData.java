@@ -636,6 +636,69 @@ public final class Histo2DData {
 		}
 		return lo;
 	}
+	
+	   /**
+     * INTERNAL: set bin contents and counts during deserialization/persistence restore.
+     * <p>
+     * This performs a defensive deep-copy of {@code bins} and replaces the internal
+     * counts in a single synchronized block.
+     * </p>
+     *
+     * @param bins bin contents sized {@code [nx][ny]}
+     * @param goodCount in-range fill count
+     * @param xUnderCount x-underflow count (y in-range)
+     * @param xOverCount x-overflow count (y in-range)
+     * @param yUnderCount y-underflow count (x in-range)
+     * @param yOverCount y-overflow count (x in-range)
+     * @param xUnder_yUnder corner count (x under, y under)
+     * @param xUnder_yOver corner count (x under, y over)
+     * @param xOver_yUnder corner count (x over, y under)
+     * @param xOver_yOver corner count (x over, y over)
+     */
+    public void setBinsForDeserialization(double[][] bins,
+                                         long goodCount,
+                                         long xUnderCount, long xOverCount,
+                                         long yUnderCount, long yOverCount,
+                                         long xUnder_yUnder, long xUnder_yOver,
+                                         long xOver_yUnder, long xOver_yOver) {
+
+        if (bins == null) {
+            throw new IllegalArgumentException("Histo2DData: bins is null");
+        }
+        if (bins.length != _nx) {
+            throw new IllegalArgumentException("Histo2DData: bins nx mismatch. Expected " + _nx + " got " + bins.length);
+        }
+        for (int ix = 0; ix < _nx; ix++) {
+            if (bins[ix] == null || bins[ix].length != _ny) {
+                throw new IllegalArgumentException("Histo2DData: bins ny mismatch at ix=" + ix + ". Expected " + _ny);
+            }
+        }
+
+        synchronized (_lock) {
+            for (int ix = 0; ix < _nx; ix++) {
+                System.arraycopy(bins[ix], 0, _bins[ix], 0, _ny);
+            }
+
+            _goodCount = Math.max(0, goodCount);
+
+            _xUnderCount = Math.max(0, xUnderCount);
+            _xOverCount  = Math.max(0, xOverCount);
+
+            _yUnderCount = Math.max(0, yUnderCount);
+            _yOverCount  = Math.max(0, yOverCount);
+
+            _xUnder_yUnder = Math.max(0, xUnder_yUnder);
+            _xUnder_yOver  = Math.max(0, xUnder_yOver);
+            _xOver_yUnder  = Math.max(0, xOver_yUnder);
+            _xOver_yOver   = Math.max(0, xOver_yOver);
+
+            // invalidate caches
+            _minMaxDirty = true;
+            _percentilesDirty = true;
+        }
+    }
+
+
     
     /**
      * Return a human-readable summary of in-range and out-of-range fills.

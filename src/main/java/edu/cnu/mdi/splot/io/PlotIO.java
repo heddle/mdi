@@ -21,12 +21,14 @@ import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
+import edu.cnu.mdi.splot.pdata.Histo2DData;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.pdata.Snapshot;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
+import edu.cnu.mdi.ui.colors.ScientificColorMap;
 
 /**
  * Read/write PlotSpec JSON files.
@@ -125,12 +127,59 @@ public final class PlotIO {
 		spec.plotDataType = data.getType();
 		spec.parameters = fromParameters(params);
 
-		for (ACurve c : data.getCurves()) {
-			spec.curves.add(fromCurve(c, data.getType()));
+		if (spec.plotDataType == PlotDataType.H2D) {
+			Histo2DData h2d = data.getHisto2DData();
+			if (h2d != null) {
+				spec.histo2d = fromHisto2D(h2d);
+			}
+		} else {
+			for (ACurve c : data.getCurves()) {
+				spec.curves.add(fromCurve(c, data.getType()));
+			}
 		}
 
 		return spec;
 	}
+	
+	// ---------------------------
+	// Heatmap (Histo2DData) <-> spec
+	// ---------------------------
+
+	private static Histo2DSpec fromHisto2D(Histo2DData h2d) {
+	    if (h2d == null) {
+	        return null;
+	    }
+
+	    Histo2DSpec s = new Histo2DSpec();
+
+	    // Name + geometry
+	    s.name = h2d.name();
+	    s.nx   = h2d.nx();
+	    s.ny   = h2d.ny();
+	    s.xmin = h2d.xMin();
+	    s.xmax = h2d.xMax();
+	    s.ymin = h2d.yMin();
+	    s.ymax = h2d.yMax();
+
+	    // Bin contents (snapshot/copy)
+	    s.bins = h2d.snapshotBins();
+
+	    // Counts
+	    s.goodCount     = h2d.getGoodCount();
+
+	    s.xUnderCount   = h2d.getXUnderCount();
+	    s.xOverCount    = h2d.getXOverCount();
+	    s.yUnderCount   = h2d.getYUnderCount();
+	    s.yOverCount    = h2d.getYOverCount();
+
+	    s.xUnder_yUnder = h2d.getXUnderYUnderCount();
+	    s.xUnder_yOver  = h2d.getXUnderYOverCount();
+	    s.xOver_yUnder  = h2d.getXOverYUnderCount();
+	    s.xOver_yOver   = h2d.getXOverYOverCount();
+
+	    return s;
+	}
+
 
 	private static PlotParametersSpec fromParameters(PlotParameters p) {
 		PlotParametersSpec s = new PlotParametersSpec();
@@ -175,6 +224,10 @@ public final class PlotIO {
 		s.extraBorder = p.extraBorder();
 		s.extraStrings = p.getExtraStrings();
 
+		s.logZ = p.isLogZ();
+		s.zColorMap = (p.getColorMap() == null) ? null : p.getColorMap().name();
+		s.showEmptyBins = p.showEmptyBins();
+
 		return s;
 	}
 
@@ -197,6 +250,34 @@ public final class PlotIO {
 			return cs;
 		}
 
+
+		// Heatmap / 2D histogram (best-effort via reflection to avoid tight coupling)
+		try {
+			Object h2 = invokeGetter(curve, "getHisto2DData");
+			if (h2 instanceof Histo2DData h2d) {
+				Histo2DSpec hs2 = new Histo2DSpec();
+				hs2.nx = h2d.nx();
+				hs2.ny = h2d.ny();
+				hs2.xmin = h2d.xMin();
+				hs2.xmax = h2d.xMax();
+				hs2.ymin = h2d.yMin();
+				hs2.ymax = h2d.yMax();
+				hs2.bins = h2d.snapshotBins();
+				hs2.goodCount = h2d.getGoodCount();
+				hs2.xUnderCount = h2d.getXUnderCount();
+				hs2.xOverCount = h2d.getXOverCount();
+				hs2.yUnderCount = h2d.getYUnderCount();
+				hs2.yOverCount = h2d.getYOverCount();
+				hs2.xUnder_yUnder = h2d.getXUnderYUnderCount();
+				hs2.xUnder_yOver = h2d.getXUnderYOverCount();
+				hs2.xOver_yUnder = h2d.getXOverYUnderCount();
+				hs2.xOver_yOver = h2d.getXOverYOverCount();
+				cs.histo2d = hs2;
+				return cs;
+			}
+		} catch (Exception ignore) {
+			// not a heatmap curve
+		}
 		if (curve instanceof Curve xy) {
 			Snapshot snap = xy.snapshot();
 			cs.x = snap.x;
@@ -233,15 +314,21 @@ public final class PlotIO {
 	/** Build PlotData from a spec (must be called on EDT). */
 	private static PlotData createPlotData(PlotSpec spec) throws PlotDataException {
 		Objects.requireNonNull(spec, "spec");
-		Objects.requireNonNull(spec.plotDataType, "spec.plotDataType");
+	    Objects.requireNonNull(spec.plotDataType, "spec.plotDataType");
 
-		PlotDataType type = spec.plotDataType;
-		List<CurveSpec> curves = spec.curves;
+	    PlotDataType type = spec.plotDataType;
 
-		if (curves == null || curves.isEmpty()) {
-			return PlotData.emptyData();
-		}
+	    // Handle H2D first (no curves expected)
+	    if (type == PlotDataType.H2D) {
+	        Histo2DData h2d = buildH2D(spec);      // helper shown below
+	        return newPlotDataForH2D(h2d);         // your existing helper
+	    }
 
+	    // For everything else, curves are required
+	    List<CurveSpec> curves = spec.curves;
+	    if (curves == null || curves.isEmpty()) {
+	        return PlotData.emptyData();
+	    }
 		switch (type) {
 		case H1D: {
 			// One HistoData per curve entry
@@ -261,6 +348,31 @@ public final class PlotIO {
 
 			// Apply per-curve props (visibility, style, method)
 			applyCurveProps(pd, curves);
+			return pd;
+		}
+
+
+		case H2D: {
+			Histo2DSpec hs2 = spec.histo2d;
+			// Backward compatibility: older format stored heatmap in curves[0].histo2d
+			if (hs2 == null && spec.curves != null && !spec.curves.isEmpty()) {
+				hs2 = spec.curves.get(0).histo2d;
+				if (hs2 != null && hs2.name == null) {
+					hs2.name = spec.curves.get(0).name;
+				}
+			}
+			if (hs2 == null || hs2.bins == null) {
+				throw new PlotDataException("Missing 2D histogram data.");
+			}
+			String name = (hs2.name != null) ? hs2.name : "Heatmap";
+			Histo2DData h2d = new Histo2DData(name, hs2.xmin, hs2.xmax, hs2.nx, hs2.ymin, hs2.ymax, hs2.ny);
+			h2d.setBinsForDeserialization(hs2.bins, hs2.goodCount,
+				hs2.xUnderCount, hs2.xOverCount,
+				hs2.yUnderCount, hs2.yOverCount,
+				hs2.xUnder_yUnder, hs2.xUnder_yOver,
+				hs2.xOver_yUnder, hs2.xOver_yOver);
+
+			PlotData pd = new PlotData(h2d);
 			return pd;
 		}
 
@@ -307,6 +419,36 @@ public final class PlotIO {
 
 		throw new PlotDataException("Unsupported plot type: " + type);
 	}
+	
+	private static Histo2DData buildH2D(PlotSpec spec) throws PlotDataException {
+	    Histo2DSpec hs2 = spec.histo2d;
+
+	    // Backward compatibility: older format stored heatmap in curves[0].histo2d
+	    if (hs2 == null && spec.curves != null && !spec.curves.isEmpty()) {
+	        hs2 = spec.curves.get(0).histo2d;
+	        if (hs2 != null && hs2.name == null) {
+	            hs2.name = spec.curves.get(0).name;
+	        }
+	    }
+	    if (hs2 == null || hs2.bins == null) {
+	        throw new PlotDataException("Missing 2D histogram data.");
+	    }
+
+	    String name = (hs2.name != null) ? hs2.name : "Heatmap";
+
+	    Histo2DData h2d = new Histo2DData(name,
+	            hs2.xmin, hs2.xmax, hs2.nx,
+	            hs2.ymin, hs2.ymax, hs2.ny);
+
+	    h2d.setBinsForDeserialization(hs2.bins, hs2.goodCount,
+	            hs2.xUnderCount, hs2.xOverCount,
+	            hs2.yUnderCount, hs2.yOverCount,
+	            hs2.xUnder_yUnder, hs2.xUnder_yOver,
+	            hs2.xOver_yUnder, hs2.xOver_yOver);
+
+	    return h2d;
+	}
+
 
 	private static void applyCurveProps(PlotData pd, List<CurveSpec> curves) {
 		for (int i = 0; i < curves.size(); i++) {
@@ -318,6 +460,32 @@ public final class PlotIO {
 			applyStyle(cs.style, c.getStyle());
 		}
 	}
+
+	
+	/** Best-effort reflection helper: invoke a no-arg getter. */
+	private static Object invokeGetter(Object target, String method) {
+		try {
+			return target.getClass().getMethod(method).invoke(target);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	/** Construct PlotData for an H2D plot while tolerating constructor variations. */
+	private static PlotData newPlotDataForH2D(Histo2DData h2d) throws PlotDataException {
+		try {
+			// Most likely: new PlotData(Histo2DData)
+			return PlotData.class.getConstructor(Histo2DData.class).newInstance(h2d);
+		} catch (Exception ignore) {
+			// Next: new PlotData(Histo2DData[])
+			try {
+				return PlotData.class.getConstructor(Histo2DData[].class).newInstance((Object) new Histo2DData[] { h2d });
+			} catch (Exception ignore2) {
+				throw new PlotDataException("No PlotData constructor supports Histo2DData. Add PlotData(Histo2DData) or PlotData(Histo2DData[])");
+			}
+		}
+	}
+
 
 	/** Apply spec parameters onto a live PlotParameters. */
 	private static void applyParameters(PlotSpec spec, PlotParameters p) {
@@ -374,6 +542,17 @@ public final class PlotIO {
 		p.setExtraDrawing(s.drawExtra);
 		p.setExtraBorder(s.extraBorder);
 		p.setExtraStrings(s.extraStrings);
+
+		// Heatmap knobs
+		p.setLogZ(s.logZ);
+		p.setShowEmptyBins(s.showEmptyBins);
+		if (s.zColorMap != null) {
+			try {
+				p.setColorMap(ScientificColorMap.valueOf(s.zColorMap));
+			} catch (Exception ignore) {
+				// keep default
+			}
+		}
 	}
 
 	/**

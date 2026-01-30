@@ -22,4 +22,7 @@ public final class CurveSpec {
 
     // Histogram (H1D)
     public HistoSpec histo;
+
+    // Histogram (H2D / heatmap)
+    public Histo2DSpec histo2d;
 }

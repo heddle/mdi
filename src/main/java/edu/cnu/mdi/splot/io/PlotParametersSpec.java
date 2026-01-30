@@ -34,6 +34,12 @@ public final class PlotParametersSpec {
     public Double manualYmin;
     public Double manualYmax;
 
+    // Heatmap (H2D) rendering knobs
+    public boolean logZ;
+    /** Stored as enum name from ScientificColorMap, e.g. "VIRIDIS". */
+    public String zColorMap;
+    public boolean showEmptyBins;
+
     // Tick formatting knobs
     public int numDecimalX;
     public int minExponentX;
