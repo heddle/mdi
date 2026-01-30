@@ -37,6 +37,7 @@ import edu.cnu.mdi.splot.example.ErfTest;
 import edu.cnu.mdi.splot.example.ErfcTest;
 import edu.cnu.mdi.splot.example.Gaussian;
 import edu.cnu.mdi.splot.example.GrowingHisto;
+import edu.cnu.mdi.splot.example.Heatmap;
 import edu.cnu.mdi.splot.example.Histo;
 import edu.cnu.mdi.splot.example.Scatter;
 import edu.cnu.mdi.splot.example.StraightLine;
@@ -442,6 +443,7 @@ public class DemoApp extends BaseMDIApplication {
 		JMenuItem erfItem = new JMenuItem("Erf Fit");
 		JMenuItem histoItem = new JMenuItem("Histogram");
 		JMenuItem growingHistoItem = new JMenuItem("Growing Histogram");
+		JMenuItem heatmapItem = new JMenuItem("Heatmap");
 		JMenuItem lineItem = new JMenuItem("Straight Line Fit");
 		JMenuItem stripItem = new JMenuItem("Memory Use Strip Chart");
 		JMenuItem threeGaussiansItem = new JMenuItem("Three Gaussians");
@@ -483,6 +485,11 @@ public class DemoApp extends BaseMDIApplication {
 			GrowingHisto example = new GrowingHisto(true);
 			view.switchToExample(example);
 		});
+		
+		heatmapItem.addActionListener(e -> {
+			Heatmap example = new Heatmap(true);
+			view.switchToExample(example);
+		});
 
 		lineItem.addActionListener(e -> {
 			StraightLine example = new StraightLine(true);
@@ -521,6 +528,7 @@ public class DemoApp extends BaseMDIApplication {
 		examplesMenu.add(erfItem);
 		examplesMenu.add(histoItem);
 		examplesMenu.add(growingHistoItem);
+		examplesMenu.add(heatmapItem);
 		examplesMenu.add(lineItem);
 		examplesMenu.add(stripItem);
 		examplesMenu.add(threeGaussiansItem);

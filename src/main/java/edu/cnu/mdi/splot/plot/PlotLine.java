@@ -14,9 +14,6 @@ import edu.cnu.mdi.graphics.style.Styled;
  */
 public abstract class PlotLine {
 
-//	public Styled(Color fillColor, Color borderColor, Color fitLineColor, Color auxLineColor, LineStyle fitLineStyle,
-//			LineStyle auxLineStyle, float fitLineWidth, float auxLineWidth, SymbolType symbolType, int symbolSize) {
-
 	// default style
 	protected static Styled _defaultStyle = new Styled();
 
@@ -31,6 +28,11 @@ public abstract class PlotLine {
 	protected Point p1 = new Point();
 	protected Point.Double wp = new Point.Double();
 
+	/**
+	 * Create a PlotLine
+	 *
+	 * @param canvas the owner canvas
+	 */
 	public PlotLine(PlotCanvas canvas) {
 		_canvas = canvas;
 	}
