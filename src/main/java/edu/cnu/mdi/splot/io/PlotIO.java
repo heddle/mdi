@@ -419,7 +419,8 @@ public final class PlotIO {
 
 		throw new PlotDataException("Unsupported plot type: " + type);
 	}
-	
+
+	// Helper to build Histo2DData from spec (with backward compatibility)
 	private static Histo2DData buildH2D(PlotSpec spec) throws PlotDataException {
 	    Histo2DSpec hs2 = spec.histo2d;
 

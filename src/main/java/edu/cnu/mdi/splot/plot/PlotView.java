@@ -235,12 +235,6 @@ public class PlotView extends BaseView {
 				_plotCanvas.shutDown();
 			}
 			
-			PlotData plotData = newCanvas.getPlotData();
-			System.out.println("Loaded plot type = " + plotData.getType());
-			System.out.println("Has curves = " + plotData.getCurves().size());
-			System.out.println("Has H2D = " + (plotData.getHisto2DData() != null));
-
-
 			// Stand up and install new plot
 			newCanvas.standUp();
 			PlotPanel newPanel = new PlotPanel(newCanvas);
@@ -283,10 +277,8 @@ public class PlotView extends BaseView {
 		}
 	}
 
+	// Save the current plot
 	private void doSave(boolean forceSaveAs) {
-		System.out.println("SAVE plot type = " + _plotCanvas.getPlotData().getType());
-		System.out.println("SAVE curves = " + _plotCanvas.getPlotData().getCurves().size());
-		System.out.println("SAVE has H2D = " + (_plotCanvas.getPlotData().getHisto2DData() != null));
 
 		File target = _currentPlotFile;
 
