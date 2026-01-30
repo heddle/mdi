@@ -12,7 +12,7 @@ import edu.cnu.mdi.dialog.DialogUtils;
 import edu.cnu.mdi.splot.edit.CurveEditorDialog;
 
 /**
- * This class creates and manages the edit plot for sPlot.
+ * This class creates and manages the plot editor for sPlot.
  *
  * @author heddle
  *
@@ -20,14 +20,14 @@ import edu.cnu.mdi.splot.edit.CurveEditorDialog;
 @SuppressWarnings("serial")
 public class SplotEditMenu extends JMenu implements ActionListener {
 
-	public static final String MENU_TITLE = "Edit Plot";
+	public static final String MENU_TITLE = "Edit";
 
 	// the owner canvas
-	private PlotCanvas _plotCanvas;
+	private final PlotCanvas plotCanvas;
 
 	// the menu items
-	protected JMenuItem _prefItem;
-	protected JMenuItem _curveItem;
+	protected final JMenuItem prefItem;
+	protected JMenuItem curveItem;
 
 	/**
 	 * Create a set of menus and items for sPlot
@@ -38,9 +38,15 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 	 */
 	public SplotEditMenu(PlotCanvas canvas) {
 		super(MENU_TITLE);
-		_plotCanvas = canvas;
-		_prefItem = addMenuItem("Preferences...", 'P', this);
-		_curveItem = addMenuItem("Curves...", 'C', this);
+		plotCanvas = canvas;
+		prefItem = addMenuItem("Preferences...", 'P', this);
+
+		boolean isHisto2D = canvas.getPlotData().getType() == edu.cnu.mdi.splot.pdata.PlotDataType.H2D;
+
+		// 2D histos do not have curves to edit
+		if (!isHisto2D) {
+			curveItem = addMenuItem("Curves...", 'C', this);
+		}
 	}
 
 	/**
@@ -71,6 +77,7 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 		return mitem;
 	}
 
+	// Convenience routine for adding a menu checkbox item.
 	protected JCheckBoxMenuItem addMenuCheckBox(String label, JMenu menu, boolean selected) {
 		JCheckBoxMenuItem cb = null;
 
@@ -90,15 +97,14 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 
-		if (source == _prefItem) {
-			_plotCanvas.showPreferencesEditor();
-		}
-		else if (source == _curveItem) {
-			CurveEditorDialog cd = new CurveEditorDialog(_plotCanvas);
+		if (source == prefItem) {
+			plotCanvas.showPreferencesEditor();
+		} else if (source == curveItem) {
+			CurveEditorDialog cd = new CurveEditorDialog(plotCanvas);
 			DialogUtils.centerDialog(cd);
 			cd.selectFirstCurve();
 			cd.setVisible(true);
-		} 
+		}
 	}
 
 	/**
@@ -107,7 +113,7 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 	 * @return the plot canvas
 	 */
 	public PlotCanvas getPlotCanvas() {
-		return _plotCanvas;
+		return plotCanvas;
 	}
 
 	/**
@@ -116,7 +122,7 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 	 * @return the preferences item
 	 */
 	public JMenuItem getPreferencesItem() {
-		return _prefItem;
+		return prefItem;
 	}
 
 	/**
@@ -125,7 +131,7 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 	 * @return the curve editor item
 	 */
 	public JMenuItem getCurveItem() {
-		return _curveItem;
+		return curveItem;
 	}
 
 }

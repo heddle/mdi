@@ -5,17 +5,38 @@ import java.awt.*;
 
 @SuppressWarnings("serial")
 public class ColorScaleBar extends JComponent {
-    private Color[] currentScale;
+
+    private ScientificColorMap _map;
     private String minLabel = "Min";
     private String maxLabel = "Max";
 
-    public ColorScaleBar(Color[] scale) {
-        this.currentScale = scale;
-        setPreferredSize(new Dimension(200, 50)); // Default size
+    public ColorScaleBar(ScientificColorMap map) {
+        _map = map;
+        setPreferredSize(new Dimension(200, 50));
     }
 
+    /** Backward-compatible constructor if needed elsewhere. */
+    public ColorScaleBar(Color[] scale) {
+        this(ScientificColorMap.VIRIDIS); // default placeholder map
+        // If someone uses this ctor, we’ll draw using the scale via interpolate:
+        _map = null;
+        _fallbackScale = scale;
+        setPreferredSize(new Dimension(200, 50));
+    }
+
+    // Only used by the fallback ctor
+    private Color[] _fallbackScale;
+
+    public void setColorMap(ScientificColorMap map) {
+        _map = map;
+        _fallbackScale = null;
+        repaint();
+    }
+
+    /** Backward-compatible setter if needed. */
     public void setScale(Color[] scale) {
-        this.currentScale = scale;
+        _map = null;
+        _fallbackScale = scale;
         repaint();
     }
 
@@ -36,39 +57,29 @@ public class ColorScaleBar extends JComponent {
         int barHeight = height / 2;
         int padding = 10;
 
-        // 1. Draw the Gradient Bar
-        // We iterate pixel by pixel to ensure the interpolation is perfectly smooth
+        // 1) Gradient bar
         for (int x = padding; x < width - padding; x++) {
-            double value = (double) (x - padding) / (width - 2 * padding);
-            g2d.setColor(getInterpolatedColor(currentScale, value));
+            double value = (double) (x - padding) / (width - 2.0 * padding);
+            Color c;
+            if (_map != null) {
+                c = _map.colorAt(value);
+            } else {
+                c = ScientificColorMap.interpolate(_fallbackScale, value);
+            }
+            g2d.setColor(c);
             g2d.drawLine(x, 5, x, 5 + barHeight);
         }
 
-        // 2. Draw Outline
+        // 2) Outline
         g2d.setColor(Color.DARK_GRAY);
         g2d.drawRect(padding, 5, width - 2 * padding, barHeight);
 
-        // 3. Draw Labels
+        // 3) Labels
         g2d.setColor(getForeground());
         FontMetrics fm = g2d.getFontMetrics();
         g2d.drawString(minLabel, padding, 15 + barHeight + fm.getAscent());
-        
+
         int maxLabelWidth = fm.stringWidth(maxLabel);
         g2d.drawString(maxLabel, width - padding - maxLabelWidth, 15 + barHeight + fm.getAscent());
-    }
-
-    // Helper method for the internal painting logic
-    private Color getInterpolatedColor(Color[] scale, double value) {
-        double pos = value * (scale.length - 1);
-        int index = (int) pos;
-        double fraction = pos - index;
-        if (index >= scale.length - 1) return scale[scale.length - 1];
-        Color c1 = scale[index];
-        Color c2 = scale[index + 1];
-        return new Color(
-            (int) (c1.getRed() + (c2.getRed() - c1.getRed()) * fraction),
-            (int) (c1.getGreen() + (c2.getGreen() - c1.getGreen()) * fraction),
-            (int) (c1.getBlue() + (c2.getBlue() - c1.getBlue()) * fraction)
-        );
     }
 }

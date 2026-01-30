@@ -15,6 +15,14 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
+/**
+ * Plot panel for plot of minimum pairwise separation vs. step.
+ * 
+ * @author heddle
+ *
+ */
+
+@SuppressWarnings("serial")
 public class MinPairwiseSeparation extends PlotPanel {
 
 	private static final String TITLE = "Min Pairwise Separation vs. Step";
@@ -28,6 +36,9 @@ public class MinPairwiseSeparation extends PlotPanel {
 	// the curves
 	private final Curve separationCurve;
 	
+	/**
+	 * Create the plot panel.
+	 */
 	public MinPairwiseSeparation() {
 		super(createCanvas());
 		
@@ -36,8 +47,6 @@ public class MinPairwiseSeparation extends PlotPanel {
 		
 		//set the plot parameters for plot and curves
 		setParameters();
-
-
 	}
 
 	// set plot parameters

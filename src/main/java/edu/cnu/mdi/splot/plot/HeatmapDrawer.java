@@ -6,7 +6,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 
 import edu.cnu.mdi.splot.pdata.Histo2DData;
-import edu.cnu.mdi.ui.colors.ScientificColorMaps;
+import edu.cnu.mdi.ui.colors.ScientificColorMap;
 
 public final class HeatmapDrawer {
 
@@ -29,7 +29,7 @@ public final class HeatmapDrawer {
         
 
         final Graphics2D g2 = (Graphics2D) g;
-        final Color[] scale =canvas.getParameters().getZScale();
+        final Color[] scale =canvas.getParameters().getColorMap().scale();
         final boolean logZ = canvas.getParameters().isLogZ();
         
         // Snapshot for consistent paint
@@ -79,7 +79,7 @@ public final class HeatmapDrawer {
 
                 t = Math.max(0.0, Math.min(1.0, t));
 
-                final Color c = ScientificColorMaps.getInterpolatedColor(scale, t);
+                final Color c = ScientificColorMap.interpolate(scale, t);
 
                 Point p0 = canvas.dataToScreen(x0, y0);
                 Point p1 = canvas.dataToScreen(x1, y1);

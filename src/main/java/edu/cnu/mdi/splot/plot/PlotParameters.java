@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.util.Vector;
 
-import edu.cnu.mdi.ui.colors.ScientificColorMaps;
+import edu.cnu.mdi.ui.colors.ScientificColorMap;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
@@ -34,7 +34,7 @@ public class PlotParameters {
 	
 	// Z scale (for heatmaps / 2D histograms)
 	private boolean _logZ = false;
-	private Color[] _zScale = ScientificColorMaps.VIRIDIS;
+	private ScientificColorMap _zColorMap = ScientificColorMap.VIRIDIS;
 
 
 	//reverse axes?
@@ -122,8 +122,22 @@ public class PlotParameters {
 	 *
 	 * @return the Z color scale
 	 */
-	public Color[] getZScale() {
-	    return _zScale;
+	public ScientificColorMap getColorMap() {
+	    return _zColorMap;
+	}
+	
+	/**
+	 * Set the color scale for Z values (heatmap intensity).
+	 * Applies to heatmap/2D histogram rendering only.
+	 *
+	 * @param colorMap the Z color scale (null ignored)
+	 * @return this parameters instance (for chaining)
+	 */
+	public PlotParameters setColorMap(ScientificColorMap colorMap) {
+	    if (colorMap != null) {
+	        _zColorMap = colorMap;
+	    }
+	    return this;
 	}
 
 	/**

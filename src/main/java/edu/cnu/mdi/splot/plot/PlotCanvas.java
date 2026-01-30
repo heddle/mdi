@@ -22,11 +22,13 @@ import javax.swing.Timer;
 import javax.swing.event.EventListenerList;
 
 import edu.cnu.mdi.feedback.FeedbackPane;
+import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.CurveChangeType;
 import edu.cnu.mdi.splot.pdata.DataChangeListener;
+import edu.cnu.mdi.splot.pdata.Histo2DData;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
@@ -683,7 +685,6 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	@Override
 	public void mouseMoved(MouseEvent e) {
 
-		// System.err.println("Plot Canvas MMoved");
 		if (_plotData == null) {
 			return;
 		}
@@ -704,6 +705,19 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 		Point pp = e.getPoint();
 		Point2D.Double dataPoint = new Point2D.Double();
 		screenToData(pp, dataPoint);
+		
+		//as always, Histo2D's are handled separately
+		if (_plotData.isHisto2DData()) {
+			Histo2DData h2d = _plotData.getHisto2DData();
+			if (h2d != null) {
+				histo2DFeedback(h2d, dataPoint, feedback);
+				return;
+			}
+			return;
+		}
+		
+		
+		
 		feedback.append(String.format("(x, y) = (%7.2g, %-7.2g)", dataPoint.x, dataPoint.y));
 
 		if (_plotData.isXYData()) {
@@ -735,6 +749,44 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 				feedback.append(cStr);
 			}
 		}
+	}
+	
+	// feedback for Histo2D
+	private void histo2DFeedback(Histo2DData h2d, Point2D.Double dataPoint, FeedbackPane feedback) {
+
+		boolean logZ = _parameters.isLogZ();
+		
+		
+		int count = (int) h2d.bin(dataPoint.x, dataPoint.y);
+		
+		double xbr[] = h2d.xBinRange(dataPoint.x);
+		double ybr[] = h2d.yBinRange(dataPoint.y);
+		if (xbr == null || ybr == null) {
+			feedback.append(String.format("(x, y) = (%.2f, %.2f) out of range", dataPoint.x, dataPoint.y));
+			return;
+		}
+
+		String s = String.format("x ε [%.1f , %.1f),  y ε [%.1f , %.1f) Z = %d", xbr[0], xbr[1], ybr[0], ybr[1], count);
+
+		if (logZ) {
+			double logCount = (count > 0) ? Math.log10(count) : 0.0;
+			s += String.format("  (%sZ = %.2f)", UnicodeUtils.LOG10, logCount);
+		}
+		feedback.append(s);
+		
+		double maxCount = h2d.maxBin();
+		if (maxCount > 0) {
+			double zOverzMax = count / h2d.maxBin();
+			s = String.format("Z/Zmax: %.1f%%", 100.0 * zOverzMax);
+			feedback.append(s);
+		}
+		
+		double percentile = h2d.percentile(dataPoint.x, dataPoint.y);
+		double mean3x3 = h2d.localMean3x3(dataPoint.x, dataPoint.y);
+		
+		feedback.append(String.format("Percentile: %dfth    Local avg (3x3): %d", Math.round(percentile), (int)mean3x3));
+		
+
 	}
 
 	/**

@@ -44,7 +44,7 @@ public final class Histo2DData {
     private final double _ymax;
     private final double _dx;
     private final double _dy;
-
+    
     // ---- storage ----
     private final double[][] _bins;
 
@@ -70,6 +70,11 @@ public final class Histo2DData {
     private boolean _minMaxDirty = true;
     private double _cachedMax = 0.0;
     private double _cachedMinNonZero = 0.0;
+    private double _cachedMean = 0.0;
+	// ---- percentile cache (occupied bin distribution) ----
+	private boolean _percentilesDirty = true;
+	private double[] _cachedNonZeroSorted = new double[0];
+
 
     // single lock for simplicity
     private final Object _lock = new Object();
@@ -122,35 +127,42 @@ public final class Histo2DData {
         return _name;
     }
 
-    // ---- geometry ----
+    /** @return number of x bins */
     public int nx() {
         return _nx;
     }
 
+    /** @return number of y bins */
     public int ny() {
         return _ny;
     }
 
+    /** @return minimum x value */
     public double xMin() {
         return _xmin;
     }
 
+    /** @return maximum x value */
     public double xMax() {
         return _xmax;
     }
 
+    /** @return minimum y value */
     public double yMin() {
         return _ymin;
     }
 
+    /** @return maximum y value */
     public double yMax() {
         return _ymax;
     }
 
+    /** @return x bin width */
     public double xBinWidth() {
         return _dx;
     }
 
+    /** @return y bin width */
     public double yBinWidth() {
         return _dy;
     }
@@ -195,6 +207,9 @@ public final class Histo2DData {
         return (iy >= 0 && iy < _ny) ? iy : -1;
     }
 
+    /**
+	 * Fill the histogram with weight 1.0.
+	 */
     public void fill(double x, double y) {
         fill(x, y, 1.0);
     }
@@ -231,6 +246,7 @@ public final class Histo2DData {
                     _bins[ix][iy] += weight;
                     _goodCount++;
                     _minMaxDirty = true;
+					_percentilesDirty = true;
                 }
                 // else: should never happen, but don't count as good if it does
                 return;
@@ -260,7 +276,22 @@ public final class Histo2DData {
     // ---- access ----
 
     /**
+	 * Get the bin content for data coordinates. Returns 0 for out-of-range.
+	 * @param x data x
+	 * @param y data y
+	 * @return bin content (the "z" value)
+	 */
+    public double bin(double x, double y) {
+		int ix = xIndex(x);
+		int iy = yIndex(y);
+		return bin(ix, iy);
+	}
+    
+    /**
      * Get the bin content. Returns 0 for out-of-range indices.
+     * @param ix x bin index
+     * @param iy y bin index
+     * @return bin content (the "z" value)
      */
     public double bin(int ix, int iy) {
         if (ix < 0 || ix >= _nx || iy < 0 || iy >= _ny) {
@@ -270,6 +301,37 @@ public final class Histo2DData {
             return _bins[ix][iy];
         }
     }
+    
+    /**
+     * Get the x bin range for a data x.
+     * @param x data x
+     * @return [x0, x1] bin range, or null if out of range
+     */
+    public double[] xBinRange(double x) {
+		int ix = xIndex(x);
+		if (ix < 0 || ix >= _nx) {
+			return null;
+		}
+		double x0 = _xmin + ix * _dx;
+		double x1 = x0 + _dx;
+		return new double[] {x0, x1};
+	}
+    
+    /**
+	 * Get the y bin range for a data y.
+	 * @param y data y
+	 * @return [y0, y1] bin range, or null if out of range
+	 */
+	public double[] yBinRange(double y) {
+		int iy = yIndex(y);
+		if (iy < 0 || iy >= _ny) {
+			return null;
+
+		}
+		double y0 = _ymin + iy * _dy;
+		double y1 = y0 + _dy;
+		return new double[] { y0, y1 };
+	}
 
     /**
      * Backwards-compatible name: this returns the in-range (good) fill count.
@@ -322,6 +384,26 @@ public final class Histo2DData {
     /** @return corner: x over, y over. */
     public long getXOverYOverCount()   { synchronized (_lock) { return _xOver_yOver; } }
 
+    /** @return number of non-empty bins. */
+    public long getEmptyBinCount() {
+		synchronized (_lock) {
+			long count = 0;
+			for (int ix = 0; ix < _nx; ix++) {
+				for (int iy = 0; iy < _ny; iy++) {
+					if (_bins[ix][iy] == 0.0) {
+						count++;
+					}
+				}
+			}
+			return count;
+		}
+	}
+    
+    
+    /**
+	 * Get the maximum bin value.
+	 * @return maximum bin value, or 0 if none
+	 */
     public double maxBin() {
         synchronized (_lock) {
             recomputeMinMaxIfNeeded();
@@ -329,6 +411,10 @@ public final class Histo2DData {
         }
     }
 
+    /**
+     * Get the minimum non-zero bin value.
+     * @return minimum non-zero bin value, or 0 if none
+     */
     public double minNonZero() {
         synchronized (_lock) {
             recomputeMinMaxIfNeeded();
@@ -356,6 +442,10 @@ public final class Histo2DData {
             _cachedMax = 0.0;
             _cachedMinNonZero = 0.0;
             _minMaxDirty = false;
+
+			// percentile cache
+			_cachedNonZeroSorted = new double[0];
+			_percentilesDirty = false;
         }
     }
 
@@ -398,6 +488,7 @@ public final class Histo2DData {
 
         double max = 0.0;
         double minNZ = 0.0;
+        double meanSum = 0.0;
 
         for (int ix = 0; ix < _nx; ix++) {
             for (int iy = 0; iy < _ny; iy++) {
@@ -413,13 +504,138 @@ public final class Histo2DData {
                         minNZ = v;
                     }
                 }
+                meanSum += v;
             }
         }
 
         _cachedMax = max;
         _cachedMinNonZero = minNZ;
+        _cachedMean = meanSum /(_nx * _ny);
         _minMaxDirty = false;
     }
+    
+    /**
+	 * Get the mean bin value (average of in-range bins).
+	 * @return mean bin value, or 0 if none
+	 */
+    public double meanBin() {
+		synchronized (_lock) {
+			recomputeMinMaxIfNeeded();
+			return _cachedMean;
+		}
+	}
+
+	/**
+	 * Get the percentile rank of the bin containing the given data coordinate.
+	 * <p>
+	 * Percentile is computed over the distribution of <em>occupied</em> bins (non-zero,
+	 * finite bin values). The returned value is in the range {@code [0, 100]} where
+	 * 0 means "empty or no occupied bins" and 100 means "at or above the maximum occupied bin".
+	 * </p>
+	 *
+	 * @param datax data x coordinate
+	 * @param datay data y coordinate
+	 * @return percentile rank in {@code [0, 100]}
+	 */
+	public double percentile(double datax, double datay) {
+		int ix = xIndex(datax);
+		int iy = yIndex(datay);
+		if (ix < 0 || iy < 0) {
+			return 0.0;
+		}
+		synchronized (_lock) {
+			recomputePercentilesIfNeeded();
+			double v = _bins[ix][iy];
+			if (!Double.isFinite(v) || v == 0.0 || _cachedNonZeroSorted.length == 0) {
+				return 0.0;
+			}
+			int upper = upperBound(_cachedNonZeroSorted, v);
+			return 100.0 * upper / _cachedNonZeroSorted.length;
+		}
+	}
+
+	/**
+	 * Compute the local 3x3 neighborhood average around the bin containing the given data coordinate.
+	 * <p>
+	 * The neighborhood includes the center bin and all valid in-range neighbors. The average is computed
+	 * over finite values; non-finite values are ignored.
+	 * </p>
+	 *
+	 * @param datax data x coordinate
+	 * @param datay data y coordinate
+	 * @return local 3x3 average, or 0 if the coordinate is out of range or no finite bins are available
+	 */
+	public double localMean3x3(double datax, double datay) {
+		int ix = xIndex(datax);
+		int iy = yIndex(datay);
+		if (ix < 0 || iy < 0) {
+			return 0.0;
+		}
+		synchronized (_lock) {
+			double sum = 0.0;
+			int n = 0;
+			for (int dx = -1; dx <= 1; dx++) {
+				int x = ix + dx;
+				if (x < 0 || x >= _nx) {
+					continue;
+				}
+				for (int dy = -1; dy <= 1; dy++) {
+					int y = iy + dy;
+					if (y < 0 || y >= _ny) {
+						continue;
+					}
+					double v = _bins[x][y];
+					if (Double.isFinite(v)) {
+						sum += v;
+						n++;
+					}
+				}
+			}
+			return (n > 0) ? (sum / n) : 0.0;
+		}
+	}
+
+	// ---- percentile helpers ----
+
+	/** Build and cache a sorted list of non-zero finite bin values (occupied bins). Must be called under {@code _lock}. */
+	private void recomputePercentilesIfNeeded() {
+		if (!_percentilesDirty) {
+			return;
+		}
+		// Worst-case size nx*ny; we'll compact after the scan.
+		double[] tmp = new double[_nx * _ny];
+		int n = 0;
+		for (int ix = 0; ix < _nx; ix++) {
+			for (int iy = 0; iy < _ny; iy++) {
+				double v = _bins[ix][iy];
+				if (Double.isFinite(v) && v != 0.0) {
+					tmp[n++] = v;
+				}
+			}
+		}
+		if (n == 0) {
+			_cachedNonZeroSorted = new double[0];
+		} else {
+			_cachedNonZeroSorted = Arrays.copyOf(tmp, n);
+			Arrays.sort(_cachedNonZeroSorted);
+		}
+		_percentilesDirty = false;
+	}
+
+	/** Upper bound: index of first element greater than {@code value}. */
+	private static int upperBound(double[] a, double value) {
+		int lo = 0;
+		int hi = a.length;
+		while (lo < hi) {
+			int mid = (lo + hi) >>> 1;
+			if (a[mid] <= value) {
+				lo = mid + 1;
+			} else {
+				hi = mid;
+			}
+		}
+		return lo;
+	}
     
     /**
      * Return a human-readable summary of in-range and out-of-range fills.

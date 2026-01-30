@@ -85,7 +85,7 @@ public class AxesTabPanel extends JPanel {
 		_logZ.setSelected(_params.isLogZ());
 		
 		//color map for heatmap
-		_colorMapPanel = new ColorMapSelectorPanel();
+		_colorMapPanel = new ColorMapSelectorPanel(_params.getColorMap());
 
 		// When log is selected, include-zero is meaningless/invalid.
 		_logX.addActionListener(e -> updateForLogSelection());
@@ -205,6 +205,8 @@ public class AxesTabPanel extends JPanel {
 
 		// Apply limits/methods first (may set manual ranges)
 		_limitsPanel.apply();
+		
+		_params.setColorMap(_colorMapPanel.getCurrentMap());
 
 		// Apply scale before include-zero, since include-zero is disabled in log mode.
 		_params.setXScale(_logX.isSelected() ? PlotParameters.AxisScale.LOG10 : PlotParameters.AxisScale.LINEAR);

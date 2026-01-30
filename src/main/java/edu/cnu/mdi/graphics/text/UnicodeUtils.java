@@ -27,6 +27,8 @@ public class UnicodeUtils {
 	public static final String SUPERN = "ⁿ";
 	public static final String SUBN = "ₙ";
 
+	public static final String LOG10 = "log₁₀";
+	
 	// erase left
 	public static final String BACKSPACE = "⌫";
 
@@ -247,57 +249,6 @@ public class UnicodeUtils {
 
 		s = s.replace("\\dagger", DAGGER);
 		return s;
-	}
-	
-	/**
-	 * Get the subscript string for the given integer.
-	 * 
-	 * @param n the integer
-	 * @return the subscript string
-	 */
-	public static String getSubscript(int n, boolean isNegative) {
-		StringBuilder sb = new StringBuilder();
-		String numStr = Integer.toString(n);
-		for (int i = 0; i < numStr.length(); i++) {
-			char c = numStr.charAt(i);
-			switch (c) {
-			case '0':
-				sb.append(SUB0);
-				break;
-			case '1':
-				sb.append(SUB1);
-				break;
-			case '2':
-				sb.append(SUB2);
-				break;
-			case '3':
-				sb.append(SUB3);
-				break;
-			case '4':
-				sb.append(SUB4);
-				break;
-			case '5':
-				sb.append(SUB5);
-				break;
-			case '6':
-				sb.append(SUB6);
-				break;
-			case '7':
-				sb.append(SUB7);
-				break;
-			case '8':
-				sb.append(SUB8);
-				break;
-			case '9':
-				sb.append(SUB9);
-				break;
-			}
-		}
-		
-		if (isNegative) {
-			sb.insert(0, SUBMINUS);
-		}
-		return sb.toString();
 	}
 	
 	/**

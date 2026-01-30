@@ -10,97 +10,62 @@ import javax.swing.SwingUtilities;
 @SuppressWarnings("serial")
 public class ColorMapSelectorPanel extends JPanel {
 
-	/** Supported color map names */
-    public enum ColorMapType {
-        VIRIDIS("Viridis"),
-        MAGMA("Magma"),
-        INFERNO("Inferno"),
-        PLASMA("Plasma"),
-        TURBO("Turbo"),
-    	GRAYSCALE("Grayscale");
+    private final JComboBox<ScientificColorMap> _combo;
+    private final ColorScaleBar _scaleBar;
+    private ScientificColorMap _currentMap;
 
-        private final String label;
+    /**
+     * Create a panel for selecting a scientific color map.
+     */
+    public ColorMapSelectorPanel(ScientificColorMap initialMap) {
+        super(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        
+        _currentMap = initialMap;
 
-        ColorMapType(String label) {
-            this.label = label;
-        }
+        _combo = new JComboBox<>(ScientificColorMap.values());
+        _combo.setSelectedItem(initialMap);
+        add(_combo);
 
-        @Override
-        public String toString() {
-            return label;
-        }
+        _scaleBar = new ColorScaleBar(initialMap);
+        _scaleBar.setPreferredSize(new Dimension(100, 20));
+        add(_scaleBar);
+
+        _combo.addActionListener(e -> {
+            ScientificColorMap map = (ScientificColorMap) _combo.getSelectedItem();
+            if (map != null) {
+            	_currentMap = map;
+                applyColorMap(map);
+            }
+        });
+    }
+    
+    /**
+	 * Get the currently selected color map.
+	 * 
+	 * @return the current ScientificColorMap
+	 */
+    public ScientificColorMap getCurrentMap() {
+		return _currentMap;
+	}
+    
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        _combo.setEnabled(enabled);
+        _scaleBar.setEnabled(enabled);
     }
 
-	public void setEnabled(boolean enabled) {
-		super.setEnabled(enabled);
-		_combo.setEnabled(enabled);
-		_scaleBar.setEnabled(enabled);
-	}
+    // apply on EDT
+    private void applyColorMap(ScientificColorMap map) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> applyColorMap(map));
+            return;
+        }
+        _scaleBar.setColorMap(map);
+    }
 
-	private final JComboBox<ColorMapType> _combo;
-	private final ColorScaleBar _scaleBar;
-
-	public ColorMapSelectorPanel() {
-		super(new FlowLayout(FlowLayout.LEFT, 4, 0));
-
-		_combo = new JComboBox<>(ColorMapType.values());
-		_combo.setSelectedItem(ColorMapType.VIRIDIS); // default
-		add(_combo);
-
-		_scaleBar = new ColorScaleBar(ScientificColorMaps.VIRIDIS);
-		_scaleBar.setPreferredSize(new Dimension(100, 20));
-		add(_scaleBar);
-
-		// Initialize to default
-		// applyColorMap(ColorMapType.VIRIDIS);
-
-		// --- Wiring ---
-		_combo.addActionListener(e -> {
-			ColorMapType type = (ColorMapType) _combo.getSelectedItem();
-			if (type != null) {
-				applyColorMap(type);
-			}
-		});
-	}
-
-	/**
-	 * Apply the selected color map to the scale bar.
-	 */
-	private void applyColorMap(ColorMapType type) {
-		// Ensure EDT safety
-		if (!SwingUtilities.isEventDispatchThread()) {
-			SwingUtilities.invokeLater(() -> applyColorMap(type));
-			return;
-		}
-
-		switch (type) {
-		case VIRIDIS:
-			_scaleBar.setScale(ScientificColorMaps.VIRIDIS);
-			break;
-		case MAGMA:
-			_scaleBar.setScale(ScientificColorMaps.MAGMA);
-			break;
-		case INFERNO:
-			_scaleBar.setScale(ScientificColorMaps.INFERNO);
-			break;
-		case PLASMA:
-			_scaleBar.setScale(ScientificColorMaps.PLASMA);
-			break;
-		case TURBO:
-			_scaleBar.setScale(ScientificColorMaps.TURBO);
-			break;
-		case GRAYSCALE:
-			_scaleBar.setScale(ScientificColorMaps.GRAYSCALE);
-			break;
-		}
-
-		_scaleBar.repaint();
-	}
-
-	/**
-	 * Optional convenience accessor if other code wants the selection.
-	 */
-	public ColorMapType getSelectedColorMap() {
-		return (ColorMapType) _combo.getSelectedItem();
-	}
+    public ScientificColorMap getSelectedColorMap() {
+        return (ScientificColorMap) _combo.getSelectedItem();
+    }
 }
