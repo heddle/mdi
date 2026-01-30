@@ -777,14 +777,14 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 		double maxCount = h2d.maxBin();
 		if (maxCount > 0) {
 			double zOverzMax = count / h2d.maxBin();
-			s = String.format("Z/Zmax: %.1f%%", 100.0 * zOverzMax);
+			s = String.format("Z / Zmax: %.1f%%", 100.0 * zOverzMax);
 			feedback.append(s);
 		}
 		
 		double percentile = h2d.percentile(dataPoint.x, dataPoint.y);
 		double mean3x3 = h2d.localMean3x3(dataPoint.x, dataPoint.y);
 		
-		feedback.append(String.format("Percentile: %dfth    Local avg (3x3): %d", Math.round(percentile), (int)mean3x3));
+		feedback.append(String.format("Percentile: %dth    Local avg (3x3): %d", Math.round(percentile), (int)mean3x3));
 		
 
 	}

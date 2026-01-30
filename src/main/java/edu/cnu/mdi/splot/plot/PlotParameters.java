@@ -35,6 +35,7 @@ public class PlotParameters {
 	// Z scale (for heatmaps / 2D histograms)
 	private boolean _logZ = false;
 	private ScientificColorMap _zColorMap = ScientificColorMap.VIRIDIS;
+	private boolean _showEmptyBins = false;
 
 
 	//reverse axes?
@@ -117,6 +118,16 @@ public class PlotParameters {
 	}
 	
 	/**
+	 * Set whether to show empty bins in heatmap/2D histogram rendering.
+	 *
+	 * @param showEmptyBins true to show empty bins
+	 * @return this parameters instance (for chaining)
+	 */
+	public boolean showEmptyBins() {
+	    return _showEmptyBins;
+	}
+	
+	/**
 	 * Get the color scale for Z values (heatmap intensity).
 	 * Applies to heatmap/2D histogram rendering only.
 	 *
@@ -151,7 +162,15 @@ public class PlotParameters {
 	    _logZ = logZ;
 	    return this;
 	}
-
+	
+	/**
+	 * Set whether to show empty bins in heatmap/2D histogram rendering.
+	 *
+	 * @param showEmptyBins true to show empty bins
+	 */
+	public void setShowEmptyBins(boolean showEmptyBins) {
+	    _showEmptyBins = showEmptyBins;
+	}
 
 	/**
 	 * Force the plot to include {@code x = 0} when determining x-axis limits.

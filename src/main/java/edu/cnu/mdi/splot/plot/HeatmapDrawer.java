@@ -52,15 +52,23 @@ public final class HeatmapDrawer {
 
         final double xmin = h2d.xMin();
         final double ymin = h2d.yMin();
+        
+        boolean showEmptyBins = canvas.getParameters().showEmptyBins();
 
         for (int ix = 0; ix < nx; ix++) {
             final double x0 = xmin + ix * dx;
             final double x1 = x0 + dx;
 
             for (int iy = 0; iy < ny; iy++) {
-            	final double v = bins[ix][iy];
-            	if (!(v >= 0) || !Double.isFinite(v)) {
+            	
+            	//z is the count as a double
+            	final double z = bins[ix][iy];
+            	if (!(z >= 0) || !Double.isFinite(z)) {
             	    continue;
+            	}
+            	
+            	if (z < 0.1 && showEmptyBins) {
+				    continue;
             	}
             	
                 final double y0 = ymin + iy * dy;
@@ -68,9 +76,9 @@ public final class HeatmapDrawer {
 
                 double t;
                 if (!logZ) {
-                    t = (zMax <= 0) ? 0.0 : (v / zMax);     // v=0 -> t=0 (paint it!)
+                    t = (zMax <= 0) ? 0.0 : (z / zMax);     // v=0 -> t=0 (paint it!)
                 } else {
-                    t = (denom <= 0) ? 0.0 : (Math.log10(v + 1.0) / denom); // v=0 -> t=0
+                    t = (denom <= 0) ? 0.0 : (Math.log10(z + 1.0) / denom); // v=0 -> t=0
                 }
 
                 if (!Double.isFinite(t)) {
@@ -90,6 +98,7 @@ public final class HeatmapDrawer {
                 int h = Math.max(1, Math.abs(p1.y - p0.y));
 
                 // optional anti-seam
+                
                 g2.setColor(c);
                 g2.fillRect(x, y, w + 1, h + 1);
              }

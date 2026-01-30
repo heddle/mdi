@@ -35,7 +35,8 @@ public class AxesTabPanel extends JPanel {
 
 	private final JCheckBox _logX;
 	private final JCheckBox _logY;
-	private final JCheckBox _logZ;          // heatmap only
+	private final JCheckBox _logZ;           // heatmap only
+	private final JCheckBox _showEmptyBins;  // heatmap only
 	private final ColorMapSelectorPanel _colorMapPanel; // heatmap only
 
 	private final JSpinner _decX;
@@ -49,6 +50,10 @@ public class AxesTabPanel extends JPanel {
 	
 	private final PlotDataType _plotDataType;
 
+	/**
+	 * Create the axes tab panel. This includes controls for axis limits, scaling,
+	 * @param canvas the plot canvas
+	 */
     public AxesTabPanel(PlotCanvas canvas) {
         _params = canvas.getParameters();
         _plotDataType = canvas.getPlotData().getType();
@@ -56,9 +61,11 @@ public class AxesTabPanel extends JPanel {
 		setBorder(new CommonBorder("Axes"));
 		setLayout(new GridBagLayout());
 
+		// include zero in auto limits
 		_xZero0 = _params.includeXZero();
 		_yZero0 = _params.includeYZero();
 
+		//reverse axes
         boolean _xReverse0 = _params.isReverseXaxis();
         boolean _yReverse0 = _params.isReverseYaxis();
 
@@ -83,6 +90,11 @@ public class AxesTabPanel extends JPanel {
 		_logZ = new JCheckBox("Log Z (heatmap)");
 		_logZ.setToolTipText("Applies to heatmap/2D histogram intensity only");
 		_logZ.setSelected(_params.isLogZ());
+		
+		// show empty bins (heatmap only)
+		_showEmptyBins = new JCheckBox("Show empty bins (heatmap)");
+		_showEmptyBins.setToolTipText("If selected, bins with zero counts are shown in white");
+		_showEmptyBins.setSelected(_params.showEmptyBins());
 		
 		//color map for heatmap
 		_colorMapPanel = new ColorMapSelectorPanel(_params.getColorMap());
@@ -137,7 +149,9 @@ public class AxesTabPanel extends JPanel {
 		int oldLeft = c.insets.left;
 		c.insets = new Insets(c.insets.top, 12, c.insets.bottom, c.insets.right);
 		add(_logZ, c);
-		c.gridy -= 2;
+		c.gridy++;
+		add(_showEmptyBins, c);
+		c.gridy -= 3;
 		JLabel cmLabel = new JLabel("Color Map (heatmap)");
 		cmLabel.setFont(Fonts.defaultFont);
 		add(cmLabel, c);
@@ -213,6 +227,7 @@ public class AxesTabPanel extends JPanel {
 		_params.setYScale(_logY.isSelected() ? PlotParameters.AxisScale.LOG10 : PlotParameters.AxisScale.LINEAR);
 
 		_params.setLogZ(_logZ.isSelected());
+		_params.setShowEmptyBins(_showEmptyBins.isSelected());
 
 		_params.includeXZero(_includeXZero.isSelected());
 		_params.includeYZero(_includeYZero.isSelected());
