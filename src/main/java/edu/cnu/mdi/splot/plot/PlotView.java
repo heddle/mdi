@@ -133,28 +133,27 @@ public class PlotView extends BaseView {
 		repaint();
 	}
 
-	/**
-	 * Switch to a new example, replacing the current plot panel and menus This is
-	 * used by the demo app
-	 *
-	 * @param example the example to switch to
-	 */
-	public void switchToExample(AExample example) {
-		Objects.requireNonNull(example, "Example cannot be null");
 
-		// example switch means the current file is no longer authoritative
+	/**
+	 * Switch to a different plot panel (and its canvas)
+	 *
+	 * @param plotPanel the new plot panel
+	 */
+	public void switchToPlotPanel(PlotPanel plotPanel) {
+		Objects.requireNonNull(plotPanel, "PlotPanel cannot be null");
+
+		// plot panel switch means the current file is no longer authoritative
 		_currentPlotFile = null;
 
 		// remove the old edit menu and shutdown old canvas
 		JMenu splotMenu = findMenu(getJMenuBar(), SplotEditMenu.MENU_TITLE);
 		if (splotMenu != null) {
 			getJMenuBar().remove(splotMenu);
-			example.getPlotCanvas().shutDown(); // keeps your existing behavior
+			_plotCanvas.shutDown(); // keeps your existing behavior
 		}
 
-		PlotCanvas plotCanvas = example.getPlotCanvas();
+		PlotCanvas plotCanvas = plotPanel.getPlotCanvas();
 		plotCanvas.standUp();
-		PlotPanel plotPanel = example.getPlotPanel();
 		setPlotPanel(plotPanel);
 
 		// re-add edit menu tied to new canvas (keep file menu as-is)
@@ -164,7 +163,7 @@ public class PlotView extends BaseView {
 		revalidate();
 		repaint();
 	}
-
+	
 	private JMenu findMenu(JMenuBar menuBar, String targetName) {
 		if (menuBar == null) return null;
 		for (int i = 0; i < menuBar.getMenuCount(); i++) {

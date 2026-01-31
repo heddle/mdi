@@ -1,7 +1,10 @@
 package edu.cnu.mdi.splot.io;
 
+import java.util.EnumSet;
+
 import edu.cnu.mdi.splot.plot.LimitsMethod;
 import edu.cnu.mdi.splot.plot.PlotParameters;
+import edu.cnu.mdi.splot.plot.RenderHint;
 
 /**
  * Persisted subset of PlotParameters that materially affects plot appearance/behavior.
@@ -20,6 +23,9 @@ public final class PlotParametersSpec {
     // Axis scaling
     public PlotParameters.AxisScale xScale = PlotParameters.AxisScale.LINEAR;
     public PlotParameters.AxisScale yScale = PlotParameters.AxisScale.LINEAR;
+
+	// rendering hints
+	public EnumSet<RenderHint> renderHints = EnumSet.noneOf(RenderHint.class);
 
     // Include-zero behavior
     public boolean includeXZero;

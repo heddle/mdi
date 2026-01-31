@@ -26,6 +26,7 @@ import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
+import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.CurveChangeType;
 import edu.cnu.mdi.splot.pdata.DataChangeListener;
 import edu.cnu.mdi.splot.pdata.Histo2DData;
@@ -199,6 +200,15 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 */
 	public PlotParameters getParameters() {
 		return _parameters;
+	}
+	
+	/**
+	 * Check if this is a bar plot
+	 * 
+	 * @return true if this is a bar plot
+	 */
+	public boolean isBarPlot() {
+		return _parameters.hasRenderHint(RenderHint.BARPLOT);
 	}
 
 	/**
@@ -721,6 +731,10 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 		feedback.append(String.format("(x, y) = (%7.2g, %-7.2g)", dataPoint.x, dataPoint.y));
 
 		if (_plotData.isXYData()) {
+			if (isBarPlot()) {
+				barPlotFeedback(dataPoint, feedback, pp);
+				return;
+			}
 			List<ACurve> curves = _plotData.getVisibleCurves();
 
 			for (ACurve curve : curves) {
@@ -747,6 +761,48 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 					cStr += " " + fitSummary;
 				}
 				feedback.append(cStr);
+			}
+		}
+	}
+	
+	// feedback for bar plots
+	private void barPlotFeedback(Point2D.Double dataPoint, FeedbackPane feedback, Point pp) {
+		List<ACurve> curves = _plotData.getVisibleCurves();
+		double mouseX = dataPoint.x;
+		double closestBarX = Double.NaN;
+		Curve closestCurve = null;
+		double minDist = Double.POSITIVE_INFINITY;
+
+		for (ACurve curve : curves) {
+			Snapshot s = curve.snapshot();
+			double[] xArr = s.x;
+			double[] yArr = s.y;
+			if (xArr == null || yArr == null) {
+				continue;
+			}
+			for (int i = 0; i < xArr.length; i++) {
+				double xVal = xArr[i];
+				double dist = Math.abs(xVal - mouseX);
+				if (dist < minDist) {
+					minDist = dist;
+					closestBarX = xVal;
+					closestCurve = (Curve) curve;
+				}
+			}
+		}
+
+		if (closestCurve != null && !Double.isNaN(closestBarX)) {
+			Snapshot s = closestCurve.snapshot();
+			String name = closestCurve.name();
+			double height = closestCurve.yData().get(1) - closestCurve.yData().get(0);
+			double[] xArr = s.x;
+			double[] yArr = s.y;
+			for (int i = 0; i < xArr.length; i++) {
+				if (xArr[i] == closestBarX) {
+					double barHeight = yArr[i];
+					feedback.append(String.format("Category %s at x=%.2f has height %.2f", name, closestBarX, height));
+					break;
+				}
 			}
 		}
 	}

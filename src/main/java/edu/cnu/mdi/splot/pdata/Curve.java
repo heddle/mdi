@@ -1,5 +1,6 @@
 package edu.cnu.mdi.splot.pdata;
 
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -551,5 +552,24 @@ public class Curve extends ACurve {
 			this.ey = ey;
 			this.hasEy = true;
 		}
+	}
+	
+	/**
+	 * Get the centroid of the curve data points.
+	 * @return the centroid as a Point2D.Double
+	 */
+	public Point2D.Double getCentroid() {
+		requireEdt("getCentroid");
+		double sumX = 0.0;
+		double sumY = 0.0;
+		int n = length();
+		if (n == 0) {
+			return new Point2D.Double(Double.NaN, Double.NaN);
+		}
+		for (int i = 0; i < n; i++) {
+			sumX += xData.get(i);
+			sumY += yData.get(i);
+		}
+		return new Point2D.Double(sumX / n, sumY / n);
 	}
 }

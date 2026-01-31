@@ -2,6 +2,7 @@ package edu.cnu.mdi.splot.example;
 
 import java.util.Collection;
 
+import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.fit.Evaluator;
 import edu.cnu.mdi.splot.pdata.ACurve;
@@ -101,6 +102,19 @@ public class TwoLinesWithErrors extends AExample {
 		for (ACurve dc : curves) {
 			dc.setCurveDrawingMethod(CurveDrawingMethod.POLYNOMIAL);
 		}
+		
+		Curve curve1 = (Curve) plotData.getCurve(0);
+		curve1.getStyle().setFillColor(java.awt.Color.BLUE);
+		curve1.getStyle().setBorderColor(java.awt.Color.DARK_GRAY);
+		curve1.getStyle().setLineColor(java.awt.Color.BLACK);
+		curve1.getStyle().setSymbolType(SymbolType.CIRCLE);
+		
+		Curve curve2 = (Curve) plotData.getCurve(1);
+		curve2.getStyle().setFillColor(java.awt.Color.RED);
+		curve2.getStyle().setBorderColor(java.awt.Color.DARK_GRAY);
+		curve2.getStyle().setLineColor(java.awt.Color.BLACK);
+		curve2.getStyle().setSymbolType(SymbolType.SQUARE);
+		
 
 		// many options controlled via plot parameters
 		PlotParameters params = canvas.getParameters();

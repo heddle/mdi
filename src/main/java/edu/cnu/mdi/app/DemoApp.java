@@ -45,6 +45,8 @@ import edu.cnu.mdi.splot.example.StripChart;
 import edu.cnu.mdi.splot.example.ThreeGaussians;
 import edu.cnu.mdi.splot.example.TwoHisto;
 import edu.cnu.mdi.splot.example.TwoLinesWithErrors;
+import edu.cnu.mdi.splot.pdata.PlotDataException;
+import edu.cnu.mdi.splot.plot.BarPlot;
 import edu.cnu.mdi.splot.plot.PlotView;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.util.Environment;
@@ -450,75 +452,86 @@ public class DemoApp extends BaseMDIApplication {
 		JMenuItem twoHistoItem = new JMenuItem("Two Histograms");
 		JMenuItem twoLines = new JMenuItem("Two Lines with Errors");
 		JMenuItem scatterItem = new JMenuItem("Scatter Example");
+		JMenuItem barItem = new JMenuItem("Barplot Example");
+
 
 		gaussianItem.addActionListener(e -> {
 			Gaussian example = new Gaussian(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 
 		anotherGaussianItem.addActionListener(e -> {
 			AnotherGaussian example = new AnotherGaussian(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 		
 		logItem.addActionListener(e -> {
 			CubicLogLog example = new CubicLogLog(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 
 		erfcItem.addActionListener(e -> {
 			ErfcTest example = new ErfcTest(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 
 		erfItem.addActionListener(e -> {
 			ErfTest example = new ErfTest(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 
 		histoItem.addActionListener(e -> {
 			Histo example = new Histo(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 
 		growingHistoItem.addActionListener(e -> {
 			GrowingHisto example = new GrowingHisto(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 		
 		heatmapItem.addActionListener(e -> {
 			Heatmap example = new Heatmap(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 
 		lineItem.addActionListener(e -> {
 			StraightLine example = new StraightLine(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 
 		stripItem.addActionListener(e -> {
 			StripChart example = new StripChart(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 
 		threeGaussiansItem.addActionListener(e -> {
 			ThreeGaussians example = new ThreeGaussians(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 
 		twoHistoItem.addActionListener(e -> {
 			TwoHisto example = new TwoHisto(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 
 		twoLines.addActionListener(e -> {
 			TwoLinesWithErrors example = new TwoLinesWithErrors(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
 		});
 
 		scatterItem.addActionListener(e -> {
 			Scatter example = new Scatter(true);
-			view.switchToExample(example);
+			view.switchToPlotPanel(example.getPlotPanel());
+		});
+		
+		barItem.addActionListener(e -> {
+			try {
+				view.switchToPlotPanel(BarPlot.demoBarPlot());
+			} catch (PlotDataException e1) {
+				e1.printStackTrace();
+			}
+
 		});
 
 		examplesMenu.add(gaussianItem);
@@ -535,6 +548,7 @@ public class DemoApp extends BaseMDIApplication {
 		examplesMenu.add(twoHistoItem);
 		examplesMenu.add(twoLines);
 		examplesMenu.add(scatterItem);
+		examplesMenu.add(barItem);
 		return view;
 	}
 

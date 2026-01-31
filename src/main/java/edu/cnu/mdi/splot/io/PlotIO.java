@@ -194,6 +194,9 @@ public final class PlotIO {
 		// --- NEW: axis scales ---
 		s.xScale = p.getXScale();
 		s.yScale = p.getYScale();
+		
+		//rendering hints
+		s.renderHints = p.getRenderHints();
 
 		s.includeXZero = p.includeXZero();
 		s.includeYZero = p.includeYZero();
@@ -223,7 +226,7 @@ public final class PlotIO {
 		s.drawExtra = p.extraDrawing();
 		s.extraBorder = p.extraBorder();
 		s.extraStrings = p.getExtraStrings();
-
+		
 		s.logZ = p.isLogZ();
 		s.zColorMap = (p.getColorMap() == null) ? null : p.getColorMap().name();
 		s.showEmptyBins = p.showEmptyBins();
@@ -507,6 +510,11 @@ public final class PlotIO {
 
 		p.setReverseXaxis(s.reverseXaxis);
 		p.setReverseYaxis(s.reverseYaxis);
+		
+		// set rendering hints
+		if (s.renderHints != null) {
+			p.setRenderHints(s.renderHints);
+		}
 
 		// --- NEW: apply axis scales early so subsequent logic (include-zero, limits) is consistent ---
 		PlotParameters.AxisScale xs = (s.xScale != null) ? s.xScale : PlotParameters.AxisScale.LINEAR;

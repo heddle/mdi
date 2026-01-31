@@ -8,9 +8,12 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
+import java.util.List;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.text.UnicodeUtils;
+import edu.cnu.mdi.splot.pdata.ACurve;
+import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
@@ -65,8 +68,8 @@ public class PlotTicks {
 	 * @param g the Graphics context
 	 */
 	public void draw(Graphics g) {
-		Rectangle ab = _plotCanvas.getActiveBounds();
-		if (ab == null) {
+		Rectangle activeBounds = _plotCanvas.getActiveBounds();
+		if (activeBounds == null) {
 			return;
 		}
 
@@ -88,15 +91,21 @@ public class PlotTicks {
 
 		// Major ticks
 		if (xLog) {
-			drawLogXTicks(g, xmin, xmax, world.getCenterY(), ab);
+			drawLogXTicks(g, xmin, xmax, world.getCenterY(), activeBounds);
 		} else {
-			drawXTicks(g, xmin, xmax, world.getCenterY(), majorTickLen, numMajorTickX, ab, true);
+			if (_plotCanvas.isBarPlot()) {
+				List<ACurve> curves = _plotCanvas.getPlotData().getCurves();
+				drawBarPlotCatagories(g, curves, xmin, xmax, world.getCenterY(), majorTickLen, curves.size(), activeBounds);
+			} 
+			else {
+				drawXTicks(g, xmin, xmax, world.getCenterY(), majorTickLen, numMajorTickX, activeBounds, true);
+			}
 		}
 
 		if (yLog) {
-			drawLogYTicks(g, ymin, ymax, world.getCenterX(), ab);
+			drawLogYTicks(g, ymin, ymax, world.getCenterX(), activeBounds);
 		} else {
-			drawYTicks(g, ymin, ymax, world.getCenterX(), majorTickLen, numMajorTickY, ab, true);
+			drawYTicks(g, ymin, ymax, world.getCenterX(), majorTickLen, numMajorTickY, activeBounds, true);
 		}
 
 		// Minor ticks for linear only (log draws its own minors)
@@ -104,7 +113,7 @@ public class PlotTicks {
 			double delx = (xmax - xmin) / (numMajorTickX + 1);
 			for (int i = 0; i <= numMajorTickX; i++) {
 				double xxmin = xmin + i * delx;
-				drawXTicks(g, xxmin, xxmin + delx, world.getCenterY(), minorTickLen, numMinorTickX, ab, false);
+				drawXTicks(g, xxmin, xxmin + delx, world.getCenterY(), minorTickLen, numMinorTickX, activeBounds, false);
 			}
 		}
 
@@ -112,7 +121,7 @@ public class PlotTicks {
 			double dely = (ymax - ymin) / (numMajorTickY + 1);
 			for (int i = 0; i <= numMajorTickY; i++) {
 				double yymin = ymin + i * dely;
-				drawYTicks(g, yymin, yymin + dely, world.getCenterX(), minorTickLen, numMinorTickY, ab, false);
+				drawYTicks(g, yymin, yymin + dely, world.getCenterX(), minorTickLen, numMinorTickY, activeBounds, false);
 			}
 		}
 
@@ -249,6 +258,29 @@ public class PlotTicks {
 		}
 	}
 
+	// draw bar plot category tick marks
+	private void drawBarPlotCatagories(Graphics g, List<ACurve> curves, double xmin, double xmax, double yc
+			, int ticklen, int numtick, Rectangle ab) {
+		if (curves == null || curves.isEmpty()) {
+			return;
+		}
+
+		g.setFont(Fonts.tweenFont);
+		FontMetrics fm = g.getFontMetrics();
+		int t = ab.y;
+		int b = t + ab.height;
+		int sb = b + fm.getHeight();
+		
+		for (ACurve acurve : curves) {
+			Curve curve = (Curve) acurve;
+			String name = acurve.name();
+			Point2D.Double center = curve.getCentroid();
+			_wp.setLocation(center.x, yc);
+			_plotCanvas.dataToScreen(_pp, _wp);
+			int sw = fm.stringWidth(name);
+			g.drawString(name, _pp.x - sw / 2, sb);
+		}
+	}
 
 	// draw x tick marks
 	private void drawXTicks(Graphics g, double xmin, double xmax, double yc, int ticklen, int numtick, Rectangle ab,
@@ -264,6 +296,7 @@ public class PlotTicks {
 
 		PlotParameters params = _plotCanvas.getParameters();
 		FontMetrics fm = _plotCanvas.getFontMetrics(_tickFont);
+		g.setFont(_tickFont);
 		double delx = (xmax - xmin) / (numtick + 1);
 
 		int t = ab.y;
@@ -296,6 +329,7 @@ public class PlotTicks {
 
 		PlotParameters params = _plotCanvas.getParameters();
 		FontMetrics fm = _plotCanvas.getFontMetrics(_tickFont);
+		g.setFont(_tickFont);
 		double dely = (ymax - ymin) / (numtick + 1);
 
 		int l = ab.x;

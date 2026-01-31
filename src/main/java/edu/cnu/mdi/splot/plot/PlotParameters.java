@@ -29,15 +29,6 @@ public class PlotParameters {
 		LOG10
 	}
 	
-	/**
-	 * Rending hints for plot types.
-	 * Currently only used to specify bar plot rendering.
-	 * This may be expanded in the future.
-	 */
-	public enum RenderHint {
-	    BARPLOT
-	}
-	
 	
 	// axis scales
 	private AxisScale _xScale = AxisScale.LINEAR;
@@ -138,11 +129,28 @@ public class PlotParameters {
 	}
 	
 	/**
+	 * Set the rendering hints.
+	 * @param hints the rendering hints
+	 */
+	public void setRenderHints(EnumSet<RenderHint> hints) {
+	    renderHints = EnumSet.copyOf(hints);
+	}
+	
+	/**
+	 * Check whether a rendering hint is present.
+	 * @param hint the hint to check
+	 * @return true if the hint is present
+	 */
+	public boolean hasRenderHint(RenderHint hint) {
+	    return renderHints.contains(hint);
+	}
+	
+	/**
 	 * Check whether bar plot rendering is requested.
 	 * @return true if bar plot rendering is requested
 	 */
 	public boolean isBarPlot() {
-	    return renderHints.contains(RenderHint.BARPLOT);
+	    return hasRenderHint(RenderHint.BARPLOT);
 	}
 	
 	/**

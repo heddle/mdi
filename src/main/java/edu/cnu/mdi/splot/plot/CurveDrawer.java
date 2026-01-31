@@ -1,6 +1,7 @@
 package edu.cnu.mdi.splot.plot;
 
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -26,6 +27,7 @@ import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.Snapshot;
 import edu.cnu.mdi.splot.pdata.StripChartCurve;
+import edu.cnu.mdi.ui.fonts.Fonts;
 
 public class CurveDrawer {
 
@@ -53,6 +55,10 @@ public class CurveDrawer {
 		}
 
 		if (curve instanceof Curve) {
+			if (plotCanvas.isBarPlot()) {
+				drawBar(g, plotCanvas, (Curve) curve);
+				return;
+			}
 			drawXYCurve(g, plotCanvas, (Curve) curve);
 		} else if (curve instanceof StripChartCurve) {
 			drawStripChart(g, plotCanvas, (StripChartCurve) curve);
@@ -62,6 +68,65 @@ public class CurveDrawer {
 			System.err.println("Unsupported curve type in drawCurve " + curve.name());
 			return;
 		}
+
+	}
+	
+	/**
+	 * Draw a bar for a bar plot
+	 *
+	 * @param g          the graphics context
+	 * @param plotCanvas the plot canvas
+	 * @param curve      the bar curve to be drawn
+	 */
+	public static void drawBar(Graphics g, PlotCanvas canvas, Curve curve) {
+		if (!curve.isVisible()) {
+			return;
+		}
+
+
+		// get threadsafe copy of the data
+		Snapshot snapshot = curve.snapshot();
+
+		double x[] = snapshot.x;
+		double y[] = snapshot.y;
+
+		//bars require exactly 4 points
+		if ((x == null) || (x.length != 4)) {
+			return;
+		}
+		
+		Polygon poly = new Polygon();
+		Point2D.Double wp = new Point2D.Double();
+		Point p = new Point();
+		for (int i = 0; i < x.length; i++) {
+			wp.setLocation(x[i], y[i]);
+			canvas.dataToScreen(p, wp);
+			poly.addPoint(p.x, p.y);
+		}
+		IStyled style = curve.getStyle();
+		g.setColor(style.getFillColor());
+		g.fillPolygon(poly);
+		Color lineColor = style.getLineColor();
+		g.setColor(lineColor);
+		g.drawPolygon(poly);
+		
+		g.setColor(Color.black);
+		g.setFont(Fonts.smallFont);
+		String label = String.format("%.2f", y[1]);
+		wp.x = 0.5 * (x[1] + x[2]);
+		wp.y = y[1];
+		
+		
+		canvas.dataToScreen(p, wp);
+		FontMetrics fm = g.getFontMetrics();
+		int strWidth = fm.stringWidth(label);
+		
+		Rectangle plotRect = canvas.getActiveBounds();
+		p.y = Math.max(p.y, plotRect.y + fm.getHeight() + 2); // don't go above plot area
+		
+		g.drawString(label, p.x - strWidth / 2, p.y -
+				4);
+				
 
 	}
 
