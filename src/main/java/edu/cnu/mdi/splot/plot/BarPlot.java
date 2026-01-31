@@ -8,12 +8,14 @@ import java.util.Objects;
 
 import javax.swing.JFrame;
 
+import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
+import edu.cnu.mdi.splot.plot.PlotParameters.RenderHint;
 import edu.cnu.mdi.ui.colors.ScientificColorMap;
 
 public class BarPlot {
@@ -50,12 +52,16 @@ public class BarPlot {
 		PlotPanel plotPanel = new PlotPanel(canvas);
 
 		List<ACurve> curves = plotData.getCurves();
-		assignStyles(curves, values);
+		assignStyles(canvas, curves, values);
 		return plotPanel;
 	}
 	
-	private static void assignStyles(List<ACurve> curves, double[] values) {
+	// Assign styles to the curves and plot to mimic bars
+	private static void assignStyles(PlotCanvas canvas, List<ACurve> curves, double[] values) {
 		ScientificColorMap palette = ScientificColorMap.VIRIDIS;
+		
+		PlotParameters params = canvas.getParameters();
+		params.addRenderHint(RenderHint.BARPLOT);
 
 		for (int i = 0; i < curves.size(); i++) {
 			ACurve acurve = curves.get(i);
@@ -65,6 +71,7 @@ public class BarPlot {
 			curve.getStyle().setLineColor(color);
 			curve.getStyle().setFillColor(color);
 			curve.getStyle().setLineWidth(40f);
+			curve.getStyle().setSymbolType(null); // no symbols
 			curve.setCurveDrawingMethod(CurveDrawingMethod.CONNECT);
 			
 			curve.add(x, 0.0);

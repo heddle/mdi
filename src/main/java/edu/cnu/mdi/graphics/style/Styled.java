@@ -148,17 +148,17 @@ public class Styled implements IStyled {
 
 	@Override
 	public void setFillColor(Color fillColor) {
-		_fillColor = fillColor;
+		_fillColor = fillColor; // can be null
 	}
 
 	@Override
 	public void setBorderColor(Color lineColor) {
-		_borderColor = lineColor;
+		_borderColor = lineColor; // can be null
 	}
 
 	@Override
 	public void setLineColor(Color lineColor) {
-		_lineColor = lineColor;
+		_lineColor = lineColor; // can be null
 	}
 
 	/**
@@ -168,7 +168,7 @@ public class Styled implements IStyled {
 	 */
 	@Override
 	public void setLineStyle(LineStyle lineStyle) {
-		_lineStyle = lineStyle;
+		_lineStyle = lineStyle != null ? lineStyle : LineStyle.SOLID;
 	}
 
 	/**
@@ -178,7 +178,7 @@ public class Styled implements IStyled {
 	 */
 	@Override
 	public void setLineWidth(float lineWidth) {
-		_lineWidth = lineWidth;
+		_lineWidth = Math.max(0, lineWidth);
 	}
 
 	/**
@@ -187,7 +187,7 @@ public class Styled implements IStyled {
      */
 	@Override
 	public void setSymbolType(SymbolType symbolType) {
-		_symbolType = symbolType;
+		_symbolType = symbolType != null ? symbolType : SymbolType.NOSYMBOL;
 	}
 
 	/**

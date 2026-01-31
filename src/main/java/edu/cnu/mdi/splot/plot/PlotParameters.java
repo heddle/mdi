@@ -2,6 +2,7 @@ package edu.cnu.mdi.splot.plot;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.EnumSet;
 import java.util.Vector;
 
 import edu.cnu.mdi.ui.colors.ScientificColorMap;
@@ -20,17 +21,30 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  */
 public class PlotParameters {
 	
-	// --------------------------------------------------------------------
-	// Axis scale (linear vs log)
-	// --------------------------------------------------------------------
+	/**
+	 * Axes scale types.
+	 */
 	public static enum AxisScale {
 		LINEAR,
 		LOG10
 	}
 	
+	/**
+	 * Rending hints for plot types.
+	 * Currently only used to specify bar plot rendering.
+	 * This may be expanded in the future.
+	 */
+	public enum RenderHint {
+	    BARPLOT
+	}
+	
+	
 	// axis scales
 	private AxisScale _xScale = AxisScale.LINEAR;
 	private AxisScale _yScale = AxisScale.LINEAR;
+	
+	// rendering hints
+	private EnumSet<RenderHint> renderHints = EnumSet.noneOf(RenderHint.class);
 	
 	// Z scale (for heatmaps / 2D histograms)
 	private boolean _logZ = false;
@@ -105,6 +119,30 @@ public class PlotParameters {
 	 */
 	public PlotParameters(PlotCanvas canvas) {
 		_canvas = canvas;
+	}
+	
+	/**
+	 * Add a rendering hint.
+	 * @param hint the hint to add
+	 */
+	public void addRenderHint(RenderHint hint) {
+	    renderHints.add(hint);
+	}
+
+	/**
+	 * Get the rendering hints.
+	 * @return the rendering hints
+	 */
+	public EnumSet<RenderHint> getRenderHints() {
+	    return EnumSet.copyOf(renderHints);
+	}
+	
+	/**
+	 * Check whether bar plot rendering is requested.
+	 * @return true if bar plot rendering is requested
+	 */
+	public boolean isBarPlot() {
+	    return renderHints.contains(RenderHint.BARPLOT);
 	}
 	
 	/**
