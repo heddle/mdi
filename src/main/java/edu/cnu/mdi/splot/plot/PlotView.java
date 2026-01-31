@@ -124,6 +124,11 @@ public class PlotView extends BaseView {
 		return _plotPanel;
 	}
 
+	/**
+	 * Set the plot panel (and its canvas)
+	 *
+	 * @param plotPanel the new plot panel
+	 */
 	public void setPlotPanel(PlotPanel plotPanel) {
 		remove(_plotPanel);
 		_plotPanel = plotPanel;
@@ -164,6 +169,7 @@ public class PlotView extends BaseView {
 		repaint();
 	}
 	
+	// find a menu by name in a menubar
 	private JMenu findMenu(JMenuBar menuBar, String targetName) {
 		if (menuBar == null) return null;
 		for (int i = 0; i < menuBar.getMenuCount(); i++) {
@@ -198,6 +204,7 @@ public class PlotView extends BaseView {
 		return (f.exists() && f.isDirectory()) ? f : null;
 	}
 
+	// Update Environment data directory based on chosen file/dir
 	private void updateEnvironmentDataDirectory(File chosenFileOrDir) {
 		if (chosenFileOrDir == null) return;
 
@@ -207,6 +214,7 @@ public class PlotView extends BaseView {
 		}
 	}
 
+	// Open a plot file
 	private void doOpenPlot() {
 		JFileChooser fc = new JFileChooser(getInitialChooserDirectory());
 		fc.setFileFilter(new PlotFileFilter());
@@ -221,7 +229,8 @@ public class PlotView extends BaseView {
 		updateEnvironmentDataDirectory(selected);
 		openPlotFile(selected);
 	}
-
+	
+	// Open the given plot file
 	private void openPlotFile(File file) {
 		if (file == null) return;
 

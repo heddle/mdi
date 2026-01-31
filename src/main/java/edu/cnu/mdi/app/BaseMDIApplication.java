@@ -20,6 +20,7 @@ import javax.swing.UIManager;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
 import edu.cnu.mdi.desktop.Desktop;
+import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.swing.WindowPlacement;
 import edu.cnu.mdi.ui.fonts.Fonts;
@@ -27,6 +28,7 @@ import edu.cnu.mdi.ui.menu.FileMenu;
 import edu.cnu.mdi.ui.menu.MenuManager;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.view.ViewManager;
+import edu.cnu.mdi.view.VirtualView;
 
 /**
  * Base class for all MDI applications.
@@ -181,6 +183,28 @@ public class BaseMDIApplication extends JFrame {
     // ======================================================================
     // Virtual Desktop Support
     // ======================================================================
+
+	// in BaseMDIApplication
+	protected void standardVirtualDesktopReady(VirtualView vv, Runnable defaultLayout, boolean applySavedLayout) {
+		if (vv != null) {
+			vv.reconfigure();
+			if (defaultLayout != null) {
+				defaultLayout.run();
+			}
+		}
+		if (applySavedLayout) {
+			Desktop.getInstance().loadConfigurationFile();
+			Desktop.getInstance().configureViews();
+		}
+		Log.getInstance().info(vv != null ? "Virtual desktop enabled" : "Virtual desktop disabled");
+	}
+
+	protected void standardVirtualDesktopRelayout(VirtualView vv) {
+		if (vv != null) {
+            vv.reconfigure();
+        }
+
+    }
 
     /**
      * Enable framework-level support for a "virtual desktop" layout strategy.

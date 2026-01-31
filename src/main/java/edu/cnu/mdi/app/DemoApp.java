@@ -207,21 +207,8 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	@Override
 	protected void onVirtualDesktopReady() {
-
-		// If virtual desktop is enabled, apply the demo defaults first.
-		if (virtualView != null) {
-			virtualView.reconfigure();
-			restoreDefaultViewLocations();
-		}
-
-		// Apply persisted configuration last, so saved layouts override demo defaults.
-		Desktop.getInstance().loadConfigurationFile();
-		Desktop.getInstance().configureViews();
-
-		Log.getInstance().info("Application name = " + Environment.getApplicationName());
-		Log.getInstance().info("Config file = " + Environment.getInstance().getConfigurationFile());
-
-		Log.getInstance().info("DemoApp is ready.");
+	    standardVirtualDesktopReady(virtualView, this::restoreDefaultViewLocations, true);
+	    Log.getInstance().info("Classifier is ready.");		Log.getInstance().info("DemoApp is ready.");
 	}
 
 	/**
@@ -232,9 +219,7 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	@Override
 	protected void onVirtualDesktopRelayout() {
-		if (virtualView != null) {
-			virtualView.reconfigure();
-		}
+		standardVirtualDesktopRelayout(virtualView);
 	}
 
 	/**
