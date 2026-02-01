@@ -112,7 +112,7 @@ public class CurveDrawer {
 		
 		g.setColor(Color.black);
 		g.setFont(Fonts.smallFont);
-		String label = String.format("%.2f", y[1]);
+		String label = String.format("%.4f", y[1]);
 		wp.x = 0.5 * (x[1] + x[2]);
 		wp.y = y[1];
 		

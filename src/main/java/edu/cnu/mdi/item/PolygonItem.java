@@ -17,11 +17,11 @@ public class PolygonItem extends PathBasedItem {
 	/**
 	 * Create a world polygon item
 	 *
-	 * @param itemList the layer this item is on.
+	 * @param layer the layer this item is on.
 	 * @param points   the points of the polygon
 	 */
-	public PolygonItem(Layer itemList, Point2D.Double points[]) {
-		super(itemList);
+	public PolygonItem(Layer layer, Point2D.Double points[]) {
+		super(layer);
 
 		// set the path
 		if (points != null) {

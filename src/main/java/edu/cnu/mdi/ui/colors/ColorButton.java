@@ -21,7 +21,7 @@ public class ColorButton extends JButton {
 
 	public ColorButton(String label, Color initial) {
 		super(label);
-		this.color = (initial != null) ? initial : new Color(0, 0, 0, 255);
+		this.color = initial;
 		setFocusPainted(false);
 		updateSwatch();
 		addActionListener(e -> chooseColor());
@@ -36,7 +36,13 @@ public class ColorButton extends JButton {
 		updateSwatch();
 	}
 
+	// Updates the button icon to show the current color
 	private void updateSwatch() {
+		if (color == null) {
+			setIcon(null);
+			setText("x");
+			return;
+		}
 		setIcon(new ImageIcon(makeSwatch(color, 28, 14)));
 	}
 

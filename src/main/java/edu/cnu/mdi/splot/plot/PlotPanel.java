@@ -17,6 +17,7 @@ import javax.swing.SwingConstants;
 
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
+import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.util.PrintUtils;
 
 @SuppressWarnings("serial")
@@ -71,7 +72,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 
 		_canvas.addPropertyChangeListener(this);
 		add(_canvas, BorderLayout.CENTER);
-
+		
 		addSouth();
 		addNorth();
 		addWest();

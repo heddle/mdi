@@ -12,11 +12,11 @@ public class RectangleItem extends PolygonItem {
 	/**
 	 * Create a world rectangle object.
 	 *
-	 * @param itemList the list this item is on.
+	 * @param layer the list this item is on.
 	 * @param wr       the initial bounds of the item.
 	 */
-	public RectangleItem(Layer itemList, Rectangle2D.Double wr) {
-		super(itemList, WorldGraphicsUtils.getPoints(wr));
+	public RectangleItem(Layer layer, Rectangle2D.Double wr) {
+		super(layer, WorldGraphicsUtils.getPoints(wr));
 	}
 
 	/**
@@ -25,6 +25,7 @@ public class RectangleItem extends PolygonItem {
 	 */
 	@Override
 	protected void reshape() {
+		
 		int j = _modification.getSelectIndex();
 		int i = (j + 3) % 4;
 		int k = (j + 1) % 4;
@@ -51,6 +52,9 @@ public class RectangleItem extends PolygonItem {
 		wpoly[k].x += vk.x;
 		wpoly[k].y += vk.y;
 		_path = WorldGraphicsUtils.worldPolygonToPath(wpoly);
+		
+
+
 		geometryChanged();
 	}
 }

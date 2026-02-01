@@ -85,6 +85,7 @@ public class BarPlot {
 		
 	}
 	
+	// Force behavior to mimic a bar plot
 	private static void forceBehavior(PlotCanvas canvas, int numCurves) {
 		PlotParameters params = canvas.getParameters();
 		params.addRenderHint(RenderHint.BARPLOT);
@@ -103,10 +104,20 @@ public class BarPlot {
 		ticks.setNumMinorTickX(0);
 	
 		Rectangle2D.Double world = canvas.getDataWorld();
-		//add horizontal line at every integer y value
-		for (int y = -1; y <= (int) world.getMaxY() + 1; y++) {
-			params.addPlotLine(new HorizontalLine(canvas, y));
-		}
+		
+		
+		double ymax = world.getMaxY();
+		double ymin = Math.min(0, world.getMinY());
+		double yRange = ymax - ymin;
+	    double yStep = 2*Math.pow(10, Math.floor(Math.log10(yRange)));
+	    double yStart = Math.floor(ymin / yStep) * yStep;
+	    double y = yStart;
+	    while (y < ymax) {
+	    	params.addPlotLine(new HorizontalLine(canvas, y));
+	    	y += yStep;
+	    }
+		
+		
 	}
 	
 	public static PlotPanel demoBarPlot() throws PlotDataException {

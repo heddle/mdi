@@ -5,13 +5,20 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
+
+import javax.imageio.ImageIO;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
+import edu.cnu.mdi.item.ImageItem;
 import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.swing.WindowPlacement;
+import edu.cnu.mdi.transfer.ImageFilters;
 
 /**
  * A simple view used to test the tool bar.
@@ -30,6 +37,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 	private DrawingView(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
 		getContainer().getFeedbackControl().addFeedbackProvider(this);
+		setFileFilter(ImageFilters.isActualImage);
 	}
 
 	/**
@@ -60,16 +68,25 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 	}
 
 	/**
-	 * Some view specific feedback. Should always call super.getFeedbackStrings
-	 * first.
+	 * Handle files dropped on this view through drag and drop.
 	 *
-	 * @param container   the base container for the view.
-	 * @param screenPoint the pixel point
-	 * @param worldPoint  the corresponding world location.
+	 * @param files the dropped files.
 	 */
 	@Override
-	public void getFeedbackStrings(IContainer container, Point pp, Point2D.Double wp, List<String> feedbackStrings) {
-
+	public void filesDropped(List<File> files) {
+		if (files == null || files.isEmpty()) {
+			return;
+		}
+		File file = files.get(0);
+		try {
+			BufferedImage img = ImageIO.read(file);
+			IContainer container = getContainer();
+			new ImageItem(container.getAnnotationLayer(), null, img);
+			refresh();
+		} catch (IOException e) {
+			System.err.println("Error reading image file: " + e.getMessage());
+		}
 	}
+
 
 }

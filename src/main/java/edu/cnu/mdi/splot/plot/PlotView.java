@@ -17,6 +17,7 @@ import edu.cnu.mdi.splot.io.PlotFileFilter;
 import edu.cnu.mdi.splot.io.PlotIO;
 import edu.cnu.mdi.splot.io.RecentPlotFiles;
 import edu.cnu.mdi.splot.io.RecentPlotsMenu;
+import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.view.BaseView;
 
@@ -134,6 +135,8 @@ public class PlotView extends BaseView {
 	private PlotPanel createPlotPanel() {
 		_plotCanvas = new PlotCanvas(null, "Empty Plot", "X Axis", "Y axis");
 		_plotPanel = new PlotPanel(_plotCanvas);
+		_plotCanvas.setTransferHandler(new FileDropHandler(this));
+
 		return _plotPanel;
 	}
 
@@ -146,6 +149,7 @@ public class PlotView extends BaseView {
 		remove(_plotPanel);
 		_plotPanel = plotPanel;
 		_plotCanvas = plotPanel.getPlotCanvas();
+		_plotCanvas.setTransferHandler(new FileDropHandler(this));
 		add(_plotPanel);
 		revalidate();
 		repaint();
@@ -216,10 +220,19 @@ public class PlotView extends BaseView {
 	 */
 	@Override
 	public void filesDropped(List<File> files) {
-		System.out.println("Files dropped on view: " + getName());
+		// just open the first valid plot file
+		//files already filtered by FileDropHandler
+		if (files == null || files.isEmpty()) {
+			return;
+		}
+		File file = files.get(0);
+		updateEnvironmentDataDirectory(file);
+		openPlotFile(file);
+
 	}
 
 
+	// Get initial directory for file chooser from Environment
 	private File getInitialChooserDirectory() {
 		Environment env = Environment.getInstance();
 		String dir = env.getDataDirectory();
@@ -369,6 +382,7 @@ public class PlotView extends BaseView {
 		}
 	}
 
+	// rebuild the recent files menu
 	private void rebuildRecentMenu() {
 		if (_recentPlotsMenu != null && _recentMenuHelper != null) {
 			_recentMenuHelper.rebuild(_recentPlotsMenu);

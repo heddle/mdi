@@ -19,10 +19,10 @@ public class PathBasedItem extends AItem {
 	/**
 	 * Create an object that is based on a java Path2D object.
 	 *
-	 * @param itemList the list this item is on.
+	 * @param layer the list this item is on.
 	 */
-	public PathBasedItem(Layer itemList) {
-		super(itemList);
+	public PathBasedItem(Layer layer) {
+		super(layer);
 	}
 
 	/**

@@ -41,6 +41,7 @@ import edu.cnu.mdi.item.ItemChangeListener;
 import edu.cnu.mdi.item.ItemChangeType;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.log.Log;
+import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.view.BaseView;
 
 /**
@@ -184,8 +185,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 		addComponentListener(componentAdapter);
 
-		// Initialize the file drop handler
-		setTransferHandler(new FileDropHandler());
 	}
 
 	/**
@@ -194,6 +193,8 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	@Override
 	public void setView(BaseView view) {
 		_view = view;
+		// Initialize the file drop handler
+		setTransferHandler(new FileDropHandler(_view));
 	}
 
 	/**
@@ -1114,38 +1115,4 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		_standardPanning = standardPanning;
 	}
 
-	// Inner class for handling file drops
-	private class FileDropHandler extends TransferHandler {
-
-		@Override
-		public boolean canImport(TransferSupport support) {
-			// Validate that we are dropping files
-			return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
-		}
-
-		@Override
-		public boolean importData(TransferSupport support) {
-			if (!canImport(support))
-				return false;
-
-			try {
-				Transferable t = support.getTransferable();
-				@SuppressWarnings("unchecked")
-				List<File> allFiles = (List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
-
-				Predicate<File> fileFilter = _view != null ? _view.getFileFilter() : null;
-				// Apply the filter if it exists
-                List<File> acceptedFiles = (fileFilter == null) ? allFiles : 
-                    allFiles.stream().filter(fileFilter).collect(Collectors.toList());
-
-                if (!acceptedFiles.isEmpty()) {
-                    onFilesDropped(acceptedFiles);
-                    return true;
-                }
-				return true;
-			} catch (Exception e) {
-				return false;
-			}
-		}
-	}
 }

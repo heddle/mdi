@@ -53,6 +53,7 @@ import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.properties.PropertyUtils;
+import edu.cnu.mdi.transfer.IFileDropHandler;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
 
 /**
@@ -87,7 +88,7 @@ import edu.cnu.mdi.ui.menu.ViewPopupMenu;
  */
 @SuppressWarnings("serial")
 public class BaseView extends JInternalFrame
-		implements FocusListener, MouseListener, ComponentListener, IFeedbackProvider {
+		implements FocusListener, MouseListener, ComponentListener, IFeedbackProvider, IFileDropHandler {
 
 	/**
 	 * Stable property name prefix used for persistence.
@@ -254,7 +255,10 @@ public class BaseView extends JInternalFrame
 	/**
      * Set a file filter, e.g., f -> f.getName().endsWith(".png").
      * Used for drag and drop.
+     * @param filter the file filter
+     * @see IFileDropHandler
      */
+	@Override
     public void setFileFilter(Predicate<File> filter) {
         this.fileFilter = filter;
     }
@@ -263,6 +267,7 @@ public class BaseView extends JInternalFrame
 	 * Get the file filter used for drag and drop.
 	 * @return the file filter, or null if none is set.
 	 */
+	@Override
     public Predicate<File> getFileFilter() {
 		return this.fileFilter;
 	}
@@ -272,8 +277,9 @@ public class BaseView extends JInternalFrame
 	 *
 	 * @param files the dropped files.
 	 */
+	@Override
 	public void filesDropped(List<File> files) {
-		System.out.println("Files dropped on view: " + getName());
+		// no-op see PlotView and DrawingView for example override;
 	}
 	
 	/**
