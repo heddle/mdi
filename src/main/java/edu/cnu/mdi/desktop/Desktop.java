@@ -1,17 +1,9 @@
 package edu.cnu.mdi.desktop;
 
-import java.awt.AWTEvent;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
-import java.awt.event.AWTEventListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -24,10 +16,8 @@ import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
 import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.graphics.ImageManager;
-import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.util.Environment;
@@ -39,7 +29,7 @@ import edu.cnu.mdi.view.BaseView;
  * @author heddle
  */
 @SuppressWarnings("serial")
-public final class Desktop extends JDesktopPane implements MouseListener, MouseMotionListener {
+public final class Desktop extends JDesktopPane {
 
     /**
      * Used to operate (e.g., refresh) all views
@@ -68,16 +58,6 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
     // the singleton
     private static Desktop instance;
 
-    // optional after drawer
-    private IDrawable _afterDraw;
-
-    // drag tracking
-    private transient AWTEventListener _globalMouseListener;
-    private boolean _globalListenerInstalled = false;
-
-    // If non-null, we believe a JInternalFrame drag/resize is in progress.
-    private JInternalFrame _dragFrame;
-
     /**
      * Create a desktop pane.
      *
@@ -88,30 +68,27 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
      */
     private Desktop(Color background, String backgroundImage) {
 
-        setDragMode(JDesktopPane.OUTLINE_DRAG_MODE); // faster
-        setDoubleBuffered(true);
-     // Critical: custom DesktopManager owns OUTLINE_DRAG_MODE drawing to prevent XOR "ghost" rectangles
-        setDesktopManager(new GhostBustingDesktopManager(this));
-        
-        if (background != null) {
-            setBackground(background);
-        } else {
-            setBackground(X11Colors.getX11Color("royal blue"));
-        }
+		setDoubleBuffered(true);
 
-        // tile?
-        tile = false;
-        if (backgroundImage != null) {
-            _icon = ImageManager.getInstance().loadImageIcon(backgroundImage);
-            if (_icon != null) {
-                tile = true;
-                _tileSize = new Dimension(_icon.getIconWidth(), _icon.getIconHeight());
-                if ((_tileSize.width < 2) || (_tileSize.height < 2)) {
-                    tile = false;
-                }
-            }
-        }
-    }
+		if (background != null) {
+			setBackground(background);
+		} else {
+			setBackground(X11Colors.getX11Color("royal blue"));
+		}
+
+		// tile?
+		tile = false;
+		if (backgroundImage != null) {
+			_icon = ImageManager.getInstance().loadImageIcon(backgroundImage);
+			if (_icon != null) {
+				tile = true;
+				_tileSize = new Dimension(_icon.getIconWidth(), _icon.getIconHeight());
+				if ((_tileSize.width < 2) || (_tileSize.height < 2)) {
+					tile = false;
+				}
+			}
+		}
+	}
 
     /**
      * Create a desktop pane.
@@ -137,113 +114,6 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
         return instance;
     }
 
-    // --------------------------------------------------------------------
-    // Global mouse "safety net" for OUTLINE_DRAG_MODE ghost outlines.
-    //
-    // Root problem: sometimes the internal frame never receives mouseReleased
-    // (e.g. release occurs outside the window). That leaves the outline drawn.
-    //
-    // Fix:
-    //  - install an AWTEventListener during dragging
-    //  - if we see MOUSE_RELEASED => end drag
-    //  - if we see ANY mouse event with *no buttons down* => we missed release => end drag
-    //  - uninstall the listener after cleanup
-    // --------------------------------------------------------------------
-
-    private void ensureGlobalListener() {
-        if (_globalListenerInstalled) {
-            return;
-        }
-
-        _globalMouseListener = event -> {
-            if (!(event instanceof MouseEvent)) {
-                return;
-            }
-
-            MouseEvent me = (MouseEvent) event;
-
-            // If we ever see a release, force cleanup and uninstall.
-            if (me.getID() == MouseEvent.MOUSE_RELEASED) {
-                try {
-                    forceEndDrag();
-                } finally {
-                    uninstallGlobalListener();
-                }
-                return;
-            }
-
-            // Detect "no buttons down" on any mouse event: indicates we missed a release.
-            int downMask = MouseEvent.BUTTON1_DOWN_MASK
-                         | MouseEvent.BUTTON2_DOWN_MASK
-                         | MouseEvent.BUTTON3_DOWN_MASK;
-
-            boolean anyButtonDown = (me.getModifiersEx() & downMask) != 0;
-
-            if (!anyButtonDown) {
-                try {
-                    // Even if _dragFrame is null, we may still have an outline to erase.
-                    forceEndDrag();
-                } finally {
-                    uninstallGlobalListener();
-                }
-            }
-        };
-
-        Toolkit.getDefaultToolkit().addAWTEventListener(
-                _globalMouseListener,
-                AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK
-        );
-
-        _globalListenerInstalled = true;
-    }
-
-    private void uninstallGlobalListener() {
-        if (!_globalListenerInstalled) {
-            return;
-        }
-        try {
-            Toolkit.getDefaultToolkit().removeAWTEventListener(_globalMouseListener);
-        } catch (Exception ignored) {
-        } finally {
-            _globalMouseListener = null;
-            _globalListenerInstalled = false;
-        }
-    }
-
-    private void forceEndDrag() {
-
-        // Always attempt to erase any XOR outline we might have drawn,
-        // even if _dragFrame is null.
-        try {
-            if (getDesktopManager() instanceof GhostBustingDesktopManager gdm) {
-                gdm.cancelOutline();
-            }
-        } catch (Exception ignored) {}
-
-        JInternalFrame f = _dragFrame;
-
-        try {
-            // If we know what frame was being dragged, ask the desktop manager to finalize.
-            if (f != null) {
-                var dm = getDesktopManager();
-                if (dm != null) {
-                    try { dm.endDraggingFrame(f); } catch (Exception ignored) {}
-                    try { dm.endResizingFrame(f); } catch (Exception ignored) {}
-                }
-            }
-
-            // Strong repaint to clear any remaining artifacts.
-            repaint();
-            try {
-                paintImmediately(0, 0, getWidth(), getHeight());
-            } catch (Exception ignored) {}
-
-        } finally {
-            _dragFrame = null;
-        }
-    }
-
-
     /**
      * The paint method for the desktop. This is where the background image gets
      * tiled
@@ -253,26 +123,11 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
     @Override
     public void paintComponent(Graphics g) {
 
+    	super.paintComponent(g);
         if (tile) {
             tile(g);
-        } else {
-            super.paintComponent(g);
-        }
-
-        if (_afterDraw != null) {
-            _afterDraw.draw((Graphics2D) g, null);
         }
     }
-
-    /**
-     * Set an "after" draw
-     *
-     * @param afterDraw the drawable
-     */
-    public void setAfterDraw(IDrawable afterDraw) {
-        _afterDraw = afterDraw;
-    }
-
     /**
      * Tile the background.
      *
@@ -293,48 +148,6 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
         }
     }
 
-    @Override
-    public Component add(Component comp, int index) {
-
-        if (comp instanceof JInternalFrame) {
-            JInternalFrame frame = (JInternalFrame) comp;
-            frame.setOpaque(false);
-
-            // Note: drags often originate on the title bar (north pane),
-            // so we do not rely on the component being exactly the frame
-            // when tracking drags. We still listen here for simplicity.
-            frame.addMouseListener(this);
-            frame.addMouseMotionListener(this);
-        }
-
-        return super.add(comp, index);
-    }
-
-    /**
-     * Gets the top internal frame. Surprising that we had to write this.
-     *
-     * @return the top internal frame.
-     */
-    public JInternalFrame getTopFrame() {
-
-        int minIndex = -1;
-        int minZorder = 99999;
-
-        JInternalFrame frames[] = getAllFrames();
-        if (frames != null) {
-            for (int index = 0; index < frames.length; index++) {
-                if (getComponentZOrder(frames[index]) < minZorder) {
-                    minZorder = getComponentZOrder(frames[index]);
-                    minIndex = index;
-                }
-            }
-        }
-
-        if (minIndex < 0) {
-            return null;
-        }
-        return frames[minIndex];
-    }
 
     /**
      * Load the configuration file that preserves an arrangement of views.
@@ -482,42 +295,4 @@ public final class Desktop extends JDesktopPane implements MouseListener, MouseM
         }
     }
 
-    @Override
-    public void mouseDragged(MouseEvent e) {
-    	// Start of a drag gesture; install global safety net to catch mouse-up outside window.
-      // Don't trust e.getComponent() to be a JInternalFrame; drags are often on the title bar.
-        Component src = (Component) e.getSource();
-        JInternalFrame f = (JInternalFrame) SwingUtilities.getAncestorOfClass(JInternalFrame.class, src);
-
-        if (f != null) {
-            _dragFrame = f;
-            ensureGlobalListener();
-        }
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseClicked(MouseEvent e) {
-    }
-
-    @Override
-    public void mousePressed(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent e) {
-        _dragFrame = null;
-        uninstallGlobalListener();
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent e) {
-    }
-
-    @Override
-    public void mouseExited(MouseEvent e) {
-    }
 }
