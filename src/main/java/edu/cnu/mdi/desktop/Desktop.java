@@ -68,7 +68,8 @@ public final class Desktop extends JDesktopPane {
      */
     private Desktop(Color background, String backgroundImage) {
 
-		setDoubleBuffered(true);
+    	setDesktopManager(new GuardedDesktopManager());
+		setDragMode(JDesktopPane.LIVE_DRAG_MODE);
 
 		if (background != null) {
 			setBackground(background);
