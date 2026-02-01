@@ -6,6 +6,8 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
@@ -16,12 +18,16 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.swing.JComponent;
+import javax.swing.TransferHandler;
 
 import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
@@ -35,7 +41,6 @@ import edu.cnu.mdi.item.ItemChangeListener;
 import edu.cnu.mdi.item.ItemChangeType;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.log.Log;
-import edu.cnu.mdi.util.Point2DSupport;
 import edu.cnu.mdi.view.BaseView;
 
 /**
@@ -162,8 +167,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		_layers.remove(_connectionLayer);
 		_layers.remove(_annotationLayer);
 
-		// Ensure the default layer is present as a user layer (should be, but guarantee
-		// it).
+		// Ensure the default layer is present as a user layer
 		if (!_layers.contains(_defaultLayer)) {
 			_layers.add(_defaultLayer);
 		}
@@ -179,6 +183,9 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		};
 
 		addComponentListener(componentAdapter);
+
+		// Initialize the file drop handler
+		setTransferHandler(new FileDropHandler());
 	}
 
 	/**
@@ -188,7 +195,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	public void setView(BaseView view) {
 		_view = view;
 	}
-
 
 	/**
 	 * Share the model with another container (used for magnification windows).
@@ -812,17 +818,17 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		_toolBar = toolBar;
 		if (_toolBar != null) {
 			toolHandler = new BaseToolHandler(this);
-			((BaseToolBar)_toolBar).setHandler(toolHandler);
+			((BaseToolBar) _toolBar).setHandler(toolHandler);
 		}
 
 	}
 
 	/**
-	 *  Check and set the toolbar state (e.g., button enable/disable)
+	 * Check and set the toolbar state (e.g., button enable/disable)
 	 */
 	public void setToolBarState() {
-        if (_toolBar != null) {
-			//TODO: implement specific state changes based on selection
+		if (_toolBar != null) {
+			// TODO: implement specific state changes based on selection
 
 		}
 	}
@@ -853,7 +859,7 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 
 		// Update toolbar text (if present)
 		if (_toolBar != null) {
-			String statusText=String.format("Local: (%d, %d) World: (%.2f, %.2f)", pp.x, pp.y, wp.x, wp.y);
+			String statusText = String.format("Local: (%d, %d) World: (%.2f, %.2f)", pp.x, pp.y, wp.x, wp.y);
 			_toolBar.updateStatusText(statusText);
 		}
 
@@ -869,6 +875,20 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	@Override
 	public BaseView getView() {
 		return _view;
+	}
+
+	/**
+	 * File drag and drop handler. Define the logic for what happens once files are
+	 * validated. Overriding this allows subclasses to handle files differently,
+	 * but the expectation is the the view will handle the drop.
+	 */
+	protected void onFilesDropped(List<File> files) {
+		for (File f : files) {
+			System.out.println("Processing: " + f.getName());
+		}
+		if (_view != null) {
+			_view.filesDropped(files);
+		}
 	}
 
 	/**
@@ -1092,5 +1112,40 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 	@Override
 	public void setStandardPanning(boolean standardPanning) {
 		_standardPanning = standardPanning;
+	}
+
+	// Inner class for handling file drops
+	private class FileDropHandler extends TransferHandler {
+
+		@Override
+		public boolean canImport(TransferSupport support) {
+			// Validate that we are dropping files
+			return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
+		}
+
+		@Override
+		public boolean importData(TransferSupport support) {
+			if (!canImport(support))
+				return false;
+
+			try {
+				Transferable t = support.getTransferable();
+				@SuppressWarnings("unchecked")
+				List<File> allFiles = (List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
+
+				Predicate<File> fileFilter = _view != null ? _view.getFileFilter() : null;
+				// Apply the filter if it exists
+                List<File> acceptedFiles = (fileFilter == null) ? allFiles : 
+                    allFiles.stream().filter(fileFilter).collect(Collectors.toList());
+
+                if (!acceptedFiles.isEmpty()) {
+                    onFilesDropped(acceptedFiles);
+                    return true;
+                }
+				return true;
+			} catch (Exception e) {
+				return false;
+			}
+		}
 	}
 }

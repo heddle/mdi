@@ -1,7 +1,9 @@
 package edu.cnu.mdi.splot.plot;
 
 import java.io.File;
+import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.prefs.Preferences;
 
 import javax.swing.JFileChooser;
@@ -11,12 +13,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 import edu.cnu.mdi.properties.PropertyUtils;
-import edu.cnu.mdi.splot.example.AExample;
 import edu.cnu.mdi.splot.io.PlotFileFilter;
 import edu.cnu.mdi.splot.io.PlotIO;
 import edu.cnu.mdi.splot.io.RecentPlotFiles;
 import edu.cnu.mdi.splot.io.RecentPlotsMenu;
-import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.view.BaseView;
 
@@ -47,6 +47,11 @@ public class PlotView extends BaseView {
 		this("sPlot");
 	}
 
+	/**
+	 * Create a PlotView
+	 *
+	 * @param title the view title
+	 */
 	public PlotView(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
 		add(createPlotPanel());
@@ -55,6 +60,14 @@ public class PlotView extends BaseView {
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 
+		//set the file filter to plot files
+		Predicate<File> plotFilter = f -> {
+		    if (!f.isFile()) return false;
+		    
+		    String name = f.getName().toLowerCase();
+		    return name.endsWith(".plot.json") || name.endsWith(".splot.json");
+		};
+		setFileFilter(plotFilter);
 		addMenus();
 	}
 
@@ -107,7 +120,7 @@ public class PlotView extends BaseView {
 		if (existingEdit != null) {
 			menuBar.remove(existingEdit);
 		}
-		
+
 		SplotEditMenu editMenu = new SplotEditMenu(_plotCanvas);
 		// add the edit menu and call "hack" to fix focus issues
 		BaseView.applyFocusFix(editMenu, this);
@@ -168,10 +181,12 @@ public class PlotView extends BaseView {
 		revalidate();
 		repaint();
 	}
-	
+
 	// find a menu by name in a menubar
 	private JMenu findMenu(JMenuBar menuBar, String targetName) {
-		if (menuBar == null) return null;
+		if (menuBar == null) {
+			return null;
+		}
 		for (int i = 0; i < menuBar.getMenuCount(); i++) {
 			JMenu menu = menuBar.getMenu(i);
 			if (menu != null && targetName.equals(menu.getText())) {
@@ -194,6 +209,17 @@ public class PlotView extends BaseView {
 	// File actions
 	// -----------------------------
 
+	/**
+	 * Handle files dropped on this view through drag and drop.
+	 *
+	 * @param files the dropped files.
+	 */
+	@Override
+	public void filesDropped(List<File> files) {
+		System.out.println("Files dropped on view: " + getName());
+	}
+
+
 	private File getInitialChooserDirectory() {
 		Environment env = Environment.getInstance();
 		String dir = env.getDataDirectory();
@@ -206,7 +232,9 @@ public class PlotView extends BaseView {
 
 	// Update Environment data directory based on chosen file/dir
 	private void updateEnvironmentDataDirectory(File chosenFileOrDir) {
-		if (chosenFileOrDir == null) return;
+		if (chosenFileOrDir == null) {
+			return;
+		}
 
 		File dir = chosenFileOrDir.isDirectory() ? chosenFileOrDir : chosenFileOrDir.getParentFile();
 		if (dir != null && dir.exists() && dir.isDirectory()) {
@@ -229,10 +257,12 @@ public class PlotView extends BaseView {
 		updateEnvironmentDataDirectory(selected);
 		openPlotFile(selected);
 	}
-	
+
 	// Open the given plot file
 	private void openPlotFile(File file) {
-		if (file == null) return;
+		if (file == null) {
+			return;
+		}
 
 		try {
 			// Load a fresh canvas on EDT (PlotIO does EDT-safe construction)
@@ -242,7 +272,7 @@ public class PlotView extends BaseView {
 			if (_plotCanvas != null) {
 				_plotCanvas.shutDown();
 			}
-			
+
 			// Stand up and install new plot
 			newCanvas.standUp();
 			PlotPanel newPanel = new PlotPanel(newCanvas);

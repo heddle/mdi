@@ -19,9 +19,11 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Predicate;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -122,9 +124,11 @@ public class BaseView extends JInternalFrame
 	/** Optional toolbar (if configured). */
 	private BaseToolBar toolBar;
 
-	/** Optional virtual window item (used by overview/minimap type views). */
+	/** Optional virtual window item (used by the virtual view). */
 	protected VirtualWindowItem virtualItem;
-
+	
+	/** Optional file filter for drag-and-drop operations. */
+	private Predicate<File> fileFilter = null;
 
 	// --------------------------------------------------------------------
 	// Construction
@@ -246,7 +250,32 @@ public class BaseView extends JInternalFrame
 	public IContainer getContainer() {
 		return container;
 	}
+	
+	/**
+     * Set a file filter, e.g., f -> f.getName().endsWith(".png").
+     * Used for drag and drop.
+     */
+    public void setFileFilter(Predicate<File> filter) {
+        this.fileFilter = filter;
+    }
+    
+    /**
+	 * Get the file filter used for drag and drop.
+	 * @return the file filter, or null if none is set.
+	 */
+    public Predicate<File> getFileFilter() {
+		return this.fileFilter;
+	}
 
+	/**
+	 * Handle files dropped on this view through drag and drop.
+	 *
+	 * @param files the dropped files.
+	 */
+	public void filesDropped(List<File> files) {
+		System.out.println("Files dropped on view: " + getName());
+	}
+	
 	/**
 	 * Legacy behavior: view "name" equals its title.
 	 * <p>
