@@ -13,6 +13,7 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.Objects;
 
+import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.SymbolDraw;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.Styled;
@@ -124,7 +125,7 @@ public class CurveDrawer {
 		Rectangle plotRect = canvas.getActiveBounds();
 		p.y = Math.max(p.y, plotRect.y + fm.getHeight() + 2); // don't go above plot area
 		
-		g.drawString(label, p.x - strWidth / 2, p.y -
+	    GraphicsUtils.drawEtchedText(g, label, p.x - strWidth / 2, p.y -
 				4);
 				
 

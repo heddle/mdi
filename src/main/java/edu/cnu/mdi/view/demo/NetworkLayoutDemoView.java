@@ -107,7 +107,7 @@ public class NetworkLayoutDemoView extends BaseView {
 	}
 
 	// Provide feedback strings showing screen and world coordinates
-	// items will ad to the feedback when they are mouse-overed
+	// items will add to the feedback when they are mouse-overed
 	@Override
 	public void getFeedbackStrings(IContainer container, Point pp, Double wp, List<String> feedbackStrings) {
 

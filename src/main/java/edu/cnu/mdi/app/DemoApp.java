@@ -82,6 +82,11 @@ import edu.cnu.mdi.view.demo.NetworkLayoutDemoView;
  */
 @SuppressWarnings("serial")
 public class DemoApp extends BaseMDIApplication {
+	
+	static {
+	    System.setProperty("sun.java2d.noddraw", "true"); // Prevent conflict with Java2D
+	    com.jogamp.opengl.GLProfile.initSingleton();
+	}
 
 	/** Singleton instance of the demo app. */
 	private static DemoApp INSTANCE;

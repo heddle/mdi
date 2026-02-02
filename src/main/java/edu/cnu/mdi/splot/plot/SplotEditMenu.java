@@ -10,6 +10,7 @@ import javax.swing.KeyStroke;
 
 import edu.cnu.mdi.dialog.DialogUtils;
 import edu.cnu.mdi.splot.edit.CurveEditorDialog;
+import edu.cnu.mdi.splot.pdata.PlotDataType;
 
 /**
  * This class creates and manages the plot editor for sPlot.
@@ -41,7 +42,7 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 		plotCanvas = canvas;
 		prefItem = addMenuItem("Preferences...", 'P', this);
 
-		boolean isHisto2D = canvas.getPlotData().getType() == edu.cnu.mdi.splot.pdata.PlotDataType.H2D;
+		boolean isHisto2D = canvas.getPlotData().getType() == PlotDataType.H2D;
 
 		// 2D histos do not have curves to edit
 		if (!isHisto2D) {

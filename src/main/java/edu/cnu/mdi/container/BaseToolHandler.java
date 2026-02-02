@@ -59,18 +59,19 @@ public class BaseToolHandler implements IToolHandler  {
 		Objects.requireNonNull(container, "container");
 		this.container = container;
 
-		MouseMotionListener mml = new MouseMotionListener() {
-			@Override
-			public void mouseMoved(MouseEvent e) {
-				container.feedbackTrigger(e, false);
-			}
-
-			@Override
-			public void mouseDragged(MouseEvent e) {
-				container.feedbackTrigger(e, true);
-			}
-		};
-		container.getComponent().addMouseMotionListener(mml);
+		//TODO: TEST TO CONFIRM THIS ISN'T NEEDED ANYMORE
+//		MouseMotionListener mml = new MouseMotionListener() {
+//			@Override
+//			public void mouseMoved(MouseEvent e) {
+//				container.feedbackTrigger(e, false);
+//			}
+//
+//			@Override
+//			public void mouseDragged(MouseEvent e) {
+//				container.feedbackTrigger(e, true);
+//			}
+//		};
+//		container.getComponent().addMouseMotionListener(mml);
 	}
 
 

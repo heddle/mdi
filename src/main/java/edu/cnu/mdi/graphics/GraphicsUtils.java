@@ -397,6 +397,22 @@ public class GraphicsUtils {
 		int y = Math.min(p1.y, p2.y);
 		return new Rectangle(x, y, w, h);
 	}
+	
+	/**
+	 * Draw etched text. The text is drawn twice, once in white offset by (1,1) and then in black at the
+	 * given position. This helps the text stand out against any background.
+	 * @param g the Graphics context.
+	 * @param text the text to draw.
+	 * @param x the x position.
+	 * @param y the y position.
+	 */
+	public static void drawEtchedText(Graphics g, String text, int x, int y) {
+		g.setColor(Color.white);
+		g.drawString(text, x + 1, y + 1);
+		g.setColor(Color.black);
+		g.drawString(text, x, y);
+	}
+
 
 	/**
 	 * Draw a styled line.

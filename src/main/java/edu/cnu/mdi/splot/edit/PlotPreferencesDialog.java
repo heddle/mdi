@@ -35,7 +35,6 @@ public class PlotPreferencesDialog extends SimpleDialog {
 		super("Plot Preferences", plotCanvas, true, APPLY, CLOSE);
 
 		_plotCanvas = plotCanvas;
-
 		addCenter();
 		pack();
 	}

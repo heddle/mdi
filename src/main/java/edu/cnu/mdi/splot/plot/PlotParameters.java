@@ -279,6 +279,11 @@ public class PlotParameters {
 		if (_yScale != ns) {
 			_yScale = ns;
 			_canvas.setWorldSystem();
+			
+			if (isBarPlot()) {
+				// need to rebuild bars for log scale change
+				BarPlot.rebuildBars(_canvas);
+			}
 		}
 		return this;
 	}
@@ -673,6 +678,13 @@ public class PlotParameters {
 	public PlotParameters removePlotLine(PlotLine line) {
 		_lines.remove(line);
 		return this;
+	}
+	
+	/**
+	 * Clear all plot lines (annotations).
+	 */
+	public void clearPlotLines() {
+	    _lines.clear();
 	}
 
 	/**

@@ -18,6 +18,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -529,7 +530,20 @@ public class BaseView extends JInternalFrame
 
 		FeedbackPane fbp = new FeedbackPane(fg, bg, fontSize);
 		fbp.setBorder(null);
-		getContainer().setFeedbackPane(fbp);
+		IContainer container = getContainer();
+		container.setFeedbackPane(fbp);
+		MouseMotionListener mml = new MouseMotionListener() {
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				container.feedbackTrigger(e, false);
+			}
+
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				container.feedbackTrigger(e, true);
+			}
+		};
+		container.getComponent().addMouseMotionListener(mml);
 		return fbp;
 	}
 

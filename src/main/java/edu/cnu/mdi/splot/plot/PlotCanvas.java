@@ -40,6 +40,7 @@ import edu.cnu.mdi.util.Environment;
 @SuppressWarnings("serial")
 public class PlotCanvas extends JComponent implements MouseListener, MouseMotionListener, DataChangeListener {
 
+	
 	public static final String DONEDRAWINGPROP = "Done Drawing";
 	public static final String TITLETEXTCHANGE = "Title Text";
 	public static final String TITLEFONTCHANGE = "Title Font";
@@ -799,8 +800,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 			double[] yArr = s.y;
 			for (int i = 0; i < xArr.length; i++) {
 				if (xArr[i] == closestBarX) {
-					double barHeight = yArr[i];
-					feedback.append(String.format("Category %s at x=%.2f has height %.2f", name, closestBarX, height));
+					feedback.append(String.format("Category %s at x=%.2f has height %.4f", name, closestBarX, height));
 					break;
 				}
 			}

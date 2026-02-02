@@ -38,7 +38,7 @@ import edu.cnu.mdi.view.BaseView;
  * </p>
  */
 @SuppressWarnings("serial")
-public class MapView2D extends BaseView implements MouseMotionListener {
+public class MapView2D extends BaseView {
 
 	// share country boundaries across all map views
 	private static List<CountryFeature> _countries;
@@ -92,8 +92,6 @@ public class MapView2D extends BaseView implements MouseMotionListener {
 		// set the after draw
 		setAfterDraw();
 
-		// listen for mouse motion over the view's container
-		getContainer().getComponent().addMouseMotionListener(this);
 	}
 
 	/**
@@ -186,16 +184,6 @@ public class MapView2D extends BaseView implements MouseMotionListener {
 
 		refresh();
 
-	}
-
-	@Override
-	public void mouseDragged(MouseEvent e) {
-		// no-op
-	}
-
-	@Override
-	public void mouseMoved(MouseEvent e) {
-		// no-op (feedback is computed via getFeedbackStrings)
 	}
 
 	/**

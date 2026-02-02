@@ -145,7 +145,7 @@ public class PlotView extends BaseView {
 	 *
 	 * @param plotPanel the new plot panel
 	 */
-	public void setPlotPanel(PlotPanel plotPanel) {
+	private void setPlotPanel(PlotPanel plotPanel) {
 		remove(_plotPanel);
 		_plotPanel = plotPanel;
 		_plotCanvas = plotPanel.getPlotCanvas();
