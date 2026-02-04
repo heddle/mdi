@@ -46,7 +46,7 @@ public final class Histo2DData {
     private final double _dy;
     
     // ---- storage ----
-    private final double[][] _bins;
+    public final double[][] _bins;
 
     // ---- counts (HistoData-like) ----
     /** In-range fill count (good points). */
