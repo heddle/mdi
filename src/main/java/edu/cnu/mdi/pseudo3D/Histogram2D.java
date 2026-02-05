@@ -47,7 +47,7 @@ import edu.cnu.mdi.ui.colors.ScientificColorMap;
  * and it still directly reads {@code data._bins}.
  */
 @SuppressWarnings("serial")
-public class BackedHistogram2D extends JComponent {
+public class Histogram2D extends JComponent {
 
     // ---- Backing data ----
     private Histo2DData data;
@@ -65,6 +65,11 @@ public class BackedHistogram2D extends JComponent {
     private double rotX = 0.5;
     private double rotY = 0.5;
     private double zoomMultiplier = 1.0; // 1.0 = no zoom
+
+    /** Whether Z values are mapped with log10(1+z) for height and color. */
+    private boolean logZ = false;
+    /** Small epsilon used when logZ is enabled and z is extremely small. */
+    private static final double LOG_EPS = 1e-12;
 
     // ---- Hover state ----
     private int hoveredI = -1;
@@ -103,7 +108,7 @@ public class BackedHistogram2D extends JComponent {
      * @param data     histogram data (must not be {@code null})
      * @param colorMap colormap used to color pillars by bin content (must not be {@code null})
      */
-    public BackedHistogram2D(Histo2DData data, ScientificColorMap colorMap) {
+    public Histogram2D(Histo2DData data, ScientificColorMap colorMap) {
         this.data = Objects.requireNonNull(data, "data");
         this.colorMap = Objects.requireNonNull(colorMap, "colorMap");
 
@@ -147,6 +152,30 @@ public class BackedHistogram2D extends JComponent {
     public void setColorMap(ScientificColorMap colorMap) {
         this.colorMap = Objects.requireNonNull(colorMap, "colorMap");
         repaint();
+    }
+
+    /**
+     * Enable or disable log-Z mapping for pillar height and color.
+     * <p>
+     * When enabled, each bin value {@code z} is mapped to {@code log10(1 + max(z,0))}.
+     * This compresses dynamic range while keeping empty bins at 0.
+     *
+     * @param logZ {@code true} to enable log-Z mapping; {@code false} for linear mapping
+     */
+    public void setLogZ(boolean logZ) {
+        if (this.logZ == logZ) {
+            return;
+        }
+        this.logZ = logZ;
+        refreshDataScale();
+        repaint();
+    }
+
+    /**
+     * @return {@code true} if log-Z mapping is enabled
+     */
+    public boolean isLogZ() {
+        return logZ;
     }
 
     /**
@@ -312,8 +341,15 @@ public class BackedHistogram2D extends JComponent {
         if (max <= 0) {
             invMaxBin = 1.0;
         } else {
-            invMaxBin = 1.0 / max;
+            if (logZ) {
+                // Scale relative to mapped max = log10(1+max).
+                double mappedMax = Math.log10(1.0 + Math.max(0.0, max));
+                invMaxBin = (mappedMax > LOG_EPS) ? (1.0 / mappedMax) : 1.0;
+            } else {
+                invMaxBin = 1.0 / max;
+            }
         }
+        // Height scaling: tuned empirically to give a good aspect ratio across common bin counts.
         heightScale = ((nx + ny) / 5.0) * invMaxBin;
     }
 
@@ -387,6 +423,36 @@ public class BackedHistogram2D extends JComponent {
      * @param zoom zoom scale
      * @return true if the mouse is hovering over the top face of this bar
      */
+    /**
+     * Map a raw bin value to the value used for height/color scaling.
+     * <p>
+     * In linear mode, this returns {@code max(z,0)}. In log-Z mode, this returns
+     * {@code log10(1 + max(z,0))}.
+     */
+    private double mapZ(double z) {
+        if (z <= 0) {
+            return 0.0;
+        }
+        if (!logZ) {
+            return z;
+        }
+        // log10(1+z) is well-defined at z=0 and behaves linearly for small z.
+        return Math.log10(1.0 + z);
+    }
+
+    /** Format the maximum Z value (mapped if logZ). */
+    private String formatZMax() {
+        double max = data.maxBin();
+        if (max <= 0) {
+            return "0";
+        }
+        if (!logZ) {
+            return String.format("%.4g", max);
+        }
+        double mapped = Math.log10(1.0 + Math.max(0.0, max));
+        return String.format("%.4g", mapped);
+    }
+
     private void renderBar(Graphics2D g2, int cx, int cy, int i, int j, double h, double zoom, boolean isHovered) {
         // Bar footprint in "data grid" coordinates.
         final double x0 = i - nx / 2.0;
@@ -395,7 +461,10 @@ public class BackedHistogram2D extends JComponent {
         final double y1 = y0 + 0.85;
 
         // Scaled height.
-        final double sH = h * heightScale;
+        final double z = mapZ(h);
+
+        // Scaled height.
+        final double sH = z * heightScale;
 
         // Precompute some rotated values for speed.
         // projX: cx + (x*cosY + y*sinY)*zoom
@@ -421,7 +490,7 @@ public class BackedHistogram2D extends JComponent {
         final int bx1 = projX(x1, y0, cx, zoom);
         final int by1 = projY(x1, y0, 0.0, cy, zoom);
 
-        float t = (float) (h * invMaxBin);
+        float t = (float) (z * invMaxBin);
         if (t < 0f) {
             t = 0f;
         } else if (t > 1f) {
@@ -453,7 +522,10 @@ public class BackedHistogram2D extends JComponent {
         final double y0 = j - ny / 2.0;
         final double x1 = x0 + 0.85;
         final double y1 = y0 + 0.85;
-        final double sH = h * heightScale;
+        final double z = mapZ(h);
+
+        // Scaled height.
+        final double sH = z * heightScale;
 
         final int tx0 = projX(x0, y0, cx, zoom);
         final int ty0 = projY(x0, y0, sH, cy, zoom);
@@ -493,6 +565,11 @@ public class BackedHistogram2D extends JComponent {
         // Labels + ticks (kept lightweight; uses reflection so this class remains a drop-in
         // even if Histo2DData's accessor names change).
         drawAxisLabelsAndTicks(g2, cx, cy, zoom);
+
+        // Minimal Z reference label (helps interpret heights).
+        g2.setColor(Color.DARK_GRAY);
+        String zlab = logZ ? "log10(1+Z)" : "Z";
+        g2.drawString(zlab + " max: " + formatZMax(), ox + 6, oy - 6);
     }
 
     /**
@@ -577,6 +654,7 @@ public class BackedHistogram2D extends JComponent {
         }
     }
 
+    // Format tick value with appropriate precision.
     private String formatTick(double v) {
         double av = Math.abs(v);
         if (av >= 1000 || (av > 0 && av < 0.01)) {
@@ -681,27 +759,4 @@ public class BackedHistogram2D extends JComponent {
         g2.fillPolygon(px, py, 4);
     }
 
-    public static void main(String[] args) {
-        JFrame f = new JFrame("2D Histogram in pseudo-3D");
-
-        int nx = 50;
-        int ny = 50;
-        Histo2DData data = new Histo2DData("Test", 0, 1, nx, 0, 1, ny);
-
-        for (int i = 0; i < nx; i++) {
-            double x = ((double) i + 1.0e-6) / nx;
-            for (int j = 0; j < ny; j++) {
-                double y = ((double) j + 1.0e-6) / ny;
-                double z = (Math.sin(i * 0.1) * Math.cos(j * 0.1) + 1.1) * 10; // some test data
-                data.fill(x, y, z);
-            }
-
-        }
-
-        BackedHistogram2D canvas = new BackedHistogram2D(data, ScientificColorMap.VIRIDIS);
-        f.add(canvas);
-        f.setSize(1000, 800);
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.setVisible(true);
-    }
 }

@@ -5,7 +5,6 @@ import java.util.EnumSet;
 import edu.cnu.mdi.splot.plot.LimitsMethod;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 import edu.cnu.mdi.splot.plot.RenderHint;
-import edu.cnu.mdi.splot.plot.PlotParameters.Histo2DRenderMode;
 
 /**
  * Persisted subset of PlotParameters that materially affects plot appearance/behavior.
@@ -24,7 +23,6 @@ public final class PlotParametersSpec {
     // Axis scaling
     public PlotParameters.AxisScale xScale = PlotParameters.AxisScale.LINEAR;
     public PlotParameters.AxisScale yScale = PlotParameters.AxisScale.LINEAR;
-	public Histo2DRenderMode histo2DRenderMode = Histo2DRenderMode.HEATMAP;
 
 	// rendering hints
 	public EnumSet<RenderHint> renderHints = EnumSet.noneOf(RenderHint.class);

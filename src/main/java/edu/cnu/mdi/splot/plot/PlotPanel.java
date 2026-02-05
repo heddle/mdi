@@ -17,7 +17,6 @@ import javax.swing.SwingConstants;
 
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
-import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.util.PrintUtils;
 
 @SuppressWarnings("serial")
@@ -228,6 +227,15 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		_titleLabel.setBackground(bg);
 		_xLabel.setBackground(bg);
 		_yLabel.setBackground(bg);
+	}
+	
+	/**
+	 * Does this panel hold a 2D histogram?
+	 *
+	 * @return true if it holds a 2D histogram
+	 */
+	public boolean holds2DHistogram() {
+		return _canvas.getPlotData().isHisto2DData();
 	}
 
 	@Override

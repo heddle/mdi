@@ -48,6 +48,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	public static final String YLABELTEXTCHANGE = "Y Label Text";
 	public static final String AXESFONTCHANGE = "Axes Font";
 	public static final String STATUSFONTCHANGE = "Status Font";
+	public static final String LOGZCHANGE = "Log Z";
 
 	// List of plot change listeners
 	private EventListenerList _listenerList;

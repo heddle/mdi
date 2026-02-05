@@ -231,7 +231,6 @@ public final class PlotIO {
 		s.zColorMap = (p.getColorMap() == null) ? null : p.getColorMap().name();
 		s.showEmptyBins = p.showEmptyBins();
 
-		s.histo2DRenderMode = p.getHisto2DRenderMode();
 		return s;
 	}
 
@@ -563,7 +562,6 @@ public final class PlotIO {
 				// keep default
 			}
 		}
-		p.setHisto2DRenderMode(s.histo2DRenderMode != null ? s.histo2DRenderMode : PlotParameters.Histo2DRenderMode.HEATMAP);
 	}
 
 	/**

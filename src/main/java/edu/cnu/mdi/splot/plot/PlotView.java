@@ -1,5 +1,8 @@
 package edu.cnu.mdi.splot.plot;
 
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Color;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
@@ -7,12 +10,18 @@ import java.util.function.Predicate;
 import java.util.prefs.Preferences;
 
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.SwingConstants;
+import javax.swing.ButtonGroup;
 
 import edu.cnu.mdi.properties.PropertyUtils;
+import edu.cnu.mdi.pseudo3D.Histo2DPanel;
 import edu.cnu.mdi.splot.io.PlotFileFilter;
 import edu.cnu.mdi.splot.io.PlotIO;
 import edu.cnu.mdi.splot.io.RecentPlotFiles;
@@ -30,19 +39,27 @@ import edu.cnu.mdi.view.BaseView;
 @SuppressWarnings("serial")
 public class PlotView extends BaseView {
 
-	// the owner canvas
+	// Card constants
+	public static final String CARD_PLOT = "Plot";
+	public static final String CARD_HISTO2D = "Histo2D";
+
 	protected PlotCanvas _plotCanvas;
-
-	// panel that holds the canvas
 	protected PlotPanel _plotPanel;
+	
 
-	// current file (for Save vs Save As)
+	// CardLayout components
+	private CardLayout _cardLayout;
+	private JPanel _cardDeck;
+	private JPanel _histoPanel;
+
 	private File _currentPlotFile;
-
-	// recent files support
 	private RecentPlotFiles _recentFiles;
 	private RecentPlotsMenu _recentMenuHelper;
 	private JMenu _recentPlotsMenu;
+	// ... existing constants and fields ...
+	private JMenu _viewMenu;
+	private JRadioButtonMenuItem _plotMenuItem;
+	private JMenuItem _histoMenuItem;
 
 	public PlotView() {
 		this("sPlot");
@@ -55,21 +72,31 @@ public class PlotView extends BaseView {
 	 */
 	public PlotView(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
-		add(createPlotPanel());
 
-		// IMPORTANT: create menu bar BEFORE adding menus
+		// 1. Setup CardLayout deck
+		_cardLayout = new CardLayout();
+		_cardDeck = new JPanel(_cardLayout);
+
+		// 2. Initialize cards
+		_cardDeck.add(createPlotPanel(), CARD_PLOT);
+		_cardDeck.add(createHistoPlaceholder(), CARD_HISTO2D);
+
+		// 3. Add deck to the view (BorderLayout.CENTER by default)
+		add(_cardDeck, BorderLayout.CENTER);
+
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 
-		//set the file filter to plot files
 		Predicate<File> plotFilter = f -> {
-		    if (!f.isFile()) return false;
-		    
-		    String name = f.getName().toLowerCase();
-		    return name.endsWith(".plot.json") || name.endsWith(".splot.json");
+			if (!f.isFile())
+				return false;
+			String name = f.getName().toLowerCase();
+			return name.endsWith(".plot.json") || name.endsWith(".splot.json");
 		};
 		setFileFilter(plotFilter);
 		addMenus();
+		// Initial sync of the menu state
+		updateViewMenuState();
 	}
 
 	// add the plot IO menus + the splot edit menu
@@ -127,8 +154,74 @@ public class PlotView extends BaseView {
 		BaseView.applyFocusFix(editMenu, this);
 		menuBar.add(editMenu);
 
+		// Create View Menu
+		_viewMenu = new JMenu("View");
+
+		// Use radio buttons so the user knows which card is active
+		ButtonGroup group = new ButtonGroup();
+
+		_plotMenuItem = new JRadioButtonMenuItem("Standard Plot");
+		_plotMenuItem.setSelected(true);
+		_plotMenuItem.addActionListener(e -> showCard(CARD_PLOT));
+
+		_histoMenuItem = new JRadioButtonMenuItem("2D Histogram");
+		_histoMenuItem.addActionListener(e -> showCard(CARD_HISTO2D));
+
+		group.add(_plotMenuItem);
+		group.add(_histoMenuItem);
+
+		_viewMenu.add(_plotMenuItem);
+		_viewMenu.add(_histoMenuItem);
+
+		BaseView.applyFocusFix(_viewMenu, this);
+		menuBar.add(_viewMenu);
+
 		revalidate();
 		repaint();
+	}
+
+	/**
+	 * Updates the enablement of the Histo2D option based on the PlotPanel's capabilities.
+	 */
+	private void updateViewMenuState() {
+	    if (_histoMenuItem != null && _plotPanel != null) {
+	        boolean canShowHisto = _plotPanel.holds2DHistogram();
+	        _histoMenuItem.setEnabled(canShowHisto);
+	        
+	        // Only force a switch if we are CURRENTLY on the Histo card 
+	        // and the new panel doesn't support it.
+	        if (!canShowHisto && isHistoCardVisible()) {
+	            showCard(CARD_PLOT);
+	        }
+	    }
+	}
+
+	/**
+	 * Helper to check which card is currently at the front
+	 */
+	private boolean isHistoCardVisible() {
+	    // CardLayout doesn't have a simple getVisibleCard() method, 
+	    // so we check the internal state or the component visibility.
+	    return _histoPanel.isVisible();
+	}
+	
+	private JPanel createHistoPlaceholder() {
+		_histoPanel = new JPanel(new BorderLayout());
+		_histoPanel.setBackground(Color.DARK_GRAY);
+		JLabel label = new JLabel("2D Histogram Placeholder", SwingConstants.CENTER);
+		label.setForeground(Color.WHITE);
+		_histoPanel.add(label, BorderLayout.CENTER);
+		return _histoPanel;
+	}
+
+	
+	/**
+	 * Toggles between the Plot and Histo2D cards.
+	 * 
+	 * @param cardName Use PlotView.CARD_PLOT or PlotView.CARD_HISTO2D
+	 */
+	public void showCard(String cardName) {
+		_cardLayout.show(_cardDeck, cardName);
 	}
 
 	// create the plot panel
@@ -139,23 +232,52 @@ public class PlotView extends BaseView {
 
 		return _plotPanel;
 	}
-
-	/**
-	 * Set the plot panel (and its canvas)
-	 *
-	 * @param plotPanel the new plot panel
-	 */
-	private void setPlotPanel(PlotPanel plotPanel) {
-		remove(_plotPanel);
-		_plotPanel = plotPanel;
-		_plotCanvas = plotPanel.getPlotCanvas();
-		_plotCanvas.setTransferHandler(new FileDropHandler(this));
-		add(_plotPanel);
-		revalidate();
-		repaint();
+	
+	private void setHisto2DPanel() {
+		if (_histoPanel != null) {
+			_cardDeck.remove(_histoPanel);
+		}
+		
+		if (_plotPanel.holds2DHistogram()) {
+			PlotParameters params = _plotCanvas.getParameters();
+			boolean logZ = reflectLogZ(params);
+			_histoPanel = new Histo2DPanel(_plotCanvas.getPlotData().getHisto2DData(), params.getColorMap(), logZ);
+			_plotCanvas.addPropertyChangeListener((Histo2DPanel)_histoPanel);
+		} else {
+			createHistoPlaceholder(); // empty placeholder
+		}
+	    _cardDeck.add(_histoPanel, CARD_HISTO2D);
+	    
 	}
 
-
+	/**
+	 * Updated to ensure every new plot starts on the "Plot" card.
+	 */
+	private void setPlotPanel(PlotPanel plotPanel) {
+	    _cardDeck.remove(_plotPanel);
+	    
+	    _plotPanel = plotPanel;
+	    _plotCanvas = plotPanel.getPlotCanvas();
+	    _plotCanvas.setTransferHandler(new FileDropHandler(this));
+	    
+	    _cardDeck.add(_plotPanel, CARD_PLOT);
+	    
+	    // 1. Update menu enablement
+	    updateViewMenuState();
+	    
+	    // 2. ALWAYS reset to the standard Plot card for new panels
+	    showCard(CARD_PLOT);
+	    
+	    // 3. Ensure the radio button in the menu matches the reset
+	    if (_plotMenuItem != null) {
+	        _plotMenuItem.setSelected(true);
+	    }
+	    
+	    setHisto2DPanel();
+	    
+	    _cardDeck.revalidate();
+	    _cardDeck.repaint();
+	}
 	/**
 	 * Switch to a different plot panel (and its canvas)
 	 *
@@ -163,22 +285,19 @@ public class PlotView extends BaseView {
 	 */
 	public void switchToPlotPanel(PlotPanel plotPanel) {
 		Objects.requireNonNull(plotPanel, "PlotPanel cannot be null");
-
-		// plot panel switch means the current file is no longer authoritative
 		_currentPlotFile = null;
 
-		// remove the old edit menu and shutdown old canvas
 		JMenu splotMenu = findMenu(getJMenuBar(), SplotEditMenu.MENU_TITLE);
 		if (splotMenu != null) {
 			getJMenuBar().remove(splotMenu);
-			_plotCanvas.shutDown(); // keeps your existing behavior
+			if (_plotCanvas != null)
+				_plotCanvas.shutDown();
 		}
 
 		PlotCanvas plotCanvas = plotPanel.getPlotCanvas();
 		plotCanvas.standUp();
 		setPlotPanel(plotPanel);
 
-		// re-add edit menu tied to new canvas (keep file menu as-is)
 		JMenu menu = new SplotEditMenu(plotCanvas);
 		getJMenuBar().add(menu);
 
@@ -221,7 +340,7 @@ public class PlotView extends BaseView {
 	@Override
 	public void filesDropped(List<File> files) {
 		// just open the first valid plot file
-		//files already filtered by FileDropHandler
+		// files already filtered by FileDropHandler
 		if (files == null || files.isEmpty()) {
 			return;
 		}
@@ -230,7 +349,6 @@ public class PlotView extends BaseView {
 		openPlotFile(file);
 
 	}
-
 
 	// Get initial directory for file chooser from Environment
 	private File getInitialChooserDirectory() {
@@ -314,11 +432,7 @@ public class PlotView extends BaseView {
 			repaint();
 
 		} catch (Exception ex) {
-			JOptionPane.showMessageDialog(
-					this,
-					ex.getMessage(),
-					"Open Plot Failed",
-					JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Open Plot Failed", JOptionPane.ERROR_MESSAGE);
 
 			// If it failed, drop it from recents to avoid a "dead" entry
 			if (_recentFiles != null) {
@@ -351,12 +465,8 @@ public class PlotView extends BaseView {
 
 		// Confirm overwrite if needed
 		if (target.exists()) {
-			int ok = JOptionPane.showConfirmDialog(
-					this,
-					"Overwrite existing file?\n" + target.getAbsolutePath(),
-					"Confirm Save",
-					JOptionPane.OK_CANCEL_OPTION,
-					JOptionPane.QUESTION_MESSAGE);
+			int ok = JOptionPane.showConfirmDialog(this, "Overwrite existing file?\n" + target.getAbsolutePath(),
+					"Confirm Save", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
 			if (ok != JOptionPane.OK_OPTION) {
 				return;
 			}
@@ -374,11 +484,7 @@ public class PlotView extends BaseView {
 			rebuildRecentMenu();
 
 		} catch (Exception ex) {
-			JOptionPane.showMessageDialog(
-					this,
-					ex.getMessage(),
-					"Save Plot Failed",
-					JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Save Plot Failed", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
@@ -387,5 +493,50 @@ public class PlotView extends BaseView {
 		if (_recentPlotsMenu != null && _recentMenuHelper != null) {
 			_recentMenuHelper.rebuild(_recentPlotsMenu);
 		}
+	}
+
+	/**
+	 * Best-effort reflection helper to detect whether the current plot parameters
+	 * have log-Z enabled for 2D histograms/heatmaps.
+	 * <p>
+	 * This keeps the pseudo-3D card loosely coupled to PlotParameters API details.
+	 */
+	private static boolean reflectLogZ(Object plotParameters) {
+		if (plotParameters == null) {
+			return false;
+		}
+		final String[] methodNames = {
+				"isLogZ",
+				"getLogZ",
+				"isLogZEnabled",
+				"getLogZEnabled",
+				"isLogz",
+				"getLogz"
+		};
+		for (String mname : methodNames) {
+			try {
+				var m = plotParameters.getClass().getMethod(mname);
+				Object val = m.invoke(plotParameters);
+				if (val instanceof Boolean b) {
+					return b.booleanValue();
+				}
+			} catch (Exception ignore) {
+				// try next
+			}
+		}
+		// Some implementations store it as a field instead of an accessor.
+		final String[] fieldNames = { "logZ", "_logZ", "logz", "_logz" };
+		for (String fname : fieldNames) {
+			try {
+				var f = plotParameters.getClass().getDeclaredField(fname);
+				f.setAccessible(true);
+				Object val = f.get(plotParameters);
+				if (val instanceof Boolean b) {
+					return b.booleanValue();
+				}
+			} catch (Exception ignore) {
+			}
+		}
+		return false;
 	}
 }
