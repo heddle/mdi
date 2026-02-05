@@ -5,10 +5,9 @@
 
     This POM defines:
       • Java 17 build configuration
-      • JOGL/GlueGen OpenGL bindings from JogAmp repository
       • JUnit 5 for unit testing
       • Maven Surefire integration
-      • exec-maven-plugin for launching the Swing/JOGL demo
+      • exec-maven-plugin for launching the demo
 -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -23,7 +22,7 @@
 	<packaging>jar</packaging>
 
 	<name>mdi</name>
-	<description>MDI visualization and Swing/JOGL demo framework</description>
+	<description>MDI visualization framework</description>
 
 	<!-- Build properties such as Java version, encoding, and dependency
 	versions -->
@@ -39,16 +38,8 @@
 		<maven.surefire.plugin.version>3.3.0</maven.surefire.plugin.version>
 	</properties>
 
-	<!-- External repositories for dependencies not in Maven Central -->
-	<repositories>
-		<repository>
-			<id>jogamp</id>
-			<name>JogAmp Repository</name>
-			<url>https://jogamp.org/deployment/maven</url>
-		</repository>
-	</repositories>
 
-	<!-- Project dependencies: JOGL, GlueGen, JUnit 5, Commons Math, Batik -->
+	<!-- Project dependencies: JUnit 5, Commons Math, Batik, Gson -->
 	<dependencies>
 		<!-- Apache Batik for svg -->
 		<dependency>
@@ -67,20 +58,6 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
 			<version>3.6.1</version>
-		</dependency>
-
-		<!-- JOGL: OpenGL bindings -->
-		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl-all-main</artifactId>
-			<version>2.4.0</version>
-		</dependency>
-
-		<!-- GlueGen runtime for JOGL -->
-		<dependency>
-			<groupId>org.jogamp.gluegen</groupId>
-			<artifactId>gluegen-rt-main</artifactId>
-			<version>2.4.0</version>
 		</dependency>
 
         <!-- FlatLaf Look and Feel for Swing -->
@@ -141,7 +118,6 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>${maven.surefire.plugin.version}</version>
 				<configuration>
-					<!-- Forces classpath mode to avoid JPMS issues with JOGL -->
 					<useModulePath>false</useModulePath>
 				</configuration>
 			</plugin>
@@ -156,8 +132,6 @@
 					<!-- Entry point for the application -->
 					<mainClass>edu.cnu.mdi.demo.Main</mainClass>
 
-					<!-- Prevent errors if JOGL threads remain active -->
-					<cleanupDaemonThreads>false</cleanupDaemonThreads>
 				</configuration>
 
 				<executions>
