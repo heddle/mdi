@@ -29,10 +29,20 @@ public class PlotParameters {
 		LOG10
 	}
 	
-	
+	/**
+	 * Render 2DHistogram as heatmap or pseudo-3D bars.
+	 */
+	public enum Histo2DRenderMode {
+	    HEATMAP,
+	    PSEUDO_3D
+	}
+
 	// axis scales
 	private AxisScale _xScale = AxisScale.LINEAR;
 	private AxisScale _yScale = AxisScale.LINEAR;
+	
+	//heatmap vs pseudo-3D bars for 2D histograms
+	private Histo2DRenderMode _histo2DRenderMode = Histo2DRenderMode.HEATMAP;
 	
 	// rendering hints
 	private EnumSet<RenderHint> renderHints = EnumSet.noneOf(RenderHint.class);
@@ -284,6 +294,26 @@ public class PlotParameters {
 				// need to rebuild bars for log scale change
 				BarPlot.rebuildBars(_canvas);
 			}
+		}
+		return this;
+	}
+
+	/** @return the rendering mode for 2D histograms (heatmap or pseudo-3D bars). */
+	public Histo2DRenderMode getHisto2DRenderMode() {
+		return _histo2DRenderMode;
+	}
+
+	/**
+	 * Set the rendering mode for 2D histograms (heatmap or pseudo-3D bars).
+	 *
+	 * @param mode the new rendering mode (null treated as HEATMAP)
+	 * @return this parameters instance (for chaining)
+	 */
+	public PlotParameters setHisto2DRenderMode(Histo2DRenderMode mode) {
+		Histo2DRenderMode nm = (mode == null) ? Histo2DRenderMode.HEATMAP : mode;
+		if (_histo2DRenderMode != nm) {
+			_histo2DRenderMode = nm;
+			_canvas.repaint();
 		}
 		return this;
 	}
