@@ -380,7 +380,8 @@ public class DemoApp extends BaseMDIApplication {
 				"Network Declutter Demo View",
 				PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT, 1.2, PropertyUtils.VISIBLE, false,
 				PropertyUtils.BACKGROUND, Color.white, PropertyUtils.WORLDSYSTEM,
-				new Rectangle2D.Double(0.0, 0.0, 1, 1));
+				new Rectangle2D.Double(0.0, 0.0, 1, 1),
+				PropertyUtils.INFOBUTTON, true);
 		return view;
 	}
 
@@ -406,7 +407,7 @@ public class DemoApp extends BaseMDIApplication {
 				1.2, PropertyUtils.TOOLBARBITS, toolBits,
 				PropertyUtils.VISIBLE, false, 
 				PropertyUtils.BACKGROUND, X11Colors.getX11Color("alice blue"), PropertyUtils.TITLE,
-				"Network Layout Demo View ");
+				"Network Layout Demo View");
 		return view;
 	}
 
@@ -434,7 +435,7 @@ public class DemoApp extends BaseMDIApplication {
 			e.printStackTrace();
 		}
 
-		long toolBits =  ToolBits.STATUS | ToolBits.CENTER | ToolBits.ZOOMTOOLS | ToolBits.DRAWINGTOOLS | ToolBits.MAGNIFY ;
+		long toolBits =  ToolBits.INFO | ToolBits.STATUS | ToolBits.CENTER | ToolBits.ZOOMTOOLS | ToolBits.DRAWINGTOOLS | ToolBits.MAGNIFY ;
 
 		return new MapView2D(PropertyUtils.TITLE, "Sample 2D Map View",
 				PropertyUtils.FRACTION, 0.6, PropertyUtils.ASPECT, 1.5, PropertyUtils.CONTAINERCLASS,

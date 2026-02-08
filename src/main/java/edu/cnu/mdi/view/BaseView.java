@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.Insets;
 import java.awt.Point;
@@ -28,15 +29,23 @@ import java.util.function.Predicate;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
+import javax.swing.Icon;
 import javax.swing.InputMap;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
+import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
+import javax.swing.OverlayLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
@@ -50,9 +59,11 @@ import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.format.DoubleFormat;
+import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
+import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.transfer.IFileDropHandler;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
@@ -101,6 +112,15 @@ public class BaseView extends JInternalFrame
 	 * </p>
 	 */
 	protected String VIEWPROPNAME = "?";
+	
+	/** Dialog used to show view information (lazily created). */
+	protected JDialog infoDialog;
+	protected static final Icon infoIcon; 
+	static {
+		String path = ToolBits.getResourcePath(ToolBits.INFO);
+		infoIcon = ImageManager.getInstance().loadUiIcon(path, 
+				BaseToolBar.DEFAULT_ICON_SIZE, BaseToolBar.DEFAULT_ICON_SIZE);
+	}
 
 	/**
 	 * Properties provided at construction time (and used as the view's
@@ -780,6 +800,60 @@ public class BaseView extends JInternalFrame
 	public void componentResized(ComponentEvent e) {
 		// no-op
 	}
+	
+	public void viewInfo() {
+		AbstractViewInfo info = getViewInfo();
+		if (info != null) {
+			if (infoDialog != null && infoDialog.isShowing()) {
+				infoDialog.toFront();
+				return;
+			}
+			infoDialog = InfoDialogHelper.showInfoDialog(this, info);
+		} else {
+			JOptionPane.showMessageDialog(this, 
+					"No detailed information is available for this view.", 
+					"View Info", JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+	
+	/**
+	 * Helper component: Wraps the view content and overlays a floating info button
+	 * in the top-right corner.
+	 */
+	private static class ViewWrapper extends JLayeredPane {
+		
+		public ViewWrapper(JComponent viewContent, BaseView view) {
+			setLayout(new OverlayLayout(this));
+
+			// 1. The Info Button (Foreground Layer)
+			JButton infoButton = new JButton();
+			infoButton.setIcon(infoIcon);
+			
+			// Styling: Small, semi-transparent, flat look
+			infoButton.setMargin(new Insets(0, 0, 0, 0));
+			infoButton.setPreferredSize(new Dimension(infoIcon.getIconWidth(), 
+					infoIcon.getIconHeight()));
+			infoButton.setFocusable(false);
+			infoButton.setBorderPainted(false);
+			infoButton.setContentAreaFilled(false);
+			infoButton.setBackground(new Color(255, 255, 255, 160)); // Slight transparency
+			infoButton.setToolTipText("View Information");
+			infoButton.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+
+			infoButton.addActionListener(e -> {
+				view.viewInfo();
+			});
+
+			// 2. Container to align button Top-Right
+			JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+			buttonPanel.setOpaque(false); // Transparent so map shows through
+			buttonPanel.add(infoButton);
+			
+			// 3. Add layers (First added = Topmost in OverlayLayout)
+			add(buttonPanel); 
+			add(viewContent);
+		}
+	}
 
 	// =====================================================================================
 	// Helper components (nested for drop-in refactor)
@@ -1029,6 +1103,13 @@ public class BaseView extends JInternalFrame
 				view.scrollPane = new JScrollPane(center);
 				center = view.scrollPane;
 			}
+			
+			// *** INTEGRATION START: Wrap with Info Button if configured ***
+			if (cfg.infobutton && center instanceof JComponent) {
+				// We pass the 'view' so the wrapper can call view.getViewInfo() lazily on click
+				center = new ViewWrapper((JComponent) center, view);
+			}
+			// *** INTEGRATION END ***
 
 			// Optional split pane west component.
 			if (cfg.splitWestComponent != null) {
@@ -1108,6 +1189,8 @@ public class BaseView extends JInternalFrame
 	public AbstractViewInfo getViewInfo() {
 		return null;
 	}
+	
+	
 
 		/**
 	 * Captures/restores persistent properties for a view.

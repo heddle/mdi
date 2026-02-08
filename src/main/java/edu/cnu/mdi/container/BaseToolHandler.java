@@ -4,7 +4,6 @@ import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,22 +57,15 @@ public class BaseToolHandler implements IToolHandler  {
 	public BaseToolHandler(BaseContainer container) {
 		Objects.requireNonNull(container, "container");
 		this.container = container;
-
-		//TODO: TEST TO CONFIRM THIS ISN'T NEEDED ANYMORE
-//		MouseMotionListener mml = new MouseMotionListener() {
-//			@Override
-//			public void mouseMoved(MouseEvent e) {
-//				container.feedbackTrigger(e, false);
-//			}
-//
-//			@Override
-//			public void mouseDragged(MouseEvent e) {
-//				container.feedbackTrigger(e, true);
-//			}
-//		};
-//		container.getComponent().addMouseMotionListener(mml);
 	}
 
+	@Override
+	public void info(GestureContext gc) {
+		BaseView view = container.getView();
+		if (view != null) {
+			view.viewInfo();
+		}
+	}
 
 
 	/**

@@ -202,4 +202,9 @@ public class DefaultToolHandler implements IToolHandler {
 	public void createLine(GestureContext gc, Point start, Point end) {
 	}
 
+	@Override
+	public void info(GestureContext gc) {
+		// no-op
+	}
+
 }

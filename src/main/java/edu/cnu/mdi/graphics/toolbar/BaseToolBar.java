@@ -493,7 +493,10 @@ public class BaseToolBar extends AToolBar {
 		if (ToolBits.hasPrinterButton(bits)) {
 			oneShot(ToolBits.PRINTER, () -> handler.print(actionContext()));
 		}
-
+		if (ToolBits.hasInfoButton(bits)) {
+			oneShot(ToolBits.INFO, () -> handler.info(actionContext()));
+		}
+	
 		// Status field (optional)
 		if (ToolBits.hasStatusField(bits)) {
 			statusField = createStatusTextField();

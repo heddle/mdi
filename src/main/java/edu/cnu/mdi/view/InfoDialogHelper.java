@@ -5,9 +5,15 @@ import java.awt.*;
 
 public class InfoDialogHelper {
 
-    public static void showInfoDialog(Component parent, AbstractViewInfo info) {
+    public static JDialog showInfoDialog(Component parent, AbstractViewInfo info) {
         // Create the dialog
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent), "Information", Dialog.ModalityType.APPLICATION_MODAL);
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(parent), "Information", 
+        		Dialog.ModalityType.MODELESS);
+
+        dialog.setAlwaysOnTop(false);
+        dialog.setAutoRequestFocus(false);
+        dialog.setFocusableWindowState(false);
+        dialog.setType(java.awt.Window.Type.UTILITY);       
         dialog.setLayout(new BorderLayout());
         
         // Create the HTML viewer
@@ -37,5 +43,7 @@ public class InfoDialogHelper {
         dialog.setSize(500, 400);
         dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
+        
+        return dialog;
     }
 }

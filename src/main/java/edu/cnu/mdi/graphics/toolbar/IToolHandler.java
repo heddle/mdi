@@ -166,6 +166,9 @@ public interface IToolHandler {
 
     /** @param gc context (non-null) */
     void delete(GestureContext gc);
+    
+    /** @param gc context (non-null) */
+    void info(GestureContext gc);
 
     /** @param gc context (non-null) */
     void captureImage(GestureContext gc);

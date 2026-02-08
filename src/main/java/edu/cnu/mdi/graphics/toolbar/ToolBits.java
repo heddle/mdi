@@ -61,6 +61,7 @@ public final class ToolBits {
 	public static final long CAMERA    = 02000000L;
 	public static final long PRINTER   = 04000000L;
 	public static final long STATUS    = 010000000L;
+	public static final long INFO      = 020000000L;
 
 	/**
 	 * Return a stable string id for a predefined toolbar bit.
@@ -142,6 +143,9 @@ public final class ToolBits {
 		if (buttonBit == STATUS) {
 			return "status";
 		}
+		if (buttonBit == INFO) {
+			return "info";
+		}
 		return "bit_" + buttonBit;
 	}
 
@@ -162,7 +166,7 @@ public final class ToolBits {
 		m.put(RECTANGLE,  "images/svg/rectangle.svg");
 		m.put(POLYGON,    "images/svg/polygon.svg");
 		m.put(LINE,       "images/svg/line.svg");
-		m.put(STYLEB,      "images/svg/colorwheel.svg");
+		m.put(STYLEB,     "images/svg/colorwheel.svg");
 		m.put(DELETE,     "images/svg/delete.svg");
 		m.put(CENTER,     "images/svg/center.svg");
 		m.put(UNDOZOOM,   "images/svg/undo_zoom.svg");
@@ -177,6 +181,7 @@ public final class ToolBits {
 		m.put(PRINTER,    "images/svg/printer.svg");
 		m.put(RADARC,     "images/svg/radarc.svg");
 		m.put(MAGNIFY,    "images/svg/magnify.svg");
+		m.put(INFO,       "images/svg/infocirc.svg");
 		m.put(STATUS,      ""); // No icon for status field
 		BUTTON_ICON_MAP = Collections.unmodifiableMap(m);
 	}
@@ -193,7 +198,7 @@ public final class ToolBits {
 		m.put(RECTANGLE,  "Create a rectangle item");
 		m.put(POLYGON,    "Create a polygon item");
 		m.put(LINE,       "Create a line item");
-		m.put(STYLEB,      "Edit style of selected item(s)");
+		m.put(STYLEB,     "Edit style of selected item(s)");
 		m.put(DELETE,     "Delete selected item(s)");
 		m.put(CENTER,     "Recenter the view at clicked location");
 		m.put(UNDOZOOM,   "Undo last zoom action");
@@ -208,6 +213,7 @@ public final class ToolBits {
 		m.put(PRINTER,    "Print the current canvas");
 		m.put(RADARC,     "Create a radarc item");
 		m.put(MAGNIFY,    "Magnify area under mouse cursor");
+		m.put(INFO,       "Information about this view");
 		m.put(STATUS,      "");
 		BUTTON_TOOLTIP_MAP = Collections.unmodifiableMap(m);
 	}
@@ -298,5 +304,6 @@ public final class ToolBits {
 	protected static boolean hasStatusField(long toolbarBits)     { return hasBit(STATUS, toolbarBits); }
 	protected static boolean hasZoomInButton(long toolbarBits)    { return hasBit(ZOOMIN, toolbarBits); }
 	protected static boolean hasZoomOutButton(long toolbarBits)   { return hasBit(ZOOMOUT, toolbarBits); }
+	protected static boolean hasInfoButton(long toolbarBits)      { return hasBit(INFO, toolbarBits); }
 	protected static boolean hasBoxZoomButton(long toolbarBits)   { return hasBit(BOXZOOM, toolbarBits); }
 }

@@ -16,6 +16,7 @@ import edu.cnu.mdi.sim.SimulationEngine;
 import edu.cnu.mdi.sim.SimulationEngineConfig;
 import edu.cnu.mdi.sim.ui.SimulationView;
 import edu.cnu.mdi.util.Environment;
+import edu.cnu.mdi.view.AbstractViewInfo;
 
 /**
  * World-based network decluttering demo hosted in an MDI
@@ -98,6 +99,14 @@ public class NetworkDeclutterDemoView extends SimulationView implements IResetta
 		pack();
 		// Start engine thread (remains paused until Run unless you call startAndRun()).
 		startSimulation();
+	}
+
+	/**
+	 *  Get an information object describing this view, 
+	 *  used in the UI and for help.
+	 */
+	public AbstractViewInfo getViewInfo() {
+		return new NetworkDeclutterViewInfo();
 	}
 
 	@Override

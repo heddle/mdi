@@ -3,12 +3,15 @@ package edu.cnu.mdi.splot.plot;
 import java.awt.Rectangle;
 import java.util.Objects;
 
+import javax.swing.SwingUtilities;
+
 import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.DefaultToolHandler;
 import edu.cnu.mdi.graphics.toolbar.GestureContext;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
+import edu.cnu.mdi.view.BaseView;
 
 
 public class PlotToolHandler extends DefaultToolHandler {
@@ -53,6 +56,15 @@ public class PlotToolHandler extends DefaultToolHandler {
 	public BaseToolBar getToolBar() {
 		return toolBar;
 	}
+	
+	@Override
+	public void info(GestureContext gc) {
+		BaseView view = (BaseView) SwingUtilities.getAncestorOfClass(BaseView.class, gc.getCanvas());
+		if (view != null) {
+			view.viewInfo();
+		}
+	}
+
 
 	@Override
 	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
