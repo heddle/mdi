@@ -796,6 +796,7 @@ public class BaseView extends JInternalFrame
 		final String title;
 
 		final boolean standardDecorations;
+		final boolean infobutton;
 		final boolean iconifiable;
 		final boolean maximizable;
 		final boolean resizable;
@@ -818,12 +819,14 @@ public class BaseView extends JInternalFrame
 		final long toolBits;
 		final ARubberband.Policy boxZoomPolicy;
 
-		private ViewInitConfig(String title, boolean standardDecorations, boolean iconifiable,
+		// Constructor is private; use the static factory method.
+		private ViewInitConfig(String title, boolean standardDecorations, boolean infobutton, boolean iconifiable,
 				boolean maximizable, boolean resizable, boolean closable, boolean scrollable, boolean visible, int left,
 				int top, int width, int height, Rectangle2D.Double worldSystem, Color background,
 				JComponent splitWestComponent, long toolBits, ARubberband.Policy boxZoomPolicy) {
 			this.title = title;
 			this.standardDecorations = standardDecorations;
+			this.infobutton = infobutton;
 			this.iconifiable = iconifiable;
 			this.maximizable = maximizable;
 			this.resizable = resizable;
@@ -852,6 +855,7 @@ public class BaseView extends JInternalFrame
 			}
 
 			boolean standardDecorations = PropertyUtils.getStandardViewDecorations(props);
+			boolean infobutton = PropertyUtils.getInfoButton(props);
 			boolean iconifiable = PropertyUtils.getIconifiable(props);
 			boolean maximizable = PropertyUtils.getMaximizable(props);
 			boolean resizable = PropertyUtils.getResizable(props);
@@ -893,7 +897,7 @@ public class BaseView extends JInternalFrame
 			long bits = PropertyUtils.getToolbarBits(props);
 			ARubberband.Policy policy = PropertyUtils.getBoxZoomRubberbandPolicy(props);
 
-			return new ViewInitConfig(title, standardDecorations, iconifiable, maximizable, resizable,
+			return new ViewInitConfig(title, standardDecorations, infobutton, iconifiable, maximizable, resizable,
 					closable, scrollable, visible, left, top, width, height, worldSystem, background, west, bits,
 					policy);
 		}
