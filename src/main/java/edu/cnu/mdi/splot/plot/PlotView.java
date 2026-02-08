@@ -233,6 +233,7 @@ public class PlotView extends BaseView {
 		return _plotPanel;
 	}
 	
+	// set up the 2D histogram panel
 	private void setHisto2DPanel() {
 		if (_histoPanel != null) {
 			_cardDeck.remove(_histoPanel);

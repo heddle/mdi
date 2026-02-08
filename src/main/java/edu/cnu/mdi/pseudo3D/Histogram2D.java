@@ -67,8 +67,8 @@ public class Histogram2D extends JComponent {
 	private Point lastMouse;
 	private final Point mousePos = new Point(0, 0);
 
-	private double rotX = 0.5;
-	private double rotY = 0.5;
+	private double rotX = 1.880796; // ~108 degrees, tuned for good initial view of typical histograms
+	private double rotY = -0.785398; // -45 degrees, tuned for good initial view of typical histograms
 	private double zoomMultiplier = 1.0; // 1.0 = no zoom
 
 	/** Whether Z values are mapped with log10(1+z) for height and color. */
@@ -219,7 +219,7 @@ public class Histogram2D extends JComponent {
 	                panY += dy;
 	            } else {
 	                // Left Click (or anything else) remains Rotation
-	                rotY += dx * 0.01;
+	                rotY -= dx * 0.01;
 	                rotX += dy * 0.01;
 	            }
 	            
@@ -276,17 +276,22 @@ public class Histogram2D extends JComponent {
 		// HUD: Draw after all 3D elements
 		g2.setColor(Color.BLACK);
 		g2.setFont(Fonts.defaultMono);
-		g2.drawString("Z-MAX: " + formatZMax(), 15, 25);
-		if (logZ) {
-			g2.setColor(new Color(150, 0, 0));
-			g2.drawString("MODE: Log10(1+Z)", 15, 40);
-		}
-		
+		FontMetrics fm = g2.getFontMetrics();
+		int fontHeight = fm.getHeight() + 1;
+		int y = 20;
+		int x = 10;
 		if (hoveredI >= 0) {
 		    g2.setColor(Color.BLUE);
 		    String hoverStat = String.format("BIN [%d, %d] VAL: %.4f", hoveredI, hoveredJ, bins[hoveredI][hoveredJ]);
-		    g2.drawString(hoverStat, 20, 60);
+		    g2.drawString(hoverStat, x, y);
 		}
+		g2.drawString("Z-MAX: " + formatZMax(), x, y + fontHeight);
+		if (logZ) {
+			g2.setColor(new Color(150, 0, 0));
+			g2.drawString("MODE: Log10(1+Z)", x, y + 2*fontHeight);
+		}
+		
+
 	}
 
 	/**

@@ -37,10 +37,14 @@ public class Histo2DPanel extends JPanel implements PropertyChangeListener {
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
 		if (PlotCanvas.LOGZCHANGE.equals(evt.getPropertyName())) {
-			System.out.println("Histo2DPanel: logZ change event received");
 			boolean logZ = (boolean) evt.getNewValue();
 			// Update the logZ setting of the histogram renderer
 			hist.setLogZ(logZ);
+		}
+		else if (PlotCanvas.COLORMAPCHANGE.equals(evt.getPropertyName())) {
+			ScientificColorMap colorMap = (ScientificColorMap) evt.getNewValue();
+			// Update the colormap of the histogram renderer
+			hist.setColorMap(colorMap);
 		}
 	}
 }

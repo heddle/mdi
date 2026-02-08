@@ -191,6 +191,7 @@ public class PlotParameters {
 	 */
 	public PlotParameters setColorMap(ScientificColorMap colorMap) {
 	    if (colorMap != null) {
+			_canvas.remoteFirePropertyChange(PlotCanvas.COLORMAPCHANGE, _zColorMap, colorMap);
 	        _zColorMap = colorMap;
 	    }
 	    return this;
