@@ -1093,8 +1093,19 @@ public class BaseView extends JInternalFrame
 			im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "mdi.delete");
 		}
 	}
-
+	
 	/**
+	 * Optional method for subclasses to provide view-specific information for
+	 * display in the info dialog and activated by the toolbar's info button. 
+	 * Default implementation returns null (no info).
+	 *
+	 * @return view information, or null if not applicable.
+	 */
+	public AbstractViewInfo getViewInfo() {
+		return null;
+	}
+
+		/**
 	 * Captures/restores persistent properties for a view.
 	 * <p>
 	 * Uses the stable prefix {@link BaseView#getPropertyName()}. Supports old key
@@ -1165,6 +1176,7 @@ public class BaseView extends JInternalFrame
 		}
 
 
+		// Capture properties from the view's current state, using the stable prefix and writing both new and legacy keys for compatibility.
 		static Properties captureFromView(BaseView view) {
 			Properties props = new Properties();
 
@@ -1219,6 +1231,7 @@ public class BaseView extends JInternalFrame
 			return props;
 		}
 		
+		// Helper methods to read properties with support for multiple key variants (dotted and legacy no-dot).
 		private static String firstPresent(Properties p, String... keys) {
 		    if (p == null) return null;
 		    for (String k : keys) {

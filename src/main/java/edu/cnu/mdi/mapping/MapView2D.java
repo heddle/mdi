@@ -19,6 +19,7 @@ import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
+import edu.cnu.mdi.view.AbstractViewInfo;
 import edu.cnu.mdi.view.BaseView;
 
 /**
@@ -117,6 +118,20 @@ public class MapView2D extends BaseView {
 
 		add(sidePanel, BorderLayout.EAST);
 	}
+	
+	/**
+	 * Get the view info object for this map view, which provides metadata and
+	 * content for the "Info" dialog. This method is called by the base view when
+	 * the user clicks the "Info" button.
+	 *
+	 * @return an instance of {@link MapViewInfo} containing information about this
+	 *         map view.
+	 */
+	@Override
+	public AbstractViewInfo getViewInfo() {
+		return new MapViewInfo();
+	}
+
 
 	/**
 	 * Set the view's "after draw" operation, which performs the actual map
