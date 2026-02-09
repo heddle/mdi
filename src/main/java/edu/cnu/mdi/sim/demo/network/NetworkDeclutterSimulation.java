@@ -246,7 +246,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	/** True if {@link #cancel(SimulationContext)} has been called. */
 	private volatile boolean canceled;
 
-	/** Optional engine used for posting progress/messages/refresh. */
+	/** Simulation engine used for posting progress/messages/refresh. */
 	private SimulationEngine engine;
 	
 	/** Queue of energy samples collected during the simulation. */

@@ -22,6 +22,7 @@ public final class ProgressInfo {
 	/** Optional UI message such as "Cooling..." or "Loading data...". */
 	public final String message;
 
+	// Private constructor; use static factory methods for clarity.
 	private ProgressInfo(boolean indeterminate, double fraction, String message) {
 		this.indeterminate = indeterminate;
 		this.fraction = fraction;

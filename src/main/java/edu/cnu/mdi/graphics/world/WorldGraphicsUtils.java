@@ -8,11 +8,13 @@ import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
 import edu.cnu.mdi.container.IContainer;
@@ -431,6 +433,112 @@ public class WorldGraphicsUtils {
 		drawWorldRadArc(g, container, xc, yc, rmin, rmax, startAngle, stopAngle, style.getFillColor(),
 				style.getLineColor(), style.getLineWidth(), style.getLineStyle());
 	}
+	
+	/**
+	 * Draw an image mapped onto a world quad defined by w0, wW, and wH. The image is mapped
+	 * so that w0 is the top-left corner,
+	 * wW is the point along the width direction, and wH is the point along the height direction.
+	 *
+	 * @param g2d       the graphics context.
+	 * @param image     the image to draw.
+	 * @param wpoly      the world quad corners in order: w0, wa, w2, wb 
+	 * w0 is the top left (wa and wb are adjacent to w0).
+	 * @param container the container on which it is rendered.
+	 */
+	public static void drawImageOnQuad(
+		    Graphics g,
+		    BufferedImage image,
+		    Point2D.Double[] wpoly, // expects 4 points in order: w0, wa, w2, wb (wa and wb are adjacent to w0)
+		    IContainer container) {
+		
+		if (image == null || wpoly == null || wpoly.length < 4) {
+			return;
+		}
+		
+		// We’ll use w0 as the “top-left” reference in the original rectangle’s path
+		// order.
+		Point2D.Double w0 = wpoly[0];
+		// Adjacent corners along the path (these are the two edges meeting at w0).
+		Point2D.Double wa = wpoly[1];
+		Point2D.Double wb = wpoly[3];
+
+
+		double imgW = image.getWidth();
+		double imgH = image.getHeight();
+		double imgRatio = imgW / imgH;
+
+		double ra = w0.distance(wa);
+		double rb = w0.distance(wb);
+		// Candidate ratio if wb is width, wa is height:
+		double quadRatio1 = rb / ra;
+		// Candidate ratio if wa is width, wb is height:
+		double quadRatio2 = ra / rb;
+
+		Point2D.Double wW = wb; // point along width direction from w0
+		Point2D.Double wH = wa; // point along height direction from w0
+		if (Math.abs(quadRatio2 - imgRatio) < Math.abs(quadRatio1 - imgRatio)) {
+			// Swap: wa is width direction, wb is height direction
+			wW = wa;
+			wH = wb;
+		}
+
+		// Convert the three destination points to LOCAL coords:
+		// d0 corresponds to image (0,0), dW to (imgW,0), dH to (0,imgH).
+		java.awt.Point p0 = new Point();
+		java.awt.Point pW = new Point();
+		java.awt.Point pH = new Point();
+		container.worldToLocal(p0, w0);
+		container.worldToLocal(pW, wW);
+		container.worldToLocal(pH, wH);
+
+		double x0 = p0.x, y0 = p0.y;
+		double x1 = pW.x, y1 = pW.y;
+		double x2 = pH.x, y2 = pH.y;
+
+		// Build an affine mapping from image pixel coords -> local screen coords.
+		// [ x ] [ m00 m01 m02 ] [ u ]
+		// [ y ] = [ m10 m11 m12 ] [ v ]
+		// [ 1 ] [ 0 0 1 ] [ 1 ]
+		//
+		// u in [0,imgW], v in [0,imgH]
+
+		// If the affine basis is mirrored (negative determinant), the image will draw
+		// flipped.
+		// Fix by flipping the image's v-axis mapping while staying in the same quad.
+		double det = (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0);
+		if (det < 0) {
+			double ox0 = x0, oy0 = y0;
+			double ox1 = x1, oy1 = y1;
+			double ox2 = x2, oy2 = y2;
+
+			// Make origin be the "bottom-left" corner in local coords (old pH),
+			// map v upward to old origin (old p0), and shift the width corner accordingly.
+			x0 = ox2;
+			y0 = oy2; // new origin
+			x2 = ox0;
+			y2 = oy0; // new (0,imgH) corner
+			x1 = ox1 + (ox2 - ox0); // new (imgW,0) corner (bottom-right)
+			y1 = oy1 + (oy2 - oy0);
+		}
+
+		double m00 = (x1 - x0) / imgW;
+		double m10 = (y1 - y0) / imgW;
+		double m01 = (x2 - x0) / imgH;
+		double m11 = (y2 - y0) / imgH;
+		double m02 = x0;
+		double m12 = y0;
+		
+
+		Graphics2D g2d = (Graphics2D) g.create();
+		try {
+			AffineTransform at = new AffineTransform(m00, m10, m01, m11, m02, m12);
+			g2d.drawImage(image, at, null);
+		} finally {
+			g2d.dispose();
+		}
+		
+	}
+
 
 	/**
 	 * Create a screen representation of world circle.

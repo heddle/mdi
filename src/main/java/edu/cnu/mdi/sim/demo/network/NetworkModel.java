@@ -58,6 +58,12 @@ public final class NetworkModel {
 	/** Number of printers. */
 	public final int printerCount;
 
+	/**
+	 * Private constructor to enforce use of the static factory method.
+	 * @param serverCount number of servers
+	 * @param clientCount number of clients
+	 * @param printerCount number of printers
+	 */
 	private NetworkModel(int serverCount, int clientCount, int printerCount) {
 		this.serverCount = serverCount;
 		this.clientCount = clientCount;
