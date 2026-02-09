@@ -514,6 +514,17 @@ public class BaseToolBar extends AToolBar {
 		}
 	}
 
+	/**
+	 * Add the info button if it is not already present.
+	 * <em>Intended for use by applications that want to add the info button after
+	 * construction.</em>
+	 */
+	public void addInfoButton() {
+		if (!hasTool(ToolBits.getId(ToolBits.INFO))) {
+			oneShot(ToolBits.INFO, () -> handler.info(actionContext()));
+		}
+	}
+	
 	// ------------------------------------------------------------------------
 	// Button configuration
 	// ------------------------------------------------------------------------

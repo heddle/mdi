@@ -43,6 +43,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 	// toolbar
 	protected BaseToolBar _toolbar;
 
+	// decorations level
 	protected int _decorations;
 
 	/**
@@ -83,6 +84,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		return new Insets(def.top + 2, def.left + 2, def.bottom + 2, def.right + 2);
 	}
 
+	// add the south component
 	private void addSouth() {
 		// south panel for x axis and status
 		JPanel spanel = new JPanel();
@@ -201,6 +203,15 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 	 */
 	public FeedbackPane getFeedbackPane() {
 		return _feedbackPane;
+	}
+	
+	/**
+	 * Get the toolbar
+	 *
+	 * @return the toolbar
+	 */
+	public BaseToolBar getToolBar() {
+		return _toolbar;
 	}
 
 	/**

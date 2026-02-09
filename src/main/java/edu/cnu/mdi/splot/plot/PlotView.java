@@ -230,6 +230,7 @@ public class PlotView extends BaseView {
 		_plotPanel = new PlotPanel(_plotCanvas);
 		_plotCanvas.setTransferHandler(new FileDropHandler(this));
 
+		_plotPanel.getToolBar().addInfoButton();
 		return _plotPanel;
 	}
 	
@@ -258,6 +259,7 @@ public class PlotView extends BaseView {
 	    _cardDeck.remove(_plotPanel);
 	    
 	    _plotPanel = plotPanel;
+		_plotPanel.getToolBar().addInfoButton();
 	    _plotCanvas = plotPanel.getPlotCanvas();
 	    _plotCanvas.setTransferHandler(new FileDropHandler(this));
 	    
