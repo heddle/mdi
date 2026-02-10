@@ -30,10 +30,19 @@ import javax.swing.SwingUtilities;
  */
 public final class SimulationEngine {
 
+	// the actual simulation
 	private final Simulation simulation;
+	
+	// configuration (immutable) holds parameters for engine behavior such as refresh 
+	// intervals and auto-run
 	private final SimulationEngineConfig config;
+	
+	// context (e.g., state) shared with the simulation; also used for bookkeeping 
+	// such as step count and cancellation flag
 	private final SimulationContext context = new SimulationContext();
 
+	// listeners (e.g., views) are stored in a thread-safe list since they can be 
+	// added/removed from the EDT while the simulation thread is running
 	private final List<SimulationListener> listeners = new CopyOnWriteArrayList<>();
 
 	private volatile SimulationState state = SimulationState.NEW;
