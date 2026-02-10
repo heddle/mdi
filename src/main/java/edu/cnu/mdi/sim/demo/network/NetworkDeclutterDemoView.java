@@ -57,19 +57,17 @@ public class NetworkDeclutterDemoView extends SimulationView implements IResetta
 	 */
 	public NetworkDeclutterDemoView(Object... keyVals) {
 		// must call super(...) first. We build the simulation via a static helper.
-		super(createSimulation(), new SimulationEngineConfig(60, 250, 60, false), true,
-				(SimulationView.ControlPanelFactory) NetworkDeclutterControlPanel::new,
-
-				// enable diagnostics
-				true, DiagnosticPlotPanel::new,
-
-				// split fraction
-				0.7,
-
-				keyVals);																	// concrete
-																									// simulation type
+		super(createSimulation(), 
+				new SimulationEngineConfig(60, 250, 60, false), 
+				true,
+				(SimulationView.ControlPanelFactory) NetworkDeclutterControlPanel::new,		
+				true, // enable diagnostics
+				DiagnosticPlotPanel::new,
+				0.7, // split ratio for diagnostics panel
+				keyVals);																	
+																									
 		this.plots = (DiagnosticPlotPanel) getDiagnosticsComponent();
-																									// attach
+																									
 		// engine callbacks.
 
 		this.sim = (NetworkDeclutterSimulation) getSimulationEngine().getSimulation();

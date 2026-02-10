@@ -164,25 +164,36 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	 *                             component on startup (0..1)
 	 * @param keyVals              standard {@link BaseView} key-value arguments
 	 */
-	public SimulationView(Simulation simulation, SimulationEngineConfig config, boolean includeControlPanel,
-			ControlPanelFactory controlPanelFactory, boolean includeDiagnostics, DiagnosticFactory diagnosticFactory,
-			double initialSplitFraction, Object... keyVals) {
+	public SimulationView(Simulation simulation, 
+			SimulationEngineConfig config, 
+			boolean includeControlPanel,
+			ControlPanelFactory controlPanelFactory, 
+			boolean includeDiagnostics, 
+			DiagnosticFactory diagnosticFactory,
+			double initialSplitFraction, 
+			Object... keyVals) {
 
 		super(keyVals);
 
 		Objects.requireNonNull(simulation, "simulation");
 		Objects.requireNonNull(config, "config");
 
+		// The engine gets created first since the control panel factory 
+		// may want to bind to it during creation. 
 		engine = new SimulationEngine(simulation, config);
 		engine.addListener(this);
 
-		// --- Control panel ---
+		// if the control panel is included, create it and bind to this host. The factory
+		// can be null if the caller doesn't want a control panel but includeControlPanel is true.
 		if (includeControlPanel) {
 			ControlPanelFactory f = (controlPanelFactory != null) ? controlPanelFactory : DEFAULT_FACTORY;
 
 			JComponent cp = f.createControlPanel();
 			controlPanel = cp;
 
+			// If the control panel implements ISimulationControlPanel, bind it to 
+			// this host. The effect of binding is that the control panel's buttons 
+			// will control this view's engine.
 			if (cp instanceof ISimulationControlPanel scp) {
 				scp.bind(this);
 			}
