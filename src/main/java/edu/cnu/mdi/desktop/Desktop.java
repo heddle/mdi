@@ -222,6 +222,23 @@ public final class Desktop extends JDesktopPane {
             }
         }
     }
+    
+    /**
+     * Call prepareForExit on all views. This allows them to stop simulations, save
+     * state, etc. before the application exits.
+     */
+    public void prepareForExit() {
+		JInternalFrame[] frames = getAllFrames();
+		if (frames == null) {
+			return;
+		}
+
+		for (JInternalFrame frame : frames) {
+			if (frame instanceof BaseView) {
+				((BaseView) frame).prepareForExit();
+			}
+		}
+	}
 
     /**
      * Write the configuration file that preserves the current arrangement of views.

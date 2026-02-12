@@ -102,6 +102,7 @@ public class BaseMDIApplication extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent we) {
+            	prepareForShutdown();
                 System.exit(0);
             }
         });
@@ -153,6 +154,14 @@ public class BaseMDIApplication extends JFrame {
 
         instance = this;
     }
+    
+    /** Prepare for application shutdown. Subclasses may override to add
+	 * custom shutdown behavior. They should call super.prepareForShutdown()
+	 * to ensure the desktop gets a chance to notify views.
+	 */
+    protected void prepareForShutdown() {
+ 		Desktop.getInstance().prepareForExit();
+	}
     
     /** Return a stable application ID for use in persistence, etc. By default
      * this is the fully-qualified class name of the class containing

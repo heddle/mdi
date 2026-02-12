@@ -251,6 +251,15 @@ public class BaseView extends JInternalFrame
 		Insets defInsets = super.getInsets();
 		return new Insets(defInsets.top, defInsets.left, 2, defInsets.right);
 	}
+	
+	/**
+	 * Optional hook for views to prepare for application closing. Default does
+	 * nothing.
+	 */
+	public void prepareForExit() {
+		// Default implementation does nothing; 
+		//override as needed, e,g, to stop background threads or save state.
+	}
 
 	/**
 	 * Get the owning parent frame that hosts the desktop.
