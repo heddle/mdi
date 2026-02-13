@@ -317,4 +317,8 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 		}
 		return null;
 	}
+	
+	public static IconSimulationControlPanel simplifiedPanel (boolean includeStartButton) {
+		return new IconSimulationControlPanel(new StandardSimIcons(), includeStartButton);
+	}
 }
