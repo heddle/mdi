@@ -45,7 +45,11 @@ public final class SimulationEngine {
 	// added/removed from the EDT while the simulation thread is running
 	private final List<SimulationListener> listeners = new CopyOnWriteArrayList<>();
 
+	// State is volatile since it's read by the EDT and written by the simulation thread.
 	private volatile SimulationState state = SimulationState.NEW;
+
+	// The simulation thread that runs the main loop. 
+	// Marked volatile to ensure visibility across threads.
 	private volatile Thread simThread;
 
 	private volatile boolean pauseRequested;
@@ -333,6 +337,7 @@ public final class SimulationEngine {
 	}
 	
 
+	// Transition state and notify listeners on the EDT.
 	private void transition(SimulationState newState, String reason) {
 		SimulationState old = state;
 		state = newState;
