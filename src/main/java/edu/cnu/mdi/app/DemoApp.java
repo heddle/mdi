@@ -18,7 +18,6 @@ import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
 import edu.cnu.mdi.mapping.MapContainer;
 import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.properties.PropertyUtils;
-import edu.cnu.mdi.sim.demo.forestfire.ForestFireDemoView;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
 import edu.cnu.mdi.sim.simanneal.tspdemo.TspDemoView;
 import edu.cnu.mdi.splot.example.AnotherGaussian;
@@ -87,7 +86,7 @@ public class DemoApp extends BaseMDIApplication {
 	private final boolean enableVirtualDesktop = true;
 
 	/** Number of "columns"/cells in the virtual desktop. */
-	private final int virtualDesktopCols = 7;
+	private final int virtualDesktopCols = 6;
 
 	// -------------------------------------------------------------------------
 	// Sample views used by the demo. None are meant to be completely realistic.
@@ -101,7 +100,6 @@ public class DemoApp extends BaseMDIApplication {
 	private NetworkDeclutterDemoView networkDeclutterDemoView;
 	private TspDemoView tspDemoView;
 	private NetworkLayoutDemoView networkLayoutDemoView;
-	private ForestFireDemoView forestFireDemoView;
 
 	/**
 	 * Private constructor: use {@link #getInstance()}.
@@ -169,9 +167,6 @@ public class DemoApp extends BaseMDIApplication {
 		// Network declutter demo view
 		networkDeclutterDemoView = createNetworkDeclutterDemoView();
 		
-		// Forest fire demo view
-		forestFireDemoView = createForestFireDemoView();
-
 		// TSP demo view
 		tspDemoView = createTspDemoView();
 
@@ -235,17 +230,13 @@ public class DemoApp extends BaseMDIApplication {
 		virtualView.moveTo(tspDemoView, 3, VirtualView.CENTER);
 		tspDemoView.setVisible(true);
 		
-		//column 4: forest fire demo center
-		virtualView.moveTo(forestFireDemoView, 4, VirtualView.CENTER);
-		forestFireDemoView.setVisible(true);
-
-		// Column 5: network layout demo lower left
-		virtualView.moveTo(networkLayoutDemoView, 5, 0, -50, VirtualView.BOTTOMLEFT);
+		// Column 4: network layout demo lower left
+		virtualView.moveTo(networkLayoutDemoView, 4, 0, -50, VirtualView.BOTTOMLEFT);
 		networkLayoutDemoView.setVisible(true);
 
 
-	// column 6: log view upper left (is not vis by default)
-		virtualView.moveTo(logView, 6, VirtualView.UPPERLEFT);
+	// column 5: log view upper left (is not vis by default)
+		virtualView.moveTo(logView, 5, VirtualView.UPPERLEFT);
 
 	}
 
@@ -380,20 +371,6 @@ public class DemoApp extends BaseMDIApplication {
 		examplesMenu.add(barItem);
 		return view;
 	}
-	
-	/**
-	 * Create the forest fire demo view.
-	 */
-	ForestFireDemoView createForestFireDemoView() {
-		ForestFireDemoView view = new ForestFireDemoView(PropertyUtils.TITLE,
-				"Forest Fire Demo View",
-				PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT, 1.2, PropertyUtils.VISIBLE, false,
-				PropertyUtils.BACKGROUND, Color.white, PropertyUtils.WORLDSYSTEM,
-				new Rectangle2D.Double(0.0, 0.0, 1, 1),
-				PropertyUtils.INFOBUTTON, true);
-		return view;
-	}
-
 
 	/**
 	 * Create the network declutter demo view.
