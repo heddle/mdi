@@ -154,6 +154,7 @@ public final class SimulationEngine {
 	public void requestCancel() {
 		context.requestCancel();
 		pauseRequested = false;
+		postEDT(l -> l.onCancelRequested(context));
 	}
 
 	/**
@@ -339,9 +340,30 @@ public final class SimulationEngine {
 
 	// Transition state and notify listeners on the EDT.
 	private void transition(SimulationState newState, String reason) {
-		SimulationState old = state;
-		state = newState;
-		postEDT(l -> l.onStateChange(context, old, newState, reason));
+	    SimulationState old = state;
+	    state = newState;
+
+	    // Always report state change
+	    postEDT(l -> l.onStateChange(context, old, newState, reason));
+
+	    // ALSO fire lifecycle callbacks that correspond to key states
+	    switch (newState) {
+	        case INITIALIZING:
+	            postEDT(l -> l.onInit(context));
+	            break;
+
+	        case READY:
+	            postEDT(l -> l.onReady(context));
+	            break;
+
+	        case TERMINATED:
+	            postEDT(l -> l.onDone(context));
+	            break;
+
+	        default:
+	            // no-op (RUNNING/PAUSED handled explicitly elsewhere; FAILED posts onFail explicitly)
+	            break;
+	    }
 	}
 
 	private void postEDT(java.util.function.Consumer<SimulationListener> call) {

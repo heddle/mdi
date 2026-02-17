@@ -201,7 +201,7 @@ public class BaseView extends JInternalFrame
 			ViewKeyBindings.installDeleteBinding(this);
 			pack();
 		} else {
-			// Container-less views: we still position/bounds as configured.
+			// No world system: skip container and related setup; just apply basic frame config.
 			FrameConfigurer.applyNoContainerBounds(this, cfg);
 		}
 
@@ -931,6 +931,7 @@ public class BaseView extends JInternalFrame
 			return worldSystem != null;
 		}
 
+		// Static factory method to create a ViewInitConfig from properties.
 		static ViewInitConfig from(Properties props) {
 			String title = PropertyUtils.getTitle(props);
 			if (title == null) {

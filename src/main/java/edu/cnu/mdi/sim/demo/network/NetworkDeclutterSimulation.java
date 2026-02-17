@@ -310,8 +310,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	@Override
 	public boolean step(SimulationContext ctx) {
 
-	    // return false if normal completion conditions met
-
+	    // return false (terminate) if normal completion conditions met
 	    if (canceled || ctx.isCancelRequested()) {
 	        return false;
 	    }

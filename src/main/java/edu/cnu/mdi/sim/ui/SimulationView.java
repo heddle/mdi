@@ -484,6 +484,7 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 		}
 	}
 
+	// Perform an engine reset immediately, replacing the current engine with a new one created from the supplied simulation.
 	private void doEngineResetNow(java.util.function.Supplier<edu.cnu.mdi.sim.Simulation> simSupplier,
 			java.util.function.Consumer<edu.cnu.mdi.sim.SimulationEngine> afterSwap, boolean autoStart,
 			boolean refresh) {
