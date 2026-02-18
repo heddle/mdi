@@ -397,7 +397,7 @@ public class GraphicsUtils {
 		int y = Math.min(p1.y, p2.y);
 		return new Rectangle(x, y, w, h);
 	}
-	
+
 	/**
 	 * Draw etched text. The text is drawn twice, once in white offset by (1,1) and then in black at the
 	 * given position. This helps the text stand out against any background.
@@ -1079,23 +1079,23 @@ public class GraphicsUtils {
         double t;
 
         if (fdelx > fdely) {
-			t = ((double) px - (double) startx) / (double) delx;
+			t = ((double) px - (double) startx) / delx;
 			if ((t < 0.0) || (t > 1.0)) {
 				return false;
 			}
 
-			double yt = (double) starty + t * (double) dely;
+			double yt = starty + t * dely;
 
-            return Math.abs(yt - (double) py) < SELECTRES;
+            return Math.abs(yt - py) < SELECTRES;
 		} else {
-			t = ((double) py - (double) starty) / (double) dely;
+			t = ((double) py - (double) starty) / dely;
 			if ((t < 0.0) || (t > 1.0)) {
 				return false;
 			}
 
-			double xt = (double) startx + t * (double) delx;
+			double xt = startx + t * delx;
 
-			if (Math.abs(xt - (double) px) < SELECTRES) {
+			if (Math.abs(xt - px) < SELECTRES) {
 				return true;
 
 			}

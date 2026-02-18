@@ -19,7 +19,7 @@ public class ColorMapSelectorPanel extends JPanel {
      */
     public ColorMapSelectorPanel(ScientificColorMap initialMap) {
         super(new FlowLayout(FlowLayout.LEFT, 4, 0));
-        
+
         _currentMap = initialMap;
 
         _combo = new JComboBox<>(ScientificColorMap.values());
@@ -38,16 +38,16 @@ public class ColorMapSelectorPanel extends JPanel {
             }
         });
     }
-    
+
     /**
 	 * Get the currently selected color map.
-	 * 
+	 *
 	 * @return the current ScientificColorMap
 	 */
     public ScientificColorMap getCurrentMap() {
 		return _currentMap;
 	}
-    
+
 
     @Override
     public void setEnabled(boolean enabled) {

@@ -44,7 +44,7 @@ public final class Histo2DData {
     private final double _ymax;
     private final double _dx;
     private final double _dy;
-    
+
     // ---- storage ----
     public final double[][] _bins;
 
@@ -175,10 +175,7 @@ public final class Histo2DData {
      * Includes x==xMax in the last bin.
      */
     public int xIndex(double x) {
-        if (!Double.isFinite(x)) {
-            return -1;
-        }
-        if (x < _xmin || x > _xmax) {
+        if (!Double.isFinite(x) || x < _xmin || x > _xmax) {
             return -1;
         }
         if (x == _xmax) {
@@ -194,10 +191,7 @@ public final class Histo2DData {
      * Includes y==yMax in the last bin.
      */
     public int yIndex(double y) {
-        if (!Double.isFinite(y)) {
-            return -1;
-        }
-        if (y < _ymin || y > _ymax) {
+        if (!Double.isFinite(y) || y < _ymin || y > _ymax) {
             return -1;
         }
         if (y == _ymax) {
@@ -223,10 +217,7 @@ public final class Histo2DData {
      * </p>
      */
     public void fill(double x, double y, double weight) {
-        if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(weight)) {
-            return;
-        }
-        if (weight == 0.0) {
+        if (!Double.isFinite(x) || !Double.isFinite(y) || !Double.isFinite(weight) || (weight == 0.0)) {
             // still arguably a "fill", but doesn't affect anything; treat as no-op
             return;
         }
@@ -254,21 +245,32 @@ public final class Histo2DData {
 
             // out-of-range -> counters
             if (!xIn && yIn) {
-                if (x < _xmin) _xUnderCount++;
-                else _xOverCount++;
+                if (x < _xmin) {
+					_xUnderCount++;
+				} else {
+					_xOverCount++;
+				}
             }
             else if (xIn && !yIn) {
-                if (y < _ymin) _yUnderCount++;
-                else _yOverCount++;
+                if (y < _ymin) {
+					_yUnderCount++;
+				} else {
+					_yOverCount++;
+				}
             }
             else { // both out-of-range -> corner
                 final boolean xUnder = (x < _xmin);
                 final boolean yUnder = (y < _ymin);
 
-                if (xUnder && yUnder) _xUnder_yUnder++;
-                else if (xUnder)      _xUnder_yOver++;
-                else if (yUnder)      _xOver_yUnder++;
-                else                  _xOver_yOver++;
+                if (xUnder && yUnder) {
+					_xUnder_yUnder++;
+				} else if (xUnder) {
+					_xUnder_yOver++;
+				} else if (yUnder) {
+					_xOver_yUnder++;
+				} else {
+					_xOver_yOver++;
+				}
             }
         }
     }
@@ -286,7 +288,7 @@ public final class Histo2DData {
 		int iy = yIndex(y);
 		return bin(ix, iy);
 	}
-    
+
     /**
      * Get the bin content. Returns 0 for out-of-range indices.
      * @param ix x bin index
@@ -301,7 +303,7 @@ public final class Histo2DData {
             return _bins[ix][iy];
         }
     }
-    
+
     /**
      * Get the x bin range for a data x.
      * @param x data x
@@ -316,7 +318,7 @@ public final class Histo2DData {
 		double x1 = x0 + _dx;
 		return new double[] {x0, x1};
 	}
-    
+
     /**
 	 * Get the y bin range for a data y.
 	 * @param y data y
@@ -398,8 +400,8 @@ public final class Histo2DData {
 			return count;
 		}
 	}
-    
-    
+
+
     /**
 	 * Get the maximum bin value.
 	 * @return maximum bin value, or 0 if none
@@ -469,9 +471,9 @@ public final class Histo2DData {
      */
     public static double maxZ(double[][] bins) {
         double max = 0.0;
-        for (int ix = 0; ix < bins.length; ix++) {
-            for (int iy = 0; iy < bins[ix].length; iy++) {
-                double v = bins[ix][iy];
+        for (double[] bin : bins) {
+            for (int iy = 0; iy < bin.length; iy++) {
+                double v = bin[iy];
                 if (Double.isFinite(v) && v > max) {
                     max = v;
                 }
@@ -513,7 +515,7 @@ public final class Histo2DData {
         _cachedMean = meanSum /(_nx * _ny);
         _minMaxDirty = false;
     }
-    
+
     /**
 	 * Get the mean bin value (average of in-range bins).
 	 * @return mean bin value, or 0 if none
@@ -636,7 +638,7 @@ public final class Histo2DData {
 		}
 		return lo;
 	}
-	
+
 	   /**
      * INTERNAL: set bin contents and counts during deserialization/persistence restore.
      * <p>
@@ -699,7 +701,7 @@ public final class Histo2DData {
     }
 
 
-    
+
     /**
      * Return a human-readable summary of in-range and out-of-range fills.
      * <p>

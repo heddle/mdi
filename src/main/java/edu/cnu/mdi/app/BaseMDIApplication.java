@@ -85,7 +85,7 @@ public class BaseMDIApplication extends JFrame {
 
         // Initialize FlatLaf LookAndFeel
         UIInit();
-        
+
         //set the application name
         String applicationId = getApplicationId();
         Environment.setApplicationName(applicationId);
@@ -154,7 +154,7 @@ public class BaseMDIApplication extends JFrame {
 
         instance = this;
     }
-    
+
     /** Prepare for application shutdown. Subclasses may override to add
 	 * custom shutdown behavior. They should call super.prepareForShutdown()
 	 * to ensure the desktop gets a chance to notify views.
@@ -162,7 +162,7 @@ public class BaseMDIApplication extends JFrame {
     protected void prepareForShutdown() {
  		Desktop.getInstance().prepareForExit();
 	}
-    
+
     /** Return a stable application ID for use in persistence, etc. By default
      * this is the fully-qualified class name of the class containing
      * main(), which is presumably a subclass.The subclass may override this to
@@ -170,7 +170,7 @@ public class BaseMDIApplication extends JFrame {
      */
     protected String getApplicationId() {
         return getClass().getName(); // fully-qualified is most stable/unique
-    } 
+    }
 
     //initialize the FlatLaf UI
 	private void UIInit() {

@@ -20,7 +20,7 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * </pre>
  */
 public class PlotParameters {
-	
+
 	/**
 	 * Axes scale types.
 	 */
@@ -32,10 +32,10 @@ public class PlotParameters {
 	// axis scales
 	private AxisScale _xScale = AxisScale.LINEAR;
 	private AxisScale _yScale = AxisScale.LINEAR;
-	
+
 	// rendering hints
 	private EnumSet<RenderHint> renderHints = EnumSet.noneOf(RenderHint.class);
-	
+
 	// Z scale (for heatmaps / 2D histograms)
 	private boolean _logZ = false;
 	private ScientificColorMap _zColorMap = ScientificColorMap.VIRIDIS;
@@ -110,7 +110,7 @@ public class PlotParameters {
 	public PlotParameters(PlotCanvas canvas) {
 		_canvas = canvas;
 	}
-	
+
 	/**
 	 * Add a rendering hint.
 	 * @param hint the hint to add
@@ -126,7 +126,7 @@ public class PlotParameters {
 	public EnumSet<RenderHint> getRenderHints() {
 	    return EnumSet.copyOf(renderHints);
 	}
-	
+
 	/**
 	 * Set the rendering hints.
 	 * @param hints the rendering hints
@@ -134,7 +134,7 @@ public class PlotParameters {
 	public void setRenderHints(EnumSet<RenderHint> hints) {
 	    renderHints = EnumSet.copyOf(hints);
 	}
-	
+
 	/**
 	 * Check whether a rendering hint is present.
 	 * @param hint the hint to check
@@ -143,7 +143,7 @@ public class PlotParameters {
 	public boolean hasRenderHint(RenderHint hint) {
 	    return renderHints.contains(hint);
 	}
-	
+
 	/**
 	 * Check whether bar plot rendering is requested.
 	 * @return true if bar plot rendering is requested
@@ -151,7 +151,7 @@ public class PlotParameters {
 	public boolean isBarPlot() {
 	    return hasRenderHint(RenderHint.BARPLOT);
 	}
-	
+
 	/**
 	 * Check whether Z values (heatmap intensity) are displayed on a log10 scale.
 	 * Applies to heatmap/2D histogram rendering only.
@@ -161,7 +161,7 @@ public class PlotParameters {
 	public boolean isLogZ() {
 	    return _logZ;
 	}
-	
+
 	/**
 	 * Set whether to show empty bins in heatmap/2D histogram rendering.
 	 *
@@ -171,7 +171,7 @@ public class PlotParameters {
 	public boolean showEmptyBins() {
 	    return _showEmptyBins;
 	}
-	
+
 	/**
 	 * Get the color scale for Z values (heatmap intensity).
 	 * Applies to heatmap/2D histogram rendering only.
@@ -181,7 +181,7 @@ public class PlotParameters {
 	public ScientificColorMap getColorMap() {
 	    return _zColorMap;
 	}
-	
+
 	/**
 	 * Set the color scale for Z values (heatmap intensity).
 	 * Applies to heatmap/2D histogram rendering only.
@@ -211,7 +211,7 @@ public class PlotParameters {
 		}
 		return this;
 	}
-	
+
 	/**
 	 * Set whether to show empty bins in heatmap/2D histogram rendering.
 	 *
@@ -242,13 +242,13 @@ public class PlotParameters {
 		_includeYZero = incZero;
 		return this;
 	}
-	
+
 	/** @return x-axis scale (linear or log10). */
 	public AxisScale getXScale() {
 		return _xScale;
 	}
 
-	
+
 	/**
 	 * Set the x-axis scale.
 	 * Requests that the owning canvas recompute the world system.
@@ -282,7 +282,7 @@ public class PlotParameters {
 		if (_yScale != ns) {
 			_yScale = ns;
 			_canvas.setWorldSystem();
-			
+
 			if (isBarPlot()) {
 				// need to rebuild bars for log scale change
 				BarPlot.rebuildBars(_canvas);
@@ -682,7 +682,7 @@ public class PlotParameters {
 		_lines.remove(line);
 		return this;
 	}
-	
+
 	/**
 	 * Clear all plot lines (annotations).
 	 */

@@ -25,7 +25,7 @@ public class ConvergenceVsStep extends PlotPanel {
 	private static final String RATIO_CURVE = "Force RMS / Avg Speed (diagnostic)";
 
 	private static final String[] CURVE_NAMES = { SPEED_CURVE, FRMS_CURVE, RATIO_CURVE };
-	
+
 	// the curves
 	private final Curve speedCurve;
 	private final Curve frmsCurve;
@@ -36,7 +36,7 @@ public class ConvergenceVsStep extends PlotPanel {
 	 */
 	public ConvergenceVsStep() {
 		super(createCanvas());
-		
+
 		PlotData plotData = getPlotCanvas().getPlotData();
 		this.speedCurve = (Curve) plotData.getCurve(SPEED_CURVE);
 		this.frmsCurve = (Curve) plotData.getCurve(FRMS_CURVE);
@@ -46,7 +46,7 @@ public class ConvergenceVsStep extends PlotPanel {
 		setParameters();
 
 	}
-	
+
 	// set plot parameters
 	private void setParameters() {
 		PlotParameters params = getPlotCanvas().getParameters();
@@ -61,7 +61,7 @@ public class ConvergenceVsStep extends PlotPanel {
 		setCurveStyle(frmsCurve, SymbolType.SQUARE, X11Colors.getX11Color("Light Coral"), Color.red);
 		setCurveStyle(ratioCurve, SymbolType.DIAMOND, X11Colors.getX11Color("Medium Sea Green", 128), Color.green);
 	}
-	
+
 	//helper method to set curve style
 	private void setCurveStyle(Curve curve, SymbolType stype, Color symbolColor, Color symbolBorder) {
 		IStyled style = curve.getStyle();
@@ -69,10 +69,10 @@ public class ConvergenceVsStep extends PlotPanel {
 		style.setFillColor(symbolColor);
 		style.setBorderColor(symbolBorder);
 	}
-	
+
 	/**
 	 * Update the plot with new diagnostic data.
-	 * 
+	 *
 	 * @param d diagnostic data (from the simulation)
 	 */
 	protected void updatePlot(NetworkDeclutterSimulation.Diagnostics d) {
@@ -83,7 +83,7 @@ public class ConvergenceVsStep extends PlotPanel {
 
 	// create the plot canvas
 	private static PlotCanvas createCanvas() {
-		
+
 		PlotData plotData;
 		try {
 			plotData = new PlotData(PlotDataType.XYEXYE, CURVE_NAMES, null);

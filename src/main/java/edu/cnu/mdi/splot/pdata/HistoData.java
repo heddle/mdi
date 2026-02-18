@@ -1017,7 +1017,7 @@ public class HistoData {
 
 			if (bin == 0) {
 				wp.setLocation(xmin, 0);
-				
+
 				if (canvas.dataToScreen(pp, wp)) {
 					poly.addPoint(pp.x, pp.y);
 				}

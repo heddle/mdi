@@ -553,7 +553,7 @@ public class Curve extends ACurve {
 			this.hasEy = true;
 		}
 	}
-	
+
 	/**
 	 * Get the centroid of the curve data points.
 	 * @return the centroid as a Point2D.Double

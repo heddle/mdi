@@ -433,7 +433,7 @@ public class WorldGraphicsUtils {
 		drawWorldRadArc(g, container, xc, yc, rmin, rmax, startAngle, stopAngle, style.getFillColor(),
 				style.getLineColor(), style.getLineWidth(), style.getLineStyle());
 	}
-	
+
 	/**
 	 * Draw an image mapped onto a world quad defined by w0, wW, and wH. The image is mapped
 	 * so that w0 is the top-left corner,
@@ -441,7 +441,7 @@ public class WorldGraphicsUtils {
 	 *
 	 * @param g2d       the graphics context.
 	 * @param image     the image to draw.
-	 * @param wpoly      the world quad corners in order: w0, wa, w2, wb 
+	 * @param wpoly      the world quad corners in order: w0, wa, w2, wb
 	 * w0 is the top left (wa and wb are adjacent to w0).
 	 * @param container the container on which it is rendered.
 	 */
@@ -450,11 +450,11 @@ public class WorldGraphicsUtils {
 		    BufferedImage image,
 		    Point2D.Double[] wpoly, // expects 4 points in order: w0, wa, w2, wb (wa and wb are adjacent to w0)
 		    IContainer container) {
-		
+
 		if (image == null || wpoly == null || wpoly.length < 4) {
 			return;
 		}
-		
+
 		// We’ll use w0 as the “top-left” reference in the original rectangle’s path
 		// order.
 		Point2D.Double w0 = wpoly[0];
@@ -527,7 +527,7 @@ public class WorldGraphicsUtils {
 		double m11 = (y2 - y0) / imgH;
 		double m02 = x0;
 		double m12 = y0;
-		
+
 
 		Graphics2D g2d = (Graphics2D) g.create();
 		try {
@@ -536,7 +536,7 @@ public class WorldGraphicsUtils {
 		} finally {
 			g2d.dispose();
 		}
-		
+
 	}
 
 

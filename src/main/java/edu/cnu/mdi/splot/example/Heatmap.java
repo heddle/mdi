@@ -6,7 +6,7 @@ import edu.cnu.mdi.splot.pdata.PlotDataException;
 
 @SuppressWarnings("serial")
 public class Heatmap extends AExample {
-	
+
 	public Heatmap(boolean headless) {
 		super(headless);
 	}
@@ -74,11 +74,17 @@ public class Heatmap extends AExample {
 	        }
 
 	        // Clamp to [0,100] so we always contribute to bins
-	        if (x < 0) x = 0;
-	        else if (x > 100) x = 100;
+	        if (x < 0) {
+				x = 0;
+			} else if (x > 100) {
+				x = 100;
+			}
 
-	        if (y < 0) y = 0;
-	        else if (y > 100) y = 100;
+	        if (y < 0) {
+				y = 0;
+			} else if (y > 100) {
+				y = 100;
+			}
 
 	        h2.fill(x, y); // or whatever your "increment bin for (x,y)" call is
 	    }
@@ -90,7 +96,7 @@ public class Heatmap extends AExample {
 	@Override
 	public void setParameters() {
 	}
-	
+
 	// ---------------------------------------------------------------
 	public static void main(String arg[]) {
 

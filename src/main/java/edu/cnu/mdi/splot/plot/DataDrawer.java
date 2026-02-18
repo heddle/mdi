@@ -56,7 +56,7 @@ public class DataDrawer {
 				line.draw(g);
 			}
 		}
-		
+
 		//heatmaps have no curves, treated separately
 		if (plotData.isHisto2DData()) {
 			HeatmapDrawer.drawHeatmap(g, _plotCanvas, plotData.getHisto2DData());

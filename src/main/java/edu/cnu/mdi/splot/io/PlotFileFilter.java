@@ -1,6 +1,7 @@
 package edu.cnu.mdi.splot.io;
 
 import java.io.File;
+
 import javax.swing.filechooser.FileFilter;
 
 /**
@@ -22,8 +23,12 @@ public final class PlotFileFilter extends FileFilter {
 
     @Override
     public boolean accept(File f) {
-        if (f == null) return false;
-        if (f.isDirectory()) return true;
+        if (f == null) {
+			return false;
+		}
+        if (f.isDirectory()) {
+			return true;
+		}
 
         String name = f.getName().toLowerCase();
         return name.endsWith(EXT_PREFERRED) || name.endsWith(EXT_ALT);
@@ -36,7 +41,9 @@ public final class PlotFileFilter extends FileFilter {
 
     /** Returns true if the file name matches a supported plot extension. */
     public static boolean isPlotFile(File f) {
-        if (f == null) return false;
+        if (f == null) {
+			return false;
+		}
         String name = f.getName().toLowerCase();
         return name.endsWith(EXT_PREFERRED) || name.endsWith(EXT_ALT);
     }
@@ -46,8 +53,12 @@ public final class PlotFileFilter extends FileFilter {
      * otherwise appends {@link #EXT_PREFERRED}.
      */
     public static File ensurePlotExtension(File f) {
-        if (f == null) return null;
-        if (isPlotFile(f)) return f;
+        if (f == null) {
+			return null;
+		}
+        if (isPlotFile(f)) {
+			return f;
+		}
         return new File(f.getParentFile(), f.getName() + EXT_PREFERRED);
     }
 }

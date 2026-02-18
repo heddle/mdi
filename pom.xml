@@ -16,14 +16,43 @@
 
 	<!-- Basic project identification -->
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>edu.cnu</groupId>
+	
+	<groupId>io.github.heddle</groupId>
 	<artifactId>mdi</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<packaging>jar</packaging>
 
-	<name>mdi</name>
-	<description>MDI visualization framework</description>
+  <name>MDI Scientific Visualization Framework</name>
+    <description>
+        A modular Java framework for 2D and 3D scientific visualization,
+        simulation, and data-driven interactive applications.
+    </description>
+    <url>https://github.com/heddle/mdi</url>
+    
+        <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
+    <developers>
+        <developer>
+            <id>heddle</id>
+            <name>David Heddle</name>
+            <email>david.heddle@cnu.edu</email>
+            <url>https://github.com/heddle</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/heddle/mdi.git</connection>
+        <developerConnection>scm:git:ssh://github.com:heddle/mdi.git</developerConnection>
+        <url>https://github.com/heddle/mdi</url>
+        <tag>HEAD</tag>
+    </scm>
+    
 	<!-- Build properties such as Java version, encoding, and dependency
 	versions -->
 	<properties>
@@ -60,14 +89,14 @@
 			<version>3.6.1</version>
 		</dependency>
 
-        <!-- FlatLaf Look and Feel for Swing -->
+		<!-- FlatLaf Look and Feel for Swing -->
 		<dependency>
 			<groupId>com.formdev</groupId>
 			<artifactId>flatlaf</artifactId>
 			<version>3.5.4</version>
 		</dependency>
 
-        <!-- FlatLaf extras -->
+		<!-- FlatLaf extras -->
 		<dependency>
 			<groupId>com.formdev</groupId>
 			<artifactId>flatlaf-extras</artifactId>
@@ -88,7 +117,7 @@
 			<version>2.17.0</version>
 		</dependency>
 
-        <!-- Google Gson for JSON processing -->
+		<!-- Google Gson for JSON processing -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
@@ -99,67 +128,128 @@
 	</dependencies>
 
 	<!-- Build configuration section -->
-	<build>
-		<plugins>
+  <build>
+        <plugins>
 
-			<!-- Java compiler configuration -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.13.0</version>
-				<configuration>
-					<release>17</release>
-				</configuration>
-			</plugin>
+            <!-- Compiler -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+            </plugin>
 
-			<!-- Surefire test runner, configured for JUnit 5 -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>${maven.surefire.plugin.version}</version>
-				<configuration>
-					<useModulePath>false</useModulePath>
-				</configuration>
-			</plugin>
-
-			<!-- exec-maven-plugin for running the demo via 'mvn exec:java' -->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>3.2.0</version>
-
-				<configuration>
-					<!-- Entry point for the application -->
-					<mainClass>edu.cnu.mdi.demo.Main</mainClass>
-
-				</configuration>
-
-				<executions>
-					<execution>
-						<goals>
-							<goal>java</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
-			<!-- Optional JAR-with-manifest configuration -->
-			<!--
+            <!-- Executable Main-Class -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.3.0</version>
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>edu.cnu.mdi.demo.Main</mainClass>
+                            <mainClass>edu.cnu.mdi.app.DemoApp</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
             </plugin>
-            -->
 
-		</plugins>
-	</build>
+            <!-- Shaded Demo Jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals><goal>shade</goal></goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <shadedClassifierName>demo</shadedClassifierName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>edu.cnu.mdi.app.DemoApp</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <!-- Release profile -->
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+
+                    <!-- Sources -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <phase>verify</phase>
+                                <goals><goal>jar-no-fork</goal></goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Javadoc -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.6.3</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <phase>verify</phase>
+                                <goals><goal>jar</goal></goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <additionalOptions>-Xdoclint:none</additionalOptions>
+                        </configuration>
+                    </plugin>
+
+                    <!-- GPG signing -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals><goal>sign</goal></goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Sonatype Central Publishing -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.9.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>false</autoPublish>
+                        </configuration>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

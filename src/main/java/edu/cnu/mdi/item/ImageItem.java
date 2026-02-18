@@ -1,10 +1,7 @@
 package edu.cnu.mdi.item;
 
 import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Double;
@@ -26,7 +23,7 @@ public class ImageItem extends RectangleItem {
 	 * @param image the image to display.
 	 */
 	public ImageItem(Layer layer, Double wr, BufferedImage image) {
-		super(layer, wr == null ? createDefaultBounds((IContainer) layer.getContainer(), image) : wr);
+		super(layer, wr == null ? createDefaultBounds(layer.getContainer(), image) : wr);
 		Objects.requireNonNull(image, "Image cannot be null");
 		this.image = image;
 		this.setRightClickable(true);
@@ -54,13 +51,13 @@ public class ImageItem extends RectangleItem {
 		if (image == null || _path == null) {
 			return;
 		}
-		
+
 		// Get the actual (possibly rotated) rectangle corners in WORLD coords.
 		Point2D.Double[] wpoly = WorldGraphicsUtils.pathToWorldPolygon(_path);
 		if (wpoly == null || wpoly.length < 4) {
 			return;
 		}
-		
+
 		WorldGraphicsUtils.drawImageOnQuad(g, image, wpoly, container);
 	}
 

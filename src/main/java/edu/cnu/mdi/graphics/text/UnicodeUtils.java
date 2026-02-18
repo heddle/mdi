@@ -28,7 +28,7 @@ public class UnicodeUtils {
 	public static final String SUBN = "ₙ";
 
 	public static final String LOG10 = "log₁₀";
-	
+
 	// erase left
 	public static final String BACKSPACE = "⌫";
 
@@ -250,10 +250,10 @@ public class UnicodeUtils {
 		s = s.replace("\\dagger", DAGGER);
 		return s;
 	}
-	
+
 	/**
 	 * Get the superscript string for the given integer.
-	 * 
+	 *
 	 * @param n the integer
 	 * @return the superscript string
 	 */

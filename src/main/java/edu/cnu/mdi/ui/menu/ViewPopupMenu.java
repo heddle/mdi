@@ -4,6 +4,7 @@ import javax.swing.JPopupMenu;
 
 import edu.cnu.mdi.view.BaseView;
 
+@SuppressWarnings("serial")
 public class ViewPopupMenu extends JPopupMenu {
 
     /**

@@ -70,7 +70,7 @@ public class LabelsTabPanel extends JPanel {
 		c.gridx = 0;
 		c.gridy = row;
 		c.gridwidth = 3;
-		
+
 		JPanel fontPanel = createFontPanel();
 		add(fontPanel, c);
 	}
@@ -82,7 +82,7 @@ public class LabelsTabPanel extends JPanel {
 		_titleFont = new FontChoosePanel("Title font", _params.getTitleFont());
 		_axesFont = new FontChoosePanel("Axes label font", _params.getAxesFont());
 		_statusFont = new FontChoosePanel("Status font", _params.getStatusFont());
-		
+
 		fontPanel.add(_titleFont);
 		fontPanel.add(_axesFont);
 		fontPanel.add(_statusFont);

@@ -54,7 +54,7 @@ public class Legend extends DraggableRectangle {
 	 */
 	public void draw(Graphics g) {
 		PlotData plotData = _canvas.getPlotData();
-		
+
 		//as always, Histo2D has no curves to show so
 		//we put some useful stats instead
 		if (plotData.getType() == PlotDataType.H2D) {
@@ -92,10 +92,10 @@ public class Legend extends DraggableRectangle {
 			}
 		}
 	}
-	
+
 	private void histo2DDraw(Graphics g, Histo2DData h2d) {
 		FontMetrics fm = _canvas.getFontMetrics(_params.getTextFont());
-		
+
 		ArrayList<String> strings = new ArrayList<>();
 		long totalEntries = h2d.getTotalCount();
 		if (totalEntries <  10000) {
@@ -103,17 +103,17 @@ public class Legend extends DraggableRectangle {
 		} else  {
 			strings.add(String.format("Total Entries: %.2e", (double)totalEntries));
 		}
-		
+
 		//empty bins, occupancy
 		long totalBins = h2d.nx() * h2d.ny();
 		long emptyBins = h2d.getEmptyBinCount();
 		double occupancy = 100.0 * (totalBins - emptyBins) / totalBins;
 		strings.add(String.format("Bins: %d ( %.2f%% occupied) ", totalBins, occupancy));
-		
+
 		//count range
 		double maxCount = h2d.maxBin();
 		double minCount = ((emptyBins > 0) ? 0.0 : h2d.minNonZero());
-		
+
 		boolean logZ = _params.isLogZ();
 		if (logZ) {
 			double logMin = Math.log10(minCount + 1.0);
@@ -123,10 +123,10 @@ public class Legend extends DraggableRectangle {
 			strings.add(String.format("Z: [%.0f - %.0f]", minCount,
 					maxCount));
 		}
-		
+
 		// mean
 		strings.add(String.format("<Z>: %.1f (occupied bins)", h2d.meanBin()));
-		
+
 		//determine required width and height
 		width = 0;
 		height = 0;
@@ -145,7 +145,7 @@ public class Legend extends DraggableRectangle {
 
 		g.setFont(_params.getTextFont());
 		g.setColor(_params.getTextForeground());
-		
+
 		//draw the strings
 		int ys = y;
 		for (String s : strings) {

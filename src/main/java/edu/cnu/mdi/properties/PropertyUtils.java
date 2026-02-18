@@ -238,7 +238,7 @@ public class PropertyUtils {
 	public static boolean getIconifiable(Properties props) {
 		return getBoolean(props, ICONIFIABLE, true);
 	}
-	
+
 	/**
 	 * Get the view info button boolean flag.
 	 *

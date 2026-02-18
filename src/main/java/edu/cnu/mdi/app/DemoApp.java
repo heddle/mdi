@@ -16,6 +16,7 @@ import edu.cnu.mdi.mapping.GeoJsonCityLoader;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
 import edu.cnu.mdi.mapping.MapContainer;
+import edu.cnu.mdi.mapping.MapResources;
 import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
@@ -71,7 +72,7 @@ import edu.cnu.mdi.view.demo.NetworkLayoutDemoView;
  */
 @SuppressWarnings("serial")
 public class DemoApp extends BaseMDIApplication {
-	
+
 	/** Singleton instance of the demo app. */
 	private static DemoApp INSTANCE;
 
@@ -166,7 +167,7 @@ public class DemoApp extends BaseMDIApplication {
 
 		// Network declutter demo view
 		networkDeclutterDemoView = createNetworkDeclutterDemoView();
-		
+
 		// TSP demo view
 		tspDemoView = createTspDemoView();
 
@@ -174,11 +175,11 @@ public class DemoApp extends BaseMDIApplication {
 		networkLayoutDemoView = createNetworkLayoutDemoView();
 
 	}
-	
+
 	@Override
     protected String getApplicationId() {
         return "mdiDemoApp";
-    } 
+    }
 
 	/**
 	 * Runs once after the outer frame is showing and Swing layout has stabilized.
@@ -229,7 +230,7 @@ public class DemoApp extends BaseMDIApplication {
 		// Column 3: TSP demo center
 		virtualView.moveTo(tspDemoView, 3, VirtualView.CENTER);
 		tspDemoView.setVisible(true);
-		
+
 		// Column 4: network layout demo lower left
 		virtualView.moveTo(networkLayoutDemoView, 4, 0, -50, VirtualView.BOTTOMLEFT);
 		networkLayoutDemoView.setVisible(true);
@@ -250,7 +251,7 @@ public class DemoApp extends BaseMDIApplication {
 	 * Create the demo plot view.
 	 */
 	PlotView createPlotView() {
-		final PlotView view = new PlotView(PropertyUtils.TITLE, "Demo Plots", 
+		final PlotView view = new PlotView(PropertyUtils.TITLE, "Demo Plots",
 				PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT, 1.2, PropertyUtils.VISIBLE, true);
 
 		// add the examples menu and call "hack" to fix focus issues
@@ -284,7 +285,7 @@ public class DemoApp extends BaseMDIApplication {
 			AnotherGaussian example = new AnotherGaussian(true);
 			view.switchToPlotPanel(example.getPlotPanel());
 		});
-		
+
 		logItem.addActionListener(e -> {
 			CubicLogLog example = new CubicLogLog(true);
 			view.switchToPlotPanel(example.getPlotPanel());
@@ -309,7 +310,7 @@ public class DemoApp extends BaseMDIApplication {
 			GrowingHisto example = new GrowingHisto(true);
 			view.switchToPlotPanel(example.getPlotPanel());
 		});
-		
+
 		heatmapItem.addActionListener(e -> {
 			Heatmap example = new Heatmap(true);
 			view.switchToPlotPanel(example.getPlotPanel());
@@ -344,7 +345,7 @@ public class DemoApp extends BaseMDIApplication {
 			Scatter example = new Scatter(true);
 			view.switchToPlotPanel(example.getPlotPanel());
 		});
-		
+
 		barItem.addActionListener(e -> {
 			try {
 				view.switchToPlotPanel(BarPlot.demoBarPlot());
@@ -390,7 +391,7 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	TspDemoView createTspDemoView() {
 		TspDemoView view = new TspDemoView(PropertyUtils.TITLE,
-				"TSP Demo View", 
+				"TSP Demo View",
 				PropertyUtils.FRACTION, 0.6, PropertyUtils.ASPECT, 1.2, PropertyUtils.VISIBLE, false,
 				PropertyUtils.BACKGROUND, X11Colors.getX11Color("lavender blush"), PropertyUtils.WORLDSYSTEM,
 				new Rectangle2D.Double(0.0,	 0.0, 1, 1));
@@ -405,7 +406,7 @@ public class DemoApp extends BaseMDIApplication {
 		long toolBits = ToolBits.NAVIGATIONTOOLS | ToolBits.DELETE | ToolBits.CONNECTOR;
 		NetworkLayoutDemoView view = new NetworkLayoutDemoView(PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT,
 				1.2, PropertyUtils.TOOLBARBITS, toolBits,
-				PropertyUtils.VISIBLE, false, 
+				PropertyUtils.VISIBLE, false,
 				PropertyUtils.BACKGROUND, X11Colors.getX11Color("alice blue"), PropertyUtils.TITLE,
 				"Network Layout Demo View");
 		return view;
@@ -421,15 +422,15 @@ public class DemoApp extends BaseMDIApplication {
 		String resPrefix = Environment.MDI_RESOURCE_PATH;
 		// Load a small set of countries just for demo purposes.
 		try {
-			List<CountryFeature> countries = GeoJsonCountryLoader.loadFromResource(resPrefix + "/geo/countries.geojson");
+			List<CountryFeature> countries = GeoJsonCountryLoader.loadFromResource(resPrefix + MapResources.COUNTRIES_GEOJSON);
 			MapView2D.setCountries(countries);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 
-		// Load cities as well (optional).
+		// Load cities as well.
 		try {
-			List<GeoJsonCityLoader.CityFeature> cities = GeoJsonCityLoader.loadFromResource(resPrefix + "/geo/cities.geojson");
+			List<GeoJsonCityLoader.CityFeature> cities = GeoJsonCityLoader.loadFromResource(resPrefix + MapResources.CITIES_GEOJSON);
 			MapView2D.setCities(cities);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -437,6 +438,7 @@ public class DemoApp extends BaseMDIApplication {
 
 		long toolBits =  ToolBits.INFO | ToolBits.STATUS | ToolBits.CENTER | ToolBits.ZOOMTOOLS | ToolBits.DRAWINGTOOLS | ToolBits.MAGNIFY ;
 
+		// Create the view with a reasonable default configuration.
 		return new MapView2D(PropertyUtils.TITLE, "Sample 2D Map View",
 				PropertyUtils.FRACTION, 0.6, PropertyUtils.ASPECT, 1.5, PropertyUtils.CONTAINERCLASS,
 				MapContainer.class, PropertyUtils.TOOLBARBITS, toolBits);

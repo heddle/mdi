@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.prefs.Preferences;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -18,7 +19,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.SwingConstants;
-import javax.swing.ButtonGroup;
 
 import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.pseudo3D.Histo2DPanel;
@@ -45,7 +45,7 @@ public class PlotView extends BaseView {
 
 	protected PlotCanvas _plotCanvas;
 	protected PlotPanel _plotPanel;
-	
+
 
 	// CardLayout components
 	private CardLayout _cardLayout;
@@ -88,8 +88,9 @@ public class PlotView extends BaseView {
 		setJMenuBar(menuBar);
 
 		Predicate<File> plotFilter = f -> {
-			if (!f.isFile())
+			if (!f.isFile()) {
 				return false;
+			}
 			String name = f.getName().toLowerCase();
 			return name.endsWith(".plot.json") || name.endsWith(".splot.json");
 		};
@@ -187,8 +188,8 @@ public class PlotView extends BaseView {
 	    if (_histoMenuItem != null && _plotPanel != null) {
 	        boolean canShowHisto = _plotPanel.holds2DHistogram();
 	        _histoMenuItem.setEnabled(canShowHisto);
-	        
-	        // Only force a switch if we are CURRENTLY on the Histo card 
+
+	        // Only force a switch if we are CURRENTLY on the Histo card
 	        // and the new panel doesn't support it.
 	        if (!canShowHisto && isHistoCardVisible()) {
 	            showCard(CARD_PLOT);
@@ -200,11 +201,11 @@ public class PlotView extends BaseView {
 	 * Helper to check which card is currently at the front
 	 */
 	private boolean isHistoCardVisible() {
-	    // CardLayout doesn't have a simple getVisibleCard() method, 
+	    // CardLayout doesn't have a simple getVisibleCard() method,
 	    // so we check the internal state or the component visibility.
 	    return _histoPanel.isVisible();
 	}
-	
+
 	private JPanel createHistoPlaceholder() {
 		_histoPanel = new JPanel(new BorderLayout());
 		_histoPanel.setBackground(Color.DARK_GRAY);
@@ -214,10 +215,10 @@ public class PlotView extends BaseView {
 		return _histoPanel;
 	}
 
-	
+
 	/**
 	 * Toggles between the Plot and Histo2D cards.
-	 * 
+	 *
 	 * @param cardName Use PlotView.CARD_PLOT or PlotView.CARD_HISTO2D
 	 */
 	public void showCard(String cardName) {
@@ -233,13 +234,13 @@ public class PlotView extends BaseView {
 		_plotPanel.getToolBar().addInfoButton();
 		return _plotPanel;
 	}
-	
+
 	// set up the 2D histogram panel
 	private void setHisto2DPanel() {
 		if (_histoPanel != null) {
 			_cardDeck.remove(_histoPanel);
 		}
-		
+
 		if (_plotPanel.holds2DHistogram()) {
 			PlotParameters params = _plotCanvas.getParameters();
 			boolean logZ = reflectLogZ(params);
@@ -249,7 +250,7 @@ public class PlotView extends BaseView {
 			createHistoPlaceholder(); // empty placeholder
 		}
 	    _cardDeck.add(_histoPanel, CARD_HISTO2D);
-	    
+
 	}
 
 	/**
@@ -257,27 +258,27 @@ public class PlotView extends BaseView {
 	 */
 	private void setPlotPanel(PlotPanel plotPanel) {
 	    _cardDeck.remove(_plotPanel);
-	    
+
 	    _plotPanel = plotPanel;
 		_plotPanel.getToolBar().addInfoButton();
 	    _plotCanvas = plotPanel.getPlotCanvas();
 	    _plotCanvas.setTransferHandler(new FileDropHandler(this));
-	    
+
 	    _cardDeck.add(_plotPanel, CARD_PLOT);
-	    
+
 	    // 1. Update menu enablement
 	    updateViewMenuState();
-	    
+
 	    // 2. ALWAYS reset to the standard Plot card for new panels
 	    showCard(CARD_PLOT);
-	    
+
 	    // 3. Ensure the radio button in the menu matches the reset
 	    if (_plotMenuItem != null) {
 	        _plotMenuItem.setSelected(true);
 	    }
-	    
+
 	    setHisto2DPanel();
-	    
+
 	    _cardDeck.revalidate();
 	    _cardDeck.repaint();
 	}
@@ -293,8 +294,9 @@ public class PlotView extends BaseView {
 		JMenu splotMenu = findMenu(getJMenuBar(), SplotEditMenu.MENU_TITLE);
 		if (splotMenu != null) {
 			getJMenuBar().remove(splotMenu);
-			if (_plotCanvas != null)
+			if (_plotCanvas != null) {
 				_plotCanvas.shutDown();
+			}
 		}
 
 		PlotCanvas plotCanvas = plotPanel.getPlotCanvas();

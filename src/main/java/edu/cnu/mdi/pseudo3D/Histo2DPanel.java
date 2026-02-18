@@ -19,7 +19,7 @@ import edu.cnu.mdi.ui.colors.ScientificColorMap;
 public class Histo2DPanel extends JPanel implements PropertyChangeListener {
 
 	private Histogram2D hist;
- 
+
     /**
      * Create a pseudo-3D histogram panel.
      *

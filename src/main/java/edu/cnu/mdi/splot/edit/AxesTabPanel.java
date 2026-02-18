@@ -47,7 +47,7 @@ public class AxesTabPanel extends JPanel {
 	// snapshot for deciding if world system must be recomputed
 	private final boolean _xZero0, _yZero0;
 	private final boolean _xLog0, _yLog0;
-	
+
 	private final PlotDataType _plotDataType;
 
 	/**
@@ -90,12 +90,12 @@ public class AxesTabPanel extends JPanel {
 		_logZ = new JCheckBox("Log Z (heatmap)");
 		_logZ.setToolTipText("Applies to heatmap/2D histogram intensity only");
 		_logZ.setSelected(_params.isLogZ());
-		
+
 		// show empty bins (heatmap only)
 		_showEmptyBins = new JCheckBox("Show empty bins (heatmap)");
 		_showEmptyBins.setToolTipText("If selected, bins with zero counts are shown in white");
 		_showEmptyBins.setSelected(_params.showEmptyBins());
-		
+
 		//color map for heatmap
 		_colorMapPanel = new ColorMapSelectorPanel(_params.getColorMap());
 
@@ -141,7 +141,7 @@ public class AxesTabPanel extends JPanel {
 		add(_logX, c);
 		c.gridx = 1;
 		add(_logY, c);
-		
+
 		// Row: log Z (heatmap only)
 		// add Log Z in a new column
 		c.gridx = 2;
@@ -159,7 +159,7 @@ public class AxesTabPanel extends JPanel {
 		add(_colorMapPanel, c);
 		c.gridy++;
 		c.insets = new Insets(c.insets.top, oldLeft, c.insets.bottom, c.insets.right); // res
-		
+
 
 		// Tick formatting block
 		c.gridy++;
@@ -204,7 +204,7 @@ public class AxesTabPanel extends JPanel {
 		if (ylog) {
 			_includeYZero.setSelected(false);
 		}
-		
+
 		// log Z and colormap only for heatmaps
 		_logZ.setEnabled(_plotDataType == PlotDataType.H2D);
 		_colorMapPanel.setEnabled(_plotDataType == PlotDataType.H2D);
@@ -219,7 +219,7 @@ public class AxesTabPanel extends JPanel {
 
 		// Apply limits/methods first (may set manual ranges)
 		_limitsPanel.apply();
-		
+
 		_params.setColorMap(_colorMapPanel.getCurrentMap());
 
 		// Apply scale before include-zero, since include-zero is disabled in log mode.

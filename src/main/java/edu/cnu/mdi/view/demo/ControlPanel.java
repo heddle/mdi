@@ -12,6 +12,7 @@ import javax.swing.SwingConstants;
 
 import edu.cnu.mdi.ui.fonts.Fonts;
 
+@SuppressWarnings("serial")
 public class ControlPanel extends JPanel {
 
 	// the parent view being controlled

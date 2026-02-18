@@ -41,9 +41,9 @@ public class PlotData implements CurveChangeListener {
 
 	/** Plot data set type. */
 	private final PlotDataType type;
-	
-	/** 
-	 * 2D histogram data, if applicable. 
+
+	/**
+	 * 2D histogram data, if applicable.
 	 * The only type to be cached because it has no curves.
 	 */
 	private Histo2DData histo2DData;
@@ -72,7 +72,7 @@ public class PlotData implements CurveChangeListener {
 
 		}
 	}
-	
+
 	/**
 	 * Create plot data for a 2D histogram.
 	 *
@@ -163,7 +163,7 @@ public class PlotData implements CurveChangeListener {
 				addCurve(curve);
 			}
 			break;
-			
+
 		case H2D:
 			throw new PlotDataException("Use PlotData(Histo2DData) constructor for 2D histograms.");
 
@@ -194,11 +194,11 @@ public class PlotData implements CurveChangeListener {
 	public PlotDataType getType() {
 		return type;
 	}
-	
-	/** 
-	 * Get the 2D histogram data, if applicable. There are no curves 
+
+	/**
+	 * Get the 2D histogram data, if applicable. There are no curves
 	 * for 2D histograms so the data is cached here.
-	 * @return the 2D histogram data, or null if not applicable. 
+	 * @return the 2D histogram data, or null if not applicable.
 	 */
 	public Histo2DData getHisto2DData() {
 		return histo2DData;
@@ -212,7 +212,7 @@ public class PlotData implements CurveChangeListener {
 	public boolean isHistoData() {
 		return (type == PlotDataType.H1D);
 	}
-	
+
 	/**
 	 * Convenience method to determine if this is 2D histogram plot data.
 	 *
@@ -347,11 +347,11 @@ public class PlotData implements CurveChangeListener {
 
 	/** @return the minimum x value over all curves. */
 	public double xMin() {
-		
+
 		if (isHisto2DData()) {
 			return histo2DData.xMin();
 		}
-		
+
 		if (curves.isEmpty()) {
 			return Double.NaN;
 		}
@@ -367,11 +367,11 @@ public class PlotData implements CurveChangeListener {
 
 	/** @return the maximum x value over all curves. */
 	public double xMax() {
-		
+
 		if (isHisto2DData()) {
 			return histo2DData.xMax();
 		}
-		
+
 		if (curves.isEmpty()) {
 			return Double.NaN;
 		}
@@ -387,11 +387,11 @@ public class PlotData implements CurveChangeListener {
 
 	/** @return the minimum y value over all curves. */
 	public double yMin() {
-		
+
 		if (isHisto2DData()) {
 			return histo2DData.yMin();
 		}
-		
+
 		if (curves.isEmpty()) {
 			return Double.NaN;
 		}
@@ -407,11 +407,11 @@ public class PlotData implements CurveChangeListener {
 
 	/** @return the maximum y value over all curves. */
 	public double yMax() {
-		
+
 		if (isHisto2DData()) {
 			return histo2DData.yMax();
 		}
-		
+
 		if (curves.isEmpty()) {
 			return Double.NaN;
 		}

@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
 import java.awt.geom.Rectangle2D;
@@ -118,7 +116,7 @@ public class MapView2D extends BaseView {
 
 		add(sidePanel, BorderLayout.EAST);
 	}
-	
+
 	/**
 	 * Get the view info object for this map view, which provides metadata and
 	 * content for the "Info" dialog. This method is called by the base view when

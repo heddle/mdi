@@ -18,7 +18,7 @@ public class Node {
 
 	/** World velocity in world-units per step. */
 	public double vx, vy;
-	
+
 	/** Force on the node */
 	public double fx, fy;
 

@@ -25,8 +25,12 @@ public final class RecentPlotFiles {
      * @param maxSize maximum number of recent entries to retain (typical: 8–15)
      */
     public RecentPlotFiles(Preferences prefsNode, int maxSize) {
-        if (prefsNode == null) throw new IllegalArgumentException("prefsNode is null");
-        if (maxSize < 1) throw new IllegalArgumentException("maxSize must be >= 1");
+        if (prefsNode == null) {
+			throw new IllegalArgumentException("prefsNode is null");
+		}
+        if (maxSize < 1) {
+			throw new IllegalArgumentException("maxSize must be >= 1");
+		}
         this.prefs = prefsNode;
         this.maxSize = maxSize;
         normalize(); // clean any stale/duplicate entries on startup
@@ -44,7 +48,9 @@ public final class RecentPlotFiles {
 
     /** Add/update a path at the front of the MRU list. Ignores nulls and non-existent files. */
     public void add(File file) {
-        if (file == null) return;
+        if (file == null) {
+			return;
+		}
         File f = file;
         try {
             f = file.getCanonicalFile();
@@ -52,7 +58,9 @@ public final class RecentPlotFiles {
             // keep original
         }
 
-        if (!f.exists() || f.isDirectory()) return;
+        if (!f.exists() || f.isDirectory()) {
+			return;
+		}
 
         String path = f.getAbsolutePath();
         List<String> list = readRaw();
@@ -73,7 +81,9 @@ public final class RecentPlotFiles {
 
     /** Remove a file from the list (if present). */
     public void remove(File file) {
-        if (file == null) return;
+        if (file == null) {
+			return;
+		}
         String path = file.getAbsolutePath();
         List<String> list = readRaw();
         if (list.removeIf(path::equals)) {
@@ -111,7 +121,9 @@ public final class RecentPlotFiles {
         if (changed) {
             // Write back normalized list
             List<String> normalized = new ArrayList<>();
-            for (File f : out) normalized.add(f.getAbsolutePath());
+            for (File f : out) {
+				normalized.add(f.getAbsolutePath());
+			}
             writeRaw(normalized);
         }
 
@@ -122,7 +134,9 @@ public final class RecentPlotFiles {
     public List<String> getRecentPaths() {
         List<File> files = getRecentFiles();
         List<String> paths = new ArrayList<>(files.size());
-        for (File f : files) paths.add(f.getAbsolutePath());
+        for (File f : files) {
+			paths.add(f.getAbsolutePath());
+		}
         return paths;
     }
 
@@ -132,7 +146,9 @@ public final class RecentPlotFiles {
 
     private List<String> readRaw() {
         int n = prefs.getInt(KEY_COUNT, 0);
-        if (n < 0) n = 0;
+        if (n < 0) {
+			n = 0;
+		}
 
         List<String> list = new ArrayList<>(Math.min(n, maxSize));
         for (int i = 0; i < n; i++) {
@@ -145,7 +161,9 @@ public final class RecentPlotFiles {
     }
 
     private void writeRaw(List<String> list) {
-        if (list == null) list = Collections.emptyList();
+        if (list == null) {
+			list = Collections.emptyList();
+		}
 
         // First clear old keys
         int old = prefs.getInt(KEY_COUNT, 0);
@@ -174,8 +192,12 @@ public final class RecentPlotFiles {
         List<String> uniq = new ArrayList<>();
         for (File f : files) {
             String p = f.getAbsolutePath();
-            if (!uniq.contains(p)) uniq.add(p);
-            if (uniq.size() >= maxSize) break;
+            if (!uniq.contains(p)) {
+				uniq.add(p);
+			}
+            if (uniq.size() >= maxSize) {
+				break;
+			}
         }
         writeRaw(uniq);
     }

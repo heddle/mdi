@@ -71,7 +71,7 @@ public class CurveDrawer {
 		}
 
 	}
-	
+
 	/**
 	 * Draw a bar for a bar plot
 	 *
@@ -95,7 +95,7 @@ public class CurveDrawer {
 		if ((x == null) || (x.length != 4)) {
 			return;
 		}
-		
+
 		Polygon poly = new Polygon();
 		Point2D.Double wp = new Point2D.Double();
 		Point p = new Point();
@@ -110,24 +110,24 @@ public class CurveDrawer {
 		Color lineColor = style.getLineColor();
 		g.setColor(lineColor);
 		g.drawPolygon(poly);
-		
+
 		g.setColor(Color.black);
 		g.setFont(Fonts.smallFont);
 		String label = String.format("%.4f", y[1]);
 		wp.x = 0.5 * (x[1] + x[2]);
 		wp.y = y[1];
-		
-		
+
+
 		canvas.dataToScreen(p, wp);
 		FontMetrics fm = g.getFontMetrics();
 		int strWidth = fm.stringWidth(label);
-		
+
 		Rectangle plotRect = canvas.getActiveBounds();
 		p.y = Math.max(p.y, plotRect.y + fm.getHeight() + 2); // don't go above plot area
-		
+
 	    GraphicsUtils.drawEtchedText(g, label, p.x - strWidth / 2, p.y -
 				4);
-				
+
 
 	}
 

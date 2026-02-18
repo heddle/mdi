@@ -62,14 +62,14 @@ public abstract class PlotLine {
 	 */
 	public void draw(Graphics g) {
 		wp.setLocation(getX0(), getY0());
-		
+
 		boolean goodPoint;
 		goodPoint = _canvas.dataToScreen(p0, wp);
 		if (!goodPoint) {
 			return;
 		}
 		wp.setLocation(getX1(), getY1());
-		
+
 		goodPoint =_canvas.dataToScreen(p1, wp);
 		if (!goodPoint) {
 			return;
@@ -106,10 +106,10 @@ public abstract class PlotLine {
 	 * @return the ending y coordinate
 	 */
 	public abstract double getY1();
-	
+
 	@Override
 	public String toString() {
-		return "PlotLine: (" + getX0() + ", " + getY0() + ") to (" + getX1() + ", " + getY1() + ")";	
+		return "PlotLine: (" + getX0() + ", " + getY0() + ") to (" + getX1() + ", " + getY1() + ")";
 	}
 
 }

@@ -222,7 +222,7 @@ public final class Desktop extends JDesktopPane {
             }
         }
     }
-    
+
     /**
      * Call prepareForExit on all views. This allows them to stop simulations, save
      * state, etc. before the application exits.

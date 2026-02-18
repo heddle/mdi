@@ -12,13 +12,13 @@ public interface IFileDropHandler {
      * @param filter the file filter can be null
      */
  	public abstract void setFileFilter(Predicate<File> filter);
- 	
+
  	/**
 	 * Get the current file filter.
 	 * @return the file filter can be null
 	 */
  	public abstract Predicate<File> getFileFilter();
- 	
+
  	/**
 	 * Handle files dropped onto the component.
 	 * @param files the dropped files.

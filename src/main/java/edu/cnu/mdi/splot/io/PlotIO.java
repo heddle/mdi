@@ -19,9 +19,9 @@ import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.Curve;
+import edu.cnu.mdi.splot.pdata.Histo2DData;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
-import edu.cnu.mdi.splot.pdata.Histo2DData;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
@@ -140,7 +140,7 @@ public final class PlotIO {
 
 		return spec;
 	}
-	
+
 	// ---------------------------
 	// Heatmap (Histo2DData) <-> spec
 	// ---------------------------
@@ -194,7 +194,7 @@ public final class PlotIO {
 		// --- NEW: axis scales ---
 		s.xScale = p.getXScale();
 		s.yScale = p.getYScale();
-		
+
 		//rendering hints
 		s.renderHints = p.getRenderHints();
 
@@ -226,7 +226,7 @@ public final class PlotIO {
 		s.drawExtra = p.extraDrawing();
 		s.extraBorder = p.extraBorder();
 		s.extraStrings = p.getExtraStrings();
-		
+
 		s.logZ = p.isLogZ();
 		s.zColorMap = (p.getColorMap() == null) ? null : p.getColorMap().name();
 		s.showEmptyBins = p.showEmptyBins();
@@ -465,7 +465,7 @@ public final class PlotIO {
 		}
 	}
 
-	
+
 	/** Best-effort reflection helper: invoke a no-arg getter. */
 	private static Object invokeGetter(Object target, String method) {
 		try {
@@ -510,7 +510,7 @@ public final class PlotIO {
 
 		p.setReverseXaxis(s.reverseXaxis);
 		p.setReverseYaxis(s.reverseYaxis);
-		
+
 		// set rendering hints
 		if (s.renderHints != null) {
 			p.setRenderHints(s.renderHints);

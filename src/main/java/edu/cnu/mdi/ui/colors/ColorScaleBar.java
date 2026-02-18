@@ -1,7 +1,13 @@
 package edu.cnu.mdi.ui.colors;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+
+import javax.swing.JComponent;
 
 @SuppressWarnings("serial")
 public class ColorScaleBar extends JComponent {
@@ -59,7 +65,7 @@ public class ColorScaleBar extends JComponent {
 
         // 1) Gradient bar
         for (int x = padding; x < width - padding; x++) {
-            double value = (double) (x - padding) / (width - 2.0 * padding);
+            double value = (x - padding) / (width - 2.0 * padding);
             Color c;
             if (_map != null) {
                 c = _map.colorAt(value);

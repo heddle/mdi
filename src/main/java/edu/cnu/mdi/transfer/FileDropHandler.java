@@ -1,16 +1,17 @@
 package edu.cnu.mdi.transfer;
 
-import javax.swing.*;
-
-import java.awt.datatransfer.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.io.File;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import javax.swing.TransferHandler;
+
 @SuppressWarnings("serial")
 public class FileDropHandler extends TransferHandler {
-	
+
 	private final IFileDropHandler dropHandler;
 	public FileDropHandler(IFileDropHandler dropHandler) {
 		super();
@@ -25,8 +26,9 @@ public class FileDropHandler extends TransferHandler {
 
 	@Override
 	public boolean importData(TransferSupport support) {
-		if (!canImport(support))
+		if (!canImport(support)) {
 			return false;
+		}
 
 		try {
 			Transferable t = support.getTransferable();
@@ -35,7 +37,7 @@ public class FileDropHandler extends TransferHandler {
 
 			Predicate<File> fileFilter = dropHandler != null ? dropHandler.getFileFilter() : null;
 			// Apply the filter if it exists
-            List<File> acceptedFiles = (fileFilter == null) ? allFiles : 
+            List<File> acceptedFiles = (fileFilter == null) ? allFiles :
                 allFiles.stream().filter(fileFilter).collect(Collectors.toList());
 
             if (!acceptedFiles.isEmpty()) {

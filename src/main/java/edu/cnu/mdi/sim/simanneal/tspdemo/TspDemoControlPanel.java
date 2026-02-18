@@ -61,7 +61,7 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 
 	/** Default max cities. */
 	public static final int MAX_CITIES = 1000;
-	
+
 	//for the float based river slider
 	private final static int RIVER_NUM_DECIMALS = 2;
 	private final static int RIVER_SCALE = (int) Math.pow(10, RIVER_NUM_DECIMALS);
@@ -115,7 +115,7 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		// Reset button (right)
 		addResetButton();
 
-		
+
 		// -------- Sliders panel (center) --------
 		JPanel sliderPanel = new JPanel();
 		sliderPanel.setLayout(new BorderLayout(0,0));
@@ -126,14 +126,14 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		cPanel.setBorder(new CommonBorder("Number Cities"));
 		JPanel rPanel = new JPanel();
 		rPanel.setBorder(new CommonBorder("River Crossing Penalty or Bonus"));
-		
+
 		Font font = Fonts.tinyFont;
-		
+
 		int tickSpace = (MAX_CITIES - MIN_CITIES) / 5;
-		citySlider  = SliderFactory.createLabeledSlider(cPanel, MIN_CITIES, MAX_CITIES, 
+		citySlider  = SliderFactory.createLabeledSlider(cPanel, MIN_CITIES, MAX_CITIES,
 				TspDemoView.DEFAULT_NUM_CITY, tickSpace, 0, font, true);
-		
-		
+
+
 		float fTickSpace = 0.4f;
 		riverSlider = SliderFactory.createLabeledSlider(rPanel, -1f, 1f, TspDemoView.DEFAULT_RIVER_PENALTY, fTickSpace, 0f, font, true, RIVER_NUM_DECIMALS);
 
@@ -166,7 +166,7 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
 		};
 		citySlider.addChangeListener(cl);
 		riverSlider.addChangeListener(cl);
-		
+
 		setBorder(BorderFactory.createEtchedBorder());
 	}
 

@@ -183,7 +183,7 @@ public abstract class ACurve {
 	 * @return curve length
 	 */
 	public abstract int length();
-	
+
 	/**
 	 * Clear all data from this curve and fire a DATA change event.
 	 * <p>

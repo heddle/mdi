@@ -40,7 +40,7 @@ import edu.cnu.mdi.util.Environment;
 @SuppressWarnings("serial")
 public class PlotCanvas extends JComponent implements MouseListener, MouseMotionListener, DataChangeListener {
 
-	
+
 	public static final String DONEDRAWINGPROP = "Done Drawing";
 	public static final String TITLETEXTCHANGE = "Title Text";
 	public static final String TITLEFONTCHANGE = "Title Font";
@@ -173,8 +173,9 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 
 	@Override
 	public void removeNotify() {
-		if (_timer != null)
+		if (_timer != null) {
 			_timer.stop();
+		}
 		super.removeNotify();
 	}
 
@@ -204,10 +205,10 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	public PlotParameters getParameters() {
 		return _parameters;
 	}
-	
+
 	/**
 	 * Check if this is a bar plot
-	 * 
+	 *
 	 * @return true if this is a bar plot
 	 */
 	public boolean isBarPlot() {
@@ -428,10 +429,12 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 			_worldSystem.setFrame(0, 0, 1, 1);
 			return;
 		}
-		if (wxmax <= wxmin)
+		if (wxmax <= wxmin) {
 			wxmax = wxmin + 1.0;
-		if (wymax <= wymin)
+		}
+		if (wymax <= wymin) {
 			wymax = wymin + 1.0;
+		}
 
 		_worldSystem.setFrame(wxmin, wymin, wxmax - wxmin, wymax - wymin);
 
@@ -578,7 +581,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 
 	/**
 	 * Find min/max strictly positive values on an axis across all curves.
-	 * 
+	 *
 	 * @param xAxis true for x, false for y
 	 * @return {minPos, maxPos} or null if no positive finite values exist
 	 */
@@ -593,15 +596,18 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 		for (ACurve c : _plotData.getCurves()) {
 			Snapshot s = c.snapshot();
 			double[] arr = xAxis ? s.x : s.y;
-			if (arr == null)
+			if (arr == null) {
 				continue;
+			}
 
 			for (double v : arr) {
 				if (v > 0.0 && Double.isFinite(v)) {
-					if (v < minPos)
+					if (v < minPos) {
 						minPos = v;
-					if (v > maxPos)
+					}
+					if (v > maxPos) {
 						maxPos = v;
+					}
 				}
 			}
 		}
@@ -718,7 +724,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 		Point pp = e.getPoint();
 		Point2D.Double dataPoint = new Point2D.Double();
 		screenToData(pp, dataPoint);
-		
+
 		//as always, Histo2D's are handled separately
 		if (_plotData.isHisto2DData()) {
 			Histo2DData h2d = _plotData.getHisto2DData();
@@ -728,9 +734,9 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 			}
 			return;
 		}
-		
-		
-		
+
+
+
 		feedback.append(String.format("(x, y) = (%7.2g, %-7.2g)", dataPoint.x, dataPoint.y));
 
 		if (_plotData.isXYData()) {
@@ -767,7 +773,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 			}
 		}
 	}
-	
+
 	// feedback for bar plots
 	private void barPlotFeedback(Point2D.Double dataPoint, FeedbackPane feedback, Point pp) {
 		List<ACurve> curves = _plotData.getVisibleCurves();
@@ -783,8 +789,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 			if (xArr == null || yArr == null) {
 				continue;
 			}
-			for (int i = 0; i < xArr.length; i++) {
-				double xVal = xArr[i];
+			for (double xVal : xArr) {
 				double dist = Math.abs(xVal - mouseX);
 				if (dist < minDist) {
 					minDist = dist;
@@ -800,23 +805,23 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 			double height = closestCurve.yData().get(1) - closestCurve.yData().get(0);
 			double[] xArr = s.x;
 			double[] yArr = s.y;
-			for (int i = 0; i < xArr.length; i++) {
-				if (xArr[i] == closestBarX) {
+			for (double element : xArr) {
+				if (element == closestBarX) {
 					feedback.append(String.format("Category %s at x=%.2f has height %.4f", name, closestBarX, height));
 					break;
 				}
 			}
 		}
 	}
-	
+
 	// feedback for Histo2D
 	private void histo2DFeedback(Histo2DData h2d, Point2D.Double dataPoint, FeedbackPane feedback) {
 
 		boolean logZ = _parameters.isLogZ();
-		
-		
+
+
 		int count = (int) h2d.bin(dataPoint.x, dataPoint.y);
-		
+
 		double xbr[] = h2d.xBinRange(dataPoint.x);
 		double ybr[] = h2d.yBinRange(dataPoint.y);
 		if (xbr == null || ybr == null) {
@@ -831,19 +836,19 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 			s += String.format("  (%sZ = %.2f)", UnicodeUtils.LOG10, logCount);
 		}
 		feedback.append(s);
-		
+
 		double maxCount = h2d.maxBin();
 		if (maxCount > 0) {
 			double zOverzMax = count / h2d.maxBin();
 			s = String.format("Z / Zmax: %.1f%%", 100.0 * zOverzMax);
 			feedback.append(s);
 		}
-		
+
 		double percentile = h2d.percentile(dataPoint.x, dataPoint.y);
 		double mean3x3 = h2d.localMean3x3(dataPoint.x, dataPoint.y);
-		
+
 		feedback.append(String.format("Percentile: %dth    Local avg (3x3): %d", Math.round(percentile), (int)mean3x3));
-		
+
 
 	}
 
@@ -903,8 +908,9 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 * The plot is being shutdown
 	 */
 	public void shutDown() {
-		if (_timer != null)
+		if (_timer != null) {
 			_timer.stop();
+		}
 		notifyListeners(PlotChangeType.SHUTDOWN);
 	}
 
@@ -912,8 +918,9 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 * The plot is being stood up
 	 */
 	public void standUp() {
-		if (_timer != null)
+		if (_timer != null) {
 			_timer.start();
+		}
 		notifyListeners(PlotChangeType.STOODUP);
 	}
 
@@ -1264,7 +1271,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 
 	    return true;
 	}
-	
+
 
 	/**
 	 * Convert a <b>data</b> rectangle to a screen (pixel) rectangle.
@@ -1300,14 +1307,14 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	    int y = Math.min(p0.y, p1.y);
 	    int w = Math.abs(p1.x - p0.x);
 	    int h = Math.abs(p1.y - p0.y);
-	    
+
 	    w = Math.max(w, 1);
 	    h = Math.max(h, 1);
 
 	    screenRect.setBounds(x, y, w, h);
 	    return true;
 	}
-	
+
 	/**
 	 * Convert a <b>data</b> rectangle to a screen (pixel) rectangle.
 	 * <p>
@@ -1340,13 +1347,13 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	    int y = Math.min(p0.y, p1.y);
 	    int w = Math.abs(p1.x - p0.x);
 	    int h = Math.abs(p1.y - p0.y);
-	    
+
 	    w = Math.max(w, 1);
 	    h = Math.max(h, 1);
 
 	    return new Rectangle(x, y, w, h);
 	}
-	
+
 	/**
 	 * Convert a <b>data</b> point to screen (pixel) coordinates.
 	 * <p>

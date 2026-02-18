@@ -164,13 +164,13 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	 *                             component on startup (0..1)
 	 * @param keyVals              standard {@link BaseView} key-value arguments
 	 */
-	public SimulationView(Simulation simulation, 
-			SimulationEngineConfig config, 
+	public SimulationView(Simulation simulation,
+			SimulationEngineConfig config,
 			boolean includeControlPanel,
-			ControlPanelFactory controlPanelFactory, 
-			boolean includeDiagnostics, 
+			ControlPanelFactory controlPanelFactory,
+			boolean includeDiagnostics,
 			DiagnosticFactory diagnosticFactory,
-			double initialSplitFraction, 
+			double initialSplitFraction,
 			Object... keyVals) {
 
 		super(keyVals);
@@ -178,8 +178,8 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 		Objects.requireNonNull(simulation, "simulation");
 		Objects.requireNonNull(config, "config");
 
-		// The engine gets created first since the control panel factory 
-		// may want to bind to it during creation. 
+		// The engine gets created first since the control panel factory
+		// may want to bind to it during creation.
 		engine = new SimulationEngine(simulation, config);
 		engine.addListener(this);
 
@@ -191,8 +191,8 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 			JComponent cp = f.createControlPanel();
 			controlPanel = cp;
 
-			// If the control panel implements ISimulationControlPanel, bind it to 
-			// this host. The effect of binding is that the control panel's buttons 
+			// If the control panel implements ISimulationControlPanel, bind it to
+			// this host. The effect of binding is that the control panel's buttons
 			// will control this view's engine.
 			if (cp instanceof ISimulationControlPanel scp) {
 				scp.bind(this);
@@ -222,8 +222,9 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	}
 
 	private static double clamp01(double x) {
-		if (Double.isNaN(x))
+		if (Double.isNaN(x)) {
 			return DEFAULT_DIAG_SPLIT_FRACTION;
+		}
 		return Math.max(0.0, Math.min(1.0, x));
 	}
 
@@ -254,7 +255,7 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 		cp.remove(center);
 
 		Component left = center;
-		
+
 		JSplitPane sp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, diag);
 
 		// Divider location based on fraction needs a realized size; set it after
@@ -271,7 +272,7 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 		cp.add(sp, BorderLayout.CENTER);
 		cp.revalidate();
 		cp.repaint();
-		
+
 
 
 		return sp;

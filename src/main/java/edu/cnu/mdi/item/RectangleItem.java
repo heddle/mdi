@@ -25,7 +25,7 @@ public class RectangleItem extends PolygonItem {
 	 */
 	@Override
 	protected void reshape() {
-		
+
 		int j = _modification.getSelectIndex();
 		int i = (j + 3) % 4;
 		int k = (j + 1) % 4;
@@ -52,7 +52,7 @@ public class RectangleItem extends PolygonItem {
 		wpoly[k].x += vk.x;
 		wpoly[k].y += vk.y;
 		_path = WorldGraphicsUtils.worldPolygonToPath(wpoly);
-		
+
 
 
 		geometryChanged();

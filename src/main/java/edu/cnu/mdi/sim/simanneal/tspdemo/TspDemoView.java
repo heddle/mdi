@@ -1,7 +1,6 @@
 package edu.cnu.mdi.sim.simanneal.tspdemo;
 
 import java.awt.BasicStroke;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -102,7 +101,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 			    keyVals
 			);
 		// Grab the diagnostics component that SimulationView installed on the right
-		this.evtPlot = (EvsTPlotPanel) getDiagnosticsComponent();	
+		this.evtPlot = (EvsTPlotPanel) getDiagnosticsComponent();
 
 		// Recover bundle created by createSimulationAndStashBundle().
 		Bundle b = BUNDLE_TL.get();

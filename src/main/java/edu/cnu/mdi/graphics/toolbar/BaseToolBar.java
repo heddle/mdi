@@ -496,7 +496,7 @@ public class BaseToolBar extends AToolBar {
 		if (ToolBits.hasInfoButton(bits)) {
 			oneShot(ToolBits.INFO, () -> handler.info(actionContext()));
 		}
-	
+
 		// Status field (optional)
 		if (ToolBits.hasStatusField(bits)) {
 			statusField = createStatusTextField();
@@ -524,7 +524,7 @@ public class BaseToolBar extends AToolBar {
 			oneShot(ToolBits.INFO, () -> handler.info(actionContext()));
 		}
 	}
-	
+
 	// ------------------------------------------------------------------------
 	// Button configuration
 	// ------------------------------------------------------------------------

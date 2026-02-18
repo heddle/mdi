@@ -26,12 +26,12 @@ public final class HeatmapDrawer {
         if (g == null || canvas == null || h2d == null) {
             return;
         }
-        
+
 
         final Graphics2D g2 = (Graphics2D) g;
         final Color[] scale =canvas.getParameters().getColorMap().scale();
         final boolean logZ = canvas.getParameters().isLogZ();
-        
+
         // Snapshot for consistent paint
         final double[][] bins = h2d.snapshotBins();
 
@@ -40,10 +40,10 @@ public final class HeatmapDrawer {
             return;
         }
 
-        // log10(v+1) mapping 
+        // log10(v+1) mapping
         final double logMax = logZ ? Math.log10(zMax + 1.0) : 0.0;
         final double denom = logZ ? logMax : 1.0;
-        
+
         final int nx = h2d.nx();
         final int ny = h2d.ny();
 
@@ -52,7 +52,7 @@ public final class HeatmapDrawer {
 
         final double xmin = h2d.xMin();
         final double ymin = h2d.yMin();
-        
+
         boolean showEmptyBins = canvas.getParameters().showEmptyBins();
 
         for (int ix = 0; ix < nx; ix++) {
@@ -60,17 +60,13 @@ public final class HeatmapDrawer {
             final double x1 = x0 + dx;
 
             for (int iy = 0; iy < ny; iy++) {
-            	
+
             	//z is the count as a double
             	final double z = bins[ix][iy];
-            	if (!(z >= 0) || !Double.isFinite(z)) {
-            	    continue;
-            	}
-            	
-            	if (z < 0.1 && showEmptyBins) {
+            	if (!(z >= 0) || !Double.isFinite(z) || (z < 0.1 && showEmptyBins)) {
 				    continue;
             	}
-            	
+
                 final double y0 = ymin + iy * dy;
                 final double y1 = y0 + dy;
 
@@ -98,7 +94,7 @@ public final class HeatmapDrawer {
                 int h = Math.max(1, Math.abs(p1.y - p0.y));
 
                 // optional anti-seam
-                
+
                 g2.setColor(c);
                 g2.fillRect(x, y, w + 1, h + 1);
              }

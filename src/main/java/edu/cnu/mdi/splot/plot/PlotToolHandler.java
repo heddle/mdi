@@ -56,7 +56,7 @@ public class PlotToolHandler extends DefaultToolHandler {
 	public BaseToolBar getToolBar() {
 		return toolBar;
 	}
-	
+
 	@Override
 	public void info(GestureContext gc) {
 		BaseView view = (BaseView) SwingUtilities.getAncestorOfClass(BaseView.class, gc.getCanvas());

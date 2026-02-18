@@ -72,7 +72,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 
 		_canvas.addPropertyChangeListener(this);
 		add(_canvas, BorderLayout.CENTER);
-		
+
 		addSouth();
 		addNorth();
 		addWest();
@@ -204,7 +204,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 	public FeedbackPane getFeedbackPane() {
 		return _feedbackPane;
 	}
-	
+
 	/**
 	 * Get the toolbar
 	 *
@@ -239,7 +239,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		_xLabel.setBackground(bg);
 		_yLabel.setBackground(bg);
 	}
-	
+
 	/**
 	 * Does this panel hold a 2D histogram?
 	 *

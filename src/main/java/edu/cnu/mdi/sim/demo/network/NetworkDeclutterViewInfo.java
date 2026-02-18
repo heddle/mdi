@@ -14,7 +14,7 @@ public class NetworkDeclutterViewInfo extends AbstractViewInfo {
 		return "The purpose of this view is to demonstrate the MDI similation package"
 				+ "using a world-based network decluttering algorithm. It simulates a network of servers, clients and printers, applying a force-directed layout algorithm to reduce visual clutter while preserving the overall structure of the network.";
 	}
-	
+
 	@Override
 		public String getUsage() {
 			return "<ul>" +
@@ -23,7 +23,7 @@ public class NetworkDeclutterViewInfo extends AbstractViewInfo {
 					"<li>Observe how the force-directed layout algorithm declutters the network while maintaining connectivity.</li>" +
 					"</ul>";
 	}
-	
+
     @Override
     public String getTechnicalNotes() {
         return "Handbook of Graph Drawing and Visualization (Discrete Mathematics and Its Applications), Chapter 12: \"Force-Directed Drawing Algorithms\", Roberto Tamassia ed.";

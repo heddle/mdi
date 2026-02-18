@@ -50,7 +50,7 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  */
 @SuppressWarnings("serial")
 public class Histogram2D extends JComponent {
-	
+
 	private double panX = 0;
 	private double panY = 0;
 
@@ -222,7 +222,7 @@ public class Histogram2D extends JComponent {
 	                rotY -= dx * 0.01;
 	                rotX += dy * 0.01;
 	            }
-	            
+
 	            lastMouse = e.getPoint();
 	            repaint();
 	        }
@@ -290,7 +290,7 @@ public class Histogram2D extends JComponent {
 			g2.setColor(new Color(150, 0, 0));
 			g2.drawString("MODE: Log10(1+Z)", x, y + 2*fontHeight);
 		}
-		
+
 
 	}
 
@@ -545,16 +545,18 @@ public class Histogram2D extends JComponent {
 
 		// DRAW VISIBLE SIDES BASED ON ROTATION
 		// Side 1: Front-X face
-		if (cosY > 0)
+		if (cosY > 0) {
 			fillQ(g2, tx1, ty1, tx2, ty2, bx2, by2, bx1, by1);
-		else
+		} else {
 			fillQ(g2, tx0, ty0, tx3, ty3, bx3, by3, bx0, by0);
+		}
 
 		// Side 2: Front-Y face
-		if (sinY < 0)
+		if (sinY < 0) {
 			fillQ(g2, tx1, ty1, tx0, ty0, bx0, by0, bx1, by1);
-		else
+		} else {
 			fillQ(g2, tx2, ty2, tx3, ty3, bx3, by3, bx2, by2);
+		}
 
 		// Top face (always drawn last)
 		g2.setColor(base);
@@ -660,13 +662,13 @@ public class Histogram2D extends JComponent {
 	private void drawAxisLabelsAndTicks(Graphics2D g2, int cx, int cy, double zoom) {
 		final double xMin = reflectRangeValue(data, new String[] { "xMin", "xmin", "_xmin", "minX", "getXMin" }, 0.0);
 		final double xMax = reflectRangeValue(data, new String[] { "xMax", "xmax", "_xmax", "maxX", "getXMax" },
-				(double) nx);
+				nx);
 		final double yMin = reflectRangeValue(data, new String[] { "yMin", "ymin", "_ymin", "minY", "getYMin" }, 0.0);
 		final double yMax = reflectRangeValue(data, new String[] { "yMax", "ymax", "_ymax", "maxY", "getYMax" },
-				(double) ny);
+				ny);
 
 		// If we failed to detect real-world ranges, label in terms of bin indices.
-		final boolean useBinLabels = (xMax == (double) nx && xMin == 0.0 && yMax == (double) ny && yMin == 0.0);
+		final boolean useBinLabels = (xMax == nx && xMin == 0.0 && yMax == ny && yMin == 0.0);
 
 		g2.setStroke(new BasicStroke(1f));
 		g2.setColor(Color.darkGray);

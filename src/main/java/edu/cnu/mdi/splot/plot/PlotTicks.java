@@ -96,7 +96,7 @@ public class PlotTicks {
 			if (_plotCanvas.isBarPlot()) {
 				List<ACurve> curves = _plotCanvas.getPlotData().getCurves();
 				drawBarPlotCatagories(g, curves, xmin, xmax, world.getCenterY(), majorTickLen, curves.size(), activeBounds);
-			} 
+			}
 			else {
 				drawXTicks(g, xmin, xmax, world.getCenterY(), majorTickLen, numMajorTickX, activeBounds, true);
 			}
@@ -166,7 +166,7 @@ public class PlotTicks {
 		} // for
 
 	}
-	
+
 	private void drawLogXTicks(Graphics g, double xmin, double xmax, double yc, Rectangle ab) {
 		if (xmin <= 0 || xmax <= 0) {
 			return;
@@ -270,7 +270,7 @@ public class PlotTicks {
 		int t = ab.y;
 		int b = t + ab.height;
 		int sb = b + fm.getHeight();
-		
+
 		for (ACurve acurve : curves) {
 			Curve curve = (Curve) acurve;
 			String name = acurve.name();

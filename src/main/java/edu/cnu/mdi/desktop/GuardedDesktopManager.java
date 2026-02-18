@@ -11,9 +11,9 @@ import javax.swing.JComponent;
  */
 @SuppressWarnings("serial")
 public class GuardedDesktopManager extends DefaultDesktopManager {
-	
+
 	private static final int TOP_MARGIN = 5; // A little breathing room
-    
+
     @Override
     public void dragFrame(JComponent f, int newX, int newY) {
         // Prevent the title bar from going above the top edge (y < 0)

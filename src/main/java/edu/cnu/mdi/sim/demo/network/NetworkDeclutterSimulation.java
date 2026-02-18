@@ -91,7 +91,7 @@ import edu.cnu.mdi.sim.SimulationEngine;
  * </ul>
  */
 public final class NetworkDeclutterSimulation implements Simulation {
-	
+
 	private static final double REPULSION_EPS = 1.0e-4;
 	private static final double OVERLAP_PAD = 0.01;
 	private static final double PRINTER_RBOOST = 0.8;
@@ -230,7 +230,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	 */
 	private int maxSteps = 2000;
 
-	
+
 	/**
 	 * Force threshold for declaring the layout "settled".
 	 */
@@ -248,7 +248,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 
 	/** Simulation engine used for posting progress/messages/refresh. */
 	private SimulationEngine engine;
-	
+
 	/** Queue of energy samples collected during the simulation. */
 	private final java.util.concurrent.ConcurrentLinkedQueue<EnergySample> energySamples = new java.util.concurrent.ConcurrentLinkedQueue<>();
 
@@ -342,7 +342,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	            kboost = printerKBoost;
 	        }
 
-	        // f>0 pulls endpoints together; 
+	        // f>0 pulls endpoints together;
 	        //f<0 pushes apart (rest length rboost*r0)
 	        double f = kboost * k * (r - rboost * r0);
 	        double ux = dx / r;
@@ -401,7 +401,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	        node.fx += -centerK * (node.x - 0.5);
 	        node.fy += -centerK * (node.y - 0.5);
 	    }
-	    
+
 	    //compute rms force
 	    double f2sum = 0.0;
 	    for (var node : model.nodes) {
@@ -470,7 +470,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	    }
 	    return step < maxSteps;
 	}
-	
+
 	/**
 	 * Average node speed threshold for declaring the layout "settled".
 	 * <p>
@@ -490,17 +490,17 @@ public final class NetworkDeclutterSimulation implements Simulation {
 			engine.postProgress(ProgressInfo.indeterminate("Canceling…"));
 		}
 	}
-	
+
 	/**
 	 * Get the queue of diagnostics samples collected during the simulation.
-	 * 
+	 *
 	 * @return the diagnostics samples queue
 	 */
 	public java.util.concurrent.ConcurrentLinkedQueue<Diagnostics> getDiagnosticsSamples() {
 	    return diagnosticsSamples;
 	}
 
-	
+
 	/**
 	 * Get the current simulation step index.
 	 *
@@ -512,13 +512,13 @@ public final class NetworkDeclutterSimulation implements Simulation {
 
 	/**
 	 * Get the queue of energy samples collected during the simulation.
-	 * 
+	 *
 	 * @return the energy samples queue
 	 */
 	public java.util.concurrent.ConcurrentLinkedQueue<EnergySample> getEnergySamples() {
 	    return energySamples;
 	}
-	
+
 	/**
 	 * Compute a pseudo-energy diagnostic for the current layout.
 	 * <p>
@@ -606,10 +606,10 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	    public final int step;
 	    public final Energy energy;
 	    public EnergySample(int step, Energy energy) {
-	    	this.step = step; 
+	    	this.step = step;
 	    	this.energy = energy; }
 	}
-	
+
 	/**
 	 * Compute diagnostics for the current model state.
 	 * <p>
@@ -716,7 +716,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 		}
 
 	    double vmaxFrac = vmaxHitCount / (double) Math.max(1, n);
-	    
+
 	    // ---- min pairwise separation ----
 	    double minSep = minPairwiseSeparation();
 
@@ -742,7 +742,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 		}
 		return minSep;
 	}
-	/** 
+	/**
 	 * Energy diagnostics for the current simulation state.
 	 */
 	public static final class Energy {

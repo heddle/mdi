@@ -54,7 +54,7 @@ public final class NetworkModel {
 
 	/** Number of clients. */
 	public final int clientCount;
-	
+
 	/** Number of printers. */
 	public final int printerCount;
 
@@ -98,17 +98,17 @@ public final class NetworkModel {
 		for (int i = 0; i < serverCount; i++) {
 			model.servers.add(new Node(i, Node.NodeType.SERVER, rng.nextDouble(), rng.nextDouble()));
 		}
-		
+
 		// Clients
 		for (int i = 0; i < clientCount; i++) {
 			model.clients.add(new Node(i, Node.NodeType.CLIENT, rng.nextDouble(), rng.nextDouble()));
 		}
-		
+
 		// Printers
 		for (int i = 0; i < printerCount; i++) {
 			model.printers.add(new Node(i, Node.NodeType.PRINTER, rng.nextDouble(), rng.nextDouble()));
 		}
-		
+
 		model.nodes.addAll(model.servers);
 		model.nodes.addAll(model.clients);
 		model.nodes.addAll(model.printers);
@@ -116,10 +116,10 @@ public final class NetworkModel {
 		// client-server connections
 		for (Node client : model.clients) {
 			//assign every client to a random server
-			Node server = model.servers.get(rng.nextInt(serverCount));	
+			Node server = model.servers.get(rng.nextInt(serverCount));
 			model.edges.add(new Edge(client, server));
 		}
-		
+
 		// printer connections
 		for (Node printer : model.printers) {
 			//assign every printer to some random (between 1 and 4) clients
@@ -133,7 +133,7 @@ public final class NetworkModel {
 				} while (assignedClients.contains(client));
 				assignedClients.add(client);
 				model.edges.add(new Edge(client, printer));
-					
+
 			}
 		}
 

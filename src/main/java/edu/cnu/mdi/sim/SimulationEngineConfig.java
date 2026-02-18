@@ -8,7 +8,7 @@ package edu.cnu.mdi.sim;
  * </p>
  */
 public final class SimulationEngineConfig {
-	
+
 	public static final int DEFAULT_REFRESH_INTERVAL_MS = 33; // ~30 Hz
 	public static final int DEFAULT_PROGRESS_INTERVAL_MS = 200; // ~5 Hz
 	public static final int DEFAULT_COOPERATIVE_YIELD_MS = 0; // no yielding
@@ -28,8 +28,8 @@ public final class SimulationEngineConfig {
 	 * <p>
 	 * This is a fallback heartbeat. Many simulations will call
 	 * {@link SimulationEngine#postProgress(ProgressInfo)} directly for determinate
-	 * progress. Use 0 to disable periodic progress pings. If your simulation is determinate, 
-	 * you can set this to a large value (e.g., 1000 ms) to get occasional progress updates 
+	 * progress. Use 0 to disable periodic progress pings. If your simulation is determinate,
+	 * you can set this to a large value (e.g., 1000 ms) to get occasional progress updates
 	 * without flooding the ED, or set to 0 to disable entirely and rely on explicit progress posts.
 	 * </p>
 	 */
@@ -92,9 +92,9 @@ public final class SimulationEngineConfig {
 	 *         enabled)
 	 */
 	public static SimulationEngineConfig defaults() {
-		return new SimulationEngineConfig(DEFAULT_REFRESH_INTERVAL_MS, 
-				DEFAULT_PROGRESS_INTERVAL_MS, 
-				DEFAULT_COOPERATIVE_YIELD_MS,	
+		return new SimulationEngineConfig(DEFAULT_REFRESH_INTERVAL_MS,
+				DEFAULT_PROGRESS_INTERVAL_MS,
+				DEFAULT_COOPERATIVE_YIELD_MS,
 				DEFAULT_AUTO_RUN);
 	}
 }

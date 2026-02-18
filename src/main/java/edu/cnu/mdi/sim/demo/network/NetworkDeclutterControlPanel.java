@@ -28,18 +28,18 @@ public class NetworkDeclutterControlPanel extends JPanel implements ISimulationC
 	// Server slider parameters
 	private static final int MIN_SERVERS = 5;
 	private static final int MAX_SERVERS = 45;
-	
+
 	// Client slider parameters
 	private static final int MIN_CLIENTS = 10;
 	private static final int MAX_CLIENTS = 210;
-	
+
 	// Printer slider parameters
 	private static final int MIN_PRINTERS = 0;
 	private static final int MAX_PRINTERS = 20;
-	
+
 	// Base panel with buttons + progress
 	private final IconSimulationControlPanel basePanel;
-	
+
 	// Sliders
 	private final JSlider serverSlider;
 	private final JSlider clientSlider;
@@ -85,20 +85,20 @@ public class NetworkDeclutterControlPanel extends JPanel implements ISimulationC
 		JPanel cPanel = createCommonPanel("Number Clients");
 		JPanel pPanel = createCommonPanel("Number Printers");
 
-		
+
 
 		Font font = Fonts.tinyFont;
 
 		int tickSpace = (MAX_SERVERS - MIN_SERVERS) / 5;
-		serverSlider = SliderFactory.createLabeledSlider(sPanel, MIN_SERVERS, MAX_SERVERS, 
+		serverSlider = SliderFactory.createLabeledSlider(sPanel, MIN_SERVERS, MAX_SERVERS,
 				NetworkDeclutterDemoView.DEFAULT_NUM_SERVERS, tickSpace, 0, font, true);
-		
+
 		tickSpace = (MAX_CLIENTS - MIN_CLIENTS) / 5;
-		clientSlider  = SliderFactory.createLabeledSlider(cPanel, MIN_CLIENTS, MAX_CLIENTS, 
+		clientSlider  = SliderFactory.createLabeledSlider(cPanel, MIN_CLIENTS, MAX_CLIENTS,
 				NetworkDeclutterDemoView.DEFAULT_NUM_CLIENTS, tickSpace, 0, font, true);
-		
+
 		tickSpace = (MAX_PRINTERS - MIN_PRINTERS) / 5;
-		printerSlider  = SliderFactory.createLabeledSlider(pPanel, MIN_PRINTERS, MAX_PRINTERS, 
+		printerSlider  = SliderFactory.createLabeledSlider(pPanel, MIN_PRINTERS, MAX_PRINTERS,
 				NetworkDeclutterDemoView.DEFAULT_NUM_PRINTERS, tickSpace, 0, font, true);
 
 		JPanel rows = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
@@ -220,7 +220,7 @@ private void updateResetEnabled() {
 
 		// The host is the view. We only require it implement ITspDemoResettable.
 		if (host instanceof IResettable resettable) {
-			
+
 			int servers = serverSlider.getValue();
 			int clients = clientSlider.getValue();
 			int printers = printerSlider.getValue();

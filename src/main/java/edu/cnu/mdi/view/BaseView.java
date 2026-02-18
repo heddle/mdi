@@ -112,13 +112,13 @@ public class BaseView extends JInternalFrame
 	 * </p>
 	 */
 	protected String VIEWPROPNAME = "?";
-	
+
 	/** Dialog used to show view information (lazily created). */
 	protected JDialog infoDialog;
-	protected static final Icon infoIcon; 
+	protected static final Icon infoIcon;
 	static {
 		String path = ToolBits.getResourcePath(ToolBits.INFO);
-		infoIcon = ImageManager.getInstance().loadUiIcon(path, 
+		infoIcon = ImageManager.getInstance().loadUiIcon(path,
 				BaseToolBar.DEFAULT_ICON_SIZE, BaseToolBar.DEFAULT_ICON_SIZE);
 	}
 
@@ -148,7 +148,7 @@ public class BaseView extends JInternalFrame
 
 	/** Optional virtual window item (used by the virtual view). */
 	protected VirtualWindowItem virtualItem;
-	
+
 	/** Optional file filter for drag-and-drop operations. */
 	private Predicate<File> fileFilter = null;
 
@@ -251,13 +251,13 @@ public class BaseView extends JInternalFrame
 		Insets defInsets = super.getInsets();
 		return new Insets(defInsets.top, defInsets.left, 2, defInsets.right);
 	}
-	
+
 	/**
 	 * Optional hook for views to prepare for application closing. Default does
 	 * nothing.
 	 */
 	public void prepareForExit() {
-		// Default implementation does nothing; 
+		// Default implementation does nothing;
 		//override as needed, e,g, to stop background threads or save state.
 	}
 
@@ -281,7 +281,7 @@ public class BaseView extends JInternalFrame
 	public IContainer getContainer() {
 		return container;
 	}
-	
+
 	/**
      * Set a file filter, e.g., f -> f.getName().endsWith(".png").
      * Used for drag and drop.
@@ -292,7 +292,7 @@ public class BaseView extends JInternalFrame
     public void setFileFilter(Predicate<File> filter) {
         this.fileFilter = filter;
     }
-    
+
     /**
 	 * Get the file filter used for drag and drop.
 	 * @return the file filter, or null if none is set.
@@ -311,7 +311,7 @@ public class BaseView extends JInternalFrame
 	public void filesDropped(List<File> files) {
 		// no-op see PlotView and DrawingView for example override;
 	}
-	
+
 	/**
 	 * Legacy behavior: view "name" equals its title.
 	 * <p>
@@ -342,7 +342,7 @@ public class BaseView extends JInternalFrame
 		return viewPopupMenu;
 	}
 
-	
+
 	/**
 	 * Install a right-click popup trigger on the view's canvas so that the view popup
 	 * menu appears even when no toolbar tool is selected.
@@ -368,12 +368,8 @@ public class BaseView extends JInternalFrame
 		canvas.addMouseListener(new MouseAdapter() {
 
 			private void maybeShow(MouseEvent e) {
-				if (e == null || !e.isPopupTrigger()) {
-					return;
-				}
-
 				// If the click is on an item, let item-level logic handle it.
-				if (container.getItemAtPoint(e.getPoint()) != null) {
+				if (e == null || !e.isPopupTrigger() || (container.getItemAtPoint(e.getPoint()) != null)) {
 					return;
 				}
 
@@ -809,7 +805,7 @@ public class BaseView extends JInternalFrame
 	public void componentResized(ComponentEvent e) {
 		// no-op
 	}
-	
+
 	public void viewInfo() {
 		AbstractViewInfo info = getViewInfo();
 		if (info != null) {
@@ -819,28 +815,28 @@ public class BaseView extends JInternalFrame
 			}
 			infoDialog = InfoDialogHelper.showInfoDialog(this, info);
 		} else {
-			JOptionPane.showMessageDialog(this, 
-					"No detailed information is available for this view.", 
+			JOptionPane.showMessageDialog(this,
+					"No detailed information is available for this view.",
 					"View Info", JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
-	
+
 	/**
 	 * Helper component: Wraps the view content and overlays a floating info button
 	 * in the top-right corner.
 	 */
 	private static class ViewWrapper extends JLayeredPane {
-		
+
 		public ViewWrapper(JComponent viewContent, BaseView view) {
 			setLayout(new OverlayLayout(this));
 
 			// 1. The Info Button (Foreground Layer)
 			JButton infoButton = new JButton();
 			infoButton.setIcon(infoIcon);
-			
+
 			// Styling: Small, semi-transparent, flat look
 			infoButton.setMargin(new Insets(0, 0, 0, 0));
-			infoButton.setPreferredSize(new Dimension(infoIcon.getIconWidth(), 
+			infoButton.setPreferredSize(new Dimension(infoIcon.getIconWidth(),
 					infoIcon.getIconHeight()));
 			infoButton.setFocusable(false);
 			infoButton.setBorderPainted(false);
@@ -857,9 +853,9 @@ public class BaseView extends JInternalFrame
 			JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
 			buttonPanel.setOpaque(false); // Transparent so map shows through
 			buttonPanel.add(infoButton);
-			
+
 			// 3. Add layers (First added = Topmost in OverlayLayout)
-			add(buttonPanel); 
+			add(buttonPanel);
 			add(viewContent);
 		}
 	}
@@ -1113,7 +1109,7 @@ public class BaseView extends JInternalFrame
 				view.scrollPane = new JScrollPane(center);
 				center = view.scrollPane;
 			}
-			
+
 			// *** INTEGRATION START: Wrap with Info Button if configured ***
 			if (cfg.infobutton && center instanceof JComponent) {
 				// We pass the 'view' so the wrapper can call view.getViewInfo() lazily on click
@@ -1188,10 +1184,10 @@ public class BaseView extends JInternalFrame
 			im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), "mdi.delete");
 		}
 	}
-	
+
 	/**
 	 * Optional method for subclasses to provide view-specific information for
-	 * display in the info dialog and activated by the toolbar's info button. 
+	 * display in the info dialog and activated by the toolbar's info button.
 	 * Default implementation returns null (no info).
 	 *
 	 * @return view information, or null if not applicable.
@@ -1199,8 +1195,8 @@ public class BaseView extends JInternalFrame
 	public AbstractViewInfo getViewInfo() {
 		return null;
 	}
-	
-	
+
+
 
 		/**
 	 * Captures/restores persistent properties for a view.
@@ -1327,13 +1323,17 @@ public class BaseView extends JInternalFrame
 
 			return props;
 		}
-		
+
 		// Helper methods to read properties with support for multiple key variants (dotted and legacy no-dot).
 		private static String firstPresent(Properties p, String... keys) {
-		    if (p == null) return null;
+		    if (p == null) {
+				return null;
+			}
 		    for (String k : keys) {
 		        String v = p.getProperty(k);
-		        if (v != null) return v;
+		        if (v != null) {
+					return v;
+				}
 		    }
 		    return null;
 		}
@@ -1345,7 +1345,9 @@ public class BaseView extends JInternalFrame
 
 		private static Integer getIntIfPresent(Properties p, String... keys) {
 		    String v = firstPresent(p, keys);
-		    if (v == null) return null;
+		    if (v == null) {
+				return null;
+			}
 		    try {
 		        return Integer.parseInt(v.trim());
 		    } catch (NumberFormatException nfe) {

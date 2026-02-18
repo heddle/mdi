@@ -14,7 +14,7 @@ public abstract class AbstractViewInfo {
     public abstract String getPurpose();
 
     // --- Hook Methods (Override these if you have content) ---
-    
+
     /**
      * @return Steps or instructions on how to use the view.
      */
@@ -47,7 +47,7 @@ public abstract class AbstractViewInfo {
 
     public String getAsHTML() {
         StringBuilder sb = new StringBuilder();
-        
+
         // CSS Styling for Swing
         sb.append("<html><head><style>");
         sb.append("body { font-family: sans-serif; padding: 10px; color: #333; }");
@@ -106,7 +106,9 @@ public abstract class AbstractViewInfo {
 
     // Basic HTML escaping to prevent rendering errors
     private String escape(String s) {
-        if (s == null) return "";
+        if (s == null) {
+			return "";
+		}
         return s.replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")

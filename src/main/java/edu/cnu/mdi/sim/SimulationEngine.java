@@ -32,23 +32,23 @@ public final class SimulationEngine {
 
 	// the actual simulation
 	private final Simulation simulation;
-	
-	// configuration (immutable) holds parameters for engine behavior such as refresh 
+
+	// configuration (immutable) holds parameters for engine behavior such as refresh
 	// intervals and auto-run
 	private final SimulationEngineConfig config;
-	
-	// context (e.g., state) shared with the simulation; also used for bookkeeping 
+
+	// context (e.g., state) shared with the simulation; also used for bookkeeping
 	// such as step count and cancellation flag
 	private final SimulationContext context = new SimulationContext();
 
-	// listeners (e.g., views) are stored in a thread-safe list since they can be 
+	// listeners (e.g., views) are stored in a thread-safe list since they can be
 	// added/removed from the EDT while the simulation thread is running
 	private final List<SimulationListener> listeners = new CopyOnWriteArrayList<>();
 
 	// State is volatile since it's read by the EDT and written by the simulation thread.
 	private volatile SimulationState state = SimulationState.NEW;
 
-	// The simulation thread that runs the main loop. 
+	// The simulation thread that runs the main loop.
 	// Marked volatile to ensure visibility across threads.
 	private volatile Thread simThread;
 
@@ -309,7 +309,7 @@ public final class SimulationEngine {
 			postEDT(l -> l.onFail(context, ex));
 		}
 	}
-	
+
 	/**
 	 * Get the simulation instance.
 	 *
@@ -318,7 +318,7 @@ public final class SimulationEngine {
 	public Simulation getSimulation() {
 		return simulation;
 	}
-	
+
 	/**
 	 * Get the engine configuration.
 	 *
@@ -327,7 +327,7 @@ public final class SimulationEngine {
 	public SimulationEngineConfig getConfig() {
 		return config;
 	}
-	
+
 	/**
 	 * Get the simulation context.
 	 *
@@ -336,7 +336,7 @@ public final class SimulationEngine {
 	public SimulationContext getContext() {
 		return context;
 	}
-	
+
 
 	// Transition state and notify listeners on the EDT.
 	private void transition(SimulationState newState, String reason) {

@@ -127,8 +127,12 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 			}
 			for (double v : arr) {
 				if (v > 0.0 && Double.isFinite(v)) {
-					if (v < minPos) minPos = v;
-					if (v > maxPos) maxPos = v;
+					if (v < minPos) {
+						minPos = v;
+					}
+					if (v > maxPos) {
+						maxPos = v;
+					}
 				}
 			}
 		}
