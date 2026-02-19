@@ -19,7 +19,7 @@
 	
 	<groupId>io.github.heddle</groupId>
 	<artifactId>mdi</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
   <name>MDI Scientific Visualization Framework</name>
