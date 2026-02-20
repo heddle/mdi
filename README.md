@@ -1,33 +1,113 @@
-# MDI Project
+# MDI – Modular Desktop Interface for Scientific Applications
 
-MDI (Multi-Document Interface) is a lightweight Java framework for building
-modular scientific and visualization applications.  
-It is designed so that each window or tool (a “document”) can run independently
-while sharing a common model, controller, and messaging infrastructure.
+MDI is a Java framework for building scientific desktop applications with:
 
----
+- Interactive plotting  
+- Simulation engines  
+- Multi-view modular architecture  
+- Extensible tools and layered drawing  
+- Distribution via Maven Central  
 
-# splot
-splot is a Swing-based plotting library. As such, all UI notifications and rendering must occur
-on the Swing Event Dispatch Thread (EDT). Internally, curve updates may invalidate cached fits
-and trigger repaints, so care is taken to preserve this contract. We believe splot is thread-safe and
-that plot added can be added from any thread. Several of the example plots test the thead safety.
-The add and addall methods for the curces extending the abstract ACurve class can be called from any thread.
-If called on the EDT the new data are applied immediately and a single DATA change event is fired.
-If called off the EDT (i.e., on a background worker thread) the data are enqueued into a lock-free
-staging queue, and a coalesced drain pass is scheduled on the EDT. The drain applies data in batches
-and fires one consolidated DATA change event, preventing repaint storms.
+It is built on pure Swing for long-term JVM stability and zero external runtime dependencies.
 
 ---
 
-## 🛠 Building
+## Why MDI?
 
-This project uses **Maven**.
+Scientific desktop applications have different needs than typical GUI apps:
 
-To build the JAR:
+- Long-running simulations  
+- Real-time data visualization  
+- Multi-document workflows  
+- Precise rendering control  
+- Stability across Java versions  
 
-```bash
-mvn clean package
+MDI provides architectural infrastructure for these use cases.
 
-To run tests:
-mvn test
+It is not just a widget toolkit.  
+It is a foundation for building complete scientific applications.
+
+---
+
+## Key Features
+
+### Multi-Document Architecture
+
+Each window (“view”) operates independently while sharing:
+
+- Messaging infrastructure  
+- Common models  
+- Simulation engine integration  
+- Extensible toolbars  
+- Layered drawing support  
+
+---
+
+### Integrated Plotting (splot)
+
+The built-in plotting module provides:
+
+- Thread-safe curve updates  
+- Swing EDT-safe rendering  
+- Curve fitting  
+- Lock-free staging queues for background updates  
+- Coalesced repaint events  
+
+Plots can safely receive data from worker threads without repaint storms.
+
+---
+
+### Built-In Simulation Framework
+
+MDI includes:
+
+- Step-based simulation engines  
+- Cancel support  
+- Reset hooks  
+- Coordinated view refresh  
+- Background execution integration  
+
+Ideal for:
+
+- Physics demonstrations  
+- Optimization visualizations  
+- Network simulations  
+- Educational tools  
+
+---
+
+### Layered Drawing System
+
+Views support:
+
+- Items  
+- Layers  
+- Mouse interaction  
+- Selection tools  
+- Virtual desktop behavior  
+
+This makes it easy to build:
+
+- Network graphs  
+- Geometric editors  
+- Data overlays  
+- Interactive teaching tools  
+
+---
+
+## Installation
+
+MDI is available on Maven Central:
+
+```xml
+<dependency>
+    <groupId>io.github.heddle</groupId>
+    <artifactId>mdi</artifactId>
+    <version>1.0.0</version>
+</dependency>
+
+---
+
+## Hello MDI
+
+<img src="docs/images/helloMDI.png" width="800">
