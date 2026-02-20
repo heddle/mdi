@@ -179,7 +179,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		};
 
 		addComponentListener(componentAdapter);
-
 	}
 
 	/**

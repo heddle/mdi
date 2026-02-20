@@ -2,6 +2,7 @@ package edu.cnu.mdi.app;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.EventQueue;
 import java.awt.Frame;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -9,7 +10,9 @@ import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.InputStream;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -151,6 +154,10 @@ public class BaseMDIApplication extends JFrame {
         menuManager.addMenu(ViewManager.getInstance().getViewMenu());
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
+        
+		// Enable the framework-managed virtual desktop lifecycle (one-shot ready +
+		// debounced relayout).
+		prepareForVirtualDesktop();
 
         instance = this;
     }
@@ -231,7 +238,7 @@ public class BaseMDIApplication extends JFrame {
      *
      * @param debounceMs debounce delay (milliseconds) for resize/move events
      */
-    protected void prepareForVirtualDesktop(int debounceMs) {
+    private void prepareForVirtualDesktop(int debounceMs) {
 
         final int delay = Math.max(50, debounceMs);
 
@@ -318,4 +325,44 @@ public class BaseMDIApplication extends JFrame {
     protected void onVirtualDesktopRelayout() {
         // override in subclass if needed
     }
+    
+   /**
+	 * Attempt to determine the framework version from the manifest or pom.properties.
+	 * <p>
+	 * This is used in the "About" dialog and elsewhere. If the version cannot be
+	 * determined, returns "(development build)".
+	 *
+	 * @return framework version string
+	 */
+    public static String getFrameworkVersion() {
+        // Try manifest first
+        Package pkg = BaseMDIApplication.class.getPackage();
+        String v = (pkg != null) ? pkg.getImplementationVersion() : null;
+        if (v != null && !v.isBlank()) return v;
+
+        // Fallback: pom.properties (more reliable)
+        String path = "/META-INF/maven/io.github.heddle/mdi/pom.properties";
+        try (InputStream in = BaseMDIApplication.class.getResourceAsStream(path)) {
+            if (in != null) {
+                Properties p = new Properties();
+                p.load(in);
+                String pv = p.getProperty("version");
+                if (pv != null && !pv.isBlank()) return pv;
+            }
+        } catch (Exception ignored) {}
+
+        return "(development build)";
+    }
+
+    /**
+	 * Launch the application on the EDT using the provided factory.
+	 *
+	 * @param factory supplier that creates the application instance
+	 */
+    public static void launch(Supplier<? extends BaseMDIApplication> factory) {
+        EventQueue.invokeLater(() -> {
+            BaseMDIApplication app = factory.get();
+            app.setVisible(true);
+        });
+    } 
 }

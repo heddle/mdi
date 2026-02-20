@@ -32,10 +32,11 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 	 *
 	 * @param keyVals variable set of arguments.
 	 */
-	private DrawingView(Object... keyVals) {
+	public DrawingView(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
 		getContainer().getFeedbackControl().addFeedbackProvider(this);
 		setFileFilter(ImageFilters.isActualImage);
+		initFeedback();
 	}
 
 	/**
@@ -64,6 +65,16 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 		view.pack();
 		return view;
 	}
+	
+	/**
+	 *  Get an information object describing this view,
+	 *  used in the UI and for help.
+	 */
+	@Override
+	public AbstractViewInfo getViewInfo() {
+		return new DrawingViewInfo();
+	}
+
 
 	/**
 	 * Handle files dropped on this view through drag and drop.

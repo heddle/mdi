@@ -64,7 +64,10 @@ public abstract class AbstractViewInfo {
         sb.append("<h1>").append(escape(getTitle())).append("</h1>");
 
         // 2. Purpose (Always present)
-        sb.append("<p>").append(escape(getPurpose())).append("</p>");
+        String purpose = getPurpose();
+        sb.append("<p>")
+          .append(isPurposeHtml() ? purpose : escape(purpose))
+          .append("</p>");
 
         // 3. Usage Section (Conditional)
         String usage = getUsage();
@@ -102,6 +105,14 @@ public abstract class AbstractViewInfo {
 
         sb.append("</body></html>");
         return sb.toString();
+    }
+    
+    /**
+	 * Override this if your purpose string contains HTML tags and you want to render them as-is.
+	 * By default, the purpose is treated as plain text and escaped for safety.
+	 */
+    protected boolean isPurposeHtml() { 
+        return false; 
     }
 
     // Basic HTML escaping to prevent rendering errors

@@ -17,6 +17,8 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriter;
 
+import edu.cnu.mdi.app.BaseMDIApplication;
+
 /**
  * Environment information and simple application preferences for the mdi
  * framework. This class acts as a central place to query basic system
@@ -258,7 +260,7 @@ public final class Environment {
 	 *
 	 * @return array of graphics devices
 	 */
-	public GraphicsDevice[] getGraphicsDevices() {
+	public static GraphicsDevice[] getGraphicsDevices() {
 		GraphicsEnvironment g = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		return g.getScreenDevices();
 	}
@@ -407,6 +409,22 @@ public final class Environment {
 
 		return sb.toString();
 	}
+	
+	public static String startupReport() {
+		StringBuilder sb = new StringBuilder(256);
+		sb.append("MDI Framework: " +  BaseMDIApplication.getFrameworkVersion() + "\n");
+		// Java version and vendor
+		sb.append("Java ").append(System.getProperty("java.version")).append(" (").
+				append(System.getProperty("java.vendor")).append(")" + "\n");
+		// OS name and version
+		sb.append(System.getProperty("os.name")).append(" ").append(System
+				.getProperty("os.version") + "\n");
+		GraphicsDevice[] devices = getGraphicsDevices();
+		int count = (devices == null) ? 0 : devices.length;
+		sb.append("Monitors detected: " + count + "\n");
+		
+		return sb.toString();
+	}
 
 	/**
 	 * Returns a multi-line description of the environment, including paths, display
@@ -425,13 +443,6 @@ public final class Environment {
 		sb.append("OS Name: ").append(osName).append('\n');
 		sb.append("Home Directory: ").append(homeDirectory).append('\n');
 		sb.append("Current Working Directory: ").append(currentWorkingDirectory).append('\n');
-		sb.append("Class Path: ").append(classPath).append('\n');
-
-		String[] tokens = splitClassPath();
-		sb.append("Class Path Token Count: ").append(tokens.length).append('\n');
-		for (int i = 0; i < tokens.length; i++) {
-			sb.append("  Class Path Token [").append(i).append("] = ").append(tokens[i]).append('\n');
-		}
 
 		sb.append("PNG Writer: ").append(pngWriter == null ? "none" : pngWriter).append('\n');
 
