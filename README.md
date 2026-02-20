@@ -171,5 +171,27 @@ public class HelloMDI extends BaseMDIApplication {
 	    );
 	}
 }
-
 ```
+---
+
+## Demo Application
+
+The repository includes a full-featured `DemoApp` showcasing:
+
+- DrawingView
+- PlotView (splot integration)
+- Network layout demo
+- Traveling Salesperson simulation
+- 2D map view
+- Simulation framework examples
+
+To run the demo from the project source:
+
+```bash
+mvn clean package
+mvn exec:java -Dexec.mainClass="edu.cnu.mdi.demo.DemoApp"
+```
+Here is a screenshot of one of the multiple views in the DemoApp:
+
+<img src="docs/images/tsp.png" width="800">
+
