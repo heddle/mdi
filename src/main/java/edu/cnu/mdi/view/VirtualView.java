@@ -868,6 +868,14 @@ public class VirtualView extends BaseView
 		return _currentCol;
 	}
 
+	/**
+	 * Move a view to a specific virtual cell, by applying an offset relative to the
+	 * current column and a placement constraint.
+	 *
+	 * @param view       the view to move
+	 * @param col        the target column
+	 * @param constraint placement constraint constant
+	 */
 	public void moveTo(BaseView view, int col, int constraint) {
 		moveTo(view, col, 0, 0, constraint);
 	}

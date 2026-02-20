@@ -110,10 +110,6 @@ public class DemoApp extends BaseMDIApplication {
 	private DemoApp(Object... keyVals) {
 		super(keyVals);
 
-		// Enable the framework-managed virtual desktop lifecycle (one-shot ready +
-		// debounced relayout).
-		prepareForVirtualDesktop();
-
 		// Log environment information early.
 		Log.getInstance().info(Environment.getInstance().toString());
 

@@ -139,7 +139,6 @@ public class ViewManager extends Vector<BaseView> {
 
 		boolean added = super.add(view);
 		if (added) {
-			Log.getInstance().info("ViewManager: added view: " + view.getTitle());
 
 			if (view instanceof VirtualView) {
 				_virtualView = (VirtualView) view;
@@ -169,8 +168,6 @@ public class ViewManager extends Vector<BaseView> {
 		if ((view == null) || !contains(view)) {
 			return false;
 		}
-
-		Log.getInstance().info("ViewManager: removed view: " + view.getTitle());
 
 		// UI + notifications on EDT
 		runOnEdt(() -> {

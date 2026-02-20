@@ -1137,6 +1137,20 @@ public class BaseView extends JInternalFrame
 			}
 		}
 	}
+	
+	/**
+	 * Centers the view within its parent frame if possible.
+	 */
+	public void center() {
+		JFrame parent = getParentFrame();
+		if (parent != null) {
+			Dimension parentSize = parent.getSize();
+			Dimension mySize = getSize();
+			int x = (parentSize.width - mySize.width) / 2;
+			int y = (parentSize.height - mySize.height) / 2;
+			setLocation(x, y);
+		}
+	}
 
 	/**
 	 * Returns the optional toolbar for this view.
