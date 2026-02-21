@@ -191,7 +191,6 @@ To run the demo from the project source:
 mvn clean package
 mvn exec:java -Dexec.mainClass="edu.cnu.mdi.demo.DemoApp"
 ```
-Here is a screenshot of one of the multiple views in the DemoApp:
-
-<img src="docs/images/tsp.png" width="800">
+Here is one of the views running inside the DemoApp:
+<img src="docs/images/tsp.png" width="900">
 
