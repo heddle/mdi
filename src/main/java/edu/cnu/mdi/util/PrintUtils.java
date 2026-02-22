@@ -8,51 +8,127 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 
+import javax.swing.RepaintManager;
+
 public class PrintUtils implements Printable {
 
-	private static boolean _isPrinting;
-	private Component _componentToBePrinted;
+    // Used as global flag (e.g., to suppress animations during print),
+    // ThreadLocal is safer than a static boolean.
+    private static final ThreadLocal<Boolean> PRINTING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
-	public static void printComponent(Component c) {
-		new PrintUtils(c).print();
-	}
+    private final Component component;
 
-	public PrintUtils(Component componentToBePrinted) {
-		_componentToBePrinted = componentToBePrinted;
-	}
+    // Behavior knobs (keep defaults sane)
+    private final boolean fitToPage;
+    private final boolean centerOnPage;
+    private final boolean allowUpscale;
 
-	public void print() {
-		PrinterJob printJob = PrinterJob.getPrinterJob();
-		printJob.setPrintable(this);
-		if (printJob.printDialog()) {
-			try {
-				printJob.print();
-			} catch (PrinterException pe) {
-				System.out.println("Error printing: " + pe);
-			}
-		}
-	}
+    /**
+     * Convenience method to print a component with default settings:
+     * @param c the component to print (must have non-zero size)
+     */
+    public static void printComponent(Component c) {
+        new PrintUtils(c, true, true, false).print();
+    }
 
-	@Override
-	public int print(Graphics g, PageFormat pageFormat, int pageIndex) {
-		if (pageIndex > 0) {
-			return (NO_SUCH_PAGE);
-		} else {
-			Graphics2D g2d = (Graphics2D) g;
+    /**
+     * Convenience constructor with default settings:
+     * fitToPage=true, centerOnPage=true, allowUpscale=false
+     * @param componentToBePrinted
+     */
+    public PrintUtils(Component componentToBePrinted) {
+        this(componentToBePrinted, true, true, false);
+    }
 
-			g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+    /**
+     * Full constructor with behavior knobs:
+     * @param fitToPage    if true, scale to fit imageable area
+     * @param centerOnPage if true, center within imageable area (after scaling)
+     * @param allowUpscale if false, scale will never exceed 1.0 (no enlarging)
+     */
+    public PrintUtils(Component componentToBePrinted, boolean fitToPage, boolean centerOnPage, boolean allowUpscale) {
+        this.component = componentToBePrinted;
+        this.fitToPage = fitToPage;
+        this.centerOnPage = centerOnPage;
+        this.allowUpscale = allowUpscale;
+    }
 
-			// TODO CACULATE CORRECT SCALE FACTOR
-			g2d.scale(0.75, 0.75);
+    /**
+	 * Show print dialog and print if user confirms.
+	 */
+    public void print() {
+        PrinterJob job = PrinterJob.getPrinterJob();
+        job.setJobName(component.getName() != null ? component.getName() : component.getClass().getSimpleName());
+        job.setPrintable(this);
 
-			_isPrinting = true;
-			_componentToBePrinted.printAll(g2d);
-			_isPrinting = false;
-			return (PAGE_EXISTS);
-		}
-	}
+        if (job.printDialog()) {
+            try {
+                job.print();
+            } catch (PrinterException pe) {
+                System.out.println("Error printing: " + pe);
+            }
+        }
+    }
 
-	public static boolean isPrinting() {
-		return _isPrinting;
-	}
+    @Override
+    public int print(Graphics g, PageFormat pf, int pageIndex) throws PrinterException {
+        if (pageIndex > 0) {
+            return NO_SUCH_PAGE;
+        }
+
+        Graphics2D g2 = (Graphics2D) g.create();
+        try {
+            // Move origin to imageable area
+            g2.translate(pf.getImageableX(), pf.getImageableY());
+
+            double scale = 1.0;
+
+            int cw = Math.max(1, component.getWidth());
+            int ch = Math.max(1, component.getHeight());
+
+            if (fitToPage) {
+                double sx = pf.getImageableWidth() / cw;
+                double sy = pf.getImageableHeight() / ch;
+                scale = Math.min(sx, sy);
+                if (!allowUpscale) {
+                    scale = Math.min(1.0, scale);
+                }
+            }
+
+            // Optional centering within imageable area
+            if (centerOnPage) {
+                double printedW = cw * scale;
+                double printedH = ch * scale;
+                double dx = (pf.getImageableWidth() - printedW) / 2.0;
+                double dy = (pf.getImageableHeight() - printedH) / 2.0;
+                if (dx > 0) g2.translate(dx, 0);
+                if (dy > 0) g2.translate(0, dy);
+            }
+
+            g2.scale(scale, scale);
+
+            // Disable double buffering for cleaner printing
+            RepaintManager mgr = RepaintManager.currentManager(component);
+            boolean wasDB = mgr.isDoubleBufferingEnabled();
+            mgr.setDoubleBufferingEnabled(false);
+
+            PRINTING.set(Boolean.TRUE);
+            try {
+                // For Swing components, printAll is usually fine.
+                // component.print(g2) is also valid; printAll is slightly more "include everything".
+                component.printAll(g2);
+            } finally {
+                PRINTING.set(Boolean.FALSE);
+                mgr.setDoubleBufferingEnabled(wasDB);
+            }
+
+            return PAGE_EXISTS;
+        } finally {
+            g2.dispose();
+        }
+    }
+
+    public static boolean isPrinting() {
+        return PRINTING.get();
+    }
 }
