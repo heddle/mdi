@@ -3,18 +3,18 @@ package edu.cnu.mdi.util;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 
 import javax.swing.RepaintManager;
+import javax.swing.SwingUtilities;
+
+import edu.cnu.mdi.graphics.GraphicsUtils;
 
 public class PrintUtils implements Printable {
-
-    // Used as global flag (e.g., to suppress animations during print),
-    // ThreadLocal is safer than a static boolean.
-    private static final ThreadLocal<Boolean> PRINTING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     private final Component component;
 
@@ -112,13 +112,11 @@ public class PrintUtils implements Printable {
             boolean wasDB = mgr.isDoubleBufferingEnabled();
             mgr.setDoubleBufferingEnabled(false);
 
-            PRINTING.set(Boolean.TRUE);
-            try {
+           try {
                 // For Swing components, printAll is usually fine.
                 // component.print(g2) is also valid; printAll is slightly more "include everything".
                 component.printAll(g2);
             } finally {
-                PRINTING.set(Boolean.FALSE);
                 mgr.setDoubleBufferingEnabled(wasDB);
             }
 
@@ -127,8 +125,66 @@ public class PrintUtils implements Printable {
             g2.dispose();
         }
     }
+    
+    public static void printComponentAsImage(Component c) {
+        final BufferedImage[] snap = new BufferedImage[1];
 
-    public static boolean isPrinting() {
-        return PRINTING.get();
+        try {
+            Runnable r = () -> snap[0] = GraphicsUtils.getComponentImage(c);
+
+            if (SwingUtilities.isEventDispatchThread()) {
+                r.run();
+            } else {
+                SwingUtilities.invokeAndWait(r);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+
+        if (snap[0] == null) return;
+
+        printImage(snap[0], c.getName());
+    }
+
+    private static void printImage(BufferedImage img, String jobName) {
+        PrinterJob job = PrinterJob.getPrinterJob();
+        if (jobName != null) job.setJobName(jobName);
+
+        job.setPrintable((graphics, pf, pageIndex) -> {
+            if (pageIndex > 0) return Printable.NO_SUCH_PAGE;
+
+            Graphics2D g2 = (Graphics2D) graphics.create();
+            try {
+                g2.translate(pf.getImageableX(), pf.getImageableY());
+
+                double iw = img.getWidth();
+                double ih = img.getHeight();
+                double sx = pf.getImageableWidth() / iw;
+                double sy = pf.getImageableHeight() / ih;
+                double scale = Math.min(sx, sy);        // fit-to-page, preserve aspect
+                scale = Math.min(1.0, scale);           // no upscale
+
+                // center
+                double dx = (pf.getImageableWidth() - iw * scale) / 2.0;
+                double dy = (pf.getImageableHeight() - ih * scale) / 2.0;
+                if (dx > 0) g2.translate(dx, 0);
+                if (dy > 0) g2.translate(0, dy);
+
+                g2.scale(scale, scale);
+                g2.drawImage(img, 0, 0, null);
+                return Printable.PAGE_EXISTS;
+            } finally {
+                g2.dispose();
+            }
+        });
+
+        if (job.printDialog()) {
+            try {
+                job.print();
+            } catch (PrinterException pe) {
+                pe.printStackTrace();
+            }
+        }   
     }
 }

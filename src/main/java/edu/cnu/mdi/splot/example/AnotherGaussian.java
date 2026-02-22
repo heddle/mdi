@@ -1,5 +1,7 @@
 package edu.cnu.mdi.splot.example;
 
+import edu.cnu.mdi.graphics.style.Styled;
+import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.PlotData;
@@ -66,11 +68,11 @@ public class AnotherGaussian extends AExample {
 		PlotData plotData = canvas.getPlotData();
 
 		Curve curve = (Curve) plotData.getCurve(0);
-		// symbol fill color
-		curve.getStyle().setFillColor(X11Colors.getX11Color("dark sea green"));
-
-		// symbol border color
-		curve.getStyle().setBorderColor(X11Colors.getX11Color("dark red"));
+		Styled style = curve.getStyle();
+		style.setFillColor(X11Colors.getX11Color("dark sea green"));
+		style.setLineColor(X11Colors.getX11Color("dark green"));
+		style.setSymbolType(SymbolType.SQUARE);
+		style.setBorderColor(X11Colors.getX11Color("dark red"));
 		curve.setCurveDrawingMethod(CurveDrawingMethod.GAUSSIAN);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6).setNumDecimalY(2);

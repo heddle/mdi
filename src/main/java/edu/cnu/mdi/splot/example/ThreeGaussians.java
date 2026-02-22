@@ -2,6 +2,8 @@ package edu.cnu.mdi.splot.example;
 
 import java.awt.Color;
 
+import edu.cnu.mdi.graphics.style.Styled;
+import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.fit.Evaluator;
 import edu.cnu.mdi.splot.pdata.Curve;
@@ -62,7 +64,7 @@ public class ThreeGaussians extends AExample {
 			return sum;
 		};
 
-		FitVectors testData = FitVectors.testData(eval, -1.0, 7.0, n, 4.0, 5.0);
+		FitVectors testData = FitVectors.testData(eval, -1.0, 7.0, n, 6.0, 7.0);
 		for (int i = 0; i < n; i++) {
 			double x = testData.x[i];
 			double y = testData.y[i];
@@ -84,12 +86,15 @@ public class ThreeGaussians extends AExample {
 	public void setParameters() {
 		PlotData plotData = canvas.getPlotData();
 
+		Curve curve = (Curve) plotData.getCurve(curveName);
+		Styled style = curve.getStyle();
 		// symbol fill color
-		plotData.getCurve(0).getStyle().setFillColor(new Color(32, 32, 32, 64));
-
-		// symbol border color
-		plotData.getCurve(0).getStyle().setBorderColor(Color.darkGray);
-		plotData.getCurve(0).setCurveDrawingMethod(CurveDrawingMethod.GAUSSIANS);
+		style.setFillColor(new Color(32, 32, 32, 64));
+		style.setSymbolType(SymbolType.CIRCLE);
+		style.setBorderColor(Color.darkGray);
+		style.setLineColor(Color.black);
+		
+		curve.setCurveDrawingMethod(CurveDrawingMethod.GAUSSIANS);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6).setNumDecimalY(2);
 		params.includeXZero(true);
