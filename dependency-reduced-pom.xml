@@ -4,7 +4,7 @@
   <groupId>io.github.heddle</groupId>
   <artifactId>mdi</artifactId>
   <name>MDI Scientific Visualization Framework</name>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
   <description>A modular Java framework for 2D and 3D scientific visualization,
         simulation, and data-driven interactive applications.</description>
   <url>https://github.com/heddle/mdi</url>
