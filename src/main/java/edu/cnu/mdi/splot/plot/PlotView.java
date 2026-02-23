@@ -28,6 +28,7 @@ import edu.cnu.mdi.splot.io.RecentPlotFiles;
 import edu.cnu.mdi.splot.io.RecentPlotsMenu;
 import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.util.Environment;
+import edu.cnu.mdi.view.AbstractViewInfo;
 import edu.cnu.mdi.view.BaseView;
 
 /**
@@ -180,6 +181,16 @@ public class PlotView extends BaseView {
 		revalidate();
 		repaint();
 	}
+	
+	/**
+	 *  Get an information object describing this view,
+	 *  used in the UI and for help.
+	 */
+	@Override
+	public AbstractViewInfo getViewInfo() {
+		return new PlotViewInfo();
+	}
+
 
 	/**
 	 * Updates the enablement of the Histo2D option based on the PlotPanel's capabilities.
