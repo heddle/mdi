@@ -1,5 +1,7 @@
 package edu.cnu.mdi.view.demo;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -19,6 +21,7 @@ import edu.cnu.mdi.graphics.connection.ConnectionManager;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.item.RectangleItem;
+import edu.cnu.mdi.ui.fonts.Fonts;
 
 public class DeviceItem extends RectangleItem {
 	// icon size in pixels
@@ -83,10 +86,37 @@ public class DeviceItem extends RectangleItem {
 			// Prefer a real component as the paint context.
 			java.awt.Component c = (container != null) ? container.getComponent() : null;
 			icon.paintIcon(c, g2, x, y);
+			if (showName()) {
+				drawDisplayName(g2, container, getDisplayName(),
+						x, y, size, container.approximateZoomFactor());
+			}
+
+			
 			return;
 		}
 
 		super.drawItem(g2, container);
+		
+	}
+
+	//draw the display name of the device, centered and underneath
+	private void drawDisplayName(Graphics g2, IContainer container, String name,
+			int xc, int yc, int size, double approxZoomFactor) {
+		
+		//use font delta to size the font from the basline font size, so it 
+		// scales with zoom level
+		
+		int baseDelta = -2;
+		int fontDelta = (int) Math.round(baseDelta + 4 * (approxZoomFactor - 1)); // adjust the multiplier as needed
+		Font font = Fonts.plainFontDelta(fontDelta);
+		g2.setFont(font);
+		// measure the name to center it
+		int nameWidth = g2.getFontMetrics().stringWidth(name);
+		int x = xc + (size - nameWidth) / 2;
+		int y = yc + size + g2.getFontMetrics().getAscent(); 
+		g2.setColor(Color.black);
+		g2.drawString(name, x, y);
+				
 	}
 
 	/**
@@ -111,6 +141,13 @@ public class DeviceItem extends RectangleItem {
 		Rectangle2D.Double wr = new Rectangle2D.Double();
 		container.localToWorld(pxBounds, wr);
 		return wr;
+	}
+
+	
+	// see whether name should be displayed
+	private boolean showName() {
+		NetworkLayoutDemoView view = (NetworkLayoutDemoView) getView();
+		return view.showNames();
 	}
 
 	/**

@@ -13,6 +13,11 @@ import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
+/**
+ * A simple example of using the Gaussian curve fit method. 
+ * This example generates synthetic data from a Gaussian function 
+ * and then uses the built-in Gaussian fitting method to visualize it.
+ */
 @SuppressWarnings("serial")
 public class Gaussian extends AExample {
 

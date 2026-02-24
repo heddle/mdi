@@ -206,7 +206,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 
 		_layer.getContainer().getFeedbackControl().addFeedbackProvider(this);
 	}
-
+	
 	/**
 	 * Draw the item.
 	 *
@@ -242,6 +242,20 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 			drawSelections(g, container);
 		}
 	}
+
+	/**
+	 * Helper to get the view this item is on.
+	 *
+	 * @return the view this item is on.
+	 */
+	public BaseView getView() {
+		IContainer container = getContainer();
+		if (container != null) {
+			return container.getView();
+		}
+		return null;
+	}
+
 
 	/**
 	 * Draws any selection or rotation rectangles

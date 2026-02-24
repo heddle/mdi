@@ -11,6 +11,7 @@ import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 public class InfoDialogHelper {
 
@@ -31,7 +32,9 @@ public class InfoDialogHelper {
         infoPane.setText(info.getAsHTML());
         infoPane.setEditable(false);
         infoPane.setCaretPosition(0); // Ensure scroll is at top
-
+        infoPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+        infoPane.setFont(UIManager.getFont("Label.font"));
+        
         // Add padding/margins
         infoPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 

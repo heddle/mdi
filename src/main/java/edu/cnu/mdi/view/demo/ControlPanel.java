@@ -12,6 +12,11 @@ import javax.swing.SwingConstants;
 
 import edu.cnu.mdi.ui.fonts.Fonts;
 
+/**
+ * A simple control panel for the NetworkLayoutDemoView. 
+ * This panel contains checkboxes that allow the user to toggle various display options in the view, such as showing a "snap to" grid. 
+ * The checkboxes are aligned to the left and styled with a medium font for better readability.
+ */
 @SuppressWarnings("serial")
 public class ControlPanel extends JPanel {
 
@@ -35,20 +40,32 @@ public class ControlPanel extends JPanel {
 
 	// create any display checkboxes
 	private void createCheckboxes(JPanel panel) {
-		JCheckBox showGrid = new JCheckBox("Show \"snap to\" grid", true);
-		showGrid.setFont(Fonts.mediumFont);
-		showGrid.setHorizontalAlignment(SwingConstants.LEFT);
-
+		JCheckBox showGrid = createCheckBox("Show \"snap to\" grid", true);
 		showGrid.addActionListener(e -> {
 			GridDrawer gridDrawer = view.getGridDrawer();
 			gridDrawer.setVisible(showGrid.isSelected());
 			view.refresh();
 		});
+		
+		JCheckBox showNames = createCheckBox("Show node names", view.showNames());
+		showNames.addActionListener(e -> {
+			view.setShowNames(showNames.isSelected());
+			view.refresh();
+		});
 
-		leftAlign(showGrid);
 		panel.add(showGrid);
+		panel.add(showNames);
 		panel.add(Box.createVerticalStrut(12));
 
+	}
+	
+	// helper method to create a left-aligned checkbox with the specified label and initial state
+	private JCheckBox createCheckBox(String label, boolean initialState) {
+		JCheckBox checkbox = new JCheckBox(label, initialState);
+		checkbox.setFont(Fonts.mediumFont);
+		checkbox.setHorizontalAlignment(SwingConstants.LEFT);
+		leftAlign(checkbox);
+		return checkbox;
 	}
 
 	/** Force BoxLayout children to left-align instead of centering. */

@@ -27,10 +27,9 @@ import edu.cnu.mdi.swing.WindowPlacement;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
- * Support methods for drawing tools.
- *
- * @author heddle
- *
+ * A utility class that provides static methods for creating various types of items (e.g., rectangles, ellipses, lines, text) from user interactions such as rubber banding or clicking. 
+ * These methods take screen coordinates and convert them to world coordinates to create the corresponding items on the specified layer. 
+ * Each created item is configured with default properties.
  */
 public class CreationSupport {
 

@@ -1,5 +1,7 @@
 package edu.cnu.mdi.view;
 
+import java.util.List;
+
 public class DrawingViewInfo extends AbstractViewInfo {
 
 	@Override
@@ -21,11 +23,13 @@ public class DrawingViewInfo extends AbstractViewInfo {
 	}
 	
 	@Override
-	public String getUsage() {
-		return "Use the toolbar buttons to select a drawing tool, then click and drag in the view to draw. "
-				+ "Use the navigation tools to pan and zoom. "
-				+ "Click on shapes to select them, then use the style editor to change their color and stroke. "
-				+ "To insert an image into the drawing, drag a PNG or JPEG file from the file system and drop it into the view.";
+	public List<String> getUsageBullets() {
+		return List.of(
+				"Use the toolbar buttons to select a drawing tool, then click and drag in the view to draw. ",
+				"Use the navigation tools to pan and zoom. ",
+				"Click on shapes to select them, then use the style editor to change their color and stroke. ",
+				"To insert an image into the drawing, drag a PNG or JPEG file from the file system and drop it into the view."
+				);
 	}
 	
 	@Override
