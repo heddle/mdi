@@ -350,14 +350,4 @@ public class WorldPolygon {
 		return contains(p.getX(), p.getY());
 	}
 
-	public PathIterator getPathIterator(AffineTransform arg0) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public PathIterator getPathIterator(AffineTransform arg0, double arg1) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

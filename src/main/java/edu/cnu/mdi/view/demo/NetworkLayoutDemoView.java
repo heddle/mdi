@@ -31,6 +31,9 @@ public class NetworkLayoutDemoView extends BaseView {
 
 	// draws the snap to grid
 	private final GridDrawer gridDrawer;
+	
+	// whether to show the node names 
+	private boolean showNodeNames = true;
 
 	/**
 	 * Construct a Network Layout Demo View with the given properties. It is a demo,
@@ -96,7 +99,23 @@ public class NetworkLayoutDemoView extends BaseView {
 			new DeviceButton(this, ds);
 		}
 	}
+	
+	/**
+	 * Whether to show the node names on the device items.
+	 * @return true if node names should be shown, false otherwise
+	 */
+	public boolean showNames() {
+		return showNodeNames;
+	}
 
+	/**
+	 * Set whether to show the node names on the device items.
+	 * @param show true to show node names, false to hide them
+	 */
+	public void setShowNames(boolean show) {
+		this.showNodeNames = show;
+		refresh();
+	}
 	/**
 	 * Get the device layer where device items are placed.
 	 *

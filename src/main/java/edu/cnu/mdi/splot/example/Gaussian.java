@@ -2,6 +2,8 @@ package edu.cnu.mdi.splot.example;
 
 import java.awt.Color;
 
+import edu.cnu.mdi.graphics.style.Styled;
+import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.fit.Evaluator;
 import edu.cnu.mdi.splot.pdata.Curve;
@@ -11,6 +13,11 @@ import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
+/**
+ * A simple example of using the Gaussian curve fit method. 
+ * This example generates synthetic data from a Gaussian function 
+ * and then uses the built-in Gaussian fitting method to visualize it.
+ */
 @SuppressWarnings("serial")
 public class Gaussian extends AExample {
 
@@ -78,12 +85,13 @@ public class Gaussian extends AExample {
 	public void setParameters() {
 		PlotData plotData = canvas.getPlotData();
 
-		// symbol fill color
-		plotData.getCurve(0).getStyle().setFillColor(new Color(32, 32, 32, 64));
+		Curve curve = (Curve) plotData.getCurve(0);
+		Styled style = curve.getStyle();
+		style.setLineColor(Color.red);
+		style.setBorderColor(Color.black);
+		style.setSymbolType(SymbolType.X);
 
-		// symbol border color
-		plotData.getCurve(0).getStyle().setBorderColor(Color.darkGray);
-		plotData.getCurve(0).setCurveDrawingMethod(CurveDrawingMethod.GAUSSIAN);
+		curve.setCurveDrawingMethod(CurveDrawingMethod.GAUSSIAN);
 		PlotParameters params = canvas.getParameters();
 		params.setMinExponentY(6).setNumDecimalY(2);
 		String extra[] = { "Use the Edit Plot -> Curves..", "to change fit, colors, etc.",

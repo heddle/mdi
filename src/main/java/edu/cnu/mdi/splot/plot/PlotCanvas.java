@@ -11,6 +11,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -38,7 +40,7 @@ import edu.cnu.mdi.splot.pdata.Snapshot;
 import edu.cnu.mdi.util.Environment;
 
 @SuppressWarnings("serial")
-public class PlotCanvas extends JComponent implements MouseListener, MouseMotionListener, DataChangeListener {
+public class PlotCanvas extends JComponent implements MouseWheelListener, MouseListener, MouseMotionListener, DataChangeListener {
 
 
 	public static final String DONEDRAWINGPROP = "Done Drawing";
@@ -147,6 +149,7 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 		addComponentListener(componentAdapter);
 		addMouseListener(this);
 		addMouseMotionListener(this);
+		addMouseWheelListener(this);
 
 		int delay = 1000; // milliseconds
 		_timer = new Timer(delay, evt -> onTimer());
@@ -1413,6 +1416,24 @@ public class PlotCanvas extends JComponent implements MouseListener, MouseMotion
 	 */
 	private double yRawWorldToData(double yRaw) {
 	    return _yLogActive ? Math.pow(10.0, yRaw) : yRaw;
+	}
+
+	@Override
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		double r = e.getPreciseWheelRotation();
+
+		double base = 1.12;
+		if (e.isControlDown() || e.isMetaDown()) {
+			base = 1.04;
+		} else if (e.isShiftDown()) {
+			base = 1.20;
+		}
+
+		double factor = Math.pow(base, r);
+		factor = Math.max(0.2, Math.min(5.0, factor)); // defensive clamp
+
+		scale(factor);
+		e.consume();
 	}
 
 }

@@ -1,6 +1,7 @@
 package edu.cnu.mdi.mapping;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import edu.cnu.mdi.view.AbstractViewInfo;
@@ -15,17 +16,17 @@ public class MapViewInfo extends AbstractViewInfo {
     @Override
     public String getPurpose() {
         return "This view provides a flattened, 2D representation of geospatial data using " +
-               "configurable projections. It is designed for analyzing city density and global coordinates.";
+               "configurable projections. It is designed for analyzing city density and " +
+               "global coordinates.";
     }
 
     @Override
-    public String getUsage() {
-        // You can return raw strings or simple HTML here
-        return "<ul>" +
-               "<li>Use the <b>Toolbar</b> to zoom, pan, and measure distances.</li>" +
-               "<li>Adjust the <b>Minimum Population</b> slider to filter visible cities.</li>" +
-               "<li>Toggle <b>Map Theme</b> to switch between Light, Dark, and Blue modes.</li>" +
-               "</ul>";
+    public List<String> getUsageBullets() {
+        return List.of(
+            "Use the Toolbar to zoom, pan, and measure distances.",
+            "Adjust the Minimum Population slider to filter visible cities.",
+            "Toggle Map Theme to switch between Light, Dark, and Blue modes."
+        );
     }
 
     @Override

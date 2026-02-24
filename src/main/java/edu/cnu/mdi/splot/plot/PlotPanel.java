@@ -6,7 +6,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.Insets;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -17,7 +16,6 @@ import javax.swing.SwingConstants;
 
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
-import edu.cnu.mdi.util.PrintUtils;
 
 @SuppressWarnings("serial")
 public class PlotPanel extends JPanel implements PropertyChangeListener {
@@ -95,8 +93,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		PlotParameters parameters = _canvas.getParameters();
 
 		// axes labels
-		_xLabel = makeJLabel(parameters.getXLabel(), parameters.getAxesFont(), SwingConstants.CENTER, Color.white, null,
-				false);
+		_xLabel = makeJLabel(parameters.getXLabel(), parameters.getAxesFont(), SwingConstants.CENTER, Color.white, null);
 		_xLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		spanel.add(_xLabel, BorderLayout.CENTER);
 
@@ -130,7 +127,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 
 		// title label
 		_titleLabel = makeJLabel(_canvas.getParameters().getPlotTitle(), parameters.getTitleFont(),
-				SwingConstants.CENTER, Color.white, null, false);
+				SwingConstants.CENTER, Color.white, null);
 		_titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		_toolbar.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -150,22 +147,10 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 	}
 
 	// convenience function for making a label
-	private JLabel makeJLabel(String text, Font font, int alignment, Color bg, Color fg, boolean excludeFromPrint) {
+	private JLabel makeJLabel(String text, Font font, int alignment, Color bg, Color fg) {
 
-		JLabel lab = null;
-		if (excludeFromPrint) {
-			lab = new JLabel(text != null ? text : " ") {
-				@Override
-				public void paint(Graphics g) {
-					// exclude from print
-					if (!PrintUtils.isPrinting()) {
-						super.paint(g);
-					}
-				}
-			};
-		} else {
-			lab = new JLabel(text != null ? text : " ");
-		}
+		JLabel	lab = new JLabel(text != null ? text : " ");
+		
 		lab.setFont(font);
 		lab.setOpaque(true);
 		if (bg != null) {

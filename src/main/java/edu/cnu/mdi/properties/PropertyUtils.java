@@ -53,6 +53,7 @@ public class PropertyUtils {
 	public static final String USERDATA = "USERDATA";
 	public static final String VISIBLE = "VISIBLE";
 	public static final String VVLOCATION = "VVLOCATION";
+	public static final String WHEELZOOM = "WHEELZOOM";
 	public static final String WIDTH = "WIDTH";
 	public static final String WORLDSYSTEM = "WORLDSYSTEM";
 
@@ -187,6 +188,16 @@ public class PropertyUtils {
 	 */
 	public static boolean getScrollable(Properties props) {
 		return getBoolean(props, SCROLLABLE, false);
+	}
+	
+	/**
+	 * Get the "wheel zoom" boolean flag.
+	 * 
+	 * @param props the properties
+	 * @return the wheel zoom flag. On error, return false.
+	 */
+	public static boolean addWheelZoom(Properties props) {
+		return getBoolean(props, WHEELZOOM, false);
 	}
 
 	/**

@@ -9,8 +9,7 @@ import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
@@ -79,7 +78,7 @@ import edu.cnu.mdi.view.BaseView;
  * @author heddle
  */
 @SuppressWarnings("serial")
-public class BaseContainer extends JComponent implements IContainer, MouseWheelListener, ItemChangeListener {
+public class BaseContainer extends JComponent implements IContainer, ItemChangeListener {
 
 	/**
 	 * The user-managed z-layers (does NOT include protected layers).
@@ -1070,15 +1069,6 @@ public class BaseContainer extends JComponent implements IContainer, MouseWheelL
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * <p>
-	 * Default implementation does nothing; many views bind wheel zoom in the tool
-	 * layer.
-	 */
-	@Override
-	public void mouseWheelMoved(MouseWheelEvent mouseEvent) {
-	}
 
 	/**
 	 * Copy helper.

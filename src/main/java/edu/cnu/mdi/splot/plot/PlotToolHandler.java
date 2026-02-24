@@ -1,5 +1,6 @@
 package edu.cnu.mdi.splot.plot;
 
+import java.awt.Component;
 import java.awt.Rectangle;
 import java.util.Objects;
 
@@ -11,8 +12,9 @@ import edu.cnu.mdi.graphics.toolbar.DefaultToolHandler;
 import edu.cnu.mdi.graphics.toolbar.GestureContext;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
+import edu.cnu.mdi.util.PrintUtils;
+import edu.cnu.mdi.util.TakePicture;
 import edu.cnu.mdi.view.BaseView;
-
 
 public class PlotToolHandler extends DefaultToolHandler {
 
@@ -20,6 +22,10 @@ public class PlotToolHandler extends DefaultToolHandler {
 
 	// Toolbar that owns this tool handler
 	private BaseToolBar toolBar;
+
+	// The plot panel that owns the toolbar that owns this tool handler. We keep a
+	// reference to it because some of the tool actions need to call methods on it.
+	private PlotPanel plotPanel;
 
 	/**
 	 * Create a tool handler for the given plot panel.
@@ -30,21 +36,22 @@ public class PlotToolHandler extends DefaultToolHandler {
 		Objects.requireNonNull(plotPanel, "plotPanel");
 		PlotCanvas plotCanvas = plotPanel.getPlotCanvas();
 		Objects.requireNonNull(plotCanvas, "plotCanvas");
+		this.plotPanel = plotPanel;
 
-		//what is on the toolbar depends on type
+		// what is on the toolbar depends on type
 		long bits = 0;
 		PlotDataType type = plotCanvas.getType();
 		if (type != PlotDataType.STRIP) {
 			bits = ToolBits.POINTER | ToolBits.PLOTTOOLS;
-			bits = bits & ~ToolBits.UNDOZOOM; //no undo zoom for now
-		}
-		else {
+			bits = bits & ~ToolBits.UNDOZOOM; // no undo zoom for now
+		} else {
 			bits = ToolBits.POINTER | ToolBits.PICVIEWSTOOLS;
 		}
 
 		ARubberband.Policy pointerPolicy = ARubberband.Policy.NONE;
-		//histograms have x only policy
-		ARubberband.Policy boxZoomPolicy = (type == PlotDataType.H1D) ? ARubberband.Policy.XONLY : ARubberband.Policy.RECTANGLE_PRESERVE_ASPECT;
+		// histograms have x only policy
+		ARubberband.Policy boxZoomPolicy = (type == PlotDataType.H1D) ? ARubberband.Policy.XONLY
+				: ARubberband.Policy.RECTANGLE_PRESERVE_ASPECT;
 		toolBar = new BaseToolBar(plotCanvas, this, bits, pointerPolicy, boxZoomPolicy);
 	}
 
@@ -64,7 +71,6 @@ public class PlotToolHandler extends DefaultToolHandler {
 			view.viewInfo();
 		}
 	}
-
 
 	@Override
 	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
@@ -91,5 +97,33 @@ public class PlotToolHandler extends DefaultToolHandler {
 		plotCanvas.repaint();
 	}
 
+	@Override
+	public void captureImage(GestureContext gc) {
+		TakePicture.takePicture(plotPanel);
+	}
 
+	@Override
+	public void print(GestureContext gc) {
+
+		BaseToolBar tb = plotPanel.getToolBar();
+
+		boolean tbVis = tb != null && tb.isVisible();
+
+		try {
+			if (tb != null)
+				tb.setVisible(false);
+
+			plotPanel.revalidate();
+			plotPanel.repaint();
+
+			PrintUtils.printComponentAsImage(plotPanel);
+
+		} finally {
+			if (tb != null)
+				tb.setVisible(tbVis);
+
+			plotPanel.revalidate();
+			plotPanel.repaint();
+		}
+	}
 }

@@ -1,7 +1,7 @@
 package edu.cnu.mdi.splot.pdata;
 
 import java.util.Objects;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
 
 import edu.cnu.mdi.splot.fit.Evaluator;
 
@@ -28,6 +28,9 @@ public class FitVectors {
 
 	/** y data (length n). */
 	public final double[] y;
+	
+	// For reproducible test data generation.
+	private static final long testSeed = 12345L;
 
 	/**
 	 * Optional weights (length n) or null. Convention:
@@ -187,8 +190,8 @@ public class FitVectors {
 		final double sp = Math.max(0.0, sigmaYPercent) / 100.0;
 
 		final double dx = (xEnd - xStart) / (nPoints - 1.0);
-		final ThreadLocalRandom rng = ThreadLocalRandom.current();
-
+		Random rng = new Random(testSeed);
+		
 		for (int i = 0; i < nPoints; i++) {
 			double xi = xStart + i * dx;
 			x[i] = xi;

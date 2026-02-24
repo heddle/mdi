@@ -64,7 +64,7 @@ public class ConnectorItem extends PolylineItem {
 	public boolean shouldDraw(Graphics g, IContainer container) {
 		// Always recompute anchors before drawing so connection follows moved items.
 		syncAnchorsToItems();
-		return super.shouldDraw(g, container);
+		return true;
 	}
 
 	@Override
@@ -139,6 +139,8 @@ public class ConnectorItem extends PolylineItem {
 
 		_path = WorldGraphicsUtils.worldPolygonToPath(wpoly);
 		updateFocus();
+		
+		setDirty(true);
 	}
 
 	/**

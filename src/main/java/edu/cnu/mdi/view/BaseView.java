@@ -24,6 +24,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.function.Predicate;
 
@@ -118,8 +119,8 @@ public class BaseView extends JInternalFrame
 	protected static final Icon infoIcon;
 	static {
 		String path = ToolBits.getResourcePath(ToolBits.INFO);
-		infoIcon = ImageManager.getInstance().loadUiIcon(path,
-				BaseToolBar.DEFAULT_ICON_SIZE, BaseToolBar.DEFAULT_ICON_SIZE);
+		infoIcon = ImageManager.getInstance().loadUiIcon(path, BaseToolBar.DEFAULT_ICON_SIZE,
+				BaseToolBar.DEFAULT_ICON_SIZE);
 	}
 
 	/**
@@ -140,7 +141,7 @@ public class BaseView extends JInternalFrame
 	/** Lazily resolved parent JFrame containing the desktop. */
 	private JFrame parentFrame;
 
-	/** View popup menu  */
+	/** View popup menu */
 	protected final ViewPopupMenu viewPopupMenu;
 
 	/** Optional toolbar (if configured). */
@@ -180,7 +181,6 @@ public class BaseView extends JInternalFrame
 		// Parse configuration exactly once.
 		final ViewInitConfig cfg = ViewInitConfig.from(this.properties);
 
-
 		// Frame decorations and basic state.
 		FrameConfigurer.apply(this, cfg);
 
@@ -201,7 +201,8 @@ public class BaseView extends JInternalFrame
 			ViewKeyBindings.installDeleteBinding(this);
 			pack();
 		} else {
-			// No world system: skip container and related setup; just apply basic frame config.
+			// No world system: skip container and related setup; just apply basic frame
+			// config.
 			FrameConfigurer.applyNoContainerBounds(this, cfg);
 		}
 
@@ -219,7 +220,6 @@ public class BaseView extends JInternalFrame
 			SwingUtilities.invokeLater(() -> setVisible(true));
 		}
 	}
-
 
 	// --------------------------------------------------------------------
 	// Container creation (public/protected API preserved)
@@ -258,7 +258,7 @@ public class BaseView extends JInternalFrame
 	 */
 	public void prepareForExit() {
 		// Default implementation does nothing;
-		//override as needed, e,g, to stop background threads or save state.
+		// override as needed, e,g, to stop background threads or save state.
 	}
 
 	/**
@@ -283,22 +283,24 @@ public class BaseView extends JInternalFrame
 	}
 
 	/**
-     * Set a file filter, e.g., f -> f.getName().endsWith(".png").
-     * Used for drag and drop.
-     * @param filter the file filter
-     * @see IFileDropHandler
-     */
+	 * Set a file filter, e.g., f -> f.getName().endsWith(".png"). Used for drag and
+	 * drop.
+	 * 
+	 * @param filter the file filter
+	 * @see IFileDropHandler
+	 */
 	@Override
-    public void setFileFilter(Predicate<File> filter) {
-        this.fileFilter = filter;
-    }
+	public void setFileFilter(Predicate<File> filter) {
+		this.fileFilter = filter;
+	}
 
-    /**
+	/**
 	 * Get the file filter used for drag and drop.
+	 * 
 	 * @return the file filter, or null if none is set.
 	 */
 	@Override
-    public Predicate<File> getFileFilter() {
+	public Predicate<File> getFileFilter() {
 		return this.fileFilter;
 	}
 
@@ -342,14 +344,13 @@ public class BaseView extends JInternalFrame
 		return viewPopupMenu;
 	}
 
-
 	/**
-	 * Install a right-click popup trigger on the view's canvas so that the view popup
-	 * menu appears even when no toolbar tool is selected.
+	 * Install a right-click popup trigger on the view's canvas so that the view
+	 * popup menu appears even when no toolbar tool is selected.
 	 * <p>
 	 * This handles platform differences where popup triggers may fire on either
-	 * {@code mousePressed} (macOS) or {@code mouseReleased} (Windows/Linux).
-	 * The popup is only shown when the click is <em>not</em> on an item; item-level
+	 * {@code mousePressed} (macOS) or {@code mouseReleased} (Windows/Linux). The
+	 * popup is only shown when the click is <em>not</em> on an item; item-level
 	 * popups (handled elsewhere) take precedence.
 	 * </p>
 	 */
@@ -426,7 +427,8 @@ public class BaseView extends JInternalFrame
 			});
 		}
 	}
-/**
+
+	/**
 	 * @return {@code true} if this view wraps its container in a
 	 *         {@link JScrollPane}.
 	 */
@@ -595,8 +597,8 @@ public class BaseView extends JInternalFrame
 	}
 
 	/**
-	 * Apply a focus-fix mouse listener to the given menu that selects the view
-	 * when the mouse enters the menu. This works around focus issues on some platforms
+	 * Apply a focus-fix mouse listener to the given menu that selects the view when
+	 * the mouse enters the menu. This works around focus issues on some platforms
 	 * and look-and-feels. The symptom is that the view does not gain focus when the
 	 * menu is shown and you get a menu "flash".
 	 *
@@ -604,21 +606,21 @@ public class BaseView extends JInternalFrame
 	 * @param view the view to select.
 	 */
 	public static void applyFocusFix(JMenu menu, BaseView view) {
-	    menu.addMouseListener(new MouseAdapter() {
-	        @Override
-	        public void mouseEntered(MouseEvent e) {
-	            try {
-	                if (view.isIcon()) {
+		menu.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				try {
+					if (view.isIcon()) {
 						view.setIcon(false); // Ensure it's not minimized
 					}
-	                if (!view.isSelected()) {
+					if (!view.isSelected()) {
 						view.setSelected(true);
 					}
-	            } catch (Exception ex) { /* Vetoed */ }
-	        }
-	    });
+				} catch (Exception ex) {
+					/* Vetoed */ }
+			}
+		});
 	}
-
 
 	// --------------------------------------------------------------------
 	// Magnify support
@@ -631,7 +633,7 @@ public class BaseView extends JInternalFrame
 	 */
 	public void handleMagnify(final MouseEvent me) {
 
-		//check if on EDT thread
+		// check if on EDT thread
 
 		if (!SwingUtilities.isEventDispatchThread()) {
 			SwingUtilities.invokeLater(() -> handleMagnify(me));
@@ -806,6 +808,12 @@ public class BaseView extends JInternalFrame
 		// no-op
 	}
 
+	/**
+	 * Optional hook for subclasses to provide view information content. Default is
+	 * null (no info).
+	 *
+	 * @return the view info, or null if none.
+	 */
 	public void viewInfo() {
 		AbstractViewInfo info = getViewInfo();
 		if (info != null) {
@@ -815,10 +823,40 @@ public class BaseView extends JInternalFrame
 			}
 			infoDialog = InfoDialogHelper.showInfoDialog(this, info);
 		} else {
-			JOptionPane.showMessageDialog(this,
-					"No detailed information is available for this view.",
-					"View Info", JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(this, "No detailed information is available for this view.", "View Info",
+					JOptionPane.INFORMATION_MESSAGE);
 		}
+	}
+
+	// Subclasses can override this to provide structured information about the
+	// view.
+	private static void installWheelZoom(IContainer container) {
+
+		if (container == null) {
+			return;
+		}
+
+		Component comp = container.getComponent();
+		if (comp == null) {
+			return;
+		}
+
+		comp.addMouseWheelListener(e -> {
+			double r = e.getPreciseWheelRotation();
+
+			double base = 1.12;
+			if (e.isControlDown() || e.isMetaDown()) {
+				base = 1.04;
+			} else if (e.isShiftDown()) {
+				base = 1.20;
+			}
+
+			double factor = Math.pow(base, r);
+			factor = Math.max(0.2, Math.min(5.0, factor)); // defensive clamp
+
+			container.scale(factor);
+			e.consume();
+		});
 	}
 
 	/**
@@ -836,8 +874,7 @@ public class BaseView extends JInternalFrame
 
 			// Styling: Small, semi-transparent, flat look
 			infoButton.setMargin(new Insets(0, 0, 0, 0));
-			infoButton.setPreferredSize(new Dimension(infoIcon.getIconWidth(),
-					infoIcon.getIconHeight()));
+			infoButton.setPreferredSize(new Dimension(infoIcon.getIconWidth(), infoIcon.getIconHeight()));
 			infoButton.setFocusable(false);
 			infoButton.setBorderPainted(false);
 			infoButton.setContentAreaFilled(false);
@@ -880,6 +917,7 @@ public class BaseView extends JInternalFrame
 		final boolean maximizable;
 		final boolean resizable;
 		final boolean closable;
+		final boolean addWheelZoom;
 
 		final boolean scrollable;
 		final boolean visible;
@@ -902,7 +940,7 @@ public class BaseView extends JInternalFrame
 		private ViewInitConfig(String title, boolean standardDecorations, boolean infobutton, boolean iconifiable,
 				boolean maximizable, boolean resizable, boolean closable, boolean scrollable, boolean visible, int left,
 				int top, int width, int height, Rectangle2D.Double worldSystem, Color background,
-				JComponent splitWestComponent, long toolBits, ARubberband.Policy boxZoomPolicy) {
+				JComponent splitWestComponent, long toolBits, ARubberband.Policy boxZoomPolicy, boolean addWheelZoom) {
 			this.title = title;
 			this.standardDecorations = standardDecorations;
 			this.infobutton = infobutton;
@@ -921,8 +959,10 @@ public class BaseView extends JInternalFrame
 			this.splitWestComponent = splitWestComponent;
 			this.toolBits = toolBits;
 			this.boxZoomPolicy = boxZoomPolicy;
+			this.addWheelZoom = addWheelZoom;
 		}
 
+		// Convenience method to check if a world system is defined.
 		boolean hasWorldSystem() {
 			return worldSystem != null;
 		}
@@ -943,7 +983,6 @@ public class BaseView extends JInternalFrame
 
 			boolean scrollable = PropertyUtils.getScrollable(props);
 			boolean visible = PropertyUtils.getVisible(props);
-
 
 			int left = PropertyUtils.getLeft(props);
 			int top = PropertyUtils.getTop(props);
@@ -977,9 +1016,11 @@ public class BaseView extends JInternalFrame
 			long bits = PropertyUtils.getToolbarBits(props);
 			ARubberband.Policy policy = PropertyUtils.getBoxZoomRubberbandPolicy(props);
 
+			boolean addWheelZoom = PropertyUtils.addWheelZoom(props);
+
 			return new ViewInitConfig(title, standardDecorations, infobutton, iconifiable, maximizable, resizable,
 					closable, scrollable, visible, left, top, width, height, worldSystem, background, west, bits,
-					policy);
+					policy, addWheelZoom);
 		}
 	}
 
@@ -1128,16 +1169,20 @@ public class BaseView extends JInternalFrame
 
 			// Optional toolbar.
 			if (cfg.toolBits > 0) {
-				view.toolBar = new BaseToolBar(container.getComponent(), null,
-						cfg.toolBits, ARubberband.Policy.RECTANGLE, cfg.boxZoomPolicy);
+				view.toolBar = new BaseToolBar(container.getComponent(), null, cfg.toolBits,
+						ARubberband.Policy.RECTANGLE, cfg.boxZoomPolicy);
 				view.getContentPane().add(view.toolBar, BorderLayout.NORTH);
 				if (container instanceof BaseContainer baseCont) {
 					baseCont.setToolBar(view.toolBar);
 				}
 			}
+
+			if (cfg.addWheelZoom) {
+				installWheelZoom(container);
+			}
 		}
 	}
-	
+
 	/**
 	 * Centers the view within its parent frame if possible.
 	 */
@@ -1210,9 +1255,7 @@ public class BaseView extends JInternalFrame
 		return null;
 	}
 
-
-
-		/**
+	/**
 	 * Captures/restores persistent properties for a view.
 	 * <p>
 	 * Uses the stable prefix {@link BaseView#getPropertyName()}. Supports old key
@@ -1222,68 +1265,61 @@ public class BaseView extends JInternalFrame
 	private static final class ViewPersistence {
 
 		public static void applyToView(BaseView view, Properties props) {
-		    if (view == null || props == null || props.isEmpty()) {
-		        return;
-		    }
+			if (view == null || props == null || props.isEmpty()) {
+				return;
+			}
 
-		    String prefix = view.getPropertyName();     // whatever you use
-		    String dotted = prefix + ".";               // new style
-            // old style (no dot)
+			String prefix = view.getPropertyName(); // whatever you use
+			String dotted = prefix + "."; // new style
+			// old style (no dot)
 
-            // ---- Visible: APPLY ONLY IF PRESENT ----
-		    Boolean vis = getBooleanIfPresent(props,
-		            dotted + "visible",
-		            prefix + "visible");
-		    if (vis != null) {
-		        view.setVisible(vis);
-		    }
+			// ---- Visible: APPLY ONLY IF PRESENT ----
+			Boolean vis = getBooleanIfPresent(props, dotted + "visible", prefix + "visible");
+			if (vis != null) {
+				view.setVisible(vis);
+			}
 
-		    // ---- Bounds: apply only if all coords present ----
-		    Integer x = getIntIfPresent(props, dotted + "x", prefix + "x");
-		    Integer y = getIntIfPresent(props, dotted + "y", prefix + "y");
-		    Integer w = getIntIfPresent(props, dotted + "w", prefix + "w");
-		    Integer h = getIntIfPresent(props, dotted + "h", prefix + "h");
+			// ---- Bounds: apply only if all coords present ----
+			Integer x = getIntIfPresent(props, dotted + "x", prefix + "x");
+			Integer y = getIntIfPresent(props, dotted + "y", prefix + "y");
+			Integer w = getIntIfPresent(props, dotted + "w", prefix + "w");
+			Integer h = getIntIfPresent(props, dotted + "h", prefix + "h");
 
-		    if (x != null && y != null && w != null && h != null) {
-		        // Optional: clamp sanity to avoid off-screen / negative sizes
-		        if (w > 0 && h > 0) {
-		            view.setBounds(x, y, w, h);
-		        }
-		    }
+			if (x != null && y != null && w != null && h != null) {
+				// Optional: clamp sanity to avoid off-screen / negative sizes
+				if (w > 0 && h > 0) {
+					view.setBounds(x, y, w, h);
+				}
+			}
 
-		    // ---- Maximized: support misspelling, apply only if present ----
-		    Boolean max = getBooleanIfPresent(props,
-		            dotted + "maximized",
-		            dotted + "maxmized",      // historical typo
-		            prefix + "maximized",
-		            prefix + "maxmized");
-		    if (max != null) {
-		        try {
-		            view.setMaximum(max);
-		        } catch (Exception ignore) {
-		        }
-		    }
+			// ---- Maximized: support misspelling, apply only if present ----
+			Boolean max = getBooleanIfPresent(props, dotted + "maximized", dotted + "maxmized", // historical typo
+					prefix + "maximized", prefix + "maxmized");
+			if (max != null) {
+				try {
+					view.setMaximum(max);
+				} catch (Exception ignore) {
+				}
+			}
 
-		    // ---- On top (if you have it) ----
-		 // ---- On top (bring to front now; not "always on top") ----
-		    Boolean ontop = getBooleanIfPresent(props,
-		            dotted + "ontop",
-		            prefix + "ontop");
-		    if (Boolean.TRUE.equals(ontop)) {
-		        try {
-		            // Bring to front within the desktop
-		            view.moveToFront();
+			// ---- On top (if you have it) ----
+			// ---- On top (bring to front now; not "always on top") ----
+			Boolean ontop = getBooleanIfPresent(props, dotted + "ontop", prefix + "ontop");
+			if (Boolean.TRUE.equals(ontop)) {
+				try {
+					// Bring to front within the desktop
+					view.moveToFront();
 
-		            // Optional: make it the selected internal frame (usually what users mean)
-		            view.setSelected(true);
-		        } catch (Exception ignore) {
-		            // ignore PropertyVetoException etc.
-		        }
-		    }
+					// Optional: make it the selected internal frame (usually what users mean)
+					view.setSelected(true);
+				} catch (Exception ignore) {
+					// ignore PropertyVetoException etc.
+				}
+			}
 		}
 
-
-		// Capture properties from the view's current state, using the stable prefix and writing both new and legacy keys for compatibility.
+		// Capture properties from the view's current state, using the stable prefix and
+		// writing both new and legacy keys for compatibility.
 		static Properties captureFromView(BaseView view) {
 			Properties props = new Properties();
 
@@ -1338,37 +1374,37 @@ public class BaseView extends JInternalFrame
 			return props;
 		}
 
-		// Helper methods to read properties with support for multiple key variants (dotted and legacy no-dot).
+		// Helper methods to read properties with support for multiple key variants
+		// (dotted and legacy no-dot).
 		private static String firstPresent(Properties p, String... keys) {
-		    if (p == null) {
+			if (p == null) {
 				return null;
 			}
-		    for (String k : keys) {
-		        String v = p.getProperty(k);
-		        if (v != null) {
+			for (String k : keys) {
+				String v = p.getProperty(k);
+				if (v != null) {
 					return v;
 				}
-		    }
-		    return null;
+			}
+			return null;
 		}
 
 		private static Boolean getBooleanIfPresent(Properties p, String... keys) {
-		    String v = firstPresent(p, keys);
-		    return (v == null) ? null : Boolean.parseBoolean(v.trim());
+			String v = firstPresent(p, keys);
+			return (v == null) ? null : Boolean.parseBoolean(v.trim());
 		}
 
 		private static Integer getIntIfPresent(Properties p, String... keys) {
-		    String v = firstPresent(p, keys);
-		    if (v == null) {
+			String v = firstPresent(p, keys);
+			if (v == null) {
 				return null;
 			}
-		    try {
-		        return Integer.parseInt(v.trim());
-		    } catch (NumberFormatException nfe) {
-		        return null;
-		    }
+			try {
+				return Integer.parseInt(v.trim());
+			} catch (NumberFormatException nfe) {
+				return null;
+			}
 		}
-
 
 	}
 }
