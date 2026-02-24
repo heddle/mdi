@@ -953,23 +953,31 @@ public class WorldGraphicsUtils {
 		}
 		return poly;
 	}
-
 	/**
-	 * Get the number of points in a path
+	 * Counts the number of explicit vertex points in a {@link Path2D.Double}.
 	 *
-	 * @param path the path being examined.
-	 * @return the number of elementary points (from moveto and lineto)
+	 * <p>A “vertex” is contributed only by {@code SEG_MOVETO} and {@code SEG_LINETO}
+	 * segments. {@code SEG_CLOSE} does not add a new vertex and is ignored.</p>
+	 *
+	 * <p><strong>Straight-segment paths only:</strong> this method is intentionally
+	 * limited to paths composed of straight line segments. If the path contains any
+	 * curve segments ({@code SEG_QUADTO} or {@code SEG_CUBICTO}), an
+	 * {@link IllegalArgumentException} is thrown to avoid silently producing
+	 * incorrect geometry.</p>
+	 *
+	 * @param path the path to inspect; if {@code null}, returns 0
+	 * @return the number of vertex points (MOVE + LINE) in the path
+	 * @throws IllegalArgumentException if the path contains curve segments
 	 */
-	public static int getPathPointCount(Path2D path) {
+	public static int getPathPointCount(Path2D.Double path) {
 		if (path == null) {
 			return 0;
 		}
 
 		int count = 0;
-
 		PathIterator pi = path.getPathIterator(null);
+		double[] coords = new double[6];
 
-		double coords[] = new double[6];
 		while (!pi.isDone()) {
 			int type = pi.currentSegment(coords);
 			switch (type) {
@@ -978,14 +986,22 @@ public class WorldGraphicsUtils {
 				count++;
 				break;
 
-			// TODO curves
+			case PathIterator.SEG_CLOSE:
+				// no vertex added
+				break;
+
+			case PathIterator.SEG_QUADTO:
+			case PathIterator.SEG_CUBICTO:
+			default:
+				throw new IllegalArgumentException(
+						"Path contains curve segments; only MOVE/LINE/CLOSE segments are supported.");
 			}
 			pi.next();
 		}
 
 		return count;
 	}
-
+	
 	/**
 	 * Convert a path to a collection of points. This is not a general method, it
 	 * only works for simple paths of line segments. It does not deal with curves.
@@ -1019,44 +1035,76 @@ public class WorldGraphicsUtils {
 	}
 
 	/**
-	 * Get an indexed point of a path.
+	 * Returns the world-coordinate vertex at the specified index in a straight-segment path.
 	 *
-	 * @param index the index of the point we seek, starting at zero.
-	 * @param path  the path being examined.
-	 * @return the point, or <code>null</code>
+	 * <p>Vertices are defined by {@code SEG_MOVETO} and {@code SEG_LINETO} segments.
+	 * {@code SEG_CLOSE} segments are ignored.</p>
+	 *
+	 * <p>If {@code index} is out of range, this method returns {@code null} (legacy behavior).</p>
+	 *
+	 * <p><strong>Straight-segment paths only:</strong> if the path contains curve segments
+	 * ({@code SEG_QUADTO} or {@code SEG_CUBICTO}), an {@link IllegalArgumentException}
+	 * is thrown rather than silently returning incorrect results.</p>
+	 *
+	 * @param path  the path; if {@code null}, returns {@code null}
+	 * @param index zero-based vertex index (MOVE/LINE vertices only)
+	 * @return the requested vertex as a new {@link Point2D.Double}, or {@code null} if not found
+	 * @throws IllegalArgumentException if the path contains curve segments
 	 */
-	public static Point2D.Double getPathPointAt(int index, Path2D path) {
-		int count = 0;
+	public static Point2D.Double getPathPointAt(Path2D.Double path, int index) {
+		if (path == null || index < 0) {
+			return null;
+		}
 
 		PathIterator pi = path.getPathIterator(null);
+		double[] coords = new double[6];
+		int count = 0;
 
-		double coords[] = new double[6];
 		while (!pi.isDone()) {
 			int type = pi.currentSegment(coords);
 			switch (type) {
 			case PathIterator.SEG_MOVETO:
 			case PathIterator.SEG_LINETO:
 				if (count == index) {
-					Point2D.Double wp = new Point2D.Double(coords[0], coords[1]);
-					return wp;
+					return new Point2D.Double(coords[0], coords[1]);
 				}
 				count++;
 				break;
 
-			// TODO curves
+			case PathIterator.SEG_CLOSE:
+				break;
+
+			case PathIterator.SEG_QUADTO:
+			case PathIterator.SEG_CUBICTO:
+			default:
+				throw new IllegalArgumentException(
+						"Path contains curve segments; only MOVE/LINE/CLOSE segments are supported.");
 			}
 			pi.next();
 		}
 
 		return null;
 	}
-
+	
 	/**
-	 * Convert a path to a polygon.
+	 * Converts a straight-segment world path into a local (screen) {@link Polygon}.
 	 *
-	 * @param container the container on which it is rendered.
-	 * @param path      the path in question
-	 * @return the polygon corresponding to the path
+	 * <p>Each vertex contributed by {@code SEG_MOVETO} and {@code SEG_LINETO} is converted
+	 * from world coordinates to local/screen coordinates using
+	 * {@link IContainer#worldToLocal(java.awt.Point, double, double)}.</p>
+	 *
+	 * <p>{@code SEG_CLOSE} segments are ignored since they do not contribute a new vertex.</p>
+	 *
+	 * <p><strong>Straight-segment paths only:</strong> curve segments
+	 * ({@code SEG_QUADTO} / {@code SEG_CUBICTO}) are not supported. If encountered,
+	 * this method throws {@link IllegalArgumentException} to prevent silently building
+	 * an incorrect polygon.</p>
+	 *
+	 * @param container the rendering container that defines the world→local transform;
+	 *                  if {@code null}, returns {@code null}
+	 * @param path      the world path; if {@code null}, returns {@code null}
+	 * @return a local/screen {@link Polygon}, or {@code null} if there are no vertices
+	 * @throws IllegalArgumentException if the path contains curve segments
 	 */
 	public static Polygon pathToPolygon(IContainer container, Path2D.Double path) {
 		if (container == null || path == null) {
@@ -1078,13 +1126,25 @@ public class WorldGraphicsUtils {
 
 		while (!pi.isDone()) {
 			int type = pi.currentSegment(coords);
-			if (type == PathIterator.SEG_MOVETO || type == PathIterator.SEG_LINETO) {
+			switch (type) {
+			case PathIterator.SEG_MOVETO:
+			case PathIterator.SEG_LINETO:
 				container.worldToLocal(pp, coords[0], coords[1]);
 				x[count] = pp.x;
 				y[count] = pp.y;
 				count++;
+				break;
+
+			case PathIterator.SEG_CLOSE:
+				// no vertex added
+				break;
+
+			case PathIterator.SEG_QUADTO:
+			case PathIterator.SEG_CUBICTO:
+			default:
+				throw new IllegalArgumentException(
+						"Path contains curve segments; only MOVE/LINE/CLOSE segments are supported.");
 			}
-			// TODO: curves (SEG_QUADTO / SEG_CUBICTO) if/when you support them
 			pi.next();
 		}
 
@@ -1092,36 +1152,22 @@ public class WorldGraphicsUtils {
 	}
 
 	/**
-	 * Counts the needed capacity if you are going to pull out the points an put
-	 * them in a collection. Note: for now only handles moveto and lineto.
+	 * Returns the number of vertices required to extract a straight-segment path into an array.
 	 *
-	 * @param path the input path
-	 * @return the size needed for a collection
+	 * <p>This is the capacity needed to store all vertices contributed by
+	 * {@code SEG_MOVETO} and {@code SEG_LINETO}. {@code SEG_CLOSE} contributes no vertex.</p>
+	 *
+	 * <p><strong>Straight-segment paths only:</strong> curve segments are not supported and
+	 * will trigger {@link IllegalArgumentException}.</p>
+	 *
+	 * @param path the input path; if {@code null}, returns 0
+	 * @return the number of vertices (MOVE + LINE) in the path
+	 * @throws IllegalArgumentException if the path contains curve segments
 	 */
 	public static int neededCapacity(Path2D.Double path) {
-		if (path == null) {
-			return 0;
-		}
-
-		int count = 0;
-		PathIterator pi = path.getPathIterator(null);
-
-		double coords[] = new double[6];
-		while (!pi.isDone()) {
-			int type = pi.currentSegment(coords);
-			switch (type) {
-			case PathIterator.SEG_MOVETO:
-			case PathIterator.SEG_LINETO:
-				count++;
-				break;
-
-			// TODO curves
-			}
-			pi.next();
-		}
-		return count;
+		return getPathPointCount(path);
 	}
-
+	
 	/**
 	 * Convert a rectangle into a path.
 	 *
@@ -1345,11 +1391,17 @@ public class WorldGraphicsUtils {
 	}
 
 	/**
-	 * Get a world polygon from a path, using (for now at least) only the MoveTo and
-	 * LineTo pats of the path.
+	 * Extracts the world-coordinate vertices from a straight-segment path.
 	 *
-	 * @param path the path in question
-	 * @return the vertex points
+	 * <p>Vertices are taken from {@code SEG_MOVETO} and {@code SEG_LINETO} segments.
+	 * {@code SEG_CLOSE} is ignored.</p>
+	 *
+	 * <p><strong>Straight-segment paths only:</strong> if curve segments are encountered,
+	 * this method throws {@link IllegalArgumentException}.</p>
+	 *
+	 * @param path the input path; if {@code null}, returns {@code null}
+	 * @return an array of vertices in world coordinates, or {@code null} if none
+	 * @throws IllegalArgumentException if the path contains curve segments
 	 */
 	public static Point2D.Double[] pathToWorldPolygon(Path2D.Double path) {
 
@@ -1358,10 +1410,9 @@ public class WorldGraphicsUtils {
 		}
 
 		PathIterator pi = path.getPathIterator(null);
-
 		ArrayList<Point2D.Double> pointsList = new ArrayList<>();
+		double[] coords = new double[6];
 
-		double coords[] = new double[6];
 		while (!pi.isDone()) {
 			int type = pi.currentSegment(coords);
 			switch (type) {
@@ -1370,25 +1421,34 @@ public class WorldGraphicsUtils {
 				pointsList.add(new Point2D.Double(coords[0], coords[1]));
 				break;
 
-			// TODO curves
+			case PathIterator.SEG_CLOSE:
+				break;
+
+			case PathIterator.SEG_QUADTO:
+			case PathIterator.SEG_CUBICTO:
+			default:
+				throw new IllegalArgumentException(
+						"Path contains curve segments; only MOVE/LINE/CLOSE segments are supported.");
 			}
 			pi.next();
 		}
 
-		if (pointsList.isEmpty()) {
-			return null;
-		}
-
-		return pointsList.toArray(new Point2D.Double[0]);
+		return pointsList.isEmpty() ? null : pointsList.toArray(new Point2D.Double[0]);
 	}
-
+	
 	/**
-	 * Set a world polygon from a path, using (for now at least) only the MoveTo and
-	 * LineTo pats of the path.
+	 * Copies world-coordinate vertices from a straight-segment path into a preallocated array.
 	 *
-	 * @param path the path in question
-	 * @param wp   the point array--assumes it is big enough and the points have
-	 *             already been created.
+	 * <p>Vertices are extracted from {@code SEG_MOVETO} and {@code SEG_LINETO}. {@code SEG_CLOSE}
+	 * is ignored. This method stops early if {@code wp} fills up.</p>
+	 *
+	 * <p><strong>Straight-segment paths only:</strong> curve segments are not supported and
+	 * will trigger {@link IllegalArgumentException}.</p>
+	 *
+	 * @param path the input path; if {@code null}, does nothing
+	 * @param wp   destination array; assumed non-null, sized appropriately, and containing
+	 *             non-null {@link Point2D.Double} elements
+	 * @throws IllegalArgumentException if the path contains curve segments
 	 */
 	public static void pathToWorldPolygon(Path2D.Double path, Point2D.Double wp[]) {
 
@@ -1397,9 +1457,9 @@ public class WorldGraphicsUtils {
 		}
 
 		PathIterator pi = path.getPathIterator(null);
-
-		double coords[] = new double[6];
+		double[] coords = new double[6];
 		int index = 0;
+
 		while (!pi.isDone()) {
 			int type = pi.currentSegment(coords);
 			switch (type) {
@@ -1407,17 +1467,22 @@ public class WorldGraphicsUtils {
 			case PathIterator.SEG_LINETO:
 				wp[index].setLocation(coords[0], coords[1]);
 				index++;
-
 				if (index >= wp.length) {
 					return;
 				}
 				break;
 
-			// TODO curves
+			case PathIterator.SEG_CLOSE:
+				break;
+
+			case PathIterator.SEG_QUADTO:
+			case PathIterator.SEG_CUBICTO:
+			default:
+				throw new IllegalArgumentException(
+						"Path contains curve segments; only MOVE/LINE/CLOSE segments are supported.");
 			}
 			pi.next();
 		}
-
 	}
 
 	/**

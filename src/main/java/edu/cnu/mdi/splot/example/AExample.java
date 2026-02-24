@@ -62,7 +62,7 @@ public abstract class AExample extends JFrame implements PlotChangeListener {
 		WindowAdapter windowAdapter = new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent event) {
-				System.exit(1);
+				dispose();
 			}
 		};
 		addWindowListener(windowAdapter);

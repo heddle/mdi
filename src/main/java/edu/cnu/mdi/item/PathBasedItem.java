@@ -366,7 +366,7 @@ public class PathBasedItem extends AItem {
 	 * @return the bounds if the path contains only a single point
 	 */
 	protected Rectangle singlePointBounds(IContainer container) {
-		Point2D.Double wp = WorldGraphicsUtils.getPathPointAt(0, _path);
+		Point2D.Double wp = WorldGraphicsUtils.getPathPointAt(_path, 0);
 		Point pp = new Point();
 		container.worldToLocal(pp, wp);
         return new Rectangle(pp.x - 8, pp.y - 8, 16, 16);

@@ -822,8 +822,9 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	 */
 	public void setToolBarState() {
 		if (_toolBar != null) {
-			// TODO: implement specific state changes based on selection
-
+			if (_toolBar instanceof BaseToolBar) {
+				((BaseToolBar) _toolBar).setDeleteEnabled(anySelectedItems());
+			}
 		}
 	}
 
