@@ -190,7 +190,7 @@ public class DemoApp extends BaseMDIApplication {
 	@Override
 	protected void onVirtualDesktopReady() {
 	    standardVirtualDesktopReady(virtualView, this::restoreDefaultViewLocations, true);
-	    Log.getInstance().info("Classifier is ready.");		Log.getInstance().info("DemoApp is ready.");
+	    Log.getInstance().info("DemoApp is ready.");
 	}
 
 	/**
