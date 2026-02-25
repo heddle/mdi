@@ -3,6 +3,7 @@
 ![Maven Central](https://img.shields.io/maven-central/v/io.github.heddle/mdi)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Java](https://img.shields.io/badge/Java-17+-orange)
+[![arXiv](https://img.shields.io/badge/arXiv-2602.21026-b31b1b.svg)](https://arxiv.org/abs/2602.21026)
 
 
 MDI is a Java framework for building scientific desktop applications with:
