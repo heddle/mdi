@@ -29,15 +29,31 @@ public class LineItem extends AItem {
 	/**
 	 * Create a world line object.
 	 *
-	 * @param itemList the list this item is on.
+	 * @param layer the layer this item is on.
 	 * @param wp0      start of the line.
 	 * @param wp1      end of the line of the line.
 	 */
-	public LineItem(Layer itemList, Point2D.Double wp0, Point2D.Double wp1) {
-		super(itemList);
+	public LineItem(Layer layer, Point2D.Double wp0, Point2D.Double wp1) {
+		this(layer, wp0, wp1, (Object[])null);
+	}
+	
+	/**
+	 * Create a world line object.
+	 *
+	 * @param layer the layer this item is on.
+	 * @param wp0      start of the line.
+	 * @param wp1      end of the line of the line.
+	 * @param keyVals optional key-value pairs to set on the item. For example, you could
+	 * use this to set the display name, style, or other properties at construction time. 
+	 * The keys should be from the set of standard keys defined in PropertyUtils, or any 
+	 * custom keys recognized by this item or its style.
+	 */
+	public LineItem(Layer layer, Point2D.Double wp0, Point2D.Double wp1, Object... keyVals) {
+		super(layer, keyVals);
 		_line = new Line2D.Double(wp0, wp1);
 		_focus = new Point2D.Double(0.5 * (wp0.x + wp1.x), 0.5 * (wp0.y + wp1.y));
 	}
+
 
 	/**
 	 * Check whether the (rendered) item contains the given screen point.

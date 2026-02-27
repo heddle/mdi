@@ -3,7 +3,8 @@ package edu.cnu.mdi.properties;
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
-import java.util.Enumeration;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import javax.swing.JComponent;
@@ -22,9 +23,11 @@ public class PropertyUtils {
 	public static final String BACKGROUNDIMAGE = "BACKGROUNDIMAGE";
 	public static final String BOXZOOMRBPOLICY = "BOXZOOMRBPOLICY";
 	public static final String CLOSABLE = "CLOSABLE";
-	public static final String COMPONENT = "COMPONENT";
+	public static final String CONNECTABLE = "CONNECTABLE";
 	public static final String CONTAINER = "CONTAINER";
 	public static final String CONTAINERCLASS = "CONTAINERCLASS";
+	public static final String DELETABLE = "DELETABLE";
+	public static final String DOUBLECLICKABLE = "DOUBLECLICKABLE";
 	public static final String DRAGGABLE = "DRAGGABLE";
 	public static final String FILLCOLOR = "FILLCOLOR";
 	public static final String FRACTION = "FRACTION";
@@ -40,6 +43,7 @@ public class PropertyUtils {
 	public static final String LOCKED = "LOCKED";
 	public static final String RADIUS = "RADIUS";
 	public static final String RESIZABLE = "RESIZABLE";
+	public static final String RIGHTCLICKABLE = "RIGHTCLICKABLE";
 	public static final String ROTATABLE = "ROTATABLE";
 	public static final String SCROLLABLE = "SCROLLABLE";
 	public static final String SPLITWESTCOMPONENT = "SPLITWESTCOMPONENT";
@@ -52,7 +56,6 @@ public class PropertyUtils {
 	public static final String TOP = "TOP";
 	public static final String USERDATA = "USERDATA";
 	public static final String VISIBLE = "VISIBLE";
-	public static final String VVLOCATION = "VVLOCATION";
 	public static final String WHEELZOOM = "WHEELZOOM";
 	public static final String WIDTH = "WIDTH";
 	public static final String WORLDSYSTEM = "WORLDSYSTEM";
@@ -64,6 +67,58 @@ public class PropertyUtils {
 	public static final String DIST_X = "DISTX";
 	public static final String DIST_Y = "DISTY";
 	public static final String DIST_Z = "DISTZ";
+	
+	// a map of known keys and their expected value types. 
+	//This is used for error checking and documentation purposes.
+	private static final Map<String, Class<?>> KNOWN_KEYS = Map.ofEntries(
+			Map.entry(ANGLE_X, Float.class),
+			Map.entry(ANGLE_Y, Float.class),
+			Map.entry(ANGLE_Z, Float.class),
+			Map.entry(ASPECT, Double.class), 
+			Map.entry(BACKGROUND, Color.class),
+			Map.entry(BACKGROUNDIMAGE, String.class),
+		    Map.entry(BOXZOOMRBPOLICY, ARubberband.Policy.class),
+		    Map.entry(CLOSABLE, Boolean.class),
+		    Map.entry(CONNECTABLE, Boolean.class),
+		    Map.entry(CONTAINER, IContainer.class),
+		    Map.entry(CONTAINERCLASS, Class.class),
+		    Map.entry(DELETABLE, Boolean.class),
+		    Map.entry(DIST_X, Float.class),
+		    Map.entry(DIST_Y, Float.class),
+		    Map.entry(DIST_Z, Float.class),
+		    Map.entry(DOUBLECLICKABLE, Boolean.class),
+		    Map.entry(DRAGGABLE, Boolean.class),
+		    Map.entry(FILLCOLOR, Color.class),
+		    Map.entry(FRACTION, Double.class),
+		    Map.entry(HEIGHT, Integer.class),
+		    Map.entry(ICONIFIABLE, Boolean.class),
+		    Map.entry(INFOBUTTON, Boolean.class),
+		    Map.entry(LEFT, Integer.class),
+		    Map.entry(LINECOLOR, Color.class),
+		    Map.entry(LINESTYLE, LineStyle.class),
+		    Map.entry(LINEWIDTH, Float.class),
+		    Map.entry(LOCKED, Boolean.class),
+		    Map.entry(MAXIMIZE, Boolean.class),
+		    Map.entry(MAXIMIZABLE, Boolean.class),
+		    Map.entry(RADIUS, Double.class),
+		    Map.entry(RESIZABLE, Boolean.class),
+		    Map.entry(RIGHTCLICKABLE, Boolean.class),
+		    Map.entry(ROTATABLE, Boolean.class),
+		    Map.entry(SCROLLABLE, Boolean.class),
+		    Map.entry(SPLITWESTCOMPONENT, JComponent.class),
+		    Map.entry(STANDARDVIEWDECORATIONS, Boolean.class),
+		    Map.entry(SYMBOL, SymbolType.class),
+		    Map.entry(SYMBOLSIZE, Integer.class),
+		    Map.entry(TEXTCOLOR, Color.class),
+		    Map.entry(TITLE, String.class),
+		    Map.entry(TOOLBARBITS, Long.class),
+		    Map.entry(TOP, Integer.class),
+		    Map.entry(USERDATA, Object.class),
+		    Map.entry(VISIBLE, Boolean.class),
+		    Map.entry(WHEELZOOM, Boolean.class),
+		    Map.entry(WIDTH, Integer.class),
+		    Map.entry(WORLDSYSTEM, Rectangle2D.Double.class)
+		);
 
 	// default fill color a gray
 	public static Color defaultFillColor = new Color(208, 208, 208, 128);
@@ -91,53 +146,72 @@ public class PropertyUtils {
 	 * @return a set of properties
 	 */
 	public static Properties fromKeyValues(Object... keyValues) {
-		if ((keyValues == null) || (keyValues.length < 2)) {
-			return null;
-		}
 
-		int len = keyValues.length;
-		Properties props = new Properties();
+	    Properties props = new Properties();
 
-		for (int i = 0; i < (len - 1); i += 2) {
-			Object key = keyValues[i];
-			Object val = keyValues[i + 1];
-			try {
-				props.put(key, val);
-			} catch (NullPointerException e) {
-				System.err.println("null pointer exception");
-				System.err.println("key: " + key);
-				System.err.println("val: " + val);
-				e.printStackTrace();
-			}
-		}
+	    if (keyValues == null || keyValues.length == 0) {
+	        return props;
+	    }
 
-		return props;
+	    if ((keyValues.length % 2) != 0) {
+	        throw new IllegalArgumentException(
+	            "Key/value arguments must come in pairs.");
+	    }
+
+	    for (int i = 0; i < keyValues.length; i += 2) {
+
+	        Object keyObj = keyValues[i];
+	        Object value = keyValues[i + 1];
+
+	        if (!(keyObj instanceof String key)) {
+	            throw new IllegalArgumentException(
+	                "Property key must be a String at index " + i);
+	        }
+
+	        // --- Unknown key check ---
+	        if (!KNOWN_KEYS.containsKey(key)) {
+	            System.err.println("Warning: Unknown property key: " + key);
+	            props.put(key, value);
+	            continue;
+	        }
+
+	        // --- Type safety check ---
+	        Class<?> expectedType = KNOWN_KEYS.get(key);
+	        if (value != null && !expectedType.isInstance(value)) {
+	            throw new IllegalArgumentException(
+	                "Property '" + key + "' expects type " +
+	                expectedType.getSimpleName() +
+	                " but got " +
+	                value.getClass().getSimpleName());
+	        }
+
+	        props.put(key, value);
+	    }
+
+	    return props;
+	}
+	
+	/**
+	 * Register a new key and its expected type. This allows for extensibility while maintaining some level of type safety.
+	 *
+	 * @param key          the property key to register
+	 * @param expectedType the expected type of the value associated with this key
+	 * @throws NullPointerException if key or expectedType is null
+	 */
+	public static void registerKey(String key, Class<?> expectedType) {
+	    Objects.requireNonNull(key, "key");
+	    Objects.requireNonNull(expectedType, "expectedType");
+	    KNOWN_KEYS.put(key, expectedType);
 	}
 
 	/**
-	 * Convert a properties object into an object array. This is the inverse of the
-	 * fromKeyValues method.
+	 * Register a new key with an expected type of Object. This is a more permissive registration that allows any type of value for the key.
 	 *
-	 * @param props the properties
-	 * @return the corresponding object array.
+	 * @param key the property key to register
+	 * @throws NullPointerException if key is null
 	 */
-	public static Object[] toObjectArray(Properties props) {
-		if ((props == null) || (props.isEmpty())) {
-			return null;
-		}
-
-		int size = props.size();
-		Object[] o = new Object[2 * size];
-
-		int j = 0;
-		for (Enumeration<Object> e = props.keys(); e.hasMoreElements();) {
-			Object key = e.nextElement();
-			Object value = props.get(key);
-			o[j] = key;
-			o[j + 1] = value;
-			j += 2;
-		}
-		return o;
+	public static void registerKey(String key) {
+	    registerKey(key, Object.class); // means “known, any type”
 	}
 
 	/**
@@ -279,6 +353,36 @@ public class PropertyUtils {
 	public static boolean getMaximizable(Properties props) {
 		return getBoolean(props, MAXIMIZABLE, true);
 	}
+	
+	/**
+	 * Get the item connectable boolean flag. 
+	 *
+	 * @param props the properties
+	 * @return the connectable flag. On error, return false.
+	 */
+	public static boolean getConnectable(Properties props) {
+		return getBoolean(props, CONNECTABLE, false);
+	}
+	
+	/**
+	 * Get the view double-clickable boolean flag. For views and items.
+	 *
+	 * @param props the properties
+	 * @return the double-clickable flag. On error, return false.
+	 */
+	public static boolean getDoubleClickable(Properties props) {
+		return getBoolean(props, DOUBLECLICKABLE, false);
+	}
+	
+	/**
+	 * Get the view deletable boolean flag. For views and items.
+	 *
+	 * @param props the properties
+	 * @return the deletable flag. On error, return true.
+	 */
+	public static boolean getDeletable(Properties props) {
+		return getBoolean(props, DELETABLE, true);
+	}
 
 	/**
 	 * Get the view resizable boolean flag. For views.
@@ -288,6 +392,16 @@ public class PropertyUtils {
 	 */
 	public static boolean getResizable(Properties props) {
 		return getBoolean(props, RESIZABLE, true);
+	}
+	
+	/**
+	 * Get the view right-clickable boolean flag. For views and items.
+	 *
+	 * @param props the properties
+	 * @return the right-clickable flag. On error, return true.
+	 */
+	public static boolean getRightClickable(Properties props) {
+		return getBoolean(props, RIGHTCLICKABLE, true);
 	}
 
 	/**
@@ -401,17 +515,6 @@ public class PropertyUtils {
 	}
 
 	/**
-	 * Get the component id.
-	 *
-	 * @param props the properties
-	 * @return the component Id. On error return Integer.MIN_VALUE (-2^31 =
-	 *         -2147483648)
-	 */
-	public static int getComponent(Properties props) {
-		return getInt(props, COMPONENT, Integer.MIN_VALUE);
-	}
-
-	/**
 	 * Get the background color from the properties
 	 *
 	 * @param props the properties
@@ -473,8 +576,8 @@ public class PropertyUtils {
 	 * @param props the properties
 	 * @return the width. On error return 0.
 	 */
-	public static int getLineWidth(Properties props) {
-		return getInt(props, LINEWIDTH, 0);
+	public static float getLineWidth(Properties props) {
+		return getFloat(props, LINEWIDTH, 0);
 	}
 
 	/**

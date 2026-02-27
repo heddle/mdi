@@ -17,6 +17,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
@@ -29,6 +30,7 @@ import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.item.ItemModification.ModificationType;
+import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.view.BaseView;
@@ -114,7 +116,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	/**
 	 * Controls whether the item responds to a righjt click.
 	 */
-	protected boolean _rightClickable = false;
+	protected boolean _rightClickable = true;
 
 	/**
 	 * Controls whether the item can be selected.
@@ -141,7 +143,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	/**
 	 * Controls whether the item can be resized.
 	 */
-	private boolean _resizable = false;
+	private boolean _resizable = true;
 
 	/**
 	 * Controls whether the item can be deleted.
@@ -199,14 +201,62 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * Create an item on a specific layer.
 	 *
 	 * @param layer the layer it is on.
+	 * @param keyVals optional key value pairs for initialization. This is not used by
 	 */
-	public AItem(Layer layer) {
+	public AItem(Layer layer, Object... keyVals) {
 		_layer = layer;
 		_layer.add(this);
 
+		//all items are potential feedback providers
 		_layer.getContainer().getFeedbackControl().addFeedbackProvider(this);
+		
+		Properties props = PropertyUtils.fromKeyValues(keyVals);
+	    applyProperties(props);   // new
 	}
 	
+	// apply properties from the key value pairs. This is called by the constructor, but can also be called later to change properties. Subclasses should override and call super.applyProperties(props) to apply the standard properties, and then apply any subclass specific properties. The default implementation applies the standard properties.
+	protected void applyProperties(Properties props) {
+	    if (props == null) return;
+
+	    // behavior
+	    setVisible(PropertyUtils.getBoolean(props, PropertyUtils.VISIBLE, _visible));
+	    setLocked(PropertyUtils.getLocked(props));
+	    setDraggable(PropertyUtils.getDraggable(props));
+	    setResizable(PropertyUtils.getResizable(props));
+	    setRightClickable(PropertyUtils.getRightClickable(props));
+	    setDeletable(PropertyUtils.getDeletable(props));
+	    setConnectable(PropertyUtils.getConnectable(props));
+	    setDoubleClickable(PropertyUtils.getDoubleClickable(props));
+	    setRotatable(PropertyUtils.getRotatable(props));
+
+	    // title/name
+	    String title = PropertyUtils.getTitle(props);
+	    if (title != null) _displayName = title;
+
+	    // style
+	    applyStyleProperties(props);
+
+	    // subclass geometry hook
+	    applyGeometryProperties(props);
+	}
+
+	//subclasses can apply relevant geometry properties such as radius. width, etc.
+	protected void applyGeometryProperties(Properties props) {
+	    // default: do nothing
+	}
+	
+	// set the style properties from the props. Subclasses should call super.applyStyleProperties(props) to apply the standard style properties, and then apply any subclass specific style properties. The default implementation applies the standard style properties.
+	protected void applyStyleProperties(Properties props) {
+	    IStyled s = getStyleSafe();
+
+	    if (props.containsKey(PropertyUtils.FILLCOLOR)) s.setFillColor(PropertyUtils.getFillColor(props));
+	    if (props.containsKey(PropertyUtils.LINECOLOR)) s.setLineColor(PropertyUtils.getLineColor(props));
+	    if (props.containsKey(PropertyUtils.LINESTYLE)) s.setLineStyle(PropertyUtils.getLineStyle(props));
+	    if (props.containsKey(PropertyUtils.LINEWIDTH)) s.setLineWidth(PropertyUtils.getLineWidth(props));
+	    if (props.containsKey(PropertyUtils.SYMBOL)) s.setSymbolType(PropertyUtils.getSymbol(props));
+	    if (props.containsKey(PropertyUtils.SYMBOLSIZE)) s.setSymbolSize(PropertyUtils.getSymbolSize(props));
+	    if (props.containsKey(PropertyUtils.TEXTCOLOR)) s.setTextColor(PropertyUtils.getTextColor(props));
+	}
 	/**
 	 * Draw the item.
 	 *
