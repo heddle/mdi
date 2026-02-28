@@ -162,7 +162,7 @@ public class MapContainer extends BaseContainer implements HoverListener {
 	}
 	
 	// Clean up hover resources when container is closed
-	protected void prepareForExit() {
+	public void prepareForExit() {
 		HoverManager.getInstance().unregisterComponent(getComponent());
 		
 		if (hoverWindow != null) {

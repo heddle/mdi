@@ -24,7 +24,6 @@ import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.function.Predicate;
 
@@ -253,12 +252,15 @@ public class BaseView extends JInternalFrame
 	}
 
 	/**
-	 * Optional hook for views to prepare for application closing. Default does
-	 * nothing.
+	 * Optional hook for views to prepare for application closing. Default  calls
+	 * prepareForExit on the container if present, which allows simulations to stop,
+	 * state to be saved, etc. before the application exits.
 	 */
 	public void prepareForExit() {
-		// Default implementation does nothing;
-		// override as needed, e,g, to stop background threads or save state.
+		IContainer cont = getContainer();
+		if (cont != null) {
+			cont.prepareForExit();
+		}
 	}
 
 	/**

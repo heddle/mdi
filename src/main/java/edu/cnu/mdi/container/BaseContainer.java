@@ -1100,4 +1100,9 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 		_standardPanning = standardPanning;
 	}
 
+	@Override
+	public void prepareForExit() {
+		//no op
+	}
+
 }
