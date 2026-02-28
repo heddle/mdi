@@ -1,6 +1,7 @@
 package edu.cnu.mdi.mapping;
 
 import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D.Double;
@@ -35,10 +36,7 @@ public class MapContainer extends BaseContainer implements HoverListener {
 		setStandardPanning(false);
 		
 		//register for hover events
-		HoverManager.getInstance().registerComponent(getComponent(), this);
-		
-		// Create the hover info window (initially hidden)
-		hoverWindow = new HoverInfoWindow(getComponent());
+		HoverManager.getInstance().registerComponent(getComponent(), this);	
 	}
 
 
@@ -142,12 +140,36 @@ public class MapContainer extends BaseContainer implements HoverListener {
 		
 		SwingUtilities.convertPointToScreen(p, he.getSource());
 
-		hoverWindow.showMessage(countryName, p);
+		getHoverWindow().showMessage(countryName, p);
 	}
 
 	@Override
-	public void hoverDown() {
-		hoverWindow.hideWindow();
+	public void hoverDown(HoverEvent he) {
+		getHoverWindow().hideMessage();
+	}
+	
+	// Lazily create the hover window when needed
+	private HoverInfoWindow getHoverWindow() {
+	    if (hoverWindow == null) {
+	        Window ownerWin = SwingUtilities.getWindowAncestor(getComponent());
+	        if (ownerWin == null) {
+	            // Not yet realized; try again later.
+	            return null;
+	        }
+	        hoverWindow = new HoverInfoWindow(ownerWin);
+	    }
+	    return hoverWindow;
+	}
+	
+	// Clean up hover resources when container is closed
+	protected void prepareForExit() {
+		HoverManager.getInstance().unregisterComponent(getComponent());
+		
+		if (hoverWindow != null) {
+			HoverManager.getInstance().unregisterComponent(hoverWindow);
+			hoverWindow.dispose();
+			hoverWindow = null;
+		}
 	}
 
 }

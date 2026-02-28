@@ -16,6 +16,7 @@ public interface HoverListener {
     /**
 	 * Called when a hover event ends. Implementations can perform cleanup or
 	 * state updates as needed when the hover is no longer active.
+	 * @param he the HoverEvent containing details about the hover action that is ending
 	 */
-    public void hoverDown();
+    public void hoverDown(HoverEvent he);
 }

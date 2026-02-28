@@ -2,142 +2,240 @@ package edu.cnu.mdi.hover;
 
 import java.awt.Component;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Objects;
 import java.util.WeakHashMap;
 
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 /**
- * Manages hover events for registered components. This class implements a singleton
- * pattern to provide a centralized hover management system across the application.
- * It uses a timer to detect when the mouse has stopped moving over a component,
- * firing hover up and down events accordingly. The class also handles edge cases
- * such as components being removed or hidden while hovering, ensuring that hover
- * events are properly managed in those scenarios.
- * 
- * Note that the interface methods hoverUp and hoverDown are called on the 
- * Event Dispatch Thread (EDT) to ensure thread safety when interacting with 
- * Swing components.
+ * Centralized hover management (tool-tip like behavior) for arbitrary Swing components.
+ * <p>
+ * - All callbacks happen on the EDT (mouse events + Swing Timer).
+ * - Call {@link #registerComponent(Component, HoverListener)} once per component.
+ * - Call {@link #unregisterComponent(Component)} when the component/view is being disposed.
  */
-public class HoverManager {
-	// Delay in milliseconds before firing the hover up event after mouse movement stops.
-    private static final int HOVER_DELAY = 500;
-    
-    // Singleton instance of HoverManager
-    private static HoverManager instance;
+public final class HoverManager {
 
-    // Single timer instance to manage hover events across all components
+    private static final int DEFAULT_DELAY_MS = 600;
+
+    private static final HoverManager instance = new HoverManager();
+
+    /** Single Swing timer shared across all hover registrations. Fires on EDT. */
     private final Timer timer;
-    
-    // Active hover task tracking the current component, listener, and hover point
+
+    /** Weak keys so the manager does not keep components alive; listeners must still be removed on dispose. */
+    private final WeakHashMap<Component, Registration> registry = new WeakHashMap<>();
+
+    /** Current pending task (if any). Accessed only on EDT. */
     private HoverTask activeTask;
-    
-    // Flag to indicate if a hover is currently active, used to manage hover down events on movement
-    private boolean isHovering = false;
 
-    // Maps components to their specific adapter to prevent double-registration
-    private final WeakHashMap<Component, MouseAdapter> registry = new WeakHashMap<>();
+    /** Hover delay in ms. */
+    private int delayMs = DEFAULT_DELAY_MS;
 
-    // Encapsulates the state of an active hover task
-    private record HoverTask(Component component, HoverListener listener, Point point) {}
-
-    // Private constructor for singleton pattern
     private HoverManager() {
-        timer = new Timer(HOVER_DELAY, e -> fireHoverUp());
+        timer = new Timer(delayMs, this::handleTimerFired);
         timer.setRepeats(false);
     }
 
-    /**
-	 * Get the singleton instance of HoverManager. This method is synchronized to
-	 * ensure thread safety during lazy initialization.
-	 *
-	 * @return the singleton instance of HoverManager
-	 */
-    public static synchronized HoverManager getInstance() {
-        if (instance == null) instance = new HoverManager();
+    public static HoverManager getInstance() {
         return instance;
     }
 
     /**
-	 * Register a component to receive hover events. This method adds mouse listeners
-	 * to the component to track mouse movement and trigger hover events after a
-	 * specified delay. It also handles edge cases such as the component being removed
-	 * or hidden while hovering.
-	 * @param comp     the component to register for hover events
-	 * @param listener the HoverListener that will receive hover events for the component
-	 * @throws IllegalArgumentException if the component is null or the listener is null
-	 * @throws IllegalStateException if the component is already registered
-	 * @implNote This method uses a WeakHashMap to store component-adapter pairs, allowing
-	 * garbage collection of components that are no longer in use without causing memory leaks.
-	 * The method also includes checks to prevent multiple registrations of the same component and to handle edge cases where the component's visibility changes during a hover event.
-	 */
-    public void registerComponent(Component comp, HoverListener listener) {
-        // 1. Prevent multiple registrations
-        if (registry.containsKey(comp)) return;
-
-        MouseAdapter adapter = new MouseAdapter() {
-            @Override
-            public void mouseMoved(MouseEvent e) { reset(comp, e.getPoint(), listener); }
-            @Override
-            public void mouseDragged(MouseEvent e) { reset(comp, e.getPoint(), listener); }
-            @Override
-            public void mouseExited(MouseEvent e) { handleExit(comp); }
-        };
-
-        // 2. Handle Edge Case: Component is removed or hidden while hovering
-        comp.addHierarchyListener(e -> {
-            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
-                if (!comp.isShowing()) handleExit(comp);
-            }
-        });
-
-        comp.addMouseMotionListener(adapter);
-        comp.addMouseListener(adapter);
-        registry.put(comp, adapter);
+     * Set the hover delay. Must be called on EDT or before UI shows.
+     */
+    public void setDelayMs(int delayMs) {
+        if (delayMs < 0) {
+            throw new IllegalArgumentException("delayMs must be >= 0");
+        }
+        this.delayMs = delayMs;
+        timer.setInitialDelay(delayMs);
     }
 
-    // Resets the hover timer and updates the active task with the new component, listener, and point.
-    private void reset(Component comp, Point p, HoverListener listener) {
-        // If moving within the same component that is already hovering, 
-        // trigger down before restarting the "stillness" clock.
-        if (isHovering) {
-            fireHoverDown();
+    public int getDelayMs() {
+        return delayMs;
+    }
+
+    /**
+     * Register a component for hover events.
+     * <p>
+     * If the component is already registered, this method is a no-op.
+     */
+    public void registerComponent(Component comp, HoverListener listener) {
+        Objects.requireNonNull(comp, "comp");
+        Objects.requireNonNull(listener, "listener");
+
+        // If already registered, do nothing (keeps backward compatibility with your current behavior).
+        if (registry.containsKey(comp)) {
+            return;
+        }
+
+        // Mouse listener (also used as motion listener).
+        MouseAdapter mouseAdapter = new MouseAdapter() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                handleMove(comp, listener, e);
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                handleMove(comp, listener, e);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                handleMove(comp, listener, e);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                handleExit(comp, listener);
+            }
+        };
+
+        // Hierarchy listener to force exit if component is no longer showing.
+        HierarchyListener hierarchyListener = (HierarchyEvent e) -> {
+            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0) {
+                if (!comp.isShowing()) {
+                    handleExit(comp, listener);
+                }
+            }
+        };
+
+        comp.addMouseListener(mouseAdapter);
+        comp.addMouseMotionListener(mouseAdapter);
+        comp.addHierarchyListener(hierarchyListener);
+
+        registry.put(comp, new Registration(mouseAdapter, hierarchyListener));
+    }
+
+    /**
+     * Unregister a component and remove listeners installed by {@link #registerComponent(Component, HoverListener)}.
+     * <p>
+     * Safe to call multiple times.
+     */
+    public void unregisterComponent(Component comp) {
+        if (comp == null) {
+            return;
+        }
+
+        Registration reg = registry.remove(comp);
+        if (reg == null) {
+            // Not registered (or already GC'd from map); still attempt to cancel active task if it matches.
+            if (activeTask != null && activeTask.component == comp) {
+                cancelActiveTask();
+            }
+            return;
+        }
+
+        // Remove installed listeners.
+        comp.removeMouseListener(reg.mouseAdapter);
+        comp.removeMouseMotionListener(reg.mouseAdapter);
+        comp.removeHierarchyListener(reg.hierarchyListener);
+
+        // If this component is involved in the current pending/hovering task, cancel it cleanly.
+        if (activeTask != null && activeTask.component == comp) {
+            cancelActiveTask();
+        }
+    }
+
+    // -----------------------------
+    // Internal handlers (EDT only)
+    // -----------------------------
+
+    private void handleMove(Component comp, HoverListener listener, MouseEvent e) {
+        if (!comp.isShowing()) {
+            handleExit(comp, listener);
+            return;
+        }
+
+        // Convert to component coords (MouseEvent already is), and reset the task.
+        Point p = e.getPoint();
+        resetTask(comp, listener, p);
+    }
+
+    private void handleExit(Component comp, HoverListener listener) {
+        // If active task relates to this component, cancel it and send hoverDown if needed.
+        if (activeTask != null && activeTask.component == comp) {
+            if (activeTask.isHovering) {
+                safeHoverDown(activeTask.listener, new HoverEvent(comp, activeTask.lastPoint));
+            }
+            cancelActiveTask();
+        }
+    }
+
+    private void resetTask(Component comp, HoverListener listener, Point p) {
+        // If we were hovering, first issue hoverDown (classic tooltip behavior).
+        if (activeTask != null && activeTask.isHovering) {
+            safeHoverDown(activeTask.listener, new HoverEvent(activeTask.component, activeTask.lastPoint));
         }
 
         activeTask = new HoverTask(comp, listener, p);
+        timer.setInitialDelay(delayMs);
         timer.restart();
     }
 
-    //
-    private void handleExit(Component comp) {
-        if (activeTask != null && activeTask.component == comp) {
-            cancel();
+    private void handleTimerFired(ActionEvent ignored) {
+        if (activeTask == null) {
+            return;
         }
+        if (!activeTask.component.isShowing()) {
+            cancelActiveTask();
+            return;
+        }
+
+        activeTask.isHovering = true;
+        safeHoverUp(activeTask.listener, new HoverEvent(activeTask.component, activeTask.lastPoint));
     }
 
-    // Fires the hover up event if the active task is still valid and the component is showing and enabled.
-    private void fireHoverUp() {
-        // Extra safety check: is the component still visible/enabled?
-        if (activeTask != null && activeTask.component.isShowing() && activeTask.component.isEnabled()) {
-            isHovering = true;
-            activeTask.listener.hoverUp(new HoverEvent(activeTask.component, activeTask.point));
-        }
-    }
-
-    //
-    private void fireHoverDown() {
-        if (activeTask != null && isHovering) {
-            activeTask.listener.hoverDown();
-        }
-        isHovering = false;
-    }
-
-    // Cancels the active hover task and resets the state.
-    private void cancel() {
+    private void cancelActiveTask() {
         timer.stop();
-        fireHoverDown();
         activeTask = null;
+    }
+
+    private static void safeHoverUp(HoverListener listener, HoverEvent evt) {
+        // Defensive: ensure hover callbacks always occur on EDT.
+        if (SwingUtilities.isEventDispatchThread()) {
+            listener.hoverUp(evt);
+        } else {
+            SwingUtilities.invokeLater(() -> listener.hoverUp(evt));
+        }
+    }
+
+    private static void safeHoverDown(HoverListener listener, HoverEvent evt) {
+        if (SwingUtilities.isEventDispatchThread()) {
+            listener.hoverDown(evt);
+        } else {
+            SwingUtilities.invokeLater(() -> listener.hoverDown(evt));
+        }
+    }
+
+    private static final class HoverTask {
+        final Component component;
+        final HoverListener listener;
+        final Point lastPoint;
+        boolean isHovering;
+
+        HoverTask(Component component, HoverListener listener, Point p) {
+            this.component = component;
+            this.listener = listener;
+            this.lastPoint = (p == null) ? new Point(0, 0) : new Point(p); // defensive copy
+        }
+    }
+
+    private static final class Registration {
+        final MouseAdapter mouseAdapter;
+        final HierarchyListener hierarchyListener;
+
+        Registration(MouseAdapter mouseAdapter, HierarchyListener hierarchyListener) {
+            this.mouseAdapter = mouseAdapter;
+            this.hierarchyListener = hierarchyListener;
+        }
     }
 }

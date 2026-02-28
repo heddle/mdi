@@ -1,67 +1,85 @@
 package edu.cnu.mdi.hover;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
+import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Window;
 
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JWindow;
 
 import edu.cnu.mdi.ui.fonts.Fonts;
 
+/**
+ * Simple hover popup window for displaying hover text near the cursor.
+ */
 @SuppressWarnings("serial")
 public class HoverInfoWindow extends JWindow {
+
     private final JLabel label;
 
-    /**
-	 * Create a hover info window. The owner parameter is used to ensure the window
-	 * is associated with the correct parent frame, which can help with focus and
-	 * z-ordering. The window is set up to be transparent and always on top, making
-	 * it suitable for displaying hover information without interfering with user
-	 * interactions.
-	 *
-	 * @param owner the component that owns this hover info window, typically the main application frame
-	 */
-    public HoverInfoWindow(Component owner) {
-        super(javax.swing.FocusManager.getCurrentManager().getActiveWindow());
-        
-        // Setup transparency (Requires the OS/Windowing system to support it)
-        setBackground(new Color(0, 0, 0, 128)); // Black with opacity
-        
-        label = new JLabel();
-        label.setForeground(Color.WHITE);
-        label.setFont(Fonts.plainFontDelta(0));
-        label.setBorder(BorderFactory.createEmptyBorder(5, 8, 5, 8));
-        
-        add(label);
-        setAlwaysOnTop(true);
-    }
+    public HoverInfoWindow(Window owner) {
+        super(owner);
 
+        setBackground(new Color(0, 0, 0, 0));  // IMPORTANT
+
+        label = new JLabel();
+        label.setFont(Fonts.plainFontDelta(-2));
+        label.setOpaque(false);
+        label.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+        label.setForeground(Color.white);
+
+        JComponent content = (JComponent) getContentPane();
+        content.setLayout(new BorderLayout());
+        content.add(label, BorderLayout.CENTER);
+
+        content.setBackground(new Color(0, 0, 0, 128));  // translucent black
+        content.setOpaque(true);
+
+        content.setBorder(BorderFactory.createLineBorder(
+                new Color(0, 0, 0, 200)
+        ));
+
+        setAlwaysOnTop(true);
+        setFocusableWindowState(false);    }
+
+ 
     /**
-	 * Show the hover info window with the specified text at the given screen position.
-	 * The window will be positioned slightly offset from the cursor to avoid
-	 * obscuring the hovered component. The pack() method is called to ensure the
-	 * window resizes to fit the text content, and setVisible(true) is called to
-	 * display the window.
-	 */
-    public void showMessage(String text, Point screenPos) {
-        label.setText(text);
-        pack(); // Resize to fit text
-        
-        // Offset slightly so it's not directly under the cursor
-        setLocation(screenPos.x + 10, screenPos.y + 10);
+     * Show a message near the given screen coordinate.
+     *
+     * @param message the message text
+     * @param screenPoint a point in SCREEN coordinates
+     */
+    public void showMessage(String message, Point screenPoint) {
+        label.setText(message == null ? "" : message);
+        pack();
+
+        // Offset slightly so we don't sit exactly under the cursor.
+        int x = screenPoint.x + 12;
+        int y = screenPoint.y + 18;
+
+        // Optional: keep on-screen (simple clamp).
+        Insets insets = getToolkit().getScreenInsets(getGraphicsConfiguration());
+        int minX = insets.left;
+        int minY = insets.top;
+        int maxX = getGraphicsConfiguration().getBounds().x
+                + getGraphicsConfiguration().getBounds().width - insets.right - getWidth();
+        int maxY = getGraphicsConfiguration().getBounds().y
+                + getGraphicsConfiguration().getBounds().height - insets.bottom - getHeight();
+
+        if (x < minX) x = minX;
+        if (y < minY) y = minY;
+        if (x > maxX) x = maxX;
+        if (y > maxY) y = maxY;
+
+        setLocation(x, y);
         setVisible(true);
     }
 
-    /**
-	 * Hide the hover info window. This method simply sets the window's visibility
-	 * to false, which will hide it from view. The window can be shown again later
-	 * by calling showMessage() with new text and position.
-	 * Note that the window is not disposed, so it can be reused for future hover events without needing to recreate it.
-	 * This allows for efficient reuse of the hover info window across multiple hover interactions.
-	 */
-    public void hideWindow() {
+    public void hideMessage() {
         setVisible(false);
     }
 }

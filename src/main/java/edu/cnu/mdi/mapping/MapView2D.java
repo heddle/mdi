@@ -354,5 +354,15 @@ public class MapView2D extends BaseView {
 	protected IMapProjection getMapProjection() {
 		return _projection;
 	}
+	
+	/**
+	 * Prepare the view for exit by stopping any ongoing simulations, threads, or
+	 * timers. This method is called by the base view when the user clicks the
+	 * "Exit" button, allowing the view to clean up resources before the
+	 * application exits.
+	 */
+	public void prepareForExit() {
+		((MapContainer) getContainer()).prepareForExit();
+	}
 
 }

@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.EventQueue;
 import java.awt.Frame;
+import java.awt.Window;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.HierarchyEvent;
@@ -138,6 +139,13 @@ public class BaseMDIApplication extends JFrame {
                     try {
                         prepareForShutdown();
                     } finally {
+                    	prepareForShutdown();        // should dispose hover windows and dialogs
+                    	for (Window w : Window.getWindows()) {
+                    	    if (w != BaseMDIApplication.this) {         // optional: don’t double-dispose the frame currently closing
+                    	        w.dispose();
+                    	    }
+                    	}
+
                         // Dispose the frame; if this is the last displayable window and
                         // no non-daemon threads remain, the JVM will exit naturally.
                         dispose();
