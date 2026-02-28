@@ -12,12 +12,23 @@ public class RectangleItem extends PolygonItem {
 	/**
 	 * Create a world rectangle object.
 	 *
-	 * @param layer the list this item is on.
+	 * @param layer the z layer this item is on.
+	 * @param wr       the initial bounds of the item.
+	 */
+	public RectangleItem(Layer layer, Rectangle2D.Double wr, Object... keyVals) {
+		super(layer, WorldGraphicsUtils.getPoints(wr), keyVals);
+	}
+	
+	/**
+	 * Create a world rectangle object.
+	 *
+	 * @param layer the z layer this item is on.
 	 * @param wr       the initial bounds of the item.
 	 */
 	public RectangleItem(Layer layer, Rectangle2D.Double wr) {
 		super(layer, WorldGraphicsUtils.getPoints(wr));
 	}
+
 
 	/**
 	 * Reshape the item based on the modification. Keep in mind that if control or

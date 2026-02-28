@@ -19,11 +19,23 @@ public class PathBasedItem extends AItem {
 	/**
 	 * Create an object that is based on a java Path2D object.
 	 *
-	 * @param layer the list this item is on.
+	 * @param layer the z layer this item is on.
 	 */
 	public PathBasedItem(Layer layer) {
 		super(layer);
 	}
+	
+	/**
+	 * Create an object that is based on a java Path2D object.
+	 *
+	 * @param layer the z layer this item is on.
+	 * @param keyVals  optional key value pairs to set properties of the item. See
+	 *                {@link AItem#AItem(Layer, Object...)} for details.
+	 */
+	public PathBasedItem(Layer layer, Object... keyVals) {
+		super(layer, keyVals);
+	}
+
 
 	/**
 	 * Custom drawer for the item.
