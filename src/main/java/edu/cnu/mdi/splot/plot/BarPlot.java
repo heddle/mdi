@@ -251,47 +251,5 @@ public class BarPlot {
 		return createBarPlot(title, values, categories, xLabel, yLabel);
 	}
 
-	// initialize the FlatLaf UI for the main program test
-	private static void UIInit() {
-		FlatIntelliJLaf.setup();
-		UIManager.put("Component.focusWidth", 1);
-		UIManager.put("Component.arc", 6);
-		UIManager.put("Button.arc", 6);
-		UIManager.put("TabbedPane.showTabSeparators", true);
-		Fonts.refresh();
-	}
-
-
-	public static void main(String[] args) throws PlotDataException {
-
-		javax.swing.SwingUtilities.invokeLater(new Runnable() {
-			@Override
-			public void run() {
-				UIInit();
-
-				JFrame frame = new JFrame("Bar Plot Example");
-				// set up what to do if the window is closed
-				WindowAdapter windowAdapter = new WindowAdapter() {
-					@Override
-					public void windowClosing(WindowEvent event) {
-						System.exit(1);
-					}
-				};
-				frame.addWindowListener(windowAdapter);
-				frame.setSize(800, 600);
-
-				try {
-					PlotPanel barPlot = demoBarPlot();
-					frame.getContentPane().add(barPlot);
-					frame.setVisible(true);
-				} catch (PlotDataException e) {
-					e.printStackTrace();
-				}
-
-
-
-			}
-		});
-	}
 
 }

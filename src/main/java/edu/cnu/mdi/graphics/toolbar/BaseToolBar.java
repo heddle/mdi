@@ -147,6 +147,7 @@ public class BaseToolBar extends AToolBar {
 
 		this.canvas = Objects.requireNonNull(canvas, "Canvas component cannot be null");
 
+		this.handler = handler; // handler can be null at construction, but must be set before tools are used
 		this.bits = bits;
 		this.pointerPolicy = Objects.requireNonNull(pointerPolicy, "pointerPolicy cannot be null");
 		this.boxZoomPolicy = Objects.requireNonNull(boxZoomPolicy, "boxZoomPolicy cannot be null");
@@ -234,7 +235,7 @@ public class BaseToolBar extends AToolBar {
 	private void addPredefinedButtons() {
 
 		// Pointer tool (selection + move + rubberband multi-select)
-		if (ToolBits.hasPointerButton(bits)) {
+		if (ToolBits.usePointerButton(bits)) {
 			JToggleButton pointer = new APointerButton(canvas, this, pointerPolicy, DEFAULT_MIN_SIZE_PX) {
 
 				@Override
@@ -292,7 +293,7 @@ public class BaseToolBar extends AToolBar {
 		}
 
 		// Box zoom tool (toggle)
-		if (ToolBits.hasBoxZoomButton(bits)) {
+		if (ToolBits.useBoxZoomButton(bits)) {
 			JToggleButton boxZoom = new ARubberbandButton(canvas, this, boxZoomPolicy, DEFAULT_MIN_SIZE_PX) {
 				@Override
 				public void rubberbanding(GestureContext gc, Rectangle bounds, Point[] vertices) {
@@ -303,21 +304,21 @@ public class BaseToolBar extends AToolBar {
 		}
 
 		// Zoom in/out/undo/reset (one-shot)
-		if (ToolBits.hasZoomInButton(bits)) {
+		if (ToolBits.useZoomInButton(bits)) {
 			oneShot(ToolBits.ZOOMIN, () -> handler.zoomIn(actionContext()));
 		}
-		if (ToolBits.hasZoomOutButton(bits)) {
+		if (ToolBits.useZoomOutButton(bits)) {
 			oneShot(ToolBits.ZOOMOUT, () -> handler.zoomOut(actionContext()));
 		}
-		if (ToolBits.hasUndoZoomButton(bits)) {
+		if (ToolBits.useUndoZoomButton(bits)) {
 			oneShot(ToolBits.UNDOZOOM, () -> handler.undoZoom(actionContext()));
 		}
-		if (ToolBits.hasResetZoomButton(bits)) {
+		if (ToolBits.useResetZoomButton(bits)) {
 			oneShot(ToolBits.RESETZOOM, () -> handler.resetZoom(actionContext()));
 		}
 
 		// Pan tool (toggle + drag)
-		if (ToolBits.hasPanButton(bits)) {
+		if (ToolBits.usePanButton(bits)) {
 			JToggleButton pan = new ADragButton(canvas, this) {
 				@Override
 				public void startDrag(GestureContext gc) {
@@ -338,7 +339,7 @@ public class BaseToolBar extends AToolBar {
 		}
 
 		// Magnify tool (toggle + move tracking)
-		if (ToolBits.hasMagnifyButton(bits)) {
+		if (ToolBits.useMagnifyButton(bits)) {
 			JToggleButton magnify = new AMoveButton(canvas, this) {
 				@Override
 				public void startMove(GestureContext gc) {
@@ -359,7 +360,7 @@ public class BaseToolBar extends AToolBar {
 		}
 
 		// Center tool (toggle + single click)
-		if (ToolBits.hasCenterButton(bits)) {
+		if (ToolBits.useCenterButton(bits)) {
 			JToggleButton center = new ASingleClickButton(canvas, this) {
 				@Override
 				public void canvasClick(MouseEvent e) {
@@ -371,7 +372,7 @@ public class BaseToolBar extends AToolBar {
 		}
 
 		// Drawing tools (rubberband)
-		if (ToolBits.hasLineButton(bits)) {
+		if (ToolBits.useLineButton(bits)) {
 
 			JToggleButton line = new ARubberbandButton(canvas, this, ARubberband.Policy.LINE, DEFAULT_MIN_SIZE_PX) {
 				@Override
@@ -385,7 +386,7 @@ public class BaseToolBar extends AToolBar {
 			addStdToggle(ToolBits.LINE, line);
 		}
 
-		if (ToolBits.hasRectangleButton(bits)) {
+		if (ToolBits.useRectangleButton(bits)) {
 			JToggleButton rectangle = new ARubberbandButton(canvas, this, ARubberband.Policy.RECTANGLE,
 					DEFAULT_MIN_SIZE_PX) {
 				@Override
@@ -397,7 +398,7 @@ public class BaseToolBar extends AToolBar {
 			addStdToggle(ToolBits.RECTANGLE, rectangle);
 		}
 
-		if (ToolBits.hasEllipseButton(bits)) {
+		if (ToolBits.useEllipseButton(bits)) {
 			JToggleButton ellipse = new ARubberbandButton(canvas, this, ARubberband.Policy.OVAL, DEFAULT_MIN_SIZE_PX) {
 				@Override
 				public void rubberbanding(GestureContext gc, Rectangle bounds, Point[] vertices) {
@@ -408,7 +409,7 @@ public class BaseToolBar extends AToolBar {
 			addStdToggle(ToolBits.ELLIPSE, ellipse);
 		}
 
-		if (ToolBits.hasRadArcButton(bits)) {
+		if (ToolBits.useRadArcButton(bits)) {
 			JToggleButton radArc = new ARubberbandButton(canvas, this, ARubberband.Policy.RADARC, DEFAULT_MIN_SIZE_PX) {
 				@Override
 				public void rubberbanding(GestureContext gc, Rectangle bounds, Point[] vertices) {
@@ -419,7 +420,7 @@ public class BaseToolBar extends AToolBar {
 			addStdToggle(ToolBits.RADARC, radArc);
 		}
 
-		if (ToolBits.hasPolygonButton(bits)) {
+		if (ToolBits.usePolygonButton(bits)) {
 
 			JToggleButton polygon = new ARubberbandButton(canvas, this, ARubberband.Policy.POLYGON,
 					DEFAULT_MIN_SIZE_PX) {
@@ -432,7 +433,7 @@ public class BaseToolBar extends AToolBar {
 			addStdToggle(ToolBits.POLYGON, polygon);
 		}
 
-		if (ToolBits.hasPolylineButton(bits)) {
+		if (ToolBits.usePolylineButton(bits)) {
 			JToggleButton polyline = new ARubberbandButton(canvas, this, ARubberband.Policy.POLYLINE,
 					DEFAULT_MIN_SIZE_PX) {
 				@Override
@@ -445,7 +446,7 @@ public class BaseToolBar extends AToolBar {
 		}
 
 		// Text tool (toggle + single click)
-		if (ToolBits.hasTextButton(bits)) {
+		if (ToolBits.useTextButton(bits)) {
 			JToggleButton text = new ASingleClickButton(canvas, this) {
 				@Override
 				public void canvasClick(MouseEvent e) {
@@ -457,7 +458,7 @@ public class BaseToolBar extends AToolBar {
 		}
 
 		// Connector tool (rubberband line + point-approval hook)
-		if (ToolBits.hasConnectorButton(bits)) {
+		if (ToolBits.useConnectorButton(bits)) {
 			JToggleButton connector = new ARubberbandButton(canvas, this, ARubberband.Policy.TWO_CLICK_LINE,
 					DEFAULT_MIN_SIZE_PX) {
 
@@ -481,24 +482,24 @@ public class BaseToolBar extends AToolBar {
 		}
 
 		// Style + Delete + Camera + Printer (one-shot)
-		if (ToolBits.hasStyleButton(bits)) {
+		if (ToolBits.useStyleButton(bits)) {
 			oneShot(ToolBits.STYLEB, () -> handler.styleEdit(actionContext()));
 		}
-		if (ToolBits.hasDeleteButton(bits)) {
+		if (ToolBits.useDeleteButton(bits)) {
 			oneShot(ToolBits.DELETE, () -> handler.delete(actionContext()));
 		}
-		if (ToolBits.hasCameraButton(bits)) {
+		if (ToolBits.useCameraButton(bits)) {
 			oneShot(ToolBits.CAMERA, () -> handler.captureImage(actionContext()));
 		}
-		if (ToolBits.hasPrinterButton(bits)) {
+		if (ToolBits.usePrinterButton(bits)) {
 			oneShot(ToolBits.PRINTER, () -> handler.print(actionContext()));
 		}
-		if (ToolBits.hasInfoButton(bits)) {
+		if (ToolBits.useInfoButton(bits)) {
 			oneShot(ToolBits.INFO, () -> handler.info(actionContext()));
 		}
 
 		// Status field (optional)
-		if (ToolBits.hasStatusField(bits)) {
+		if (ToolBits.useStatusField(bits)) {
 			statusField = createStatusTextField();
 			addSeparator();
 
@@ -688,6 +689,18 @@ public class BaseToolBar extends AToolBar {
 	 */
 	public boolean hasDeleteTool() {
 		return hasTool(ToolBits.getId(ToolBits.DELETE));
+	}
+	
+	/**
+	 * Enable or disable the delete tool/button if it exists.
+	 *
+	 * @param enabled new enabled state for the delete tool
+	 */
+	public void setDeleteEnabled(boolean enabled) {
+		if (!hasDeleteTool()) {
+			return;
+		}
+		setButtonEnabled(ToolBits.getId(ToolBits.DELETE), enabled);
 	}
 
 	/**

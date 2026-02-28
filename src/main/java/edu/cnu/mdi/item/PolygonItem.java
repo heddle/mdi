@@ -17,25 +17,37 @@ public class PolygonItem extends PathBasedItem {
 	/**
 	 * Create a world polygon item
 	 *
-	 * @param layer the layer this item is on.
+	 * @param layer the z layer this item is on.
 	 * @param points   the points of the polygon
+	 * @param keyVals  optional key value pairs for styling the item.
 	 */
-	public PolygonItem(Layer layer, Point2D.Double points[]) {
-		super(layer);
+	public PolygonItem(Layer layer, Point2D.Double points[], Object... keyVals) {
+		super(layer, keyVals);
 
 		// set the path
 		if (points != null) {
 			setPath(points);
 		}
 	}
+	
+	/**
+	 * Create a world polygon item
+	 *
+	 * @param layer the z layer this item is on.
+	 * @param points   the points of the polygon
+	 */
+	public PolygonItem(Layer layer, Point2D.Double points[]) {
+		this(layer, points, (Object[]) null);
+	}
+
 
 	/**
 	 * Create a world polygon item
 	 *
-	 * @param itemList the layer this item is on.
+	 * @param layer the z layer this item is on.
 	 */
-	public PolygonItem(Layer itemList) {
-		super(itemList);
+	public PolygonItem(Layer layer) {
+		super(layer);
 	}
 
 	/**

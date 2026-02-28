@@ -43,7 +43,7 @@ public class EllipseItem extends PolygonItem {
 	/**
 	 * Create an ellipse.
 	 *
-	 * @param layer   owning layer.
+	 * @param layer   the z layer this item is on.
 	 * @param w       full width in world units (clamped to {@link #MIN_SIZE}).
 	 * @param h       full height in world units (clamped to {@link #MIN_SIZE}).
 	 * @param azimuth rotation in degrees, using the application's compass/bearing

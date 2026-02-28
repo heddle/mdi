@@ -283,27 +283,27 @@ public final class ToolBits {
 
 	// --- checks used by BaseToolBar ---
 
-	protected static boolean hasPointerButton(long toolbarBits)   { return hasBit(POINTER, toolbarBits); }
-	protected static boolean hasPanButton(long toolbarBits)       { return hasBit(PAN, toolbarBits); }
-	protected static boolean hasResetZoomButton(long toolbarBits) { return hasBit(RESETZOOM, toolbarBits); }
-	protected static boolean hasUndoZoomButton(long toolbarBits)  { return hasBit(UNDOZOOM, toolbarBits); }
-	protected static boolean hasCenterButton(long toolbarBits)    { return hasBit(CENTER, toolbarBits); }
-	protected static boolean hasPrinterButton(long toolbarBits)   { return hasBit(PRINTER, toolbarBits); }
-	protected static boolean hasCameraButton(long toolbarBits)    { return hasBit(CAMERA, toolbarBits); }
-	protected static boolean hasDeleteButton(long toolbarBits)    { return hasBit(DELETE, toolbarBits); }
-	protected static boolean hasStyleButton(long toolbarBits)     { return hasBit(STYLEB, toolbarBits); }
-	protected static boolean hasEllipseButton(long toolbarBits)   { return hasBit(ELLIPSE, toolbarBits); }
-	protected static boolean hasTextButton(long toolbarBits)      { return hasBit(TEXT, toolbarBits); }
-	protected static boolean hasRectangleButton(long toolbarBits) { return hasBit(RECTANGLE, toolbarBits); }
-	protected static boolean hasPolygonButton(long toolbarBits)   { return hasBit(POLYGON, toolbarBits); }
-	protected static boolean hasLineButton(long toolbarBits)      { return hasBit(LINE, toolbarBits); }
-	protected static boolean hasPolylineButton(long toolbarBits)  { return hasBit(POLYLINE, toolbarBits); }
-	protected static boolean hasRadArcButton(long toolbarBits)    { return hasBit(RADARC, toolbarBits); }
-	protected static boolean hasMagnifyButton(long toolbarBits)   { return hasBit(MAGNIFY, toolbarBits); }
-	protected static boolean hasConnectorButton(long toolbarBits) { return hasBit(CONNECTOR, toolbarBits); }
-	protected static boolean hasStatusField(long toolbarBits)     { return hasBit(STATUS, toolbarBits); }
-	protected static boolean hasZoomInButton(long toolbarBits)    { return hasBit(ZOOMIN, toolbarBits); }
-	protected static boolean hasZoomOutButton(long toolbarBits)   { return hasBit(ZOOMOUT, toolbarBits); }
-	protected static boolean hasInfoButton(long toolbarBits)      { return hasBit(INFO, toolbarBits); }
-	protected static boolean hasBoxZoomButton(long toolbarBits)   { return hasBit(BOXZOOM, toolbarBits); }
+	protected static boolean usePointerButton(long toolbarBits)   { return hasBit(POINTER, toolbarBits); }
+	protected static boolean usePanButton(long toolbarBits)       { return hasBit(PAN, toolbarBits); }
+	protected static boolean useResetZoomButton(long toolbarBits) { return hasBit(RESETZOOM, toolbarBits); }
+	protected static boolean useUndoZoomButton(long toolbarBits)  { return hasBit(UNDOZOOM, toolbarBits); }
+	protected static boolean useCenterButton(long toolbarBits)    { return hasBit(CENTER, toolbarBits); }
+	protected static boolean usePrinterButton(long toolbarBits)   { return hasBit(PRINTER, toolbarBits); }
+	protected static boolean useCameraButton(long toolbarBits)    { return hasBit(CAMERA, toolbarBits); }
+	protected static boolean useDeleteButton(long toolbarBits)    { return hasBit(DELETE, toolbarBits); }
+	protected static boolean useStyleButton(long toolbarBits)     { return hasBit(STYLEB, toolbarBits); }
+	protected static boolean useEllipseButton(long toolbarBits)   { return hasBit(ELLIPSE, toolbarBits); }
+	protected static boolean useTextButton(long toolbarBits)      { return hasBit(TEXT, toolbarBits); }
+	protected static boolean useRectangleButton(long toolbarBits) { return hasBit(RECTANGLE, toolbarBits); }
+	protected static boolean usePolygonButton(long toolbarBits)   { return hasBit(POLYGON, toolbarBits); }
+	protected static boolean useLineButton(long toolbarBits)      { return hasBit(LINE, toolbarBits); }
+	protected static boolean usePolylineButton(long toolbarBits)  { return hasBit(POLYLINE, toolbarBits); }
+	protected static boolean useRadArcButton(long toolbarBits)    { return hasBit(RADARC, toolbarBits); }
+	protected static boolean useMagnifyButton(long toolbarBits)   { return hasBit(MAGNIFY, toolbarBits); }
+	protected static boolean useConnectorButton(long toolbarBits) { return hasBit(CONNECTOR, toolbarBits); }
+	protected static boolean useStatusField(long toolbarBits)     { return hasBit(STATUS, toolbarBits); }
+	protected static boolean useZoomInButton(long toolbarBits)    { return hasBit(ZOOMIN, toolbarBits); }
+	protected static boolean useZoomOutButton(long toolbarBits)   { return hasBit(ZOOMOUT, toolbarBits); }
+	protected static boolean useInfoButton(long toolbarBits)      { return hasBit(INFO, toolbarBits); }
+	protected static boolean useBoxZoomButton(long toolbarBits)   { return hasBit(BOXZOOM, toolbarBits); }
 }

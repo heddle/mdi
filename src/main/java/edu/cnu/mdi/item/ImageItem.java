@@ -18,7 +18,7 @@ public class ImageItem extends RectangleItem {
 	/**
 	 * Create a world image object.
 	 *
-	 * @param layer the list this item is on.
+	 * @param layer the z layer this item is on.
 	 * @param wr    the initial bounds of the item. If null, the image size is used.
 	 * @param image the image to display.
 	 */

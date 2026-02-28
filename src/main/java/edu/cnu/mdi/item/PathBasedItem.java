@@ -19,11 +19,23 @@ public class PathBasedItem extends AItem {
 	/**
 	 * Create an object that is based on a java Path2D object.
 	 *
-	 * @param layer the list this item is on.
+	 * @param layer the z layer this item is on.
 	 */
 	public PathBasedItem(Layer layer) {
 		super(layer);
 	}
+	
+	/**
+	 * Create an object that is based on a java Path2D object.
+	 *
+	 * @param layer the z layer this item is on.
+	 * @param keyVals  optional key value pairs to set properties of the item. See
+	 *                {@link AItem#AItem(Layer, Object...)} for details.
+	 */
+	public PathBasedItem(Layer layer, Object... keyVals) {
+		super(layer, keyVals);
+	}
+
 
 	/**
 	 * Custom drawer for the item.
@@ -366,7 +378,7 @@ public class PathBasedItem extends AItem {
 	 * @return the bounds if the path contains only a single point
 	 */
 	protected Rectangle singlePointBounds(IContainer container) {
-		Point2D.Double wp = WorldGraphicsUtils.getPathPointAt(0, _path);
+		Point2D.Double wp = WorldGraphicsUtils.getPathPointAt(_path, 0);
 		Point pp = new Point();
 		container.worldToLocal(pp, wp);
         return new Rectangle(pp.x - 8, pp.y - 8, 16, 16);

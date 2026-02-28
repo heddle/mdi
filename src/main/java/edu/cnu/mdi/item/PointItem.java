@@ -7,6 +7,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.ImageIcon;
+import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.SymbolDraw;
@@ -20,53 +21,61 @@ import edu.cnu.mdi.graphics.style.SymbolType;
  */
 public class PointItem extends AItem {
 
-	// alignment constants used for points with icons
-	public static final int LEFT = 1;
-	public static final int CENTER = 2;
-	public static final int RIGHT = 3;
-
-	public static final int TOP = 1;
-	public static final int BOTTOM = 3;
 
 	// the alignment values
-	private int _xAlignment = CENTER;
-	private int _yAlignment = CENTER;
+	private int _xAlignment = SwingUtilities.CENTER;
+	private int _yAlignment = SwingUtilities.CENTER;
 
-	// some point items will display
-	protected ImageIcon _imageIcon;
+	// some point items will display an icon instead of a symbol. If so, this is the icon to display.
+	protected ImageIcon icon;
 
 	/**
 	 * Constructor for a basic point item.
 	 *
-	 * @param itemList the list this item is on.
+	 * @param layer the layer this item is on.
 	 */
-	public PointItem(Layer itemList) {
-		super(itemList);
+	public PointItem(Layer layer) {
+		super(layer);
 		_focus = new Point2D.Double(Double.NaN, Double.NaN);
 	}
 
 	/**
 	 * Constructor for a basic point item.
 	 *
-	 * @param itemList the list this item is on.
+	 * @param layer the layer this item is on.
 	 * @param icon     an icon to draw at the point
 	 */
-	public PointItem(Layer itemList, ImageIcon icon) {
-		super(itemList);
-		_imageIcon = icon;
+	public PointItem(Layer layer, ImageIcon icon) {
+		super(layer);
+		this.icon = icon;
 		_focus = new Point2D.Double(Double.NaN, Double.NaN);
 	}
 
 	/**
 	 * Constructor for a basic point item.
 	 *
-	 * @param itemList the list this item is on.
+	 * @param layer the layer this item is on.
 	 * @param location the location for the point.
 	 */
-	public PointItem(Layer itemList, Point2D.Double location) {
-		super(itemList);
+	public PointItem(Layer layer, Point2D.Double location) {
+		this(layer, location, (Object[])null);
+	}
+	
+	/**
+	 * Constructor for a basic point item.
+	 *
+	 * @param layer the layer this item is on.
+	 * @param location the location for the point.
+	 * @param keyVals optional key-value pairs to set on the item. For example, you could
+	 * use this to set the display name, style, or other properties at construction time. 
+	 * The keys should be from the set of standard keys defined in PropertyUtils, or any 
+	 * custom keys recognized by this item or its style.
+	 */
+	public PointItem(Layer layer, Point2D.Double location, Object... keyVals) {
+		super(layer, keyVals);
 		_focus = new Point2D.Double(location.x, location.y);
 	}
+
 
 	/**
 	 * Custom drawer for the item.
@@ -78,37 +87,37 @@ public class PointItem extends AItem {
 	public void drawItem(Graphics g, IContainer container) {
 
 		// draw icon?
-		if (_imageIcon != null) {
+		if (icon != null) {
 			Point p = getFocusPoint(container);
-			int w = _imageIcon.getIconWidth();
-			int h = _imageIcon.getIconHeight();
+			int w = icon.getIconWidth();
+			int h = icon.getIconHeight();
 
 			int x = p.x;
 			int y = p.y;
 
 			switch (_xAlignment) {
-			case LEFT:
+			case SwingUtilities.LEFT:
 				break;
-			case CENTER:
+			case SwingUtilities.CENTER:
 				x -= w / 2;
 				break;
-			case RIGHT:
+			case SwingUtilities.RIGHT:
 				x -= w;
 				break;
 			}
 
 			switch (_yAlignment) {
-			case TOP:
+			case SwingUtilities.TOP:
 				break;
-			case CENTER:
+			case SwingUtilities.CENTER:
 				y -= h / 2;
 				break;
-			case BOTTOM:
+			case SwingUtilities.BOTTOM:
 				y -= h;
 				break;
 			}
 
-			g.drawImage(_imageIcon.getImage(), x, y, container.getComponent());
+			g.drawImage(icon.getImage(), x, y, container.getComponent());
 		} else {
 			// draw symbol?
 			if (_style.getSymbolType() != SymbolType.NOSYMBOL) {
@@ -148,34 +157,34 @@ public class PointItem extends AItem {
 	@Override
 	public Rectangle getBounds(IContainer container) {
 
-		if (_imageIcon != null) {
+		if (icon != null) {
 			Point p = new Point();
 			container.worldToLocal(p, _focus);
 
-			int w = _imageIcon.getIconWidth();
-			int h = _imageIcon.getIconHeight();
+			int w = icon.getIconWidth();
+			int h = icon.getIconHeight();
 
 			int x = p.x;
 			int y = p.y;
 
 			switch (_xAlignment) {
-			case LEFT:
+			case SwingUtilities.LEFT:
 				break;
-			case CENTER:
+			case SwingUtilities.CENTER:
 				x -= w / 2;
 				break;
-			case RIGHT:
+			case SwingUtilities.RIGHT:
 				x -= w;
 				break;
 			}
 
 			switch (_yAlignment) {
-			case TOP:
+			case SwingUtilities.TOP:
 				break;
-			case CENTER:
+			case SwingUtilities.CENTER:
 				y -= h / 2;
 				break;
-			case BOTTOM:
+			case SwingUtilities.BOTTOM:
 				y -= h;
 				break;
 			}
