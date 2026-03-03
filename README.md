@@ -190,7 +190,7 @@ To run the demo from the project source:
 
 ```bash
 mvn clean package
-mvn exec:java -Dexec.mainClass="edu.cnu.mdi.demo.DemoApp"
+mvn exec:java -Dexec.mainClass="edu.cnu.mdi.app.DemoApp"
 ```
 Here is one of the views running inside the DemoApp:
 <img src="docs/images/tsp.png" width="900">
