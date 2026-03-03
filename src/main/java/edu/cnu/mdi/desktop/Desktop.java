@@ -16,6 +16,7 @@ import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
 import javax.swing.JInternalFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.log.Log;
@@ -228,6 +229,11 @@ public final class Desktop extends JDesktopPane {
      * state, etc. before the application exits.
      */
     public void prepareForExit() {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(this::prepareForExit);
+            return;
+        }
+
 		JInternalFrame[] frames = getAllFrames();
 		if (frames == null) {
 			return;

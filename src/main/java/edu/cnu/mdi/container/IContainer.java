@@ -369,5 +369,12 @@ public interface IContainer {
 	 * @return the approximate zoom factor
 	 */
 	public double approximateZoomFactor();
+	
+	/**
+	 * Prepare for exiting the application. This is called from the main frame when
+	 * the user tries to exit. It gives the container a chance to do things like
+	 * prompt to save unsaved work or dispose of resources.
+	 */
+	public void prepareForExit();
 
 }

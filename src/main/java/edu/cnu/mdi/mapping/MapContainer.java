@@ -1,21 +1,42 @@
 package edu.cnu.mdi.mapping;
 
 import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D.Double;
 
+import javax.swing.SwingUtilities;
+
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.graphics.text.UnicodeUtils;
+import edu.cnu.mdi.hover.HoverEvent;
+import edu.cnu.mdi.hover.HoverInfoWindow;
+import edu.cnu.mdi.hover.HoverListener;
+import edu.cnu.mdi.hover.HoverManager;
 
 @SuppressWarnings("serial")
-public class MapContainer extends BaseContainer {
+public class MapContainer extends BaseContainer implements HoverListener {
+	
+	// Optional hover info window for displaying country name
+	private HoverInfoWindow hoverWindow;
 
+	/**
+	 * Create a map container with the specified world system scale. The world
+	 * system scale determines how many world units correspond to one pixel in the
+	 * view. A larger scale means that more of the world is visible at once (zoomed
+	 * out), while a smaller scale means that less of the world is visible (zoomed
+	 * in). The constructor also disables standard panning behavior, which may be
+	 * handled differently in a mapping context.
+	 *
+	 * @param worldSystem the initial world system scale for the map container
+	 */
 	public MapContainer(Double worldSystem) {
 		super(worldSystem);
 		setStandardPanning(false);
+		
+		//register for hover events
+		HoverManager.getInstance().registerComponent(getComponent(), this);	
 	}
 
 
@@ -105,6 +126,50 @@ public class MapContainer extends BaseContainer {
 	// Get the MapView2D
 	private MapView2D getMapView2D() {
 		return (MapView2D) getView();
+	}
+	
+
+	@Override
+	public void hoverUp(HoverEvent he) {
+		// Convert local mouse Point to screen coordinates
+		Point p = he.getLocation();
+		String countryName = getMapView2D().getCountryAtPoint(p, this);
+		if (countryName == null) {
+			return; // No country at this point, so don't show hover info
+		}
+		
+		SwingUtilities.convertPointToScreen(p, he.getSource());
+
+		getHoverWindow().showMessage(countryName, p);
+	}
+
+	@Override
+	public void hoverDown(HoverEvent he) {
+		getHoverWindow().hideMessage();
+	}
+	
+	// Lazily create the hover window when needed
+	private HoverInfoWindow getHoverWindow() {
+	    if (hoverWindow == null) {
+	        Window ownerWin = SwingUtilities.getWindowAncestor(getComponent());
+	        if (ownerWin == null) {
+	            // Not yet realized; try again later.
+	            return null;
+	        }
+	        hoverWindow = new HoverInfoWindow(ownerWin);
+	    }
+	    return hoverWindow;
+	}
+	
+	// Clean up hover resources when container is closed
+	public void prepareForExit() {
+		HoverManager.getInstance().unregisterComponent(getComponent());
+		
+		if (hoverWindow != null) {
+			HoverManager.getInstance().unregisterComponent(hoverWindow);
+			hoverWindow.dispose();
+			hoverWindow = null;
+		}
 	}
 
 }

@@ -233,6 +233,24 @@ public class MapView2D extends BaseView {
 		}
 		return new Rectangle2D.Double(-xLim, -yLim, 2 * xLim, 2 * yLim);
 	}
+	
+	/**
+	 * Get the country at the given screen point, if any. This method uses the
+	 * country renderer's picking method to determine if a country is under the
+	 * cursor and returns a formatted string with the country's name and ISO code.
+	 *
+	 * @param pp        the screen-space point to check for a country.
+	 * @param container the host container, used for coordinate transformations.
+	 * @return a string with the country's name and ISO code if a country is hit,
+	 *         or null if no country is under the cursor.
+	 */
+	public String getCountryAtPoint(Point pp, IContainer container) {
+		GeoJsonCountryLoader.CountryFeature countryHit = _countryRenderer.pickCountry(pp, container);
+		if (countryHit != null) {
+			return String.format("%s (%s)", countryHit.getAdminName(), countryHit.getIsoA3());
+		}
+		return null;
+	}
 
 	/**
 	 * Provide feedback strings for the current cursor position. This includes:
@@ -335,6 +353,16 @@ public class MapView2D extends BaseView {
 	 */
 	protected IMapProjection getMapProjection() {
 		return _projection;
+	}
+	
+	/**
+	 * Prepare the view for exit by stopping any ongoing simulations, threads, or
+	 * timers. This method is called by the base view when the user clicks the
+	 * "Exit" button, allowing the view to clean up resources before the
+	 * application exits.
+	 */
+	public void prepareForExit() {
+		((MapContainer) getContainer()).prepareForExit();
 	}
 
 }

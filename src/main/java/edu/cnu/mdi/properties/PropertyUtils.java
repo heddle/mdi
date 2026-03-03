@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.JComponent;
 
@@ -70,56 +71,57 @@ public class PropertyUtils {
 	
 	// a map of known keys and their expected value types. 
 	//This is used for error checking and documentation purposes.
-	private static final Map<String, Class<?>> KNOWN_KEYS = Map.ofEntries(
-			Map.entry(ANGLE_X, Float.class),
-			Map.entry(ANGLE_Y, Float.class),
-			Map.entry(ANGLE_Z, Float.class),
-			Map.entry(ASPECT, Double.class), 
-			Map.entry(BACKGROUND, Color.class),
-			Map.entry(BACKGROUNDIMAGE, String.class),
-		    Map.entry(BOXZOOMRBPOLICY, ARubberband.Policy.class),
-		    Map.entry(CLOSABLE, Boolean.class),
-		    Map.entry(CONNECTABLE, Boolean.class),
-		    Map.entry(CONTAINER, IContainer.class),
-		    Map.entry(CONTAINERCLASS, Class.class),
-		    Map.entry(DELETABLE, Boolean.class),
-		    Map.entry(DIST_X, Float.class),
-		    Map.entry(DIST_Y, Float.class),
-		    Map.entry(DIST_Z, Float.class),
-		    Map.entry(DOUBLECLICKABLE, Boolean.class),
-		    Map.entry(DRAGGABLE, Boolean.class),
-		    Map.entry(FILLCOLOR, Color.class),
-		    Map.entry(FRACTION, Double.class),
-		    Map.entry(HEIGHT, Integer.class),
-		    Map.entry(ICONIFIABLE, Boolean.class),
-		    Map.entry(INFOBUTTON, Boolean.class),
-		    Map.entry(LEFT, Integer.class),
-		    Map.entry(LINECOLOR, Color.class),
-		    Map.entry(LINESTYLE, LineStyle.class),
-		    Map.entry(LINEWIDTH, Float.class),
-		    Map.entry(LOCKED, Boolean.class),
-		    Map.entry(MAXIMIZE, Boolean.class),
-		    Map.entry(MAXIMIZABLE, Boolean.class),
-		    Map.entry(RADIUS, Double.class),
-		    Map.entry(RESIZABLE, Boolean.class),
-		    Map.entry(RIGHTCLICKABLE, Boolean.class),
-		    Map.entry(ROTATABLE, Boolean.class),
-		    Map.entry(SCROLLABLE, Boolean.class),
-		    Map.entry(SPLITWESTCOMPONENT, JComponent.class),
-		    Map.entry(STANDARDVIEWDECORATIONS, Boolean.class),
-		    Map.entry(SYMBOL, SymbolType.class),
-		    Map.entry(SYMBOLSIZE, Integer.class),
-		    Map.entry(TEXTCOLOR, Color.class),
-		    Map.entry(TITLE, String.class),
-		    Map.entry(TOOLBARBITS, Long.class),
-		    Map.entry(TOP, Integer.class),
-		    Map.entry(USERDATA, Object.class),
-		    Map.entry(VISIBLE, Boolean.class),
-		    Map.entry(WHEELZOOM, Boolean.class),
-		    Map.entry(WIDTH, Integer.class),
-		    Map.entry(WORLDSYSTEM, Rectangle2D.Double.class)
-		);
+	private static final Map<String, Class<?>> KNOWN_KEYS = new ConcurrentHashMap<>();
 
+	static {
+	    KNOWN_KEYS.put(ANGLE_X, Float.class);
+	    KNOWN_KEYS.put(ANGLE_Y, Float.class);
+	    KNOWN_KEYS.put(ANGLE_Z, Float.class);
+	    KNOWN_KEYS.put(ASPECT, Double.class);
+	    KNOWN_KEYS.put(BACKGROUND, Color.class);
+	    KNOWN_KEYS.put(BACKGROUNDIMAGE, String.class);
+	    KNOWN_KEYS.put(BOXZOOMRBPOLICY, ARubberband.Policy.class);
+	    KNOWN_KEYS.put(CLOSABLE, Boolean.class);
+	    KNOWN_KEYS.put(CONNECTABLE, Boolean.class);
+	    KNOWN_KEYS.put(CONTAINER, IContainer.class);
+	    KNOWN_KEYS.put(CONTAINERCLASS, Class.class);
+	    KNOWN_KEYS.put(DELETABLE, Boolean.class);
+	    KNOWN_KEYS.put(DIST_X, Float.class);
+	    KNOWN_KEYS.put(DIST_Y, Float.class);
+	    KNOWN_KEYS.put(DIST_Z, Float.class);
+	    KNOWN_KEYS.put(DOUBLECLICKABLE, Boolean.class);
+	    KNOWN_KEYS.put(DRAGGABLE, Boolean.class);
+	    KNOWN_KEYS.put(FILLCOLOR, Color.class);
+	    KNOWN_KEYS.put(FRACTION, Double.class);
+	    KNOWN_KEYS.put(HEIGHT, Integer.class);
+	    KNOWN_KEYS.put(ICONIFIABLE, Boolean.class);
+	    KNOWN_KEYS.put(INFOBUTTON, Boolean.class);
+	    KNOWN_KEYS.put(LEFT, Integer.class);
+	    KNOWN_KEYS.put(LINECOLOR, Color.class);
+	    KNOWN_KEYS.put(LINESTYLE, LineStyle.class);
+	    KNOWN_KEYS.put(LINEWIDTH, Float.class);
+	    KNOWN_KEYS.put(LOCKED, Boolean.class);
+	    KNOWN_KEYS.put(MAXIMIZE, Boolean.class);
+	    KNOWN_KEYS.put(MAXIMIZABLE, Boolean.class);
+	    KNOWN_KEYS.put(RADIUS, Double.class);
+	    KNOWN_KEYS.put(RESIZABLE, Boolean.class);
+	    KNOWN_KEYS.put(RIGHTCLICKABLE, Boolean.class);
+	    KNOWN_KEYS.put(ROTATABLE, Boolean.class);
+	    KNOWN_KEYS.put(SCROLLABLE, Boolean.class);
+	    KNOWN_KEYS.put(SPLITWESTCOMPONENT, JComponent.class);
+	    KNOWN_KEYS.put(STANDARDVIEWDECORATIONS, Boolean.class);
+	    KNOWN_KEYS.put(SYMBOL, SymbolType.class);
+	    KNOWN_KEYS.put(SYMBOLSIZE, Integer.class);
+	    KNOWN_KEYS.put(TEXTCOLOR, Color.class);
+	    KNOWN_KEYS.put(TITLE, String.class);
+	    KNOWN_KEYS.put(TOOLBARBITS, Long.class);
+	    KNOWN_KEYS.put(TOP, Integer.class);
+	    KNOWN_KEYS.put(USERDATA, Object.class);
+	    KNOWN_KEYS.put(VISIBLE, Boolean.class);
+	    KNOWN_KEYS.put(WHEELZOOM, Boolean.class);
+	    KNOWN_KEYS.put(WIDTH, Integer.class);
+	    KNOWN_KEYS.put(WORLDSYSTEM, Rectangle2D.Double.class);
+	}
 	// default fill color a gray
 	public static Color defaultFillColor = new Color(208, 208, 208, 128);
 
@@ -197,13 +199,28 @@ public class PropertyUtils {
 	 * @param key          the property key to register
 	 * @param expectedType the expected type of the value associated with this key
 	 * @throws NullPointerException if key or expectedType is null
+	 * @throws IllegalArgumentException if key is blank
+	 * @throws IllegalStateException if the key is already registered with a different expected type
 	 */
 	public static void registerKey(String key, Class<?> expectedType) {
-	    Objects.requireNonNull(key, "key");
-	    Objects.requireNonNull(expectedType, "expectedType");
-	    KNOWN_KEYS.put(key, expectedType);
-	}
+	    if (key == null || key.isBlank()) {
+	        throw new IllegalArgumentException("key must be non-null and non-blank");
+	    }
+	    if (expectedType == null) {
+	        throw new IllegalArgumentException("expectedType must be non-null");
+	    }
 
+	    Class<?> prev = KNOWN_KEYS.putIfAbsent(key, expectedType);
+	    if (prev != null) {
+	        // already registered: refuse to overwrite
+	        throw new IllegalStateException(
+	            "Property key already registered: " + key +
+	            " (existing type=" + prev.getName() +
+	            ", requested type=" + expectedType.getName() + ")"
+	        );
+	    }
+	}
+	
 	/**
 	 * Register a new key with an expected type of Object. This is a more permissive registration that allows any type of value for the key.
 	 *
@@ -212,6 +229,24 @@ public class PropertyUtils {
 	 */
 	public static void registerKey(String key) {
 	    registerKey(key, Object.class); // means “known, any type”
+	}
+	
+	/**
+	 * Register a new key and its expected type, allowing overwriting an existing registration. This is a more permissive registration that allows changing the expected type of an already registered key.
+	 *
+	 * @param key          the property key to register
+	 * @param expectedType the expected type of the value associated with this key
+	 * @throws NullPointerException if key or expectedType is null
+	 * @throws IllegalArgumentException if key is blank
+	 */
+	public static void registerKeyOverwrite(String key, Class<?> expectedType) {
+	    if (key == null || key.isBlank()) {
+	        throw new IllegalArgumentException("key must be non-null and non-blank");
+	    }
+	    if (expectedType == null) {
+	        throw new IllegalArgumentException("expectedType must be non-null");
+	    }
+	    KNOWN_KEYS.put(key, expectedType);
 	}
 
 	/**
