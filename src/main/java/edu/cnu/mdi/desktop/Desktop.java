@@ -279,21 +279,33 @@ public final class Desktop extends JDesktopPane {
             }
         }
 
-        // write config file
-        try {
-            FileOutputStream fos = new FileOutputStream(file);
-            try {
-                properties.storeToXML(fos, null);
-                fos.close();
-                JOptionPane.showMessageDialog(null, "Your configuration was saved to: " + file.getAbsolutePath(),
-                        "Success", JOptionPane.INFORMATION_MESSAGE);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
+		// write config file
+		try {
+			FileOutputStream fos = new FileOutputStream(file);
+			try {
+				properties.storeToXML(fos, null);
+				JOptionPane.showMessageDialog(null, "Your configuration was saved to: " + file.getAbsolutePath(),
+						"Success", JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException e) {
+				Log.getInstance()
+						.warning("Failed to write configuration file to [" + file.getPath() + "]: " + e.getMessage());
+				System.err.println("Failed to write configuration file to [" + file.getPath() + "]: " + e.getMessage());
+			} finally {
+				try {
+					fos.close();
+				} catch (IOException e) {
+					Log.getInstance().warning(
+							"Failed to close file output stream for [" + file.getPath() + "]: " + e.getMessage());
+					System.err.println(
+							"Failed to close file output stream for [" + file.getPath() + "]: " + e.getMessage());
+				}
+			}
+		} catch (FileNotFoundException e) {
+			Log.getInstance()
+					.warning("Failed to write configuration file to [" + file.getPath() + "]: " + e.getMessage());
+			System.err.println("Failed to write configuration file to [" + file.getPath() + "]: " + e.getMessage());
+		}
+	}
 
     /**
      * Delete the configuration file that preserves the current arrangement of

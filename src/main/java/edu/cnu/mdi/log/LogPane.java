@@ -17,57 +17,60 @@ import edu.cnu.mdi.ui.colors.X11Colors;
  */
 
 @SuppressWarnings("serial")
-public class SimpleLogPane extends TextPaneScrollPane {
+public class LogPane extends TextPaneScrollPane {
 
+	// the font sizes for different log levels
 	private static int CONFIGFONTSIZE = 12;
 	private static int WARNINGFONTSIZE = 11;
 	private static int INFOFONTSIZE = 12;
 	private static int ERRORFONTSIZE = 11;
+	private static int EXCEPTIONFONTSIZE = 10;
 
-	// reduce from seven levels
-	private static enum Grade {
-		CONFIG, INFO, WARNING, ERROR
-	}
 
-	private static EnumMap<Grade, SimpleAttributeSet> styles;
+	// the styles for different log levels
+	private static EnumMap<Log.Level, SimpleAttributeSet> styles;
 
+	// initialize the styles
 	static {
-		styles = new EnumMap<>(Grade.class);
-		styles.put(Grade.INFO, createStyle(Color.black, "sansserif", INFOFONTSIZE, false, false));
-		styles.put(Grade.CONFIG, createStyle(Color.blue, "sansserif", CONFIGFONTSIZE, false, false));
-		styles.put(Grade.WARNING,
-				createStyle(X11Colors.getX11Color("orange red"), "monospaced", WARNINGFONTSIZE, false, true));
-		styles.put(Grade.ERROR, createStyle(Color.red, "monospaced", ERRORFONTSIZE, false, true));
+		styles = new EnumMap<>(Log.Level.class);
+		styles.put(Log.Level.INFO, createStyle(Color.black, "sansserif", INFOFONTSIZE, false, false));
+		styles.put(Log.Level.CONFIG, createStyle(Color.blue, "sansserif", CONFIGFONTSIZE, false, false));
+		styles.put(Log.Level.WARNING, createStyle(X11Colors.getX11Color("orange red"), "monospaced", WARNINGFONTSIZE, false, true));
+		styles.put(Log.Level.ERROR, createStyle(Color.red, "sanserif", ERRORFONTSIZE, false, true));
+		styles.put(Log.Level.ERROR, createStyle(Color.red, "monospaced", EXCEPTIONFONTSIZE, false, true));
 	}
 
-	public SimpleLogPane() {
+	/**
+	 * Constructor.
+	 */
+	public LogPane() {
 		setPreferredSize(new Dimension(800, 400));
 
 		ILogListener ll = new ILogListener() {
 
 			@Override
 			public void config(String message) {
-				append(Grade.CONFIG, message);
+				append(Log.Level.CONFIG, message);
 			}
 
 			@Override
 			public void info(String message) {
-				append(Grade.INFO, message);
+				append(Log.Level.INFO, message);
 			}
 
 			@Override
 			public void error(String message) {
-				append(Grade.ERROR, message);
+				append(Log.Level.ERROR, message);
 			}
 
 			@Override
 			public void exception(String message) {
-				append(Grade.ERROR, message);
+				append(Log.Level.EXCEPTION, message);
 			}
 
 			@Override
 			public void warning(String message) {
-				append(Grade.WARNING, message);
+				append(Log.Level.WARNING, message);
 			}
 		};
 
@@ -98,8 +101,9 @@ public class SimpleLogPane extends TextPaneScrollPane {
 	 * @param grade   the grade of the messaged.
 	 * @param message the message text.
 	 */
-	private void append(Grade grade, String message) {
-		append(fixMessage(message), styles.get(grade), (grade == Grade.ERROR));
+	private void append(Log.Level level, String message) {
+		boolean writeTime = (level == Log.Level.ERROR) || (level == Log.Level.EXCEPTION);
+		append(fixMessage(message), styles.get(level), writeTime);
 	}
 
 }

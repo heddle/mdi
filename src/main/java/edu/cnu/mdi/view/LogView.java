@@ -1,6 +1,6 @@
 package edu.cnu.mdi.view;
 
-import edu.cnu.mdi.log.SimpleLogPane;
+import edu.cnu.mdi.log.LogPane;
 import edu.cnu.mdi.properties.PropertyUtils;
 
 /**
@@ -20,7 +20,7 @@ public class LogView extends BaseView {
 		super(PropertyUtils.TITLE, "Log", PropertyUtils.ICONIFIABLE, true, PropertyUtils.MAXIMIZABLE, true,
 				PropertyUtils.CLOSABLE, true, PropertyUtils.RESIZABLE, true, PropertyUtils.WIDTH, width,
 				PropertyUtils.HEIGHT, height, PropertyUtils.VISIBLE, visible);
-		add(new SimpleLogPane());
+		add(new LogPane());
 	}
 
 }
