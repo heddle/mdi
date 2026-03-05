@@ -134,26 +134,25 @@ public class BaseMDIApplication extends JFrame {
             // the embedding application (e.g., in main()).
             setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
             addWindowListener(new WindowAdapter() {
-                @Override
-                public void windowClosing(WindowEvent we) {
-                    try {
-                        prepareForShutdown();
-                    } finally {
-                    	prepareForShutdown();        // should dispose hover windows and dialogs
-                    	for (Window w : Window.getWindows()) {
-                    	    if (w != BaseMDIApplication.this) {         // optional: don’t double-dispose the frame currently closing
-                    	        w.dispose();
-                    	    }
-                    	}
+				@Override
+				public void windowClosing(WindowEvent we) {
+					try {
+						prepareForShutdown(); // notify views, stop timers, dispose hover window, etc.
+					} finally {
+						for (Window w : Window.getWindows()) {
+							if (w != BaseMDIApplication.this) { // don’t double-dispose the frame currently closing
+								w.dispose();
+							}
+						}
 
-                        // Dispose the frame; if this is the last displayable window and
-                        // no non-daemon threads remain, the JVM will exit naturally.
-                        dispose();
-                    }
-                }
-            });
+						// Dispose the frame; if this is the last displayable window and
+						// no non-daemon threads remain, the JVM will exit naturally.
+						dispose();
+					}
+				}
+			});
 
-            // --------------------------------------------------------------------
+			   // --------------------------------------------------------------------
             // Frame attributes
             // --------------------------------------------------------------------
             Color background = PropertyUtils.getBackground(_properties);
@@ -283,7 +282,7 @@ public class BaseMDIApplication extends JFrame {
             Desktop.getInstance().loadConfigurationFile();
             Desktop.getInstance().configureViews();
         }
-        Log.getInstance().info(vv != null ? "Virtual desktop enabled" : "Virtual desktop disabled");
+        Log.getInstance().config(vv != null ? "Virtual desktop enabled" : "Virtual desktop disabled");
     }
 
     protected void standardVirtualDesktopRelayout(VirtualView vv) {
