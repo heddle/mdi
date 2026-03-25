@@ -167,9 +167,8 @@ public class DemoApp extends BaseMDIApplication {
 		// TSP demo view
 		tspDemoView = createTspDemoView();
 
-		// Network layout demo view
-		networkLayoutDemoView = createNetworkLayoutDemoView();
-
+		// Network layout demo view create lazily (as an example)
+		ViewManager.getInstance().addConfiguration(NetworkLayoutDemoView.getConfiguration());
 	}
 
 	@Override
@@ -226,10 +225,6 @@ public class DemoApp extends BaseMDIApplication {
 		// Column 3: TSP demo center
 		virtualView.moveTo(tspDemoView, 3, VirtualView.CENTER);
 		tspDemoView.setVisible(true);
-
-		// Column 4: network layout demo lower left
-		virtualView.moveTo(networkLayoutDemoView, 4, 0, -50, VirtualView.BOTTOMLEFT);
-		networkLayoutDemoView.setVisible(true);
 
 
 	// column 5: log view upper left (is not vis by default)
@@ -395,20 +390,6 @@ public class DemoApp extends BaseMDIApplication {
 		return view;
 	}
 
-	/**
-	 * Create the network layout demo view.
-	 * @return a new {@link NetworkLayoutDemoView}
-	 */
-	private NetworkLayoutDemoView createNetworkLayoutDemoView() {
-		long toolBits = ToolBits.NAVIGATIONTOOLS | ToolBits.DELETE | ToolBits.CONNECTOR;
-		NetworkLayoutDemoView view = new NetworkLayoutDemoView(PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT,
-				1.2, PropertyUtils.TOOLBARBITS, toolBits,
-				PropertyUtils.VISIBLE, false,
-				PropertyUtils.WHEELZOOM, true,
-				PropertyUtils.BACKGROUND, X11Colors.getX11Color("alice blue"), PropertyUtils.TITLE,
-				"Network Layout Demo View");
-		return view;
-	}
 
 	/**
 	 * Create the demo map view and load small GeoJSON datasets from resources.

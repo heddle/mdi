@@ -14,11 +14,14 @@ import edu.cnu.mdi.app.DemoApp;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
+import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.view.BaseView;
+import edu.cnu.mdi.view.ViewConfiguration;
+import edu.cnu.mdi.view.VirtualView;
 
 @SuppressWarnings("serial")
 public class NetworkLayoutDemoView extends BaseView {
@@ -55,6 +58,18 @@ public class NetworkLayoutDemoView extends BaseView {
 		// add an east side panel with a control panel and feedback
 		initEastSidePanel();
 	}
+	
+	/**
+	 * Create a DCHexView view. This is used by lazy creation
+	 *
+	 * @param keyVals the key value pairs for the view properties
+	 * @return a DCHexView View
+	 */
+	public static NetworkLayoutDemoView construct(Object... keyVals) {
+		NetworkLayoutDemoView view = new NetworkLayoutDemoView(getDefaultKeyVals());
+		return view;
+	}
+
 
 	// initialize the east side panel with feedback and controls
 	private void initEastSidePanel() {
@@ -73,9 +88,31 @@ public class NetworkLayoutDemoView extends BaseView {
 		sidePanel.add(cp, BorderLayout.NORTH);
 		sidePanel.add(fbp, BorderLayout.CENTER);
 		sidePanel.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, getHeight()));
-
 		add(sidePanel, BorderLayout.EAST);
+	}
+	
+	/**
+	 * Get the view configuration for lazy creation
+	 *
+	 * @return the view configuration for lazy creation
+	 */
+	public static ViewConfiguration<NetworkLayoutDemoView> getConfiguration() {
+		return new ViewConfiguration<>(NetworkLayoutDemoView.class, true, 
+				4, 0, 0, VirtualView.CENTER, getDefaultKeyVals());
+	}
 
+	
+	// get the attributes to pass to the super constructor
+	public static Object[] getDefaultKeyVals() {
+		long toolBits = ToolBits.NAVIGATIONTOOLS | ToolBits.DELETE | ToolBits.CONNECTOR;
+		return new Object[] {
+				PropertyUtils.FRACTION, 0.7, 
+				PropertyUtils.ASPECT, 1.2, 
+				PropertyUtils.TOOLBARBITS, toolBits,
+				PropertyUtils.VISIBLE, true,
+				PropertyUtils.WHEELZOOM, true,
+				PropertyUtils.BACKGROUND, X11Colors.getX11Color("alice blue"), 
+				PropertyUtils.TITLE,"Network Layout Demo View"		};
 	}
 
 	// add the custom buttons to the toolbar

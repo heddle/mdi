@@ -689,6 +689,30 @@ public class VirtualView extends BaseView
 			return;
 		}
 	}
+	
+	/**
+	 * Go to a specific column, making it visible. This is used by the virtual window items when they are double clicked.
+	 *
+	 * @param col the column to go to
+	 */
+	public void gotoColumn(int col) {
+
+		if ((col == _currentCol) || (col < 0) || (col >= _numcol)) {
+			return;
+		}
+		
+		int dh = _offsets[_currentCol].x - _offsets[col].x;
+
+		// can't do dv because can't give internal frames -y
+		int dv = 0;
+
+		for (BaseView view : _views) {
+			view.offset(dh, dv);
+		}
+
+		_currentCol = col;
+	}
+
 
 	/**
 	 * Handle a click on the virtual desktop.

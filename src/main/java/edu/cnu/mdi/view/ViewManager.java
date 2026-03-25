@@ -13,6 +13,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.EventListenerList;
 
 import edu.cnu.mdi.log.Log;
+import edu.cnu.mdi.properties.PropertyUtils;
 
 /**
  * Singleton registry and UI coordinator for all {@link BaseView} instances
@@ -46,6 +47,9 @@ public class ViewManager extends Vector<BaseView> {
 
 	/** Singleton instance. */
 	private static volatile ViewManager instance;
+
+	// List of view configurations for lazy loading
+	private java.util.List<ViewConfiguration<?>> _configs = new java.util.ArrayList<>();
 
 	/** Optional menu whose contents reflect the registered views. */
 	private JMenu _viewMenu;
@@ -362,5 +366,49 @@ public class ViewManager extends Vector<BaseView> {
 		} else {
 			SwingUtilities.invokeLater(r);
 		}
+	}
+	
+
+	/**
+	 * Add a view configuration for lazy loading. If the configuration is not lazy, 
+	 * the view is created immediately. If it is lazy, a menu entry is added to allow 
+	 * the user to create the view on demand.
+	 */
+	public void addConfiguration(ViewConfiguration<?> config) {
+	    _configs.add(config);
+	    if (!config.lazily) {
+	        config.getView(); // Force immediate creation
+	    } else {
+	        addLazyMenuEntry(config);
+	    }
+	}
+	
+	// Add a menu entry for lazy loading of the view
+	private void addLazyMenuEntry(final ViewConfiguration<?> config) {
+	    // Extract title from keyVals
+	    String title = "Unknown View";
+	    for (int i = 0; i < config.keyVals.length; i += 2) {
+	        if (PropertyUtils.TITLE.equals(config.keyVals[i])) {
+	            title = (String) config.keyVals[i+1];
+	            break;
+	        }
+	    }
+
+	    final JMenuItem mi = new JMenuItem("Create " + title);
+	    mi.setFont(mi.getFont().deriveFont(java.awt.Font.ITALIC));
+	    
+	    mi.addActionListener(new ActionListener() {
+	        @Override
+	        public void actionPerformed(ActionEvent e) {
+	            BaseView view = config.getView(); // This calls realizeView()
+	            if (view != null) {
+	                _viewMenu.remove(mi); // Remove the "Create" item
+	                // The BaseView constructor calls ViewManager.getInstance().add(this),
+	                // so the standard menu item will be added automatically.
+	            }
+	        }
+	    });
+	    _viewMenu.add(mi);
+	    config.menuIndex = _viewMenu.getItemCount() - 1; // Store index for potential future use
 	}
 }
