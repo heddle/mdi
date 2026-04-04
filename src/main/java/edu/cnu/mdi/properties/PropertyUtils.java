@@ -55,6 +55,7 @@ public class PropertyUtils {
 	public static final String TITLE = "TITLE";
 	public static final String TOOLBARBITS = "TOOLBARBITS";
 	public static final String TOP = "TOP";
+	public static final String USECONTAINER = "USECONTAINER";
 	public static final String USERDATA = "USERDATA";
 	public static final String VISIBLE = "VISIBLE";
 	public static final String WHEELZOOM = "WHEELZOOM";
@@ -116,6 +117,7 @@ public class PropertyUtils {
 	    KNOWN_KEYS.put(TITLE, String.class);
 	    KNOWN_KEYS.put(TOOLBARBITS, Long.class);
 	    KNOWN_KEYS.put(TOP, Integer.class);
+	    KNOWN_KEYS.put(USECONTAINER, Boolean.class);
 	    KNOWN_KEYS.put(USERDATA, Object.class);
 	    KNOWN_KEYS.put(VISIBLE, Boolean.class);
 	    KNOWN_KEYS.put(WHEELZOOM, Boolean.class);
@@ -247,6 +249,16 @@ public class PropertyUtils {
 	        throw new IllegalArgumentException("expectedType must be non-null");
 	    }
 	    KNOWN_KEYS.put(key, expectedType);
+	}
+	
+	/**
+	 * Get the "use container" boolean flag.
+	 *
+	 * @param props the properties
+	 * @return the use container flag. On error, return true.
+	 */
+	public static boolean getUseContainer(Properties props) {
+		return getBoolean(props, USECONTAINER, true);
 	}
 
 	/**

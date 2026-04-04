@@ -7,24 +7,27 @@ import java.awt.Point;
 import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import javax.swing.JPanel;
 
-import edu.cnu.mdi.app.DemoApp;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
-import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.view.BaseView;
 import edu.cnu.mdi.view.ViewConfiguration;
+import edu.cnu.mdi.view.ViewPropertiesBuilder;
 import edu.cnu.mdi.view.VirtualView;
 
 @SuppressWarnings("serial")
 public class NetworkLayoutDemoView extends BaseView {
+
+	/** Default title used both for the frame title and lazy menu registration. */
+	private static final String TITLE = "Network Layout Demo View";
 
 	// The drawing z layer to place the devices on
 	private final Layer deviceLayer;
@@ -34,20 +37,28 @@ public class NetworkLayoutDemoView extends BaseView {
 
 	// draws the snap to grid
 	private final GridDrawer gridDrawer;
-	
-	// whether to show the node names 
+
+	// whether to show the node names
 	private boolean showNodeNames = true;
 
 	/**
-	 * Construct a Network Layout Demo View with the given properties. It is a demo,
-	 * not a serious application. It demonstrates placing network devices on a
-	 * canvas, with feedback and some custom toolbar buttons.
-	 *
-	 * @param keyVals key-value pairs for view properties. See how it is used in
-	 *                {@link DemoApp where this view is instantiated}.
+	 * Construct the demo view using its canonical default properties.
 	 */
-	public NetworkLayoutDemoView(Object... keyVals) {
-		super(PropertyUtils.fromKeyValues(keyVals));
+	public NetworkLayoutDemoView() {
+		this(createDefaultProperties());
+	}
+
+	/**
+	 * Construct a Network Layout Demo View with the given properties.
+	 * <p>
+	 * This is a demo, not a serious application. It demonstrates placing network
+	 * devices on a canvas, with feedback and some custom toolbar buttons.
+	 * </p>
+	 *
+	 * @param props the properties used to configure the view
+	 */
+	public NetworkLayoutDemoView(Properties props) {
+		super(props);
 		deviceLayer = new Layer(getContainer(), "Devices");
 		getContainer().getFeedbackControl().addFeedbackProvider(this);
 		addToToolBar();
@@ -58,18 +69,34 @@ public class NetworkLayoutDemoView extends BaseView {
 		// add an east side panel with a control panel and feedback
 		initEastSidePanel();
 	}
-	
+
 	/**
-	 * Create a DCHexView view. This is used by lazy creation
+	 * Create the default properties for this view.
 	 *
-	 * @param keyVals the key value pairs for the view properties
-	 * @return a DCHexView View
+	 * @return the default view properties
 	 */
-	public static NetworkLayoutDemoView construct(Object... keyVals) {
-		NetworkLayoutDemoView view = new NetworkLayoutDemoView(getDefaultKeyVals());
-		return view;
+	private static Properties createDefaultProperties() {
+		long toolBits = ToolBits.NAVIGATIONTOOLS | ToolBits.DELETE | ToolBits.CONNECTOR;
+
+		return new ViewPropertiesBuilder()
+				.fraction(0.7)
+				.aspect(1.2)
+				.toolbarBits(toolBits)
+				.visible(true)
+				.wheelZoom(true)
+				.background(X11Colors.getX11Color("alice blue"))
+				.title(TITLE)
+				.build();
 	}
 
+	/**
+	 * Get the view configuration for lazy creation.
+	 *
+	 * @return the view configuration for lazy creation
+	 */
+	public static ViewConfiguration<NetworkLayoutDemoView> getConfiguration() {
+		return ViewConfiguration.lazy(TITLE, NetworkLayoutDemoView::new, 4, 0, 0, VirtualView.CENTER);
+	}
 
 	// initialize the east side panel with feedback and controls
 	private void initEastSidePanel() {
@@ -90,30 +117,6 @@ public class NetworkLayoutDemoView extends BaseView {
 		sidePanel.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, getHeight()));
 		add(sidePanel, BorderLayout.EAST);
 	}
-	
-	/**
-	 * Get the view configuration for lazy creation
-	 *
-	 * @return the view configuration for lazy creation
-	 */
-	public static ViewConfiguration<NetworkLayoutDemoView> getConfiguration() {
-		return new ViewConfiguration<>(NetworkLayoutDemoView.class, true, 
-				4, 0, 0, VirtualView.CENTER, getDefaultKeyVals());
-	}
-
-	
-	// get the attributes to pass to the super constructor
-	public static Object[] getDefaultKeyVals() {
-		long toolBits = ToolBits.NAVIGATIONTOOLS | ToolBits.DELETE | ToolBits.CONNECTOR;
-		return new Object[] {
-				PropertyUtils.FRACTION, 0.7, 
-				PropertyUtils.ASPECT, 1.2, 
-				PropertyUtils.TOOLBARBITS, toolBits,
-				PropertyUtils.VISIBLE, true,
-				PropertyUtils.WHEELZOOM, true,
-				PropertyUtils.BACKGROUND, X11Colors.getX11Color("alice blue"), 
-				PropertyUtils.TITLE,"Network Layout Demo View"		};
-	}
 
 	// add the custom buttons to the toolbar
 	private void addToToolBar() {
@@ -126,9 +129,6 @@ public class NetworkLayoutDemoView extends BaseView {
 		tb.spacer(8);
 
 		// this is a one-shot button that represents snapping the items to a grid
-		// one-shot buttons just perform an action when clicked
-		// they do not stay selected like toggle buttons
-		//
 		new GridButton(this);
 
 		// add a mutually exclusive toolbar toggle button for all known devices
@@ -136,9 +136,10 @@ public class NetworkLayoutDemoView extends BaseView {
 			new DeviceButton(this, ds);
 		}
 	}
-	
+
 	/**
 	 * Whether to show the node names on the device items.
+	 *
 	 * @return true if node names should be shown, false otherwise
 	 */
 	public boolean showNames() {
@@ -147,12 +148,14 @@ public class NetworkLayoutDemoView extends BaseView {
 
 	/**
 	 * Set whether to show the node names on the device items.
+	 *
 	 * @param show true to show node names, false to hide them
 	 */
 	public void setShowNames(boolean show) {
 		this.showNodeNames = show;
 		refresh();
 	}
+
 	/**
 	 * Get the device layer where device items are placed.
 	 *
@@ -177,7 +180,6 @@ public class NetworkLayoutDemoView extends BaseView {
 		feedbackStrings.add(coordStr);
 		feedbackStrings.add(deviceCountStr);
 		feedbackStrings.add("$orange$Zoom Level: " + String.format("%.2f%%", container.approximateZoomFactor() * 100));
-
 	}
 
 	/**
@@ -203,5 +205,4 @@ public class NetworkLayoutDemoView extends BaseView {
 		}
 		return devices;
 	}
-
 }

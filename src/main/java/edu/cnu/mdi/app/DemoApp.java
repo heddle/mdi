@@ -100,7 +100,6 @@ public class DemoApp extends BaseMDIApplication {
 	private PlotView plotView;
 	private NetworkDeclutterDemoView networkDeclutterDemoView;
 	private TspDemoView tspDemoView;
-	private NetworkLayoutDemoView networkLayoutDemoView;
 
 	/**
 	 * Private constructor: use {@link #getInstance()}.

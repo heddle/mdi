@@ -192,7 +192,7 @@ public class BaseView extends JInternalFrame
 		ViewManager.getInstance().add(this);
 
 		// Build view content.
-		if (cfg.hasWorldSystem()) {
+		if (cfg.useContainer && cfg.hasWorldSystem()) {
 			this.container = resolveContainer(cfg.worldSystem);
 			this.container.setView(this);
 			ViewContentBuilder.build(this, cfg);
@@ -238,6 +238,25 @@ public class BaseView extends JInternalFrame
 		return ContainerFactory.resolveContainer(this.properties, worldSystem);
 	}
 
+	/**
+	 * Optional lifecycle hook invoked exactly once when a view is first realized
+	 * through a {@link ViewConfiguration}.
+	 * <p>
+	 * For eagerly created views this occurs during normal startup creation. For
+	 * lazily created views this occurs when the user first requests the view from the
+	 * Views menu.
+	 * </p>
+	 * <p>
+	 * The default implementation does nothing. Subclasses may override this to
+	 * reconcile themselves with shared application state, refresh externally-managed
+	 * data, or perform other "first realization" actions that should happen after the
+	 * view has been fully constructed and registered.
+	 * </p>
+	 */
+	public void onFirstRealize() {
+		// default no-op
+	}
+	
 	// --------------------------------------------------------------------
 	// Standard accessors
 	// --------------------------------------------------------------------
@@ -922,6 +941,7 @@ public class BaseView extends JInternalFrame
 		final boolean addWheelZoom;
 
 		final boolean scrollable;
+		final boolean useContainer;
 		final boolean visible;
 
 		final int left;
@@ -942,7 +962,7 @@ public class BaseView extends JInternalFrame
 		private ViewInitConfig(String title, boolean standardDecorations, boolean infobutton, boolean iconifiable,
 				boolean maximizable, boolean resizable, boolean closable, boolean scrollable, boolean visible, int left,
 				int top, int width, int height, Rectangle2D.Double worldSystem, Color background,
-				JComponent splitWestComponent, long toolBits, ARubberband.Policy boxZoomPolicy, boolean addWheelZoom) {
+				JComponent splitWestComponent, long toolBits, ARubberband.Policy boxZoomPolicy, boolean addWheelZoom, boolean useContainer) {
 			this.title = title;
 			this.standardDecorations = standardDecorations;
 			this.infobutton = infobutton;
@@ -962,6 +982,7 @@ public class BaseView extends JInternalFrame
 			this.toolBits = toolBits;
 			this.boxZoomPolicy = boxZoomPolicy;
 			this.addWheelZoom = addWheelZoom;
+			this.useContainer = useContainer;
 		}
 
 		// Convenience method to check if a world system is defined.
@@ -984,6 +1005,7 @@ public class BaseView extends JInternalFrame
 			boolean closable = PropertyUtils.getClosable(props);
 
 			boolean scrollable = PropertyUtils.getScrollable(props);
+			boolean useContainer = PropertyUtils.getUseContainer(props);
 			boolean visible = PropertyUtils.getVisible(props);
 
 			int left = PropertyUtils.getLeft(props);
@@ -1022,7 +1044,7 @@ public class BaseView extends JInternalFrame
 
 			return new ViewInitConfig(title, standardDecorations, infobutton, iconifiable, maximizable, resizable,
 					closable, scrollable, visible, left, top, width, height, worldSystem, background, west, bits,
-					policy, addWheelZoom);
+					policy, addWheelZoom, useContainer);
 		}
 	}
 
