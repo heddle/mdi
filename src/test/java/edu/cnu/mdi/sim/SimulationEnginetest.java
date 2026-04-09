@@ -164,10 +164,6 @@ class SimulationEngineTest {
         public void cancel(SimulationContext ctx) throws Exception {
             cancelCalls.incrementAndGet();
         }
-
-        void setThrowInStep(boolean v) {
-            throwInStep = v;
-        }
     }
 
     // ------------------------------------------------------------

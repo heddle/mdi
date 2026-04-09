@@ -2,7 +2,7 @@ package edu.cnu.mdi.view.demo;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -72,7 +72,7 @@ public class DeviceItem extends PointItem {
 	}
 	
 	@Override
-	public void drawItem(Graphics g2, IContainer container) {
+	public void drawItem(Graphics2D g2, IContainer container) {
 		int size = (int) Math.round(DEVICESIZE * container.approximateZoomFactor());
 		icon = (ImageIcon) ImageManager.getInstance().loadUiIcon(symbol.iconPath, size, size); // ensure image manager is
 		super.drawItem(g2, container);
@@ -88,7 +88,7 @@ public class DeviceItem extends PointItem {
 	
 
 	//draw the display name of the device, centered and underneath
-	private void drawDisplayName(Graphics g2, IContainer container, String name,
+	private void drawDisplayName(Graphics2D g2, IContainer container, String name,
 			int xc, int yc, int size, double approxZoomFactor) {
 		
 		//use font delta to size the font from the basline font size, so it 

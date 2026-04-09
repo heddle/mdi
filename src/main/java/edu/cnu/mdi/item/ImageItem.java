@@ -1,6 +1,6 @@
 package edu.cnu.mdi.item;
 
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -44,9 +44,9 @@ public class ImageItem extends RectangleItem {
 	 * @param container the graphical container being rendered.
 	 */
 	@Override
-	public void drawItem(Graphics g, IContainer container) {
+	public void drawItem(Graphics2D g2, IContainer container) {
 		// Keep this so _lastDrawnPolygon gets updated for selection handles.
-		super.drawItem(g, container);
+		super.drawItem(g2, container);
 
 		if (image == null || _path == null) {
 			return;
@@ -58,7 +58,7 @@ public class ImageItem extends RectangleItem {
 			return;
 		}
 
-		WorldGraphicsUtils.drawImageOnQuad(g, image, wpoly, container);
+		WorldGraphicsUtils.drawImageOnQuad(g2, image, wpoly, container);
 	}
 
 	private static Rectangle2D.Double createDefaultBounds(IContainer container, BufferedImage image) {

@@ -1,6 +1,6 @@
 package edu.cnu.mdi.item;
 
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
@@ -61,17 +61,17 @@ public class ConnectorItem extends PolylineItem {
 	}
 
 	@Override
-	public boolean shouldDraw(Graphics g, IContainer container) {
+	public boolean shouldDraw(Graphics2D g2, IContainer container) {
 		// Always recompute anchors before drawing so connection follows moved items.
 		syncAnchorsToItems();
 		return true;
 	}
 
 	@Override
-	public void drawItem(Graphics g, IContainer container) {
+	public void drawItem(Graphics2D g2, IContainer container) {
 		// Keep anchors synced; then draw like a normal polyline.
 		syncAnchorsToItems();
-		super.drawItem(g, container);
+		super.drawItem(g2, container);
 	}
 
 	/**

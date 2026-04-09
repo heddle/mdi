@@ -75,11 +75,12 @@ public class DemoApp extends BaseMDIApplication {
 	private DemoApp(Object... keyVals) {
 		super(keyVals);
 
-		// Log environment information early.
-		Log.getInstance().info(Environment.getInstance().toString());
-
 		// Create internal views.
 		addInitialViews();
+		
+		// Log environment information early.
+		Log.getInstance().info(Environment.getInstance().toString());
+		
 	}
 
 	@Override
@@ -94,8 +95,10 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	public static DemoApp getInstance() {
 		if (INSTANCE == null) {
-			INSTANCE = new DemoApp(PropertyUtils.TITLE, "Demo Application of MDI Views", PropertyUtils.BACKGROUNDIMAGE,
-					Environment.MDI_RESOURCE_PATH + "images/mdilogo.png", PropertyUtils.FRACTION, 0.8);
+			INSTANCE = new DemoApp(PropertyUtils.TITLE, "Demo Application of MDI Views", 
+					PropertyUtils.BACKGROUNDIMAGE, Environment.MDI_RESOURCE_PATH + "images/mdilogo.png", 
+					PropertyUtils.CONSOLELOG, true,
+					PropertyUtils.FRACTION, 0.8);
 		}
 		return INSTANCE;
 	}
@@ -126,11 +129,11 @@ public class DemoApp extends BaseMDIApplication {
 		// Network declutter demo view
 		networkDeclutterDemoView = createNetworkDeclutterDemoView();
 
-		// TSP (Traveling Salesperson) demo view
-		tspDemoView = createTspDemoView();
-
 		// Network layout demo view create lazily (as an example)
 		ViewManager.getInstance().addConfiguration(NetworkLayoutDemoView.getConfiguration());
+		
+		// TSP (Traveling Salesperson) demo view
+		tspDemoView = createTspDemoView();
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package edu.cnu.mdi.graphics.text;
+package edu.cnu.mdi.util;
 
 public class UnicodeUtils {
 

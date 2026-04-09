@@ -1,16 +1,9 @@
 package edu.cnu.mdi.splot.plot;
 
 import java.awt.Color;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.Objects;
-
-import javax.swing.JFrame;
-import javax.swing.UIManager;
-
-import com.formdev.flatlaf.FlatIntelliJLaf;
 
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.pdata.ACurve;
@@ -19,7 +12,6 @@ import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.ui.colors.ScientificColorMap;
-import edu.cnu.mdi.ui.fonts.Fonts;
 
 public class BarPlot {
 

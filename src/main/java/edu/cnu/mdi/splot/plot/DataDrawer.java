@@ -1,6 +1,6 @@
 package edu.cnu.mdi.splot.plot;
 
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.util.Collection;
@@ -28,49 +28,49 @@ public class DataDrawer {
 	 * Draw a data set on the canvas.Draws the optional fixed lines, then the
 	 * curves.
 	 *
-	 * @param g        the graphics context
+	 * @param g2       the graphics context
 	 * @param plotData the PlotData to draw.
 	 */
-	public void draw(Graphics g, PlotData plotData) {
+	public void draw(Graphics2D g2, PlotData plotData) {
 
 		// if no curves, bail
 		// clip checks
-		if ((plotData == null) || plotData.size() < 1 || !(g.getClip().intersects(_plotCanvas.getActiveBounds()))) {
+		if ((plotData == null) || plotData.size() < 1 || !(g2.getClip().intersects(_plotCanvas.getActiveBounds()))) {
 			return;
 		}
 
-		Rectangle clipRect = GraphicsUtils.minClip(g.getClip(), _plotCanvas.getActiveBounds());
+		Rectangle clipRect = GraphicsUtils.minClip(g2.getClip(), _plotCanvas.getActiveBounds());
 		if ((clipRect == null) || (clipRect.width == 0) || (clipRect.height == 0)) {
 			return;
 		}
 
 		// save the clip, set clip to active area
-		Shape oldClip = g.getClip();
+		Shape oldClip = g2.getClip();
 
-		g.setClip(clipRect);
+		g2.setClip(clipRect);
 
 		// any fixed horizontal or verticallines?
 		Vector<PlotLine> lines = _plotCanvas.getParameters().getPlotLines();
 		if (!lines.isEmpty()) {
 			for (PlotLine line : lines) {
-				line.draw(g);
+				line.draw(g2);
 			}
 		}
 
 		//heatmaps have no curves, treated separately
 		if (plotData.isHisto2DData()) {
-			HeatmapDrawer.drawHeatmap(g, _plotCanvas, plotData.getHisto2DData());
+			HeatmapDrawer.drawHeatmap(g2, _plotCanvas, plotData.getHisto2DData());
 		} else {
 			Collection<ACurve> curves = plotData.getCurves();
 			for (ACurve curve : curves) {
 				if (curve.isVisible()) {
-					CurveDrawer.drawCurve(g, _plotCanvas, curve);
+					CurveDrawer.drawCurve(g2, _plotCanvas, curve);
 				}
 			}
 		}
 
 		// restore the old clip
-		g.setClip(oldClip);
+		g2.setClip(oldClip);
 	}
 
 }

@@ -58,15 +58,15 @@ public class FileMenu extends JMenu {
 
 	/** Add the "Save View Configuration" menu item. */
 	private void addSaveConfigurationItem() {
-		JMenuItem item = new JMenuItem("Save View Configuration...");
+		JMenuItem item = new JMenuItem("Save Layout...");
 		item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, shortcutKeyMask()));
-		item.addActionListener(e -> Desktop.getInstance().writeConfigurationFile());
+		item.addActionListener(e -> Desktop.getInstance().writeConfigurationFileInteractive());
 		add(item);
 	}
 
 	/** Add the "Delete View Configuration" menu item. */
 	private void addDeleteConfigurationItem() {
-		JMenuItem item = new JMenuItem("Delete View Configuration");
+		JMenuItem item = new JMenuItem("Delete Layout...");
 		item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, shortcutKeyMask()));
 		item.addActionListener(e -> Desktop.getInstance().deleteConfigurationFile());
 		add(item);

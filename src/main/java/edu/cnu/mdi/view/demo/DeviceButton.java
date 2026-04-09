@@ -17,7 +17,7 @@ public class DeviceButton extends ASingleClickButton {
 	private EDeviceSymbol symbol;
 
 	public DeviceButton(NetworkLayoutDemoView view, EDeviceSymbol symbol) {
-		super(view.getContainer().getComponent(), view.getToolBar());
+		super(view.getIContainer().getComponent(), view.getToolBar());
 		this.view = view;
 		this.deviceLayer = view.getDeviceLayer();
 		this.symbol = symbol;
@@ -31,7 +31,7 @@ public class DeviceButton extends ASingleClickButton {
 	@Override
 	public void canvasClick(MouseEvent e) {
 		DeviceItem.createDeviceItem(deviceLayer, e.getPoint(), symbol);
-		view.getContainer().refresh();
+		view.getIContainer().refresh();
 		view.getToolBar().resetDefaultToggleButton();
 	}
 

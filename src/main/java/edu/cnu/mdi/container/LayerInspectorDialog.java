@@ -567,10 +567,10 @@ public class LayerInspectorDialog extends JDialog {
 		return new JMenuItem(new AbstractAction("Layers…") {
 			@Override
 			public void actionPerformed(java.awt.event.ActionEvent e) {
-				if (view == null || view.getContainer() == null) {
+				if (view == null || view.getIContainer() == null) {
 					return;
 				}
-				if (view.getContainer() instanceof BaseContainer bc) {
+				if (view.getIContainer() instanceof BaseContainer bc) {
 					LayerInspectorDialog.show(view, bc);
 				}
 			}

@@ -1,6 +1,6 @@
 package edu.cnu.mdi.item;
 
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
@@ -40,12 +40,12 @@ public class PathBasedItem extends AItem {
 	/**
 	 * Custom drawer for the item.
 	 *
-	 * @param g         the graphics context.
+	 * @param g2        the graphics context.
 	 * @param container the graphical container being rendered.
 	 */
 	@Override
-	public void drawItem(Graphics g, IContainer container) {
-		_lastDrawnPolygon = WorldGraphicsUtils.drawPath2D(g, container, _path, getStyleSafe(), true);
+	public void drawItem(Graphics2D g2, IContainer container) {
+		_lastDrawnPolygon = WorldGraphicsUtils.drawPath2D(g2, container, _path, getStyleSafe(), true);
 
 	}
 
@@ -54,13 +54,13 @@ public class PathBasedItem extends AItem {
 	 * the simple visibility flag check. For example, it might check whether the
 	 * item intersects the area being drawn.
 	 *
-	 * @param g         the graphics context.
+	 * @param g2        the graphics context.
 	 * @param container the graphical container being rendered.
 	 * @return <code>true</code> if the item passes any and all tests, and should be
 	 *         drawn.
 	 */
 	@Override
-	public boolean shouldDraw(Graphics g, IContainer container) {
+	public boolean shouldDraw(Graphics2D g2, IContainer container) {
 
 		if (WorldGraphicsUtils.getPathPointCount(_path) == 1) {
 			Rectangle spr = singlePointBounds(container);

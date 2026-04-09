@@ -79,7 +79,7 @@ public class HeadlessPointerTool implements MouseListener, MouseMotionListener {
 	public HeadlessPointerTool(BaseView view) {
 		Objects.requireNonNull(view, "view");
 
-		_container = Objects.requireNonNull(view.getContainer(), "container");
+		_container = Objects.requireNonNull(view.getIContainer(), "container");
 		_component = Objects.requireNonNull(_container.getComponent(), "component");
 
 		_component.addMouseListener(this);

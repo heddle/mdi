@@ -59,12 +59,12 @@ public class NetworkLayoutDemoView extends BaseView {
 	 */
 	public NetworkLayoutDemoView(Properties props) {
 		super(props);
-		deviceLayer = new Layer(getContainer(), "Devices");
-		getContainer().getFeedbackControl().addFeedbackProvider(this);
+		deviceLayer = new Layer(getIContainer(), "Devices");
+		getIContainer().getFeedbackControl().addFeedbackProvider(this);
 		addToToolBar();
 
 		// add an underlying snap-to grid drawer
-		gridDrawer = new GridDrawer(getContainer(), 20, X11Colors.getX11Color("light gray"));
+		gridDrawer = new GridDrawer(getIContainer(), 20, X11Colors.getX11Color("light gray"));
 
 		// add an east side panel with a control panel and feedback
 		initEastSidePanel();
@@ -120,7 +120,7 @@ public class NetworkLayoutDemoView extends BaseView {
 
 	// add the custom buttons to the toolbar
 	private void addToToolBar() {
-		AToolBar tb = getContainer().getToolBar();
+		AToolBar tb = getIContainer().getToolBar();
 		if (tb == null) {
 			return;
 		}

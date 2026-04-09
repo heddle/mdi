@@ -1,7 +1,6 @@
 package edu.cnu.mdi.splot.plot;
 
 import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 
@@ -16,19 +15,17 @@ public final class HeatmapDrawer {
 	 * onto the given graphics context, using the given canvas for
 	 * coordinate transforms, and the given options for color scale
 	 * and log-Z setting.
-	 * @param g  graphics context on which to draw
+	 * @param g2  graphics context on which to draw
 	 * @param canvas  plot canvas for coordinate transforms
 	 * @param h2d  2D histogram data to draw
 	 * @param opt  heatmap drawing options (if null, defaults used)
 	 */
-    public static void drawHeatmap(Graphics g, PlotCanvas canvas, Histo2DData h2d) {
+    public static void drawHeatmap(Graphics2D g2, PlotCanvas canvas, Histo2DData h2d) {
 
-        if (g == null || canvas == null || h2d == null) {
+        if (g2 == null || canvas == null || h2d == null) {
             return;
         }
 
-
-        final Graphics2D g2 = (Graphics2D) g;
         final Color[] scale =canvas.getParameters().getColorMap().scale();
         final boolean logZ = canvas.getParameters().isLogZ();
 

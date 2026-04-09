@@ -3,7 +3,6 @@ package edu.cnu.mdi.util;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -16,7 +15,7 @@ public class TextUtils {
 
 	/**
 	 * Draws rotated multi-line text with specified alignment.
-	 * @param g the Graphics context
+	 * @param g2 the Graphics context
 	 * @param cp the center point for rotation
 	 * @param s the text to draw (can contain newlines)
 	 * @param font the font to use
@@ -24,22 +23,21 @@ public class TextUtils {
 	 * @param theta the rotation angle in degrees
 	 * @param align Use SwingConstants.LEFT, CENTER, or RIGHT
 	 */
-	public static void drawRotatedText(Graphics g, Point cp, String s,
+	public static void drawRotatedText(Graphics2D g2, Point cp, String s,
 	        Font font, Color tcolor, double theta, int align) {
-	    Graphics2D g2d = (Graphics2D) g.create();
 
-	    g2d.setFont(font);
-	    g2d.setColor(tcolor);
-	    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+	    g2.setFont(font);
+	    g2.setColor(tcolor);
+	    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 	    String[] lines = s.split("\\R");
-	    FontMetrics fm = g2d.getFontMetrics();
+	    FontMetrics fm = g2.getFontMetrics();
 	    int lineHeight = fm.getHeight();
 	    int totalHeight = lineHeight * lines.length;
 
 	    // Apply transformations
-	    g2d.translate(cp.x, cp.y);
-	    g2d.rotate(Math.toRadians(theta));
+	    g2.translate(cp.x, cp.y);
+	    g2.rotate(Math.toRadians(theta));
 
 	    // Calculate max width for the whole block
 	    int maxWidth = 0;
@@ -71,10 +69,10 @@ public class TextUtils {
 	        }
 
 	        float y = startY + (i * lineHeight);
-	        g2d.drawString(line, x, y);
+	        g2.drawString(line, x, y);
 	    }
 
-	    g2d.dispose();
+	    g2.dispose();
 	}
 
 	/**

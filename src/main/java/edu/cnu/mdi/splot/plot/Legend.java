@@ -1,7 +1,7 @@
 package edu.cnu.mdi.splot.plot;
 
 import java.awt.FontMetrics;
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -9,13 +9,13 @@ import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.SymbolDraw;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.SymbolType;
-import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.Histo2DData;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
+import edu.cnu.mdi.util.UnicodeUtils;
 
 @SuppressWarnings("serial")
 public class Legend extends DraggableRectangle {
@@ -50,9 +50,9 @@ public class Legend extends DraggableRectangle {
 	/**
 	 * Draw the legend
 	 *
-	 * @param g the graphics context
+	 * @param g2 the graphics context
 	 */
-	public void draw(Graphics g) {
+	public void draw(Graphics2D g2) {
 		PlotData plotData = _canvas.getPlotData();
 
 		//as always, Histo2D has no curves to show so
@@ -60,7 +60,7 @@ public class Legend extends DraggableRectangle {
 		if (plotData.getType() == PlotDataType.H2D) {
 			Histo2DData h2d = plotData.getHisto2DData();
 			if (h2d != null) {
-				histo2DDraw(g, h2d);
+				histo2DDraw(g2, h2d);
 			}
 			return;
 		}
@@ -75,12 +75,12 @@ public class Legend extends DraggableRectangle {
 		width = getLegendWidth();
 		height = getLegendHeight();
 
-		g.setColor(_params.getTextBackground());
-		g.fillRect(x, y, width, height);
+		g2.setColor(_params.getTextBackground());
+		g2.fillRect(x, y, width, height);
 
 		if (_params.isLegendBorder()) {
-			g.setColor(_params.getTextBorderColor());
-			g.drawRect(x, y, width, height);
+			g2.setColor(_params.getTextBorderColor());
+			g2.drawRect(x, y, width, height);
 		}
 
 		int yi = y + VGAP;
@@ -88,12 +88,13 @@ public class Legend extends DraggableRectangle {
 		Collection<ACurve> curves = plotData.getVisibleCurves();
 		for (ACurve curve : curves) {
 			if (curve.isVisible()) {
-				yi = drawCurveLegendInfo(g, yi, curve);
+				yi = drawCurveLegendInfo(g2, yi, curve);
 			}
 		}
 	}
 
-	private void histo2DDraw(Graphics g, Histo2DData h2d) {
+	// draw the legend for a 2D histogram
+	private void histo2DDraw(Graphics2D g2, Histo2DData h2d) {
 		FontMetrics fm = _canvas.getFontMetrics(_params.getTextFont());
 
 		ArrayList<String> strings = new ArrayList<>();
@@ -135,31 +136,31 @@ public class Legend extends DraggableRectangle {
 			height += fm.getHeight();
 		}
 
-		g.setColor(_params.getTextBackground());
-		g.fillRect(x, y, width, height);
+		g2.setColor(_params.getTextBackground());
+		g2.fillRect(x, y, width, height);
 
 		if (_params.isLegendBorder()) {
-			g.setColor(_params.getTextBorderColor());
-			g.drawRect(x, y, width, height);
+			g2.setColor(_params.getTextBorderColor());
+			g2.drawRect(x, y, width, height);
 		}
 
-		g.setFont(_params.getTextFont());
-		g.setColor(_params.getTextForeground());
+		g2.setFont(_params.getTextFont());
+		g2.setColor(_params.getTextForeground());
 
 		//draw the strings
 		int ys = y;
 		for (String s : strings) {
-			g.drawString(s, x + HGAP, ys + fm.getAscent());
+			g2.drawString(s, x + HGAP, ys + fm.getAscent());
 			ys += fm.getHeight();
 		}
 
 	}
 
 	// draw the info for the given curve
-	private int drawCurveLegendInfo(Graphics g, int y, ACurve curve) {
+	private int drawCurveLegendInfo(Graphics2D g2, int y, ACurve curve) {
 		FontMetrics fm = _canvas.getFontMetrics(_params.getTextFont());
-		g.setFont(_params.getTextFont());
-		g.setColor(_params.getTextForeground());
+		g2.setFont(_params.getTextFont());
+		g2.setColor(_params.getTextForeground());
 
 		Styled style = curve.getStyle();
 		CurveDrawingMethod cdm = curve.getCurveDrawingMethod();
@@ -176,16 +177,16 @@ public class Legend extends DraggableRectangle {
 			legStr += (" " + hc.getHistoData().statStr());
 		}
 
-		g.drawString(legStr, x + width - _maxStringWidth - HGAP, yc + fm.getHeight() / 2);
+		g2.drawString(legStr, x + width - _maxStringWidth - HGAP, yc + fm.getHeight() / 2);
 
 		if ((_numVisCurves > 0) && cdm != CurveDrawingMethod.NONE) {
-			GraphicsUtils.drawStyleLine(g, style.getLineColor(), style.getLineWidth(), style.getLineStyle(), x + HGAP,
+			GraphicsUtils.drawStyleLine(g2, style.getLineColor(), style.getLineWidth(), style.getLineStyle(), x + HGAP,
 					yc, x + HGAP + _params.getLegendLineLength(), yc);
 		}
 
 		// draw symbol if any but only for xy curves
 		if (curve.isXYCurve()) {
-			SymbolDraw.drawSymbol(g, x + HGAP + _extra / 2, yc, curve.getStyle());
+			SymbolDraw.drawSymbol(g2, x + HGAP + _extra / 2, yc, curve.getStyle());
 		}
 
 		return y + space + VGAP;

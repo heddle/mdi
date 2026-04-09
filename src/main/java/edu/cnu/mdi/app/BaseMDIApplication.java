@@ -24,6 +24,7 @@ import javax.swing.UIManager;
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
 import edu.cnu.mdi.desktop.Desktop;
+import edu.cnu.mdi.log.ConsoleLogger;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.swing.WindowPlacement;
@@ -176,6 +177,13 @@ public class BaseMDIApplication extends JFrame {
 					}
 				}
 			});
+			
+			//console logging of log events for debugging?
+			boolean consoleLogger = PropertyUtils.getConsoleLog(_properties);
+			if (consoleLogger) {
+				Log.getInstance().addLogListener(new ConsoleLogger());
+				Log.getInstance().config("Console logging enabled");
+			}
 
 			// --------------------------------------------------------------------
 			// Frame attributes

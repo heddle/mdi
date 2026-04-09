@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
@@ -15,10 +15,10 @@ import javax.swing.SwingConstants;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.dialog.TextEditDialog;
-import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.swing.WindowPlacement;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.TextUtils;
+import edu.cnu.mdi.util.UnicodeUtils;
 
 /**
  * A drawable item that renders text with a rectangular background/border.
@@ -81,12 +81,12 @@ public class TextItem extends RectangleItem {
 	}
 
 	@Override
-	public void drawItem(Graphics g, IContainer container) {
-		super.drawItem(g, container);
+	public void drawItem(Graphics2D g2, IContainer container) {
+		super.drawItem(g2, container);
 
 		Point cp = new Point();
 		container.worldToLocal(cp, _focus);
-		TextUtils.drawRotatedText(g, cp, getText(), _font, _style.getTextColor(),
+		TextUtils.drawRotatedText(g2, cp, getText(), _font, _style.getTextColor(),
 				getAzimuth(), alignment);
 	}
 

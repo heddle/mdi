@@ -13,7 +13,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.optim.SimpleVectorValueChecker;
 
-import edu.cnu.mdi.graphics.text.UnicodeUtils;
+import edu.cnu.mdi.util.UnicodeUtils;
 
 /**
  * Base class for least-squares fitters built on Apache Commons Math 3.x

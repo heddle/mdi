@@ -34,7 +34,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 	 */
 	public DrawingView(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
-		getContainer().getFeedbackControl().addFeedbackProvider(this);
+		getIContainer().getFeedbackControl().addFeedbackProvider(this);
 		setFileFilter(ImageFilters.isActualImage);
 		initFeedback();
 	}
@@ -90,7 +90,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 		File file = files.get(0);
 		try {
 			BufferedImage img = ImageIO.read(file);
-			IContainer container = getContainer();
+			IContainer container = getIContainer();
 			new ImageItem(container.getAnnotationLayer(), null, img);
 			refresh();
 		} catch (IOException e) {

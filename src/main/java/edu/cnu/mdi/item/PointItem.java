@@ -1,6 +1,6 @@
 package edu.cnu.mdi.item;
 
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -80,11 +80,11 @@ public class PointItem extends AItem {
 	/**
 	 * Custom drawer for the item.
 	 *
-	 * @param g         the graphics context.
+	 * @param g2        the graphics context.
 	 * @param container the graphical container being rendered.
 	 */
 	@Override
-	public void drawItem(Graphics g, IContainer container) {
+	public void drawItem(Graphics2D g2, IContainer container) {
 
 		// draw icon?
 		if (icon != null) {
@@ -117,14 +117,14 @@ public class PointItem extends AItem {
 				break;
 			}
 
-			g.drawImage(icon.getImage(), x, y, container.getComponent());
+			g2.drawImage(icon.getImage(), x, y, container.getComponent());
 		} else {
 			// draw symbol?
 			if (_style.getSymbolType() != SymbolType.NOSYMBOL) {
 				Rectangle r = getBounds(container);
 				int xc = r.x + r.width / 2;
 				int yc = r.y + r.height / 2;
-				SymbolDraw.drawSymbol(g, xc, yc, _style);
+				SymbolDraw.drawSymbol(g2, xc, yc, _style);
 			}
 		}
 	}
@@ -134,13 +134,13 @@ public class PointItem extends AItem {
 	 * the simple visibility flag check. For example, it might check whether the
 	 * item intersects the area being drawn.
 	 *
-	 * @param g         the graphics context.
+	 * @param g2        the graphics context.
 	 * @param container the graphical container being rendered.
 	 * @return <code>true</code> if the item passes any and all tests, and should be
 	 *         drwan.
 	 */
 	@Override
-	public boolean shouldDraw(Graphics g, IContainer container) {
+	public boolean shouldDraw(Graphics2D g2, IContainer container) {
 		Rectangle r = getBounds(container);
 		Rectangle b = container.getComponent().getBounds();
 		b.x = 0;

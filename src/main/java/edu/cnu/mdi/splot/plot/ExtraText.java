@@ -1,7 +1,7 @@
 package edu.cnu.mdi.splot.plot;
 
 import java.awt.FontMetrics;
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
 
 /**
@@ -38,9 +38,9 @@ public class ExtraText extends DraggableRectangle {
 	/**
 	 * Draw the extra text
 	 *
-	 * @param g the graphics context
+	 * @param g2 the graphics context
 	 */
-	public void draw(Graphics g) {
+	public void draw(Graphics2D g2) {
 
 		String[] extraStrings = _params.getExtraStrings();
 		if ((extraStrings == null) || (extraStrings.length < 1)) {
@@ -61,23 +61,23 @@ public class ExtraText extends DraggableRectangle {
 			x = right - width - 10;
 		}
 
-		g.setColor(_params.getExtraBackground());
-		g.setFont(_params.getExtraFont());
-		g.fillRect(x, y, width, height);
+		g2.setColor(_params.getExtraBackground());
+		g2.setFont(_params.getExtraFont());
+		g2.fillRect(x, y, width, height);
 
-		g.setColor(_params.getExtraForeground());
+		g2.setColor(_params.getExtraForeground());
 		FontMetrics fm = _canvas.getFontMetrics(_params.getExtraFont());
 
 		int xs = x + HGAP;
 		int ys = y + VGAP + fm.getHeight();
 		for (String s : extraStrings) {
-			g.drawString(s, xs, ys);
+			g2.drawString(s, xs, ys);
 			ys += fm.getHeight();
 		}
 
 		if (_params.extraBorder()) {
-			g.setColor(_params.getExtraBorderColor());
-			g.drawRect(x, y, width, height);
+			g2.setColor(_params.getExtraBorderColor());
+			g2.drawRect(x, y, width, height);
 		}
 
 	}

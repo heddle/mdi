@@ -373,7 +373,7 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	public void onRefresh(SimulationContext ctx) {
 		onSimulationRefresh(ctx);
 
-		IContainer cont = getContainer();
+		IContainer cont = getIContainer();
 		if (cont != null && cont.getComponent() != null) {
 			cont.getComponent().repaint();
 		} else {

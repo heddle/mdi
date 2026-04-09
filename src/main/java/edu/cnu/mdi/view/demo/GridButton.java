@@ -16,7 +16,7 @@ public class GridButton extends AOneShotButton {
 	private NetworkLayoutDemoView view;
 
 	public GridButton(NetworkLayoutDemoView view) {
-		super(view.getContainer().getComponent(), view.getToolBar());
+		super(view.getIContainer().getComponent(), view.getToolBar());
 
 		this.view = view;
 		String iconPath = Environment.MDI_RESOURCE_PATH + "images/svg/grid.svg";
@@ -30,7 +30,7 @@ public class GridButton extends AOneShotButton {
 	@Override
 	public void performAction() {
 		int gridSize = view.getGridDrawer().getGridSize();
-		IContainer container = view.getContainer();
+		IContainer container = view.getIContainer();
 
 		for (DeviceItem device : view.getAllDevices()) {
 

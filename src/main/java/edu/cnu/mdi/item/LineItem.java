@@ -1,6 +1,6 @@
 package edu.cnu.mdi.item;
 
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Line2D;
@@ -81,12 +81,12 @@ public class LineItem extends AItem {
 	/**
 	 * Custom drawer for the item.
 	 *
-	 * @param g         the graphics context.
+	 * @param g2        the graphics context.
 	 * @param container the graphical container being rendered.
 	 */
 	@Override
-	public void drawItem(Graphics g, IContainer container) {
-		WorldGraphicsUtils.drawWorldLine(g, container, _line.x1, _line.y1, _line.x2, _line.y2, _style);
+	public void drawItem(Graphics2D g2, IContainer container) {
+		WorldGraphicsUtils.drawWorldLine(g2, container, _line.x1, _line.y1, _line.x2, _line.y2, _style);
 	}
 
 	/**
@@ -100,7 +100,7 @@ public class LineItem extends AItem {
 	 *         drawn.
 	 */
 	@Override
-	public boolean shouldDraw(Graphics g, IContainer container) {
+	public boolean shouldDraw(Graphics2D g2, IContainer container) {
 		Rectangle r = WorldGraphicsUtils.getBounds(container, _line.x1, _line.y1, _line.x2, _line.y2);
 		return container.getComponent().getBounds().intersects(r);
 	}

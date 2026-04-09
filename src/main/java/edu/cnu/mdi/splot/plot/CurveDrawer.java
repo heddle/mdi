@@ -2,7 +2,6 @@ package edu.cnu.mdi.splot.plot;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Polygon;
@@ -39,14 +38,14 @@ public class CurveDrawer {
 	/**
 	 * Draw a curve with x and y error bars
 	 *
-	 * @param g          the graphics context
+	 * @param g2         the graphics context
 	 * @param plotCanvas the plot canvas
 	 * @param xcol       the x data column
 	 * @param ycol       the y data column
 	 * @param xerrCol    the x error bar column (often <code>null</code>)
 	 * @param yerrCol    the y error bar column
 	 */
-	public static void drawCurve(Graphics g, PlotCanvas plotCanvas, ACurve curve) {
+	public static void drawCurve(Graphics2D g2, PlotCanvas plotCanvas, ACurve curve) {
 
 		Objects.requireNonNull(curve, "curve");
 		Objects.requireNonNull(plotCanvas, "plotCanvas");
@@ -57,14 +56,14 @@ public class CurveDrawer {
 
 		if (curve instanceof Curve) {
 			if (plotCanvas.isBarPlot()) {
-				drawBar(g, plotCanvas, (Curve) curve);
+				drawBar(g2, plotCanvas, (Curve) curve);
 				return;
 			}
-			drawXYCurve(g, plotCanvas, (Curve) curve);
+			drawXYCurve(g2, plotCanvas, (Curve) curve);
 		} else if (curve instanceof StripChartCurve) {
-			drawStripChart(g, plotCanvas, (StripChartCurve) curve);
+			drawStripChart(g2, plotCanvas, (StripChartCurve) curve);
 		} else if (curve instanceof HistoCurve) {
-			drawHistoCurve(g, plotCanvas, (HistoCurve) curve);
+			drawHistoCurve(g2, plotCanvas, (HistoCurve) curve);
 		} else {
 			System.err.println("Unsupported curve type in drawCurve " + curve.name());
 			return;
@@ -75,11 +74,11 @@ public class CurveDrawer {
 	/**
 	 * Draw a bar for a bar plot
 	 *
-	 * @param g          the graphics context
+	 * @param g2         the graphics context
 	 * @param plotCanvas the plot canvas
 	 * @param curve      the bar curve to be drawn
 	 */
-	public static void drawBar(Graphics g, PlotCanvas canvas, Curve curve) {
+	public static void drawBar(Graphics2D g2, PlotCanvas canvas, Curve curve) {
 		if (!curve.isVisible()) {
 			return;
 		}
@@ -105,27 +104,27 @@ public class CurveDrawer {
 			poly.addPoint(p.x, p.y);
 		}
 		IStyled style = curve.getStyle();
-		g.setColor(style.getFillColor());
-		g.fillPolygon(poly);
+		g2.setColor(style.getFillColor());
+		g2.fillPolygon(poly);
 		Color lineColor = style.getLineColor();
-		g.setColor(lineColor);
-		g.drawPolygon(poly);
+		g2.setColor(lineColor);
+		g2.drawPolygon(poly);
 
-		g.setColor(Color.black);
-		g.setFont(Fonts.smallFont);
+		g2.setColor(Color.black);
+		g2.setFont(Fonts.smallFont);
 		String label = String.format("%.4f", y[1]);
 		wp.x = 0.5 * (x[1] + x[2]);
 		wp.y = y[1];
 
 
 		canvas.dataToScreen(p, wp);
-		FontMetrics fm = g.getFontMetrics();
+		FontMetrics fm = g2.getFontMetrics();
 		int strWidth = fm.stringWidth(label);
 
 		Rectangle plotRect = canvas.getActiveBounds();
 		p.y = Math.max(p.y, plotRect.y + fm.getHeight() + 2); // don't go above plot area
 
-	    GraphicsUtils.drawEtchedText(g, label, p.x - strWidth / 2, p.y -
+	    GraphicsUtils.drawEtchedText(g2, label, p.x - strWidth / 2, p.y -
 				4);
 
 
@@ -134,11 +133,11 @@ public class CurveDrawer {
 	/**
 	 * Draw a standard XY(with optional errors) curve
 	 *
-	 * @param g          the graphics context
+	 * @param g2         the graphics context
 	 * @param plotCanvas the plot canvas
 	 * @param curve      the XY(E)curve to be drawn
 	 */
-	public static void drawXYCurve(Graphics g, PlotCanvas canvas, Curve curve) {
+	public static void drawXYCurve(Graphics2D g2, PlotCanvas canvas, Curve curve) {
 		if (!curve.isVisible()) {
 			return;
 		}
@@ -163,7 +162,7 @@ public class CurveDrawer {
 		}
 
 		// draw the fit line or basic connector lines
-		drawFitOrLines(g, canvas, curve, x, y);
+		drawFitOrLines(g2, canvas, curve, x, y);
 
 		// symbols?
 		Styled style = curve.getStyle();
@@ -179,12 +178,12 @@ public class CurveDrawer {
 					canvas.dataToScreen(p0, wp);
 					wp.setLocation(x[i], y1);
 					canvas.dataToScreen(p1, wp);
-					g.drawLine(p0.x, p0.y, p1.x, p1.y);
+					g2.drawLine(p0.x, p0.y, p1.x, p1.y);
 				}
 
 				wp.setLocation(x[i], y[i]);
 				canvas.dataToScreen(p0, wp);
-				SymbolDraw.drawSymbol(g, p0.x, p0.y, style);
+				SymbolDraw.drawSymbol(g2, p0.x, p0.y, style);
 
 			}
 		}
@@ -193,11 +192,11 @@ public class CurveDrawer {
 	/**
 	 * Draw a strip chart
 	 *
-	 * @param g               the graphics context
+	 * @param g2              the graphics context
 	 * @param plotCanvas      the plot canvas
 	 * @param stripChartCurve the strip chart curve
 	 */
-	public static void drawStripChart(Graphics g, PlotCanvas canvas, StripChartCurve stripChartCurve) {
+	public static void drawStripChart(Graphics2D g2, PlotCanvas canvas, StripChartCurve stripChartCurve) {
 
 		Objects.requireNonNull(stripChartCurve, "stripChartCurve");
 		Objects.requireNonNull(canvas, "canvas");
@@ -221,17 +220,17 @@ public class CurveDrawer {
 		}
 
 		// draw the fit line or basic connector lines
-		drawFitOrLines(g, canvas, stripChartCurve, x, y);
+		drawFitOrLines(g2, canvas, stripChartCurve, x, y);
 	}
 
 	/**
 	 * Draw a 1D histogram
 	 *
-	 * @param g          the graphics context
+	 * @param g2         the graphics context
 	 * @param plotCanvas the plot canvas
 	 * @param histoCurve the histogram curve
 	 */
-	private static void drawHistoCurve(Graphics g, PlotCanvas canvas, HistoCurve histoCurve) {
+	private static void drawHistoCurve(Graphics2D g2, PlotCanvas canvas, HistoCurve histoCurve) {
 
 		HistoData hd = histoCurve.getHistoData();
 		if (histoCurve.isDirty()) {
@@ -241,15 +240,15 @@ public class CurveDrawer {
 		Polygon poly = HistoData.GetPolygon(canvas, hd);
 		IStyled style = histoCurve.getStyle();
 
-		g.setColor(style.getFillColor());
-		g.fillPolygon(poly);
+		g2.setColor(style.getFillColor());
+		g2.fillPolygon(poly);
 
 		Color borderColor = style.getBorderColor();
 		if (borderColor == null) {
 			borderColor = _transGray;
 		}
-		g.setColor(borderColor);
-		g.drawPolygon(poly);
+		g2.setColor(borderColor);
+		g2.drawPolygon(poly);
 
 		long counts[] = hd.getCounts();
 		int numBin = hd.getNumberBins();
@@ -263,7 +262,7 @@ public class CurveDrawer {
 		}
 
 		// draw the fit line
-		drawFitOrLines(g, canvas, histoCurve, x, y);
+		drawFitOrLines(g2, canvas, histoCurve, x, y);
 
 		// draw statistical errors
 		if (hd.drawStatisticalErrors()) {
@@ -279,9 +278,9 @@ public class CurveDrawer {
 					canvas.dataToScreen(p0, wp);
 					wp.setLocation(x[bin], ymax);
 					canvas.dataToScreen(p1, wp);
-					g.drawLine(p0.x, p0.y, p1.x, p1.y);
-					g.drawLine(p0.x - 2, p0.y, p0.x + 2, p0.y);
-					g.drawLine(p1.x - 2, p1.y, p1.x + 2, p1.y);
+					g2.drawLine(p0.x, p0.y, p1.x, p1.y);
+					g2.drawLine(p0.x - 2, p0.y, p0.x + 2, p0.y);
+					g2.drawLine(p1.x - 2, p1.y, p1.x + 2, p1.y);
 				}
 			}
 
@@ -290,9 +289,9 @@ public class CurveDrawer {
 		// draw the bin borders
 		Rectangle b = canvas.getActiveBounds();
 		int n = poly.npoints;
-		g.setColor(borderColor);
+		g2.setColor(borderColor);
 		for (int i = 0; i < n; i++) {
-			g.drawLine(poly.xpoints[i], poly.ypoints[i], poly.xpoints[i], b.y + b.height);
+			g2.drawLine(poly.xpoints[i], poly.ypoints[i], poly.xpoints[i], b.y + b.height);
 		}
 
 	}
@@ -300,20 +299,18 @@ public class CurveDrawer {
 	/**
 	 * Draw the fit or basic no-fit connections for the given curve
 	 *
-	 * @param g          the graphics context
+	 * @param g2         the graphics context
 	 *
 	 * @param plotCanvas the plot canvas
 	 *
 	 * @param curve      the curve
 	 */
-	private static void drawFitOrLines(Graphics g, PlotCanvas canvas, ACurve curve, double x[], double y[]) {
+	private static void drawFitOrLines(Graphics2D g2, PlotCanvas canvas, ACurve curve, double x[], double y[]) {
 
 		IStyled style = curve.getStyle();
 		Point2D.Double wp = new Point2D.Double();
 		Point p0 = new Point();
 		Point p1 = new Point();
-
-		Graphics2D g2 = (Graphics2D) g;
 
 		Stroke oldStroke = g2.getStroke();
 		g2.setStroke(style.getStroke());
@@ -353,7 +350,7 @@ public class CurveDrawer {
 				canvas.dataToScreen(p1, wp);
 
 				g2.setColor(style.getFillColor());
-				g.fillRect(p0.x, p0.y, p1.x - p0.x, bottom - p0.y);
+				g2.fillRect(p0.x, p0.y, p1.x - p0.x, bottom - p0.y);
 
 				g2.setColor(style.getLineColor());
 				g2.drawLine(p0.x, p0.y, p1.x, p0.y);

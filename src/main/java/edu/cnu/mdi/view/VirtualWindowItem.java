@@ -1,6 +1,6 @@
 package edu.cnu.mdi.view;
 
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
@@ -33,7 +33,7 @@ public class VirtualWindowItem extends RectangleItem {
 	 * @param baseView the base view this item represents.
 	 */
 	public VirtualWindowItem(VirtualView vview, BaseView baseView) {
-		super(vview.getContainer().getAnnotationLayer(), getWorldRect(baseView));
+		super(vview.getIContainer().getAnnotationLayer(), getWorldRect(baseView));
 		_vview = vview;
 		_baseView = baseView;
 		_baseView.setVirtualItem(this);
@@ -97,7 +97,7 @@ public class VirtualWindowItem extends RectangleItem {
 				at.transform(sf, _focus);
 			}
 
-			_vview.getContainer().refresh();
+			_vview.getIContainer().refresh();
 		}
 	}
 
@@ -114,8 +114,8 @@ public class VirtualWindowItem extends RectangleItem {
 		case DRAG:
 
 			Point p = _modification.getCurrentMousePoint();
-			if (!_vview.getContainer().getComponent().getBounds().contains(p)) {
-				_vview.getContainer().refresh();
+			if (!_vview.getIContainer().getComponent().getBounds().contains(p)) {
+				_vview.getIContainer().refresh();
 				break;
 			}
 
@@ -127,7 +127,7 @@ public class VirtualWindowItem extends RectangleItem {
 			_baseView.offset(dh, dv);
 			setLocation();
 
-			_vview.getContainer().refresh();
+			_vview.getIContainer().refresh();
 			break;
 
 		default:
@@ -139,15 +139,15 @@ public class VirtualWindowItem extends RectangleItem {
 	/**
 	 * Custom drawer for the item.
 	 *
-	 * @param g         the graphics context.
+	 * @param g2        the graphics context.
 	 * @param container the graphical container being rendered.
 	 */
 	@Override
-	public void drawItem(Graphics g, IContainer container) {
+	public void drawItem(Graphics2D g2, IContainer container) {
 		if (!_baseView.isVisible() || _baseView.isClosed() || _baseView.isIcon()) {
 			setEnabled(false);
 		} else {
-			super.drawItem(g, container);
+			super.drawItem(g2, container);
 			setEnabled(true);
 		}
 	}
@@ -162,8 +162,12 @@ public class VirtualWindowItem extends RectangleItem {
 		return wr;
 	}
 
+	/**
+	 * Set the location of this item based on the location of the base view. This
+	 * should be called whenever the base view moves.
+	 */
 	public void setLocation() {
-		Rectangle2D.Double world = _vview.getContainer().getWorldSystem();
+		Rectangle2D.Double world = _vview.getIContainer().getWorldSystem();
 		Rectangle bvBounds = _baseView.getBounds();
 		Rectangle2D.Double wr = new Rectangle2D.Double();
 
@@ -176,7 +180,7 @@ public class VirtualWindowItem extends RectangleItem {
 		wr.height = bvBounds.height - 2*del;
 
 		setPath(WorldGraphicsUtils.getPoints(wr));
-		_vview.getContainer().refresh();
+		_vview.getIContainer().refresh();
 	}
 
 	/**

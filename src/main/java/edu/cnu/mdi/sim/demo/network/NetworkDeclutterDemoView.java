@@ -87,7 +87,7 @@ public class NetworkDeclutterDemoView extends SimulationView implements IResetta
 		setAfterDraw();
 		setBeforeDraw();
 
-		getContainer().scale(1.1); // initial zoom
+		getIContainer().scale(1.1); // initial zoom
 
 		pack();
 		// Start engine thread (remains paused until Run unless you call startAndRun()).
@@ -128,7 +128,7 @@ public class NetworkDeclutterDemoView extends SimulationView implements IResetta
 
 	// Draw edges before nodes
 	private void setBeforeDraw() {
-		getContainer().setBeforeDraw(new DrawableAdapter() {
+		getIContainer().setBeforeDraw(new DrawableAdapter() {
 			@Override
 			public void draw(Graphics2D g2, IContainer container) {
 				Point pp0 = new Point();
@@ -146,8 +146,8 @@ public class NetworkDeclutterDemoView extends SimulationView implements IResetta
 						g2.setColor(Color.black);
 					}
 
-					getContainer().worldToLocal(pp0, node1.x, node1.y);
-					getContainer().worldToLocal(pp1, node2.x, node2.y);
+					getIContainer().worldToLocal(pp0, node1.x, node1.y);
+					getIContainer().worldToLocal(pp1, node2.x, node2.y);
 
 					g2.drawLine(pp0.x, pp0.y, pp1.x, pp1.y);
 				}
@@ -157,22 +157,22 @@ public class NetworkDeclutterDemoView extends SimulationView implements IResetta
 
 	// Draw nodes after edges
 	private void setAfterDraw() {
-		getContainer().setAfterDraw(new DrawableAdapter() {
+		getIContainer().setAfterDraw(new DrawableAdapter() {
 			@Override
 			public void draw(Graphics2D g2, IContainer container) {
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 				Point pp = new Point();
 				for (Node n : model.servers) {
-					getContainer().worldToLocal(pp, n.x, n.y);
-					serverIcon.paintIcon(getContainer().getComponent(), g2, pp.x - iconRadiusPx, pp.y - iconRadiusPx);
+					getIContainer().worldToLocal(pp, n.x, n.y);
+					serverIcon.paintIcon(getIContainer().getComponent(), g2, pp.x - iconRadiusPx, pp.y - iconRadiusPx);
 				}
 				for (Node n : model.clients) {
-					getContainer().worldToLocal(pp, n.x, n.y);
-					clientIcon.paintIcon(getContainer().getComponent(), g2, pp.x - iconRadiusPx, pp.y - iconRadiusPx);
+					getIContainer().worldToLocal(pp, n.x, n.y);
+					clientIcon.paintIcon(getIContainer().getComponent(), g2, pp.x - iconRadiusPx, pp.y - iconRadiusPx);
 				}
 				for (Node n : model.printers) {
-					getContainer().worldToLocal(pp, n.x, n.y);
-					printerIcon.paintIcon(getContainer().getComponent(), g2, pp.x - iconRadiusPx, pp.y - iconRadiusPx);
+					getIContainer().worldToLocal(pp, n.x, n.y);
+					printerIcon.paintIcon(getIContainer().getComponent(), g2, pp.x - iconRadiusPx, pp.y - iconRadiusPx);
 				}
 			}
 		});

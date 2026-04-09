@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
@@ -24,7 +25,6 @@ import javax.swing.Timer;
 import javax.swing.event.EventListenerList;
 
 import edu.cnu.mdi.feedback.FeedbackPane;
-import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
@@ -38,6 +38,7 @@ import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.pdata.Snapshot;
 import edu.cnu.mdi.util.Environment;
+import edu.cnu.mdi.util.UnicodeUtils;
 
 @SuppressWarnings("serial")
 public class PlotCanvas extends JComponent implements MouseWheelListener, MouseListener, MouseMotionListener, DataChangeListener {
@@ -462,21 +463,21 @@ public class PlotCanvas extends JComponent implements MouseWheelListener, MouseL
 		setAffineTransforms();
 
 		// draw the data
-		_dataDrawer.draw(g, _plotData);
+		_dataDrawer.draw((Graphics2D)g, _plotData);
 
 		// frame the active area
 		g.setColor(Color.black);
 		g.drawRect(_activeBounds.x, _activeBounds.y, _activeBounds.width, _activeBounds.height);
 
 		// draw the ticks and legend
-		_plotTicks.draw(g);
+		_plotTicks.draw((Graphics2D)g);
 
 		if (_parameters.isLegendDrawn()) {
-			_legend.draw(g);
+			_legend.draw((Graphics2D)g);
 		}
 
 		if (_parameters.extraDrawing()) {
-			_extra.draw(g);
+			_extra.draw((Graphics2D)g);
 		}
 
 		firePropertyChange(DONEDRAWINGPROP, drawCount, ++drawCount);
@@ -807,7 +808,6 @@ public class PlotCanvas extends JComponent implements MouseWheelListener, MouseL
 			String name = closestCurve.name();
 			double height = closestCurve.yData().get(1) - closestCurve.yData().get(0);
 			double[] xArr = s.x;
-			double[] yArr = s.y;
 			for (double element : xArr) {
 				if (element == closestBarX) {
 					feedback.append(String.format("Category %s at x=%.2f has height %.4f", name, closestBarX, height));

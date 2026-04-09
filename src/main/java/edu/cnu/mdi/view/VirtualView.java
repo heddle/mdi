@@ -171,11 +171,11 @@ public class VirtualView extends BaseView
 
 		// Visual defaults.
 		setBackground(_bg);
-		getContainer().getComponent().setBackground(_bg);
+		getIContainer().getComponent().setBackground(_bg);
 
 		// Mouse interactions (hover title, double-click column switch).
-		getContainer().getComponent().addMouseMotionListener(this);
-		getContainer().getComponent().addMouseListener(this);
+		getIContainer().getComponent().addMouseMotionListener(this);
+		getIContainer().getComponent().addMouseListener(this);
 
 		// Initial offsets based on the current (possibly placeholder) world system.
 		setOffsets();
@@ -319,7 +319,7 @@ public class VirtualView extends BaseView
 		final int width = _numcol * d.width;
 		final int height = d.height;
 
-		Rectangle2D.Double ws = getContainer().getWorldSystem();
+		Rectangle2D.Double ws = getIContainer().getWorldSystem();
 		ws.width = width;
 		ws.height = height;
 
@@ -340,7 +340,7 @@ public class VirtualView extends BaseView
 	 * used when shifting views.
 	 */
 	private void setOffsets() {
-		Rectangle2D.Double world = getContainer().getWorldSystem();
+		Rectangle2D.Double world = getIContainer().getWorldSystem();
 		double dx = world.width / _numcol;
 		double dy = world.height;
 
@@ -362,7 +362,7 @@ public class VirtualView extends BaseView
 			}
 		};
 
-		getContainer().setBeforeDraw(beforeDraw);
+		getIContainer().setBeforeDraw(beforeDraw);
 	}
 
 	/**
@@ -377,7 +377,7 @@ public class VirtualView extends BaseView
 			public void draw(Graphics2D g, IContainer container) {
 
 				Rectangle b = container.getComponent().getBounds();
-				Rectangle2D.Double world = getContainer().getWorldSystem();
+				Rectangle2D.Double world = getIContainer().getWorldSystem();
 				Point2D.Double wp = new Point2D.Double();
 				Point pp = new Point();
 				double dx = world.width / _numcol;
@@ -397,7 +397,7 @@ public class VirtualView extends BaseView
 			}
 		};
 
-		getContainer().setAfterDraw(afterDraw);
+		getIContainer().setAfterDraw(afterDraw);
 	}
 
 	/**
@@ -408,6 +408,28 @@ public class VirtualView extends BaseView
 		for (BaseView view : ViewManager.getInstance()) {
 			addView(view);
 		}
+	}
+	
+	/**
+	 * Returns the horizontal pixel offset currently applied to all managed
+	 * views — that is, how far left they have been shifted from their
+	 * column-0 positions.
+	 * <p>
+	 * This is used by {@link Desktop#writeConfigurationFile()} to normalise
+	 * saved view bounds back to column-0 coordinates, so that they restore
+	 * correctly regardless of which column was active when the layout was
+	 * saved.
+	 * </p>
+	 *
+	 * @return current horizontal pixel offset (non-negative; zero when at
+	 *         column 0)
+	 */
+	public int getCurrentColumnPixelOffset() {
+	    if (_offsets == null || _currentCol < 0 || _currentCol >= _offsets.length
+	            || _offsets[_currentCol] == null) {
+	        return 0;
+	    }
+	    return _offsets[_currentCol].x;
 	}
 
 	/**
@@ -549,7 +571,7 @@ public class VirtualView extends BaseView
 			BaseView view = (BaseView) source;
 			if (view.getVirtualItem() != null) {
 				view.getVirtualItem().setVisible(true);
-				getContainer().getAnnotationLayer().sendToFront(view.getVirtualItem());
+				getIContainer().getAnnotationLayer().sendToFront(view.getVirtualItem());
 			}
 		}
 	}
@@ -580,7 +602,7 @@ public class VirtualView extends BaseView
 			view.removeInternalFrameListener(this);
 
 			if (view.getVirtualItem() != null) {
-				getContainer().getAnnotationLayer().remove(view.getVirtualItem());
+				getIContainer().getAnnotationLayer().remove(view.getVirtualItem());
 			}
 
 			_views.remove(view);
@@ -652,9 +674,9 @@ public class VirtualView extends BaseView
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		getContainer().localToWorld(e.getPoint(), _wp);
+		getIContainer().localToWorld(e.getPoint(), _wp);
 
-		AItem item = getContainer().getItemAtPoint(e.getPoint());
+		AItem item = getIContainer().getItemAtPoint(e.getPoint());
 		if (item instanceof VirtualWindowItem) {
 			VirtualWindowItem vvi = (VirtualWindowItem) item;
 			setTitle(vvi.getBaseView().getTitle());
@@ -747,7 +769,7 @@ public class VirtualView extends BaseView
 	 */
 	private Rectangle getColRect(int col) {
 
-		Rectangle2D.Double world = getContainer().getWorldSystem();
+		Rectangle2D.Double world = getIContainer().getWorldSystem();
 		double dx = world.width / _numcol;
 		double dy = world.height;
 
@@ -756,7 +778,7 @@ public class VirtualView extends BaseView
 
 		Rectangle2D.Double wr = new Rectangle2D.Double(x, y, dx, dy);
 		Rectangle r = new Rectangle();
-		getContainer().worldToLocal(r, wr);
+		getIContainer().worldToLocal(r, wr);
 		return r;
 	}
 
@@ -791,9 +813,9 @@ public class VirtualView extends BaseView
 	private Point getRowCol(Point p) {
 
 		Point2D.Double wp = new Point2D.Double();
-		getContainer().localToWorld(p, wp);
+		getIContainer().localToWorld(p, wp);
 
-		Rectangle2D.Double world = getContainer().getWorldSystem();
+		Rectangle2D.Double world = getIContainer().getWorldSystem();
 		double dx = world.width / _numcol;
 
 		int col = (int) (wp.x / dx);
@@ -808,7 +830,7 @@ public class VirtualView extends BaseView
 	 * @return offset in world coordinates; {@code x = currentCol*dx, y = 0}
 	 */
 	public Point2D.Double totalOffset() {
-		Rectangle2D.Double world = getContainer().getWorldSystem();
+		Rectangle2D.Double world = getIContainer().getWorldSystem();
 		double dx = world.width / _numcol;
 		return new Point2D.Double(_currentCol * dx, 0);
 	}
@@ -841,7 +863,7 @@ public class VirtualView extends BaseView
 			return;
 		}
 
-		Rectangle2D.Double world = getContainer().getWorldSystem();
+		Rectangle2D.Double world = getIContainer().getWorldSystem();
 		double dx = world.width / _numcol;
 		double dy = world.height;
 
@@ -868,7 +890,7 @@ public class VirtualView extends BaseView
 	 */
 	public int getViewColumn(BaseView view) {
 
-		Rectangle2D.Double world = getContainer().getWorldSystem();
+		Rectangle2D.Double world = getIContainer().getWorldSystem();
 		double dx = world.width / _numcol;
 		Rectangle bounds = view.getBounds();
 		double xc = bounds.getCenterX();
@@ -934,7 +956,7 @@ public class VirtualView extends BaseView
 			return;
 		}
 
-		Rectangle2D.Double world = getContainer().getWorldSystem();
+		Rectangle2D.Double world = getIContainer().getWorldSystem();
 		double dx = world.width / _numcol;
 		double dy = world.height;
 
@@ -1006,7 +1028,7 @@ public class VirtualView extends BaseView
 			return;
 		}
 
-		Rectangle b = view.getVirtualItem().getBounds(getContainer());
+		Rectangle b = view.getVirtualItem().getBounds(getIContainer());
 		Point pp = new Point(b.x + b.width / 2, b.y + b.height / 2);
 		Point rc = getRowCol(pp);
 

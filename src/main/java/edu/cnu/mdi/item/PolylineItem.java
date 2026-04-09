@@ -1,6 +1,6 @@
 package edu.cnu.mdi.item;
 
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 
 import edu.cnu.mdi.container.IContainer;
@@ -40,12 +40,12 @@ public class PolylineItem extends PathBasedItem {
 	/**
 	 * Custom drawer for the item.
 	 *
-	 * @param g         the graphics context.
+	 * @param g2        the graphics context.
 	 * @param container the graphical container being rendered.
 	 */
 	@Override
-	public void drawItem(Graphics g, IContainer container) {
-		_lastDrawnPolygon = WorldGraphicsUtils.drawPath2D(g, container, _path, _style, false);
+	public void drawItem(Graphics2D g2, IContainer container) {
+		_lastDrawnPolygon = WorldGraphicsUtils.drawPath2D(g2, container, _path, _style, false);
 
 	}
 

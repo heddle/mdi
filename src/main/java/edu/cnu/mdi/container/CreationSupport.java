@@ -13,7 +13,6 @@ import javax.swing.JPopupMenu;
 import edu.cnu.mdi.dialog.TextEditDialog;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
-import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.EllipseItem;
 import edu.cnu.mdi.item.Layer;
@@ -25,6 +24,7 @@ import edu.cnu.mdi.item.RectangleItem;
 import edu.cnu.mdi.item.TextItem;
 import edu.cnu.mdi.swing.WindowPlacement;
 import edu.cnu.mdi.ui.fonts.Fonts;
+import edu.cnu.mdi.util.UnicodeUtils;
 
 /**
  * A utility class that provides static methods for creating various types of items (e.g., rectangles, ellipses, lines, text) from user interactions such as rubber banding or clicking. 

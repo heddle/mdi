@@ -124,8 +124,8 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 		setAfterDraw();
 
 		// Initial view scale (cities are in [0,1]).
-		if (getContainer() != null) {
-			getContainer().scale(1.25);
+		if (getIContainer() != null) {
+			getIContainer().scale(1.25);
 		}
 
 		pack();
@@ -231,7 +231,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 
 	/** Install "before draw" hook: draw tour + (optional) river. */
 	private void setBeforeDraw() {
-		getContainer().setBeforeDraw(new DrawableAdapter() {
+		getIContainer().setBeforeDraw(new DrawableAdapter() {
 			@Override
 			public void draw(Graphics2D g2, IContainer container) {
 				if (container == null) {
@@ -289,7 +289,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 
 	/** Install "after draw" hook: draw city markers. */
 	private void setAfterDraw() {
-		getContainer().setAfterDraw(new DrawableAdapter() {
+		getIContainer().setAfterDraw(new DrawableAdapter() {
 			@Override
 			public void draw(Graphics2D g2, IContainer container) {
 				if (container == null) {

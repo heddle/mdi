@@ -15,8 +15,8 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
-import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
+import edu.cnu.mdi.util.UnicodeUtils;
 import edu.cnu.mdi.view.AbstractViewInfo;
 import edu.cnu.mdi.view.BaseView;
 
@@ -163,7 +163,7 @@ public class MapView2D extends BaseView {
 			}
 		};
 
-		getContainer().setAfterDraw(afterDraw);
+		getIContainer().setAfterDraw(afterDraw);
 	}
 
 	/**
@@ -186,7 +186,7 @@ public class MapView2D extends BaseView {
 		_projection = ProjectionFactory.create(projection, _controlPanel.getCurrentTheme());
 		_gratRenderer = new GraticuleRenderer(_projection);
 
-		getContainer().resetWorldSystem(getWorldSystem(_projection.getProjection()));
+		getIContainer().resetWorldSystem(getWorldSystem(_projection.getProjection()));
 
 		_countryRenderer = new CountryRenderer(_countries, _projection);
 
@@ -362,7 +362,7 @@ public class MapView2D extends BaseView {
 	 * application exits.
 	 */
 	public void prepareForExit() {
-		((MapContainer) getContainer()).prepareForExit();
+		((MapContainer) getIContainer()).prepareForExit();
 	}
 
 }

@@ -1,6 +1,6 @@
 package edu.cnu.mdi.splot.plot;
 
-import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
@@ -60,7 +60,7 @@ public abstract class PlotLine {
 	 *
 	 * @param g the graphis context
 	 */
-	public void draw(Graphics g) {
+	public void draw(Graphics2D g2) {
 		wp.setLocation(getX0(), getY0());
 
 		boolean goodPoint;
@@ -75,7 +75,7 @@ public abstract class PlotLine {
 			return;
 		}
 
-		GraphicsUtils.drawStyleLine(g, _style.getAuxLineColor(), _style.getAuxLineWidth(), _style.getAuxLineStyle(),
+		GraphicsUtils.drawStyleLine(g2, _style.getAuxLineColor(), _style.getAuxLineWidth(), _style.getAuxLineStyle(),
 				p0.x, p0.y, p1.x, p1.y);
 	}
 

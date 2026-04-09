@@ -9,11 +9,11 @@ import java.awt.geom.Rectangle2D.Double;
 import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.container.BaseContainer;
-import edu.cnu.mdi.graphics.text.UnicodeUtils;
 import edu.cnu.mdi.hover.HoverEvent;
 import edu.cnu.mdi.hover.HoverInfoWindow;
 import edu.cnu.mdi.hover.HoverListener;
 import edu.cnu.mdi.hover.HoverManager;
+import edu.cnu.mdi.util.UnicodeUtils;
 
 @SuppressWarnings("serial")
 public class MapContainer extends BaseContainer implements HoverListener {

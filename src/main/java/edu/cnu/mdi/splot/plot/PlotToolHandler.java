@@ -1,6 +1,5 @@
 package edu.cnu.mdi.splot.plot;
 
-import java.awt.Component;
 import java.awt.Rectangle;
 import java.util.Objects;
 

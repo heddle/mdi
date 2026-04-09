@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,6 +24,7 @@ public class PropertyUtils {
 	public static final String BOXZOOMRBPOLICY = "BOXZOOMRBPOLICY";
 	public static final String CLOSABLE = "CLOSABLE";
 	public static final String CONNECTABLE = "CONNECTABLE";
+	public static final String CONSOLELOG = "CONSOLELOG";
 	public static final String CONTAINER = "CONTAINER";
 	public static final String CONTAINERCLASS = "CONTAINERCLASS";
 	public static final String DELETABLE = "DELETABLE";
@@ -84,6 +84,7 @@ public class PropertyUtils {
 	    KNOWN_KEYS.put(BOXZOOMRBPOLICY, ARubberband.Policy.class);
 	    KNOWN_KEYS.put(CLOSABLE, Boolean.class);
 	    KNOWN_KEYS.put(CONNECTABLE, Boolean.class);
+	    KNOWN_KEYS.put(CONSOLELOG, Boolean.class);
 	    KNOWN_KEYS.put(CONTAINER, IContainer.class);
 	    KNOWN_KEYS.put(CONTAINERCLASS, Class.class);
 	    KNOWN_KEYS.put(DELETABLE, Boolean.class);
@@ -259,6 +260,16 @@ public class PropertyUtils {
 	 */
 	public static boolean getUseContainer(Properties props) {
 		return getBoolean(props, USECONTAINER, true);
+	}
+	
+	/**
+	 * Get the "console log" boolean flag.
+	 *
+	 * @param props the properties
+	 * @return the console log flag. On error, return false.
+	 */
+	public static boolean getConsoleLog(Properties props) {
+		return getBoolean(props, CONSOLELOG, false);
 	}
 
 	/**
@@ -513,7 +524,8 @@ public class PropertyUtils {
 	 * @return an aspect ratio used (optionally) to size views
 	 */
 	public static double getAspectRatio(Properties props) {
-		return getDouble(props, ASPECT, 1);
+		//aspect rations of 0 are ignored
+		return getDouble(props, ASPECT, 0);
 	}
 
 	/**
