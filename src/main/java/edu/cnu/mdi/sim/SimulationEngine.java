@@ -198,8 +198,121 @@ public final class SimulationEngine {
 			});
 		}
 	}
-
+	
+	//
 	private void runLoop() {
+	    context.markStarted();
+
+	    // Tracks why the main loop exited so we can choose the right
+	    // termination path and avoid firing onDone after a cancel.
+	    boolean cancelledCleanly = false;
+
+	    try {
+	        transition(SimulationState.INITIALIZING, "start");
+	        simulation.init(context);
+	        transition(SimulationState.READY, "initialized");
+
+	        if (!config.autoRun) {
+	            pauseRequested = true;
+	        } else {
+	            transition(SimulationState.RUNNING, "auto-run");
+	            postEDT(l -> l.onRun(context));
+	        }
+
+	        long lastRefreshNs  = System.nanoTime();
+	        long lastProgressNs = System.nanoTime(); // FIX: renamed — was shadowing the field lastProgress
+
+	        final long coopEveryNs = (config.cooperativeYieldMs > 0)
+	                ? (config.cooperativeYieldMs * 1_000_000L) : 0L;
+	        long lastCoopYield = System.nanoTime();
+
+	        while (!stopRequested) {
+
+	            // --- Pause handling ---
+	            if (pauseRequested) {
+	                if (state != SimulationState.PAUSED && state != SimulationState.READY) {
+	                    transition(SimulationState.PAUSED, "pause requested");
+	                    postEDT(l -> l.onPause(context));
+	                }
+	                while (pauseRequested && !stopRequested && !context.isCancelRequested()) {
+	                    LockSupport.parkNanos(10_000_000L);
+	                }
+	                if (stopRequested || context.isCancelRequested()) {
+	                    break;
+	                }
+	                if (state == SimulationState.READY) {
+	                    transition(SimulationState.RUNNING, "run requested");
+	                    postEDT(l -> l.onRun(context));
+	                } else {
+	                    transition(SimulationState.RUNNING, "resume");
+	                    postEDT(l -> l.onResume(context));
+	                }
+	            }
+
+	            // --- Cancellation check ---
+	            if (context.isCancelRequested()) {
+	                cancelledCleanly = true; // FIX: record cancellation before breaking
+	                transition(SimulationState.TERMINATING, "cancel requested");
+	                try {
+	                    simulation.cancel(context);
+	                } catch (Exception ignored) { }
+	                break;
+	            }
+
+	            // --- One simulation step ---
+	            boolean keepGoing = simulation.step(context);
+	            context.incrementStep();
+
+	            long now = System.nanoTime();
+
+	            if (config.refreshIntervalMs > 0
+	                    && (now - lastRefreshNs) >= config.refreshIntervalMs * 1_000_000L) {
+	                lastRefreshNs = now;
+	                requestRefresh();
+	            }
+
+	            if (config.progressIntervalMs > 0
+	                    && (now - lastProgressNs) >= config.progressIntervalMs * 1_000_000L) {
+	                lastProgressNs = now; // FIX: was updating the wrong variable
+	                postProgress(ProgressInfo.indeterminate("Running…"));
+	            }
+
+	            if (!keepGoing) {
+	                break;
+	            }
+
+	            if (coopEveryNs > 0 && (now - lastCoopYield) >= coopEveryNs) {
+	                Thread.yield();
+	                lastCoopYield = now;
+	            }
+	        }
+
+	        // FIX: always call shutdown for cleanup, but only fire onDone on
+	        // normal completion — cancellation gets its own distinct path.
+	        transition(SimulationState.TERMINATING,
+	                cancelledCleanly ? "cancelled" : "stop/complete");
+	        try {
+	            simulation.shutdown(context);
+	        } catch (Exception ignored) { }
+
+	        transition(SimulationState.TERMINATED,
+	                cancelledCleanly ? "cancelled" : "done");
+
+	        if (!cancelledCleanly) {
+	            // Deliberate: onDone fires only for normal stop/completion.
+	            // Cancellation is already communicated via onCancelRequested()
+	            // and the TERMINATED state-change with reason="cancelled".
+	            postEDT(l -> l.onDone(context));
+	        }
+
+	    } catch (Exception ex) {
+	        transition(SimulationState.FAILED, ex.toString());
+	        postEDT(l -> l.onFail(context, ex));
+	    }
+	}
+
+	// Main simulation loop, run on a dedicated thread.
+	private void XrunLoop() {
 		context.markStarted();
 
 		try {
@@ -217,7 +330,7 @@ public final class SimulationEngine {
 			}
 
 			long lastRefresh = System.nanoTime();
-			long lastProgress = System.nanoTime();
+			long lastProgressPingNs = System.nanoTime();
 
 			// Cooperative yield: rate-limited. This avoids "sleep per step" which is
 			// catastrophic for fast inner loops (e.g., TSP annealing).
@@ -276,8 +389,8 @@ public final class SimulationEngine {
 				}
 
 				// Periodic progress ping (rate-limited, indeterminate by default)
-				if (config.progressIntervalMs > 0 && (now - lastProgress) >= config.progressIntervalMs * 1_000_000L) {
-					lastProgress = now;
+				if (config.progressIntervalMs > 0 && (now - lastProgressPingNs) >= config.progressIntervalMs * 1_000_000L) {
+					lastProgressPingNs = now;
 					postProgress(ProgressInfo.indeterminate("Running…"));
 				}
 
