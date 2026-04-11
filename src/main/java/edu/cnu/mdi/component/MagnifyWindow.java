@@ -129,7 +129,6 @@ public class MagnifyWindow extends JWindow {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				_selectedMag = Integer.parseInt(e.getActionCommand());
-				// System.err.println("New mag selection " + _selectedMag);
 			}
 
 		};

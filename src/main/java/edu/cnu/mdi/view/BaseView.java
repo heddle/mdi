@@ -922,7 +922,6 @@ public class BaseView extends JInternalFrame
 
         final String title;
         final boolean standardDecorations;
-        final boolean infobutton;
         final boolean iconifiable;
         final boolean maximizable;
         final boolean resizable;
@@ -942,7 +941,7 @@ public class BaseView extends JInternalFrame
         final ARubberband.Policy boxZoomPolicy;
 
         private ViewInitConfig(String title, boolean standardDecorations,
-                boolean infobutton, boolean iconifiable, boolean maximizable,
+                boolean iconifiable, boolean maximizable,
                 boolean resizable, boolean closable, boolean scrollable,
                 boolean visible, int left, int top, int width, int height,
                 Rectangle2D.Double worldSystem, Color background,
@@ -951,7 +950,6 @@ public class BaseView extends JInternalFrame
                 boolean useContainer) {
             this.title               = title;
             this.standardDecorations = standardDecorations;
-            this.infobutton          = infobutton;
             this.iconifiable         = iconifiable;
             this.maximizable         = maximizable;
             this.resizable           = resizable;
@@ -989,7 +987,6 @@ public class BaseView extends JInternalFrame
             }
 
             boolean standardDecorations = PropertyUtils.getStandardViewDecorations(props);
-            boolean infobutton          = PropertyUtils.getInfoButton(props);
             boolean iconifiable         = PropertyUtils.getIconifiable(props);
             boolean maximizable         = PropertyUtils.getMaximizable(props);
             boolean resizable           = PropertyUtils.getResizable(props);
@@ -1033,7 +1030,7 @@ public class BaseView extends JInternalFrame
             ARubberband.Policy  policy         = PropertyUtils.getBoxZoomRubberbandPolicy(props);
             boolean             addWheelZoom   = PropertyUtils.addWheelZoom(props);
 
-            return new ViewInitConfig(title, standardDecorations, infobutton,
+            return new ViewInitConfig(title, standardDecorations,
                     iconifiable, maximizable, resizable, closable, scrollable,
                     visible, left, top, width, height, worldSystem, background,
                     west, bits, policy, addWheelZoom, useContainer);
@@ -1221,10 +1218,6 @@ public class BaseView extends JInternalFrame
                 center = view.scrollPane;
             }
 
-            // Optionally overlay the floating info button.
-            if (cfg.infobutton && center instanceof JComponent) {
-                center = new ViewWrapper((JComponent) center, view);
-            }
 
             // Optional split pane west component.
             if (cfg.splitWestComponent != null) {
@@ -1275,49 +1268,8 @@ public class BaseView extends JInternalFrame
             });
         }
     }
-
-    // -----------------------------------------------------------------------
-    // ViewWrapper — floating info-button overlay
-    // -----------------------------------------------------------------------
-
-    /**
-     * A {@link JLayeredPane} that overlays a floating info button in the
-     * top-right corner of the view's content area.
-     */
-    private static class ViewWrapper extends JLayeredPane {
-
-        /**
-         * Construct the wrapper.
-         *
-         * @param viewContent the container component to wrap
-         * @param view        the owning view (used to invoke info dialog)
-         */
-        ViewWrapper(JComponent viewContent, BaseView view) {
-            setLayout(new OverlayLayout(this));
-
-            JButton infoButton = new JButton();
-            infoButton.setIcon(infoIcon);
-            infoButton.setMargin(new Insets(0, 0, 0, 0));
-            infoButton.setPreferredSize(new Dimension(
-                    infoIcon.getIconWidth(), infoIcon.getIconHeight()));
-            infoButton.setFocusable(false);
-            infoButton.setBorderPainted(false);
-            infoButton.setContentAreaFilled(false);
-            infoButton.setBackground(new Color(255, 255, 255, 160));
-            infoButton.setToolTipText("View Information");
-            infoButton.setBorder(BorderFactory.createLineBorder(Color.GRAY));
-            infoButton.addActionListener(e -> view.viewInfo());
-
-            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-            buttonPanel.setOpaque(false);
-            buttonPanel.add(infoButton);
-
-            // First added = topmost in OverlayLayout.
-            add(buttonPanel);
-            add(viewContent);
-        }
-    }
-
+    
+ 
     // -----------------------------------------------------------------------
     // ViewKeyBindings — keyboard shortcuts
     // -----------------------------------------------------------------------

@@ -261,16 +261,6 @@ public class ViewPropertiesBuilder {
 	}
 
 	/**
-	 * Set whether the info button should be shown.
-	 *
-	 * @param enabled {@code true} to show the info button
-	 * @return this builder
-	 */
-	public ViewPropertiesBuilder infoButton(boolean enabled) {
-		return put(PropertyUtils.INFOBUTTON, enabled);
-	}
-
-	/**
 	 * Set a split-pane west component.
 	 *
 	 * @param component the west component

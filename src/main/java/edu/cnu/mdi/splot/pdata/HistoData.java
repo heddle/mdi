@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import edu.cnu.mdi.splot.plot.DoubleFormat;
+import edu.cnu.mdi.format.DoubleFormat;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 import edu.cnu.mdi.util.UnicodeUtils;

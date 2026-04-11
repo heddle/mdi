@@ -15,6 +15,7 @@ import edu.cnu.mdi.mapping.MapResources;
 import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
+import edu.cnu.mdi.sim.ga.triimage.ImageEvolutionDemoView;
 import edu.cnu.mdi.sim.simanneal.tspdemo.TspDemoView;
 import edu.cnu.mdi.splot.example.SplotDemoView;
 import edu.cnu.mdi.splot.plot.PlotView;
@@ -66,6 +67,7 @@ public class DemoApp extends BaseMDIApplication {
 	private PlotView plotView;
 	private NetworkDeclutterDemoView networkDeclutterDemoView;
 	private TspDemoView tspDemoView;
+	private ImageEvolutionDemoView imageEvolutionDemoView;
 
 	/**
 	 * Private constructor: use {@link #getInstance()}.
@@ -85,7 +87,7 @@ public class DemoApp extends BaseMDIApplication {
 
 	@Override
 	protected int getVirtualDesktopColumns() {
-		return 6;
+		return 7;
 	} // opts in; 0 = disabled
 
 	/**
@@ -134,6 +136,9 @@ public class DemoApp extends BaseMDIApplication {
 		
 		// TSP (Traveling Salesperson) demo view
 		tspDemoView = createTspDemoView();
+		
+		// Image evolution demo view
+		imageEvolutionDemoView = createImageEvolutionDemoView();
 	}
 
 	@Override
@@ -150,17 +155,19 @@ public class DemoApp extends BaseMDIApplication {
 		vv.moveTo(plotView, 1, VirtualView.CENTER);
 		vv.moveTo(networkDeclutterDemoView, 2, VirtualView.CENTER);
 		vv.moveTo(tspDemoView, 3, VirtualView.CENTER);
-		vv.moveTo(logView, 5, VirtualView.UPPERLEFT);
+		vv.moveTo(imageEvolutionDemoView, 5, VirtualView.CENTER);
+		vv.moveTo(logView, 6, VirtualView.UPPERLEFT);
 	}
 
 	/**
 	 * Create the network declutter demo view.
 	 */
 	NetworkDeclutterDemoView createNetworkDeclutterDemoView() {
+		long toolBits = ToolBits.INFO;
 		NetworkDeclutterDemoView view = new NetworkDeclutterDemoView(PropertyUtils.TITLE, "Network Declutter Demo View",
 				PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT, 1.2,
 				PropertyUtils.BACKGROUND, Color.white, PropertyUtils.WORLDSYSTEM,
-				new Rectangle2D.Double(0.0, 0.0, 1, 1), PropertyUtils.INFOBUTTON, true);
+				new Rectangle2D.Double(0.0, 0.0, 1, 1), PropertyUtils.TOOLBARBITS, toolBits);
 		return view;
 	}
 
@@ -172,6 +179,18 @@ public class DemoApp extends BaseMDIApplication {
 				PropertyUtils.ASPECT, 1.2, PropertyUtils.BACKGROUND,
 				X11Colors.getX11Color("lavender blush"), PropertyUtils.WORLDSYSTEM,
 				new Rectangle2D.Double(0.0, 0.0, 1, 1));
+		return view;
+	}
+	
+	/**
+	 * Create the image evolution demo view.
+	 */
+	ImageEvolutionDemoView createImageEvolutionDemoView() {
+		long toolBits = ToolBits.INFO;
+
+		ImageEvolutionDemoView view = new ImageEvolutionDemoView(PropertyUtils.TITLE, "Image Evolution Demo View",
+				PropertyUtils.FRACTION, 0.8, PropertyUtils.ASPECT, 1.2, PropertyUtils.BACKGROUND,
+				X11Colors.getX11Color("honeydew"), PropertyUtils.TOOLBARBITS, toolBits);
 		return view;
 	}
 

@@ -10,11 +10,11 @@ import javax.swing.JPanel;
 
 import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.component.EnumComboBox;
+import edu.cnu.mdi.format.DoubleFormat;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
-import edu.cnu.mdi.splot.plot.DoubleFormat;
 import edu.cnu.mdi.splot.plot.TextFieldSlider;
 import edu.cnu.mdi.ui.colors.ColorLabel;
 import edu.cnu.mdi.ui.fonts.Fonts;

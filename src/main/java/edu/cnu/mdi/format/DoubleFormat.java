@@ -30,7 +30,11 @@ public class DoubleFormat {
 	public static String doubleFormat(double value, int numdec, boolean scinot) {
 
 		StringBuffer pattern = new StringBuffer();
-		pattern.append("0.");
+		if (numdec < 1) {
+			pattern.append("0");
+		} else {
+			pattern.append("0.");
+		}
 
 		for (int i = 0; i < numdec; i++) {
 			pattern.append("0");
@@ -41,7 +45,7 @@ public class DoubleFormat {
 		}
 
 		String patternStr = pattern.toString();
-		DecimalFormat df;
+		DecimalFormat df = null;
 		df = (formats.get(patternStr));
 
 		if (df == null) {
@@ -76,7 +80,8 @@ public class DoubleFormat {
 	 * </code>
 	 *
 	 * @param value       the value to format.
-	 * @param numdec      the number of digits right of the decimal.
+	 * @param numdec      the number of digits right of the decimal. If the
+	 *                    exponent is >= n or <= -n it will use sci notation.
 	 * @param minExponent the minimum (absolute value) index for scientific
 	 *                    notation.
 	 */
@@ -94,25 +99,11 @@ public class DoubleFormat {
 
 		if (exponent < minExponent) {
 			return doubleFormat(value, numdec, false);
-		} else {
+		} else { // use sci not
 			return doubleFormat(value, numdec, true);
 		}
 
 	}
 
-	/**
-	 * main program for testing.
-	 *
-	 * @param args command line arguments (ignored.)
-	 */
-	public static void main(String[] args) {
-		double d = 12345.67;
-
-		for (int i = 0; i < 12; i++) {
-			System.err.println(doubleFormat(d, 6, 2));
-			// System.err.println(doubleFormat(-d, 6, 3));
-			d = d / 10;
-		}
-	}
 
 }

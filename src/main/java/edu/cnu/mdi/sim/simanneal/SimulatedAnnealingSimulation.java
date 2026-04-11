@@ -59,7 +59,7 @@ import edu.cnu.mdi.sim.SimulationEngine;
  *
  * @param <S> concrete solution type for the annealing problem
  */
-public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implements Simulation {
+public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> implements Simulation {
 
 	private EventListenerList _listenerList;
 
@@ -68,6 +68,9 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 
 	/** Configuration parameters controlling step limits, cooling rate, and UI throttling. */
 	private final SimulatedAnnealingConfig cfg;
+	
+	// Better — self-documenting, compiler-checked
+	private enum NotifyType { ACCEPTED_MOVE, NEW_BEST }
 
 	/**
 	 * High-level stopping/temperature schedule policy.
@@ -188,9 +191,8 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 	 *
 	 * @return a copy of the best solution, or {@code null} if initialization has not occurred
 	 */
-	@SuppressWarnings("unchecked")
 	public S getBestSolutionCopy() {
-		return (best == null) ? null : (S) best.copy();
+		return (best == null) ? null : best.copy();
 	}
 
 	/**
@@ -230,7 +232,7 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 
 		// Initialize current/best solution
 		current = problem.randomSolution(rng);
-		best = (S) current.copy();
+		best = current.copy();
 
 		currentE = problem.energy(current);
 		bestE = currentE;
@@ -318,14 +320,13 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 			if (dE > 0) {
 				uphillAccepted++;
 			}
-			onAcceptedMove(T, currentE);
-			notifyListeners(T, currentE, 0); // accepted move
+			notifyListeners(T, currentE, NotifyType.ACCEPTED_MOVE); // accepted move
 
 			// Track best-so-far
 			if (currentE < bestE) {
 				bestE = currentE;
-				best = (S) current.copy();
-				notifyListeners(T, bestE, 1); // new best
+				best = current.copy();
+				notifyListeners(T, bestE, NotifyType.NEW_BEST); // new best
 			}
 		} else {
 			// Revert rejected move (moves must support undo for correctness)
@@ -333,6 +334,15 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 		}
 
 		step++;
+
+        // Periodic energy resync to prevent floating-point drift accumulation.
+        // currentE is updated incrementally (currentE += dE) which accumulates
+        // rounding error over millions of steps. Re-synchronizing against a full
+        // energy recomputation keeps the error bounded without measurable overhead
+        // since problem.energy() is called at most once every 10,000 steps.
+       if (step % 10_000 == 0) {
+            currentE = problem.energy(current);
+        }
 
 		// Optional UI signals (throttled)
 		if (engine != null) {
@@ -361,17 +371,6 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 	    return temperatureAt(step); // or store lastT
 	}
 
-
-	/**
-	 * Called after each accepted move.
-	 * <p>
-	 * Subclasses or listeners may override to record (T, E) pairs
-	 * for live plotting.
-	 * </p>
-	 */
-	protected void onAcceptedMove(double temperature, double energy) {
-	//    System.err.println("accepted T = " + temperature + "  E = " + energy);
-	}
 
 
 	/**
@@ -409,7 +408,7 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 	}
 
 	// notify listeners of message
-	private void notifyListeners(double temperature, double energy, int option) {
+	private void notifyListeners(double temperature, double energy, NotifyType option) {
 
 		if (_listenerList == null) {
 			return;
@@ -426,9 +425,9 @@ public class SimulatedAnnealingSimulation<S extends AnnealingSolution> implement
 
 				IAcceptedMoveListener listener = (IAcceptedMoveListener) listeners[i + 1];
 
-				if (option == 1) {
+				if (option == NotifyType.NEW_BEST) {
 					listener.newBest(temperature, energy);
-				} else if (option == 0) {
+				} else if (option == NotifyType.ACCEPTED_MOVE) {
 					listener.acceptedMove(temperature, energy);
 				}
 

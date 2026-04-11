@@ -34,7 +34,6 @@ public class PropertyUtils {
 	public static final String FRACTION = "FRACTION";
 	public static final String HEIGHT = "HEIGHT";
 	public static final String ICONIFIABLE = "ICONIFIABLE";
-	public static final String INFOBUTTON = "INFOBUTTON";
 	public static final String LEFT = "LEFT";
 	public static final String LINECOLOR = "LINECOLOR";
 	public static final String LINESTYLE = "LINESTYLE";
@@ -97,7 +96,6 @@ public class PropertyUtils {
 	    KNOWN_KEYS.put(FRACTION, Double.class);
 	    KNOWN_KEYS.put(HEIGHT, Integer.class);
 	    KNOWN_KEYS.put(ICONIFIABLE, Boolean.class);
-	    KNOWN_KEYS.put(INFOBUTTON, Boolean.class);
 	    KNOWN_KEYS.put(LEFT, Integer.class);
 	    KNOWN_KEYS.put(LINECOLOR, Color.class);
 	    KNOWN_KEYS.put(LINESTYLE, LineStyle.class);
@@ -380,16 +378,6 @@ public class PropertyUtils {
 	 */
 	public static boolean getIconifiable(Properties props) {
 		return getBoolean(props, ICONIFIABLE, true);
-	}
-
-	/**
-	 * Get the view info button boolean flag.
-	 *
-	 * @param props the properties
-	 * @return the info button flag. On error, return false.
-	 */
-	public static boolean getInfoButton(Properties props) {
-		return getBoolean(props, INFOBUTTON, false);
 	}
 
 	/**

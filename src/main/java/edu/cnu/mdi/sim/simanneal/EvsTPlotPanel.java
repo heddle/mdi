@@ -166,6 +166,10 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 		params.setXScale(PlotParameters.AxisScale.LOG10);
 		params.setTitleFont(Fonts.plainFontDelta(1));
 		params.setLegendDrawing(false);
+		String extra[] = { "At a given temperature:", 
+				"Gray points/band show accepted moves.", 
+				"Red squares show the best solution."};
+		params.setExtraStrings(extra);
 	}
 
 }

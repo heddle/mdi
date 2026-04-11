@@ -5,5 +5,5 @@ package edu.cnu.mdi.sim.simanneal;
  * Annealing solutions must support deep copying.
  */
 public interface AnnealingSolution extends Cloneable {
-    AnnealingSolution copy();   // deep copy
+	<S extends AnnealingSolution> S copy();   // deep copy
 }

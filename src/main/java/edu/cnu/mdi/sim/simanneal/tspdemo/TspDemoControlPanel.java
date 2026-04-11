@@ -25,295 +25,395 @@ import edu.cnu.mdi.sim.ui.IconSimulationControlPanel;
 import edu.cnu.mdi.sim.ui.StandardSimIcons;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
-
 /**
  * Control panel for the TSP simulated annealing demo.
+ *
+ * <h2>Structure</h2>
  * <p>
- * This panel composes:
+ * Follows the standard MDI composite control panel pattern:
  * </p>
  * <ul>
- *   <li>a standard {@link IconSimulationControlPanel} (Start/Run/Pause/Resume/Stop/Cancel + progress)</li>
- *   <li>a "Cities" slider (10..500)</li>
- *   <li>a "River penalty" slider (-1..+1)</li>
- *   <li>a Reset button</li>
+ *   <li><b>Left</b> — {@link IconSimulationControlPanel} providing the
+ *       standard play/pause/stop media buttons and progress bar.</li>
+ *   <li><b>Center</b> — two labeled sliders:
+ *       <ul>
+ *         <li><em>Number Cities</em> ({@link #MIN_CITIES}..{@link #MAX_CITIES})
+ *             — number of randomly placed cities.</li>
+ *         <li><em>River Crossing Penalty or Bonus</em> (−1..+1) — adds a
+ *             constant to the distance of any edge that crosses the river.
+ *             Positive values penalize crossings (the tour avoids the river);
+ *             negative values reward them (the tour seeks crossings).</li>
+ *       </ul>
+ *   </li>
+ *   <li><b>Right</b> — Reset button that rebuilds the model and simulation
+ *       from the current slider values.</li>
  * </ul>
  *
  * <h2>State gating</h2>
  * <p>
- * The demo parameters (cities, river penalty, reset) are enabled only when the engine
- * is in {@link SimulationState#READY} or {@link SimulationState#TERMINATED}.
- * This avoids mutating the model while the simulation thread is running/paused.
+ * The sliders and Reset button are only enabled when the engine is in
+ * {@link SimulationState#READY} or {@link SimulationState#TERMINATED}. This
+ * prevents the user from changing parameters while the simulation thread is
+ * actively mutating the model.
  * </p>
  *
  * <h2>Reset behavior</h2>
  * <p>
- * The Reset button requests a rebuild/reinitialize from the host if the host implements
- * {@link ITspDemoResettable}. Slider changes also enable the Reset button immediately,
- * and may optionally auto-reset when the user releases the slider knob (see
- * {@link #autoResetOnSliderRelease}).
+ * Pressing Reset calls {@link ITspDemoResettable#requestReset} on the host if
+ * it implements that interface, passing the current slider values. The host
+ * ({@link TspDemoView}) is responsible for stopping the current engine,
+ * building a new simulation with the new parameters, and restarting.
+ * </p>
+ * <p>
+ * An optional auto-reset mode ({@link #autoResetOnSliderRelease}) can trigger
+ * a reset automatically when the user releases a slider knob in an editable
+ * state. It is disabled by default.
+ * </p>
+ *
+ * <h2>River slider precision</h2>
+ * <p>
+ * {@link JSlider} operates on integers, so the river penalty slider is scaled
+ * by {@link #RIVER_SCALE} ({@code 10^}{@link #RIVER_NUM_DECIMALS}) internally
+ * and divided back to a {@code double} in {@link #getRiverPenalty()}.
  * </p>
  */
 @SuppressWarnings("serial")
 public class TspDemoControlPanel extends JPanel implements ISimulationControlPanel, SimulationListener {
 
-	/** Default min cities. */
-	public static final int MIN_CITIES = 10;
+    /** Minimum number of cities available on the city slider. */
+    public static final int MIN_CITIES = 10;
 
-	/** Default max cities. */
-	public static final int MAX_CITIES = 1000;
+    /** Maximum number of cities available on the city slider. */
+    public static final int MAX_CITIES = 1000;
 
-	//for the float based river slider
-	private final static int RIVER_NUM_DECIMALS = 2;
-	private final static int RIVER_SCALE = (int) Math.pow(10, RIVER_NUM_DECIMALS);
+    /**
+     * Number of decimal places retained in the river penalty slider.
+     * The slider integer value is divided by {@link #RIVER_SCALE} to recover
+     * the {@code double} penalty.
+     */
+    private static final int RIVER_NUM_DECIMALS = 2;
 
-	// Base panel with buttons + progress
-	private final IconSimulationControlPanel basePanel;
+    /** Scale factor for the river penalty slider ({@code 10^RIVER_NUM_DECIMALS}). */
+    private static final int RIVER_SCALE = (int) Math.pow(10, RIVER_NUM_DECIMALS);
 
-	// Sliders
-	private final JSlider citySlider;
-	private final JSlider riverSlider;
+    /** Standard media-button panel (play/pause/stop/cancel + progress bar). */
+    private final IconSimulationControlPanel basePanel;
 
-	// Reset button resets the demo with current parameters
-	private JButton resetButton;
+    /** Slider controlling the number of cities in the next problem. */
+    private final JSlider citySlider;
 
-	// the host is typically a subclass of SimulationView
-	private ISimulationHost host;
+    /**
+     * Slider controlling the river crossing penalty or bonus.
+     * Range: −1.00 (maximum bonus) to +1.00 (maximum penalty).
+     */
+    private final JSlider riverSlider;
 
-	// Dirty flag to track whether parameters have changed since last reset
-	private volatile boolean dirty;
+    /** Button that triggers a full model/simulation reset. */
+    private JButton resetButton;
 
-	/**
-	 * If true, the panel automatically requests reset when the user releases a slider knob
-	 * (i.e., when {@code getValueIsAdjusting() == false}) and the engine is in a safe state.
-	 * <p>
-	 * This matches "reinitialize if those values change" while still keeping an explicit
-	 * Reset button.
-	 * </p>
-	 */
-	private final boolean autoResetOnSliderRelease = false;
+    /** The simulation host this panel is bound to (typically {@link TspDemoView}). */
+    private ISimulationHost host;
 
-	/**
-	 * Construct a new TSP demo control panel with standard icons.
-	 */
-	public TspDemoControlPanel() {
-		this(new StandardSimIcons());
-	}
+    /**
+     * True if the slider values have changed since the last reset.
+     * Used to decide whether Reset should be enabled.
+     * All reads and writes occur on the EDT so no synchronization is needed.
+     */
+    private boolean dirty;
 
-	/**
-	 * Construct a new TSP demo control panel using the provided icon set.
-	 *
-	 * @param icons simulation icons (non-null)
-	 */
-	public TspDemoControlPanel(StandardSimIcons icons) {
-		super(new BorderLayout(8, 0));
-		Objects.requireNonNull(icons, "icons");
+    /**
+     * If {@code true}, the panel automatically requests a reset when the user
+     * releases a slider knob ({@code getValueIsAdjusting() == false}) while the
+     * engine is in an editable state.
+     * <p>
+     * Disabled by default. Enable if you want the demo to reinitialize
+     * immediately whenever a slider value changes, without requiring an explicit
+     * Reset button press.
+     * </p>
+     */
+    private final boolean autoResetOnSliderRelease = false;
 
-		// Base panel (left) has the standard media icons
-		basePanel = new IconSimulationControlPanel(icons, false);
-		add(basePanel, BorderLayout.WEST);
+    // -------------------------------------------------------------------------
+    // Constructors
+    // -------------------------------------------------------------------------
 
-		// Reset button (right)
-		addResetButton();
+    /**
+     * Construct with the standard MDI icon set.
+     */
+    public TspDemoControlPanel() {
+        this(new StandardSimIcons());
+    }
 
+    /**
+     * Construct with a caller-supplied icon set.
+     *
+     * @param icons simulation icons (non-null)
+     */
+    public TspDemoControlPanel(StandardSimIcons icons) {
+        super(new BorderLayout(8, 0));
+        Objects.requireNonNull(icons, "icons");
 
-		// -------- Sliders panel (center) --------
-		JPanel sliderPanel = new JPanel();
-		sliderPanel.setLayout(new BorderLayout(0,0));
-		sliderPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
+        basePanel = new IconSimulationControlPanel(icons, false);
+        add(basePanel, BorderLayout.WEST);
 
-		// Cities row
-		JPanel cPanel = new JPanel();
-		cPanel.setBorder(new CommonBorder("Number Cities"));
-		JPanel rPanel = new JPanel();
-		rPanel.setBorder(new CommonBorder("River Crossing Penalty or Bonus"));
+        addResetButton();
 
-		Font font = Fonts.tinyFont;
+        // ── Sliders (center) ─────────────────────────────────────────────────
+        JPanel sliderPanel = new JPanel(new BorderLayout(0, 0));
+        sliderPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
 
-		int tickSpace = (MAX_CITIES - MIN_CITIES) / 5;
-		citySlider  = SliderFactory.createLabeledSlider(cPanel, MIN_CITIES, MAX_CITIES,
-				TspDemoView.DEFAULT_NUM_CITY, tickSpace, 0, font, true);
+        JPanel cPanel = new JPanel();
+        cPanel.setBorder(new CommonBorder("Number Cities"));
 
+        JPanel rPanel = new JPanel();
+        rPanel.setBorder(new CommonBorder("River Crossing Penalty or Bonus"));
 
-		float fTickSpace = 0.4f;
-		riverSlider = SliderFactory.createLabeledSlider(rPanel, -1f, 1f, TspDemoView.DEFAULT_RIVER_PENALTY, fTickSpace, 0f, font, true, RIVER_NUM_DECIMALS);
+        Font font = Fonts.tinyFont;
 
-		JPanel rows = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-		rows.add(cPanel);
-		rows.add(rPanel);
+        int tickSpace = (MAX_CITIES - MIN_CITIES) / 5;
+        citySlider = SliderFactory.createLabeledSlider(
+                cPanel, MIN_CITIES, MAX_CITIES,
+                TspDemoView.DEFAULT_NUM_CITY, tickSpace, 0, font, true);
 
-		sliderPanel.add(rows, BorderLayout.CENTER);
+        riverSlider = SliderFactory.createLabeledSlider(
+                rPanel, -1f, 1f,
+                TspDemoView.DEFAULT_RIVER_PENALTY, 0.4f, 0f, font, true, RIVER_NUM_DECIMALS);
 
+        JPanel rows = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        rows.add(cPanel);
+        rows.add(rPanel);
+        sliderPanel.add(rows, BorderLayout.CENTER);
+        add(sliderPanel, BorderLayout.CENTER);
 
-		add(sliderPanel, BorderLayout.CENTER);
+        // ── Slider change listener ────────────────────────────────────────────
+        ChangeListener cl = new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                dirty = true;
+                updateResetEnabled();
 
-		// Slider listeners
-		ChangeListener cl = new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
+                if (autoResetOnSliderRelease) {
+                    boolean adjusting = citySlider.getValueIsAdjusting()
+                                     || riverSlider.getValueIsAdjusting();
+                    if (!adjusting) {
+                        maybeAutoReset();
+                    }
+                }
+            }
+        };
+        citySlider.addChangeListener(cl);
+        riverSlider.addChangeListener(cl);
 
-				dirty = true;
-				updateResetEnabled();
+        setBorder(BorderFactory.createEtchedBorder());
+    }
 
-				// Optional auto-reset when user releases knob
-				if (autoResetOnSliderRelease) {
-					boolean adjusting =
-						citySlider.getValueIsAdjusting() || riverSlider.getValueIsAdjusting();
-					if (!adjusting) {
-						maybeAutoReset();
-					}
-				}
-			}
-		};
-		citySlider.addChangeListener(cl);
-		riverSlider.addChangeListener(cl);
+    // -------------------------------------------------------------------------
+    // Private layout helpers
+    // -------------------------------------------------------------------------
 
-		setBorder(BorderFactory.createEtchedBorder());
-	}
+    /**
+     * Build and add the Reset button to the EAST slot.
+     * The button starts disabled; it is enabled by {@link #updateResetEnabled()}
+     * when the engine is in an editable state.
+     */
+    private void addResetButton() {
+        resetButton = new JButton("Reset");
+        resetButton.setEnabled(false);
+        resetButton.addActionListener(e -> requestResetFromHost());
 
-	// add the reset button on the right
-	private void addResetButton() {
-		// put the reset button (East) on a panel to keep it from stretching
-		resetButton = new JButton("Reset");
-		resetButton.setEnabled(false);
-		JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 20));
-		btnPanel.add(resetButton);
-		btnPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
-		resetButton.addActionListener(e -> requestResetFromHost());
-		add(btnPanel, BorderLayout.EAST);
-	}
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 20));
+        btnPanel.add(resetButton);
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+        add(btnPanel, BorderLayout.EAST);
+    }
 
+    // -------------------------------------------------------------------------
+    // ISimulationControlPanel
+    // -------------------------------------------------------------------------
+
+    /**
+     * Bind this panel to the given simulation host.
+     * <p>
+     * Binds the embedded {@link #basePanel} to the same host, registers this
+     * panel as a {@link SimulationListener}, and applies the current engine
+     * state immediately.
+     * </p>
+     *
+     * @param host the simulation host (non-null; typically {@link TspDemoView})
+     */
     @Override
-	public void bind(ISimulationHost host) {
-		this.host = Objects.requireNonNull(host, "host");
+    public void bind(ISimulationHost host) {
+        this.host = Objects.requireNonNull(host, "host");
+        basePanel.bind(host);
+        host.getSimulationEngine().addListener(this);
+        applyState(host.getSimulationState());
+    }
 
-		// Bind the base panel (buttons + progress) to the same host.
-		basePanel.bind(host);
+    /**
+     * Unbind this panel from its host.
+     * <p>
+     * Removes the listener from the engine and unbinds the embedded
+     * {@link #basePanel}. The panel becomes inert until bound again.
+     * </p>
+     */
+    @Override
+    public void unbind() {
+        if (host != null) {
+            try {
+                host.getSimulationEngine().removeListener(this);
+            } catch (Throwable ignored) {
+                // Defensive: engine may already be stopping.
+            }
+        }
+        basePanel.unbind();
+        host = null;
+    }
 
-		// Listen for state changes so we can enable/disable our controls.
-		host.getSimulationEngine().addListener(this);
+    // -------------------------------------------------------------------------
+    // Accessors
+    // -------------------------------------------------------------------------
 
-		// Apply current state immediately.
-		applyState(host.getSimulationState());
-	}
+    /**
+     * Return the city count currently selected on the slider.
+     *
+     * @return number of cities in the range [{@link #MIN_CITIES},
+     *         {@link #MAX_CITIES}]
+     */
+    public int getCityCount() {
+        return citySlider.getValue();
+    }
 
-	@Override
-	public void unbind() {
-		if (host != null) {
-			try {
-				host.getSimulationEngine().removeListener(this);
-			} catch (Throwable ignored) {
-				// Defensive: engine may already be stopping.
-			}
-		}
-		basePanel.unbind();
-		host = null;
-	}
+    /**
+     * Return the river penalty currently selected on the slider.
+     *
+     * @return penalty in {@code [−1.0, +1.0]}; positive values penalize river
+     *         crossings, negative values reward them
+     */
+    public double getRiverPenalty() {
+        return riverSlider.getValue() / (double) RIVER_SCALE;
+    }
 
-	/**
-	 * Get the selected city count.
-	 *
-	 * @return city count
-	 */
-	public int getCityCount() {
-		return citySlider.getValue();
-	}
+    // -------------------------------------------------------------------------
+    // SimulationListener — state gating
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Get the selected river penalty in [-1, +1].
-	 *
-	 * @return river penalty
-	 */
-	public double getRiverPenalty() {
-		return riverSlider.getValue() / (double) RIVER_SCALE;
-	}
+    /** {@inheritDoc} */
+    @Override
+    public void onStateChange(SimulationContext ctx, SimulationState from,
+                               SimulationState to, String reason) {
+        applyState(to);
+    }
 
-	// -------------------------------------------------------------------------
-	// SimulationListener: state gating
-	// -------------------------------------------------------------------------
+    /** {@inheritDoc} */
+    @Override
+    public void onReady(SimulationContext ctx) {
+        applyState(SimulationState.READY);
+    }
 
-	@Override
-	public void onStateChange(SimulationContext ctx, SimulationState from, SimulationState to, String reason) {
-		applyState(to);
-	}
+    /** {@inheritDoc} */
+    @Override
+    public void onDone(SimulationContext ctx) {
+        applyState(SimulationState.TERMINATED);
+    }
 
-	@Override
-	public void onReady(SimulationContext ctx) {
-		applyState(SimulationState.READY);
-	}
+    /** {@inheritDoc} */
+    @Override
+    public void onFail(SimulationContext ctx, Throwable error) {
+        applyState(SimulationState.FAILED);
+    }
 
-	@Override
-	public void onDone(SimulationContext ctx) {
-		applyState(SimulationState.TERMINATED);
-	}
+    /**
+     * {@inheritDoc}
+     * No-op — progress display is handled by the embedded {@link #basePanel}.
+     */
+    @Override
+    public void onProgress(SimulationContext ctx, ProgressInfo progress) {
+        // no-op
+    }
 
-	@Override
-	public void onFail(SimulationContext ctx, Throwable error) {
-		applyState(SimulationState.FAILED);
-	}
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
 
-	@Override
-	public void onProgress(SimulationContext ctx, ProgressInfo progress) {
-		// no-op (base panel handles progress UI)
-	}
+    /**
+     * Enable or disable controls based on the current simulation state.
+     * <p>
+     * Sliders and Reset are enabled only in {@link SimulationState#READY} or
+     * {@link SimulationState#TERMINATED} to prevent parameter changes while
+     * the simulation thread is running or paused.
+     * </p>
+     *
+     * @param state current simulation state
+     */
+    private void applyState(SimulationState state) {
+        boolean editable = (state == SimulationState.READY
+                         || state == SimulationState.TERMINATED);
+        citySlider.setEnabled(editable);
+        riverSlider.setEnabled(editable);
+        updateResetEnabled();
+    }
 
-	// based on simulation state, enable/disable our controls
-	private void applyState(SimulationState state) {
-		boolean editable = (state == SimulationState.READY || state == SimulationState.TERMINATED);
+    /**
+     * Update the Reset button's enabled state.
+     * <p>
+     * Reset is enabled whenever the engine is in an editable state, regardless
+     * of whether the sliders are dirty. This allows the user to reset to the
+     * current parameters (generating a new random city layout) without changing
+     * any values.
+     * </p>
+     */
+    private void updateResetEnabled() {
+        if (host == null) {
+            resetButton.setEnabled(false);
+            return;
+        }
+        SimulationState state = host.getSimulationState();
+        boolean editable = (state == SimulationState.READY
+                         || state == SimulationState.TERMINATED);
+        resetButton.setEnabled(editable);
+    }
 
-		citySlider.setEnabled(editable);
-		riverSlider.setEnabled(editable);
+    /**
+     * If the engine is in an editable state and the sliders are dirty,
+     * automatically request a reset.
+     * <p>
+     * Only called when {@link #autoResetOnSliderRelease} is {@code true}.
+     * </p>
+     */
+    private void maybeAutoReset() {
+        if (host == null || !dirty) return;
 
-		updateResetEnabled();
-	}
+        SimulationState state = host.getSimulationState();
+        boolean editable = (state == SimulationState.READY
+                         || state == SimulationState.TERMINATED);
+        if (editable) {
+            requestResetFromHost();
+        }
+    }
 
-	// Enable Reset only when in editable state
-	private void updateResetEnabled() {
-		if (host == null) {
-			resetButton.setEnabled(false);
-			return;
-		}
-		SimulationState state = host.getSimulationState();
-		boolean editable = (state == SimulationState.READY || state == SimulationState.TERMINATED);
+    /**
+     * Read the current slider values and forward a reset request to the host
+     * if it implements {@link ITspDemoResettable}.
+     * <p>
+     * Called on the EDT (button action listener), but defensively wraps in
+     * {@link SwingUtilities#invokeLater} if somehow called off-EDT.
+     * </p>
+     */
+    private void requestResetFromHost() {
+        if (host == null) return;
 
-		// Enable Reset only when editable
-		resetButton.setEnabled(editable);
-	}
+        if (host instanceof ITspDemoResettable resettable) {
+            int cities      = getCityCount();
+            double penalty  = getRiverPenalty();
 
-	private void maybeAutoReset() {
-		if (host == null || !dirty) {
-			return;
-		}
+            if (SwingUtilities.isEventDispatchThread()) {
+                resettable.requestReset(cities, penalty);
+            } else {
+                SwingUtilities.invokeLater(() -> resettable.requestReset(cities, penalty));
+            }
 
-		SimulationState state = host.getSimulationState();
-		boolean editable = (state == SimulationState.READY || state == SimulationState.TERMINATED);
-		if (!editable) {
-			return;
-		}
-
-		requestResetFromHost();
-	}
-
-	// Request reset from host if it implements ITspDemoResettable
-	private void requestResetFromHost() {
-		if (host == null) {
-			return;
-		}
-
-		// The host is the view. We only require it implement ITspDemoResettable.
-		if (host instanceof ITspDemoResettable resettable) {
-			int cities = getCityCount();
-			double penalty = getRiverPenalty();
-
-			// Reset should happen on EDT (button already on EDT), but be defensive.
-			if (SwingUtilities.isEventDispatchThread()) {
-				resettable.requestReset(cities, penalty);
-			} else {
-				SwingUtilities.invokeLater(() -> resettable.requestReset(cities, penalty));
-			}
-
-			dirty = false;
-			updateResetEnabled();
-		}
-	}
-
+            dirty = false;
+            updateResetEnabled();
+        }
+    }
 }

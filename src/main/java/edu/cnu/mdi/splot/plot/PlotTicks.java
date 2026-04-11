@@ -9,6 +9,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.util.List;
 
+import edu.cnu.mdi.format.DoubleFormat;
 import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.Curve;
