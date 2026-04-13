@@ -14,9 +14,9 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.item.ImageItem;
-import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.swing.WindowPlacement;
 import edu.cnu.mdi.transfer.ImageFilters;
+import edu.cnu.mdi.util.PropertyUtils;
 
 /**
  * A simple view used to test the tool bar.

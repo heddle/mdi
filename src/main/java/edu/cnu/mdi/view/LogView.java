@@ -1,7 +1,7 @@
 package edu.cnu.mdi.view;
 
 import edu.cnu.mdi.log.LogPane;
-import edu.cnu.mdi.properties.PropertyUtils;
+import edu.cnu.mdi.util.PropertyUtils;
 
 /**
  * This is a predefined view used to display all the log messages.

@@ -5,10 +5,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.SwingUtilities;
 
+import edu.cnu.mdi.splot.fit.CubicSpline;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.fit.FitResult;
 import edu.cnu.mdi.splot.fit.IFitter;
-import edu.cnu.mdi.splot.spline.CubicSpline;
 
 /**
  * Histogram-backed curve that integrates {@link HistoData} into the
@@ -144,7 +144,10 @@ public class HistoCurve extends ACurve {
 			case ERF:
 			case ERFC:
 			case GAUSSIAN:
-			case GAUSSIANS: {
+			case GAUSSIANS:
+			case EXPONENTIAL_DECAY:
+			case POWER_LAW:
+			case LORENTZIAN: {
 				IFitter fitter = createFitterForCurrentMethod();
 				if (fitter != null) {
 					FitVectors v = fitVectors();

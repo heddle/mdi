@@ -1,8 +1,5 @@
 package edu.cnu.mdi.splot.fit;
 
-import edu.cnu.mdi.component.EnumComboBox;
-import edu.cnu.mdi.splot.spline.CubicSpline;
-
 /**
  * Specifies how a curve should be drawn for a data set.
  * <p>
@@ -41,7 +38,16 @@ public enum CurveDrawingMethod {
 	ERF("Erf Function"),
 
 	/** Complementary error function fit. */
-	ERFC("Erfc Function");
+	ERFC("Erfc Function"),
+
+	/** Exponential decay fit: A·exp(-x/τ) + C. */
+	EXPONENTIAL_DECAY("Exponential Decay"),
+
+	/** Power law fit: A·x^n + C. */
+	POWER_LAW("Power Law"),
+
+	/** Lorentzian (Breit-Wigner / Cauchy) resonance peak fit. */
+	LORENTZIAN("Lorentzian");
 
 	// ------------------------------------------------------------------------
 	// Display name handling
@@ -82,22 +88,5 @@ public enum CurveDrawingMethod {
 		return null;
 	}
 
-	/**
-	 * Obtain a combo box of curve drawing methods.
-	 *
-	 * @param defaultChoice default selected method (may be {@code null})
-	 * @return the combo box
-	 */
-	public static EnumComboBox<CurveDrawingMethod> getComboBox(CurveDrawingMethod defaultChoice) {
 
-		EnumComboBox<CurveDrawingMethod> cb = new EnumComboBox<>(CurveDrawingMethod.class, null, // no extra choice
-				CurveDrawingMethod::getName // label provider
-		);
-
-		if (defaultChoice != null) {
-			cb.setSelectedItem(defaultChoice);
-		}
-
-		return cb;
-	}
 }

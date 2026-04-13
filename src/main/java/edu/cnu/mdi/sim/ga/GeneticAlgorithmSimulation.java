@@ -75,8 +75,6 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	    final double[] currentFits = fitnesses;
 	    final int      popSize     = currentInds.size();
 
-	    long t0 = System.nanoTime();
-
 	    // 1. Build offspring pool
 	    List<C> offspring = new ArrayList<>(popSize);
 	    while (offspring.size() < popSize - cfg.eliteCount()) {
@@ -90,12 +88,8 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	        }
 	    }
 
-	    long t1 = System.nanoTime();
-
 	    // 2. Evaluate offspring
 	    double[] offFitness = evaluateAll(offspring);
-
-	    long t2 = System.nanoTime();
 
 	    // 3. Replace + reconstruct fitnesses
 	    List<C> nextGen = operators.replacement()
@@ -114,24 +108,11 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	        newFitnesses[i] = offFitness[i - cfg.eliteCount()];
 	    }
 
-	    long t3 = System.nanoTime();
-
 	    population = wrap(nextGen);
 	    fitnesses  = newFitnesses;
 	    trackBest(population.individuals(), fitnesses);
 	    generation++;
 
-	    // Temporary: print phase timings every 100 generations
-	    if (generation % 100 == 0) {
-	        System.err.printf("Gen %d  offspring=%.1fms  evaluate=%.1fms  replace=%.1fms  total=%.1fms%n",
-	                generation,
-	                (t1 - t0) / 1e6,
-	                (t2 - t1) / 1e6,
-	                (t3 - t2) / 1e6,
-	                (t3 - t0) / 1e6);
-	    }
-
-	    // ... UI hints unchanged ...
 	    return true;
 	}
 

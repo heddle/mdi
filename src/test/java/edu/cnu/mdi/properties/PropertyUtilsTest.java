@@ -8,6 +8,8 @@ import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 
+import edu.cnu.mdi.util.PropertyUtils;
+
 class PropertyUtilsTest {
 
     @Test

@@ -15,16 +15,19 @@ import javax.swing.Timer;
 import javax.swing.event.EventListenerList;
 
 import edu.cnu.mdi.graphics.style.Styled;
+import edu.cnu.mdi.splot.fit.CubicSpline;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.fit.ErfFitter;
 import edu.cnu.mdi.splot.fit.ErfcFitter;
 import edu.cnu.mdi.splot.fit.Evaluator;
+import edu.cnu.mdi.splot.fit.ExponentialDecayFitter;
 import edu.cnu.mdi.splot.fit.FitResult;
 import edu.cnu.mdi.splot.fit.GaussianFitter;
 import edu.cnu.mdi.splot.fit.IFitter;
+import edu.cnu.mdi.splot.fit.LorentzianFitter;
 import edu.cnu.mdi.splot.fit.MultiGaussianFitter;
 import edu.cnu.mdi.splot.fit.PolynomialFitter;
-import edu.cnu.mdi.splot.spline.CubicSpline;
+import edu.cnu.mdi.splot.fit.PowerLawFitter;
 
 /**
  * Base class for all plottable curves (XY curves, histogram curves, strip-chart
@@ -222,6 +225,15 @@ public abstract class ACurve {
 			// "order" interpreted as number of Gaussians. (Constructor: (count,
 			// includeBaseline))
 			return new MultiGaussianFitter(Math.max(1, getFitOrder()), true);
+
+		case EXPONENTIAL_DECAY:
+			return new ExponentialDecayFitter();
+
+		case POWER_LAW:
+			return new PowerLawFitter();
+
+		case LORENTZIAN:
+			return new LorentzianFitter();
 
 		default:
 			return null;

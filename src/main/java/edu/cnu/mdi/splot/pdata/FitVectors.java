@@ -28,7 +28,7 @@ public class FitVectors {
 
 	/** y data (length n). */
 	public final double[] y;
-	
+
 	// For reproducible test data generation.
 	private static final long testSeed = 12345L;
 
@@ -191,7 +191,7 @@ public class FitVectors {
 
 		final double dx = (xEnd - xStart) / (nPoints - 1.0);
 		Random rng = new Random(testSeed);
-		
+
 		for (int i = 0; i < nPoints; i++) {
 			double xi = xStart + i * dx;
 			x[i] = xi;

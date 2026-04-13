@@ -359,7 +359,9 @@ public class PlotTicks {
             // Minor ticks at 2×, 3×, … 9× the decade
             for (int m = 2; m <= 9; m++) {
                 double v = m * decade;
-                if (v < xmin || v > xmax) continue;
+                if (v < xmin || v > xmax) {
+					continue;
+				}
                 _wp.setLocation(v, yc);
                 _plotCanvas.dataToScreen(_pp, _wp);
                 g2.drawLine(_pp.x, b, _pp.x, b - minorTickLen);
@@ -419,7 +421,9 @@ public class PlotTicks {
             // Minor ticks at 2×, 3×, … 9× the decade
             for (int m = 2; m <= 9; m++) {
                 double v = m * decade;
-                if (v < ymin || v > ymax) continue;
+                if (v < ymin || v > ymax) {
+					continue;
+				}
                 _wp.setLocation(xc, v);
                 _plotCanvas.dataToScreen(_pp, _wp);
                 g2.drawLine(l, _pp.y, l + minorTickLen, _pp.y);

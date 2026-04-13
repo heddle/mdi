@@ -150,7 +150,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 	private JLabel makeJLabel(String text, Font font, int alignment, Color bg, Color fg) {
 
 		JLabel	lab = new JLabel(text != null ? text : " ");
-		
+
 		lab.setFont(font);
 		lab.setOpaque(true);
 		if (bg != null) {

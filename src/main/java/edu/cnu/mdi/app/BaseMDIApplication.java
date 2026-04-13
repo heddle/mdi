@@ -26,12 +26,12 @@ import com.formdev.flatlaf.FlatIntelliJLaf;
 import edu.cnu.mdi.desktop.Desktop;
 import edu.cnu.mdi.log.ConsoleLogger;
 import edu.cnu.mdi.log.Log;
-import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.swing.WindowPlacement;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.ui.menu.FileMenu;
 import edu.cnu.mdi.ui.menu.MenuManager;
 import edu.cnu.mdi.util.Environment;
+import edu.cnu.mdi.util.PropertyUtils;
 import edu.cnu.mdi.view.ViewManager;
 import edu.cnu.mdi.view.VirtualView;
 

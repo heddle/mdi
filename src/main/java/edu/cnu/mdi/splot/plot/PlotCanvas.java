@@ -9,121 +9,180 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.Timer;
 import javax.swing.event.EventListenerList;
 
-import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.splot.edit.PlotPreferencesDialog;
 import edu.cnu.mdi.splot.pdata.ACurve;
-import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.CurveChangeType;
 import edu.cnu.mdi.splot.pdata.DataChangeListener;
-import edu.cnu.mdi.splot.pdata.Histo2DData;
-import edu.cnu.mdi.splot.pdata.HistoCurve;
-import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.pdata.Snapshot;
 import edu.cnu.mdi.util.Environment;
-import edu.cnu.mdi.util.UnicodeUtils;
 
+/**
+ * The primary Swing component for rendering a 2-D scientific plot.
+ *
+ * <h3>Responsibilities</h3>
+ * <ul>
+ *   <li>Owning the coordinate-system geometry ({@link #_worldSystem},
+ *       {@link #setWorldSystem()}, affine transforms)</li>
+ *   <li>Painting: delegating to {@link DataDrawer}, {@link PlotTicks},
+ *       {@link Legend}, and {@link ExtraText}</li>
+ *   <li>Notifying {@link PlotChangeListener}s on lifecycle events</li>
+ *   <li>Providing the public coordinate-conversion API (screen ↔ raw-world
+ *       ↔ data)</li>
+ *   <li>Data management: {@link #setPlotData}, {@link #clearData}</li>
+ * </ul>
+ *
+ * <h3>Mouse handling</h3>
+ * <p>All mouse interaction (legend dragging, feedback readout, scroll-wheel
+ * zoom) is delegated to {@link PlotMouseHandler}, which is wired up in the
+ * constructor. {@code PlotCanvas} no longer implements any mouse listener
+ * interfaces directly.</p>
+ *
+ * <h3>Coordinate systems</h3>
+ * <p>Three coordinate spaces are in play:</p>
+ * <ol>
+ *   <li><b>Screen (local)</b> &mdash; Swing pixel coordinates,
+ *       {@code (0,0)} at top-left.</li>
+ *   <li><b>Raw world</b> &mdash; stored in {@link #_worldSystem};
+ *       <em>log₁₀(data)</em> when a log axis is active.</li>
+ *   <li><b>Data</b> &mdash; the real values in the curves, always linear.</li>
+ * </ol>
+ * <p>Conversion methods are named {@code screen*}, {@code *RawWorld*}, and
+ * {@code *Data*} to make the direction explicit.</p>
+ *
+ * @author heddle
+ * @see PlotMouseHandler
+ * @see DataDrawer
+ * @see PlotTicks
+ */
 @SuppressWarnings("serial")
-public class PlotCanvas extends JComponent implements MouseWheelListener, MouseListener, MouseMotionListener, DataChangeListener {
+public class PlotCanvas extends JComponent implements DataChangeListener {
 
+	// -----------------------------------------------------------------------
+	// Property-change event names (fired via firePropertyChange)
+	// -----------------------------------------------------------------------
 
-	public static final String DONEDRAWINGPROP = "Done Drawing";
-	public static final String TITLETEXTCHANGE = "Title Text";
-	public static final String TITLEFONTCHANGE = "Title Font";
-	public static final String XLABELTEXTCHANGE = "X Label Text";
-	public static final String YLABELTEXTCHANGE = "Y Label Text";
-	public static final String AXESFONTCHANGE = "Axes Font";
-	public static final String STATUSFONTCHANGE = "Status Font";
-	public static final String LOGZCHANGE = "Log Z";
-	public static final String COLORMAPCHANGE = "Colormap";
+	/** Fired after every completed paint pass. */
+	public static final String DONEDRAWINGPROP   = "Done Drawing";
+	/** Fired when the plot title text changes. */
+	public static final String TITLETEXTCHANGE   = "Title Text";
+	/** Fired when the plot title font changes. */
+	public static final String TITLEFONTCHANGE   = "Title Font";
+	/** Fired when the x-axis label text changes. */
+	public static final String XLABELTEXTCHANGE  = "X Label Text";
+	/** Fired when the y-axis label text changes. */
+	public static final String YLABELTEXTCHANGE  = "Y Label Text";
+	/** Fired when the axes font changes. */
+	public static final String AXESFONTCHANGE    = "Axes Font";
+	/** Fired when the status/feedback font changes. */
+	public static final String STATUSFONTCHANGE  = "Status Font";
+	/** Fired when log-Z mode changes (2D histograms). */
+	public static final String LOGZCHANGE        = "Log Z";
+	/** Fired when the colour map changes (2D histograms / heatmaps). */
+	public static final String COLORMAPCHANGE    = "Colormap";
 
-	// List of plot change listeners
+	// -----------------------------------------------------------------------
+	// Fields
+	// -----------------------------------------------------------------------
+
+	/** Listeners for {@link PlotChangeType} lifecycle events. */
 	private EventListenerList _listenerList;
 
-	// used to fire property changes. Transient.
+	/** Monotonically increasing counter used to tag {@link #DONEDRAWINGPROP} events. */
 	private long drawCount = 0;
 
-	// for saving files
-	private static String _dataFilePath;
+	/**
+	 * Default directory used by save/open dialogs.
+	 * <p>Instance-level (not static) so that multiple canvases in the same JVM
+	 * track their own last-used directories independently.</p>
+	 */
+	private String _dataFilePath = Environment.getInstance().getHomeDirectory();
 
-	// the bounds of the plot
+	/** Pixel bounds of the active (data) area inside the component. */
 	private Rectangle _activeBounds;
 
-	// redraw check for dynamic data adding
+	/** Signals that a redraw is pending (set by background data producers). */
 	private boolean _needsRedraw;
+
+	/** Signals that the world system should also be recomputed on the next redraw. */
 	private boolean _needsRescale;
 
-	// the world system of the active area
+	/**
+	 * The visible region in <em>raw world</em> coordinates.
+	 * When log axes are active this is in log₁₀(data) space.
+	 */
 	private Rectangle2D.Double _worldSystem = new Rectangle2D.Double(0, 0, 1, 1);
 
-	// If true, log scaling is actually active (requested + valid range)
+	/** {@code true} when log-10 x-scaling is both requested and valid (range > 0). */
 	private boolean _xLogActive = false;
+
+	/** {@code true} when log-10 y-scaling is both requested and valid (range > 0). */
 	private boolean _yLogActive = false;
 
-	// convert from screen to raw world and vice versa
+	/** Transforms screen → raw-world (null when component has no valid size). */
 	protected AffineTransform _screenToRawWorld;
+
+	/** Transforms raw-world → screen (null when component has no valid size). */
 	protected AffineTransform _rawWorldToScreen;
 
-	// dataset being plotted
+	/** The data backing this canvas. */
 	protected PlotData _plotData;
 
-	// plot parameters
+	/** Visual and numerical parameters (axis labels, fonts, log scale, etc.). */
 	protected PlotParameters _parameters;
 
-	// plot ticks
+	/** Tick-mark generator and renderer. */
 	private PlotTicks _plotTicks;
 
-	// if this has a parent (optional), print applies to the
-	// parent. For example, the parent might be a PlotPanel
+	/**
+	 * Optional parent component (usually a {@link PlotPanel}).
+	 * When present, print actions apply to the parent.
+	 */
 	private Component _parent;
 
-	// legend and floating label dragging
+	/** Draggable legend overlay. */
 	private Legend _legend;
 
-	// extra and floating label dragging
+	/** Draggable extra-text overlay. */
 	private ExtraText _extra;
 
-	// data drawer
+	/** Delegates data drawing to type-specific drawers. */
 	private DataDrawer _dataDrawer;
 
-	// toolbar that owns this canvas
+	/** Optional toolbar; used to determine whether the pointer tool is active. */
 	private BaseToolBar _toolBar;
 
-	// swing timer for fixing world system
+	/** Coalescing timer that drives redraws for streaming/DAQ data. */
 	private final Timer _timer;
 
+	// -----------------------------------------------------------------------
+	// Constructor
+	// -----------------------------------------------------------------------
+
 	/**
-	 * Create a plot canvas for plotting a dataset
+	 * Creates a {@code PlotCanvas} for the given dataset.
 	 *
-	 * @param plotData  the dataset to plot. It might contain many curves
-	 * @param plotTitle the plot title
-	 * @param xLabel    the x axis label
-	 * @param yLabel    the y axis label
+	 * @param plotData  the initial dataset ({@code null} → empty XYXY data)
+	 * @param plotTitle plot title (may be {@code null})
+	 * @param xLabel    x-axis label (may be {@code null})
+	 * @param yLabel    y-axis label (may be {@code null})
 	 */
-	public PlotCanvas(PlotData plotData, String plotTitle, String xLabel, String yLabel) {
+	public PlotCanvas(PlotData plotData, String plotTitle,
+	                  String xLabel, String yLabel) {
 
 		if (plotData == null) {
 			plotData = PlotData.emptyData();
-		}
-		if (_dataFilePath == null) {
-			_dataFilePath = Environment.getInstance().getHomeDirectory();
 		}
 
 		setBackground(Color.white);
@@ -131,49 +190,38 @@ public class PlotCanvas extends JComponent implements MouseWheelListener, MouseL
 		_parameters.setPlotTitle(plotTitle);
 		_parameters.setXLabel(xLabel);
 		_parameters.setYLabel(yLabel);
-		_plotTicks = new PlotTicks(this);
+		_plotTicks  = new PlotTicks(this);
 
 		setPlotData(plotData);
 
-		ComponentAdapter componentAdapter = new ComponentAdapter() {
+		addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent ce) {
 				setAffineTransforms();
 				repaint();
 			}
-		};
+		});
 
-		_legend = new Legend(this);
-		_extra = new ExtraText(this);
+		_legend     = new Legend(this);
+		_extra      = new ExtraText(this);
 		_dataDrawer = new DataDrawer(this);
 
-		addComponentListener(componentAdapter);
-		addMouseListener(this);
-		addMouseMotionListener(this);
-		addMouseWheelListener(this);
+		// Delegate legend-drag, feedback readout, and scroll-wheel zoom
+		// to PlotMouseHandler. The toolbar gesture handler (PlotToolHandler)
+		// is wired separately by PlotPanel.
+		PlotMouseHandler mouseHandler = new PlotMouseHandler(this);
+		addMouseListener(mouseHandler);
+		addMouseMotionListener(mouseHandler);
+		addMouseWheelListener(mouseHandler);
 
-		int delay = 1000; // milliseconds
-		_timer = new Timer(delay, evt -> onTimer());
-		_timer.setCoalesce(true); // good for bursty updates
+		// Coalescing redraw timer (1 s interval).
+		_timer = new Timer(1000, evt -> onTimer());
+		_timer.setCoalesce(true);
 	}
 
-	// timer action
-	private void onTimer() {
-		if (_needsRedraw) {
-			if (_needsRescale) {
-				setWorldSystem();
-			}
-			repaint();
-			_needsRedraw = false;
-			_needsRescale = false;
-		}
-	}
-
-	@Override
-	public void addNotify() {
-		super.addNotify();
-		// optional: start here rather than constructor
-	}
+	// -----------------------------------------------------------------------
+	// Lifecycle
+	// -----------------------------------------------------------------------
 
 	@Override
 	public void removeNotify() {
@@ -184,109 +232,263 @@ public class PlotCanvas extends JComponent implements MouseWheelListener, MouseL
 	}
 
 	/**
-	 * Get the PlotData type
-	 *
-	 * @return the plot data type
+	 * Starts the timer and notifies listeners that the canvas is active.
 	 */
-	public PlotDataType getType() {
-		return _plotData.getType();
+	public void standUp() {
+		if (_timer != null) {
+			_timer.start();
+		}
+		notifyListeners(PlotChangeType.STOODUP);
 	}
 
 	/**
-	 * Get the plot title
-	 *
-	 * @return the plot title
+	 * Stops the timer and notifies listeners that the canvas is shutting down.
 	 */
-	public String getTitle() {
-		return _parameters.getPlotTitle();
+	public void shutDown() {
+		if (_timer != null) {
+			_timer.stop();
+		}
+		notifyListeners(PlotChangeType.SHUTDOWN);
+	}
+
+	// -----------------------------------------------------------------------
+	// Accessors used by PlotMouseHandler (package-visible)
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Returns the draggable legend overlay.
+	 *
+	 * @return the {@link Legend} (never {@code null} after construction)
+	 */
+	Legend getLegend() {
+		return _legend;
 	}
 
 	/**
-	 * Get the plot parameters
+	 * Returns the draggable extra-text overlay.
 	 *
-	 * @return the plot parameters
+	 * @return the {@link ExtraText} (never {@code null} after construction)
 	 */
-	public PlotParameters getParameters() {
-		return _parameters;
+	ExtraText getExtra() {
+		return _extra;
 	}
 
 	/**
-	 * Check if this is a bar plot
+	 * Returns {@code true} when the pointer (select) tool is active.
+	 * <p>
+	 * Used by {@link PlotMouseHandler} to decide whether mouse-press events
+	 * should prime a drag.
+	 * </p>
 	 *
-	 * @return true if this is a bar plot
+	 * @return {@code true} if there is no toolbar or the toolbar's pointer tool
+	 *         is selected
 	 */
-	public boolean isBarPlot() {
-		return _parameters.hasRenderHint(RenderHint.BARPLOT);
+	boolean isPointer() {
+		return (_toolBar == null) || _toolBar.isPointerActive();
 	}
 
-	/**
-	 * Set the parent component, probably a PlotPanel
-	 *
-	 * @param parent the optional parent component
-	 */
-	public void setParent(Component parent) {
-		_parent = parent;
-	}
+	// -----------------------------------------------------------------------
+	// Data management
+	// -----------------------------------------------------------------------
 
 	/**
-	 * Set a new data set for the canvas
+	 * Replaces the dataset and recomputes the world system.
 	 *
-	 * @param plotData the new dataset
+	 * @param plotData the new dataset ({@code null} → empty XYXY data)
 	 */
 	protected void setPlotData(PlotData plotData) {
 		if (plotData == null) {
 			plotData = PlotData.emptyData();
 		}
 
-		// remove from old
 		if (_plotData != null) {
 			_plotData.removeDataChangeListener(this);
 		}
 
 		_plotData = plotData;
-
-		// add to new
 		_plotData.addDataChangeListener(this);
-
 		setWorldSystem();
 		repaint();
 	}
 
 	/**
-	 * Get the underlying plot data
+	 * Returns the dataset backing this canvas.
 	 *
-	 * @return the underlying plot data
+	 * @return the current {@link PlotData} (never {@code null} after
+	 *         construction)
 	 */
 	public PlotData getPlotData() {
 		return _plotData;
 	}
 
 	/**
-	 * Clear all data from all curves Use with caution!
+	 * Clears all data from every curve.
+	 *
+	 * @see ACurve#clearData()
 	 */
 	public void clearData() {
-		for (ACurve curve : getPlotData().getCurves()) {
+		for (ACurve curve : _plotData.getCurves()) {
 			curve.clearData();
 		}
 	}
 
 	/**
-	 * Get the world boundary
+	 * Returns the current {@link PlotDataType}.
 	 *
-	 * @return the world boundary
+	 * @return data type of the current dataset
 	 */
-	public Rectangle.Double getWorld() {
+	public PlotDataType getType() {
+		return _plotData.getType();
+	}
+
+	// -----------------------------------------------------------------------
+	// Parameters and appearance
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Returns the plot parameters object.
+	 *
+	 * @return current {@link PlotParameters}
+	 */
+	public PlotParameters getParameters() {
+		return _parameters;
+	}
+
+	/**
+	 * Returns the plot title.
+	 *
+	 * @return title string (may be {@code null})
+	 */
+	public String getTitle() {
+		return _parameters.getPlotTitle();
+	}
+
+	/**
+	 * Returns {@code true} if this canvas is configured as a bar plot.
+	 *
+	 * @return {@code true} if the {@link RenderHint#BARPLOT} hint is set
+	 */
+	public boolean isBarPlot() {
+		return _parameters.hasRenderHint(RenderHint.BARPLOT);
+	}
+
+	/**
+	 * Sets the optional parent component (usually a {@link PlotPanel}).
+	 *
+	 * @param parent parent component, or {@code null}
+	 */
+	public void setParent(Component parent) {
+		_parent = parent;
+	}
+
+	/**
+	 * Sets the toolbar that owns this canvas.
+	 *
+	 * @param toolBar the toolbar, or {@code null} if there is no toolbar
+	 */
+	public void setToolBar(BaseToolBar toolBar) {
+		_toolBar = toolBar;
+	}
+
+	/**
+	 * Opens the plot preferences dialog.
+	 */
+	public void showPreferencesEditor() {
+		PlotPreferencesDialog prefEditor = new PlotPreferencesDialog(this);
+		prefEditor.setVisible(true);
+		prefEditor.toFront();
+	}
+
+	// -----------------------------------------------------------------------
+	// World-system and coordinate geometry
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Returns the visible region in raw-world coordinates.
+	 * <p>
+	 * When log axes are active, this rectangle is in log₁₀(data) space.
+	 * </p>
+	 *
+	 * @return the world rectangle (never {@code null} after construction)
+	 */
+	public Rectangle2D.Double getWorld() {
 		return _worldSystem;
 	}
 
+	/**
+	 * Returns the pixel bounds of the active (data) area within the component.
+	 *
+	 * @return active bounds, or {@code null} if the component has no size yet
+	 */
+	public Rectangle getActiveBounds() {
+		return _activeBounds;
+	}
+
+	/**
+	 * Returns {@code true} if log-10 scaling is active on the x-axis.
+	 *
+	 * @return {@code true} when x log-scaling is both requested and valid
+	 */
+	public boolean isXLogActive() {
+		return _xLogActive;
+	}
+
+	/**
+	 * Returns {@code true} if log-10 scaling is active on the y-axis.
+	 *
+	 * @return {@code true} when y log-scaling is both requested and valid
+	 */
+	public boolean isYLogActive() {
+		return _yLogActive;
+	}
+
+	/**
+	 * Returns the tick-mark renderer for this canvas.
+	 *
+	 * @return the {@link PlotTicks} (never {@code null} after construction)
+	 */
+	public PlotTicks getPlotTicks() {
+		return _plotTicks;
+	}
+
+	/**
+	 * Returns the {@link PlotPanel} that contains this canvas, if any.
+	 *
+	 * @return the parent {@link PlotPanel}, or {@code null}
+	 */
+	public PlotPanel plotPanel() {
+		if (_parent instanceof PlotPanel) {
+			return (PlotPanel) _parent;
+		}
+		return null;
+	}
+
+	/**
+	 * Signals that this canvas needs a repaint, optionally requesting a world
+	 * rescale. Safe to call from any thread; the actual work happens on the
+	 * next timer tick.
+	 *
+	 * @param rescale if {@code true}, the world system is recomputed before
+	 *                repainting
+	 */
+	public void needsRedraw(boolean rescale) {
+		_needsRedraw  = true;
+		_needsRescale = _needsRescale || rescale;
+	}
+
+	/**
+	 * Recomputes the world system from the current data and plot parameters.
+	 *
+	 * <p>Handles manual limits, algorithmic (NiceScale) limits, and log-axis
+	 * bounds. Activates log scaling only when the final data range is strictly
+	 * positive.</p>
+	 */
 	public void setWorldSystem() {
 
-		if (_worldSystem == null) {
-			return;
-		}
-
-		if (_plotData == null) {
-			_worldSystem.setFrame(0, 0, 1, 1);
+		if (_worldSystem == null || _plotData == null) {
+			if (_worldSystem != null) {
+				_worldSystem.setFrame(0, 0, 1, 1);
+			}
 			return;
 		}
 
@@ -299,137 +501,93 @@ public class PlotCanvas extends JComponent implements MouseWheelListener, MouseL
 		double ymin = _plotData.yMin();
 		double ymax = _plotData.yMax();
 
-		PlotParameters params = getParameters();
+		PlotParameters params       = getParameters();
+		LimitsMethod   xMethod      = params.getXLimitsMethod();
+		LimitsMethod   yMethod      = params.getYLimitsMethod();
+		final boolean  xLogRequested = (params.getXScale() == PlotParameters.AxisScale.LOG10);
+		final boolean  yLogRequested = (params.getYScale() == PlotParameters.AxisScale.LOG10);
 
-		LimitsMethod xMethod = params.getXLimitsMethod();
-		LimitsMethod yMethod = params.getYLimitsMethod();
-
-		final boolean xLogRequested = (params.getXScale() == PlotParameters.AxisScale.LOG10);
-		final boolean yLogRequested = (params.getYScale() == PlotParameters.AxisScale.LOG10);
-
-		// -------------------------------------------------------------
-		// X bounds: if log requested, use positive-only data bounds and
-		// DO NOT call NiceScale (which often rounds down to 0).
-		// -------------------------------------------------------------
+		// --- X bounds ---
 		switch (xMethod) {
 		case MANUALLIMITS:
 			xmin = params.getManualXMin();
 			xmax = params.getManualXMax();
 			break;
-
 		case ALGORITHMICLIMITS:
 			if (xLogRequested) {
 				double[] mm = positiveDataMinMax(true);
-				if (mm != null) {
-					xmin = mm[0];
-					xmax = mm[1];
-				} // else keep fallback values; log will deactivate later
+				if (mm != null) { xmin = mm[0]; xmax = mm[1]; }
 			} else {
-				NiceScale ns = new NiceScale(xmin, xmax, _plotTicks.getNumMajorTickX() + 2, params.includeXZero());
-				xmin = ns.getNiceMin();
-				xmax = ns.getNiceMax();
+				NiceScale ns = new NiceScale(xmin, xmax,
+						_plotTicks.getNumMajorTickX() + 2, params.includeXZero());
+				xmin = ns.getNiceMin(); xmax = ns.getNiceMax();
 			}
 			break;
-
 		case USEDATALIMITS:
 			if (xLogRequested) {
 				double[] mm = positiveDataMinMax(true);
-				if (mm != null) {
-					xmin = mm[0];
-					xmax = mm[1];
-				}
+				if (mm != null) { xmin = mm[0]; xmax = mm[1]; }
 			}
 			break;
 		}
 
-		// -------------------------------------------------------------
-		// Y bounds: same logic
-		// -------------------------------------------------------------
+		// --- Y bounds ---
 		switch (yMethod) {
 		case MANUALLIMITS:
 			ymin = params.getManualYMin();
 			ymax = params.getManualYMax();
 			break;
-
 		case ALGORITHMICLIMITS:
 			if (yLogRequested) {
 				double[] mm = positiveDataMinMax(false);
-				if (mm != null) {
-					ymin = mm[0];
-					ymax = mm[1];
-				}
+				if (mm != null) { ymin = mm[0]; ymax = mm[1]; }
 			} else {
-				NiceScale ns = new NiceScale(ymin, ymax, _plotTicks.getNumMajorTickY() + 2, params.includeYZero());
-				ymin = ns.getNiceMin();
-				ymax = ns.getNiceMax();
+				NiceScale ns = new NiceScale(ymin, ymax,
+						_plotTicks.getNumMajorTickY() + 2, params.includeYZero());
+				ymin = ns.getNiceMin(); ymax = ns.getNiceMax();
 			}
 			break;
-
 		case USEDATALIMITS:
 			if (yLogRequested) {
 				double[] mm = positiveDataMinMax(false);
-				if (mm != null) {
-					ymin = mm[0];
-					ymax = mm[1];
-				}
+				if (mm != null) { ymin = mm[0]; ymax = mm[1]; }
 			}
 			break;
 		}
 
-		// Guard invalids
-		if (!Double.isFinite(xmin) || !Double.isFinite(xmax) || !Double.isFinite(ymin) || !Double.isFinite(ymax)) {
+		// Guard non-finite values.
+		if (!Double.isFinite(xmin) || !Double.isFinite(xmax)
+				|| !Double.isFinite(ymin) || !Double.isFinite(ymax)) {
 			_worldSystem.setFrame(0, 0, 1, 1);
 			return;
 		}
 
-		// Ensure min <= max
-		if (xmax < xmin) {
-			double t = xmin;
-			xmin = xmax;
-			xmax = t;
+		// Ensure min ≤ max.
+		if (xmax < xmin) { double t = xmin; xmin = xmax; xmax = t; }
+		if (ymax < ymin) { double t = ymin; ymin = ymax; ymax = t; }
+
+		// Expand degenerate (zero-width) ranges.
+		if (Math.abs(xmax - xmin) < 1.0e-12) {
+			if (xLogRequested && xmin > 0.0) { xmin /= 1.1; xmax *= 1.1; }
+			else { double pad = (xmin != 0.0) ? (0.01 * Math.abs(xmin)) : 1.0; xmin -= pad; xmax += pad; }
 		}
-		if (ymax < ymin) {
-			double t = ymin;
-			ymin = ymax;
-			ymax = t;
+		if (Math.abs(ymax - ymin) < 1.0e-12) {
+			if (yLogRequested && ymin > 0.0) { ymin /= 1.1; ymax *= 1.1; }
+			else { double pad = (ymin != 0.0) ? (0.01 * Math.abs(ymin)) : 1.0; ymin -= pad; ymax += pad; }
 		}
 
-		// Expand any zero/near-zero range (log-safe)
-		double dx = xmax - xmin;
-		if (Math.abs(dx) < 1.0e-12) {
-			if (xLogRequested && xmin > 0.0 && xmax > 0.0) {
-				xmin /= 1.1;
-				xmax *= 1.1;
-			} else {
-				double pad = (Math.abs(xmin) > 0) ? (0.01 * Math.abs(xmin)) : 1.0;
-				xmin -= pad;
-				xmax += pad;
-			}
-		}
-
-		double dy = ymax - ymin;
-		if (Math.abs(dy) < 1.0e-12) {
-			if (yLogRequested && ymin > 0.0 && ymax > 0.0) {
-				ymin /= 1.1;
-				ymax *= 1.1;
-			} else {
-				double pad = (Math.abs(ymin) > 0) ? (0.01 * Math.abs(ymin)) : 1.0;
-				ymin -= pad;
-				ymax += pad;
-			}
-		}
-
-		// Enable log only if final data range is strictly positive
+		// Enable log only if the final range is strictly positive.
 		_xLogActive = xLogRequested && (xmin > 0.0) && (xmax > 0.0);
 		_yLogActive = yLogRequested && (ymin > 0.0) && (ymax > 0.0);
 
-		// Convert bounds to world space (log space if active)
+		// Convert to raw-world space (log₁₀ if active).
 		double wxmin = _xLogActive ? Math.floor(log10(xmin)) : xmin;
-		double wxmax = _xLogActive ? Math.ceil(log10(xmax)) : xmax;
+		double wxmax = _xLogActive ? Math.ceil(log10(xmax))  : xmax;
 		double wymin = _yLogActive ? Math.floor(log10(ymin)) : ymin;
-		double wymax = _yLogActive ? Math.ceil(log10(ymax)) : ymax;
+		double wymax = _yLogActive ? Math.ceil(log10(ymax))  : ymax;
 
-		if (!Double.isFinite(wxmin) || !Double.isFinite(wxmax) || !Double.isFinite(wymin) || !Double.isFinite(wymax)) {
+		if (!Double.isFinite(wxmin) || !Double.isFinite(wxmax)
+				|| !Double.isFinite(wymin) || !Double.isFinite(wymax)) {
 			_worldSystem.setFrame(0, 0, 1, 1);
 			return;
 		}
@@ -441,153 +599,542 @@ public class PlotCanvas extends JComponent implements MouseWheelListener, MouseL
 		}
 
 		_worldSystem.setFrame(wxmin, wymin, wxmax - wxmin, wymax - wymin);
-
 		setAffineTransforms();
 	}
 
 	/**
-	 * Paint the canvas
+	 * Returns the visible region in <em>data</em> (linear) coordinates.
 	 *
-	 * @param g the graphics context
-	 */
-	@Override
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
-
-		Rectangle b = getBounds();
-
-		g.setColor(getBackground());
-		g.fillRect(0, 0, b.width, b.height);
-
-		// super.paintComponent(g);
-		setAffineTransforms();
-
-		// draw the data
-		_dataDrawer.draw((Graphics2D)g, _plotData);
-
-		// frame the active area
-		g.setColor(Color.black);
-		g.drawRect(_activeBounds.x, _activeBounds.y, _activeBounds.width, _activeBounds.height);
-
-		// draw the ticks and legend
-		_plotTicks.draw((Graphics2D)g);
-
-		if (_parameters.isLegendDrawn()) {
-			_legend.draw((Graphics2D)g);
-		}
-
-		if (_parameters.extraDrawing()) {
-			_extra.draw((Graphics2D)g);
-		}
-
-		firePropertyChange(DONEDRAWINGPROP, drawCount, ++drawCount);
-
-	}
-
-	/**
-	 * Data is being added, possibly very quickly, so lets schedule a redraw
-	 *
-	 * @param rescale if <code>true</code> the world system will also be rescaled
-	 */
-	public void needsRedraw(boolean rescale) {
-		_needsRedraw = true;
-		_needsRescale = _needsRescale || rescale;
-	}
-
-	/**
-	 * Get the active plot area
-	 *
-	 * @return the active plot area
-	 */
-	public Rectangle getActiveBounds() {
-		return _activeBounds;
-	}
-
-	// set the active bounds from the component bounds and the margins
-	private void setActiveBounds() {
-		Rectangle bounds = getBounds();
-		if (bounds == null) {
-			_activeBounds = null;
-		} else {
-			int left = 0;
-			int top = 0;
-			int right = left + bounds.width;
-			int bottom = top + bounds.height;
-
-			int bottomMargin = 25;
-			int leftMargin = 25;
-
-			if (_parameters.getAxesFont() != null) {
-				FontMetrics fm = getFontMetrics(_parameters.getAxesFont());
-				bottomMargin = 6 + fm.getHeight();
-				leftMargin = 6 + fm.getHeight();
-			}
-
-			left += leftMargin;
-			// default values for margins
-			int _topMargin = 10;
-			top += _topMargin;
-			int _rightMargin = 10;
-			right -= _rightMargin;
-			bottom -= bottomMargin;
-
-			if (_activeBounds == null) {
-				_activeBounds = new Rectangle();
-			}
-			_activeBounds.setBounds(left, top, right - left, bottom - top);
-		}
-
-	}
-
-	// check if x axis is reversed, so xmin on right insteat of left
-	private boolean reverseX() {
-		return _parameters.isReverseXaxis();
-	}
-
-	// check if y axis is reversed, so ymin on top instead of bottom
-	private boolean reverseY() {
-		return _parameters.isReverseYaxis();
-	}
-
-	private static double log10(double v) {
-		return Math.log(v) / Math.log(10.0);
-	}
-
-	public boolean isXLogActive() {
-		return _xLogActive;
-	}
-
-	public boolean isYLogActive() {
-		return _yLogActive;
-	}
-
-
-	/**
-	 * Get the visible bounds in *data* space (not log space). Used by tick
-	 * generation and any UI that wants real values.
+	 * @return data-space rectangle, or {@code null} if the world system is
+	 *         uninitialised
 	 */
 	public Rectangle2D.Double getDataWorld() {
 		if (_worldSystem == null) {
 			return null;
 		}
+
 		double xmin = xRawWorldToData(_worldSystem.getMinX());
 		double xmax = xRawWorldToData(_worldSystem.getMaxX());
 		double ymin = yRawWorldToData(_worldSystem.getMinY());
 		double ymax = yRawWorldToData(_worldSystem.getMaxY());
 
-		double x0 = Math.min(xmin, xmax);
-		double y0 = Math.min(ymin, ymax);
-		double w = Math.abs(xmax - xmin);
-		double h = Math.abs(ymax - ymin);
+		return new Rectangle2D.Double(
+				Math.min(xmin, xmax), Math.min(ymin, ymax),
+				Math.abs(xmax - xmin), Math.abs(ymax - ymin));
+	}
 
-		return new Rectangle2D.Double(x0, y0, w, h);
+	// -----------------------------------------------------------------------
+	// Painting
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Paints the canvas: background, data, frame, ticks, legend, extra text.
+	 * Fires {@link #DONEDRAWINGPROP} when complete.
+	 *
+	 * @param g graphics context
+	 */
+	@Override
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		
+		// Skip drawing when the component has no size or active bounds (e.g. before
+		// layout). This prevents drawing glitches during resizing and when the
+		// canvas is first shown.
+		if (_activeBounds == null) {
+			return;
+		}
+
+		Rectangle b = getBounds();
+		g.setColor(getBackground());
+		g.fillRect(0, 0, b.width, b.height);
+
+		setAffineTransforms();
+
+		_dataDrawer.draw((Graphics2D) g, _plotData);
+
+		g.setColor(Color.black);
+		g.drawRect(_activeBounds.x, _activeBounds.y,
+		           _activeBounds.width, _activeBounds.height);
+
+		_plotTicks.draw((Graphics2D) g);
+
+		if (_parameters.isLegendDrawn()) {
+			_legend.draw((Graphics2D) g);
+		}
+		if (_parameters.extraDrawing()) {
+			_extra.draw((Graphics2D) g);
+		}
+
+		firePropertyChange(DONEDRAWINGPROP, drawCount, ++drawCount);
+	}
+
+	// -----------------------------------------------------------------------
+	// Zoom and scale
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Zooms to a rubber-band rectangle specified in screen (pixel) coordinates.
+	 * Rectangles smaller than 15×15 pixels are ignored to prevent accidental
+	 * micro-zooms.
+	 *
+	 * @param rbrect rubber-band rectangle in screen coordinates
+	 */
+	public void zoomToRect(Rectangle rbrect) {
+		if ((rbrect.width < 15) || (rbrect.height < 15)) {
+			return;
+		}
+		screenToRawWorld(rbrect, _worldSystem);
+		setAffineTransforms();
+		repaint();
 	}
 
 	/**
-	 * Find min/max strictly positive values on an axis across all curves.
+	 * Scales the visible area by {@code amount} around its centre.
+	 * Values greater than 1 zoom out; values less than 1 zoom in.
 	 *
-	 * @param xAxis true for x, false for y
-	 * @return {minPos, maxPos} or null if no positive finite values exist
+	 * @param amount scale factor ({@code > 0})
+	 */
+	public void scale(double amount) {
+		double xc = _worldSystem.getCenterX();
+		double yc = _worldSystem.getCenterY();
+		double w  = _worldSystem.width  * amount;
+		double h  = _worldSystem.height * amount;
+		_worldSystem.setFrame(xc - w / 2, yc - h / 2, w, h);
+		repaint();
+	}
+
+	// -----------------------------------------------------------------------
+	// Plot-change listener management
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Registers a {@link PlotChangeListener} for lifecycle events.
+	 * Duplicate registrations are silently de-duplicated.
+	 *
+	 * @param listener the listener to add (non-null)
+	 */
+	public void addPlotChangeListener(PlotChangeListener listener) {
+		if (_listenerList == null) {
+			_listenerList = new EventListenerList();
+		}
+		_listenerList.remove(PlotChangeListener.class, listener);
+		_listenerList.add(PlotChangeListener.class, listener);
+	}
+
+	/**
+	 * Removes a previously registered {@link PlotChangeListener}.
+	 *
+	 * @param listener the listener to remove (ignored if {@code null} or not
+	 *                 registered)
+	 */
+	public void removePlotChangeListener(PlotChangeListener listener) {
+		if (listener == null || _listenerList == null) {
+			return;
+		}
+		_listenerList.remove(PlotChangeListener.class, listener);
+	}
+
+	/**
+	 * Triggers a property-change event on behalf of another object (e.g. a
+	 * sub-component that cannot fire its own property changes).
+	 *
+	 * @param propName property name
+	 * @param oldValue old value
+	 * @param newValue new value
+	 */
+	public void remoteFirePropertyChange(String propName,
+	                                     Object oldValue, Object newValue) {
+		firePropertyChange(propName, oldValue, newValue);
+	}
+
+	// -----------------------------------------------------------------------
+	// DataChangeListener
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Called by the data model when curve data changes. Schedules a rescaled
+	 * redraw.
+	 *
+	 * @param plotData the plot data that changed
+	 * @param curve    the specific curve that changed
+	 * @param type     the type of change
+	 */
+	@Override
+	public void dataSetChanged(PlotData plotData, ACurve curve, CurveChangeType type) {
+		setWorldSystem();
+		needsRedraw(true);
+	}
+
+	/*
+	 * ==========================================================================
+	 * Coordinate-conversion API
+	 * ==========================================================================
+	 *
+	 * Three coordinate spaces:
+	 *
+	 * 1) Screen (local) — Swing pixel coords, (0,0) = top-left.
+	 * 2) Raw world      — stored in _worldSystem; log₁₀(data) when log active.
+	 * 3) Data           — real values in curves, always linear.
+	 *
+	 * Naming rule:
+	 *   *RawWorld* ↔ raw-world space (log₁₀ when active)
+	 *   *Data*     ↔ data space (always linear)
+	 *
+	 * Zoom: use screenToRawWorld → assign into _worldSystem.
+	 * Readout: use screenToData → display real values.
+	 * Drawing: use dataToScreen → handles log conversion internally.
+	 * ==========================================================================
+	 */
+
+	/**
+	 * Converts a screen (pixel) point to raw-world coordinates.
+	 * <p>
+	 * Raw world is the coordinate system of {@link #_worldSystem}. When log axes
+	 * are active, raw world is in log₁₀(data) space. Use this for rubber-band
+	 * zoom operations.
+	 * </p>
+	 *
+	 * @param screenPoint screen point in component coordinates (non-null)
+	 * @param rawPoint    output point filled with raw-world coordinates (non-null)
+	 * @throws IllegalArgumentException if either argument is {@code null}
+	 */
+	public void screenToRawWorld(Point screenPoint, Point2D.Double rawPoint) {
+		if (rawPoint == null) {
+			throw new IllegalArgumentException("rawPoint must not be null");
+		}
+		if (screenPoint == null) {
+			throw new IllegalArgumentException("screenPoint must not be null");
+		}
+		if (_screenToRawWorld == null) {
+			return;
+		}
+		_screenToRawWorld.transform(screenPoint, rawPoint);
+	}
+
+	/**
+	 * Converts a screen (pixel) rectangle to a raw-world rectangle.
+	 * <p>
+	 * Use this for rubber-band zoom: the result can be assigned directly into
+	 * {@link #_worldSystem}.
+	 * </p>
+	 *
+	 * @param screenRect screen rectangle in component coordinates
+	 * @param rawRect    output rectangle in raw-world coordinates (non-null)
+	 * @throws IllegalArgumentException if {@code rawRect} is {@code null}
+	 */
+	public void screenToRawWorld(Rectangle screenRect, Rectangle2D.Double rawRect) {
+		if (rawRect == null) {
+			throw new IllegalArgumentException("rawRect must not be null");
+		}
+		if (_screenToRawWorld == null || screenRect == null) {
+			return;
+		}
+
+		Point p0 = new Point(screenRect.x, screenRect.y);
+		Point p1 = new Point(screenRect.x + screenRect.width,
+		                     screenRect.y + screenRect.height);
+		Point2D.Double w0 = new Point2D.Double();
+		Point2D.Double w1 = new Point2D.Double();
+		_screenToRawWorld.transform(p0, w0);
+		_screenToRawWorld.transform(p1, w1);
+
+		rawRect.setFrame(
+				Math.min(w0.x, w1.x), Math.min(w0.y, w1.y),
+				Math.abs(w1.x - w0.x), Math.abs(w1.y - w0.y));
+	}
+
+	/**
+	 * Converts a screen (pixel) point to data coordinates (always linear units).
+	 * <p>
+	 * Use this for mouse readouts and hit-tests in data space.
+	 * </p>
+	 *
+	 * @param screenPoint screen point in component coordinates
+	 * @param dataPoint   output point in data coordinates (non-null)
+	 * @throws IllegalArgumentException if {@code dataPoint} is {@code null}
+	 */
+	public void screenToData(Point screenPoint, Point2D.Double dataPoint) {
+		if (dataPoint == null) {
+			throw new IllegalArgumentException("dataPoint must not be null");
+		}
+		if (_screenToRawWorld == null || screenPoint == null) {
+			return;
+		}
+
+		_screenToRawWorld.transform(screenPoint, dataPoint);
+		dataPoint.x = xRawWorldToData(dataPoint.x);
+		dataPoint.y = yRawWorldToData(dataPoint.y);
+	}
+
+	/**
+	 * Converts a screen rectangle to data-space bounds (always linear units).
+	 * <p>
+	 * Do <em>not</em> use this to update {@link #_worldSystem}; for zoom you
+	 * want raw-world coordinates.
+	 * </p>
+	 *
+	 * @param screenRect screen rectangle in component coordinates
+	 * @param dataRect   output rectangle in data coordinates (non-null)
+	 * @throws IllegalArgumentException if {@code dataRect} is {@code null}
+	 */
+	public void screenToData(Rectangle screenRect, Rectangle2D.Double dataRect) {
+		if (dataRect == null) {
+			throw new IllegalArgumentException("dataRect must not be null");
+		}
+		if (_screenToRawWorld == null || screenRect == null) {
+			return;
+		}
+
+		Rectangle2D.Double wr = new Rectangle2D.Double();
+		screenToRawWorld(screenRect, wr);
+
+		double xmin = xRawWorldToData(wr.getMinX());
+		double xmax = xRawWorldToData(wr.getMaxX());
+		double ymin = yRawWorldToData(wr.getMinY());
+		double ymax = yRawWorldToData(wr.getMaxY());
+
+		dataRect.x      = Math.min(xmin, xmax);
+		dataRect.y      = Math.min(ymin, ymax);
+		dataRect.width  = Math.abs(xmax - xmin);
+		dataRect.height = Math.abs(ymax - ymin);
+	}
+
+	/**
+	 * Converts a data point (linear units) to screen (pixel) coordinates.
+	 * <p>
+	 * Handles log-axis conversion internally (data → log₁₀ → raw-world →
+	 * screen).
+	 * </p>
+	 *
+	 * @param screenPt  output screen point (non-null)
+	 * @param dataPoint input data point in linear units (non-null)
+	 * @return {@code true} on success; {@code false} if the point is invalid for
+	 *         the current axes (e.g. non-positive on a log axis) or transforms
+	 *         are unavailable
+	 */
+	public boolean dataToScreen(Point screenPt, Point2D.Double dataPoint) {
+		if (_rawWorldToScreen == null || screenPt == null || dataPoint == null) {
+			return false;
+		}
+		if (!Double.isFinite(dataPoint.x) || !Double.isFinite(dataPoint.y)) {
+			return false;
+		}
+		if ((_xLogActive && dataPoint.x <= 0.0) || (_yLogActive && dataPoint.y <= 0.0)) {
+			return false;
+		}
+
+		Point2D.Double wsrc = new Point2D.Double(
+				xDataToRawWorld(dataPoint.x), yDataToRawWorld(dataPoint.y));
+		Point2D.Double dst = new Point2D.Double();
+		_rawWorldToScreen.transform(wsrc, dst);
+
+		screenPt.x = (int) Math.round(dst.x);
+		screenPt.y = (int) Math.round(dst.y);
+		return true;
+	}
+
+	/**
+	 * Converts a data rectangle (linear units) to a screen rectangle.
+	 *
+	 * @param screenRect output screen rectangle (non-null)
+	 * @param dataRect   input data rectangle in linear units (non-null)
+	 * @return {@code true} on success; {@code false} if any corner is invalid for
+	 *         the current axes or transforms are unavailable
+	 */
+	public boolean dataToScreen(Rectangle screenRect, Rectangle2D.Double dataRect) {
+		if (screenRect == null || dataRect == null) {
+			return false;
+		}
+
+		Point p0 = new Point(), p1 = new Point();
+		if (!dataToScreen(p0, new Point2D.Double(dataRect.getMinX(), dataRect.getMinY()))
+				|| !dataToScreen(p1, new Point2D.Double(dataRect.getMaxX(), dataRect.getMaxY()))) {
+			return false;
+		}
+
+		int x = Math.min(p0.x, p1.x);
+		int y = Math.min(p0.y, p1.y);
+		int w = Math.max(Math.abs(p1.x - p0.x), 1);
+		int h = Math.max(Math.abs(p1.y - p0.y), 1);
+		screenRect.setBounds(x, y, w, h);
+		return true;
+	}
+
+	/**
+	 * Converts a data rectangle specified by two corners to a screen rectangle.
+	 *
+	 * @param dataX0 data-space x₀ (linear)
+	 * @param dataY0 data-space y₀ (linear)
+	 * @param dataX1 data-space x₁ (linear)
+	 * @param dataY1 data-space y₁ (linear)
+	 * @return screen rectangle, or {@code null} if any corner is invalid
+	 */
+	public Rectangle dataToScreen(double dataX0, double dataY0,
+	                              double dataX1, double dataY1) {
+		Point p0 = new Point(), p1 = new Point();
+		if (!dataToScreen(p0, new Point2D.Double(dataX0, dataY0))
+				|| !dataToScreen(p1, new Point2D.Double(dataX1, dataY1))) {
+			return null;
+		}
+		int x = Math.min(p0.x, p1.x);
+		int y = Math.min(p0.y, p1.y);
+		return new Rectangle(x, y,
+				Math.max(Math.abs(p1.x - p0.x), 1),
+				Math.max(Math.abs(p1.y - p0.y), 1));
+	}
+
+	/**
+	 * Converts a single data point to a screen point.
+	 *
+	 * @param dataX data-space x (linear)
+	 * @param dataY data-space y (linear)
+	 * @return screen point, or {@code null} if the point is invalid for the
+	 *         current axes
+	 */
+	public Point dataToScreen(double dataX, double dataY) {
+		Point p = new Point();
+		return dataToScreen(p, new Point2D.Double(dataX, dataY)) ? p : null;
+	}
+
+	// -----------------------------------------------------------------------
+	// Private coordinate helpers
+	// -----------------------------------------------------------------------
+
+	/** Data → raw-world for x (log₁₀ when x log is active). */
+	private double xDataToRawWorld(double xData) {
+		return _xLogActive ? log10(xData) : xData;
+	}
+
+	/** Data → raw-world for y (log₁₀ when y log is active). */
+	private double yDataToRawWorld(double yData) {
+		return _yLogActive ? log10(yData) : yData;
+	}
+
+	/** Raw-world → data for x (10^raw when x log is active). */
+	private double xRawWorldToData(double xRaw) {
+		return _xLogActive ? Math.pow(10.0, xRaw) : xRaw;
+	}
+
+	/** Raw-world → data for y (10^raw when y log is active). */
+	private double yRawWorldToData(double yRaw) {
+		return _yLogActive ? Math.pow(10.0, yRaw) : yRaw;
+	}
+
+	/** log₁₀(v). */
+	private static double log10(double v) {
+		return Math.log(v) / Math.log(10.0);
+	}
+
+	// -----------------------------------------------------------------------
+	// Private / internal helpers
+	// -----------------------------------------------------------------------
+
+	/** Timer callback: redraws (and optionally rescales) if flagged. */
+	private void onTimer() {
+		if (_needsRedraw) {
+			if (_needsRescale) {
+				setWorldSystem();
+			}
+			repaint();
+			_needsRedraw  = false;
+			_needsRescale = false;
+		}
+	}
+
+	/** Notifies all registered {@link PlotChangeListener}s. */
+	private void notifyListeners(PlotChangeType event) {
+		if (_listenerList == null) {
+			return;
+		}
+
+		Object[] listeners = _listenerList.getListenerList();
+		for (int i = 0; i < listeners.length; i += 2) {
+			if (listeners[i] == PlotChangeListener.class) {
+				((PlotChangeListener) listeners[i + 1]).plotChanged(event);
+			}
+		}
+	}
+
+	/**
+	 * Computes the bounding box of the active (data) plot area based on the
+	 * current component size and margin parameters.
+	 */
+	private void setActiveBounds() {
+		Rectangle bounds = getBounds();
+		if (bounds == null) {
+			_activeBounds = null;
+			return;
+		}
+
+		int left   = 0, top    = 0;
+		int right  = bounds.width;
+		int bottom = bounds.height;
+
+		int bottomMargin = 25;
+		int leftMargin   = 25;
+
+		if (_parameters.getAxesFont() != null) {
+			FontMetrics fm = getFontMetrics(_parameters.getAxesFont());
+			bottomMargin   = 6 + fm.getHeight();
+			leftMargin     = 6 + fm.getHeight();
+		}
+
+		left  += leftMargin;
+		top   += 10;  // _topMargin
+		right -= 10;  // _rightMargin
+		bottom -= bottomMargin;
+
+		if (_activeBounds == null) {
+			_activeBounds = new Rectangle();
+		}
+		_activeBounds.setBounds(left, top, right - left, bottom - top);
+	}
+
+	/** Rebuilds the affine transforms from the current world system and active bounds. */
+	protected void setAffineTransforms() {
+		Rectangle bounds = getBounds();
+		if (bounds == null || bounds.width < 1 || bounds.height < 1) {
+			_screenToRawWorld = null;
+			_rawWorldToScreen = null;
+			_activeBounds     = null;
+			return;
+		}
+
+		setActiveBounds();
+		if (_worldSystem == null || _activeBounds == null
+				|| _activeBounds.width < 1 || _activeBounds.height < 1) {
+			return;
+		}
+
+		final boolean rx    = _parameters.isReverseXaxis();
+		final boolean ry    = _parameters.isReverseYaxis();
+		final double  sxMag = _worldSystem.width  / _activeBounds.width;
+		final double  syMag = _worldSystem.height / _activeBounds.height;
+		final double  tx    = rx ? _worldSystem.getMaxX() : _worldSystem.getMinX();
+		final double  ty    = ry ? _worldSystem.getMinY() : _worldSystem.getMaxY();
+		final double  sx    = rx ? -sxMag :  sxMag;
+		final double  sy    = ry ?  syMag : -syMag;
+
+		_screenToRawWorld = AffineTransform.getTranslateInstance(tx, ty);
+		_screenToRawWorld.concatenate(AffineTransform.getScaleInstance(sx, sy));
+		_screenToRawWorld.concatenate(
+				AffineTransform.getTranslateInstance(-_activeBounds.x, -_activeBounds.y));
+
+		try {
+			_rawWorldToScreen = _screenToRawWorld.createInverse();
+		} catch (NoninvertibleTransformException e) {
+			e.printStackTrace();
+			_rawWorldToScreen = null;
+		}
+	}
+
+	/**
+	 * Finds the minimum and maximum strictly-positive values on an axis across
+	 * all curves. Used when computing log-axis bounds.
+	 *
+	 * @param xAxis {@code true} for the x-axis; {@code false} for y
+	 * @return {@code {minPos, maxPos}}, or {@code null} if no positive finite
+	 *         values exist
 	 */
 	private double[] positiveDataMinMax(boolean xAxis) {
 		if (_plotData == null) {
@@ -598,7 +1145,7 @@ public class PlotCanvas extends JComponent implements MouseWheelListener, MouseL
 		double maxPos = Double.NEGATIVE_INFINITY;
 
 		for (ACurve c : _plotData.getCurves()) {
-			Snapshot s = c.snapshot();
+			Snapshot s   = c.snapshot();
 			double[] arr = xAxis ? s.x : s.y;
 			if (arr == null) {
 				continue;
@@ -616,824 +1163,6 @@ public class PlotCanvas extends JComponent implements MouseWheelListener, MouseL
 			}
 		}
 
-		if (minPos == Double.POSITIVE_INFINITY || maxPos == Double.NEGATIVE_INFINITY) {
-			return null;
-		}
-		return new double[] { minPos, maxPos };
+		return (minPos == Double.POSITIVE_INFINITY) ? null : new double[]{minPos, maxPos};
 	}
-
-	// Get the transforms for world to local and vice versa
-	protected void setAffineTransforms() {
-		Rectangle bounds = getBounds();
-
-		if ((bounds == null) || (bounds.width < 1) || (bounds.height < 1)) {
-			_screenToRawWorld = null;
-			_rawWorldToScreen = null;
-			_activeBounds = null;
-			return;
-		}
-
-		setActiveBounds();
-
-		if (_worldSystem == null || _activeBounds == null || _activeBounds.width < 1 || _activeBounds.height < 1) {
-			return;
-		}
-
-		final boolean rx = reverseX();
-		final boolean ry = reverseY();
-
-		// Magnitudes
-		final double sxMag = _worldSystem.width / _activeBounds.width;
-		final double syMag = _worldSystem.height / _activeBounds.height;
-
-		// Choose which world edge maps to the local top-left of the active plot area
-		final double tx = rx ? _worldSystem.getMaxX() : _worldSystem.getMinX();
-		final double ty = ry ? _worldSystem.getMinY() : _worldSystem.getMaxY();
-
-		// Sign controls axis direction on screen
-		final double sx = rx ? -sxMag : sxMag;
-		final double sy = ry ? syMag : -syMag;
-
-		_screenToRawWorld = AffineTransform.getTranslateInstance(tx, ty);
-		_screenToRawWorld.concatenate(AffineTransform.getScaleInstance(sx, sy));
-		_screenToRawWorld.concatenate(AffineTransform.getTranslateInstance(-_activeBounds.x, -_activeBounds.y));
-
-		try {
-			_rawWorldToScreen = _screenToRawWorld.createInverse();
-		} catch (NoninvertibleTransformException e) {
-			e.printStackTrace();
-			_rawWorldToScreen = null;
-		}
-	}
-
-	/**
-	 * The mouse has been dragged over the plot canvas
-	 *
-	 * @param e the mouseEvent
-	 */
-	@Override
-	public void mouseDragged(MouseEvent e) {
-		if (_legend.isDraggingPrimed()) {
-			_legend.setDragging(true);
-		}
-
-		if (_legend.isDragging()) {
-			int dx = e.getX() - _legend.getCurrentPoint().x;
-			int dy = e.getY() - _legend.getCurrentPoint().y;
-			_legend.x += dx;
-			_legend.y += dy;
-			_legend.setCurrentPoint(e.getPoint());
-			repaint();
-		}
-
-		if (_extra.isDraggingPrimed()) {
-			_extra.setDragging(true);
-		}
-
-		if (_extra.isDragging()) {
-			int dx = e.getX() - _extra.getCurrentPoint().x;
-			int dy = e.getY() - _extra.getCurrentPoint().y;
-			_extra.x += dx;
-			_extra.y += dy;
-			_extra.setCurrentPoint(e.getPoint());
-			repaint();
-		}
-	}
-
-	/**
-	 * The mouse has moved over the plot canvas
-	 *
-	 * @param e the mouseEvent
-	 */
-	@Override
-	public void mouseMoved(MouseEvent e) {
-
-		if (_plotData == null) {
-			return;
-		}
-
-		PlotPanel plotPanel = plotPanel();
-		if (plotPanel == null) {
-			return;
-		}
-
-		FeedbackPane feedback = plotPanel().getFeedbackPane();
-
-		if ((_activeBounds == null) || (_worldSystem == null)) {
-			return;
-		}
-
-		feedback.clear();
-
-		Point pp = e.getPoint();
-		Point2D.Double dataPoint = new Point2D.Double();
-		screenToData(pp, dataPoint);
-
-		//as always, Histo2D's are handled separately
-		if (_plotData.isHisto2DData()) {
-			Histo2DData h2d = _plotData.getHisto2DData();
-			if (h2d != null) {
-				histo2DFeedback(h2d, dataPoint, feedback);
-				return;
-			}
-			return;
-		}
-
-
-
-		feedback.append(String.format("(x, y) = (%7.2g, %-7.2g)", dataPoint.x, dataPoint.y));
-
-		if (_plotData.isXYData()) {
-			if (isBarPlot()) {
-				barPlotFeedback(dataPoint, feedback, pp);
-				return;
-			}
-			List<ACurve> curves = _plotData.getVisibleCurves();
-
-			for (ACurve curve : curves) {
-				String cStr = String.format("%s: %d points ", curve.name(), curve.length());
-
-				String fitSummary = curve.getFitSummary();
-				if (fitSummary != null) {
-					cStr += " " + fitSummary;
-				}
-				feedback.append(cStr);
-
-			}
-		}
-
-		if (_plotData.isHistoData()) {
-			List<ACurve> curves = _plotData.getVisibleCurves();
-
-			for (ACurve curve : curves) {
-				HistoCurve hc = (HistoCurve) curve;
-				HistoData hd = hc.getHistoData();
-				String cStr = HistoData.statusString(this, hd, pp, dataPoint);
-				String fitSummary = curve.getFitSummary();
-				if (fitSummary != null) {
-					cStr += " " + fitSummary;
-				}
-				feedback.append(cStr);
-			}
-		}
-	}
-
-	// feedback for bar plots
-	private void barPlotFeedback(Point2D.Double dataPoint, FeedbackPane feedback, Point pp) {
-		List<ACurve> curves = _plotData.getVisibleCurves();
-		double mouseX = dataPoint.x;
-		double closestBarX = Double.NaN;
-		Curve closestCurve = null;
-		double minDist = Double.POSITIVE_INFINITY;
-
-		for (ACurve curve : curves) {
-			Snapshot s = curve.snapshot();
-			double[] xArr = s.x;
-			double[] yArr = s.y;
-			if (xArr == null || yArr == null) {
-				continue;
-			}
-			for (double xVal : xArr) {
-				double dist = Math.abs(xVal - mouseX);
-				if (dist < minDist) {
-					minDist = dist;
-					closestBarX = xVal;
-					closestCurve = (Curve) curve;
-				}
-			}
-		}
-
-		if (closestCurve != null && !Double.isNaN(closestBarX)) {
-			Snapshot s = closestCurve.snapshot();
-			String name = closestCurve.name();
-			double height = closestCurve.yData().get(1) - closestCurve.yData().get(0);
-			double[] xArr = s.x;
-			for (double element : xArr) {
-				if (element == closestBarX) {
-					feedback.append(String.format("Category %s at x=%.2f has height %.4f", name, closestBarX, height));
-					break;
-				}
-			}
-		}
-	}
-
-	// feedback for Histo2D
-	private void histo2DFeedback(Histo2DData h2d, Point2D.Double dataPoint, FeedbackPane feedback) {
-
-		boolean logZ = _parameters.isLogZ();
-
-
-		int count = (int) h2d.bin(dataPoint.x, dataPoint.y);
-
-		double xbr[] = h2d.xBinRange(dataPoint.x);
-		double ybr[] = h2d.yBinRange(dataPoint.y);
-		if (xbr == null || ybr == null) {
-			feedback.append(String.format("(x, y) = (%.2f, %.2f) out of range", dataPoint.x, dataPoint.y));
-			return;
-		}
-
-		String s = String.format("x ε [%.1f , %.1f),  y ε [%.1f , %.1f) Z = %d", xbr[0], xbr[1], ybr[0], ybr[1], count);
-
-		if (logZ) {
-			double logCount = (count > 0) ? Math.log10(count) : 0.0;
-			s += String.format("  (%sZ = %.2f)", UnicodeUtils.LOG10, logCount);
-		}
-		feedback.append(s);
-
-		double maxCount = h2d.maxBin();
-		if (maxCount > 0) {
-			double zOverzMax = count / h2d.maxBin();
-			s = String.format("Z / Zmax: %.1f%%", 100.0 * zOverzMax);
-			feedback.append(s);
-		}
-
-		double percentile = h2d.percentile(dataPoint.x, dataPoint.y);
-		double mean3x3 = h2d.localMean3x3(dataPoint.x, dataPoint.y);
-
-		feedback.append(String.format("Percentile: %dth    Local avg (3x3): %d", Math.round(percentile), (int)mean3x3));
-
-
-	}
-
-	/**
-	 * Add a plot change listener
-	 *
-	 * @param listener the listener to add
-	 */
-	public void addPlotChangeListener(PlotChangeListener listener) {
-
-		if (_listenerList == null) {
-			_listenerList = new EventListenerList();
-		}
-
-		// avoid adding duplicates
-		_listenerList.remove(PlotChangeListener.class, listener);
-		_listenerList.add(PlotChangeListener.class, listener);
-	}
-
-	/**
-	 * Remove a PlotChangeListener.
-	 *
-	 * @param listener the PlotChangeListener to remove.
-	 */
-
-	public void removePlotChangeListener(PlotChangeListener listener) {
-
-		if ((listener == null) || (_listenerList == null)) {
-			return;
-		}
-
-		_listenerList.remove(PlotChangeListener.class, listener);
-	}
-
-	// notify listeners of message
-	private void notifyListeners(PlotChangeType event) {
-
-		if (_listenerList == null) {
-			return;
-		}
-
-		// Guaranteed to return a non-null array
-		Object[] listeners = _listenerList.getListenerList();
-
-		// This weird loop is the bullet proof way of notifying all listeners.
-		// for (int i = listeners.length - 2; i >= 0; i -= 2) {
-		// order is flipped so it goes in order as added
-		for (int i = 0; i < listeners.length; i += 2) {
-			if (listeners[i] == PlotChangeListener.class) {
-				PlotChangeListener listener = (PlotChangeListener) listeners[i + 1];
-				listener.plotChanged(event);
-			}
-		}
-	}
-
-	/**
-	 * The plot is being shutdown
-	 */
-	public void shutDown() {
-		if (_timer != null) {
-			_timer.stop();
-		}
-		notifyListeners(PlotChangeType.SHUTDOWN);
-	}
-
-	/**
-	 * The plot is being stood up
-	 */
-	public void standUp() {
-		if (_timer != null) {
-			_timer.start();
-		}
-		notifyListeners(PlotChangeType.STOODUP);
-	}
-
-	// check if pointer tool is active
-	private boolean isPointer() {
-		return (_toolBar == null) || _toolBar.isPointerActive();
-	}
-
-	public void setToolBar(BaseToolBar toolBar) {
-		_toolBar = toolBar;
-	}
-
-	/**
-	 * The mouse has been pressed on plot canvas
-	 *
-	 * @param e the mouseEvent
-	 */
-	@Override
-	public void mousePressed(MouseEvent e) {
-
-		if (isPointer() && _parameters.isLegendDrawn() && _legend.contains(e.getPoint())) {
-			_legend.setDraggingPrimed(true);
-			_legend.setCurrentPoint(e.getPoint());
-		} else if (isPointer() && _parameters.extraDrawing() && _extra.contains(e.getPoint())) {
-			_extra.setDraggingPrimed(true);
-			_extra.setCurrentPoint(e.getPoint());
-		}
-	}
-
-	/**
-	 * The mouse has been released on plot canvas. A release comes before the click
-	 *
-	 * @param e the mouseEvent
-	 */
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		_legend.setDragging(false);
-		_legend.setDraggingPrimed(false);
-		_legend.setCurrentPoint(null);
-		_extra.setDragging(false);
-		_extra.setDraggingPrimed(false);
-		_extra.setCurrentPoint(null);
-	}
-
-	/**
-	 * The mouse has entered the area of the plot canvas
-	 *
-	 * @param e the mouseEvent
-	 */
-	@Override
-	public void mouseEntered(MouseEvent e) {
-
-	}
-
-	/**
-	 * The mouse has exited the area of the plot canvas
-	 *
-	 * @param e the mouseEvent
-	 */
-	@Override
-	public void mouseExited(MouseEvent e) {
-	}
-
-	/**
-	 * Zoom to a given rectangle in local coordinates
-	 *
-	 * @param rbrect the rectangle in local coordinates
-	 */
-	public void zoomToRect(Rectangle rbrect) {
-		if ((rbrect.width < 15) || (rbrect.height < 15)) {
-			return;
-		}
-
-		screenToRawWorld(rbrect, _worldSystem);
-		setAffineTransforms();
-		repaint();
-	}
-
-	/**
-	 * Scale the canvas by a given amount
-	 *
-	 * @param amount the factor to scale by
-	 */
-	public void scale(double amount) {
-		double xc = _worldSystem.getCenterX();
-		double w = _worldSystem.width * amount;
-		double x = xc - w / 2;
-
-		double h;
-		double y;
-
-		h = _worldSystem.height * amount;
-		double yc = _worldSystem.getCenterY();
-		y = yc - h / 2;
-		_worldSystem.setFrame(x, y, w, h);
-		repaint();
-	}
-
-	/**
-	 * Show the plot preferences dialog
-	 */
-	public void showPreferencesEditor() {
-		PlotPreferencesDialog prefEditor = new PlotPreferencesDialog(this);
-		prefEditor.setVisible(true);
-		prefEditor.toFront();
-	}
-
-	/**
-	 * Used so another object can tell the plot canvas to fire a property change
-	 * event
-	 *
-	 * @param propName the property name
-	 * @param oldValue the old value
-	 * @param newValue the new value
-	 */
-	public void remoteFirePropertyChange(String propName, Object oldValue, Object newValue) {
-		firePropertyChange(propName, oldValue, newValue);
-	}
-
-	/**
-	 * Get the canavas's plot ticks
-	 *
-	 * @return the plot ticks
-	 */
-	public PlotTicks getPlotTicks() {
-		return _plotTicks;
-	}
-
-	public PlotPanel plotPanel() {
-		if ((_parent != null) && (_parent instanceof PlotPanel)) {
-			return (PlotPanel) _parent;
-		}
-		return null;
-	}
-
-	@Override
-	public void dataSetChanged(PlotData plotData, ACurve curve, CurveChangeType type) {
-		setWorldSystem();
-		needsRedraw(true);
-	}
-
-	@Override
-	public void mouseClicked(MouseEvent e) {
-	}
-
-	/*
-	 * ========================= Coordinate systems in PlotCanvas =========================
-	 *
-	 * PlotCanvas uses three coordinate systems:
-	 *
-	 * 1) Local (screen) coordinates
-	 *    - Swing component coordinates: (0,0) is the top-left of the component.
-	 *    - Mouse events and painting happen in this space.
-	 *
-	 * 2) Raw World coordinates (internal world)
-	 *    - This is the coordinate system stored in _worldSystem and used by the affine transforms.
-	 *    - IMPORTANT: when log axes are active, raw world is in log10(data) space.
-	 *      Example: if x-data is 100, raw-world x is log10(100) = 2.
-	 *    - This is the correct space for rubber-band zooming and for storing the visible window.
-	 *
-	 * 3) Data coordinates
-	 *    - These are the "real" data values shown to the user and stored in curves.
-	 *    - Data coordinates are ALWAYS in linear units (even when log axes are active).
-	 *    - Conversion between data and raw-world happens at the boundary:
-	 *        data -> raw world : log10(data)    (only if log active)
-	 *        raw world -> data : pow(10, world) (only if log active)
-	 *
-	 * Naming rule used below:
-	 *   - *Raw* methods produce/consume raw-world coordinates (log10-space if active).
-	 *   - *Data* methods produce/consume data coordinates (always linear values).
-	 *
-	 * Usage rules:
-	 *   - For rubber-band zoom: screenToRawWorld(Rectangle, ...) then assign into _worldSystem.
-	 *   - For mouse readout / status text: screenToData(Point, ...) so you display real values.
-	 *   - For drawing curves: dataToScreen(screenPt, dataPoint) where the input is data; the method
-	 *     handles the log conversion internally.
-	 * ===================================================================================
-	 */
-
-	// -------- transformation methods ---------
-
-	/**
-	 * Convert a local (screen) point to the internal <b>raw world</b> coordinates.
-	 * <p>
-	 * Raw world is the coordinate system used by {@link #_worldSystem}. When log scaling
-	 * is active, raw world coordinates are in log10(data) space.
-	 * </p>
-	 * <p>
-	 * Use this when you need to manipulate {@link #_worldSystem} directly (e.g. zoom),
-	 * or when you need the internal world-space for debugging.
-	 * </p>
-	 *
-	 * @param screenPoint screen (pixel) point (component coordinates)
-	 * @param rawPoint output point filled with raw world coordinates (log10-space if active)
-	 */
-	public void screenToRawWorld(Point screenPoint, Point2D.Double rawPoint) {
-	    if (rawPoint == null) {
-	        throw new IllegalArgumentException("rawpoint must not be null");
-	    }
-	    if (screenPoint == null) {
-	        throw new IllegalArgumentException("screenPoint must not be null");
-	    }
-	    if (_screenToRawWorld == null) {
-	        return;
-	    }
-	    _screenToRawWorld.transform(screenPoint, rawPoint);
-	}
-
-	/**
-	 * Convert a screen (pixel) rectangle to an internal <b>raw world</b> rectangle.
-	 * <p>
-	 * This is the correct conversion for rubberband zooming because {@link #_worldSystem}
-	 * is stored in raw world coordinates (log10-space when log axes are active).
-	 * </p>
-	 *
-	 * @param screenRect screen (pixel) rectangle (component coordinates)
-	 * @param rawRect output rectangle filled with raw world bounds (log10-space if active)
-	 */
-	public void screenToRawWorld(Rectangle screenRect, Rectangle2D.Double rawRect) {
-	    if (rawRect == null) {
-	        throw new IllegalArgumentException("rawRect must not be null");
-	    }
-	    if (_screenToRawWorld == null || screenRect == null) {
-	        return;
-	    }
-
-	    // Two corners in screen (pixel) space
-	    Point p0 = new Point(screenRect.x, screenRect.y);
-	    Point p1 = new Point(screenRect.x + screenRect.width, screenRect.y + screenRect.height);
-
-	    Point2D.Double w0 = new Point2D.Double();
-	    Point2D.Double w1 = new Point2D.Double();
-
-	    _screenToRawWorld.transform(p0, w0);
-	    _screenToRawWorld.transform(p1, w1);
-
-	    double xmin = Math.min(w0.x, w1.x);
-	    double xmax = Math.max(w0.x, w1.x);
-	    double ymin = Math.min(w0.y, w1.y);
-	    double ymax = Math.max(w0.y, w1.y);
-
-	    rawRect.setFrame(xmin, ymin, xmax - xmin, ymax - ymin);
-	}
-
-	/**
-	 * Convert a screen (pixel) point to <b>data</b> coordinates.
-	 * <p>
-	 * Data coordinates are the real values (always linear units). When log axes are active,
-	 * this method converts from raw-world log10 space back into data space.
-	 * </p>
-	 * <p>
-	 * Use this for mouse readouts, hit tests in data space, and any UI that reports
-	 * "real" x/y values.
-	 * </p>
-	 *
-	 * @param screenPoint  local screen point (component coordinates)
-	 * @param dataPoint output point filled with data coordinates (linear units)
-	 */
-	public void screenToData(Point screenPoint, Point2D.Double dataPoint) {
-	    if (dataPoint == null) {
-	        throw new IllegalArgumentException("dataPoint must not be null");
-	    }
-	    if (_screenToRawWorld == null || screenPoint == null) {
-	        return;
-	    }
-
-	    // dp becomes RAW world (log10-space if active)
-	    _screenToRawWorld.transform(screenPoint, dataPoint);
-
-	    // RAW world -> DATA
-	    dataPoint.x = xRawWorldToData(dataPoint.x);
-	    dataPoint.y = yRawWorldToData(dataPoint.y);
-	}
-
-	/**
-	 * Convert a screen (pixel) rectangle to <b>data</b> coordinates.
-	 * <p>
-	 * This converts the screen rectangle to raw-world first (log10-space if active),
-	 * then converts the bounds back into data space.
-	 * </p>
-	 * <p>
-	 * Use this when you want to interpret a rubberband selection in terms of data values.
-	 * Do <b>not</b> use this to update {@link #_worldSystem}; for zoom you want raw world.
-	 * </p>
-	 *
-	 * @param screenRect screen (pixel) rectangle (component coordinates)
-	 * @param dataRect output rectangle filled with data-space bounds (linear units)
-	 */
-	public void screenToData(Rectangle screenRect, Rectangle2D.Double dataRect) {
-	    if (dataRect == null) {
-	        throw new IllegalArgumentException("dataRect must not be null");
-	    }
-	    if (_screenToRawWorld == null || screenRect == null) {
-	        return;
-	    }
-
-	    Rectangle2D.Double wr = new Rectangle2D.Double();
-	    screenToRawWorld(screenRect, wr); // RAW world (log10-space if active)
-
-	    double xmin = xRawWorldToData(wr.getMinX());
-	    double xmax = xRawWorldToData(wr.getMaxX());
-	    double ymin = yRawWorldToData(wr.getMinY());
-	    double ymax = yRawWorldToData(wr.getMaxY());
-
-	    dataRect.x = Math.min(xmin, xmax);
-	    dataRect.y = Math.min(ymin, ymax);
-	    dataRect.width  = Math.abs(xmax - xmin);
-	    dataRect.height = Math.abs(ymax - ymin);
-	}
-
-	/**
-	 * Convert a <b>data</b> coordinate to screen (pixel) coordinates.
-	 * <p>
-	 * Input is data-space (linear units). If log axes are active, the method converts
-	 * data -> raw-world via log10(data) before applying the affine transform.
-	 * </p>
-	 *
-	 * @param screenPt output local screen point (component coordinates)
-	 * @param dataPoint input data point (linear units)
-	 * @return true if conversion succeeded; false if log axes are active and input
-	 *         contains non-positive values (invalid for log scale) or transforms are unavailable
-	 */
-	public boolean dataToScreen(Point screenPt, Point2D.Double dataPoint) {
-	    if (_rawWorldToScreen == null || screenPt == null || dataPoint == null) {
-	        return false;
-	    }
-
-	    // Reject NaN/Inf early
-	    if (!Double.isFinite(dataPoint.x) || !Double.isFinite(dataPoint.y)) {
-	        return false;
-	    }
-
-	    // Reject invalid data for log axes
-	    if ((_xLogActive && dataPoint.x <= 0.0) || (_yLogActive && dataPoint.y <= 0.0)) {
-	        return false;
-	    }
-
-	    Point2D.Double wsrc = new Point2D.Double(
-	            xDataToRawWorld(dataPoint.x),
-	            yDataToRawWorld(dataPoint.y));
-
-	    // Transform in double space, then round to pixel coords
-	    Point2D.Double dst = new Point2D.Double();
-	    _rawWorldToScreen.transform(wsrc, dst);
-
-	    screenPt.x = (int) Math.round(dst.x);
-	    screenPt.y = (int) Math.round(dst.y);
-
-	    return true;
-	}
-
-
-	/**
-	 * Convert a <b>data</b> rectangle to a screen (pixel) rectangle.
-	 * <p>
-	 * The input rectangle is in data-space (linear units). If log axes are active,
-	 * conversion uses log10 internally.
-	 * </p>
-	 * <p>
-	 * IMPORTANT: This method can fail in log mode if any bound is non-positive. In that case
-	 * the return value is false and {@code r} is left unchanged.
-	 * </p>
-	 *
-	 * @param screenRect  output screen (pixel) rectangle (component coordinates)
-	 * @param dataRect input data rectangle (linear units)
-	 * @return true if conversion succeeded; false if invalid for log scale or transforms missing
-	 */
-	public boolean dataToScreen(Rectangle screenRect, Rectangle2D.Double dataRect) {
-	    if (screenRect == null || dataRect == null) {
-	        return false;
-	    }
-
-	    Point2D.Double d0 = new Point2D.Double(dataRect.getMinX(), dataRect.getMinY());
-	    Point2D.Double d1 = new Point2D.Double(dataRect.getMaxX(), dataRect.getMaxY());
-
-	    Point p0 = new Point();
-	    Point p1 = new Point();
-
-	    if (!dataToScreen(p0, d0) || !dataToScreen(p1, d1)) {
-	        return false;
-	    }
-
-	    int x = Math.min(p0.x, p1.x);
-	    int y = Math.min(p0.y, p1.y);
-	    int w = Math.abs(p1.x - p0.x);
-	    int h = Math.abs(p1.y - p0.y);
-
-	    w = Math.max(w, 1);
-	    h = Math.max(h, 1);
-
-	    screenRect.setBounds(x, y, w, h);
-	    return true;
-	}
-
-	/**
-	 * Convert a <b>data</b> rectangle to a screen (pixel) rectangle.
-	 * <p>
-	 * The input rectangle is in data-space (linear units). If log axes are active,
-	 * conversion uses log10 internally.
-	 * </p>
-	 * <p>
-	 * IMPORTANT: This method can fail in log mode if any bound is non-positive. In that case
-	 * the return value is null.
-	 * </p>
-	 *
-	 * @param dataX0 data-space x0 (linear units)
-	 * @param dataY0 data-space y0 (linear units)
-	 * @param dataX1 data-space x1 (linear units)
-	 * @param dataY1 data-space y1 (linear units)
-	 * @return screen (pixel) rectangle (component coordinates), or null if invalid for log scale
-	 */
-	public Rectangle dataToScreen(double dataX0, double dataY0, double dataX1, double dataY1) {
-	    Point2D.Double d0 = new Point2D.Double(dataX0, dataY0);
-	    Point2D.Double d1 = new Point2D.Double(dataX1, dataY1);
-
-	    Point p0 = new Point();
-	    Point p1 = new Point();
-
-	    if (!dataToScreen(p0, d0) || !dataToScreen(p1, d1)) {
-	        return null;
-	    }
-
-	    int x = Math.min(p0.x, p1.x);
-	    int y = Math.min(p0.y, p1.y);
-	    int w = Math.abs(p1.x - p0.x);
-	    int h = Math.abs(p1.y - p0.y);
-
-	    w = Math.max(w, 1);
-	    h = Math.max(h, 1);
-
-	    return new Rectangle(x, y, w, h);
-	}
-
-	/**
-	 * Convert a <b>data</b> point to screen (pixel) coordinates.
-	 * <p>
-	 * Input is data-space (linear units). If log axes are active, the method converts
-	 * data -> raw-world via log10(data) before applying the affine transform.
-	 * </p>
-	 *
-	 * @param dataX input data x (linear units)
-	 * @param dataY input data y (linear units)
-	 * @return screen (pixel) point (component coordinates), or null if invalid for log scale
-	 */
-	public Point dataToScreen(double dataX, double dataY) {
-	    Point2D.Double d = new Point2D.Double(dataX, dataY);
-	    Point p = new Point();
-	    if (dataToScreen(p, d)) {
-	        return p;
-	    } else {
-	        return null;
-	    }
-	}
-
-	/**
-	 * Data -> raw-world conversion for X.
-	 * <p>
-	 * When log axes are active, raw world is log10(data).
-	 * </p>
-	 */
-	private double xDataToRawWorld(double xData) {
-	    return _xLogActive ? log10(xData) : xData;
-	}
-
-	/**
-	 * Data -> raw-world conversion for Y.
-	 * <p>
-	 * When log axes are active, raw world is log10(data).
-	 * </p>
-	 */
-	private double yDataToRawWorld(double yData) {
-	    return _yLogActive ? log10(yData) : yData;
-	}
-
-	/**
-	 * Raw-world -> data conversion for X.
-	 * <p>
-	 * When log axes are active, data is 10^(rawWorld).
-	 * </p>
-	 */
-	private double xRawWorldToData(double xRaw) {
-	    return _xLogActive ? Math.pow(10.0, xRaw) : xRaw;
-	}
-
-	/**
-	 * Raw-world -> data conversion for Y.
-	 * <p>
-	 * When log axes are active, data is 10^(rawWorld).
-	 * </p>
-	 */
-	private double yRawWorldToData(double yRaw) {
-	    return _yLogActive ? Math.pow(10.0, yRaw) : yRaw;
-	}
-
-	@Override
-	public void mouseWheelMoved(MouseWheelEvent e) {
-		double r = e.getPreciseWheelRotation();
-
-		double base = 1.12;
-		if (e.isControlDown() || e.isMetaDown()) {
-			base = 1.04;
-		} else if (e.isShiftDown()) {
-			base = 1.20;
-		}
-
-		double factor = Math.pow(base, r);
-		factor = Math.max(0.2, Math.min(5.0, factor)); // defensive clamp
-
-		scale(factor);
-		e.consume();
-	}
-
 }

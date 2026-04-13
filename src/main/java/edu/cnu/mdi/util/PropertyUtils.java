@@ -1,4 +1,4 @@
-package edu.cnu.mdi.properties;
+package edu.cnu.mdi.util;
 
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
@@ -14,7 +14,6 @@ import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.ui.colors.X11Colors;
-import edu.cnu.mdi.util.Environment;
 
 public class PropertyUtils {
 

@@ -25,7 +25,7 @@ public class PlotViewInfo extends AbstractViewInfo {
 
 	@Override
 	public List<String> getUsageBullets() {
-		
+
 		return List.of(
 				"Use the Toolbar to zoom, pan, and reset the view.",
 				"Hover over data points to see details in the feedback pane.",
@@ -34,7 +34,7 @@ public class PlotViewInfo extends AbstractViewInfo {
 				"To open a saved plot file, simply drag-and-drop it into the plot area."
 				);
 	}
-	
+
 	@Override
 	protected boolean isPurposeHtml() {
 	    return true;

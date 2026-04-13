@@ -64,9 +64,9 @@ import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
-import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.transfer.IFileDropHandler;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
+import edu.cnu.mdi.util.PropertyUtils;
 
 /**
  * Base class for all MDI views.

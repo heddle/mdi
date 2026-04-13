@@ -26,9 +26,9 @@ import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.item.ItemModification.ModificationType;
-import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.util.Environment;
+import edu.cnu.mdi.util.PropertyUtils;
 import edu.cnu.mdi.view.BaseView;
 
 /**
@@ -74,7 +74,7 @@ import edu.cnu.mdi.view.BaseView;
  * <p>
  * <strong>Important:</strong> items are locked by default ({@code _locked =
  * true}). Applications must explicitly call {@link #setLocked(boolean) setLocked(false)}
- * (or supply {@link edu.cnu.mdi.properties.PropertyUtils#LOCKED LOCKED} in the
+ * (or supply {@link edu.cnu.mdi.util.PropertyUtils#LOCKED LOCKED} in the
  * constructor key-value pairs) to make an item interactive.
  * </p>
  *

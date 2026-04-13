@@ -32,7 +32,7 @@ public class FitEditorPanel extends JPanel {
 	private static final Font _font2 = Fonts.plainFontDelta(-3);
 
 	// change fit style
-	EnumComboBox _fitSelector;
+	EnumComboBox<CurveDrawingMethod> _fitSelector;
 
 	// polynomial order
 	protected TextFieldSlider _polynomialOrderSelector;
@@ -59,8 +59,14 @@ public class FitEditorPanel extends JPanel {
 	private void addContent() {
 
 		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+		
+		
+		_fitSelector = new EnumComboBox<>(
+			    CurveDrawingMethod.class,
+			    null,
+			    CurveDrawingMethod::getName
+			);
 
-		_fitSelector = CurveDrawingMethod.getComboBox(CurveDrawingMethod.NONE);
 		setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		createPolySelector();

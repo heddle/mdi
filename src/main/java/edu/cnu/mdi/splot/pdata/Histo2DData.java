@@ -472,8 +472,7 @@ public final class Histo2DData {
     public static double maxZ(double[][] bins) {
         double max = 0.0;
         for (double[] bin : bins) {
-            for (int iy = 0; iy < bin.length; iy++) {
-                double v = bin[iy];
+            for (double v : bin) {
                 if (Double.isFinite(v) && v > max) {
                     max = v;
                 }

@@ -7,8 +7,8 @@ import java.util.Properties;
 import javax.swing.JComponent;
 
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
+import edu.cnu.mdi.util.PropertyUtils;
 import edu.cnu.mdi.graphics.rubberband.ARubberband;
-import edu.cnu.mdi.properties.PropertyUtils;
 
 /**
  * Fluent builder for constructing the {@link Properties} used to initialize

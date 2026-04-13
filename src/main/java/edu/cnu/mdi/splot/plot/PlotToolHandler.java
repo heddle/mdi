@@ -109,8 +109,9 @@ public class PlotToolHandler extends DefaultToolHandler {
 		boolean tbVis = tb != null && tb.isVisible();
 
 		try {
-			if (tb != null)
+			if (tb != null) {
 				tb.setVisible(false);
+			}
 
 			plotPanel.revalidate();
 			plotPanel.repaint();
@@ -118,8 +119,9 @@ public class PlotToolHandler extends DefaultToolHandler {
 			PrintUtils.printComponentAsImage(plotPanel);
 
 		} finally {
-			if (tb != null)
+			if (tb != null) {
 				tb.setVisible(tbVis);
+			}
 
 			plotPanel.revalidate();
 			plotPanel.repaint();

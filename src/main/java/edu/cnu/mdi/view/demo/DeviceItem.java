@@ -19,8 +19,8 @@ import edu.cnu.mdi.graphics.connection.ConnectionManager;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.item.PointItem;
-import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.ui.fonts.Fonts;
+import edu.cnu.mdi.util.PropertyUtils;
 
 public class DeviceItem extends PointItem {
 	

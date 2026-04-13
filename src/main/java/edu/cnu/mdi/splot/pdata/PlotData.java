@@ -29,6 +29,16 @@ import javax.swing.event.EventListenerList;
  * updated from a background sampler (e.g. {@link StripChartCurve}), the view
  * should use its existing snapshot/copy strategy when rendering.
  *
+ * <h3>Thread-safety</h3>
+ * {@code PlotData} is <em>not</em> thread-safe. All structural mutations
+ * ({@link #addCurve}, {@link #removeCurve}, {@link #clear}) and all
+ * listener notifications MUST be called on the Swing EDT.
+ *
+ * Background producers should call only the thread-safe methods on the
+ * individual {@link ACurve} subclasses (e.g. {@link Curve#add},
+ * {@link Curve#enqueue}) — never mutate {@code PlotData} directly from
+ * off-EDT threads.
+ *
  * @author heddle
  */
 public class PlotData implements CurveChangeListener {

@@ -10,11 +10,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.swing.SwingUtilities;
 
+import edu.cnu.mdi.splot.fit.CubicSpline;
 import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 import edu.cnu.mdi.splot.fit.Evaluator;
 import edu.cnu.mdi.splot.fit.FitResult;
 import edu.cnu.mdi.splot.fit.IFitter;
-import edu.cnu.mdi.splot.spline.CubicSpline;
 
 /**
  * Backing data model for a strip chart / time-series plot.
@@ -538,7 +538,10 @@ public class StripChartCurve extends ACurve {
 			case ERF:
 			case ERFC:
 			case GAUSSIAN:
-			case GAUSSIANS: {
+			case GAUSSIANS:
+			case EXPONENTIAL_DECAY:
+			case POWER_LAW:
+			case LORENTZIAN: {
 				IFitter fitter = createFitterForCurrentMethod();
 				if (fitter != null) {
 					FitVectors v = new FitVectors(xData, yData, null);

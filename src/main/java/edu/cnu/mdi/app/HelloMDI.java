@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
-import edu.cnu.mdi.properties.PropertyUtils;
+import edu.cnu.mdi.util.PropertyUtils;
 import edu.cnu.mdi.view.DrawingView;
 
 /**

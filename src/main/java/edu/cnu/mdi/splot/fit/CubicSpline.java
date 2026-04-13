@@ -1,4 +1,4 @@
-package edu.cnu.mdi.splot.spline;
+package edu.cnu.mdi.splot.fit;
 
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -9,8 +9,6 @@ import java.util.List;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.solvers.BrentSolver;
 import org.apache.commons.math3.exception.NoBracketingException;
-
-import edu.cnu.mdi.splot.fit.Evaluator;
 
 /**
  * Natural cubic spline interpolator over tabulated data {@code (x[i], y[i])}.

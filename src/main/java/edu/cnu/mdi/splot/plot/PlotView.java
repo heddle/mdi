@@ -20,7 +20,6 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.SwingConstants;
 
-import edu.cnu.mdi.properties.PropertyUtils;
 import edu.cnu.mdi.pseudo3D.Histo2DPanel;
 import edu.cnu.mdi.splot.io.PlotFileFilter;
 import edu.cnu.mdi.splot.io.PlotIO;
@@ -28,6 +27,7 @@ import edu.cnu.mdi.splot.io.RecentPlotFiles;
 import edu.cnu.mdi.splot.io.RecentPlotsMenu;
 import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.util.Environment;
+import edu.cnu.mdi.util.PropertyUtils;
 import edu.cnu.mdi.view.AbstractViewInfo;
 import edu.cnu.mdi.view.BaseView;
 
@@ -181,7 +181,7 @@ public class PlotView extends BaseView {
 		revalidate();
 		repaint();
 	}
-	
+
 	/**
 	 *  Get an information object describing this view,
 	 *  used in the UI and for help.
@@ -254,7 +254,7 @@ public class PlotView extends BaseView {
 
 		if (_plotPanel.holds2DHistogram()) {
 			PlotParameters params = _plotCanvas.getParameters();
-			boolean logZ = reflectLogZ(params);
+			boolean logZ = params.isLogZ();
 			_histoPanel = new Histo2DPanel(_plotCanvas.getPlotData().getHisto2DData(), params.getColorMap(), logZ);
 			_plotCanvas.addPropertyChangeListener((Histo2DPanel)_histoPanel);
 		} else {
@@ -511,48 +511,4 @@ public class PlotView extends BaseView {
 		}
 	}
 
-	/**
-	 * Best-effort reflection helper to detect whether the current plot parameters
-	 * have log-Z enabled for 2D histograms/heatmaps.
-	 * <p>
-	 * This keeps the pseudo-3D card loosely coupled to PlotParameters API details.
-	 */
-	private static boolean reflectLogZ(Object plotParameters) {
-		if (plotParameters == null) {
-			return false;
-		}
-		final String[] methodNames = {
-				"isLogZ",
-				"getLogZ",
-				"isLogZEnabled",
-				"getLogZEnabled",
-				"isLogz",
-				"getLogz"
-		};
-		for (String mname : methodNames) {
-			try {
-				var m = plotParameters.getClass().getMethod(mname);
-				Object val = m.invoke(plotParameters);
-				if (val instanceof Boolean b) {
-					return b.booleanValue();
-				}
-			} catch (Exception ignore) {
-				// try next
-			}
-		}
-		// Some implementations store it as a field instead of an accessor.
-		final String[] fieldNames = { "logZ", "_logZ", "logz", "_logz" };
-		for (String fname : fieldNames) {
-			try {
-				var f = plotParameters.getClass().getDeclaredField(fname);
-				f.setAccessible(true);
-				Object val = f.get(plotParameters);
-				if (val instanceof Boolean b) {
-					return b.booleanValue();
-				}
-			} catch (Exception ignore) {
-			}
-		}
-		return false;
-	}
 }

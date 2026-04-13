@@ -24,6 +24,7 @@ import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.Curve;
 import edu.cnu.mdi.splot.pdata.HistoCurve;
 import edu.cnu.mdi.splot.pdata.HistoData;
+import edu.cnu.mdi.splot.pdata.HistoDrawingUtils;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.Snapshot;
 import edu.cnu.mdi.splot.pdata.StripChartCurve;
@@ -237,7 +238,7 @@ public class CurveDrawer {
 			histoCurve.doFit(true);
 		}
 
-		Polygon poly = HistoData.GetPolygon(canvas, hd);
+		Polygon poly = HistoDrawingUtils.buildScreenPolygon(canvas, hd);
 		IStyled style = histoCurve.getStyle();
 
 		g2.setColor(style.getFillColor());
