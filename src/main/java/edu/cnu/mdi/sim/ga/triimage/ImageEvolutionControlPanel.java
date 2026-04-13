@@ -1,13 +1,16 @@
 package edu.cnu.mdi.sim.ga.triimage;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.component.CommonBorder;
@@ -116,10 +119,16 @@ public class ImageEvolutionControlPanel extends JPanel
         resetButton = new JButton("Reset");
         resetButton.setEnabled(false);
         resetButton.addActionListener(e -> requestResetFromHost());
+        
+	   	JLabel hint = new JLabel("Changes apply on Reset");
+    	hint.setFont(Fonts.smallFont);
+    	hint.setForeground(Color.black);
+    	hint.setHorizontalAlignment(SwingConstants.CENTER);
 
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 20));
-        btnPanel.add(resetButton);
-        btnPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
+        JPanel btnPanel = new JPanel(new BorderLayout(0, 4));
+        btnPanel.add(hint, BorderLayout.CENTER);
+        btnPanel.add(resetButton, BorderLayout.SOUTH);
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 10));
         add(btnPanel, BorderLayout.EAST);
     }
 
@@ -164,10 +173,13 @@ public class ImageEvolutionControlPanel extends JPanel
 
     /**
      * Enable or disable controls based on the current simulation state.
-     * Sliders and Reset are only editable when the simulation is not actively
-     * running.
-     */
-    private void applyState(SimulationState state) {
+     * <p>
+     * Sliders and Reset are enabled in READY, PAUSED, TERMINATED, and FAILED.
+     * Changes to slider values only take effect on the next Reset — parameters
+     * are built into the model at construction and cannot be modified mid-run.
+     * The simulation must be paused or stopped before parameters can be changed.
+     * </p>
+     */    private void applyState(SimulationState state) {
         boolean editable = state == SimulationState.READY
                 || state == SimulationState.PAUSED
                 || state == SimulationState.TERMINATED

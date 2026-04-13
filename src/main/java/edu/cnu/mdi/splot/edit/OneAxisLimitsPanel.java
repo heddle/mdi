@@ -49,7 +49,7 @@ public class OneAxisLimitsPanel extends JPanel implements ActionListener {
 	private JFormattedTextField _maxTF;
 
 	// the method combo box
-	private EnumComboBox _methodSelector;
+	private EnumComboBox<?> _methodSelector;
 
 	// plot parameters
 	private PlotParameters _params;

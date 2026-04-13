@@ -1,14 +1,17 @@
 package edu.cnu.mdi.sim.simanneal.tspdemo;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -217,15 +220,20 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
      * when the engine is in an editable state.
      */
     private void addResetButton() {
+    	JLabel hint = new JLabel("Changes apply on Reset");
+    	hint.setFont(Fonts.smallFont);
+    	hint.setForeground(Color.black);
+    	hint.setHorizontalAlignment(SwingConstants.CENTER);
+
         resetButton = new JButton("Reset");
         resetButton.setEnabled(false);
         resetButton.addActionListener(e -> requestResetFromHost());
 
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 20));
-        btnPanel.add(resetButton);
-        btnPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
-        add(btnPanel, BorderLayout.EAST);
-    }
+        JPanel btnPanel = new JPanel(new BorderLayout(0, 4));
+        btnPanel.add(hint, BorderLayout.CENTER);
+        btnPanel.add(resetButton, BorderLayout.SOUTH);
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 10));
+        add(btnPanel, BorderLayout.EAST);    }
 
     // -------------------------------------------------------------------------
     // ISimulationControlPanel
@@ -338,20 +346,19 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
     /**
      * Enable or disable controls based on the current simulation state.
      * <p>
-     * Sliders and Reset are enabled only in {@link SimulationState#READY} or
-     * {@link SimulationState#TERMINATED} to prevent parameter changes while
-     * the simulation thread is running or paused.
+     * Sliders and Reset are enabled in READY, PAUSED, TERMINATED, and FAILED.
+     * Changes to slider values only take effect on the next Reset — parameters
+     * are built into the model at construction and cannot be modified mid-run.
+     * The simulation must be paused or stopped before parameters can be changed.
      * </p>
-     *
-     * @param state current simulation state
      */
-    private void applyState(SimulationState state) {
-        boolean editable = (state == SimulationState.READY
-                         || state == SimulationState.TERMINATED);
-        citySlider.setEnabled(editable);
-        riverSlider.setEnabled(editable);
-        updateResetEnabled();
-    }
+	private void applyState(SimulationState state) {
+		boolean editable = (state == SimulationState.READY || state == SimulationState.TERMINATED
+				|| state == SimulationState.PAUSED); // add this
+		citySlider.setEnabled(editable);
+		riverSlider.setEnabled(editable);
+		updateResetEnabled();
+	}
 
     /**
      * Update the Reset button's enabled state.
@@ -369,7 +376,9 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
         }
         SimulationState state = host.getSimulationState();
         boolean editable = (state == SimulationState.READY
-                         || state == SimulationState.TERMINATED);
+                || state == SimulationState.PAUSED
+                || state == SimulationState.TERMINATED
+                || state == SimulationState.FAILED);
         resetButton.setEnabled(editable);
     }
 

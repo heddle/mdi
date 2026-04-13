@@ -1,14 +1,17 @@
 package edu.cnu.mdi.sim.demo.network;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.component.CommonBorder;
@@ -122,14 +125,20 @@ public class NetworkDeclutterControlPanel extends JPanel implements ISimulationC
 
 	// add the reset button on the right
 	private void addResetButton() {
-		// put the reset button (East) on a panel to keep it from stretching
-		resetButton = new JButton("Reset");
-		resetButton.setEnabled(false);
-		JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 20));
-		btnPanel.add(resetButton);
-		btnPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 10));
-		resetButton.addActionListener(e -> requestResetFromHost());
-		add(btnPanel, BorderLayout.EAST);
+	   	JLabel hint = new JLabel("Changes apply on Reset");
+    	hint.setFont(Fonts.smallFont);
+    	hint.setForeground(Color.black);
+    	hint.setHorizontalAlignment(SwingConstants.CENTER);
+
+        resetButton = new JButton("Reset");
+        resetButton.setEnabled(false);
+        resetButton.addActionListener(e -> requestResetFromHost());
+
+        JPanel btnPanel = new JPanel(new BorderLayout(0, 4));
+        btnPanel.add(hint, BorderLayout.CENTER);
+        btnPanel.add(resetButton, BorderLayout.SOUTH);
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(8, 0, 8, 10));
+        add(btnPanel, BorderLayout.EAST);
 	}
 
 	@Override
@@ -209,7 +218,6 @@ private void updateResetEnabled() {
             || state == SimulationState.PAUSED
             || state == SimulationState.TERMINATED
             || state == SimulationState.FAILED);
-
     resetButton.setEnabled(editable);
 }
 	// Request reset from host if it implements ITspDemoResettable
