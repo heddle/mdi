@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.Insets;
 import java.awt.Point;
@@ -29,23 +28,18 @@ import java.util.function.Predicate;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
-import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.InputMap;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
-import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
-import javax.swing.OverlayLayout;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
@@ -481,9 +475,13 @@ public class BaseView extends JInternalFrame
             final Component viewport = scrollPane.getViewport();
             viewport.addMouseListener(new MouseAdapter() {
                 private void maybeShow(MouseEvent e) {
-                    if (e == null || !e.isPopupTrigger()) return;
+                    if (e == null || !e.isPopupTrigger()) {
+						return;
+					}
                     Point p = SwingUtilities.convertPoint(viewport, e.getPoint(), canvas);
-                    if (container.getItemAtPoint(p) != null) return;
+                    if (container.getItemAtPoint(p) != null) {
+						return;
+					}
                     ViewPopupMenu menu = getViewPopupMenu();
                     if (menu != null) {
                         menu.show(viewport, e.getX(), e.getY());
@@ -1010,7 +1008,7 @@ public class BaseView extends JInternalFrame
 					if (aspect <= 0.001) { // ignore invalid aspect ratios
 						height = (int) (fraction * appSize.height);
 						width = (int) (fraction * appSize.width);
-					} else { 
+					} else {
 						// Calculate size based on height
 						height = (int) (fraction * appSize.height);
 						width = (int) (height * aspect);
@@ -1120,8 +1118,21 @@ public class BaseView extends JInternalFrame
      */
     private static final class ContainerFactory {
 
-        /**
+    	   /**
          * Resolve a container from the given properties and world system.
+         *
+         * <p>Resolution order:</p>
+         * <ol>
+         *   <li>An {@link IContainer} instance stored directly in the properties
+         *       under {@link PropertyUtils#CONTAINER}.</li>
+         *   <li>A {@link edu.cnu.mdi.view.ContainerFactory} stored under
+         *       {@link PropertyUtils#CONTAINERFACTORY} — the preferred approach
+         *       for new code because it is type-safe and IDE-navigable.</li>
+         *   <li>A {@link Class} stored under {@link PropertyUtils#CONTAINERCLASS},
+         *       instantiated via its {@code (Rectangle2D.Double)} constructor —
+         *       retained for backward compatibility.</li>
+         *   <li>A default {@link BaseContainer}.</li>
+         * </ol>
          *
          * @param props       the view's construction properties
          * @param worldSystem the initial world coordinate rectangle
@@ -1129,13 +1140,23 @@ public class BaseView extends JInternalFrame
          */
         static IContainer resolveContainer(Properties props,
                 Rectangle2D.Double worldSystem) {
-            // Explicit container instance takes priority.
+     
+            // 1. Explicit container instance takes highest priority.
             IContainer fromProps = PropertyUtils.getContainer(props);
             if (fromProps != null) {
                 return fromProps;
             }
-
-            // Container class takes second priority.
+     
+            // 2. ContainerFactory functional interface — preferred over Class.
+            //    Use the fully-qualified name to disambiguate from this inner class.
+            Object rawFactory = props.get(PropertyUtils.CONTAINERFACTORY);
+            if (rawFactory instanceof edu.cnu.mdi.view.ContainerFactory) {
+                return ((edu.cnu.mdi.view.ContainerFactory) rawFactory)
+                        .create(worldSystem);
+            }
+     
+            // 3. Container class via reflection — legacy path, kept for
+            //    backward compatibility with existing call sites.
             Object rawClass = props.get(PropertyUtils.CONTAINERCLASS);
             if (rawClass instanceof Class<?>
                     && IContainer.class.isAssignableFrom((Class<?>) rawClass)) {
@@ -1144,11 +1165,10 @@ public class BaseView extends JInternalFrame
                         (Class<? extends IContainer>) rawClass;
                 return instantiateContainer(cc, worldSystem);
             }
-
-            // Fall back to the default container.
+     
+            // 4. Fall back to the default container.
             return new BaseContainer(worldSystem);
         }
-
         /**
          * Instantiate a container class via its {@code (Rectangle2D.Double)}
          * constructor.
@@ -1254,9 +1274,13 @@ public class BaseView extends JInternalFrame
          * @param container the container to add wheel zoom to
          */
         private static void installWheelZoom(IContainer container) {
-            if (container == null) return;
+            if (container == null) {
+				return;
+			}
             Component comp = container.getComponent();
-            if (comp == null) return;
+            if (comp == null) {
+				return;
+			}
             comp.addMouseWheelListener(e -> {
                 double r    = e.getPreciseWheelRotation();
                 double base = e.isControlDown() || e.isMetaDown() ? 1.04
@@ -1268,8 +1292,8 @@ public class BaseView extends JInternalFrame
             });
         }
     }
-    
- 
+
+
     // -----------------------------------------------------------------------
     // ViewKeyBindings — keyboard shortcuts
     // -----------------------------------------------------------------------
@@ -1295,7 +1319,9 @@ public class BaseView extends JInternalFrame
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     IContainer container = view.container;
-                    if (container == null) return;
+                    if (container == null) {
+						return;
+					}
                     // Prefer the toolbar's delete handler when available.
                     if (container.getToolBar() instanceof BaseToolBar baseTb
                             && baseTb.hasDeleteTool()) {
@@ -1477,10 +1503,14 @@ public class BaseView extends JInternalFrame
          * @return the first matching value, or {@code null}
          */
         private static String firstPresent(Properties props, String... keys) {
-            if (props == null) return null;
+            if (props == null) {
+				return null;
+			}
             for (String k : keys) {
                 String v = props.getProperty(k);
-                if (v != null) return v;
+                if (v != null) {
+					return v;
+				}
             }
             return null;
         }
@@ -1511,7 +1541,9 @@ public class BaseView extends JInternalFrame
         private static Integer getIntIfPresent(Properties props,
                 String... keys) {
             String v = firstPresent(props, keys);
-            if (v == null) return null;
+            if (v == null) {
+				return null;
+			}
             try {
                 return Integer.parseInt(v.trim());
             } catch (NumberFormatException nfe) {

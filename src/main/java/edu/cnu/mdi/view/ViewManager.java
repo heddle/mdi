@@ -4,9 +4,12 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -45,20 +48,21 @@ import edu.cnu.mdi.log.Log;
  * <h2>Threading</h2>
  * <p>
  * All Swing state mutations (menu items, view visibility) are dispatched to
- * the EDT. The collection itself is {@code synchronized} on {@code this} for
- * the add/remove operations inherited from {@link Vector}.
+ * the EDT. The backing view list is guarded by {@code synchronized(this)} for
+ * all add, remove, and iteration operations.
  * </p>
  *
- * <h2>Backward compatibility</h2>
+ * <h2>Migration note</h2>
  * <p>
- * This class extends {@link Vector} so that existing code iterating over
- * {@code ViewManager.getInstance()} directly continues to compile without
- * change. Prefer the typed {@link #add(BaseView)} and
- * {@link #remove(BaseView)} methods over the raw {@link Vector} mutators.
+ * This class previously extended {@link java.util.Vector} for legacy iteration
+ * compatibility. It now implements {@link Iterable}{@code <BaseView>} instead,
+ * which is sufficient for {@code for}-each loops and is a strictly cleaner
+ * contract. Code that called {@code Vector}-specific methods (e.g.
+ * {@code elementAt}, {@code indexOf}) should migrate to {@link #get(int)} and
+ * {@link #getViews()} respectively.
  * </p>
  */
-@SuppressWarnings("serial")
-public class ViewManager extends Vector<BaseView> {
+public class ViewManager implements Iterable<BaseView> {
 
     // -----------------------------------------------------------------------
     // Singleton
@@ -68,6 +72,20 @@ public class ViewManager extends Vector<BaseView> {
     private static volatile ViewManager instance;
 
     // -----------------------------------------------------------------------
+    // Backing store
+    // -----------------------------------------------------------------------
+
+    /**
+     * Ordered list of all currently registered views.
+     *
+     * <p>Access is guarded by {@code synchronized(this)} to preserve the
+     * thread-safety contract previously provided by
+     * {@link java.util.Vector}. All mutation and iteration that requires a
+     * consistent snapshot must hold this monitor.</p>
+     */
+    private final List<BaseView> views = new ArrayList<>(32);
+
+    // -----------------------------------------------------------------------
     // State
     // -----------------------------------------------------------------------
 
@@ -75,8 +93,7 @@ public class ViewManager extends Vector<BaseView> {
      * All registered view configurations (both eager and lazy), in
      * registration order.
      */
-    private final java.util.List<ViewConfiguration<?>> configs =
-            new java.util.ArrayList<>();
+    private final List<ViewConfiguration<?>> configs = new ArrayList<>();
 
     /**
      * The "Views" menu whose contents mirror the set of registered views.
@@ -114,7 +131,6 @@ public class ViewManager extends Vector<BaseView> {
 
     /** Private constructor: use {@link #getInstance()}. */
     private ViewManager() {
-        super(32);
     }
 
     /**
@@ -132,6 +148,48 @@ public class ViewManager extends Vector<BaseView> {
             }
         }
         return instance;
+    }
+
+    // -----------------------------------------------------------------------
+    // Iterable<BaseView>
+    // -----------------------------------------------------------------------
+
+    /**
+     * Returns an iterator over the currently registered views in registration
+     * order.
+     *
+     * <p>The iterator operates on a <em>snapshot</em> copy taken at call
+     * time, so it is safe to call {@link #add(BaseView)} or
+     * {@link #remove(BaseView)} while iterating without a
+     * {@link java.util.ConcurrentModificationException}. The snapshot
+     * reflects the state of the registry at the moment {@code iterator()} is
+     * called; views added or removed afterwards are not visible through the
+     * returned iterator.</p>
+     *
+     * @return a snapshot iterator; never {@code null}
+     */
+    @Override
+    public Iterator<BaseView> iterator() {
+        synchronized (this) {
+            return new ArrayList<>(views).iterator();
+        }
+    }
+
+    /**
+     * Returns an unmodifiable, point-in-time snapshot {@link List} of all
+     * currently registered views in registration order.
+     *
+     * <p>The returned list will not reflect subsequent additions or removals.
+     * Callers that need to iterate once should prefer {@link #iterator()};
+     * callers that need random access or must pass a {@code List} to other
+     * APIs should use this method.</p>
+     *
+     * @return an unmodifiable snapshot; never {@code null}
+     */
+    public List<BaseView> getViews() {
+        synchronized (this) {
+            return Collections.unmodifiableList(new ArrayList<>(views));
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -177,47 +235,47 @@ public class ViewManager extends Vector<BaseView> {
 
     /**
      * Register a view with this manager.
-     * <p>
-     * A corresponding menu item is added to the Views menu. Registered
+     *
+     * <p>A corresponding menu item is added to the Views menu. Registered
      * {@link IViewListener}s are notified. If the view is a
-     * {@link VirtualView} it becomes the active virtual desktop.
-     * </p>
+     * {@link VirtualView} it becomes the active virtual desktop.</p>
+     *
+     * <p>This method is idempotent: registering the same instance twice is a
+     * no-op.</p>
      *
      * @param view the view to register; ignored if {@code null} or already
      *             registered
      * @return {@code true} if the view was newly added
      */
-    @Override
     public synchronized boolean add(BaseView view) {
-        if (view == null || contains(view)) {
+        if (view == null || views.contains(view)) {
             return false;
         }
 
-        boolean added = super.add(view);
-        if (added) {
-            if (view instanceof VirtualView) {
-                virtualView = (VirtualView) view;
-            }
-            runOnEdt(() -> {
-                ensureRealizedMenuItem(view);
-                notifyListeners(view, true);
-            });
+        views.add(view);
+
+        if (view instanceof VirtualView) {
+            virtualView = (VirtualView) view;
         }
-        return added;
+        runOnEdt(() -> {
+            ensureRealizedMenuItem(view);
+            notifyListeners(view, true);
+        });
+
+        return true;
     }
 
     /**
      * Unregister a view.
-     * <p>
-     * Its menu item is removed, registered listeners are notified, and the
-     * view is disposed on the EDT.
-     * </p>
+     *
+     * <p>Its menu item is removed, registered listeners are notified, and the
+     * view is disposed on the EDT.</p>
      *
      * @param view the view to remove; ignored if {@code null} or not registered
      * @return {@code true} if the view was removed
      */
     public synchronized boolean remove(BaseView view) {
-        if (view == null || !contains(view)) {
+        if (view == null || !views.contains(view)) {
             return false;
         }
 
@@ -226,7 +284,7 @@ public class ViewManager extends Vector<BaseView> {
             notifyListeners(view, false);
         });
 
-        boolean removed = super.remove(view);
+        boolean removed = views.remove(view);
 
         if (removed) {
             if (view == virtualView) {
@@ -238,28 +296,48 @@ public class ViewManager extends Vector<BaseView> {
     }
 
     /**
-     * Overrides {@link Vector#remove(Object)} so removal of a {@link BaseView}
-     * always goes through the full cleanup path in {@link #remove(BaseView)}.
+     * Removes all registered views through the standard cleanup path.
      *
-     * @param o the object to remove
-     * @return {@code true} if removed
+     * <p>Each view is disposed and its listeners are notified in reverse
+     * registration order so that dependent views are torn down before the
+     * views they depend on.</p>
      */
-    @Override
-    public synchronized boolean remove(Object o) {
-        if (o instanceof BaseView) {
-            return remove((BaseView) o);
+    public synchronized void clear() {
+        // Iterate over a snapshot; remove(BaseView) modifies `views` in-place.
+        List<BaseView> snapshot = new ArrayList<>(views);
+        for (int i = snapshot.size() - 1; i >= 0; i--) {
+            remove(snapshot.get(i));
         }
-        return false;
     }
 
     /**
-     * Removes all registered views through the standard cleanup path.
+     * Returns {@code true} if the given view is currently registered.
+     *
+     * @param view the view to test; {@code null} always returns {@code false}
+     * @return {@code true} if registered
      */
-    @Override
-    public synchronized void clear() {
-        for (int i = size() - 1; i >= 0; i--) {
-            remove(get(i));
-        }
+    public synchronized boolean contains(BaseView view) {
+        return view != null && views.contains(view);
+    }
+
+    /**
+     * Returns the number of currently registered views.
+     *
+     * @return the view count; never negative
+     */
+    public synchronized int size() {
+        return views.size();
+    }
+
+    /**
+     * Returns the view at the given zero-based index in registration order.
+     *
+     * @param index zero-based position
+     * @return the view at that position
+     * @throws IndexOutOfBoundsException if {@code index} is out of range
+     */
+    public synchronized BaseView get(int index) {
+        return views.get(index);
     }
 
     // -----------------------------------------------------------------------
@@ -402,13 +480,10 @@ public class ViewManager extends Vector<BaseView> {
             return;
         }
 
-        // Record the placeholder's position before removing it.
         int pos = indexOfComponent(placeholder);
         viewMenu.remove(placeholder);
         lazyMenuItems.remove(config);
 
-        // The normal item was appended by ensureRealizedMenuItem() during
-        // add(); move it to the placeholder's former position.
         BaseView view = config.getView();
         JMenuItem realItem = (view != null) ? menuItems.get(view) : null;
         if (realItem != null) {
@@ -460,9 +535,6 @@ public class ViewManager extends Vector<BaseView> {
         placeholder.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Realize the view. BaseView's constructor calls add(), which
-                // appends a normal menu item. Once getView() returns we swap
-                // that appended item into the placeholder's former position.
                 config.getView();
                 swapPlaceholderForRealItem(config, placeholder);
             }

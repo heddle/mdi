@@ -14,6 +14,7 @@ import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.ui.colors.X11Colors;
+import edu.cnu.mdi.view.ContainerFactory;
 
 public class PropertyUtils {
 
@@ -26,6 +27,7 @@ public class PropertyUtils {
 	public static final String CONSOLELOG = "CONSOLELOG";
 	public static final String CONTAINER = "CONTAINER";
 	public static final String CONTAINERCLASS = "CONTAINERCLASS";
+	public static final String CONTAINERFACTORY = "CONTAINERFACTORY";
 	public static final String DELETABLE = "DELETABLE";
 	public static final String DOUBLECLICKABLE = "DOUBLECLICKABLE";
 	public static final String DRAGGABLE = "DRAGGABLE";
@@ -85,6 +87,7 @@ public class PropertyUtils {
 	    KNOWN_KEYS.put(CONSOLELOG, Boolean.class);
 	    KNOWN_KEYS.put(CONTAINER, IContainer.class);
 	    KNOWN_KEYS.put(CONTAINERCLASS, Class.class);
+	    KNOWN_KEYS.put(CONTAINERFACTORY, ContainerFactory.class);
 	    KNOWN_KEYS.put(DELETABLE, Boolean.class);
 	    KNOWN_KEYS.put(DIST_X, Float.class);
 	    KNOWN_KEYS.put(DIST_Y, Float.class);
