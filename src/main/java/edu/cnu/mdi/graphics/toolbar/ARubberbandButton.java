@@ -109,7 +109,6 @@ public abstract class ARubberbandButton extends JToggleButton
 
         rubberbanding(gc, bounds, vertices);
         canvas.repaint();
-       canvas.repaint();
     }
 
     /**

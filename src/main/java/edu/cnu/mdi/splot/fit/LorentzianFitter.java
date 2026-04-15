@@ -31,7 +31,7 @@ import edu.cnu.mdi.splot.pdata.FitVectors;
  * <h3>Parameter ordering</h3>
  * <ul>
  *   <li>{@code params[0] = A}   &mdash; peak height above baseline</li>
- *   <li>{@code params[1] = x₀}  &mdash; peak centre</li>
+ *   <li>{@code params[1] = x₀}  &mdash; peak center</li>
  *   <li>{@code params[2] = Γ}   &mdash; full-width at half-maximum (FWHM);
  *       enforced {@code >= DEFAULT_MIN_GAMMA}</li>
  *   <li>{@code params[3] = B}   &mdash; baseline offset</li>
@@ -58,7 +58,7 @@ public final class LorentzianFitter extends ALeastSquaresFitter {
 
 	/** Index of peak-height parameter {@code A}. */
 	public static final int IDX_A  = 0;
-	/** Index of peak-centre parameter {@code x₀}. */
+	/** Index of peak-center parameter {@code x₀}. */
 	public static final int IDX_X0 = 1;
 	/** Index of FWHM parameter {@code Γ}. */
 	public static final int IDX_G  = 2;
@@ -258,7 +258,7 @@ public final class LorentzianFitter extends ALeastSquaresFitter {
 	 * <ol>
 	 *   <li>Baseline {@code B}: average of the endpoint y-values.</li>
 	 *   <li>Peak height {@code A}: maximum (y − B).</li>
-	 *   <li>Centre {@code x₀}: x at the peak.</li>
+	 *   <li>center {@code x₀}: x at the peak.</li>
 	 *   <li>FWHM {@code Γ}: estimated from the half-maximum crossing points.
 	 *       Falls back to 10% of the x-range if no crossing is found.</li>
 	 * </ol>

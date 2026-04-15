@@ -11,7 +11,6 @@ import javax.swing.JButton;
  * <p>
 
  * Unlike {@link ToolToggleButton}, this class does not change the active tool.
- * It just runs {@link #perform(ToolContext)} when clicked.
  * </p>
  *
  * @author heddle

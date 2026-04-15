@@ -38,7 +38,7 @@ public class DefaultToolHandler implements IToolHandler {
 	}
 
 	@Override
-	public void createTextItem(Point location) {
+	public void createTextItem(GestureContext gc, Point location) {
 		// no-op
 	}
 

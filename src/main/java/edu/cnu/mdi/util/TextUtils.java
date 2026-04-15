@@ -15,10 +15,16 @@ public class TextUtils {
 
 	/**
 	 * Draws rotated multi-line text with specified alignment.
-	 * @param g2 the Graphics context
-	 * @param cp the center point for rotation
-	 * @param s the text to draw (can contain newlines)
-	 * @param font the font to use
+	 * <p>
+	 * This method creates its own Graphics2D copy so that the translate/rotate
+	 * transforms and the dispose() call never affect the caller's context.
+	 * The original {@code g2} is left completely unmodified.
+	 * </p>
+	 *
+	 * @param g2    the Graphics context (never modified or disposed)
+	 * @param cp    the center point for the text block and the rotation pivot
+	 * @param s     the text to draw (may contain newlines)
+	 * @param font  the font to use
 	 * @param tcolor the text color
 	 * @param theta the rotation angle in degrees
 	 * @param align Use SwingConstants.LEFT, CENTER, or RIGHT
@@ -26,53 +32,57 @@ public class TextUtils {
 	public static void drawRotatedText(Graphics2D g2, Point cp, String s,
 	        Font font, Color tcolor, double theta, int align) {
 
-	    g2.setFont(font);
-	    g2.setColor(tcolor);
-	    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		// Work on a copy so that translate/rotate/dispose never touch the caller's g2.
+		// This is the critical fix: the original code called g2.dispose() on the shared
+		// pipeline context, silently killing all subsequent drawing (e.g. selection
+		// handles) for the rest of that paint cycle.
+		Graphics2D g = (Graphics2D) g2.create();
+		try {
+		    g.setFont(font);
+		    g.setColor(tcolor);
+		    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-	    String[] lines = s.split("\\R");
-	    FontMetrics fm = g2.getFontMetrics();
-	    int lineHeight = fm.getHeight();
-	    int totalHeight = lineHeight * lines.length;
+		    String[] lines = s.split("\\R");
+		    FontMetrics fm = g.getFontMetrics();
+		    int lineHeight = fm.getHeight();
+		    int totalHeight = lineHeight * lines.length;
 
-	    // Apply transformations
-	    g2.translate(cp.x, cp.y);
-	    g2.rotate(Math.toRadians(theta));
+		    g.translate(cp.x, cp.y);
+		    g.rotate(Math.toRadians(theta));
 
-	    // Calculate max width for the whole block
-	    int maxWidth = 0;
-	    for (String line : lines) {
-	        maxWidth = Math.max(maxWidth, fm.stringWidth(line));
-	    }
+		    // Calculate max width for the whole block
+		    int maxWidth = 0;
+		    for (String line : lines) {
+		        maxWidth = Math.max(maxWidth, fm.stringWidth(line));
+		    }
 
+		    // Calculate the top-most baseline position
+		    float startY = -totalHeight / 2.0f + fm.getAscent();
 
-	    // Calculate the top-most baseline position
-	    float startY = -totalHeight / 2.0f + fm.getAscent();
+		    for (int i = 0; i < lines.length; i++) {
+		        String line = lines[i];
+		        int lineWidth = fm.stringWidth(line);
+		        float x;
 
-	    for (int i = 0; i < lines.length; i++) {
-	        String line = lines[i];
-	        int lineWidth = fm.stringWidth(line);
-	        float x;
+		        switch (align) {
+		            case SwingConstants.LEFT:
+		                x = -maxWidth / 2.0f;
+		                break;
+		            case SwingConstants.RIGHT:
+		                x = -lineWidth;
+		                break;
+		            case SwingConstants.CENTER:
+		            default:
+		                x = -lineWidth / 2.0f;
+		                break;
+		        }
 
-	        // Determine X offset based on alignment relative to the pivot (0,0)
-	        switch (align) {
-	            case SwingConstants.LEFT:
-	                x = -maxWidth/2; // Text starts at pivot
-	                break;
-	            case SwingConstants.RIGHT:
-	                x = -lineWidth; // Text ends at pivot
-	                break;
-	            case SwingConstants.CENTER:
-	            default:
-	                x = -lineWidth / 2.0f; // Text centered on pivot
-	                break;
-	        }
-
-	        float y = startY + (i * lineHeight);
-	        g2.drawString(line, x, y);
-	    }
-
-	    g2.dispose();
+		        float y = startY + (i * lineHeight);
+		        g.drawString(line, x, y);
+		    }
+		} finally {
+		    g.dispose();   // dispose the COPY, not the original
+		}
 	}
 
 	/**
@@ -112,38 +122,30 @@ public class TextUtils {
 	                            int topMargin, int bottomMargin,
 	                            float lineSpacing) {
 
-	    // 1. Reasonable Clamps (Safety measures for 2026 standards)
-	    leftMargin = Math.max(0, Math.min(leftMargin, 500));
-	    rightMargin = Math.max(0, Math.min(rightMargin, 500));
-	    topMargin = Math.max(0, Math.min(topMargin, 500));
+	    leftMargin   = Math.max(0, Math.min(leftMargin,   500));
+	    rightMargin  = Math.max(0, Math.min(rightMargin,  500));
+	    topMargin    = Math.max(0, Math.min(topMargin,    500));
 	    bottomMargin = Math.max(0, Math.min(bottomMargin, 500));
-
-	    // Clamp lineSpacing: 1.0 is standard; below 0.5 is unreadable
-	    lineSpacing = Math.max(0.5f, Math.min(lineSpacing, 3.0f));
+	    lineSpacing  = Math.max(0.5f, Math.min(lineSpacing, 3.0f));
 
 	    if (lines == null || lines.length == 0) {
 	        return new Rectangle(0, 0, leftMargin + rightMargin, topMargin + bottomMargin);
 	    }
 
-	    // 2. Calculate Width
 	    int maxWidth = 0;
 	    for (String line : lines) {
 	        if (line != null) {
-	            maxWidth = Math.max(maxWidth, fm.stringWidth(line)); //
+	            maxWidth = Math.max(maxWidth, fm.stringWidth(line));
 	        }
 	    }
 
-	    // 3. Calculate Height
-	    int fontHeight = fm.getHeight(); // Standard height (leading + ascent + descent)
+	    int fontHeight = fm.getHeight();
 	    int totalTextHeight = 0;
-
 	    if (lines.length > 0) {
-	        // Height of all lines except the last one (includes spacing)
 	        int interLineHeight = Math.round(fontHeight * lineSpacing);
 	        totalTextHeight = (interLineHeight * (lines.length - 1)) + fontHeight;
 	    }
 
-	    // 4. Return Final Bounds
 	    return new Rectangle(
 	        0,
 	        0,
@@ -152,42 +154,30 @@ public class TextUtils {
 	    );
 	}
 
-
 	/**
-	 * Check to see if two vectors of strings are equal. Used by feedback to avoid
-	 * redrawing identical strings.
+	 * Check to see if two vectors of strings are equal.
 	 *
 	 * @param list1 the first String vector.
 	 * @param list2 the other String vector.
-	 * @return <code>true</code> if they are equal.
+	 * @return {@code true} if they are equal.
 	 */
 	public static boolean equalStringLists(List<String> list1, List<String> list2) {
 		if ((list1 == null) && (list2 == null)) {
 			return true;
 		}
-
-		// if just one is null, not equal
-		// must have the same size
 		if ((list1 == null) || (list2 == null) || (list1.size() != list2.size())) {
 			return false;
 		}
-
-		// all strings must be equal
 		for (int i = 0; i < list1.size(); i++) {
 			String s1 = list1.get(i);
 			String s2 = list2.get(i);
-
 			if (((s1 == null) && (s2 != null)) || ((s1 != null) && (s2 == null))) {
 				return false;
 			}
-
-			if ((s1 != null) && (s2 != null) && !(s1.equals(s2))) {
+			if ((s1 != null) && !(s1.equals(s2))) {
 				return false;
 			}
-
 		}
-
 		return true;
 	}
-
 }

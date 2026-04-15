@@ -371,7 +371,7 @@ public final class HistoFitPrep {
 	 * <p>Bins closer to the candidate bin {@code i} contribute more to the
 	 * score. Weight of bin {@code j} is {@code (radius + 1 - |j - i|)}. On a
 	 * tie, prefer the bin with the higher raw count; if still tied, prefer the
-	 * bin closer to the centre of the search range.</p>
+	 * bin closer to the center of the search range.</p>
 	 *
 	 * @param h              source histogram (non-null)
 	 * @param bin0           inclusive start bin (0-based; clamped)
@@ -696,7 +696,7 @@ public final class HistoFitPrep {
 		return a;
 	}
 
-	/** Triangular-kernel weighted score centred at bin {@code i}. */
+	/** Triangular-kernel weighted score centerd at bin {@code i}. */
 	private static double triangularScore(HistoData h, int i, int radius, int nbin) {
 		int  lo          = Math.max(0,      i - radius);
 		int  hi          = Math.min(nbin-1, i + radius);

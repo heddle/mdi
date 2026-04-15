@@ -98,7 +98,7 @@ import edu.cnu.mdi.view.BaseView;
  *   <li>{@link #_line} — a world-coordinate {@link Line2D.Double} for
  *       line items.</li>
  *   <li>{@link #_focus} — a world-coordinate {@link Point2D.Double} that
- *       represents the item's conceptual centre (centroid, anchor point,
+ *       represents the item's conceptual center (centroid, anchor point,
  *       etc.).</li>
  * </ul>
  * <p>
@@ -135,27 +135,27 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     protected static final Color _FOCUSFILL = new Color(128, 128, 128, 128);
 
     /**
-     * Pixel size of the square hit-test area centred on each selection handle.
+     * Pixel size of the square hit-test area centerd on each selection handle.
      *
      * @see #SPSIZE2
      */
     protected static final int SPSIZE = 10;
 
     /**
-     * Half of {@link #SPSIZE}, used to centre selection handles on their
+     * Half of {@link #SPSIZE}, used to center selection handles on their
      * nominal points.
      */
     protected static final int SPSIZE2 = SPSIZE / 2;
 
     /**
-     * Pixel size of the square hit-test area centred on the rotation handle.
+     * Pixel size of the square hit-test area centerd on the rotation handle.
      *
      * @see #RPSIZE2
      */
     protected static final int RPSIZE = 14;
 
     /**
-     * Half of {@link #RPSIZE}, used to centre the rotation handle on its
+     * Half of {@link #RPSIZE}, used to center the rotation handle on its
      * nominal point.
      */
     protected static final int RPSIZE2 = RPSIZE / 2;
@@ -169,13 +169,13 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
                     Environment.MDI_RESOURCE_PATH + "images/svg/rotate.svg",
                     16);
 
-    /** Fill colour used for selection handle ovals. */
+    /** Fill color used for selection handle ovals. */
     private static final Color _selectFill = Color.white;
 
-    /** Outline colour used for selection handle ovals. */
+    /** Outline color used for selection handle ovals. */
     private static final Color _selectLine = Color.black;
 
-    /** Fill colour used for the rotation handle oval. */
+    /** Fill color used for the rotation handle oval. */
     private static final Color _rotateFill =
             X11Colors.getX11Color("yellow", 64);
 
@@ -202,7 +202,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     protected Point2D.Double[] _secondaryPoints;
 
     /**
-     * The world-coordinate focus of this item — typically its centre,
+     * The world-coordinate focus of this item — typically its center,
      * centroid, or anchor point. Drawn as a small filled square when the
      * item is selected. May be {@code null} if the item has no defined focus.
      */
@@ -219,7 +219,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     protected Layer _layer;
 
     /**
-     * The drawing style for this item (fill colour, line colour, line style,
+     * The drawing style for this item (fill color, line color, line style,
      * symbol type, etc.). Initialized to a default {@link Styled} instance;
      * never {@code null} under normal operation but may be {@code null} after
      * {@link #prepareForRemoval()}.
@@ -432,7 +432,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     }
 
     /**
-     * Apply style-related properties (colours, line style, line width, symbol
+     * Apply style-related properties (colors, line style, line width, symbol
      * type and size) from {@code props}.
      *
      * <p>Each property is applied only if it is actually present in
@@ -871,7 +871,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /**
      * Return the world-coordinate focus of this item.
      *
-     * <p>The focus is the item's conceptual centre: for point-like items it
+     * <p>The focus is the item's conceptual center: for point-like items it
      * is their location; for polygon items it is typically the centroid.
      * Returns {@code null} if no focus has been set.</p>
      *
@@ -1418,7 +1418,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /**
      * Return the drawing style for this item.
      *
-     * <p>Through this object fill colour, line colour, line style, line
+     * <p>Through this object fill color, line color, line style, line
      * width, symbol type, and symbol size can all be read and changed.</p>
      *
      * @return the style; may be {@code null} after {@link #prepareForRemoval}

@@ -491,8 +491,8 @@ public class WorldGraphicsUtils {
      *
      * @param g2         the graphics context
      * @param container  the container defining the world-to-screen transform
-     * @param xc         world X of the arc centre
-     * @param yc         world Y of the arc centre
+     * @param xc         world X of the arc center
+     * @param yc         world Y of the arc center
      * @param rmin       inner radius in world units
      * @param rmax       outer radius in world units
      * @param startAngle start angle in degrees
@@ -534,8 +534,8 @@ public class WorldGraphicsUtils {
      *
      * @param g2         the graphics context
      * @param container  the container defining the world-to-screen transform
-     * @param xc         world X of the arc centre
-     * @param yc         world Y of the arc centre
+     * @param xc         world X of the arc center
+     * @param yc         world Y of the arc center
      * @param rmin       inner radius in world units
      * @param rmax       outer radius in world units
      * @param startAngle start angle in degrees
@@ -557,8 +557,8 @@ public class WorldGraphicsUtils {
      *
      * @param g2         the graphics context
      * @param container  the container defining the world-to-screen transform
-     * @param xc         world X of the arc centre
-     * @param yc         world Y of the arc centre
+     * @param xc         world X of the arc center
+     * @param yc         world Y of the arc center
      * @param rmin       inner radius in world units
      * @param rmax       outer radius in world units
      * @param startAngle start angle in degrees
@@ -686,8 +686,8 @@ public class WorldGraphicsUtils {
      * </p>
      *
      * @param container the container defining the world-to-screen transform
-     * @param xc        world X of the centre
-     * @param yc        world Y of the centre
+     * @param xc        world X of the center
+     * @param yc        world Y of the center
      * @param radius    radius in world units
      * @return polygon approximating the circle in pixel coordinates
      */
@@ -718,8 +718,8 @@ public class WorldGraphicsUtils {
      * </p>
      *
      * @param container the container defining the world-to-screen transform
-     * @param xc        world X of the centre
-     * @param yc        world Y of the centre
+     * @param xc        world X of the center
+     * @param yc        world Y of the center
      * @param minRadius inner radius in world units
      * @param maxRadius outer radius in world units
      * @return polygon approximating the annulus in pixel coordinates
@@ -763,8 +763,8 @@ public class WorldGraphicsUtils {
      * </p>
      *
      * @param container  the container defining the world-to-screen transform
-     * @param xc         world X of the centre
-     * @param yc         world Y of the centre
+     * @param xc         world X of the center
+     * @param yc         world Y of the center
      * @param radius     radius in world units
      * @param startAngle start angle in degrees
      * @param stopAngle  stop angle in degrees
@@ -1690,14 +1690,14 @@ public class WorldGraphicsUtils {
     }
 
     /**
-     * Create a world point at a given distance and polar angle from a centre.
+     * Create a world point at a given distance and polar angle from a center.
      * <p>
      * Unlike {@link #project}, this method uses the standard mathematical
      * polar angle convention (0° = east, 90° = north).
      * </p>
      *
      * @param center the origin point; must not be {@code null}
-     * @param radius the distance from the centre in world units
+     * @param radius the distance from the center in world units
      * @param theta  the angle in degrees (standard polar: 0 = east, 90 = north)
      * @return the new world point
      */
@@ -1716,19 +1716,19 @@ public class WorldGraphicsUtils {
     /**
      * Build an array of world points approximating a radar-arc sweep.
      * <p>
-     * The array begins at the centre {@code wpc}, proceeds to {@code wp1}
+     * The array begins at the center {@code wpc}, proceeds to {@code wp1}
      * (the first leg endpoint), then sweeps counter-clockwise by
      * {@code arcAngle} degrees, using {@value #NUMCIRCSTEP} interpolation
-     * steps. The first element is always the centre; the remaining elements
+     * steps. The first element is always the center; the remaining elements
      * trace the arc.
      * </p>
      *
-     * @param wpc      the centre of the arc
+     * @param wpc      the center of the arc
      * @param wp1      the first leg endpoint; the distance {@code wpc→wp1}
      *                 defines the radius
      * @param arcAngle the CCW sweep angle in degrees
      * @return array of {@value #NUMCIRCSTEP}{@code + 2} world points
-     *         (centre + wp1 + arc samples)
+     *         (center + wp1 + arc samples)
      */
     public static Point2D.Double[] getRadArcPoints(Point2D.Double wpc,
             Point2D.Double wp1, double arcAngle) {
@@ -1757,12 +1757,12 @@ public class WorldGraphicsUtils {
     /**
      * Build an array of world points approximating a simple arc sweep.
      * <p>
-     * Similar to {@link #getRadArcPoints} but does not include the centre
+     * Similar to {@link #getRadArcPoints} but does not include the center
      * point. The array begins at {@code wp1} and sweeps counter-clockwise by
      * {@code arcAngle} degrees.
      * </p>
      *
-     * @param wpc      the centre of the arc (not included in the output)
+     * @param wpc      the center of the arc (not included in the output)
      * @param wp1      the first leg endpoint; the distance {@code wpc→wp1}
      *                 defines the radius
      * @param arcAngle the CCW sweep angle in degrees
@@ -1812,7 +1812,7 @@ public class WorldGraphicsUtils {
      *                0 = north, 90 = east)
      * @param numFill number of sample points per quadrant; the total returned
      *                is {@code 4 * numFill + 1}
-     * @param center  the centre of the ellipse
+     * @param center  the center of the ellipse
      * @return array of world points approximating the ellipse, closed at the
      *         last element
      */

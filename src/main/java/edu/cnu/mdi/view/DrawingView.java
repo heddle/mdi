@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
@@ -22,16 +23,10 @@ import edu.cnu.mdi.util.PropertyUtils;
  * A simple view used to test the tool bar.
  *
  * @author heddle
- *
  */
 @SuppressWarnings("serial")
 public class DrawingView extends BaseView implements IFeedbackProvider {
 
-	/**
-	 * Create a drawing view
-	 *
-	 * @param keyVals variable set of arguments.
-	 */
 	public DrawingView(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
 		getIContainer().getFeedbackControl().addFeedbackProvider(this);
@@ -40,52 +35,57 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 	}
 
 	/**
-	 * Convenience method for creating a Drawing View.
-	 *
-	 * @return a new DrawingView object
+	 * Convenience method for creating a Drawing View with a square canvas.
+	 * <p>
+	 * The BaseView constructor calls pack() and desktop.add(), both of which
+	 * affect frame sizing. setVisible(true) is deferred via invokeLater.
+	 * We defer our chrome measurement and setSize() to a second invokeLater,
+	 * which runs after setVisible has completed, giving us the true realized
+	 * component sizes.
+	 * </p>
 	 */
 	public static DrawingView createDrawingView() {
-		DrawingView view = null;
 
-		// set to a fraction of screen
 		Dimension d = WindowPlacement.screenFraction(0.4);
+		final int width = d.width;
+		final int height = d.height + 100;
 
-		int width = d.width;
-		int height = d.height;
+		long toolBits = ToolBits.STATUS | ToolBits.DRAWINGTOOLS
+				| ToolBits.ZOOMTOOLS | ToolBits.PAN | ToolBits.INFO;
 
-		// create the view
-		long toolBits = ToolBits.STATUS | ToolBits.DRAWINGTOOLS | ToolBits.ZOOMTOOLS | ToolBits.PAN | ToolBits.INFO;
-		view = new DrawingView(PropertyUtils.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, width, height),
-				PropertyUtils.WIDTH, width, // container width, not total view width
-				PropertyUtils.HEIGHT, height, // container height, not total view width
-				PropertyUtils.TOOLBARBITS, toolBits, PropertyUtils.VISIBLE, true,
-				PropertyUtils.BACKGROUND, Color.white, PropertyUtils.TITLE,
-				"Drawing View ", PropertyUtils.STANDARDVIEWDECORATIONS, true);
+		DrawingView view = new DrawingView(
+				PropertyUtils.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0),
+				PropertyUtils.WIDTH,       width,
+				PropertyUtils.HEIGHT,      height,
+				PropertyUtils.TOOLBARBITS, toolBits,
+				PropertyUtils.VISIBLE,     true,
+				PropertyUtils.BACKGROUND,  Color.white,
+				PropertyUtils.TITLE,       "Drawing View",
+				PropertyUtils.STANDARDVIEWDECORATIONS, true);
 
-		view.pack();
+		// BaseView defers setVisible via its own invokeLater. We queue our
+		// resize AFTER that by nesting a second invokeLater — it is guaranteed
+		// to run after the first one has completed, so the frame is fully
+		// realized and component sizes are the ground truth.
+		SwingUtilities.invokeLater(() -> SwingUtilities.invokeLater(() -> {
+			Dimension frameSize     = view.getSize();
+			Dimension containerSize = view.getIContainer().getComponent().getSize();
+			int chromeW = frameSize.width  - containerSize.width;
+			int chromeH = frameSize.height - containerSize.height;
+			view.setSize(width + chromeW, height + chromeH);
+		}));
+
 		return view;
 	}
-	
-	/**
-	 *  Get an information object describing this view,
-	 *  used in the UI and for help.
-	 */
+
 	@Override
 	public AbstractViewInfo getViewInfo() {
 		return new DrawingViewInfo();
 	}
 
-
-	/**
-	 * Handle files dropped on this view through drag and drop.
-	 *
-	 * @param files the dropped files.
-	 */
 	@Override
 	public void filesDropped(List<File> files) {
-		if (files == null || files.isEmpty()) {
-			return;
-		}
+		if (files == null || files.isEmpty()) return;
 		File file = files.get(0);
 		try {
 			BufferedImage img = ImageIO.read(file);
@@ -96,6 +96,4 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 			System.err.println("Error reading image file: " + e.getMessage());
 		}
 	}
-
-
 }

@@ -225,17 +225,23 @@ public final class ToolBits {
 	public static final long ANNOTATIONTOOLS = POINTER | ELLIPSE | TEXT | RECTANGLE | POLYGON | LINE
 			| POLYLINE | STYLEB | DELETE;
 
+	/** A set of tools suitable for annotating a plot. */
 	public static final long DRAWINGTOOLS = ANNOTATIONTOOLS | RADARC;
 
+	/** A set of tools suitable for zooming and panning. */
 	public static final long ZOOMTOOLS = BOXZOOM | UNDOZOOM | ZOOMIN | ZOOMOUT
 			| RESETZOOM;
 
+	/** A set of tools suitable for picture view panels. */
 	public static final long PICVIEWSTOOLS = CAMERA | PRINTER;
 
+	/** A set of tools suitable for navigation panels. */
 	public static final long NAVIGATIONTOOLS = POINTER | ZOOMTOOLS | PAN | CENTER;
 
-	public static final long PLOTTOOLS = POINTER | ZOOMTOOLS | PICVIEWSTOOLS & ~UNDOZOOM;
-
+	/** A set of tools suitable for plot panels. */
+	public static final long PLOTTOOLS = POINTER | (ZOOMTOOLS & ~UNDOZOOM) | PICVIEWSTOOLS;
+	
+	/** A set with all bits on, for use in testing. */
 	public static final long EVERYTHING = 01777777777777777777777L;
 
 	/**

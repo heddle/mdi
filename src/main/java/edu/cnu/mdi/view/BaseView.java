@@ -593,7 +593,7 @@ public class BaseView extends JInternalFrame
     }
 
     /**
-     * Centre this view within its parent frame.
+     * center this view within its parent frame.
      * <p>
      * This is a no-op if the parent frame cannot be determined.
      * </p>
@@ -1211,7 +1211,7 @@ public class BaseView extends JInternalFrame
                         new Dimension(cfg.width, cfg.height));
             }
 
-            // Centre component — optionally wrapped in a scroll pane.
+            // center component — optionally wrapped in a scroll pane.
             Component center = container.getComponent();
             if (cfg.scrollable && center != null) {
                 view.scrollPane = new JScrollPane(center);

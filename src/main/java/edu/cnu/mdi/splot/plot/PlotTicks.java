@@ -47,7 +47,7 @@ import edu.cnu.mdi.util.UnicodeUtils;
  * <h2>Bar plot mode</h2>
  * <p>
  * When the plot is a bar plot, the X axis shows the name of each data curve
- * centred on its bar group rather than numeric tick values.
+ * centerd on its bar group rather than numeric tick values.
  * </p>
  *
  * <h2>Graphics context</h2>
@@ -96,7 +96,7 @@ public class PlotTicks {
      */
     private boolean drawBinValue;
 
-    /** Colour used for tick marks and tick labels. */
+    /** Color used for tick marks and tick labels. */
     private Color _tickColor = Color.black;
 
     /** Font used for tick labels. */
@@ -257,14 +257,14 @@ public class PlotTicks {
      * 1-based histogram bin-index labels.
      * <p>
      * This method is only called when {@link #drawBinValue} is {@code true}
-     * and the underlying data is a histogram. Ticks are placed at the centres
+     * and the underlying data is a histogram. Ticks are placed at the centers
      * of each bin rather than at evenly-spaced data values.
      * </p>
      *
      * @param g2      the graphics context
      * @param xmin    left bound of the tick range in data coordinates
      * @param xmax    right bound of the tick range in data coordinates
-     * @param yc      Y data coordinate of the axis line (typically the centre
+     * @param yc      Y data coordinate of the axis line (typically the center
      *                of the data world)
      * @param ticklen tick length in pixels
      * @param numtick number of ticks to draw
@@ -435,7 +435,7 @@ public class PlotTicks {
     /**
      * Draw bar-plot category labels on the X axis.
      * <p>
-     * Instead of numeric ticks, each data curve contributes a centred name
+     * Instead of numeric ticks, each data curve contributes a centerd name
      * label positioned at the horizontal centroid of its bar group. No tick
      * marks are drawn — only labels.
      * </p>

@@ -259,8 +259,8 @@ public interface IToolHandler {
     /**
      * Create a text item at the given location.
      *
-     * @param gc
-     * @param location
+     * @param gc gesture context (non-null)
+     * @param location text location (non-null)
      */
-    void createTextItem(Point location);
+    void createTextItem(GestureContext gc, Point location);
 }

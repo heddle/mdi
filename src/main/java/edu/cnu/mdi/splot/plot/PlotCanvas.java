@@ -26,7 +26,6 @@ import edu.cnu.mdi.splot.pdata.DataChangeListener;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.pdata.Snapshot;
-import edu.cnu.mdi.util.Environment;
 
 /**
  * The primary Swing component for rendering a 2-D scientific plot.
@@ -89,7 +88,7 @@ public class PlotCanvas extends JComponent implements DataChangeListener {
 	public static final String STATUSFONTCHANGE  = "Status Font";
 	/** Fired when log-Z mode changes (2D histograms). */
 	public static final String LOGZCHANGE        = "Log Z";
-	/** Fired when the colour map changes (2D histograms / heatmaps). */
+	/** Fired when the color map changes (2D histograms / heatmaps). */
 	public static final String COLORMAPCHANGE    = "Colormap";
 
 	// -----------------------------------------------------------------------
@@ -102,12 +101,6 @@ public class PlotCanvas extends JComponent implements DataChangeListener {
 	/** Monotonically increasing counter used to tag {@link #DONEDRAWINGPROP} events. */
 	private long drawCount = 0;
 
-	/**
-	 * Default directory used by save/open dialogs.
-	 * <p>Instance-level (not static) so that multiple canvases in the same JVM
-	 * track their own last-used directories independently.</p>
-	 */
-	private String _dataFilePath = Environment.getInstance().getHomeDirectory();
 
 	/** Pixel bounds of the active (data) area inside the component. */
 	private Rectangle _activeBounds;
@@ -689,7 +682,7 @@ public class PlotCanvas extends JComponent implements DataChangeListener {
 	}
 
 	/**
-	 * Scales the visible area by {@code amount} around its centre.
+	 * Scales the visible area by {@code amount} around its center.
 	 * Values greater than 1 zoom out; values less than 1 zoom in.
 	 *
 	 * @param amount scale factor ({@code > 0})

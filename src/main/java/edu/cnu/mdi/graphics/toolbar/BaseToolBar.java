@@ -450,7 +450,8 @@ public class BaseToolBar extends AToolBar {
 			JToggleButton text = new ASingleClickButton(canvas, this) {
 				@Override
 				public void canvasClick(MouseEvent e) {
-					handler.createTextItem(e.getPoint());
+					GestureContext gc = new GestureContext(BaseToolBar.this, canvas, null, e.getPoint(), e);
+					handler.createTextItem(gc, e.getPoint());
 					resetDefaultToggleButton();
 				}
 			};

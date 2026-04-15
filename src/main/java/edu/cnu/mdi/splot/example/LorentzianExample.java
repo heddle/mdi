@@ -29,7 +29,7 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
  * <p>The true parameters of the Lorentzian are:</p>
  * <ul>
  *   <li>{@code A  = 12.0} (peak height above baseline)</li>
- *   <li>{@code x₀ = 5.0}  (resonance centre)</li>
+ *   <li>{@code x₀ = 5.0}  (resonance center)</li>
  *   <li>{@code Γ  = 1.6}  (FWHM; the half-width at half-maximum is Γ/2 = 0.8)</li>
  *   <li>{@code B  = 0.5}  (flat background)</li>
  * </ul>
@@ -121,7 +121,7 @@ public class LorentzianExample extends AExample {
 		String[] extra = {
 			"True parameters:",
 			"  A  = " + TRUE_A   + "  (peak height)",
-			"  x\u2080 = " + TRUE_X0 + "  (centre)",
+			"  x\u2080 = " + TRUE_X0 + "  (center)",
 			"  \u0393  = " + TRUE_G   + "  (FWHM)",
 			"  B  = " + TRUE_B   + "  (baseline)",
 			"Lorentzian has heavier tails",

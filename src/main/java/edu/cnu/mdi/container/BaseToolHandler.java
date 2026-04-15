@@ -382,27 +382,36 @@ public class BaseToolHandler implements IToolHandler  {
 	@Override
 	public void createRectangle(GestureContext gc, Rectangle bounds) {
 		CreationSupport.createRectangleItem(container.getAnnotationLayer(), bounds);
+		container.setDirty(true);
+		container.refresh();
 	}
 
 	@Override
 	public void createEllipse(GestureContext gc, Rectangle bounds) {
 		CreationSupport.createEllipseItem(container.getAnnotationLayer(), bounds);
+		container.setDirty(true);
+		container.refresh();
 	}
 
 	@Override
 	public void createPolygon(GestureContext gc, Point[] vertices) {
 		CreationSupport.createPolygonItem(container.getAnnotationLayer(), vertices);
-
+		container.setDirty(true);
+		container.refresh();
 	}
 
 	@Override
 	public void createPolyline(GestureContext gc, Point[] vertices) {
 		CreationSupport.createPolylineItem(container.getAnnotationLayer(), vertices);
+		container.setDirty(true);
+		container.refresh();
 	}
 
 	@Override
 	public void createLine(GestureContext gc, Point start, Point end) {
 		CreationSupport.createLineItem(container.getAnnotationLayer(), start, end);
+		container.setDirty(true);
+		container.refresh();
 	}
 
 
@@ -424,11 +433,14 @@ public class BaseToolHandler implements IToolHandler  {
 	    }
 
 	    CreationSupport.createRadArcItem(container.getAnnotationLayer(), pp[0], pp[1], sweep);
+		container.setDirty(true);
+		container.refresh();
 	}
 
 	@Override
-	public void createTextItem(Point location) {
+	public void createTextItem(GestureContext gc, Point location) {
 		CreationSupport.createTextItem(container.getAnnotationLayer(), location);
+		container.setDirty(true);
 		container.refresh();
 	}
 
