@@ -300,6 +300,8 @@ public final class NetworkDeclutterSimulation implements Simulation {
 		step = 0;
 		canceled = false;
 
+		// Post an initial message and refresh so the user sees the starting layout 
+		// before it starts moving.
 		if (engine != null) {
 			engine.postMessage("Network generated. Relaxing layout…");
 			engine.postProgress(ProgressInfo.indeterminate("Relaxing…"));

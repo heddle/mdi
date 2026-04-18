@@ -1597,13 +1597,49 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /**
      * Prepare this item for removal from its layer.
      *
-     * <p>Called by the layer when the item is being deleted. Nulls out all
-     * heavyweight references (geometry, style, layer) to assist garbage
-     * collection and prevent stale state from being accessed after removal.
-     * After this call the item should not be used.</p>
+     * <p>Called by the layer when the item is being deleted. This method
+     * performs two distinct responsibilities:</p>
+     *
+     * <ol>
+     *   <li><strong>Feedback de-registration.</strong> The item unregisters
+     *       itself from the container's {@link edu.cnu.mdi.feedback.FeedbackControl}
+     *       so that it is no longer polled on mouse-move events after removal.
+     *       Failing to do this would leave a stale reference in the listener
+     *       list, causing every subsequent mouse event to invoke
+     *       {@link #getFeedbackStrings} on a partially-destroyed object whose
+     *       geometry fields ({@link #_path}, {@link #_focus}, etc.) have already
+     *       been nulled. The container reference is captured <em>before</em>
+     *       {@link #_layer} is nulled, because {@link #getContainer()} delegates
+     *       through the layer.</li>
+     *   <li><strong>Reference nulling.</strong> All heavyweight references
+     *       (geometry, style, layer) are set to {@code null} to assist garbage
+     *       collection and to cause a fast, obvious {@link NullPointerException}
+     *       rather than subtle incorrect behaviour if the item is accidentally
+     *       used after removal.</li>
+     * </ol>
+     *
+     * <p>After this call the item must not be used. Subclasses that hold
+     * additional heavyweight references (e.g. cached screen shapes, secondary
+     * data structures) should override this method and null those fields out,
+     * calling {@code super.prepareForRemoval()} either first or last — the
+     * order is immaterial as long as the super call is included.</p>
      */
     @Override
     public void prepareForRemoval() {
+        // Capture the container reference now, before _layer is set to null.
+        // getContainer() delegates through _layer, so we must read it while
+        // the chain is still intact.
+        IContainer cont = (_layer != null) ? _layer.getContainer() : null;
+
+        // De-register from feedback polling. removeFeedbackProvider is a
+        // safe no-op when the controller has no listener list (i.e. initFeedback
+        // was never called on the owning view), so no guard is needed here.
+        if (cont != null) {
+            cont.getFeedbackControl().removeFeedbackProvider(this);
+        }
+
+        // Null out heavyweight references to assist GC and catch accidental
+        // post-removal usage quickly.
         _focus            = null;
         _lastDrawnPolygon = null;
         _layer            = null;

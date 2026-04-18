@@ -29,7 +29,6 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 
 	public DrawingView(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
-		getIContainer().getFeedbackControl().addFeedbackProvider(this);
 		setFileFilter(ImageFilters.isActualImage);
 		initFeedback();
 	}

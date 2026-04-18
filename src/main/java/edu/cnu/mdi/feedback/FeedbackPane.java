@@ -3,7 +3,7 @@ package edu.cnu.mdi.feedback;
 import java.awt.Color;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashMap;
 
 import javax.swing.text.SimpleAttributeSet;
 
@@ -47,9 +47,16 @@ public class FeedbackPane extends TextPaneScrollPane {
      *
      * <p>For example, the key {@code "red"} maps to a style that renders red
      * text on the configured background.</p>
+     *
+     * <p>A plain {@link HashMap} is used (rather than a concurrent variant)
+     * because all paths that read or write this map — {@link #append(String)}
+     * and {@link #updateFeedback} — are called exclusively on the Swing Event
+     * Dispatch Thread. Mouse-motion events that drive feedback updates are
+     * delivered on the EDT, and {@link #updateFeedback} is only invoked from
+     * there. A {@code ConcurrentHashMap} would add synchronization overhead
+     * with no correctness benefit.</p>
      */
-    private final Map<String, SimpleAttributeSet> styleCache =
-            new ConcurrentHashMap<>(101);
+    private final Map<String, SimpleAttributeSet> styleCache = new HashMap<>(101);
 
     /** Default style: cyan text, configured background, SansSerif, bold. */
     private SimpleAttributeSet DEFAULT_STYLE;
@@ -61,7 +68,16 @@ public class FeedbackPane extends TextPaneScrollPane {
     private SimpleAttributeSet SMALL_MONO_STYLE;
 
     /**
-     * Minimum color-name length (inclusive) accepted by the {@code $name$}
+     * The prefix string that selects the small monospaced style, compared
+     * case-insensitively so that {@code $Mono$}, {@code $MONO$}, and
+     * {@code $mono$} are all accepted.
+     *
+     * <p>The literal value is the lower-cased form; comparison is made against
+     * a lower-cased prefix slice of the incoming message.</p>
+     */
+    private static final String MONO_PREFIX = "$mono$";
+
+    /**
      * prefix parser.
      *
      * <p>No valid X11 color name is shorter than 2 characters (e.g. the
@@ -132,8 +148,9 @@ public class FeedbackPane extends TextPaneScrollPane {
      *
      * <h3>Prefix syntax</h3>
      * <ul>
-     *   <li>{@code "$mono$"} — the prefix is stripped and the remainder is
-     *       rendered in the small monospaced style.</li>
+     *   <li>{@code "$mono$"} (case-insensitive: {@code $Mono$}, {@code $MONO$},
+     *       etc. are all accepted) — the prefix is stripped and the remainder
+     *       is rendered in the small monospaced style.</li>
      *   <li>{@code "$<name>$"} where {@code <name>} is a valid X11 color name
      *       (case-insensitive, {@value #COLOR_NAME_MIN_LEN}–{@value
      *       #COLOR_NAME_MAX_LEN} characters) — the prefix is stripped and the
@@ -157,8 +174,13 @@ public class FeedbackPane extends TextPaneScrollPane {
      *       string is rendered in the default style.</li>
      * </ol>
      *
-     * <p>The {@code $mono$} special case is tested first and is exempt from
-     * the length validation.</p>
+     * <p>The {@code $mono$} special case (tested first, case-insensitively) is
+     * exempt from the length and color-name validation that applies to the
+     * generic {@code $name$} path. Previously, a capitalized variant such as
+     * {@code $Mono$} would fall through to the color-name path, fail to match
+     * any X11 color, and be rendered raw including the tag — an unintuitive
+     * developer experience. The case-insensitive comparison eliminates that
+     * class of mistake.</p>
      *
      * @param message the feedback line; ignored if {@code null}
      */
@@ -168,9 +190,15 @@ public class FeedbackPane extends TextPaneScrollPane {
             return;
         }
 
-        // Fast-path: monospaced small style.
-        if (message.startsWith("$mono$")) {
-            appendSmallMono(message.substring(6));
+        // Fast-path: monospaced small style.  The prefix check is
+        // case-insensitive so that $Mono$, $MONO$, etc. all work correctly.
+        // We compare against a lower-cased prefix slice rather than calling
+        // toLowerCase() on the whole string, which would allocate a new String
+        // for every feedback line.
+        if (message.length() >= MONO_PREFIX.length()
+                && message.substring(0, MONO_PREFIX.length())
+                           .equalsIgnoreCase(MONO_PREFIX)) {
+            appendSmallMono(message.substring(MONO_PREFIX.length()));
             return;
         }
 

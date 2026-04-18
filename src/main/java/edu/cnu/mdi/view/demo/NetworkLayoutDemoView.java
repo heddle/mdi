@@ -60,7 +60,6 @@ public class NetworkLayoutDemoView extends BaseView {
 	public NetworkLayoutDemoView(Properties props) {
 		super(props);
 		deviceLayer = new Layer(getIContainer(), "Devices");
-		getIContainer().getFeedbackControl().addFeedbackProvider(this);
 		addToToolBar();
 
 		// add an underlying snap-to grid drawer
@@ -179,7 +178,7 @@ public class NetworkLayoutDemoView extends BaseView {
 		feedbackStrings.add(coordStrPx);
 		feedbackStrings.add(coordStr);
 		feedbackStrings.add(deviceCountStr);
-		feedbackStrings.add("$orange$Zoom Level: " + String.format("%.2f%%", container.approximateZoomFactor() * 100));
+		feedbackStrings.add("$orange red$Zoom Level: " + String.format("%.2f%%", container.approximateZoomFactor() * 100));
 	}
 
 	/**

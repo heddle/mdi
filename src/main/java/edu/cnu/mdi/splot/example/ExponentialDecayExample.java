@@ -78,7 +78,7 @@ public class ExponentialDecayExample extends AExample {
 
 	@Override
 	protected String getPlotTitle() {
-		return "Exponential Decay Fit:  y = A\u00b7e\u207b\u02e3\u1d40\u1d41 + C";
+		return "<html>Exponential Decay Fit:  y = A·e<SUP>-x/τ</SUP> + C";
 	}
 
 	@Override

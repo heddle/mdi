@@ -9,7 +9,6 @@ import java.util.List;
 import javax.swing.event.EventListenerList;
 
 import edu.cnu.mdi.container.IContainer;
-import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.util.TextUtils;
 
 /**
@@ -115,12 +114,30 @@ public class FeedbackControl {
     /**
      * Removes a feedback provider from this controller.
      *
-     * <p>If {@code provider} is non-{@code null} but no listener list has been
-     * created yet (i.e. {@link #addFeedbackProvider} has never been called on
-     * this instance), a warning is logged. This situation almost always
-     * indicates a programming error — typically mismatched add/remove call
-     * sites, or a removal that fires before the corresponding addition — and
-     * should be investigated rather than silently swallowed.</p>
+     * <p>This method is intentionally a <em>safe no-op</em> in all cases where
+     * the provider cannot be present:</p>
+     * <ul>
+     *   <li>If {@code provider} is {@code null}, the call is ignored.</li>
+     *   <li>If no listener list has been created yet (i.e.
+     *       {@link #addFeedbackProvider} was never called on this instance), the
+     *       provider cannot be registered, so there is nothing to remove and the
+     *       call returns silently.</li>
+     * </ul>
+     *
+     * <p>The silent no-op on a {@code null} listener list is deliberate. The
+     * primary caller for removal is {@link edu.cnu.mdi.item.AItem#prepareForRemoval},
+     * which is invoked whenever an item is deleted from a layer. Items
+     * self-register in their constructor via
+     * {@link #addFeedbackProvider(IFeedbackProvider)}, but only if the
+     * container's view has called {@code initFeedback()} to create a listener
+     * list in the first place. If {@code initFeedback()} was never called —
+     * which is a normal, legitimate configuration for views that do not display
+     * a feedback pane — no listener list ever exists, and the item's removal
+     * path must not produce a spurious warning or exception.</p>
+     *
+     * <p>Logging of mismatched add/remove call sites, if desired, should be
+     * performed at a higher level where the intended registration state is
+     * known.</p>
      *
      * @param provider the feedback provider to remove; ignored if {@code null}
      */
@@ -130,15 +147,10 @@ public class FeedbackControl {
             return;
         }
 
+        // If no list was ever created, the provider cannot be registered.
+        // Return silently: this is a valid state when the owning view never
+        // called initFeedback(), and must not be treated as an error.
         if (listenerList == null) {
-            // A non-null provider is being removed from a controller that has
-            // never had any providers added. This is almost certainly a bug
-            // (e.g. mismatched add/remove calls, or removal before addition).
-            Log.getInstance().warning(
-                    "FeedbackControl.removeFeedbackProvider: called with a "
-                    + "non-null provider but no listener list exists. "
-                    + "Provider type: " + provider.getClass().getName()
-                    + ". Verify that addFeedbackProvider was called first.");
             return;
         }
 
