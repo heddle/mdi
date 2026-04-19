@@ -59,9 +59,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * <p>This class is not instantiable.</p>
  */
-public final class GeoJsonCountryLoader  {
+public final class GeoJsonCountryLoader implements ICountryLoader {
 
-    private GeoJsonCountryLoader() { /* utility class */ }
+    public GeoJsonCountryLoader() { /* utility class */ }
 
     // =========================================================================
     // CountryFeature

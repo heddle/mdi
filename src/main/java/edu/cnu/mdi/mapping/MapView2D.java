@@ -7,8 +7,12 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Collections;
 import java.util.List;
 
+import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 
 import edu.cnu.mdi.container.IContainer;
@@ -113,12 +117,23 @@ public class MapView2D extends BaseView {
     /** Renderer for city marker dots and labels. */
     private CityPointRenderer cityRenderer;
 
+    /**
+     * Ordered list of additional rendering layers added via
+     * {@link #addLayer(ShapeFeatureRenderer)}. Drawn after countries and
+     * before cities so that vector overlays (rivers, lakes, etc.) appear
+     * beneath city markers.
+     */
+    private final List<ShapeFeatureRenderer> extraLayers = new ArrayList<>();
+
     // -------------------------------------------------------------------------
     // Instance state — UI
     // -------------------------------------------------------------------------
 
     /** Side control panel (projection selector, theme buttons, population slider). */
     private MapControlPanel controlPanel;
+
+    /** Menu providing shapefile open and per-layer visibility controls. */
+    private ShapefileMenu shapefileMenu;
 
     // -------------------------------------------------------------------------
     // Workspace — reused per feedback call to avoid allocation
@@ -145,6 +160,10 @@ public class MapView2D extends BaseView {
      */
     public MapView2D(Object... keyVals) {
         super(keyVals);
+        
+		JMenuBar menuBar = new JMenuBar();
+		setJMenuBar(menuBar);
+
 
         controlPanel = new MapControlPanel(this);
 
@@ -153,6 +172,7 @@ public class MapView2D extends BaseView {
 
         initSidePanel();
         setAfterDraw();
+        initShapefileMenu();
     }
 
     // -------------------------------------------------------------------------
@@ -229,6 +249,13 @@ public class MapView2D extends BaseView {
         }
 
         rebuildCityRenderer();
+
+        // Notify any extra shapefile layers of the new projection so they
+        // re-project their geometry on the next render call.
+        for (ShapeFeatureRenderer layer : extraLayers) {
+            layer.setProjection(projection);
+        }
+
         refresh();
     }
 
@@ -278,6 +305,81 @@ public class MapView2D extends BaseView {
      */
     public int getCityCount() {
         return (cities != null) ? cities.size() : 0;
+    }
+
+    // -------------------------------------------------------------------------
+    // Extra layer management
+    // -------------------------------------------------------------------------
+
+    /**
+     * Appends a {@link ShapeFeatureRenderer} to the end of the extra-layer
+     * list. Extra layers are drawn after country polygons and before city
+     * markers, in the order they were added.
+     *
+     * <p>Typical use:</p>
+     * <pre>{@code
+     * List<ShapeFeature> rivers = new ShapefileFeatureLoader()
+     *         .load(Path.of("ne_10m_rivers_lake_centerlines.shp"));
+     * ShapeFeatureStyle style = new ShapeFeatureStyle()
+     *         .strokeColor(new Color(0x6B9FD4))
+     *         .strokeWidth(0.8f);
+     * mapView.addLayer(new ShapeFeatureRenderer(rivers, mapView.getProjection(), style));
+     * }</pre>
+     *
+     * @param renderer the layer to add; must not be {@code null}
+     */
+    public void addLayer(ShapeFeatureRenderer renderer) {
+        addLayer(renderer, "Layer " + (extraLayers.size() + 1));
+    }
+
+    /**
+     * Appends a named {@link ShapeFeatureRenderer} layer and registers it
+     * in the {@link ShapefileMenu} so the user can toggle its visibility.
+     *
+     * <p>This is the preferred overload for startup layers added from
+     * application code. The anonymous overload
+     * {@link #addLayer(ShapeFeatureRenderer)} still works but produces a
+     * menu entry with no display name.</p>
+     *
+     * @param renderer the layer to add; must not be {@code null}
+     * @param name     display name shown in the Shapefiles menu
+     */
+    public void addLayer(ShapeFeatureRenderer renderer, String name) {
+        extraLayers.add(Objects.requireNonNull(renderer, "renderer"));
+        if (shapefileMenu != null) {
+            shapefileMenu.registerLayer(renderer, name);
+        }
+        refresh();
+    }
+
+    /**
+     * Removes a previously added {@link ShapeFeatureRenderer} layer.
+     * Has no effect if the renderer is not in the list.
+     *
+     * @param renderer the layer to remove
+     */
+    public void removeLayer(ShapeFeatureRenderer renderer) {
+        if (extraLayers.remove(renderer)) refresh();
+    }
+
+    /**
+     * Removes all extra layers added via {@link #addLayer}. The base
+     * layers (countries, cities, graticule) are unaffected.
+     */
+    public void clearLayers() {
+        if (!extraLayers.isEmpty()) {
+            extraLayers.clear();
+            refresh();
+        }
+    }
+
+    /**
+     * Returns an unmodifiable view of the current extra-layer list.
+     *
+     * @return unmodifiable list of extra layers in draw order
+     */
+    public List<ShapeFeatureRenderer> getLayers() {
+        return Collections.unmodifiableList(extraLayers);
     }
 
     // -------------------------------------------------------------------------
@@ -336,6 +438,10 @@ public class MapView2D extends BaseView {
      *   <li>Latitude and longitude in degrees (only when cursor is on map).</li>
      *   <li>Picked country name and ISO code (only when cursor is on a country
      *       polygon).</li>
+     *   <li>Tooltip text from any extra layers ({@link ShapeFeatureRenderer})
+     *       whose {@link IPickable#pick} returns a non-null result. Each
+     *       layer contributes at most one string; all hit layers are
+     *       reported.</li>
      *   <li>Picked city name and population (only when cursor is near a city
      *       dot).</li>
      * </ol>
@@ -364,6 +470,14 @@ public class MapView2D extends BaseView {
                     feedbackStrings.add(
                             String.format("%s (%s)", countryHit.getAdminName(),
                                           countryHit.getIsoA3()));
+                }
+            }
+
+            // Extra shapefile layers (rivers, lakes, etc.)
+            for (ShapeFeatureRenderer layer : extraLayers) {
+                String layerHit = layer.pick(pp, container);
+                if (layerHit != null) {
+                    feedbackStrings.add(layerHit);
                 }
             }
 
@@ -399,6 +513,17 @@ public class MapView2D extends BaseView {
     // -------------------------------------------------------------------------
 
     /**
+     * Creates the {@link ShapefileMenu} and inserts it into the view's
+     * {@link javax.swing.JMenuBar} at position 1 (after the File menu),
+     * following the same pattern used by {@code SplotDemoView}.
+     */
+    private void initShapefileMenu() {
+        shapefileMenu = new ShapefileMenu(this);
+        applyFocusFix(shapefileMenu, this);
+        getJMenuBar().add(shapefileMenu);
+    }
+
+    /**
      * Initializes and lays out the east-side strip containing the control
      * panel ({@link MapControlPanel}) above the feedback pane
      * ({@link FeedbackPane}).
@@ -425,6 +550,7 @@ public class MapView2D extends BaseView {
      *   <li>Fill the ocean region inside the projection's clip shape.</li>
      *   <li>Draw the map outline and graticule lines.</li>
      *   <li>Draw country polygons.</li>
+     *   <li>Draw extra layers (rivers, lakes, etc.) in insertion order.</li>
      *   <li>Draw city dots and labels.</li>
      * </ol>
      *
@@ -451,7 +577,13 @@ public class MapView2D extends BaseView {
                     countryRenderer.render(g, container);
                 }
 
-                // 5. City dots and labels (null-safe)
+                // 5. Extra layers: rivers, lakes, and any other shapefile
+                //    overlays added via addLayer(), in insertion order.
+                for (ShapeFeatureRenderer layer : extraLayers) {
+                    layer.render(g, container);
+                }
+
+                // 6. City dots and labels (null-safe)
                 if (cityRenderer != null) {
                     cityRenderer.render(g, container);
                 }

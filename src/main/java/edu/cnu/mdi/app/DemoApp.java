@@ -3,7 +3,9 @@ package edu.cnu.mdi.app;
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.log.Log;
@@ -13,6 +15,11 @@ import edu.cnu.mdi.mapping.GeoJsonCountryLoader.CountryFeature;
 import edu.cnu.mdi.mapping.MapContainer;
 import edu.cnu.mdi.mapping.MapResources;
 import edu.cnu.mdi.mapping.MapView2D;
+import edu.cnu.mdi.mapping.ShapeFeature;
+import edu.cnu.mdi.mapping.ShapeFeatureRenderer;
+import edu.cnu.mdi.mapping.ShapeFeatureStyle;
+import edu.cnu.mdi.mapping.ShapefileCountryLoader;
+import edu.cnu.mdi.mapping.ShapefileFeatureLoader;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
 import edu.cnu.mdi.sim.ga.triimage.ImageEvolutionDemoView;
 import edu.cnu.mdi.sim.simanneal.tspdemo.TspDemoView;
@@ -254,17 +261,41 @@ public class DemoApp extends BaseMDIApplication {
                 PropertyUtils.WHEELZOOM,        true);
 
         try {
+        	
+        	//hybrid approach for demo, use GeoJSON for countries and cities so the population slider works, 
+        	//but use shapefiles for rivers and lakes to show how both formats can be used together
+        	
             List<CountryFeature> countries = GeoJsonCountryLoader
                     .loadFromResourceStatic(resPrefix + MapResources.COUNTRIES_GEOJSON);
             mapView.setCountries(countries);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            
 
-        try {
-            List<GeoJsonCityLoader.CityFeature> cities = GeoJsonCityLoader
-                    .loadFromResourceStatic(resPrefix + MapResources.CITIES_GEOJSON);
-            mapView.setCities(cities);
+        	// Major rivers only — add BEFORE lakes so lakes paint over river ends
+        	List<ShapeFeature> allRivers = new ShapefileFeatureLoader()
+        	        .load(Path.of("/Users/davidheddle/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.shp"));
+        	List<ShapeFeature> majorRivers = allRivers.stream()
+        	        .filter(f -> f.getPropertyInt("scalerank", 99) <= 6)
+        	        .collect(Collectors.toList());
+        	mapView.addLayer(new ShapeFeatureRenderer(majorRivers, mapView.getProjection(),
+        	        new ShapeFeatureStyle()
+        	                .strokeColor(new Color(107, 159, 212, 180))
+        	                .strokeWidth(0.5f)
+        	                .tooltipFields("name")), "Rivers (major)");
+
+        	// Lakes — drawn after rivers so they cover river centerlines cleanly
+        	List<ShapeFeature> lakes = new ShapefileFeatureLoader()
+        	        .load(Path.of("/Users/davidheddle/ne_10m_lakes/ne_10m_lakes.shp"));
+        	mapView.addLayer(new ShapeFeatureRenderer(lakes, mapView.getProjection(),
+        	        new ShapeFeatureStyle()
+        	                .fillColor(new Color(107, 159, 212, 220))
+        	                .strokeColor(new Color(74, 127, 181, 180))
+        	                .strokeWidth(0.4f)
+        	                .tooltipFields("name")), "Lakes");
+
+        	// Cities — use GeoJSON so the population slider works
+        	mapView.setCities(GeoJsonCityLoader
+        	        .loadFromResourceStatic(resPrefix + MapResources.CITIES_GEOJSON));       	
+  
         } catch (IOException e) {
             e.printStackTrace();
         }

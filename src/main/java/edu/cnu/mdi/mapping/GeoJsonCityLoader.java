@@ -66,9 +66,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * <p>This class is not instantiable.</p>
  */
-public final class GeoJsonCityLoader {
+public final class GeoJsonCityLoader implements ICityLoader {
 
-    private GeoJsonCityLoader() { /* utility class */ }
+    public GeoJsonCityLoader() { /* utility class */ }
 
     // =========================================================================
     // CityFeature
