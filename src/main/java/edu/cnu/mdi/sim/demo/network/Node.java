@@ -24,12 +24,20 @@ public class Node {
 
 	/**
 	 * Approximate icon radius in world units.
-	 * <p>
-	 * This is set by the view each render pass. The simulation uses it for
-	 * overlap-aware repulsion and clamping so that icons remain on-screen.
-	 * </p>
+	 *
+	 * <p>Set by the view after construction and again whenever the viewport zoom
+	 * or size changes. The simulation reads this field on the simulation thread
+	 * to compute overlap-aware repulsion and to clamp positions so icons remain
+	 * fully visible inside the unit square.</p>
+	 *
+	 * <p>Declared {@code volatile} because the view writes it on the EDT while
+	 * the simulation thread reads it concurrently. A stale value following a
+	 * just-completed zoom is harmless — it affects at most one simulation step —
+	 * but the {@code volatile} guarantee ensures the simulation thread will see
+	 * the updated value on the immediately following read without requiring an
+	 * explicit lock or memory barrier.</p>
 	 */
-	public double worldRadius;
+	public volatile double worldRadius;
 
 	/**
 	 * Construct a new node.

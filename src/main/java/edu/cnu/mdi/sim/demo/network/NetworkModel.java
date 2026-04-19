@@ -71,12 +71,21 @@ public final class NetworkModel {
 	}
 
 	/**
-	 * Create a random world-based network.
+	 * Create a random world-based network model in the unit square.
 	 *
-	 * @param serverCount number of servers (must be >= 1)
-	 * @param clientCount number of clients (must be >= 0)
-	 * @param rng         random generator (non-null)
-	 * @return a randomized model in world coordinates
+	 * <p>Servers are placed first, then clients, then printers. Every client is
+	 * assigned to exactly one randomly chosen server via an {@link Edge}. Each
+	 * printer is assigned to between 1 and 4 clients (capped at
+	 * {@code clientCount} to prevent an infinite loop when the client pool is
+	 * very small). All assignments are unique per printer.</p>
+	 *
+	 * @param serverCount  number of servers; must be &ge; 4
+	 * @param clientCount  number of clients; must be &ge; 6
+	 * @param printerCount number of printers; must be &ge; 0
+	 * @param rng          random number generator; must not be {@code null}
+	 * @return a freshly constructed, randomized {@link NetworkModel}
+	 * @throws IllegalArgumentException if any count constraint is violated or
+	 *                                  {@code rng} is {@code null}
 	 */
 	public static NetworkModel random(int serverCount, int clientCount, int printerCount, Random rng) {
 		if (serverCount < 4) {
@@ -120,20 +129,20 @@ public final class NetworkModel {
 			model.edges.add(new Edge(client, server));
 		}
 
-		// printer connections
+		// Printer connections: each printer is randomly assigned 1–4 clients.
+		// A HashSet tracks already-assigned clients to guarantee uniqueness in
+		// O(1) per probe rather than the O(k) cost of ArrayList.contains().
 		for (Node printer : model.printers) {
-			//assign every printer to some random (between 1 and 4) clients
 			int numClients = 1 + rng.nextInt(4);
-			// keep track for make sure assignments are unique
-			List<Node> assignedClients = new ArrayList<>();
-			for (int i = 0; i < numClients; i++) {
-				Node client;
-				do {
-					client = model.clients.get(rng.nextInt(clientCount));
-				} while (assignedClients.contains(client));
-				assignedClients.add(client);
-				model.edges.add(new Edge(client, printer));
+			// Cap numClients so we never loop forever when clientCount is small.
+			numClients = Math.min(numClients, clientCount);
 
+			java.util.Set<Node> assignedClients = new java.util.HashSet<>();
+			while (assignedClients.size() < numClients) {
+				Node client = model.clients.get(rng.nextInt(clientCount));
+				if (assignedClients.add(client)) {
+					model.edges.add(new Edge(client, printer));
+				}
 			}
 		}
 

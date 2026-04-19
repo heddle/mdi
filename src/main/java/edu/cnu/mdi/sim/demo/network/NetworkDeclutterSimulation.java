@@ -190,14 +190,33 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	private double overlapBoost = 3.0;
 
     /**
-	 * Printer-specific increase to spring constant.
-	 * <p>
-	 * Springs involving printers use {@code k * printerKBoost} as their
-	 * stiffness. This makes printer connections stiffer, helping them
-	 * resist being pulled around by other forces.
-	 * </p>
+	 * Printer-specific multiplier applied to the spring constant.
+	 *
+	 * <p>Springs involving printers use {@code k * printerKBoost} as their
+	 * effective stiffness, making printer connections stiffer and helping them
+	 * resist being pulled around by other forces.</p>
 	 */
-	public double printerKBoost = 1.2;
+	private double printerKBoost = 1.2;
+
+	/**
+	 * Return the printer spring-constant multiplier.
+	 *
+	 * @return the current {@code printerKBoost} value
+	 */
+	public double getPrinterKBoost() {
+	    return printerKBoost;
+	}
+
+	/**
+	 * Set the printer spring-constant multiplier.
+	 *
+	 * @param printerKBoost the new multiplier; values less than 1.0 make
+	 *                      printer springs softer than the base constant,
+	 *                      values greater than 1.0 make them stiffer
+	 */
+	public void setPrinterKBoost(double printerKBoost) {
+	    this.printerKBoost = printerKBoost;
+	}
 
 	/**
 	 * Per-component velocity clamp (world units per step).
@@ -243,16 +262,22 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	/** Current step index. */
 	private int step;
 
-	/** True if {@link #cancel(SimulationContext)} has been called. */
-	private volatile boolean canceled;
-
-	/** Simulation engine used for posting progress/messages/refresh. */
+	/**
+	 * Optional engine handle used to post progress/messages/refresh to the EDT.
+	 * Set via {@link #setEngine(SimulationEngine)}. May be {@code null} if the
+	 * caller does not need UI hints beyond what the engine itself provides.
+	 */
 	private SimulationEngine engine;
 
-	/** Queue of energy samples collected during the simulation. */
-	private final java.util.concurrent.ConcurrentLinkedQueue<EnergySample> energySamples = new java.util.concurrent.ConcurrentLinkedQueue<>();
-
-	/** Buffered per-step diagnostics samples (drained by the view on refresh). */
+	/**
+	 * Per-step diagnostic samples produced during the simulation and drained by
+	 * the view on each refresh callback.
+	 *
+	 * <p>A {@link java.util.concurrent.ConcurrentLinkedQueue} is used because
+	 * the simulation thread enqueues samples and the EDT drains them inside
+	 * {@code onRefresh} — a lock-free queue avoids any coordination between
+	 * the two threads.</p>
+	 */
 	private final java.util.concurrent.ConcurrentLinkedQueue<Diagnostics> diagnosticsSamples =
 	        new java.util.concurrent.ConcurrentLinkedQueue<>();
 
@@ -295,13 +320,18 @@ public final class NetworkDeclutterSimulation implements Simulation {
 		this.engine = engine;
 	}
 
+	/**
+	 * Initialize the simulation: reset the step counter and post an initial
+	 * refresh so the user sees the starting layout before it starts moving.
+	 *
+	 * @param ctx the simulation context (not used directly, but required by
+	 *            the {@link Simulation} contract)
+	 * @throws Exception not thrown by this implementation
+	 */
 	@Override
-	public void init(SimulationContext ctx) {
+	public void init(SimulationContext ctx) throws Exception {
 		step = 0;
-		canceled = false;
 
-		// Post an initial message and refresh so the user sees the starting layout 
-		// before it starts moving.
 		if (engine != null) {
 			engine.postMessage("Network generated. Relaxing layout…");
 			engine.postProgress(ProgressInfo.indeterminate("Relaxing…"));
@@ -312,8 +342,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	@Override
 	public boolean step(SimulationContext ctx) {
 
-	    // return false (terminate) if normal completion conditions met
-	    if (canceled || ctx.isCancelRequested()) {
+	    if (ctx.isCancelRequested()) {
 	        return false;
 	    }
 
@@ -453,8 +482,12 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	    }
 
 	    if (engine != null && (step % 10 == 0)) {
-	    	double frac = 1.0 - Math.min(1.0, avgSpeed / (5.0 * settleVel()));
-	        engine.postProgress(ProgressInfo.determinate(frac, "Relaxing… step " + step));
+	        // max(0,...) guards against a negative fraction early in the run
+	        // when avgSpeed is far above the settle threshold.
+	        double frac = Math.max(0.0,
+	                1.0 - Math.min(1.0, avgSpeed / (5.0 * settleVel())));
+	        engine.postProgress(ProgressInfo.determinate(frac,
+	                "Relaxing… step " + step));
 	    }
 
 	    if (engine != null && (step % 2 == 0)) {
@@ -475,18 +508,40 @@ public final class NetworkDeclutterSimulation implements Simulation {
 
 	/**
 	 * Average node speed threshold for declaring the layout "settled".
-	 * <p>
-	 * After {@link #minSteps}, if the mean speed (averaged across all nodes) falls
-	 * below this value, the simulation stops.
-	 * </p>
+	 *
+	 * <p>After {@link #minSteps} steps, if the mean node speed falls below this
+	 * value <em>and</em> the force RMS is below {@link #settleForce}, the
+	 * simulation stops.</p>
+	 *
+	 * <p>The threshold is intentionally coupled to {@link #r0}: a shorter
+	 * equilibrium spring length naturally produces a tighter, less-mobile layout
+	 * at rest, so the settle speed scales accordingly. Consequence: changing
+	 * {@link #r0} after construction silently shifts the effective settle
+	 * threshold.</p>
+	 *
+	 * @return the per-node speed threshold in world-units per step
 	 */
 	private double settleVel() {
 		return r0 / 25.0;
 	}
 
+	/**
+	 * Cancellation hook called by the engine on the simulation thread.
+	 *
+	 * <p>Posts a UI message and indeterminate progress indicator so the user
+	 * sees immediate feedback. The engine calls
+	 * {@link Simulation#shutdown(SimulationContext)} immediately after this
+	 * method returns.</p>
+	 *
+	 * <p>No separate simulation-side cancellation flag is needed:
+	 * {@link SimulationContext#isCancelRequested()} is the authoritative
+	 * cancellation signal and is already checked at the top of
+	 * {@link #step(SimulationContext)}.</p>
+	 *
+	 * @param ctx the simulation context
+	 */
 	@Override
 	public void cancel(SimulationContext ctx) {
-		canceled = true;
 		if (engine != null) {
 			engine.postMessage("Cancel requested.");
 			engine.postProgress(ProgressInfo.indeterminate("Canceling…"));
@@ -494,62 +549,82 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	}
 
 	/**
-	 * Get the queue of diagnostics samples collected during the simulation.
+	 * Return the queue of per-step diagnostic samples produced during the
+	 * simulation.
 	 *
-	 * @return the diagnostics samples queue
+	 * <p>The simulation enqueues a sample every 5 steps on the simulation
+	 * thread. The view drains the queue by calling
+	 * {@link java.util.Queue#poll()} repeatedly inside its {@code onRefresh}
+	 * callback on the EDT. {@link java.util.concurrent.ConcurrentLinkedQueue}
+	 * is lock-free, so concurrent access from both threads is safe without any
+	 * additional synchronization.</p>
+	 *
+	 * @return the live diagnostics queue; never {@code null}
 	 */
 	public java.util.concurrent.ConcurrentLinkedQueue<Diagnostics> getDiagnosticsSamples() {
 	    return diagnosticsSamples;
 	}
 
-
 	/**
-	 * Get the current simulation step index.
+	 * Return the current simulation step index (1-based; 0 before the first
+	 * step has completed).
 	 *
-	 * @return the step (0-based)
+	 * @return the step count
 	 */
 	public int getStep() {
 	    return step;
 	}
 
 	/**
-	 * Get the queue of energy samples collected during the simulation.
+	 * Compute a pseudo-energy snapshot for the current layout.
 	 *
-	 * @return the energy samples queue
+	 * <p>Delegates to {@link #computeEnergyInternal()}, the single canonical
+	 * implementation shared with {@link #computeDiagnostics} to eliminate
+	 * code duplication.</p>
+	 *
+	 * <p><strong>Note:</strong> These values are not a conserved Hamiltonian.
+	 * See the class-level javadoc for the full explanation of the force/energy
+	 * mismatch and other non-conservative effects.</p>
+	 *
+	 * @return an {@link Energy} record for the current node positions and
+	 *         velocities
 	 */
-	public java.util.concurrent.ConcurrentLinkedQueue<EnergySample> getEnergySamples() {
-	    return energySamples;
+	public Energy computeEnergy() {
+	    return computeEnergyInternal();
 	}
 
 	/**
-	 * Compute a pseudo-energy diagnostic for the current layout.
-	 * <p>
-	 * This is not a conserved physical energy (due to damping, clamping,
-	 * velocity caps, and piecewise forces), but it is a useful monotone-ish
-	 * objective for diagnosing convergence and tuning parameters.
-	 * </p>
+	 * Canonical energy computation shared by {@link #computeEnergy()} and
+	 * {@link #computeDiagnostics}.
+	 *
+	 * <p>Computes spring pseudo-energy, repulsion pseudo-energy, centering
+	 * potential, and kinetic energy. The repulsion pseudo-energy uses
+	 * {@code strength / sqrt(r² + ε)} while the corresponding integration force
+	 * uses {@code strength / (r² + ε)} — see the class javadoc for why this
+	 * mismatch exists and why it is acceptable for a demo.</p>
+	 *
+	 * @return a new {@link Energy} for the current node state
 	 */
-	public Energy computeEnergy() {
+	private Energy computeEnergyInternal() {
 
-	    double Uspring = 0.0;
-	    double Urep = 0.0;
-	    double Ucenter = 0.0;
-	    double K = 0.0;
+	    double Uspring  = 0.0;
+	    double Urep     = 0.0;
+	    double Ucenter  = 0.0;
+	    double K        = 0.0;
 
-	    // --- spring energy ---
+	    // Spring pseudo-energy: ½ k·kboost·(r - rboost·r0)²
 	    for (NetworkModel.Edge e : model.edges) {
 	        var a = e.node1;
 	        var b = e.node2;
 
 	        double dx = b.x - a.x;
 	        double dy = b.y - a.y;
-	        double r = Math.sqrt(dx * dx + dy * dy) + 1e-12;
+	        double r  = Math.sqrt(dx * dx + dy * dy) + 1e-12;
 
 	        double rboost = 1.0;
 	        double kboost = 1.0;
-
 	        if (a.type == Node.NodeType.PRINTER || b.type == Node.NodeType.PRINTER) {
-	            rboost = 0.8;
+	            rboost = PRINTER_RBOOST;
 	            kboost = printerKBoost;
 	        }
 
@@ -557,10 +632,10 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	        Uspring += 0.5 * (k * kboost) * dr * dr;
 	    }
 
-	    // --- repulsion energy ---
+	    // Repulsion pseudo-energy: strength / sqrt(r² + ε)
+	    // (The integration force is strength/(r²+ε), so force ≠ -∇U here;
+	    //  see class javadoc for the full discussion.)
 	    int n = model.nodes.size();
-	    double eps = 1.0e-4;
-
 	    for (int i = 0; i < n; i++) {
 	        var a = model.nodes.get(i);
 	        for (int j = i + 1; j < n; j++) {
@@ -568,32 +643,29 @@ public final class NetworkDeclutterSimulation implements Simulation {
 
 	            double dx = a.x - b.x;
 	            double dy = a.y - b.y;
-	            double r2 = dx * dx + dy * dy + eps;
-	            double r = Math.sqrt(r2);
+	            double r2 = dx * dx + dy * dy + REPULSION_EPS;
+	            double r  = Math.sqrt(r2);
 
 	            double strength = repulsionC;
 	            if (a.type == Node.NodeType.SERVER || b.type == Node.NodeType.SERVER) {
 	                strength *= serverRepulsion;
 	            }
-
-	            double minDist = a.worldRadius + b.worldRadius + 0.01;
+	            double minDist = a.worldRadius + b.worldRadius + OVERLAP_PAD;
 	            if (r2 < minDist * minDist) {
 	                strength *= overlapBoost;
 	            }
-
-	            // Potential ~ strength / r
 	            Urep += strength / r;
 	        }
 	    }
 
-	    // --- centering energy ---
+	    // Centering potential: ½ centerK · |r - center|²
 	    for (var node : model.nodes) {
 	        double dx = node.x - 0.5;
 	        double dy = node.y - 0.5;
 	        Ucenter += 0.5 * centerK * (dx * dx + dy * dy);
 	    }
 
-	    // --- kinetic energy ---
+	    // Kinetic pseudo-energy: ½ v²
 	    for (var node : model.nodes) {
 	        K += 0.5 * (node.vx * node.vx + node.vy * node.vy);
 	    }
@@ -601,102 +673,35 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	    return new Energy(Uspring, Urep, Ucenter, K);
 	}
 
-	/**
-	 * Energy sample at a given simulation step.
-	 */
-	public static final class EnergySample {
-	    public final int step;
-	    public final Energy energy;
-	    public EnergySample(int step, Energy energy) {
-	    	this.step = step;
-	    	this.energy = energy; }
-	}
+
 
 	/**
-	 * Compute diagnostics for the current model state.
-	 * <p>
-	 * Note: Energies are "pseudo-energies" for tuning/monitoring; the dynamics are
-	 * not Hamiltonian due to damping, clamping, velocity caps, and piecewise forces.
-	 * </p>
+	 * Compute a {@link Diagnostics} snapshot for the current model state.
 	 *
-	 * @param avgSpeed optional average speed computed during integration step; if
-	 *                 unknown, pass {@code Double.NaN} and it will be recomputed
-	 * @param vmaxHitCount optional count of nodes that hit the velocity clamp during
-	 *                     integration; if unknown, pass {@code -1} and it will be
-	 *                     recomputed (slower)
+	 * <p>Energies are obtained from {@link #computeEnergyInternal()} — the
+	 * single canonical implementation shared with {@link #computeEnergy()} —
+	 * so the two can never diverge.</p>
+	 *
+	 * <p>The caller may supply {@code avgSpeed} and {@code vmaxHitCount} from
+	 * values already computed during the integration step to avoid an extra
+	 * O(N) scan. Pass {@code Double.NaN} / {@code -1} to have this method
+	 * recompute them from the current node velocities.</p>
+	 *
+	 * @param avgSpeed     mean node speed in world-units/step from the most
+	 *                     recent integration, or {@code Double.NaN} to recompute
+	 * @param vmaxHitCount number of nodes that hit the speed clamp in the most
+	 *                     recent integration step, or {@code -1} to recompute
+	 * @param FrmsNow      force RMS computed during the current step
+	 * @return a fully-populated {@link Diagnostics} for the current step
 	 */
 	public Diagnostics computeDiagnostics(double avgSpeed, int vmaxHitCount, double FrmsNow) {
 
-	    // ---- energies ----
-	    double Uspring = 0.0;
-	    double Urep = 0.0;
-	    double Ucenter = 0.0;
-	    double K = 0.0;
+	    // Delegate to the shared helper — no duplicated loops.
+	    Energy e = computeEnergyInternal();
 
-	    // spring energy (edges)
-	    for (NetworkModel.Edge e : model.edges) {
-	        var a = e.node1;
-	        var b = e.node2;
-
-	        double dx = b.x - a.x;
-	        double dy = b.y - a.y;
-	        double r = Math.sqrt(dx * dx + dy * dy) + 1e-12;
-
-	        double rboost = 1.0;
-	        double kboost = 1.0;
-	        if (a.type == Node.NodeType.PRINTER || b.type == Node.NodeType.PRINTER) {
-	            rboost = 0.8;
-	            kboost = printerKBoost;
-	        }
-
-	        double dr = r - rboost * r0;
-	        Uspring += 0.5 * (k * kboost) * dr * dr;
-	    }
-
-	    // repulsion energy (all pairs)
 	    int n = model.nodes.size();
-	    double eps = 1.0e-4;
-	    double overlapPad = 0.01;
 
-	    for (int i = 0; i < n; i++) {
-	        var a = model.nodes.get(i);
-	        for (int j = i + 1; j < n; j++) {
-	            var b = model.nodes.get(j);
-
-	            double dx = a.x - b.x;
-	            double dy = a.y - b.y;
-	            double r2 = dx * dx + dy * dy + eps;
-	            double r = Math.sqrt(r2);
-
-	            double strength = repulsionC;
-	            if (a.type == Node.NodeType.SERVER || b.type == Node.NodeType.SERVER) {
-	                strength *= serverRepulsion;
-	            }
-
-	            double minDist = a.worldRadius + b.worldRadius + overlapPad;
-	            if (r2 < minDist * minDist) {
-	                strength *= overlapBoost;
-	            }
-
-	            // Potential ~ strength / r for force ~ strength / r^2
-	            Urep += strength / r;
-	        }
-	    }
-
-	    // centering potential
-	    for (var node : model.nodes) {
-	        double dx = node.x - 0.5;
-	        double dy = node.y - 0.5;
-	        Ucenter += 0.5 * centerK * (dx * dx + dy * dy);
-	    }
-
-	    // kinetic
-	    for (var node : model.nodes) {
-	        K += 0.5 * (node.vx * node.vx + node.vy * node.vy);
-	    }
-
-
-	    // ---- avg speed + clamp fraction ----
+	    // Recompute avgSpeed if the caller did not supply it.
 	    if (Double.isNaN(avgSpeed)) {
 	        double speedSum = 0.0;
 	        for (var node : model.nodes) {
@@ -705,27 +710,40 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	        avgSpeed = speedSum / Math.max(1, n);
 	    }
 
-		if (vmaxHitCount < 0) {
-			// recompute (slower, but still O(N))
-			vmaxHitCount = 0;
-			final double tol = 1e-12;
-			for (var node : model.nodes) {
-				double v2 = node.vx * node.vx + node.vy * node.vy;
-				if (v2 >= (vmax - tol) * (vmax - tol)) {
-					vmaxHitCount++;
-				}
-			}
-		}
+	    // Recompute vmaxHitCount if the caller did not supply it.
+	    if (vmaxHitCount < 0) {
+	        vmaxHitCount = 0;
+	        final double tol = 1e-12;
+	        for (var node : model.nodes) {
+	            double v2 = node.vx * node.vx + node.vy * node.vy;
+	            if (v2 >= (vmax - tol) * (vmax - tol)) {
+	                vmaxHitCount++;
+	            }
+	        }
+	    }
 
 	    double vmaxFrac = vmaxHitCount / (double) Math.max(1, n);
+	    double minSep   = minPairwiseSeparation();
 
-	    // ---- min pairwise separation ----
-	    double minSep = minPairwiseSeparation();
-
-	    return new Diagnostics(step, Uspring, Urep, Ucenter, K, avgSpeed, FrmsNow, vmaxFrac, minSep);
+	    return new Diagnostics(step,
+	            e.spring, e.repulsion, e.center, e.kinetic,
+	            avgSpeed, FrmsNow, vmaxFrac, minSep);
 	}
 
-	// compute minimum pairwise separation ratio
+	/**
+	 * Compute the minimum pairwise separation ratio across all node pairs.
+	 *
+	 * <p>For each pair {@code (a, b)}, the ratio is:
+	 * <pre>  r / (worldRadius_a + worldRadius_b + OVERLAP_PAD)</pre>
+	 * A value below 1.0 indicates the two icons overlap. The global minimum is
+	 * returned; a value near or below 1.0 signals unresolved overlaps.</p>
+	 *
+	 * <p>This is an O(N²) scan, called only from {@link #computeDiagnostics},
+	 * which itself runs only every 5 steps.</p>
+	 *
+	 * @return the minimum separation ratio; {@link Double#POSITIVE_INFINITY} if
+	 *         fewer than two nodes exist
+	 */
 	private double minPairwiseSeparation() {
 		double minSep = Double.POSITIVE_INFINITY;
 		int n = model.nodes.size();
