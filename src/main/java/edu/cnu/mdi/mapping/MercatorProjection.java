@@ -13,298 +13,361 @@ import java.awt.geom.Rectangle2D;
 import edu.cnu.mdi.container.IContainer;
 
 /**
- * Spherical Mercator projection.
- * <p>
- * Uses a practical latitude cutoff (±85°) to avoid infinite Y at the poles.
- * Projection-space coordinates:
+ * Spherical Mercator projection (EPSG:3857 style, unit sphere).
  *
+ * <h2>Forward equations</h2>
  * <pre>
- *     x = λ
- *     y = ln(tan(π/4 + φ/2))
+ *   x = λ - λ₀          (relative longitude, wrapped to [-π, π))
+ *   y = ln(tan(π/4 + φ/2))
  * </pre>
  *
- * where λ is longitude and φ is latitude in radians.
+ * <h2>Inverse equations</h2>
+ * <pre>
+ *   λ = wrap(x + λ₀)
+ *   φ = 2 atan(exp(y)) - π/2
+ * </pre>
+ *
+ * <h2>Domain</h2>
+ * <p>Latitude is clamped to ±89° to avoid infinite Y values at the poles. The
+ * projection space bounding box is therefore
+ * {@code [-π, π] × [mercatorY(-89°), mercatorY(89°)]}.</p>
+ *
+ * <h2>Seam handling</h2>
+ * <p>The Mercator projection has a seam at longitude {@code λ₀ ± π}. The
+ * {@link #crossesSeam(double, double)} override detects when a polygon edge
+ * spans more than π radians of relative longitude, which signals that the edge
+ * wraps around the seam and must be split by {@link CountryRenderer}.</p>
  */
 public class MercatorProjection implements IMapProjection {
 
-	/** Maximum latitude (in radians) to avoid infinite Y at the poles. */
-	private static final double MAX_LAT = Math.toRadians(89.0);
-	private static final double MIN_LAT = Math.toRadians(-89.0);
+    // -------------------------------------------------------------------------
+    // Constants
+    // -------------------------------------------------------------------------
 
-	/** Longitudinal extent (whole world). */
-	private static final double MIN_LON = -Math.PI;
-	private static final double MAX_LON = Math.PI;
+    /**
+     * Maximum latitude (radians) accepted before Y becomes impractical.
+     * Corresponds to approximately ±85.05° (Web Mercator standard cutoff
+     * is ~85.05°; here we use a slightly wider ±89°).
+     */
+    private static final double MAX_LAT = Math.toRadians(89.0);
+    private static final double MIN_LAT = -MAX_LAT;
 
-	/** Y extents corresponding to ±MAX_LAT. */
-	private static final double MIN_Y = mercatorY(MIN_LAT);
-	private static final double MAX_Y = mercatorY(MAX_LAT);
+    private static final double MIN_LON = -Math.PI;
+    private static final double MAX_LON =  Math.PI;
 
-	/** Active theme used for rendering. */
-	private MapTheme theme;
+    /** Projected Y at {@link #MIN_LAT}. */
+    private static final double MIN_Y = mercatorY(MIN_LAT);
 
-	/**
-	 * Central longitude (λ₀) in radians. Longitude values are mapped to projection
-	 * X as {@code x = wrap(λ - λ₀)}, so λ₀ is the longitude that appears at x = 0
-	 * in projection space.
-	 */
-	private double lambda0 = Math.toRadians(-70);
+    /** Projected Y at {@link #MAX_LAT}. */
+    private static final double MAX_Y = mercatorY(MAX_LAT);
 
-	/**
-	 * Create a Mercator projection with the given theme.
-	 *
-	 * @param theme the map theme; must not be {@code null}
-	 */
-	public MercatorProjection(MapTheme theme) {
-		setTheme(theme);
-	}
+    // -------------------------------------------------------------------------
+    // State
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Forward Mercator Y formula: {@code y = ln(tan(π/4 + φ/2))}.
-	 */
-	private static double mercatorY(double latitude) {
-		return Math.log(Math.tan((Math.PI / 4.0) + (latitude / 2.0)));
-	}
+    /**
+     * Central longitude λ₀ in radians.
+     *
+     * <p>The projected X coordinate of a geographic point is
+     * {@code wrap(λ - λ₀)}, so λ₀ is the longitude that appears at x = 0
+     * (the centre of the view). A value of -70° (approximately the Americas)
+     * gives a visually balanced initial view when the data panel is placed on
+     * the right-hand side of the window; it can be changed at any time via
+     * {@link #setCentralLongitude(double)}.</p>
+     */
+    private double lambda0 = Math.toRadians(-70.0);
 
-	/**
-	 * Get the central longitude λ₀ (in radians).
-	 *
-	 * @return the central longitude in radians
-	 */
-	public double getCentralLongitude() {
-		return lambda0;
-	}
+    /** Active rendering theme; set via {@link #setTheme(MapTheme)}. */
+    private MapTheme theme;
 
-	/**
-	 * Set the central longitude λ₀ (in radians).
-	 * <p>
-	 * The value is normalized using {@code wrapLongitude} so that it lies within
-	 * the conventional range (-π, π].
-	 *
-	 * @param centralLongitude the desired central longitude in radians
-	 */
-	public void setCentralLongitude(double centralLongitude) {
-		// Use the same normalization helper used elsewhere
-		this.lambda0 = wrapLongitude(centralLongitude);
-	}
+    // -------------------------------------------------------------------------
+    // Construction
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Test to see if the line between two longitudes crosses the seam (the line at
-	 * the central longitude). This is a test for the dreaded wrapping problem.
-	 *
-	 * @param lon1 one longitude in radians
-	 * @param lon2 the other longitude in radians
-	 * @return {@code true} if the line between the two longitudes crosses the seam;
-	 *         {@code false} otherwise
-	 */
-	@Override
-	public boolean crossesSeam(double lon1, double lon2) {
-		double d1 = lon1 - lambda0;
-		double d2 = lon2 - lambda0;
+    /**
+     * Creates a Mercator projection with the supplied theme and the default
+     * central longitude of -70° (centred on the western Atlantic).
+     *
+     * @param theme the map theme to use; must not be {@code null}
+     */
+    public MercatorProjection(MapTheme theme) {
+        setTheme(theme);
+    }
 
-		d1 = wrapLongitude(d1);
-		d2 = wrapLongitude(d2);
+    // -------------------------------------------------------------------------
+    // Private math helpers
+    // -------------------------------------------------------------------------
 
-//		return (d1 * d2 < 0) && (Math.abs(d1 - d2) > Math.PI);
-		return Math.abs(d1 - d2) > Math.PI;
+    /**
+     * Computes the Mercator Y value for the given latitude.
+     *
+     * @param latitude latitude φ in radians
+     * @return {@code ln(tan(π/4 + φ/2))}
+     */
+    private static double mercatorY(double latitude) {
+        return Math.log(Math.tan(Math.PI / 4.0 + latitude / 2.0));
+    }
 
-	}
+    // -------------------------------------------------------------------------
+    // Central longitude accessors
+    // -------------------------------------------------------------------------
 
-	@Override
-	public void latLonToXY(Point2D.Double latLon, Point2D.Double xy) {
-		double lon = latLon.x;
-		double lat = latLon.y;
+    /**
+     * Returns the central longitude λ₀ in radians.
+     *
+     * @return current central longitude (radians)
+     */
+    public double getCentralLongitude() {
+        return lambda0;
+    }
 
-		// Clamp latitude to avoid undefined values at poles
-		lat = Math.max(MIN_LAT, Math.min(MAX_LAT, lat));
+    /**
+     * Sets the central longitude λ₀ in radians.
+     *
+     * <p>The supplied value is normalized to (-π, π] via
+     * {@link #wrapLongitude(double)} before storage, so callers may pass any
+     * radian value without pre-normalizing.</p>
+     *
+     * @param centralLongitude desired central longitude in radians
+     */
+    public void setCentralLongitude(double centralLongitude) {
+        this.lambda0 = wrapLongitude(centralLongitude);
+    }
 
-		xy.x = wrapLongitude(lon - lambda0); // λ
-		xy.y = mercatorY(lat);
-	}
+    // -------------------------------------------------------------------------
+    // IMapProjection — seam
+    // -------------------------------------------------------------------------
 
-	@Override
-	public void latLonFromXY(Point2D.Double latLon, Point2D.Double xy) {
-		double x = wrapLongitude(xy.x + lambda0);
-		double y = xy.y;
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns {@code true} when the absolute difference of the two
+     * longitudes — each wrapped relative to {@code λ₀} — exceeds π radians,
+     * indicating that the segment crosses the antimeridian seam at
+     * {@code λ₀ ± π}.</p>
+     */
+    @Override
+    public boolean crossesSeam(double lon1, double lon2) {
+        double d1 = wrapLongitude(lon1 - lambda0);
+        double d2 = wrapLongitude(lon2 - lambda0);
+        return Math.abs(d1 - d2) > Math.PI;
+    }
 
-		latLon.x = x; // λ
-		latLon.y = 2.0 * Math.atan(Math.exp(y)) - Math.PI / 2.0; // φ
-	}
+    // -------------------------------------------------------------------------
+    // IMapProjection — transforms
+    // -------------------------------------------------------------------------
 
-	@Override
-	public void drawMapOutline(Graphics2D g2, IContainer container) {
-		Rectangle2D.Double r = getXYBounds();
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Latitude is clamped to [{@code MIN_LAT}, {@code MAX_LAT}] before
+     * projection. Longitude is wrapped relative to the central longitude so
+     * that the result always lies in [-π, π).</p>
+     */
+    @Override
+    public void latLonToXY(Point2D.Double latLon, Point2D.Double xy) {
+        double lat = Math.max(MIN_LAT, Math.min(MAX_LAT, latLon.y));
+        xy.x = wrapLongitude(latLon.x - lambda0);
+        xy.y = mercatorY(lat);
+    }
 
-		Point2D.Double world = new Point2D.Double();
-		Point pLL = new Point();
-		Point pLR = new Point();
-		Point pUR = new Point();
-		Point pUL = new Point();
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The inverse Mercator un-wraps X by adding λ₀, then uses the
+     * standard Gudermannian inverse to recover latitude.</p>
+     */
+    @Override
+    public void latLonFromXY(Point2D.Double latLon, Point2D.Double xy) {
+        latLon.x = wrapLongitude(xy.x + lambda0);
+        latLon.y = 2.0 * Math.atan(Math.exp(xy.y)) - Math.PI / 2.0;
+    }
 
-		// lower-left
-		world.setLocation(r.x, r.y);
-		container.worldToLocal(pLL, world);
+    // -------------------------------------------------------------------------
+    // IMapProjection — visibility
+    // -------------------------------------------------------------------------
 
-		// lower-right
-		world.setLocation(r.x + r.width, r.y);
-		container.worldToLocal(pLR, world);
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns {@code true} for all latitudes in [{@code MIN_LAT},
+     * {@code MAX_LAT}]; the poles are excluded because the Mercator Y
+     * diverges there.</p>
+     */
+    @Override
+    public boolean isPointVisible(Point2D.Double latLon) {
+        return latLon.y >= MIN_LAT && latLon.y <= MAX_LAT;
+    }
 
-		// upper-right
-		world.setLocation(r.x + r.width, r.y + r.height);
-		container.worldToLocal(pUR, world);
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The Mercator map domain is the rectangle
+     * [{@code MIN_LON}, {@code MAX_LON}] × [{@code MIN_Y}, {@code MAX_Y}].</p>
+     */
+    @Override
+    public boolean isPointOnMap(Point2D.Double xy) {
+        return xy.x >= MIN_LON && xy.x <= MAX_LON
+            && xy.y >= MIN_Y  && xy.y <= MAX_Y;
+    }
 
-		// upper-left
-		world.setLocation(r.x, r.y + r.height);
-		container.worldToLocal(pUL, world);
+    // -------------------------------------------------------------------------
+    // IMapProjection — drawing
+    // -------------------------------------------------------------------------
 
-		Color oldColor = g2.getColor();
-		Stroke oldStroke = g2.getStroke();
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Draws the rectangular bounding box of the projection domain using the
+     * theme's outline color and stroke width.</p>
+     */
+    @Override
+    public void drawMapOutline(Graphics2D g2, IContainer container) {
+        Rectangle2D.Double r = getXYBounds();
 
-		g2.setColor(theme.getOutlineColor());
-		g2.setStroke(new BasicStroke(theme.getOutlineStrokeWidth()));
+        Point2D.Double world = new Point2D.Double();
+        Point pLL = new Point(), pLR = new Point(), pUR = new Point(), pUL = new Point();
 
-		g2.drawLine(pLL.x, pLL.y, pLR.x, pLR.y);
-		g2.drawLine(pLR.x, pLR.y, pUR.x, pUR.y);
-		g2.drawLine(pUR.x, pUR.y, pUL.x, pUL.y);
-		g2.drawLine(pUL.x, pUL.y, pLL.x, pLL.y);
+        world.setLocation(r.x,           r.y);           container.worldToLocal(pLL, world);
+        world.setLocation(r.x + r.width, r.y);           container.worldToLocal(pLR, world);
+        world.setLocation(r.x + r.width, r.y + r.height);container.worldToLocal(pUR, world);
+        world.setLocation(r.x,           r.y + r.height);container.worldToLocal(pUL, world);
 
-		g2.setColor(oldColor);
-		g2.setStroke(oldStroke);
-	}
+        Color  oldColor  = g2.getColor();
+        Stroke oldStroke = g2.getStroke();
 
-	@Override
-	public boolean isPointOnMap(Point2D.Double xy) {
-		double x = xy.x;
-		double y = xy.y;
-		return (x >= MIN_LON && x <= MAX_LON && y >= MIN_Y && y <= MAX_Y);
-	}
+        g2.setColor(theme.getOutlineColor());
+        g2.setStroke(new BasicStroke(theme.getOutlineStrokeWidth()));
+        g2.drawLine(pLL.x, pLL.y, pLR.x, pLR.y);
+        g2.drawLine(pLR.x, pLR.y, pUR.x, pUR.y);
+        g2.drawLine(pUR.x, pUR.y, pUL.x, pUL.y);
+        g2.drawLine(pUL.x, pUL.y, pLL.x, pLL.y);
 
-	@Override
-	public void drawLatitudeLine(Graphics2D g2, IContainer container, double latitude) {
-		// Clamp to allowed range
-		double lat = Math.max(MIN_LAT, Math.min(MAX_LAT, latitude));
+        g2.setColor(oldColor);
+        g2.setStroke(oldStroke);
+    }
 
-		int numSegments = 360;
-		double dLon = (MAX_LON - MIN_LON) / numSegments;
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Draws a horizontal line at the given latitude by sampling 360
+     * evenly-spaced longitudes across the full longitude range and connecting
+     * the projected screen points. Uses {@link MapTheme#getGraticuleColor()}
+     * so the color respects theme switching.</p>
+     */
+    @Override
+    public void drawLatitudeLine(Graphics2D g2, IContainer container, double latitude) {
+        double lat = Math.max(MIN_LAT, Math.min(MAX_LAT, latitude));
 
-		Path2D path = new Path2D.Double();
-		Point2D.Double latLon = new Point2D.Double();
-		Point2D.Double xy = new Point2D.Double();
-		Point screen = new Point();
+        Path2D path = new Path2D.Double();
+        Point2D.Double latLon = new Point2D.Double();
+        Point2D.Double xy     = new Point2D.Double();
+        Point screen          = new Point();
 
-		latLon.y = lat;
+        latLon.y = lat;
+        double dLon = (MAX_LON - MIN_LON) / 360;
 
-		for (int i = 0; i <= numSegments; i++) {
-			double lon = MIN_LON + i * dLon;
-			latLon.x = lon;
+        for (int i = 0; i <= 360; i++) {
+            latLon.x = MIN_LON + i * dLon;
+            latLonToXY(latLon, xy);
+            container.worldToLocal(screen, xy);
+            if (i == 0) path.moveTo(screen.x, screen.y);
+            else        path.lineTo(screen.x, screen.y);
+        }
 
-			latLonToXY(latLon, xy);
-			container.worldToLocal(screen, xy);
+        Color oldColor = g2.getColor();
+        g2.setColor(theme.getGraticuleColor());   // fixed: was Color.LIGHT_GRAY
+        g2.draw(path);
+        g2.setColor(oldColor);
+    }
 
-			if (i == 0) {
-				path.moveTo(screen.x, screen.y);
-			} else {
-				path.lineTo(screen.x, screen.y);
-			}
-		}
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Draws a vertical line at the given longitude by sampling 360
+     * evenly-spaced latitudes and connecting the projected screen points.
+     * Uses {@link MapTheme#getGraticuleColor()} so the color respects theme
+     * switching.</p>
+     */
+    @Override
+    public void drawLongitudeLine(Graphics2D g2, IContainer container, double longitude) {
+        double lon = wrapLongitude(longitude);
 
-		Color oldColor = g2.getColor();
-		g2.setColor(Color.LIGHT_GRAY);
-		g2.draw(path);
-		g2.setColor(oldColor);
-	}
+        Path2D path = new Path2D.Double();
+        Point2D.Double latLon = new Point2D.Double();
+        Point2D.Double xy     = new Point2D.Double();
+        Point screen          = new Point();
 
-	@Override
-	public void drawLongitudeLine(Graphics2D g2, IContainer container, double longitude) {
-		double lon = wrapLongitude(longitude);
+        latLon.x = lon;
+        double dLat = (MAX_LAT - MIN_LAT) / 360;
 
-		int numSegments = 360;
-		double dLat = (MAX_LAT - MIN_LAT) / numSegments;
+        for (int i = 0; i <= 360; i++) {
+            latLon.y = MIN_LAT + i * dLat;
+            latLonToXY(latLon, xy);
+            container.worldToLocal(screen, xy);
+            if (i == 0) path.moveTo(screen.x, screen.y);
+            else        path.lineTo(screen.x, screen.y);
+        }
 
-		Path2D path = new Path2D.Double();
-		Point2D.Double latLon = new Point2D.Double();
-		Point2D.Double xy = new Point2D.Double();
-		Point screen = new Point();
+        Color oldColor = g2.getColor();
+        g2.setColor(theme.getGraticuleColor());   // fixed: was Color.LIGHT_GRAY
+        g2.draw(path);
+        g2.setColor(oldColor);
+    }
 
-		latLon.x = lon;
+    // -------------------------------------------------------------------------
+    // IMapProjection — metadata
+    // -------------------------------------------------------------------------
 
-		for (int i = 0; i <= numSegments; i++) {
-			double lat = MIN_LAT + i * dLat;
-			latLon.y = lat;
+    /** {@inheritDoc} */
+    @Override
+    public EProjection getProjection() { return EProjection.MERCATOR; }
 
-			latLonToXY(latLon, xy);
-			container.worldToLocal(screen, xy);
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns {@code [-π, π] × [MIN_Y, MAX_Y]} where the Y bounds
+     * correspond to the Mercator projection of ±89°.</p>
+     */
+    @Override
+    public Rectangle2D.Double getXYBounds() {
+        return new Rectangle2D.Double(MIN_LON, MIN_Y, MAX_LON - MIN_LON, MAX_Y - MIN_Y);
+    }
 
-			if (i == 0) {
-				path.moveTo(screen.x, screen.y);
-			} else {
-				path.lineTo(screen.x, screen.y);
-			}
-		}
+    /** {@inheritDoc} */
+    @Override
+    public MapTheme getTheme() { return theme; }
 
-		Color oldColor = g2.getColor();
-		g2.setColor(Color.LIGHT_GRAY);
-		g2.draw(path);
-		g2.setColor(oldColor);
-	}
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException if {@code theme} is {@code null}
+     */
+    @Override
+    public void setTheme(MapTheme theme) {
+        if (theme == null) throw new IllegalArgumentException("MapTheme must not be null");
+        this.theme = theme;
+    }
 
-	@Override
-	public boolean isPointVisible(Point2D.Double latLon) {
-		double lat = latLon.y;
-		return lat >= MIN_LAT && lat <= MAX_LAT;
-	}
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns a rectangular clip path matching {@link #getXYBounds()},
+     * converted to device coordinates via the container transform. Used by
+     * {@link #fillOcean} to restrict the ocean fill to the map rectangle.</p>
+     */
+    @Override
+    public Shape createClipShape(IContainer container) {
+        Rectangle2D.Double r = getXYBounds();
+        Point2D.Double world = new Point2D.Double();
+        Point p = new Point();
+        Path2D path = new Path2D.Double();
 
-	@Override
-	public EProjection getProjection() {
-		return EProjection.MERCATOR;
-	}
-
-	@Override
-	public Rectangle2D.Double getXYBounds() {
-		return new Rectangle2D.Double(MIN_LON, MIN_Y, MAX_LON - MIN_LON, MAX_Y - MIN_Y);
-	}
-
-	@Override
-	public MapTheme getTheme() {
-		return theme;
-	}
-
-	@Override
-	public void setTheme(MapTheme theme) {
-		if (theme == null) {
-			throw new IllegalArgumentException("MapTheme must not be null");
-		}
-		this.theme = theme;
-	}
-
-	@Override
-	public Shape createClipShape(IContainer container) {
-		Rectangle2D.Double r = getXYBounds();
-
-		Point2D.Double world = new Point2D.Double();
-		Point p = new Point();
-		Path2D path = new Path2D.Double();
-
-		// lower-left
-		world.setLocation(r.x, r.y);
-		container.worldToLocal(p, world);
-		path.moveTo(p.x, p.y);
-
-		// lower-right
-		world.setLocation(r.x + r.width, r.y);
-		container.worldToLocal(p, world);
-		path.lineTo(p.x, p.y);
-
-		// upper-right
-		world.setLocation(r.x + r.width, r.y + r.height);
-		container.worldToLocal(p, world);
-		path.lineTo(p.x, p.y);
-
-		// upper-left
-		world.setLocation(r.x, r.y + r.height);
-		container.worldToLocal(p, world);
-		path.lineTo(p.x, p.y);
-
-		path.closePath();
-		return path;
-	}
+        world.setLocation(r.x,           r.y);            container.worldToLocal(p, world); path.moveTo(p.x, p.y);
+        world.setLocation(r.x + r.width, r.y);            container.worldToLocal(p, world); path.lineTo(p.x, p.y);
+        world.setLocation(r.x + r.width, r.y + r.height); container.worldToLocal(p, world); path.lineTo(p.x, p.y);
+        world.setLocation(r.x,           r.y + r.height); container.worldToLocal(p, world); path.lineTo(p.x, p.y);
+        path.closePath();
+        return path;
+    }
 }

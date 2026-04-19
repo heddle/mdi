@@ -3,117 +3,124 @@ package edu.cnu.mdi.mapping;
 import java.awt.geom.Point2D;
 
 /**
- * Factory for creating {@link IMapProjection} instances based on
+ * Factory for creating {@link IMapProjection} instances from
  * {@link EProjection} identifiers.
- * <p>
- * This centralizes projection construction so that calling code does not need
- * to depend directly on concrete projection classes such as
- * {@link MercatorProjection}, {@link OrthographicProjection},
- * {@link MollweideProjection}, or {@link LambertEqualAreaProjection}.
- * </p>
- * <p>
- * Typical usage:
  *
- * <pre>
+ * <h2>Purpose</h2>
+ * <p>Centralizing projection construction here means that calling code
+ * (e.g. {@link MapView2D}) never depends directly on concrete classes such as
+ * {@link MercatorProjection} or {@link OrthographicProjection}. Adding a new
+ * projection requires only: a new {@link EProjection} constant, a new
+ * {@code case} in {@link #create(EProjection, MapTheme, Point2D.Double)}, and
+ * the concrete implementation class itself.</p>
+ *
+ * <h2>Theme guarantee</h2>
+ * <p>Every projection returned by this factory has its {@link MapTheme} set
+ * before the instance is returned. Callers can therefore call drawing methods
+ * immediately without risk of {@link NullPointerException}.</p>
+ *
+ * <h2>Typical usage</h2>
+ * <pre>{@code
+ * // Default center
  * IMapProjection mercator = ProjectionFactory.create(EProjection.MERCATOR, MapTheme.light());
  *
- * // Centered orthographic projection
- * Point2D.Double center = new Point2D.Double(Math.toRadians(-100.0), // λ
- * 		Math.toRadians(40.0)); // φ
- * IMapProjection ortho = ProjectionFactory.create(EProjection.ORTHOGRAPHIC, MapTheme.dark(), center);
- * </pre>
- * </p>
+ * // Explicit center (orthographic centred on the USA)
+ * Point2D.Double center = new Point2D.Double(Math.toRadians(-100.0), Math.toRadians(40.0));
+ * IMapProjection ortho  = ProjectionFactory.create(EProjection.ORTHOGRAPHIC, MapTheme.dark(), center);
+ * }</pre>
+ *
+ * <p>This class is not instantiable.</p>
  */
 public final class ProjectionFactory {
 
-	private ProjectionFactory() {
-		// not instantiable
-	}
+    private ProjectionFactory() { /* not instantiable */ }
 
-	/**
-	 * Creates a projection with the given type and theme, using a default center
-	 * (when applicable).
-	 * <p>
-	 * For projections that require a center (e.g., orthographic, Lambert
-	 * equal-area), the default is (λ = 0, φ = 0) unless noted otherwise.
-	 * </p>
-	 *
-	 * @param type  the projection type (must not be {@code null})
-	 * @param theme the map theme to use (must not be {@code null})
-	 * @return a new {@link IMapProjection} instance
-	 * @throws IllegalArgumentException if {@code type} or {@code theme} is
-	 *                                  {@code null}, or the type is unsupported
-	 */
-	public static IMapProjection create(EProjection type, MapTheme theme) {
-		return create(type, theme, null);
-	}
+    // -------------------------------------------------------------------------
+    // Factory methods
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Creates a projection with the given type, theme, and optional center.
-	 * <p>
-	 * Conventions:
-	 * <ul>
-	 * <li>Geographic center is represented by a {@link Point2D.Double} where
-	 * {@code x = λ} (longitude, radians) and {@code y = φ} (latitude,
-	 * radians).</li>
-	 * <li>If {@code center} is {@code null}, a projection-specific default center
-	 * is used.</li>
-	 * <li>Projections that do not support a center will ignore the {@code center}
-	 * value.</li>
-	 * </ul>
-	 *
-	 * @param type   the projection type (must not be {@code null})
-	 * @param theme  the map theme to use (must not be {@code null})
-	 * @param center optional projection center in radians; {@code null} allows the
-	 *               factory to choose a sensible default
-	 * @return a new {@link IMapProjection} instance
-	 * @throws IllegalArgumentException if the type or theme is {@code null}, or the
-	 *                                  type is unsupported
-	 */
-	public static IMapProjection create(EProjection type, MapTheme theme, Point2D.Double center) {
-		if (type == null) {
-			throw new IllegalArgumentException("Projection type must not be null");
-		}
-		if (theme == null) {
-			throw new IllegalArgumentException("MapTheme must not be null");
-		}
+    /**
+     * Creates a projection with the given type and theme, using each
+     * projection's built-in default center.
+     *
+     * <p>This is a convenience overload of
+     * {@link #create(EProjection, MapTheme, Point2D.Double)} that passes
+     * {@code null} for the center.</p>
+     *
+     * @param type  projection type; must not be {@code null}
+     * @param theme map theme; must not be {@code null}
+     * @return a fully initialized {@link IMapProjection} with the theme set
+     * @throws IllegalArgumentException if {@code type} or {@code theme} is
+     *                                  {@code null}, or {@code type} is not
+     *                                  yet handled by this factory
+     */
+    public static IMapProjection create(EProjection type, MapTheme theme) {
+        return create(type, theme, null);
+    }
 
-		switch (type) {
+    /**
+     * Creates a projection with the given type, theme, and optional center.
+     *
+     * <h3>Center conventions</h3>
+     * <ul>
+     *   <li>The {@code center} parameter is a {@link Point2D.Double} with
+     *       {@code x = λ₀} (longitude, radians) and {@code y = φ₀}
+     *       (latitude, radians).</li>
+     *   <li>If {@code center} is {@code null} a projection-specific default
+     *       is used (see individual cases below).</li>
+     *   <li>Projections that do not have a configurable center (currently
+     *       none, but Mercator and Mollweide only use the longitude component)
+     *       ignore the latitude component.</li>
+     * </ul>
+     *
+     * <h3>Default centers</h3>
+     * <ul>
+     *   <li><b>MERCATOR</b> — central longitude fixed at -70° by the
+     *       {@link MercatorProjection} constructor; the {@code center}
+     *       argument is ignored because recenter support is handled via
+     *       {@link MercatorProjection#setCentralLongitude(double)}.</li>
+     *   <li><b>ORTHOGRAPHIC</b> — defaults to (λ = 0°, φ = 50°), a
+     *       balanced mid-latitude northern hemisphere view.</li>
+     *   <li><b>MOLLWEIDE</b> — central longitude fixed at -70° by the
+     *       constructor; the {@code center} argument is ignored.</li>
+     *   <li><b>LAMBERT_EQUAL_AREA</b> — defaults to (λ = 0°, φ = 0°),
+     *       i.e., centered on the intersection of the equator and prime
+     *       meridian.</li>
+     * </ul>
+     *
+     * @param type   projection type; must not be {@code null}
+     * @param theme  map theme; must not be {@code null}
+     * @param center optional projection center in radians ({@code x=λ, y=φ});
+     *               {@code null} uses the projection's built-in default
+     * @return a fully initialized {@link IMapProjection} with the theme set
+     * @throws IllegalArgumentException if {@code type} or {@code theme} is
+     *                                  {@code null}, or {@code type} is
+     *                                  not yet handled by this factory
+     */
+    public static IMapProjection create(EProjection type, MapTheme theme, Point2D.Double center) {
+        if (type  == null) throw new IllegalArgumentException("Projection type must not be null");
+        if (theme == null) throw new IllegalArgumentException("MapTheme must not be null");
 
-		case MERCATOR: {
-			return new MercatorProjection(theme);
-		}
+        return switch (type) {
 
-		case ORTHOGRAPHIC: {
-			// Orthographic is centered on (λ0, φ0)
-			double lambda0 = 0.0;
-			double phi0 = Math.toRadians(50.0); // default: a nice mid-latitude view
-			if (center != null) {
-				lambda0 = center.x;
-				phi0 = center.y;
-			}
-			OrthographicProjection proj = new OrthographicProjection(lambda0, phi0);
-			proj.setTheme(theme);
-			return proj;
-		}
+            case MERCATOR -> new MercatorProjection(theme);
 
-		case MOLLWEIDE: {
-			return new MollweideProjection(theme);
-		}
+            case ORTHOGRAPHIC -> {
+                // Default: mid-latitude northern-hemisphere view.
+                double lambda0 = (center != null) ? center.x : 0.0;
+                double phi0    = (center != null) ? center.y : Math.toRadians(50.0);
+                // Use the three-argument constructor so the theme is set atomically,
+                // eliminating the NPE risk if drawing methods are called immediately.
+                yield new OrthographicProjection(lambda0, phi0, theme);
+            }
 
-		case LAMBERT_EQUAL_AREA: {
-			// Lambert azimuthal equal-area centered on (λ0, φ0)
-			double lambda0 = 0.0;
-			double phi0 = 0.0;
-			if (center != null) {
-				lambda0 = center.x;
-				phi0 = center.y;
-			}
-			return new LambertEqualAreaProjection(lambda0, phi0, theme);
-		}
+            case MOLLWEIDE -> new MollweideProjection(theme);
 
-		default:
-			throw new IllegalArgumentException("Unsupported projection type: " + type);
-		}
-	}
+            case LAMBERT_EQUAL_AREA -> {
+                double lambda0 = (center != null) ? center.x : 0.0;
+                double phi0    = (center != null) ? center.y : 0.0;
+                yield new LambertEqualAreaProjection(lambda0, phi0, theme);
+            }
+        };
+    }
 }

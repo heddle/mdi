@@ -240,40 +240,36 @@ public class DemoApp extends BaseMDIApplication {
 
         String resPrefix = Environment.MDI_RESOURCE_PATH;
 
-        // Load a small set of countries just for demo purposes.
-        try {
-            List<CountryFeature> countries = GeoJsonCountryLoader
-                    .loadFromResource(resPrefix + MapResources.COUNTRIES_GEOJSON);
-            MapView2D.setCountries(countries);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        // Load cities as well.
-        try {
-            List<GeoJsonCityLoader.CityFeature> cities = GeoJsonCityLoader
-                    .loadFromResource(resPrefix + MapResources.CITIES_GEOJSON);
-            MapView2D.setCities(cities);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
         long toolBits = ToolBits.INFO | ToolBits.STATUS | ToolBits.CENTER
                 | ToolBits.ZOOMTOOLS | ToolBits.DRAWINGTOOLS | ToolBits.MAGNIFY;
 
-        // Use a ContainerFactory constructor reference instead of a raw Class.
-        // MapContainer::new satisfies ContainerFactory.create(Rectangle2D.Double)
-        // because MapContainer already declares the matching single-argument
-        // constructor — no change to MapContainer is needed.
         ContainerFactory mapContainerFactory = MapContainer::new;
 
-        return new MapView2D(
+        MapView2D mapView = new MapView2D(
                 PropertyUtils.TITLE,            "Sample 2D Map View",
                 PropertyUtils.FRACTION,         0.6,
                 PropertyUtils.ASPECT,           1.5,
                 PropertyUtils.CONTAINERFACTORY, mapContainerFactory,
                 PropertyUtils.TOOLBARBITS,      toolBits,
                 PropertyUtils.WHEELZOOM,        true);
+
+        try {
+            List<CountryFeature> countries = GeoJsonCountryLoader
+                    .loadFromResourceStatic(resPrefix + MapResources.COUNTRIES_GEOJSON);
+            mapView.setCountries(countries);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            List<GeoJsonCityLoader.CityFeature> cities = GeoJsonCityLoader
+                    .loadFromResourceStatic(resPrefix + MapResources.CITIES_GEOJSON);
+            mapView.setCities(cities);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return mapView;
     }
 
     /**

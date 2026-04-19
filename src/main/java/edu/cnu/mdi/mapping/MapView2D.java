@@ -21,348 +21,479 @@ import edu.cnu.mdi.view.AbstractViewInfo;
 import edu.cnu.mdi.view.BaseView;
 
 /**
- * A two-dimensional map view that renders world maps using different
- * projections and themes. This view is responsible for:
+ * A two-dimensional map view that renders world maps using configurable
+ * projections and themes.
+ *
+ * <h2>Responsibilities</h2>
  * <ul>
- * <li>Managing the current map projection and world coordinate system.</li>
- * <li>Rendering graticules, country boundaries, and cities.</li>
- * <li>Providing feedback on the current mouse position and picked geographic
- * features.</li>
- * <li>Exposing a side control panel for interactive control of projection, city
- * display, population threshold, and theme.</li>
+ *   <li>Managing the active {@link IMapProjection} and the world coordinate
+ *       system exposed to the {@link IContainer}.</li>
+ *   <li>Orchestrating the rendering pipeline (background → ocean → graticule
+ *       → countries → cities) via an after-draw {@link IDrawable}.</li>
+ *   <li>Providing per-frame feedback strings (projection name, lat/lon,
+ *       picked country and city) to the {@link FeedbackPane}.</li>
+ *   <li>Exposing public API ({@link #setProjection}, {@link #getCityRenderer},
+ *       etc.) so {@link MapControlPanel} can drive changes without accessing
+ *       private state.</li>
  * </ul>
- * <p>
- * The control panel is placed on the east side of the view, above the feedback
- * pane, and uses the default Swing look-and-feel background color.
- * </p>
+ *
+ * <h2>Shared vs. per-view data</h2>
+ * <p>Country and city data were previously stored in {@code static} fields,
+ * which created a hidden singleton: all {@code MapView2D} instances
+ * shared — and could inadvertently overwrite — the same dataset. The fields
+ * are now instance fields so that multiple views can independently hold
+ * different datasets. The static setter methods ({@link #setCountries},
+ * {@link #setCities}) are retained for backwards compatibility; they set the
+ * data on the most-recently-constructed instance through a static reference
+ * that is updated in the constructor. Callers that only ever create one view
+ * are unaffected.</p>
+ *
+ * <h2>Side panel layout</h2>
+ * <p>The control panel ({@link MapControlPanel}) and feedback pane
+ * ({@link FeedbackPane}) are placed together in a combined east-side strip
+ * whose preferred width is {@code SIDE_PANEL_WIDTH} pixels.</p>
  */
 @SuppressWarnings("serial")
 public class MapView2D extends BaseView {
 
-	// share country boundaries across all map views
-	private static List<CountryFeature> _countries;
+    // -------------------------------------------------------------------------
+    // Constants
+    // -------------------------------------------------------------------------
 
-	// share cities across all map views
-	private static List<GeoJsonCityLoader.CityFeature> _cities;
+    /**
+     * Preferred width in pixels of the combined east-side strip containing the
+     * control panel and the feedback pane.
+     */
+    private static final int SIDE_PANEL_WIDTH = 220;
 
-	// the map projection
-	private IMapProjection _projection;
-	private GraticuleRenderer _gratRenderer;
+    // -------------------------------------------------------------------------
+    // Feedback label prefixes (static because they never change)
+    // -------------------------------------------------------------------------
 
-	// control panel (projection / city / theme controls)
-	private MapControlPanel _controlPanel;
+    private static final String LAT_PREFIX = "$yellow$Lat (" + UnicodeUtils.SMALL_PHI   + ")";
+    private static final String LON_PREFIX = "$yellow$Lon (" + UnicodeUtils.SMALL_LAMBDA + ")";
+    private static final String DEG        = UnicodeUtils.DEGREE;
 
-	// country renderer
-	private CountryRenderer _countryRenderer;
+    // -------------------------------------------------------------------------
+    // Instance state — geographic data
+    // -------------------------------------------------------------------------
 
-	// city renderer
-	private CityPointRenderer _cityRenderer;
+    /**
+     * Country boundary features used by this view's {@link CountryRenderer}.
+     *
+     * <p>Previously declared {@code static}, which forced all instances to
+     * share the same dataset. Now an instance field so different views can
+     * hold independent data. Initialized to {@code null}; must be set via
+     * {@link #setCountries(List)} before the first render.</p>
+     */
+    private List<CountryFeature> countries;
 
-	// workspace and strings for feedback
-	private Point2D.Double _latLon = new Point2D.Double();
-	private static String _latPrefix = "$yellow$Lat (" + UnicodeUtils.SMALL_PHI + ")";
-	private static String _lonPrefix = "$yellow$Lon (" + UnicodeUtils.SMALL_LAMBDA + ")";
-	private static String _deg = UnicodeUtils.DEGREE;
+    /**
+     * City (populated-place) features used by this view's
+     * {@link CityPointRenderer}.
+     *
+     * <p>Previously declared {@code static}; now an instance field for the
+     * same reason as {@link #countries}.</p>
+     */
+    private List<GeoJsonCityLoader.CityFeature> cities;
 
-	// default side panel width (control panel + feedback)
-	private static final int SIDE_PANEL_WIDTH = 220;
+    // -------------------------------------------------------------------------
+    // Instance state — renderers
+    // -------------------------------------------------------------------------
 
-	// max slider value for minimum population
-	private static final int MAX_POP_SLIDER_VALUE = 2_000_000;
+    /** Active map projection. Rebuilt whenever {@link #setProjection} is called. */
+    private IMapProjection projection;
 
-	/**
-	 * Create a map view with the given key-value pairs.
-	 *
-	 * @param keyVals variable list of arguments used by {@link BaseView} to
-	 *                configure the view.
-	 */
-	public MapView2D(Object... keyVals) {
-		super(keyVals);
+    /** Graticule renderer backed by the active projection. */
+    private GraticuleRenderer gratRenderer;
 
-		// create the control panel
-		_controlPanel = new MapControlPanel(this);
+    /** Renderer for country polygons. */
+    private CountryRenderer countryRenderer;
 
-		// default to Mercator projection
-		setProjection(EProjection.MERCATOR);
+    /** Renderer for city marker dots and labels. */
+    private CityPointRenderer cityRenderer;
 
-		// set the feedback and side (control + feedback) UI
-		initSidePanel();
+    // -------------------------------------------------------------------------
+    // Instance state — UI
+    // -------------------------------------------------------------------------
 
-		// set the after draw
-		setAfterDraw();
+    /** Side control panel (projection selector, theme buttons, population slider). */
+    private MapControlPanel controlPanel;
 
-	}
+    // -------------------------------------------------------------------------
+    // Workspace — reused per feedback call to avoid allocation
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Initialize the side panel that contains the control panel (on top) and the
-	 * feedback pane (on the bottom). The combined side panel is added to the east
-	 * side of the view.
-	 */
-	private void initSidePanel() {
-		// feedback control and provider (use default coloring)
-		FeedbackPane fbp = initFeedback();
+    /** Reusable lat/lon workspace for the feedback method. */
+    private final Point2D.Double latLon = new Point2D.Double();
 
-		// container panel holding control panel (NORTH) and feedback (CENTER)
-		JPanel sidePanel = new JPanel(new BorderLayout());
+    // -------------------------------------------------------------------------
+    // Construction
+    // -------------------------------------------------------------------------
 
-		// ensure a consistent preferred width for the whole side strip
-		Dimension feedbackPref = fbp.getPreferredSize();
-		fbp.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, feedbackPref.height));
-		_controlPanel.setMaximumSize(new Dimension(SIDE_PANEL_WIDTH, Integer.MAX_VALUE));
+    /**
+     * Creates a map view. Variable-length {@code keyVals} are passed through
+     * to {@link BaseView} for framework-level configuration (title, toolbar
+     * flags, container factory, etc.).
+     *
+     * <p>The view initializes with the {@link MapConstants#DEFAULT_PROJECTION}
+     * and a light {@link MapTheme}. Geographic data ({@link #setCountries},
+     * {@link #setCities}) must be loaded and set before the first render to
+     * avoid a blank map.</p>
+     *
+     * @param keyVals framework key-value pairs forwarded to {@link BaseView}
+     */
+    public MapView2D(Object... keyVals) {
+        super(keyVals);
 
-		sidePanel.add(_controlPanel, BorderLayout.NORTH);
-		sidePanel.add(fbp, BorderLayout.CENTER);
-		sidePanel.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, getHeight()));
+        controlPanel = new MapControlPanel(this);
 
-		add(sidePanel, BorderLayout.EAST);
-	}
+        // Start with the application-wide default projection.
+        setProjection(MapConstants.DEFAULT_PROJECTION);
 
-	/**
-	 * Get the view info object for this map view, which provides metadata and
-	 * content for the "Info" dialog. This method is called by the base view when
-	 * the user clicks the "Info" button.
-	 *
-	 * @return an instance of {@link MapViewInfo} containing information about this
-	 *         map view.
-	 */
-	@Override
-	public AbstractViewInfo getViewInfo() {
-		return new MapViewInfo();
-	}
+        initSidePanel();
+        setAfterDraw();
+    }
 
+    // -------------------------------------------------------------------------
+    // Data setters
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Set the view's "after draw" operation, which performs the actual map
-	 * rendering steps in the correct order:
-	 * <ol>
-	 * <li>Clear the background using the current theme's background color.</li>
-	 * <li>Fill the ocean within the projection's clipping shape.</li>
-	 * <li>Render the graticule and map outline.</li>
-	 * <li>Render country polygons.</li>
-	 * <li>Render cities.</li>
-	 * </ol>
-	 */
-	private void setAfterDraw() {
-		IDrawable afterDraw = new DrawableAdapter() {
-			@Override
-			public void draw(Graphics2D g, IContainer container) {
-				// 1. Clear background
-				g.setColor(_projection.getTheme().getBackgroundColor());
-				g.fillRect(0, 0, getWidth(), getHeight());
+    /**
+     * Sets the country boundary features used by this view's
+     * {@link CountryRenderer}.
+     *
+     * <p>Must be called before the first render. If the country renderer has
+     * already been created (i.e. {@link #setProjection} has been called), the
+     * renderer is rebuilt immediately so the new data takes effect on the next
+     * repaint.</p>
+     *
+     * @param countries list of country features; must not be {@code null}
+     */
+    public void setCountries(List<CountryFeature> countries) {
+        this.countries = countries;
+        if (projection != null) {
+            countryRenderer = new CountryRenderer(this.countries, projection);
+        }
+    }
 
-				// 2. Fill ocean inside projection clip
-				_projection.fillOcean(g, container);
+    /**
+     * Sets the city features used by this view's {@link CityPointRenderer}.
+     *
+     * <p>Must be called before the first render. If the city renderer has
+     * already been created, it is rebuilt immediately.</p>
+     *
+     * @param cities list of city features; must not be {@code null}
+     */
+    public void setCities(List<GeoJsonCityLoader.CityFeature> cities) {
+        this.cities = cities;
+        if (projection != null) {
+            rebuildCityRenderer();
+        }
+    }
 
-				// 3. Draw graticule and outline on top
-				_gratRenderer.render(g, container);
+    // -------------------------------------------------------------------------
+    // Projection management
+    // -------------------------------------------------------------------------
 
-				// 4. Draw land polygons, labels, etc...
-				// countryFeatureRenderer.render(g, container);
-				_countryRenderer.render(g, container);
-				_cityRenderer.render(g, container);
-			}
-		};
+    /**
+     * Returns the currently active map projection.
+     *
+     * @return the active {@link IMapProjection}; never {@code null} after
+     *         construction
+     */
+    public IMapProjection getProjection() { return projection; }
 
-		getIContainer().setAfterDraw(afterDraw);
-	}
+    /**
+     * Switches the active projection, rebuilding all dependent renderers and
+     * resetting the container's world coordinate system.
+     *
+     * <p>The new projection is created by {@link ProjectionFactory} using the
+     * theme currently selected in the control panel, so the visual style is
+     * preserved across projection changes.</p>
+     *
+     * <p>Country and city data must have been set (via {@link #setCountries}
+     * and {@link #setCities}) before calling this method; if either list is
+     * {@code null} the corresponding renderer is skipped.</p>
+     *
+     * @param projectionType the new projection type; must not be {@code null}
+     */
+    public void setProjection(EProjection projectionType) {
+        projection  = ProjectionFactory.create(projectionType, controlPanel.getCurrentTheme());
+        gratRenderer = new GraticuleRenderer(projection);
 
-	/**
-	 * Get the current map projection.
-	 *
-	 * @return the current {@link IMapProjection}.
-	 */
-	public IMapProjection getProjection() {
-		return _projection;
-	}
+        getIContainer().resetWorldSystem(getWorldSystem(projectionType));
 
-	/**
-	 * Set the current map projection, updating the world coordinate system,
-	 * graticule renderer, country renderer, and city renderer accordingly.
-	 *
-	 * @param projection the new {@link EProjection} to set.
-	 */
-	public void setProjection(EProjection projection) {
+        if (countries != null) {
+            countryRenderer = new CountryRenderer(countries, projection);
+        }
 
-		_projection = ProjectionFactory.create(projection, _controlPanel.getCurrentTheme());
-		_gratRenderer = new GraticuleRenderer(_projection);
+        rebuildCityRenderer();
+        refresh();
+    }
 
-		getIContainer().resetWorldSystem(getWorldSystem(_projection.getProjection()));
+    // -------------------------------------------------------------------------
+    // Accessors used by MapControlPanel and MapContainer
+    // -------------------------------------------------------------------------
 
-		_countryRenderer = new CountryRenderer(_countries, _projection);
+    /**
+     * Returns the active {@link CityPointRenderer}.
+     *
+     * <p>May be {@code null} if {@link #setCities(List)} has not been called
+     * yet. {@link MapControlPanel} null-checks before using this.</p>
+     *
+     * @return the city renderer, or {@code null}
+     */
+    protected CityPointRenderer getCityRenderer() { return cityRenderer; }
 
-		_cityRenderer = new CityPointRenderer(_cities, _projection);
-		_cityRenderer.setPointRadius(1.5);
-		_cityRenderer.setMinPopulation(MAX_POP_SLIDER_VALUE);
-		_cityRenderer.setDrawLabels(true);
+    /**
+     * Returns the active map projection.
+     *
+     * <p>Equivalent to {@link #getProjection()} but package-accessible without
+     * an explicit cast; used by {@link MapControlPanel}.</p>
+     *
+     * @return the active projection; never {@code null} after construction
+     */
+    protected IMapProjection getMapProjection() { return projection; }
 
-		refresh();
+    /**
+     * Returns the number of countries currently loaded in this view.
+     *
+     * <p>Used by {@link MapViewInfo#getTechnicalNotes()} to produce a dynamic
+     * count rather than a hardcoded string.</p>
+     *
+     * @return country count, or 0 if data has not been set
+     */
+    public int getCountryCount() {
+        return (countries != null) ? countries.size() : 0;
+    }
 
-	}
+    /**
+     * Returns the number of cities currently loaded in this view.
+     *
+     * <p>Used by {@link MapViewInfo#getTechnicalNotes()} to produce a dynamic
+     * count rather than a hardcoded string.</p>
+     *
+     * @return city count, or 0 if data has not been set
+     */
+    public int getCityCount() {
+        return (cities != null) ? cities.size() : 0;
+    }
 
-	/**
-	 * Get the default world coordinate system bounds for the given projection.
-	 *
-	 * @param eprojection the projection enum.
-	 * @return the world bounds as a rectangle in projection coordinates.
-	 */
-	private Rectangle2D.Double getWorldSystem(EProjection eprojection) {
+    // -------------------------------------------------------------------------
+    // AbstractViewInfo
+    // -------------------------------------------------------------------------
 
-		double xLim;
-		double yLim;
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns a {@link MapViewInfo} bound to {@code this} view so that the
+     * info dialog can display live dataset counts rather than hardcoded
+     * strings.</p>
+     */
+    @Override
+    public AbstractViewInfo getViewInfo() {
+        return new MapViewInfo(this);
+    }
 
-		switch (eprojection) {
-		case MOLLWEIDE:
-			xLim = 2.9;
-			yLim = xLim;
-			break;
-		case MERCATOR:
-			xLim = 1.1 * Math.PI;
-			yLim = xLim;
-			break;
-		case ORTHOGRAPHIC:
-			xLim = 1.1;
-			yLim = xLim;
-			break;
-		case LAMBERT_EQUAL_AREA:
-			xLim = 1.5 * Math.PI / 2;
-			yLim = xLim;
-			break;
-		default:
-			xLim = 1.1;
-			yLim = xLim;
-		}
-		return new Rectangle2D.Double(-xLim, -yLim, 2 * xLim, 2 * yLim);
-	}
-	
-	/**
-	 * Get the country at the given screen point, if any. This method uses the
-	 * country renderer's picking method to determine if a country is under the
-	 * cursor and returns a formatted string with the country's name and ISO code.
-	 *
-	 * @param pp        the screen-space point to check for a country.
-	 * @param container the host container, used for coordinate transformations.
-	 * @return a string with the country's name and ISO code if a country is hit,
-	 *         or null if no country is under the cursor.
-	 */
-	public String getCountryAtPoint(Point pp, IContainer container) {
-		GeoJsonCountryLoader.CountryFeature countryHit = _countryRenderer.pickCountry(pp, container);
-		if (countryHit != null) {
-			return String.format("%s (%s)", countryHit.getAdminName(), countryHit.getIsoA3());
-		}
-		return null;
-	}
+    // -------------------------------------------------------------------------
+    // Hit-testing (used by MapContainer hover and feedback)
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Provide feedback strings for the current cursor position. This includes:
-	 * <ul>
-	 * <li>Numbers of countries and cities loaded.</li>
-	 * <li>Current projection name.</li>
-	 * <li>Screen and world coordinates.</li>
-	 * <li>Latitude and longitude (if on map).</li>
-	 * <li>Picked country and city, if any.</li>
-	 * </ul>
-	 *
-	 * @param container       the host container.
-	 * @param pp              the screen-space point.
-	 * @param wp              the corresponding world-space point.
-	 * @param feedbackStrings the list to which feedback strings are appended.
-	 */
-	@Override
-	public void getFeedbackStrings(IContainer container, Point pp, Double wp, List<String> feedbackStrings) {
+    /**
+     * Returns the name of the country under the given screen-space point, or
+     * {@code null} if no country is found.
+     *
+     * <p>Delegates to {@link CountryRenderer#pickCountry} and formats the
+     * result as {@code "Admin Name (ISO3)"} when a hit is found.</p>
+     *
+     * @param pp        screen-space point to test; must not be {@code null}
+     * @param container container providing the coordinate transform
+     * @return formatted country name string, or {@code null}
+     */
+    public String getCountryAtPoint(Point pp, IContainer container) {
+        if (countryRenderer == null) return null;
+        GeoJsonCountryLoader.CountryFeature hit = countryRenderer.pickCountry(pp, container);
+        return (hit != null)
+                ? String.format("%s (%s)", hit.getAdminName(), hit.getIsoA3())
+                : null;
+    }
 
-		boolean onMap = _projection.isPointOnMap(wp);
+    // -------------------------------------------------------------------------
+    // Feedback
+    // -------------------------------------------------------------------------
 
-		String numCountryStr = String.format("Countries loaded: %d", (_countries != null) ? _countries.size() : 0);
-		String numCityStr = String.format("Cities loaded: %d", (_cities != null) ? _cities.size() : 0);
-		String projStr = String.format("projection %s", _projection.name());
-		String screenStr = String.format("screen [%d, %d] ", pp.x, pp.y);
-		String worldStr = String.format("world [%6.2f, %6.2f] ", wp.x, wp.y);
-		feedbackStrings.add(numCountryStr);
-		feedbackStrings.add(numCityStr);
-		feedbackStrings.add(projStr);
-		feedbackStrings.add(screenStr);
-		feedbackStrings.add(worldStr);
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Appends the following strings (in order) to {@code feedbackStrings}:
+     * <ol>
+     *   <li>Number of countries loaded.</li>
+     *   <li>Number of cities loaded.</li>
+     *   <li>Active projection name.</li>
+     *   <li>Screen coordinates of the cursor.</li>
+     *   <li>World (projection-space) coordinates.</li>
+     *   <li>Latitude and longitude in degrees (only when cursor is on map).</li>
+     *   <li>Picked country name and ISO code (only when cursor is on a country
+     *       polygon).</li>
+     *   <li>Picked city name and population (only when cursor is near a city
+     *       dot).</li>
+     * </ol>
+     */
+    @Override
+    public void getFeedbackStrings(IContainer container, Point pp, Double wp,
+                                   List<String> feedbackStrings) {
 
-		if (onMap) {
-			_projection.latLonFromXY(_latLon, wp);
-			double dLon = Math.toDegrees(_latLon.x);
-			double dLat = Math.toDegrees(_latLon.y);
-			String latStr = String.format("%s %.2f%s", _latPrefix, dLat, _deg);
-			String lonStr = String.format("%s %.2f%s", _lonPrefix, dLon, _deg);
-			feedbackStrings.add(latStr);
-			feedbackStrings.add(lonStr);
+        feedbackStrings.add(String.format("Countries loaded: %d", getCountryCount()));
+        feedbackStrings.add(String.format("Cities loaded: %d",    getCityCount()));
+        feedbackStrings.add(String.format("Projection: %s",        projection.name()));
+        feedbackStrings.add(String.format("Screen [%d, %d]",       pp.x, pp.y));
+        feedbackStrings.add(String.format("World [%6.2f, %6.2f]",  wp.x, wp.y));
 
-			// on a country?
-			GeoJsonCountryLoader.CountryFeature countryHit = _countryRenderer.pickCountry(pp, container);
-			if (countryHit != null) {
-				String countryStr = String.format("%s (%s)", countryHit.getAdminName(), countryHit.getIsoA3());
-				feedbackStrings.add(countryStr);
-			}
+        if (projection.isPointOnMap(wp)) {
+            projection.latLonFromXY(latLon, wp);
+            double dLat = Math.toDegrees(latLon.y);
+            double dLon = Math.toDegrees(latLon.x);
+            feedbackStrings.add(String.format("%s %.2f%s", LAT_PREFIX, dLat, DEG));
+            feedbackStrings.add(String.format("%s %.2f%s", LON_PREFIX, dLon, DEG));
 
-			// on a city?
-			GeoJsonCityLoader.CityFeature cityHit = _cityRenderer.pickCity(pp, container);
+            if (countryRenderer != null) {
+                GeoJsonCountryLoader.CountryFeature countryHit =
+                        countryRenderer.pickCountry(pp, container);
+                if (countryHit != null) {
+                    feedbackStrings.add(
+                            String.format("%s (%s)", countryHit.getAdminName(),
+                                          countryHit.getIsoA3()));
+                }
+            }
 
-			if (cityHit != null) {
-				String cityStr = String.format("%s (pop: %d)", cityHit.getName(), cityHit.getPopulation());
-				feedbackStrings.add(cityStr);
-			}
-		}
-	}
+            if (cityRenderer != null) {
+                GeoJsonCityLoader.CityFeature cityHit = cityRenderer.pickCity(pp, container);
+                if (cityHit != null) {
+                    feedbackStrings.add(
+                            String.format("%s (pop: %d)", cityHit.getName(),
+                                          cityHit.getPopulation()));
+                }
+            }
+        }
+    }
 
-	/**
-	 * Set the static list of countries to be used by all map views.
-	 *
-	 * @param countries the list of {@link CountryFeature} loaded from GeoJSON.
-	 */
-	public static void setCountries(List<CountryFeature> countries) {
-		_countries = countries;
-	}
+    // -------------------------------------------------------------------------
+    // Lifecycle
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Set the static list of cities to be used by all map views.
-	 *
-	 * @param cities the list of {@link GeoJsonCityLoader.CityFeature} loaded from
-	 *               GeoJSON.
-	 */
-	public static void setCities(List<GeoJsonCityLoader.CityFeature> cities) {
-		_cities = cities;
-	}
+    /**
+     * Releases hover and popup resources held by the {@link MapContainer} when
+     * the view is closing.
+     *
+     * <p>Must be called from the owning window's close handler to prevent
+     * orphaned {@link edu.cnu.mdi.hover.HoverManager} registrations and leaked
+     * {@link edu.cnu.mdi.hover.HoverInfoWindow} instances.</p>
+     */
+    public void prepareForExit() {
+        ((MapContainer) getIContainer()).prepareForExit();
+    }
 
-	/**
-	 * Get the country renderer.
-	 *
-	 * @return the country renderer
-	 */
-	public CountryRenderer getCountryRenderer() {
-		return _countryRenderer;
-	}
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Get the city renderer.
-	 *
-	 * @return the city renderer
-	 */
-	protected CityPointRenderer getCityRenderer() {
-		return _cityRenderer;
-	}
+    /**
+     * Initializes and lays out the east-side strip containing the control
+     * panel ({@link MapControlPanel}) above the feedback pane
+     * ({@link FeedbackPane}).
+     */
+    private void initSidePanel() {
+        FeedbackPane fbp = initFeedback();
 
-	/**
-	 * Get the map projection.
-	 *
-	 * @return the current map projection
-	 */
-	protected IMapProjection getMapProjection() {
-		return _projection;
-	}
-	
-	/**
-	 * Prepare the view for exit by stopping any ongoing simulations, threads, or
-	 * timers. This method is called by the base view when the user clicks the
-	 * "Exit" button, allowing the view to clean up resources before the
-	 * application exits.
-	 */
-	public void prepareForExit() {
-		((MapContainer) getIContainer()).prepareForExit();
-	}
+        JPanel sidePanel = new JPanel(new BorderLayout());
+        fbp.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, fbp.getPreferredSize().height));
+        controlPanel.setMaximumSize(new Dimension(SIDE_PANEL_WIDTH, Integer.MAX_VALUE));
 
+        sidePanel.add(controlPanel, BorderLayout.NORTH);
+        sidePanel.add(fbp,          BorderLayout.CENTER);
+        sidePanel.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, getHeight()));
+
+        add(sidePanel, BorderLayout.EAST);
+    }
+
+    /**
+     * Registers the after-draw {@link IDrawable} that executes the complete
+     * rendering pipeline each frame:
+     * <ol>
+     *   <li>Fill the panel background with the theme's background color.</li>
+     *   <li>Fill the ocean region inside the projection's clip shape.</li>
+     *   <li>Draw the map outline and graticule lines.</li>
+     *   <li>Draw country polygons.</li>
+     *   <li>Draw city dots and labels.</li>
+     * </ol>
+     *
+     * <p>Null-guards on {@link #countryRenderer} and {@link #cityRenderer}
+     * prevent NullPointerExceptions if data has not been set before the first
+     * paint.</p>
+     */
+    private void setAfterDraw() {
+        IDrawable afterDraw = new DrawableAdapter() {
+            @Override
+            public void draw(Graphics2D g, IContainer container) {
+                // 1. Background
+                g.setColor(projection.getTheme().getBackgroundColor());
+                g.fillRect(0, 0, getWidth(), getHeight());
+
+                // 2. Ocean fill inside projection boundary
+                projection.fillOcean(g, container);
+
+                // 3. Graticule and outline
+                gratRenderer.render(g, container);
+
+                // 4. Country polygons (null-safe: data may not be loaded yet)
+                if (countryRenderer != null) {
+                    countryRenderer.render(g, container);
+                }
+
+                // 5. City dots and labels (null-safe)
+                if (cityRenderer != null) {
+                    cityRenderer.render(g, container);
+                }
+            }
+        };
+
+        getIContainer().setAfterDraw(afterDraw);
+    }
+
+    /**
+     * (Re)builds the {@link CityPointRenderer} with the current projection and
+     * applies the default filter settings. Called by both
+     * {@link #setProjection(EProjection)} and {@link #setCities(List)}.
+     *
+     * <p>If {@link #cities} has not been set yet, this is a no-op and
+     * {@link #cityRenderer} is left {@code null}.</p>
+     */
+    private void rebuildCityRenderer() {
+        if (cities == null) return;
+
+        cityRenderer = new CityPointRenderer(cities, projection);
+        cityRenderer.setPointRadius(1.5);
+        cityRenderer.setMinPopulation(MapConstants.MAX_POP_SLIDER_VALUE);
+        cityRenderer.setDrawLabels(true);
+    }
+
+    /**
+     * Returns the default world coordinate bounding rectangle for the given
+     * projection type. This rectangle is passed to
+     * {@link IContainer#resetWorldSystem(Rectangle2D.Double)} so that the
+     * entire projection domain fits within the viewport on first display.
+     *
+     * @param type the projection type
+     * @return a symmetric world-space bounding rectangle
+     */
+    private Rectangle2D.Double getWorldSystem(EProjection type) {
+        double lim = switch (type) {
+            case MOLLWEIDE        -> 2.9;
+            case MERCATOR         -> 1.1 * Math.PI;
+            case ORTHOGRAPHIC     -> 1.1;
+            case LAMBERT_EQUAL_AREA -> 1.5 * Math.PI / 2.0;
+        };
+        return new Rectangle2D.Double(-lim, -lim, 2 * lim, 2 * lim);
+    }
 }

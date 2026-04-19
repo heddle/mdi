@@ -14,376 +14,387 @@ import edu.cnu.mdi.container.IContainer;
 
 /**
  * Lambert azimuthal equal-area projection (spherical Earth, R = 1).
- * <p>
- * Maps the entire sphere to a disk of radius 2 in projection space, preserving
- * area. The projection is centered on a chosen point (λ₀, φ₀).
- * </p>
  *
- * <h2>Forward projection</h2> From Snyder (spherical form), with Earth radius R
- * = 1:
- *
+ * <h2>Forward equations (Snyder, spherical form)</h2>
  * <pre>
- *   k = sqrt( 2 / (1 + sin φ₀ sin φ + cos φ₀ cos φ cos(λ - λ₀)) )
+ *   k = √(2 / (1 + sin φ₀ sin φ + cos φ₀ cos φ cos(λ - λ₀)))
  *
- *   x = k cos φ sin(λ - λ₀)
- *   y = k (cos φ₀ sin φ - sin φ₀ cos φ cos(λ - λ₀))
+ *   x = k · cos φ · sin(λ - λ₀)
+ *   y = k · (cos φ₀ · sin φ − sin φ₀ · cos φ · cos(λ - λ₀))
  * </pre>
  *
- * where:
- * <ul>
- * <li>λ, φ are the input longitude and latitude (in radians)</li>
- * <li>λ₀, φ₀ are the center longitude and latitude (in radians)</li>
- * </ul>
- *
- * <h2>Inverse projection</h2>
- *
+ * <h2>Inverse equations</h2>
  * <pre>
- *   ρ = sqrt(x² + y²)
- *   c = 2 asin(ρ / 2)
+ *   ρ = √(x² + y²),   c = 2 arcsin(ρ / 2)
  *
- *   φ = asin( cos c sin φ₀ + (y sin c cos φ₀) / ρ )
- *   λ = λ₀ + atan2( x sin c,
- *                   ρ cos φ₀ cos c - y sin φ₀ sin c )
+ *   φ = arcsin(cos c · sin φ₀ + (y · sin c · cos φ₀) / ρ)
+ *   λ = λ₀ + atan2(x · sin c, ρ · cos φ₀ · cos c − y · sin φ₀ · sin c)
  * </pre>
  *
- * with the special case {@code ρ = 0} corresponding to the center point (λ₀,
- * φ₀).
- * <p>
- * Conventions:
- * <ul>
- * <li>Geographic coords are passed as {@link java.awt.geom.Point2D.Double} with
- * {@code x = λ} (longitude, radians) and {@code y = φ} (latitude,
- * radians).</li>
- * <li>Projection-space coords are also {@code Point2D.Double} in "world"
- * units.</li>
- * </ul>
+ * <h2>Domain</h2>
+ * <p>The entire sphere maps to a disk of radius 2 (for R = 1). The antipode
+ * of the center point maps to the outer boundary circle. The bounding box is
+ * [-2, -2] to [2, 2].</p>
+ *
+ * <h2>Antipode singularity</h2>
+ * <p>When the denominator {@code 1 + cos γ} approaches zero (point is the
+ * antipode of the center), the formula is regularized by clamping to a point
+ * on the outer boundary of the disk at angle 0. This is geometrically correct
+ * in the limit and prevents division by zero or NaN propagation.</p>
+ *
+ * <h2>No seam</h2>
+ * <p>The Lambert projection has no antimeridian seam because the mapping from
+ * globe to disk is continuous. The default {@link IMapProjection#crossesSeam}
+ * returning {@code false} is correct for this class.</p>
  */
 public class LambertEqualAreaProjection implements IMapProjection {
 
-	/** Sphere radius in projection space. */
-	private static final double R = 1.0;
+    // -------------------------------------------------------------------------
+    // Constants
+    // -------------------------------------------------------------------------
 
-	/** Maximum latitude used for sampling / numeric safety. */
-	private static final double MAX_LAT = Math.toRadians(89.999);
-	private static final double MIN_LAT = -MAX_LAT;
+    private static final double R           = 1.0;
+    private static final double MAX_LAT     = Math.toRadians(89.999);
+    private static final double MIN_LAT     = -MAX_LAT;
 
-	/** Maximum radial distance in projection space (for the antipode). */
-	private static final double RHO_MAX = 2.0 * R;
+    /**
+     * Maximum radial distance in projection space (antipode of center
+     * maps to the circle boundary at ρ = 2R).
+     */
+    private static final double RHO_MAX     = 2.0 * R;
 
-	/** Number of segments for drawing the circular outline and clip. */
-	private static final int NUM_SEGMENTS = 360;
+    /** Number of segments for the circular outline and clip path. */
+    private static final int    NUM_SEGMENTS = 360;
 
-	/** Center longitude λ₀ (radians). */
-	private double centerLon;
+    // -------------------------------------------------------------------------
+    // State
+    // -------------------------------------------------------------------------
 
-	/** Center latitude φ₀ (radians). */
-	private double centerLat;
+    /** Central longitude λ₀ in radians. */
+    private double centerLon;
 
-	/** Theme used for drawing. May be {@code null} until set by client code. */
-	private MapTheme theme;
+    /** Central latitude φ₀ in radians. */
+    private double centerLat;
 
-	/**
-	 * Creates a Lambert azimuthal equal-area projection centered at the specified
-	 * longitude and latitude on a unit sphere.
-	 * <p>
-	 * This mirrors the primary constructor style of {@link OrthographicProjection},
-	 * leaving the {@link MapTheme} to be provided later via
-	 * {@link #setTheme(MapTheme)} (e.g., from a factory).
-	 *
-	 * @param centerLon central longitude λ₀ in radians
-	 * @param centerLat central latitude φ₀ in radians
-	 */
-	public LambertEqualAreaProjection(double centerLon, double centerLat) {
-		this.centerLon = centerLon;
-		this.centerLat = centerLat;
-	}
+    /** Active rendering theme. */
+    private MapTheme theme;
 
-	/**
-	 * Convenience constructor centered at (0, 0).
-	 * <p>
-	 * Equivalent to:
-	 *
-	 * <pre>
-	 * new LambertEqualAreaProjection(0.0, 0.0);
-	 * </pre>
-	 */
-	public LambertEqualAreaProjection() {
-		this(0.0, 0.0);
-	}
+    // -------------------------------------------------------------------------
+    // Construction
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Convenience constructor that also sets the {@link MapTheme}.
-	 *
-	 * @param centerLon central longitude λ₀ in radians
-	 * @param centerLat central latitude φ₀ in radians
-	 * @param theme     map theme; must not be {@code null}
-	 */
-	public LambertEqualAreaProjection(double centerLon, double centerLat, MapTheme theme) {
-		this(centerLon, centerLat);
-		setTheme(theme);
-	}
+    /**
+     * Creates a Lambert equal-area projection centered at the given geographic
+     * point. The {@link MapTheme} must be set via {@link #setTheme(MapTheme)}
+     * before any drawing methods are called, or use the three-argument
+     * constructor to set it atomically.
+     *
+     * @param centerLon central longitude λ₀ in radians
+     * @param centerLat central latitude φ₀ in radians
+     */
+    public LambertEqualAreaProjection(double centerLon, double centerLat) {
+        this.centerLon = centerLon;
+        this.centerLat = centerLat;
+    }
 
-	/**
-	 * Convenience constructor centered at (0, 0) with the given theme.
-	 *
-	 * @param theme map theme; must not be {@code null}
-	 */
-	public LambertEqualAreaProjection(MapTheme theme) {
-		this(0.0, 0.0, theme);
-	}
+    /**
+     * Convenience constructor centered at (0°, 0°). The theme must still be
+     * set before drawing.
+     */
+    public LambertEqualAreaProjection() {
+        this(0.0, 0.0);
+    }
 
-	/**
-	 * Set the center of the projection.
-	 *
-	 * @param centerLon central longitude λ₀ in radians
-	 * @param centerLat central latitude φ₀ in radians
-	 */
-	public void setCenter(double centerLon, double centerLat) {
-		this.centerLat = centerLat;
-		this.centerLon = centerLon;
-	}
+    /**
+     * Convenience constructor that sets both the center and the theme
+     * atomically, preventing the NullPointerException that arises when drawing
+     * methods are called before the theme is set.
+     *
+     * @param centerLon central longitude λ₀ in radians
+     * @param centerLat central latitude φ₀ in radians
+     * @param theme     map theme; must not be {@code null}
+     */
+    public LambertEqualAreaProjection(double centerLon, double centerLat, MapTheme theme) {
+        this(centerLon, centerLat);
+        setTheme(theme);
+    }
 
-	@Override
-	public void latLonToXY(Point2D.Double latLon, Point2D.Double xy) {
-		double lon = latLon.x;
-		double lat = latLon.y;
+    /**
+     * Convenience constructor centered at (0°, 0°) with the given theme.
+     *
+     * @param theme map theme; must not be {@code null}
+     */
+    public LambertEqualAreaProjection(MapTheme theme) {
+        this(0.0, 0.0, theme);
+    }
 
-		// Clamp latitude for numerical stability
-		lat = Math.max(MIN_LAT, Math.min(MAX_LAT, lat));
+    // -------------------------------------------------------------------------
+    // Center accessor
+    // -------------------------------------------------------------------------
 
-		double dLon = lon - centerLon;
+    /**
+     * Changes the center of the projection. The next repaint will show the
+     * globe centred on the new point.
+     *
+     * @param centerLon central longitude λ₀ in radians
+     * @param centerLat central latitude φ₀ in radians
+     */
+    public void setCenter(double centerLon, double centerLat) {
+        this.centerLon = centerLon;
+        this.centerLat = centerLat;
+    }
 
-		double sinLat = Math.sin(lat);
-		double cosLat = Math.cos(lat);
-		double sinLat0 = Math.sin(centerLat);
-		double cosLat0 = Math.cos(centerLat);
-		double cosDLon = Math.cos(dLon);
+    // -------------------------------------------------------------------------
+    // IMapProjection — transforms
+    // -------------------------------------------------------------------------
 
-		// Denominator in Snyder's formula (1 + cos γ)
-		double denom = 1.0 + sinLat0 * sinLat + cosLat0 * cosLat * cosDLon;
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Latitude is clamped to [{@code MIN_LAT}, {@code MAX_LAT}] before
+     * projection. When the input point is the antipode of the center (the
+     * denominator {@code 1 + cos γ ≈ 0}), the output is set to the boundary
+     * point {@code (RHO_MAX, 0)} rather than NaN.</p>
+     */
+    @Override
+    public void latLonToXY(Point2D.Double latLon, Point2D.Double xy) {
+        double lon  = latLon.x;
+        double lat  = Math.max(MIN_LAT, Math.min(MAX_LAT, latLon.y));
+        double dLon = lon - centerLon;
 
-		// When denom is very small we are at or near the antipode.
-		if (denom <= 1e-15) {
-			// Map the antipode to a point on the boundary of the disk.
-			// Choose some arbitrary direction; here we use angle 0.
-			xy.x = RHO_MAX;
-			xy.y = 0.0;
-			return;
-		}
+        double sinLat  = Math.sin(lat);
+        double cosLat  = Math.cos(lat);
+        double sinLat0 = Math.sin(centerLat);
+        double cosLat0 = Math.cos(centerLat);
+        double cosDLon = Math.cos(dLon);
 
-		double k = Math.sqrt(2.0 / denom);
+        double denom = 1.0 + sinLat0 * sinLat + cosLat0 * cosLat * cosDLon;
 
-		double x = k * cosLat * Math.sin(dLon);
-		double y = k * (cosLat0 * sinLat - sinLat0 * cosLat * cosDLon);
+        if (denom <= 1e-15) {
+            // Antipode: map to a canonical boundary point.
+            xy.x = RHO_MAX;
+            xy.y = 0.0;
+            return;
+        }
 
-		xy.setLocation(x, y);
-	}
+        double k = Math.sqrt(2.0 / denom);
+        xy.setLocation(
+            k * cosLat  * Math.sin(dLon),
+            k * (cosLat0 * sinLat - sinLat0 * cosLat * cosDLon)
+        );
+    }
 
-	@Override
-	public void latLonFromXY(Point2D.Double latLon, Point2D.Double xy) {
-		double x = xy.x;
-		double y = xy.y;
+    /** {@inheritDoc} */
+    @Override
+    public void latLonFromXY(Point2D.Double latLon, Point2D.Double xy) {
+        double x    = xy.x;
+        double y    = xy.y;
+        double rho  = Math.sqrt(x * x + y * y);
 
-		double rho2 = x * x + y * y;
-		double rho = Math.sqrt(rho2);
+        if (rho > RHO_MAX + 1e-9) {
+            latLon.setLocation(Double.NaN, Double.NaN);
+            return;
+        }
+        if (rho < 1e-15) {
+            latLon.x = centerLon;
+            latLon.y = centerLat;
+            return;
+        }
 
-		if (rho > RHO_MAX + 1e-9) {
-			// Outside valid disk; no inverse mapping.
-			latLon.setLocation(Double.NaN, Double.NaN);
-			return;
-		}
+        double sinLat0 = Math.sin(centerLat);
+        double cosLat0 = Math.cos(centerLat);
+        double c       = 2.0 * Math.asin(rho / (2.0 * R));
+        double sinC    = Math.sin(c);
+        double cosC    = Math.cos(c);
 
-		if (rho < 1e-15) {
-			// Center point
-			latLon.x = centerLon;
-			latLon.y = centerLat;
-			return;
-		}
+        latLon.y = Math.asin(cosC * sinLat0 + (y * sinC * cosLat0) / rho);
+        latLon.x = wrapLongitude(
+            centerLon + Math.atan2(x * sinC, rho * cosLat0 * cosC - y * sinLat0 * sinC));
+    }
 
-		double sinLat0 = Math.sin(centerLat);
-		double cosLat0 = Math.cos(centerLat);
+    // -------------------------------------------------------------------------
+    // IMapProjection — visibility
+    // -------------------------------------------------------------------------
 
-		// Great-circle distance from center to point
-		double c = 2.0 * Math.asin(rho / (2.0 * R));
-		double sinC = Math.sin(c);
-		double cosC = Math.cos(c);
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The Lambert projection maps the entire globe, so every point in the
+     * valid latitude range is visible.</p>
+     */
+    @Override
+    public boolean isPointVisible(Point2D.Double latLon) {
+        return latLon.y >= MIN_LAT && latLon.y <= MAX_LAT;
+    }
 
-		double phi = Math.asin(cosC * sinLat0 + (y * sinC * cosLat0) / rho);
+    /**
+     * {@inheritDoc}
+     *
+     * <p>A point is on the map when it lies within or on the boundary of the
+     * disk: x² + y² ≤ RHO_MAX².</p>
+     */
+    @Override
+    public boolean isPointOnMap(Point2D.Double xy) {
+        return xy.x * xy.x + xy.y * xy.y <= RHO_MAX * RHO_MAX + 1e-9;
+    }
 
-		double lambda = centerLon + Math.atan2(x * sinC, rho * cosLat0 * cosC - y * sinLat0 * sinC);
+    // -------------------------------------------------------------------------
+    // IMapProjection — drawing
+    // -------------------------------------------------------------------------
 
-		latLon.x = wrapLongitude(lambda);
-		latLon.y = phi;
-	}
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Draws the circular boundary of the projection disk (radius
+     * {@code RHO_MAX = 2}) using the theme's outline color and stroke
+     * width.</p>
+     */
+    @Override
+    public void drawMapOutline(Graphics2D g2, IContainer container) {
+        Path2D path = new Path2D.Double();
+        Point2D.Double world = new Point2D.Double();
+        Point screen = new Point();
 
-	@Override
-	public void drawMapOutline(Graphics2D g2, IContainer container) {
-		// Outline is the circle x^2 + y^2 = RHO_MAX^2
-		Path2D path = new Path2D.Double();
-		Point2D.Double world = new Point2D.Double();
-		Point screen = new Point();
+        for (int i = 0; i <= NUM_SEGMENTS; i++) {
+            double theta = 2.0 * Math.PI * i / NUM_SEGMENTS;
+            world.setLocation(RHO_MAX * Math.cos(theta), RHO_MAX * Math.sin(theta));
+            container.worldToLocal(screen, world);
+            if (i == 0) path.moveTo(screen.x, screen.y);
+            else        path.lineTo(screen.x, screen.y);
+        }
+        path.closePath();
 
-		for (int i = 0; i <= NUM_SEGMENTS; i++) {
-			double theta = 2.0 * Math.PI * i / NUM_SEGMENTS;
-			double x = RHO_MAX * Math.cos(theta);
-			double y = RHO_MAX * Math.sin(theta);
+        Color  oldColor  = g2.getColor();
+        Stroke oldStroke = g2.getStroke();
+        g2.setColor(theme.getOutlineColor());
+        g2.setStroke(new BasicStroke(theme.getOutlineStrokeWidth()));
+        g2.draw(path);
+        g2.setColor(oldColor);
+        g2.setStroke(oldStroke);
+    }
 
-			world.setLocation(x, y);
-			container.worldToLocal(screen, world);
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Samples 360 evenly-spaced longitudes at the given latitude and
+     * connects the projected screen points. NaN results (e.g. near the
+     * antipode boundary) are skipped. Uses
+     * {@link MapTheme#getGraticuleColor()} so the line color reflects the
+     * active theme.</p>
+     */
+    @Override
+    public void drawLatitudeLine(Graphics2D g2, IContainer container, double latitude) {
+        double lat = Math.max(MIN_LAT, Math.min(MAX_LAT, latitude));
 
-			if (i == 0) {
-				path.moveTo(screen.x, screen.y);
-			} else {
-				path.lineTo(screen.x, screen.y);
-			}
-		}
-		path.closePath();
+        Path2D path = new Path2D.Double();
+        Point2D.Double latLon = new Point2D.Double();
+        Point2D.Double xy     = new Point2D.Double();
+        Point screen          = new Point();
 
-		Color oldColor = g2.getColor();
-		Stroke oldStroke = g2.getStroke();
+        latLon.y = lat;
+        for (int i = 0; i <= 360; i++) {
+            latLon.x = -Math.PI + 2.0 * Math.PI * i / 360;
+            latLonToXY(latLon, xy);
+            if (Double.isNaN(xy.x) || Double.isNaN(xy.y) || !isPointOnMap(xy)) continue;
+            container.worldToLocal(screen, xy);
+            if (i == 0) path.moveTo(screen.x, screen.y);
+            else        path.lineTo(screen.x, screen.y);
+        }
 
-		g2.setColor(theme.getOutlineColor());
-		g2.setStroke(new BasicStroke(theme.getOutlineStrokeWidth()));
-		g2.draw(path);
+        Color oldColor = g2.getColor();
+        g2.setColor(theme.getGraticuleColor());   // fixed: was Color.LIGHT_GRAY
+        g2.draw(path);
+        g2.setColor(oldColor);
+    }
 
-		g2.setColor(oldColor);
-		g2.setStroke(oldStroke);
-	}
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Samples 180 evenly-spaced latitudes at the given longitude and
+     * connects the projected screen points. Uses
+     * {@link MapTheme#getGraticuleColor()} for the line color.</p>
+     */
+    @Override
+    public void drawLongitudeLine(Graphics2D g2, IContainer container, double longitude) {
+        double lon = wrapLongitude(longitude);
 
-	@Override
-	public boolean isPointOnMap(Point2D.Double xy) {
-		double x = xy.x;
-		double y = xy.y;
-		return x * x + y * y <= RHO_MAX * RHO_MAX + 1e-9;
-	}
+        Path2D path = new Path2D.Double();
+        Point2D.Double latLon = new Point2D.Double();
+        Point2D.Double xy     = new Point2D.Double();
+        Point screen          = new Point();
 
-	@Override
-	public void drawLatitudeLine(Graphics2D g2, IContainer container, double latitude) {
-		double lat = Math.max(MIN_LAT, Math.min(MAX_LAT, latitude));
+        latLon.x = lon;
+        for (int i = 0; i <= 180; i++) {
+            double t   = (double) i / 180;
+            latLon.y   = MIN_LAT + (MAX_LAT - MIN_LAT) * t;
+            latLonToXY(latLon, xy);
+            if (Double.isNaN(xy.x) || Double.isNaN(xy.y) || !isPointOnMap(xy)) continue;
+            container.worldToLocal(screen, xy);
+            if (i == 0) path.moveTo(screen.x, screen.y);
+            else        path.lineTo(screen.x, screen.y);
+        }
 
-		Path2D path = new Path2D.Double();
-		Point2D.Double latLon = new Point2D.Double();
-		Point2D.Double xy = new Point2D.Double();
-		Point screen = new Point();
+        Color oldColor = g2.getColor();
+        g2.setColor(theme.getGraticuleColor());   // fixed: was Color.LIGHT_GRAY
+        g2.draw(path);
+        g2.setColor(oldColor);
+    }
 
-		latLon.y = lat;
+    // -------------------------------------------------------------------------
+    // IMapProjection — metadata
+    // -------------------------------------------------------------------------
 
-		int nSamples = 360;
-		for (int i = 0; i <= nSamples; i++) {
-			double lon = -Math.PI + 2.0 * Math.PI * i / nSamples;
-			latLon.x = lon;
+    /** {@inheritDoc} */
+    @Override
+    public EProjection getProjection() { return EProjection.LAMBERT_EQUAL_AREA; }
 
-			latLonToXY(latLon, xy);
-			if (Double.isNaN(xy.x) || Double.isNaN(xy.y) || !isPointOnMap(xy)) {
-				continue;
-			}
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns the bounding square of the disk: [-RHO_MAX, -RHO_MAX] to
+     * [RHO_MAX, RHO_MAX], i.e. [-2, -2] to [2, 2] for a unit sphere.</p>
+     */
+    @Override
+    public Rectangle2D.Double getXYBounds() {
+        return new Rectangle2D.Double(-RHO_MAX, -RHO_MAX, 2.0 * RHO_MAX, 2.0 * RHO_MAX);
+    }
 
-			container.worldToLocal(screen, xy);
+    /** {@inheritDoc} */
+    @Override
+    public MapTheme getTheme() { return theme; }
 
-			if (i == 0) {
-				path.moveTo(screen.x, screen.y);
-			} else {
-				path.lineTo(screen.x, screen.y);
-			}
-		}
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalArgumentException if {@code theme} is {@code null}
+     */
+    @Override
+    public void setTheme(MapTheme theme) {
+        if (theme == null) throw new IllegalArgumentException("MapTheme must not be null");
+        this.theme = theme;
+    }
 
-		Color oldColor = g2.getColor();
-		g2.setColor(Color.LIGHT_GRAY);
-		g2.draw(path);
-		g2.setColor(oldColor);
-	}
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns a circular path in device coordinates matching the disk
+     * boundary (radius {@code RHO_MAX}), used as a clip region for ocean fill
+     * and land rendering.</p>
+     */
+    @Override
+    public Shape createClipShape(IContainer container) {
+        Path2D path = new Path2D.Double();
+        Point2D.Double world = new Point2D.Double();
+        Point screen = new Point();
 
-	@Override
-	public void drawLongitudeLine(Graphics2D g2, IContainer container, double longitude) {
-		double lon = wrapLongitude(longitude);
-
-		Path2D path = new Path2D.Double();
-		Point2D.Double latLon = new Point2D.Double();
-		Point2D.Double xy = new Point2D.Double();
-		Point screen = new Point();
-
-		latLon.x = lon;
-
-		int nSamples = 180;
-		for (int i = 0; i <= nSamples; i++) {
-			double t = (double) i / nSamples;
-			double lat = MIN_LAT + (MAX_LAT - MIN_LAT) * t;
-			latLon.y = lat;
-
-			latLonToXY(latLon, xy);
-			if (Double.isNaN(xy.x) || Double.isNaN(xy.y) || !isPointOnMap(xy)) {
-				continue;
-			}
-
-			container.worldToLocal(screen, xy);
-
-			if (i == 0) {
-				path.moveTo(screen.x, screen.y);
-			} else {
-				path.lineTo(screen.x, screen.y);
-			}
-		}
-
-		Color oldColor = g2.getColor();
-		g2.setColor(Color.LIGHT_GRAY);
-		g2.draw(path);
-		g2.setColor(oldColor);
-	}
-
-	@Override
-	public boolean isPointVisible(Point2D.Double latLon) {
-		// Entire globe is mapped; just enforce numerical latitude limits.
-		double lat = latLon.y;
-		return lat >= MIN_LAT && lat <= MAX_LAT;
-	}
-
-	@Override
-	public EProjection getProjection() {
-		// Make sure to add LAMBERT_EQUAL_AREA to your EProjection enum.
-		return EProjection.LAMBERT_EQUAL_AREA;
-	}
-
-	@Override
-	public Rectangle2D.Double getXYBounds() {
-		// Bounding box of the disk [-RHO_MAX, RHO_MAX]^2
-		return new Rectangle2D.Double(-RHO_MAX, -RHO_MAX, 2.0 * RHO_MAX, 2.0 * RHO_MAX);
-	}
-
-	@Override
-	public MapTheme getTheme() {
-		return theme;
-	}
-
-	@Override
-	public void setTheme(MapTheme theme) {
-		if (theme == null) {
-			throw new IllegalArgumentException("MapTheme must not be null");
-		}
-		this.theme = theme;
-	}
-
-	@Override
-	public Shape createClipShape(IContainer container) {
-		// Same circle as the outline, but used as a device-space clip.
-		Path2D path = new Path2D.Double();
-		Point2D.Double world = new Point2D.Double();
-		Point screen = new Point();
-
-		for (int i = 0; i <= NUM_SEGMENTS; i++) {
-			double theta = 2.0 * Math.PI * i / NUM_SEGMENTS;
-			double x = RHO_MAX * Math.cos(theta);
-			double y = RHO_MAX * Math.sin(theta);
-
-			world.setLocation(x, y);
-			container.worldToLocal(screen, world);
-
-			if (i == 0) {
-				path.moveTo(screen.x, screen.y);
-			} else {
-				path.lineTo(screen.x, screen.y);
-			}
-		}
-		path.closePath();
-		return path;
-	}
+        for (int i = 0; i <= NUM_SEGMENTS; i++) {
+            double theta = 2.0 * Math.PI * i / NUM_SEGMENTS;
+            world.setLocation(RHO_MAX * Math.cos(theta), RHO_MAX * Math.sin(theta));
+            container.worldToLocal(screen, world);
+            if (i == 0) path.moveTo(screen.x, screen.y);
+            else        path.lineTo(screen.x, screen.y);
+        }
+        path.closePath();
+        return path;
+    }
 }

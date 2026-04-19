@@ -17,55 +17,56 @@ import edu.cnu.mdi.util.UnicodeUtils;
 import edu.cnu.mdi.view.ContainerFactory;
 
 /**
- * Map-specific {@link edu.cnu.mdi.container.IContainer} that adds projection-
- * aware recentering, lat/lon coordinate conversion, and hover-driven country-
- * name popups to the standard {@link BaseContainer} behaviour.
+ * Map-specific {@link edu.cnu.mdi.container.IContainer} that adds:
+ * <ul>
+ *   <li><b>Projection-aware recentering</b> — double-click (or toolbar
+ *       recenter gesture) re-centers the active projection on the geographic
+ *       point under the cursor rather than simply scrolling the viewport.</li>
+ *   <li><b>Lat/lon coordinate conversion</b> — convenience helpers that
+ *       convert between screen, world, and geographic coordinates.</li>
+ *   <li><b>Country-name hover popup</b> — a {@link HoverInfoWindow} that
+ *       appears after the cursor dwells over a country polygon.</li>
+ * </ul>
  *
  * <h2>ContainerFactory compatibility</h2>
- * <p>
- * The single-argument constructor {@link #MapContainer(Rectangle2D.Double)}
- * satisfies the {@link ContainerFactory} functional interface contract:
- * </p>
- * <pre>
- *   ContainerFactory factory = MapContainer::new;
- * </pre>
- * <p>
- * This constructor reference can be passed to
- * {@link edu.cnu.mdi.view.ViewPropertiesBuilder#containerFactory(ContainerFactory)}
- * (stored under {@link edu.cnu.mdi.util.PropertyUtils#CONTAINERFACTORY}),
- * replacing the older reflection-based
- * {@link edu.cnu.mdi.util.PropertyUtils#CONTAINERCLASS} approach. No
- * changes to this class are required for the migration — the existing
- * constructor already has the correct signature.
- * </p>
+ * <p>The single-argument constructor
+ * {@link #MapContainer(Rectangle2D.Double)} satisfies the
+ * {@link ContainerFactory} functional interface and can therefore be
+ * referenced as a constructor reference:</p>
+ * <pre>{@code
+ * ContainerFactory factory = MapContainer::new;
+ * }</pre>
+ * <p>This reference is stored under
+ * {@link edu.cnu.mdi.util.PropertyUtils#CONTAINERFACTORY} and used by the
+ * framework to instantiate the container without reflection.</p>
  *
- * <h2>Hover popup</h2>
- * <p>
- * A {@link HoverInfoWindow} is created lazily on first use because the
- * component's window ancestor is not guaranteed to be available at
- * construction time. The popup is hidden on {@link #hoverDown} and shown
- * on {@link #hoverUp} only when the cursor is over a recognized country
- * polygon. If the window ancestor is still unavailable when the first hover
- * fires, the popup is silently suppressed for that event and will be
- * attempted again on the next {@link #hoverUp}.
- * </p>
+ * <h2>Standard panning</h2>
+ * <p>Standard viewport panning is disabled in the constructor because map
+ * views handle panning differently: a right-click recenter updates the
+ * projection center rather than scrolling a fixed background image.</p>
+ *
+ * <h2>Hover popup lifecycle</h2>
+ * <p>The {@link HoverInfoWindow} is created lazily on the first
+ * {@link #hoverUp(HoverEvent)} event because the component's window ancestor
+ * is not guaranteed to be available at construction time. If the window
+ * ancestor is still unavailable when the first hover fires, the popup is
+ * silently suppressed for that event and attempted again on the next one.</p>
  *
  * <h2>Resource cleanup</h2>
- * <p>
- * Call {@link #prepareForExit()} when the owning view is closing to
+ * <p>Call {@link #prepareForExit()} when the owning view is closing to
  * unregister the hover listener and dispose the popup window. Failing to do
- * so will leave a {@link HoverManager} registration and a visible (but
- * orphaned) {@link HoverInfoWindow} in memory.
- * </p>
+ * so leaves a {@link HoverManager} registration and a potentially visible
+ * {@link HoverInfoWindow} in memory.</p>
  */
 @SuppressWarnings("serial")
 public class MapContainer extends BaseContainer implements HoverListener {
 
     /**
-     * Lazily-created popup window used to display a country name near the cursor.
+     * Lazily-created popup window used to display a country name near the
+     * cursor.
      *
-     * <p>Null until the first {@link #hoverUp} that successfully resolves
-     * the window ancestor. Disposed and set back to {@code null} by
+     * <p>{@code null} until the first {@link #hoverUp(HoverEvent)} that
+     * successfully resolves the window ancestor. Set back to {@code null} by
      * {@link #prepareForExit()}.</p>
      */
     private HoverInfoWindow hoverWindow;
@@ -75,19 +76,17 @@ public class MapContainer extends BaseContainer implements HoverListener {
     // -------------------------------------------------------------------------
 
     /**
-     * Create a map container with the given initial world coordinate system.
+     * Creates a map container with the given initial world coordinate system.
      *
-     * <p>This constructor is intentionally kept to a single
-     * {@link Rectangle2D.Double} argument so that it satisfies the
-     * {@link ContainerFactory} functional interface and can be referenced as
-     * a constructor reference:</p>
-     * <pre>
-     *   ContainerFactory factory = MapContainer::new;
-     * </pre>
+     * <p>This constructor intentionally has a single {@link Rectangle2D.Double}
+     * parameter so it satisfies the {@link ContainerFactory} functional
+     * interface:</p>
+     * <pre>{@code
+     * ContainerFactory factory = MapContainer::new;
+     * }</pre>
      *
-     * <p>Standard panning is disabled here because map views handle panning
-     * differently (re-centering the projection rather than scrolling a
-     * viewport).</p>
+     * <p>Standard panning is disabled because map views re-center the
+     * projection on right-click rather than scrolling a viewport.</p>
      *
      * @param worldSystem the initial world coordinate rectangle; must not be
      *                    {@code null}
@@ -96,7 +95,8 @@ public class MapContainer extends BaseContainer implements HoverListener {
         super(worldSystem);
         setStandardPanning(false);
 
-        // Register for hover events so country names appear near the cursor.
+        // Register for hover events so the country-name popup fires after
+        // the cursor dwells over the map.
         HoverManager.getInstance().registerComponent(getComponent(), this);
     }
 
@@ -108,11 +108,21 @@ public class MapContainer extends BaseContainer implements HoverListener {
      * {@inheritDoc}
      *
      * <p>Overridden to re-center the active map projection on the geographic
-     * point under the cursor rather than simply shifting the viewport.</p>
+     * point under the cursor rather than shifting the viewport. The correct
+     * setter is dispatched based on the active {@link EProjection} type:
+     * <ul>
+     *   <li>{@link EProjection#MERCATOR} →
+     *       {@link MercatorProjection#setCentralLongitude(double)}</li>
+     *   <li>{@link EProjection#MOLLWEIDE} →
+     *       {@link MollweideProjection#setCentralLongitude(double)}</li>
+     *   <li>{@link EProjection#ORTHOGRAPHIC} →
+     *       {@link OrthographicProjection#setCenter(double, double)}</li>
+     *   <li>{@link EProjection#LAMBERT_EQUAL_AREA} →
+     *       {@link LambertEqualAreaProjection#setCenter(double, double)}</li>
+     * </ul>
      */
     @Override
     public void recenter(Point pp) {
-
         IMapProjection mp   = getMapView2D().getProjection();
         EProjection    proj = mp.getProjection();
 
@@ -122,21 +132,10 @@ public class MapContainer extends BaseContainer implements HoverListener {
         mp.latLonFromXY(ll, wp);
 
         switch (proj) {
-        case MERCATOR:
-            ((MercatorProjection) mp).setCentralLongitude(ll.x);
-            break;
-
-        case MOLLWEIDE:
-            ((MollweideProjection) mp).setCentralLongitude(ll.x);
-            break;
-
-        case ORTHOGRAPHIC:
-            ((OrthographicProjection) mp).setCenter(ll.x, ll.y);
-            break;
-
-        case LAMBERT_EQUAL_AREA:
-            ((LambertEqualAreaProjection) mp).setCenter(ll.x, ll.y);
-            break;
+            case MERCATOR       -> ((MercatorProjection)         mp).setCentralLongitude(ll.x);
+            case MOLLWEIDE      -> ((MollweideProjection)        mp).setCentralLongitude(ll.x);
+            case ORTHOGRAPHIC   -> ((OrthographicProjection)     mp).setCenter(ll.x, ll.y);
+            case LAMBERT_EQUAL_AREA -> ((LambertEqualAreaProjection) mp).setCenter(ll.x, ll.y);
         }
 
         getMapView2D().invalidate();
@@ -149,10 +148,15 @@ public class MapContainer extends BaseContainer implements HoverListener {
     // -------------------------------------------------------------------------
 
     /**
-     * Convert a local (screen-space) point to a geographic lat/lon point.
+     * Converts a screen-space (local) point to a geographic lat/lon point.
      *
-     * @param pp the local pixel coordinate
-     * @param ll the output lat/lon point (radians); populated in-place
+     * <p>The conversion path is:
+     * local → world (via container transform) → lat/lon (via projection
+     * inverse).</p>
+     *
+     * @param pp screen-space pixel coordinate
+     * @param ll output lat/lon point in radians ({@code x=λ, y=φ});
+     *           populated in-place
      */
     public void localToLatLon(Point pp, Point2D.Double ll) {
         Point2D.Double wp = new Point2D.Double();
@@ -161,10 +165,11 @@ public class MapContainer extends BaseContainer implements HoverListener {
     }
 
     /**
-     * Convert a world (projection) point to a geographic lat/lon point.
+     * Converts a world (projection-space) point to a geographic lat/lon point.
      *
-     * @param ll the output lat/lon point (radians); populated in-place
-     * @param wp the input world coordinate
+     * @param ll output lat/lon point in radians ({@code x=λ, y=φ});
+     *           populated in-place
+     * @param wp input world-space coordinate
      */
     public void worldToLatLon(Point2D.Double ll, Point2D.Double wp) {
         getMapView2D().getProjection().latLonFromXY(ll, wp);
@@ -177,8 +182,9 @@ public class MapContainer extends BaseContainer implements HoverListener {
     /**
      * {@inheritDoc}
      *
-     * <p>Overridden to push a formatted lat/lon string to the toolbar status
-     * area in addition to the standard feedback-pane update.</p>
+     * <p>Overridden to push a formatted lat/lon string (e.g.
+     * {@code "37.77°N, 122.41°W"}) to the toolbar status area in addition to
+     * the standard feedback-pane update performed by the superclass.</p>
      */
     @Override
     public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging) {
@@ -208,25 +214,23 @@ public class MapContainer extends BaseContainer implements HoverListener {
      * Called by {@link HoverManager} after the cursor has rested over this
      * component for the configured dwell time.
      *
-     * <p>Looks up the country under the cursor and shows its name in the
-     * hover popup. If no country is found, or if the popup window cannot yet
-     * be created (component not yet realized), this method returns silently.</p>
+     * <p>Looks up the country polygon under the cursor via
+     * {@link MapView2D#getCountryAtPoint(Point, edu.cnu.mdi.container.IContainer)}
+     * and shows the country name in the hover popup. If no country is found,
+     * or if the popup window cannot yet be created (component not yet
+     * realized), this method returns silently.</p>
      *
-     * @param he the hover event containing the component and cursor location
+     * @param he the hover event containing the source component and cursor
+     *           location
      */
     @Override
     public void hoverUp(HoverEvent he) {
         Point  p           = he.getLocation();
         String countryName = getMapView2D().getCountryAtPoint(p, this);
-
-        if (countryName == null) {
-            return; // Cursor is not over a recognized country polygon.
-        }
+        if (countryName == null) return;
 
         HoverInfoWindow win = getHoverWindow();
-        if (win == null) {
-            return; // Window ancestor not yet available; suppress this event.
-        }
+        if (win == null) return; // window ancestor not yet available
 
         SwingUtilities.convertPointToScreen(p, he.getSource());
         win.showMessage(countryName, p);
@@ -236,10 +240,11 @@ public class MapContainer extends BaseContainer implements HoverListener {
      * Called by {@link HoverManager} when the cursor leaves the component or
      * moves after a hover was triggered.
      *
-     * <p>Hides the country-name popup. If the popup was never created this
-     * is a no-op.</p>
+     * <p>Hides the country-name popup. If the popup was never created this is
+     * a no-op.</p>
      *
-     * @param he the hover event (not used beyond triggering the hide)
+     * @param he the hover event (the location is not used; only the event
+     *           occurrence matters)
      */
     @Override
     public void hoverDown(HoverEvent he) {
@@ -253,14 +258,15 @@ public class MapContainer extends BaseContainer implements HoverListener {
     // -------------------------------------------------------------------------
 
     /**
-     * Release all hover-related resources held by this container.
+     * Releases all hover-related resources held by this container.
      *
-     * <p>Unregisters the container's canvas from {@link HoverManager},
-     * disposes the {@link HoverInfoWindow} if one was created, and clears
-     * the reference so it can be GC'd. This method should be called from
+     * <p>Unregisters the canvas from {@link HoverManager}, hides and disposes
+     * the {@link HoverInfoWindow} if one was created, and clears the reference
+     * so it can be garbage-collected. Should be called from
      * {@link MapView2D#prepareForExit()} when the view is closing.</p>
      *
-     * <p>Safe to call multiple times.</p>
+     * <p>Safe to call multiple times; subsequent calls after the first are
+     * no-ops.</p>
      */
     public void prepareForExit() {
         HoverManager.getInstance().unregisterComponent(getComponent());
@@ -277,7 +283,8 @@ public class MapContainer extends BaseContainer implements HoverListener {
     // -------------------------------------------------------------------------
 
     /**
-     * Return the owning {@link MapView2D}.
+     * Returns the owning {@link MapView2D} by casting the base-class view
+     * reference.
      *
      * @return the parent map view; never {@code null} once the container is
      *         attached to a view
@@ -287,27 +294,19 @@ public class MapContainer extends BaseContainer implements HoverListener {
     }
 
     /**
-     * Return the hover popup window, creating it lazily on first call.
+     * Returns the hover popup window, creating it lazily on first call.
      *
      * <p>Returns {@code null} if the component's window ancestor is not yet
-     * available (i.e. the component has not been added to a realized Swing
-     * hierarchy). Callers must null-check the return value.</p>
+     * available (the component has not yet been added to a realized Swing
+     * hierarchy). Callers must null-check the return value before using the
+     * window.</p>
      *
-     * <p>Note: the previous implementation called
-     * {@code HoverManager.getInstance().unregisterComponent(hoverWindow)}
-     * in {@link #prepareForExit()}, but {@link HoverInfoWindow} is never
-     * registered with {@link HoverManager} — only the canvas component is.
-     * That spurious call has been removed.</p>
-     *
-     * @return the hover window, or {@code null} if the hierarchy is not yet
-     *         realized
+     * @return the hover popup, or {@code null} if not yet constructable
      */
     private HoverInfoWindow getHoverWindow() {
         if (hoverWindow == null) {
             Window ownerWin = SwingUtilities.getWindowAncestor(getComponent());
-            if (ownerWin == null) {
-                return null;
-            }
+            if (ownerWin == null) return null;
             hoverWindow = new HoverInfoWindow(ownerWin);
         }
         return hoverWindow;

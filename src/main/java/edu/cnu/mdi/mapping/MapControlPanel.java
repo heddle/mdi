@@ -20,180 +20,294 @@ import edu.cnu.mdi.component.RangeSlider;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
- * A panel for map controls.
+ * Side-panel control widget for {@link MapView2D}.
+ *
+ * <p>Provides interactive controls for:
+ * <ul>
+ *   <li><b>Projection</b> — an {@link EnumComboBox} that switches the active
+ *       {@link EProjection}.</li>
+ *   <li><b>City label visibility</b> — a checkbox that toggles city name
+ *       labels via {@link CityPointRenderer#setDrawLabels(boolean)}.</li>
+ *   <li><b>Minimum population</b> — a {@link RangeSlider} that filters cities
+ *       below a given population threshold via
+ *       {@link CityPointRenderer#setMinPopulation(long)}.</li>
+ *   <li><b>Map theme</b> — radio buttons selecting between the built-in
+ *       {@link MapTheme} presets (Light, Dark, Blue).</li>
+ * </ul>
+ *
+ * <h2>Coupling</h2>
+ * <p>This panel holds a direct reference to a {@link MapView2D} and calls
+ * its public API in response to user interaction. The coupling is intentional
+ * and kept minimal: the panel only calls well-defined accessors on the view
+ * ({@link MapView2D#getCityRenderer()},
+ * {@link MapView2D#getMapProjection()},
+ * {@link MapView2D#setProjection(EProjection)},
+ * {@link MapView2D#refresh()}).</p>
+ *
+ * <h2>Slider maximum</h2>
+ * <p>The maximum value of the population slider is
+ * {@link MapConstants#MAX_POP_SLIDER_VALUE}. Previously the same constant was
+ * duplicated in both this class and {@link MapView2D}; it is now sourced from
+ * a single location to prevent the two values from diverging.</p>
  */
 @SuppressWarnings("serial")
 public class MapControlPanel extends JPanel {
-	// max slider value for minimum population
-	private static final int MAX_POP_SLIDER_VALUE = 2_000_000;
 
-	// current map theme and available themes
-	private MapTheme _darkTheme = MapTheme.dark();
-	private MapTheme _lightTheme = MapTheme.light();
-	private MapTheme _blueTheme = MapTheme.blue();
-	private MapTheme _currentTheme = _lightTheme;
+    // -------------------------------------------------------------------------
+    // Theme instances
+    // -------------------------------------------------------------------------
 
-	private JRadioButton _lightThemeButton;
-	private JRadioButton _darkThemeButton;
-	private JRadioButton _blueThemeButton;
+    private final MapTheme darkTheme  = MapTheme.dark();
+    private final MapTheme lightTheme = MapTheme.light();
+    private final MapTheme blueTheme  = MapTheme.blue();
 
-	private boolean showNames = true;
+    /** The theme currently selected by the radio buttons. */
+    private MapTheme currentTheme = lightTheme;
 
-	// Reference to the map view being controlled
-	private MapView2D mapView;
+    // -------------------------------------------------------------------------
+    // Widgets
+    // -------------------------------------------------------------------------
 
-	public MapControlPanel(MapView2D mapView) {
-		this.mapView = mapView;
-		setAlignmentX(Component.LEFT_ALIGNMENT);
-		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-		setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+    private JRadioButton lightThemeButton;
+    private JRadioButton darkThemeButton;
+    private JRadioButton blueThemeButton;
 
-		createProjectionCombo(this);
-		createCheckboxes(this);
-		createMinPopRangeSlider(this);
-		createThemeSelector(this);
-	}
+    /** Whether city name labels are visible. Tracks the checkbox state. */
+    private boolean showNames = true;
 
-	// create a radio button for theme selection
-	private JRadioButton createThemeButton(String label, ButtonGroup bg, ActionListener al, boolean selected) {
-		JRadioButton themeButton = new JRadioButton();
-		themeButton.setSelected(selected);
-		themeButton.setFont(Fonts.mediumFont);
-		themeButton.setText(label);
-		bg.add(themeButton);
-		themeButton.addActionListener(al);
-		return themeButton;
-	}
+    // -------------------------------------------------------------------------
+    // View reference
+    // -------------------------------------------------------------------------
 
-	// create the projection selection combo box
-	private void createProjectionCombo(JPanel panel) {
-		JLabel projLabel = new JLabel("Projection");
-		projLabel.setFont(Fonts.mediumFont);
-		leftAlign(projLabel);
+    /**
+     * The map view controlled by this panel.
+     *
+     * <p>This reference is used only to call well-defined public API methods;
+     * the panel never accesses private or package-private state of the view
+     * directly.</p>
+     */
+    private final MapView2D mapView;
 
-		EnumComboBox<EProjection> projCombo = EProjection.createComboBox();
+    // -------------------------------------------------------------------------
+    // Construction
+    // -------------------------------------------------------------------------
 
-		projCombo.addActionListener(e -> {
-			EProjection selected = projCombo.getSelectedEnum();
-			mapView.setProjection(selected);
-		});
+    /**
+     * Creates a control panel bound to the given map view.
+     *
+     * @param mapView the view to control; must not be {@code null}
+     */
+    public MapControlPanel(MapView2D mapView) {
+        this.mapView = mapView;
+        setAlignmentX(Component.LEFT_ALIGNMENT);
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
-		leftAlign(projCombo);
+        createProjectionCombo(this);
+        createCheckboxes(this);
+        createMinPopRangeSlider(this);
+        createThemeSelector(this);
+    }
 
-		panel.add(projLabel);
-		panel.add(Box.createVerticalStrut(4));
-		panel.add(projCombo);
-		panel.add(Box.createVerticalStrut(12));
+    // -------------------------------------------------------------------------
+    // Widget builders
+    // -------------------------------------------------------------------------
 
-	}
+    /**
+     * Adds the projection selection combo box to {@code panel}.
+     *
+     * <p>Selecting a different projection calls
+     * {@link MapView2D#setProjection(EProjection)}, which rebuilds the
+     * projection, graticule, country, and city renderers and triggers a
+     * repaint.</p>
+     *
+     * @param panel the panel to add the combo box to
+     */
+    private void createProjectionCombo(JPanel panel) {
+        JLabel projLabel = new JLabel("Projection");
+        projLabel.setFont(Fonts.mediumFont);
+        leftAlign(projLabel);
 
-	// create any display checkboxes
-	private void createCheckboxes(JPanel panel) {
-		JCheckBox showCityNamesCheckBox = new JCheckBox("Show city names", true);
-		showCityNamesCheckBox.setFont(Fonts.mediumFont);
-		showCityNamesCheckBox.setHorizontalAlignment(SwingConstants.LEFT);
+        EnumComboBox<EProjection> projCombo = EProjection.createComboBox();
+        projCombo.addActionListener(e -> {
+            EProjection selected = projCombo.getSelectedEnum();
+            mapView.setProjection(selected);
+        });
+        leftAlign(projCombo);
 
-		showCityNamesCheckBox.addActionListener(e -> {
-			showNames = showCityNamesCheckBox.isSelected();
-			updateCityLabelVisibility();
-		});
+        panel.add(projLabel);
+        panel.add(Box.createVerticalStrut(4));
+        panel.add(projCombo);
+        panel.add(Box.createVerticalStrut(12));
+    }
 
-		leftAlign(showCityNamesCheckBox);
-		panel.add(showCityNamesCheckBox);
-		panel.add(Box.createVerticalStrut(12));
-	}
+    /**
+     * Adds the "Show city names" checkbox to {@code panel}.
+     *
+     * <p>Toggling the checkbox calls
+     * {@link CityPointRenderer#setDrawLabels(boolean)} and triggers a
+     * repaint.</p>
+     *
+     * @param panel the panel to add the checkbox to
+     */
+    private void createCheckboxes(JPanel panel) {
+        JCheckBox showCityNamesCheckBox = new JCheckBox("Show city names", true);
+        showCityNamesCheckBox.setFont(Fonts.mediumFont);
+        showCityNamesCheckBox.setHorizontalAlignment(SwingConstants.LEFT);
+        showCityNamesCheckBox.addActionListener(e -> {
+            showNames = showCityNamesCheckBox.isSelected();
+            updateCityLabelVisibility();
+        });
+        leftAlign(showCityNamesCheckBox);
+        panel.add(showCityNamesCheckBox);
+        panel.add(Box.createVerticalStrut(12));
+    }
 
-	// create the minimum population slider
-	private void createMinPopRangeSlider(JPanel panel) {
-		RangeSlider minPopSlider = new RangeSlider(0, MAX_POP_SLIDER_VALUE, MAX_POP_SLIDER_VALUE / 2, true);
-		minPopSlider.setOnChange(this::updateMinPopulationFilter);
-		minPopSlider.setBorder(new CommonBorder("Minimum Population"));
-		leftAlign(minPopSlider);
-		panel.add(minPopSlider);
-		panel.add(Box.createVerticalStrut(12));
-	}
+    /**
+     * Adds the minimum-population range slider to {@code panel}.
+     *
+     * <p>The slider range is [0, {@link MapConstants#MAX_POP_SLIDER_VALUE}]
+     * and the initial value is half that maximum. Changing the slider value
+     * calls {@link CityPointRenderer#setMinPopulation(long)} and triggers a
+     * repaint.</p>
+     *
+     * @param panel the panel to add the slider to
+     */
+    private void createMinPopRangeSlider(JPanel panel) {
+        int max = MapConstants.MAX_POP_SLIDER_VALUE;  // single source of truth
+        RangeSlider minPopSlider = new RangeSlider(0, max, max / 2, true);
+        minPopSlider.setOnChange(this::updateMinPopulationFilter);
+        minPopSlider.setBorder(new CommonBorder("Minimum Population"));
+        leftAlign(minPopSlider);
+        panel.add(minPopSlider);
+        panel.add(Box.createVerticalStrut(12));
+    }
 
-	/** Force BoxLayout children to left-align instead of centering. */
-	private static void leftAlign(JComponent c) {
-		c.setAlignmentX(Component.LEFT_ALIGNMENT);
-	}
+    /**
+     * Adds the theme selector (Light / Dark / Blue radio buttons) to
+     * {@code panel}.
+     *
+     * <p>Selecting a radio button updates {@link #currentTheme} and calls
+     * {@link IMapProjection#setTheme(MapTheme)} followed by a repaint.</p>
+     *
+     * @param panel the panel to add the theme selector to
+     */
+    private void createThemeSelector(JPanel panel) {
+        ButtonGroup themeGroup = new ButtonGroup();
 
-	private void createThemeSelector(JPanel panel) {
-		ButtonGroup themeGroup = new ButtonGroup();
-		ActionListener themeListener = e -> {
-			if (_lightThemeButton.isSelected()) {
-				_currentTheme = _lightTheme;
-			} else if (_darkThemeButton.isSelected()) {
-				_currentTheme = _darkTheme;
-			} else if (_blueThemeButton.isSelected()) {
-				_currentTheme = _blueTheme;
-			}
-			updateTheme();
-		};
+        ActionListener themeListener = e -> {
+            if      (lightThemeButton.isSelected()) currentTheme = lightTheme;
+            else if (darkThemeButton.isSelected())  currentTheme = darkTheme;
+            else if (blueThemeButton.isSelected())  currentTheme = blueTheme;
+            updateTheme();
+        };
 
-		_lightThemeButton = createThemeButton("Light", themeGroup, themeListener, true);
-		_darkThemeButton = createThemeButton("Dark", themeGroup, themeListener, false);
-		_blueThemeButton = createThemeButton("Blue", themeGroup, themeListener, false);
+        lightThemeButton = createThemeButton("Light", themeGroup, themeListener, true);
+        darkThemeButton  = createThemeButton("Dark",  themeGroup, themeListener, false);
+        blueThemeButton  = createThemeButton("Blue",  themeGroup, themeListener, false);
 
-		leftAlign(_lightThemeButton);
-		leftAlign(_darkThemeButton);
-		leftAlign(_blueThemeButton);
+        leftAlign(lightThemeButton);
+        leftAlign(darkThemeButton);
+        leftAlign(blueThemeButton);
 
-		JPanel subPanel = new JPanel();
-		subPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JPanel subPanel = new JPanel();
+        subPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        subPanel.add(lightThemeButton);
+        subPanel.add(darkThemeButton);
+        subPanel.add(blueThemeButton);
+        subPanel.add(Box.createVerticalStrut(8));
+        subPanel.setBorder(new CommonBorder("Map Theme"));
+        panel.add(subPanel);
+    }
 
-		subPanel.add(_lightThemeButton);
-		subPanel.add(_darkThemeButton);
-		subPanel.add(_blueThemeButton);
-		subPanel.add(Box.createVerticalStrut(8));
-		subPanel.setBorder(new CommonBorder("Map Theme"));
-		panel.add(subPanel);
+    /**
+     * Creates a themed radio button and adds it to the supplied group.
+     *
+     * @param label    button label text
+     * @param bg       the button group this button belongs to
+     * @param al       action listener notified on selection
+     * @param selected {@code true} if the button should be pre-selected
+     * @return the constructed {@link JRadioButton}
+     */
+    private JRadioButton createThemeButton(String label, ButtonGroup bg,
+                                           ActionListener al, boolean selected) {
+        JRadioButton button = new JRadioButton(label);
+        button.setSelected(selected);
+        button.setFont(Fonts.mediumFont);
+        bg.add(button);
+        button.addActionListener(al);
+        return button;
+    }
 
-	}
+    // -------------------------------------------------------------------------
+    // Private update helpers
+    // -------------------------------------------------------------------------
 
-	/**
-	 * Update the minimum population filter for displayed cities and refresh the
-	 * view. The population value is provided directly by the slider.
-	 *
-	 * @param pop minimum population (inclusive) for city display.
-	 */
-	private void updateMinPopulationFilter(int pop) {
-		if (mapView.getCityRenderer() != null) {
-			long minPop = pop;
-			mapView.getCityRenderer().setMinPopulation(minPop);
-			mapView.refresh();
-		}
-	}
+    /**
+     * Applies a new minimum population filter to the city renderer and
+     * triggers a repaint.
+     *
+     * @param pop the new minimum population value from the slider
+     */
+    private void updateMinPopulationFilter(int pop) {
+        CityPointRenderer renderer = mapView.getCityRenderer();
+        if (renderer != null) {
+            renderer.setMinPopulation(pop);
+            mapView.refresh();
+        }
+    }
 
-	/**
-	 * Update the map theme to light or dark and refresh the display.
-	 *
-	 */
-	private void updateTheme() {
-		if (mapView.getMapProjection() != null) {
-			mapView.getMapProjection().setTheme(_currentTheme);
-			mapView.refresh();
-		}
-	}
+    /**
+     * Applies the currently selected theme to the active projection and
+     * triggers a repaint.
+     */
+    private void updateTheme() {
+        IMapProjection proj = mapView.getMapProjection();
+        if (proj != null) {
+            proj.setTheme(currentTheme);
+            mapView.refresh();
+        }
+    }
 
-	/**
-	 * Update whether city names (labels) are drawn.
-	 */
-	private void updateCityLabelVisibility() {
-		if (mapView.getCityRenderer() != null) {
-			// Adjust to match your CityPointRenderer API
-			mapView.getCityRenderer().setDrawLabels(showNames);
-			mapView.refresh();
-		}
-	}
+    /**
+     * Applies the current label-visibility setting to the city renderer and
+     * triggers a repaint.
+     */
+    private void updateCityLabelVisibility() {
+        CityPointRenderer renderer = mapView.getCityRenderer();
+        if (renderer != null) {
+            renderer.setDrawLabels(showNames);
+            mapView.refresh();
+        }
+    }
 
-	/**
-	 * Get the current map theme.
-	 *
-	 * @return the current MapTheme
-	 */
-	public MapTheme getCurrentTheme() {
-		return _currentTheme;
-	}
+    // -------------------------------------------------------------------------
+    // Public accessor
+    // -------------------------------------------------------------------------
 
+    /**
+     * Returns the {@link MapTheme} currently selected by the theme radio
+     * buttons.
+     *
+     * <p>Called by {@link MapView2D#setProjection(EProjection)} so that a
+     * newly constructed projection can be initialized with the theme the user
+     * has already selected.</p>
+     *
+     * @return the currently active theme; never {@code null}
+     */
+    public MapTheme getCurrentTheme() { return currentTheme; }
+
+    // -------------------------------------------------------------------------
+    // Layout helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Forces a {@link JComponent} to left-align within a {@link BoxLayout}
+     * parent. Without this, BoxLayout centres components horizontally.
+     *
+     * @param c the component to left-align
+     */
+    private static void leftAlign(JComponent c) {
+        c.setAlignmentX(Component.LEFT_ALIGNMENT);
+    }
 }
