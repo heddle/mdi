@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.projection;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -11,6 +11,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.mapping.render.CountryRenderer;
+import edu.cnu.mdi.mapping.theme.MapTheme;
 
 /**
  * Spherical Mercator projection (EPSG:3857 style, unit sphere).

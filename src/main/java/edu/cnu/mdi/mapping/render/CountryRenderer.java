@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.render;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -16,6 +16,10 @@ import java.util.Objects;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
+import edu.cnu.mdi.mapping.loader.GeoJsonCountryLoader;
+import edu.cnu.mdi.mapping.projection.EProjection;
+import edu.cnu.mdi.mapping.projection.IMapProjection;
+import edu.cnu.mdi.mapping.theme.MapTheme;
 
 /**
  * Renders a collection of {@link GeoJsonCountryLoader.CountryFeature} instances

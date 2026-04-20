@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.shapefile;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Objects;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.mapping.projection.IMapProjection;
+import edu.cnu.mdi.mapping.render.IPickable;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**

@@ -47,8 +47,6 @@ public class BaseToolHandler implements IToolHandler  {
 	// cached press point for the current drag gesture
 	private Point dragPressPoint;
 
-
-
 	/**
 	 * Constructor.
 	 *

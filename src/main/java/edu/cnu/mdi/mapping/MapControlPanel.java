@@ -17,6 +17,10 @@ import javax.swing.SwingConstants;
 import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.component.EnumComboBox;
 import edu.cnu.mdi.component.RangeSlider;
+import edu.cnu.mdi.mapping.projection.EProjection;
+import edu.cnu.mdi.mapping.projection.IMapProjection;
+import edu.cnu.mdi.mapping.render.CityPointRenderer;
+import edu.cnu.mdi.mapping.theme.MapTheme;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**

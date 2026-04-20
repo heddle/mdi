@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.projection;
 
 import java.awt.Graphics2D;
 import java.awt.Shape;
@@ -6,6 +6,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.mapping.theme.MapTheme;
 
 /**
  * Contract for the map projections used within the MDI framework.

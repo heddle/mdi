@@ -1,10 +1,14 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.shapefile;
 
 import java.awt.geom.Point2D;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import edu.cnu.mdi.mapping.loader.GeoJsonCityLoader;
+import edu.cnu.mdi.mapping.loader.GeoJsonCountryLoader;
+import edu.cnu.mdi.mapping.projection.IMapProjection;
 
 /**
  * Immutable representation of a single feature loaded from an arbitrary ESRI

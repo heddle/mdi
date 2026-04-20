@@ -1,5 +1,7 @@
 package edu.cnu.mdi.mapping;
 
+import edu.cnu.mdi.mapping.projection.EProjection;
+
 /**
  * Package-wide constants shared across the MDI mapping subsystem.
  *
@@ -37,6 +39,12 @@ public final class MapConstants {
      * always agree on which projection is initially active.</p>
      */
     public static final EProjection DEFAULT_PROJECTION = EProjection.MERCATOR;
+    
+    /**
+     * The mean radius of the Earth in kilometers, used for distance calculations
+     * in the Haversine formula when computing distances between geographic coordinates.
+     */
+    public static final double RADIUS_EARTH_KM = 6371.0; 
 
     // -------------------------------------------------------------------------
     // Construction guard

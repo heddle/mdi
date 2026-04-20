@@ -1,6 +1,9 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.projection;
 
 import edu.cnu.mdi.component.EnumComboBox;
+import edu.cnu.mdi.mapping.MapConstants;
+import edu.cnu.mdi.mapping.MapProjectionMenu;
+import edu.cnu.mdi.mapping.MapView2D;
 
 /**
  * Enumeration of supported map projection types.

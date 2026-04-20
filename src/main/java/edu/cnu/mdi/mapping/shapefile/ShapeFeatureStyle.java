@@ -1,9 +1,12 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.shapefile;
 
 import java.awt.BasicStroke;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import edu.cnu.mdi.mapping.theme.MapTheme;
+
 import java.awt.Color;
 import java.awt.Stroke;
 

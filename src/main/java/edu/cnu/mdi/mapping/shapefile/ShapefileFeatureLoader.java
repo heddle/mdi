@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.shapefile;
 
 import java.awt.geom.Point2D;
 import java.io.IOException;
@@ -8,6 +8,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import edu.cnu.mdi.mapping.loader.ShapefileCityLoader;
+import edu.cnu.mdi.mapping.loader.ShapefileCountryLoader;
+import edu.cnu.mdi.mapping.theme.MapUtils;
 
 /**
  * Loads arbitrary ESRI Shapefile data into {@link ShapeFeature} instances
@@ -248,26 +252,16 @@ public final class ShapefileFeatureLoader {
      *         latitude radians}
      */
     private static Point2D.Double toRadians(Point2D.Double pt) {
-        double lon = wrapLongitude(Math.toRadians(pt.x));
-        double lat = Math.toRadians(pt.y);
-        return new Point2D.Double(lon, lat);
+        return new Point2D.Double(
+                MapUtils.lonDegreesToRadians(pt.x),
+                Math.toRadians(pt.y));
     }
 
     // -------------------------------------------------------------------------
     // Utility helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Wraps a longitude value to the canonical half-open range (-π, π].
-     *
-     * @param lon longitude in radians
-     * @return equivalent longitude in (-π, π]
-     */
-    private static double wrapLongitude(double lon) {
-        while (lon <= -Math.PI) lon += 2 * Math.PI;
-        while (lon >   Math.PI) lon -= 2 * Math.PI;
-        return lon;
-    }
+    // wrapLongitude delegated to MapUtils.MapUtils.wrapLongitude(double)
 
     /**
      * Returns a new path derived from {@code path} by replacing its file

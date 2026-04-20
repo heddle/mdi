@@ -13,6 +13,11 @@ import javax.swing.JSeparator;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import edu.cnu.mdi.log.Log;
+import edu.cnu.mdi.mapping.shapefile.ShapeFeature;
+import edu.cnu.mdi.mapping.shapefile.ShapeFeatureRenderer;
+import edu.cnu.mdi.mapping.shapefile.ShapeFeatureStyle;
+import edu.cnu.mdi.mapping.shapefile.ShapefileFeatureLoader;
+import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader;
 
 /**
  * A {@link JMenu} that provides interactive shapefile loading and per-layer

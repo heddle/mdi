@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.projection;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.mapping.theme.MapTheme;
 
 /**
  * Orthographic azimuthal projection (spherical Earth, R = 1).

@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.loader;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,6 +14,10 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import edu.cnu.mdi.mapping.projection.IMapProjection;
+import edu.cnu.mdi.mapping.render.CityPointRenderer;
+import edu.cnu.mdi.mapping.theme.MapUtils;
 
 /**
  * Utility for loading city (populated place) point features from a GeoJSON
@@ -68,7 +72,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public final class GeoJsonCityLoader implements ICityLoader {
 
-    public GeoJsonCityLoader() { /* utility class */ }
+    /** No-arg constructor required for use as an {@link ICityLoader} instance. */
+    public GeoJsonCityLoader() {}
 
     // =========================================================================
     // CityFeature
@@ -196,11 +201,13 @@ public final class GeoJsonCityLoader implements ICityLoader {
     // =========================================================================
 
     /** {@inheritDoc} — delegates to {@link #loadStatic(Path)}. */
+    @Override
     public List<CityFeature> load(Path path) throws IOException {
         return loadStatic(path);
     }
 
     /** {@inheritDoc} — delegates to {@link #loadFromResourceStatic(String)}. */
+    @Override
     public List<CityFeature> loadFromResource(String resourcePath) throws IOException {
         return loadFromResourceStatic(resourcePath);
     }
@@ -296,7 +303,7 @@ public final class GeoJsonCityLoader implements ICityLoader {
         if (!coords.isArray() || coords.size() < 2) return null;
 
         // GeoJSON coordinates are in degrees; convert and wrap longitude.
-        double lon = wrapLongitude(Math.toRadians(coords.get(0).asDouble()));
+        double lon = MapUtils.lonDegreesToRadians(coords.get(0).asDouble());
         double lat = Math.toRadians(coords.get(1).asDouble());
 
         JsonNode props       = featureNode.path("properties");
@@ -370,15 +377,5 @@ public final class GeoJsonCityLoader implements ICityLoader {
         return defaultValue;
     }
 
-    /**
-     * Wraps a longitude value to the canonical half-open range (-π, π].
-     *
-     * @param lon longitude in radians
-     * @return equivalent longitude in (-π, π]
-     */
-    private static double wrapLongitude(double lon) {
-        while (lon <= -Math.PI) lon += 2 * Math.PI;
-        while (lon >   Math.PI) lon -= 2 * Math.PI;
-        return lon;
-    }
+    // wrapLongitude delegated to MapUtils.MapUtils.wrapLongitude(double)
 }

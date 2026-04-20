@@ -1,8 +1,10 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.render;
 
 import java.awt.Graphics2D;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.mapping.projection.IMapProjection;
+import edu.cnu.mdi.mapping.theme.MapTheme;
 
 /**
  * Renders a map outline and latitude/longitude graticule lines for a given

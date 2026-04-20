@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.container;
 
 import java.awt.Point;
 import java.awt.Window;
@@ -13,6 +13,13 @@ import edu.cnu.mdi.hover.HoverEvent;
 import edu.cnu.mdi.hover.HoverInfoWindow;
 import edu.cnu.mdi.hover.HoverListener;
 import edu.cnu.mdi.hover.HoverManager;
+import edu.cnu.mdi.mapping.MapView2D;
+import edu.cnu.mdi.mapping.projection.EProjection;
+import edu.cnu.mdi.mapping.projection.IMapProjection;
+import edu.cnu.mdi.mapping.projection.LambertEqualAreaProjection;
+import edu.cnu.mdi.mapping.projection.MercatorProjection;
+import edu.cnu.mdi.mapping.projection.MollweideProjection;
+import edu.cnu.mdi.mapping.projection.OrthographicProjection;
 import edu.cnu.mdi.util.UnicodeUtils;
 import edu.cnu.mdi.view.ContainerFactory;
 
@@ -163,6 +170,22 @@ public class MapContainer extends BaseContainer implements HoverListener {
         localToWorld(pp, wp);
         getMapView2D().getProjection().latLonFromXY(ll, wp);
     }
+    
+    /**
+	 * Converts a geographic lat/lon point to a screen-space (local) point.
+	 *
+	 * <p>The conversion path is:
+	 * lat/lon → world (via projection forward) → local (via container
+	 * inverse transform).</p>
+	 *
+	 * @param pp output screen-space pixel coordinate; populated in-place
+	 * @param ll input lat/lon point in radians ({@code x=λ, y=φ})
+	 */
+    public void latLonToLocal(Point pp, Point2D.Double ll) {
+		Point2D.Double wp = new Point2D.Double();
+		getMapView2D().getProjection().latLonToXY(ll, wp);
+		worldToLocal(pp, wp);
+	}
 
     /**
      * Converts a world (projection-space) point to a geographic lat/lon point.

@@ -1,8 +1,9 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.render;
 
 import java.awt.Point;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.mapping.shapefile.ShapeFeatureRenderer;
 
 /**
  * Implemented by map renderers that support mouse-over hit testing.

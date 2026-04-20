@@ -2,8 +2,12 @@ package edu.cnu.mdi.hover;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.Window;
 
 import javax.swing.BorderFactory;
@@ -47,28 +51,25 @@ public class HoverInfoWindow extends JWindow {
         setFocusableWindowState(false);    }
 
  
-    /**
-     * Show a message near the given screen coordinate.
-     *
-     * @param message the message text
-     * @param screenPoint a point in SCREEN coordinates
-     */
     public void showMessage(String message, Point screenPoint) {
         label.setText(message == null ? "" : message);
         pack();
 
-        // Offset slightly so we don't sit exactly under the cursor.
         int x = screenPoint.x + 12;
         int y = screenPoint.y + 18;
 
-        // Optional: keep on-screen (simple clamp).
-        Insets insets = getToolkit().getScreenInsets(getGraphicsConfiguration());
-        int minX = insets.left;
-        int minY = insets.top;
-        int maxX = getGraphicsConfiguration().getBounds().x
-                + getGraphicsConfiguration().getBounds().width - insets.right - getWidth();
-        int maxY = getGraphicsConfiguration().getBounds().y
-                + getGraphicsConfiguration().getBounds().height - insets.bottom - getHeight();
+        // Find the GraphicsConfiguration for whichever monitor contains
+        // the target point — this is correct even after the window has been
+        // dragged to a different screen.
+        GraphicsConfiguration gc = getGraphicsConfigurationFor(screenPoint);
+
+        Insets insets = getToolkit().getScreenInsets(gc);
+        Rectangle bounds = gc.getBounds();
+
+        int minX = bounds.x + insets.left;
+        int minY = bounds.y + insets.top;
+        int maxX = bounds.x + bounds.width  - insets.right  - getWidth();
+        int maxY = bounds.y + bounds.height - insets.bottom - getHeight();
 
         if (x < minX) x = minX;
         if (y < minY) y = minY;
@@ -79,6 +80,32 @@ public class HoverInfoWindow extends JWindow {
         setVisible(true);
     }
 
+    /**
+     * Returns the {@link GraphicsConfiguration} for the screen device that
+     * contains (or is nearest to) the given point in screen coordinates.
+     *
+     * <p>This is the correct way to determine which monitor a popup should
+     * appear on after the owning window has been dragged to a secondary
+     * display. Asking {@code this.getGraphicsConfiguration()} is wrong
+     * because that returns the configuration of the device the popup window
+     * itself was created on, which does not update when the owner moves.</p>
+     */
+    private static GraphicsConfiguration getGraphicsConfigurationFor(Point screenPoint) {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        for (GraphicsDevice device : ge.getScreenDevices()) {
+            GraphicsConfiguration gc = device.getDefaultConfiguration();
+            if (gc.getBounds().contains(screenPoint)) {
+                return gc;
+            }
+        }
+        // Point is not within any screen (e.g. between monitors in a gap).
+        // Fall back to the default screen.
+        return GraphicsEnvironment.getLocalGraphicsEnvironment()
+                .getDefaultScreenDevice().getDefaultConfiguration();
+    }
+    /**
+	 * Hide the hover message.
+	 */
     public void hideMessage() {
         setVisible(false);
     }

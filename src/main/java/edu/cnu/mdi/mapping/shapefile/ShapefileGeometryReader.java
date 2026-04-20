@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.shapefile;
 
 import java.awt.geom.Point2D;
 import java.io.Closeable;
@@ -11,6 +11,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import edu.cnu.mdi.mapping.projection.IMapProjection;
 
 /**
  * Zero-dependency reader for the binary geometry data in ESRI Shapefile

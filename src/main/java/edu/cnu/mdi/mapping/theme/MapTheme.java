@@ -1,8 +1,12 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.theme;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Stroke;
+
+import edu.cnu.mdi.mapping.projection.IMapProjection;
+import edu.cnu.mdi.mapping.render.CityPointRenderer;
+import edu.cnu.mdi.mapping.render.CountryRenderer;
 
 /**
  * Immutable value object that encapsulates the complete visual style used when

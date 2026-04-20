@@ -1,8 +1,10 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.loader;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+
+import edu.cnu.mdi.mapping.MapView2D;
 
 /**
  * Format-agnostic contract for loading populated-place (city) features.

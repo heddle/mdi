@@ -7,6 +7,8 @@ import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
 import javax.swing.JRadioButtonMenuItem;
 
+import edu.cnu.mdi.mapping.projection.EProjection;
+
 /**
  * A {@link JMenu} that presents all available {@link EProjection} values as
  * mutually exclusive radio-button items.

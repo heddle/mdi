@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.loader;
 
 import java.awt.geom.Point2D;
 import java.io.BufferedReader;
@@ -15,6 +15,8 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import edu.cnu.mdi.mapping.theme.MapUtils;
 
 /**
  * Utility for loading country boundary polygons from a GeoJSON
@@ -61,7 +63,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public final class GeoJsonCountryLoader implements ICountryLoader {
 
-    public GeoJsonCountryLoader() { /* utility class */ }
+    /** No-arg constructor required for use as an {@link ICountryLoader} instance. */
+    public GeoJsonCountryLoader() {}
 
     // =========================================================================
     // CountryFeature
@@ -158,11 +161,13 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
     // =========================================================================
 
     /** {@inheritDoc} — delegates to {@link #loadStatic(Path)}. */
+    @Override
     public List<CountryFeature> load(Path path) throws IOException {
         return loadStatic(path);
     }
 
     /** {@inheritDoc} — delegates to {@link #loadFromResourceStatic(String)}. */
+    @Override
     public List<CountryFeature> loadFromResource(String resourcePath) throws IOException {
         return loadFromResourceStatic(resourcePath);
     }
@@ -289,7 +294,7 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
      * rings) and appends each ring to {@code out}.
      *
      * <p>Each ring coordinate pair is converted from degrees to radians, and
-     * the longitude is wrapped to (-π, π] via {@link #wrapLongitude(double)}.</p>
+     * the longitude is wrapped to (-π, π] via {@link #MapUtils.wrapLongitude(double)}.</p>
      *
      * @param polygonNode JSON node for a single polygon (array of rings)
      * @param out         destination list; rings are appended in order
@@ -299,7 +304,7 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
             List<Point2D.Double> ring = new ArrayList<>();
             for (JsonNode coordNode : ringNode) {
                 if (coordNode.isArray() && coordNode.size() >= 2) {
-                    double lon = wrapLongitude(Math.toRadians(coordNode.get(0).asDouble()));
+                    double lon = MapUtils.lonDegreesToRadians(coordNode.get(0).asDouble());
                     double lat = Math.toRadians(coordNode.get(1).asDouble());
                     ring.add(new Point2D.Double(lon, lat));
                 }
@@ -310,15 +315,5 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
         }
     }
 
-    /**
-     * Wraps a longitude value to the canonical half-open range (-π, π].
-     *
-     * @param lon longitude in radians
-     * @return equivalent longitude in (-π, π]
-     */
-    private static double wrapLongitude(double lon) {
-        while (lon <= -Math.PI) lon += 2 * Math.PI;
-        while (lon >   Math.PI) lon -= 2 * Math.PI;
-        return lon;
-    }
+    // wrapLongitude delegated to MapUtils.MapUtils.wrapLongitude(double)
 }

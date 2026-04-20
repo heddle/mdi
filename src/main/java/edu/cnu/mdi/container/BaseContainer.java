@@ -35,6 +35,8 @@ import edu.cnu.mdi.item.ItemChangeListener;
 import edu.cnu.mdi.item.ItemChangeType;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.log.Log;
+import edu.cnu.mdi.mapping.container.MapContainer;
+import edu.cnu.mdi.mapping.container.MapToolHandler;
 import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.view.BaseView;
 
@@ -811,7 +813,11 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	public void setToolBar(AToolBar toolBar) {
 		_toolBar = toolBar;
 		if (_toolBar != null) {
-			toolHandler = new BaseToolHandler(this);
+			if (this instanceof MapContainer) {
+				toolHandler = new MapToolHandler(this);
+			} else {
+				toolHandler = new BaseToolHandler(this);
+			}
 			((BaseToolBar) _toolBar).setHandler(toolHandler);
 		}
 
@@ -874,8 +880,8 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 
 	/**
 	 * File drag and drop handler. Define the logic for what happens once files are
-	 * validated. Overriding this allows subclasses to handle files differently,
-	 * but the expectation is the the view will handle the drop.
+	 * validated. Overriding this allows subclasses to handle files differently, but
+	 * the expectation is the the view will handle the drop.
 	 */
 	protected void onFilesDropped(List<File> files) {
 		for (File f : files) {
@@ -1070,7 +1076,6 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 		}
 	}
 
-
 	/**
 	 * Copy helper.
 	 */
@@ -1102,7 +1107,7 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 
 	@Override
 	public void prepareForExit() {
-		//no op
+		// no op
 	}
 
 }

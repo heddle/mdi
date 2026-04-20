@@ -1,5 +1,8 @@
 package edu.cnu.mdi.mapping;
 
+import edu.cnu.mdi.mapping.loader.GeoJsonCityLoader;
+import edu.cnu.mdi.mapping.loader.GeoJsonCountryLoader;
+
 /**
  * Centralizes classpath resource paths used by the mapping package.
  *

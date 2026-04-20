@@ -1,6 +1,9 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.projection;
 
 import java.awt.geom.Point2D;
+
+import edu.cnu.mdi.mapping.MapView2D;
+import edu.cnu.mdi.mapping.theme.MapTheme;
 
 /**
  * Factory for creating {@link IMapProjection} instances from

@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.loader;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -7,6 +7,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import edu.cnu.mdi.mapping.shapefile.ShapefileDbfReader;
+import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader;
+import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader.ShapeRecord;
+import edu.cnu.mdi.mapping.theme.MapUtils;
 
 /**
  * Loads {@link GeoJsonCityLoader.CityFeature} instances from an ESRI Shapefile
@@ -178,7 +183,7 @@ public final class ShapefileCityLoader implements ICityLoader {
                 }
 
                 // Convert to radians and wrap longitude.
-                double lon = wrapLongitude(Math.toRadians(lonDeg));
+                double lon = MapUtils.lonDegreesToRadians(lonDeg);
                 double lat = Math.toRadians(latDeg);
 
                 // Extract string attributes.
@@ -275,15 +280,5 @@ public final class ShapefileCityLoader implements ICityLoader {
         return path.resolveSibling(base + newExtension);
     }
 
-    /**
-     * Wraps a longitude value to the canonical half-open range (-π, π].
-     *
-     * @param lon longitude in radians
-     * @return equivalent longitude in (-π, π]
-     */
-    private static double wrapLongitude(double lon) {
-        while (lon <= -Math.PI) lon += 2 * Math.PI;
-        while (lon >   Math.PI) lon -= 2 * Math.PI;
-        return lon;
-    }
+    // wrapLongitude delegated to MapUtils.MapUtils.wrapLongitude(double)
 }
