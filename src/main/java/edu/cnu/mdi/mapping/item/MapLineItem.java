@@ -454,6 +454,17 @@ public class MapLineItem extends AMapItem {
 					Math.toDegrees(_endLatLon.y)));
 		}
 	}
+	
+	/**
+	 * Get the rotation point
+	 *
+	 * @param container the container bing rendered
+	 * @return the rotation point where rotations are initiated
+	 */
+	@Override
+	public Point getRotatePoint(IContainer container) {
+		return projectEndpoint((MapContainer) container, _focus);
+	}
 
 	/**
 	 * Updates the item focus from the current geographic endpoints.
