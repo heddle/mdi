@@ -9,6 +9,7 @@ import java.awt.geom.Rectangle2D;
 import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.container.BaseContainer;
+import edu.cnu.mdi.container.BaseToolHandler;
 import edu.cnu.mdi.hover.HoverEvent;
 import edu.cnu.mdi.hover.HoverInfoWindow;
 import edu.cnu.mdi.hover.HoverListener;
@@ -299,6 +300,24 @@ public class MapContainer extends BaseContainer implements HoverListener {
             hoverWindow.dispose();
             hoverWindow = null;
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Tool handler factory
+    // -------------------------------------------------------------------------
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns a {@link MapToolHandler} so that map-specific gestures
+     * (e.g. great-circle line creation via {@link MapToolHandler#createLine})
+     * are used instead of the generic {@link BaseToolHandler} defaults.</p>
+     *
+     * @return a new {@link MapToolHandler} bound to this container
+     */
+    @Override
+    protected BaseToolHandler createToolHandler() {
+        return new MapToolHandler(this);
     }
 
     // -------------------------------------------------------------------------

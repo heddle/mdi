@@ -37,8 +37,8 @@ public class DemoMap {
 			// and place it in the expected location relative to the JAR file.
 			String resPrefix = Environment.MDI_RESOURCE_PATH;
 
-			long toolBits = ToolBits.INFO | ToolBits.STATUS | ToolBits.CENTER | ToolBits.ZOOMTOOLS | ToolBits.DRAWINGTOOLS
-					| ToolBits.MAGNIFY;
+			//subset of drawing tools for maps because some do not make sense
+			long toolBits = ToolBits.MAPTOOLS | ToolBits.ZOOMTOOLS;
 
 			ContainerFactory mapContainerFactory = MapContainer::new;
 

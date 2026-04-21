@@ -35,8 +35,6 @@ import edu.cnu.mdi.item.ItemChangeListener;
 import edu.cnu.mdi.item.ItemChangeType;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.log.Log;
-import edu.cnu.mdi.mapping.container.MapContainer;
-import edu.cnu.mdi.mapping.container.MapToolHandler;
 import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.view.BaseView;
 
@@ -46,38 +44,44 @@ import edu.cnu.mdi.view.BaseView;
  * A container holds a world-coordinate viewport and a z-stack of
  * {@link Layer}s. Each layer holds a collection of {@link AItem}s.
  *
- * <h2>Layer architecture</h2> This container defines three standard layers:
+ * <h2>Layer architecture</h2>
+ * This container defines three standard layers:
  * <ul>
- * <li><b>Connections</b> (protected; drawn first / bottom)</li>
- * <li><b>Content</b> (default user layer; typical items go here)</li>
- * <li><b>Annotations</b> (protected; drawn last / top)</li>
+ *   <li><b>Connections</b> (protected; drawn first / bottom)</li>
+ *   <li><b>Content</b> (default user layer; typical items go here)</li>
+ *   <li><b>Annotations</b> (protected; drawn last / top)</li>
  * </ul>
  *
- * <h3>Important implementation note</h3> {@link Layer}'s constructor
- * auto-registers the new layer with the container via
- * {@link IContainer#addLayer(Layer)}. During this container's constructor, the
- * protected layer fields are not yet assigned when the first {@code addLayer}
- * calls occur.
+ * <h3>Important implementation note</h3>
+ * {@link Layer}'s constructor auto-registers the new layer with the container
+ * via {@link IContainer#addLayer(Layer)}. During this container's constructor,
+ * the protected layer fields are not yet assigned when the first
+ * {@code addLayer} calls occur.
  * <p>
  * Therefore, after constructing the layers we explicitly remove the protected
  * layers from {@link #_layers} and re-add the default user layer if needed.
  * This guarantees that:
  * <ul>
- * <li>{@link #_layers} contains only user layers</li>
- * <li>protected layers are still drawn and hit-tested in their fixed
- * positions</li>
+ *   <li>{@link #_layers} contains only user layers</li>
+ *   <li>protected layers are still drawn and hit-tested in their fixed
+ *       positions</li>
  * </ul>
  *
- * <h2>Visibility and locking</h2> Container-wide operations that involve user
- * interaction (hit testing, selection, deletion, enclosed selection) respect:
+ * <h2>Visibility and locking</h2>
+ * Container-wide operations that involve user interaction (hit testing,
+ * selection, deletion, enclosed selection) respect:
  * <ul>
- * <li>{@link Layer#isVisible()} – invisible layers are ignored for hit testing
- * and enclosure</li>
- * <li>{@link Layer#isLocked()} – locked layers are treated as non-interactive
- * and ignored</li>
+ *   <li>{@link Layer#isVisible()} — invisible layers are ignored for hit
+ *       testing and enclosure</li>
+ *   <li>{@link Layer#isLocked()} — locked layers are treated as
+ *       non-interactive and ignored</li>
  * </ul>
  *
- * @author heddle
+ * <h2>Tool handler extensibility</h2>
+ * Subclasses that need a specialised {@link BaseToolHandler} should override
+ * {@link #createToolHandler()} rather than overriding {@link #setToolBar}.
+ * This keeps the base class free of {@code instanceof} checks against specific
+ * subclasses.
  */
 @SuppressWarnings("serial")
 public class BaseContainer extends JComponent implements IContainer, ItemChangeListener {
@@ -395,21 +399,17 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	public void addLayer(Layer layer) {
 		Objects.requireNonNull(layer, "layer");
 
-		// During constructor, _connectionLayer/_annotationLayer may not be assigned
-		// yet,
-		// so we cannot reliably detect protected layers here. We enforce correctness
-		// after construction by cleaning _layers in the constructor.
-		if (layer == _annotationLayer) {
-			Log.getInstance().info("Adding annotation layer via addLayer. This should not happen.");
+		// During construction the _annotationLayer/_connectionLayer fields are not yet
+		// assigned, so these guards can never fire then — they only matter for
+		// post-construction callers who should not pass a protected layer here.
+		if (layer == _annotationLayer || layer == _connectionLayer) {
+			Log.getInstance().warning("addLayer() called with a protected layer ('"
+					+ layer.getName() + "'). Protected layers are managed internally "
+					+ "and must not be passed to addLayer(). Call ignored.");
 			return;
 		}
 
-		if (layer == _connectionLayer) {
-			Log.getInstance().info("Adding connection layer via addLayer. This should not happen.");
-			return;
-		}
-
-		_layers.remove(layer); // in case already there
+		_layers.remove(layer); // deduplicate: remove if already present, then re-add at top
 		_layers.add(layer);
 	}
 
@@ -458,13 +458,10 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	 */
 	@Override
 	public void worldToLocal(Point pp, Point2D.Double wp) {
-		if (worldToLocal != null) {
-			try {
-				worldToLocal.transform(wp, pp);
-			} catch (NullPointerException npe) {
-				npe.printStackTrace();
-			}
+		if (worldToLocal == null || wp == null || pp == null) {
+			return;
 		}
+		worldToLocal.transform(wp, pp);
 	}
 
 	/**
@@ -808,19 +805,34 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * <p>Installs the toolbar and creates the tool handler via
+	 * {@link #createToolHandler()}, which subclasses may override to supply a
+	 * different handler without requiring an {@code instanceof} branch here.</p>
 	 */
 	@Override
 	public void setToolBar(AToolBar toolBar) {
 		_toolBar = toolBar;
 		if (_toolBar != null) {
-			if (this instanceof MapContainer) {
-				toolHandler = new MapToolHandler(this);
-			} else {
-				toolHandler = new BaseToolHandler(this);
-			}
+			toolHandler = createToolHandler();
 			((BaseToolBar) _toolBar).setHandler(toolHandler);
 		}
+	}
 
+	/**
+	 * Factory method that creates the {@link BaseToolHandler} appropriate for
+	 * this container.
+	 *
+	 * <p>The default implementation returns a plain {@link BaseToolHandler}.
+	 * Subclasses that require specialised tool behaviour (e.g.
+	 * {@code MapContainer}) should override this method to return their own
+	 * handler rather than relying on an {@code instanceof} check in
+	 * {@link #setToolBar}.</p>
+	 *
+	 * @return a new tool handler bound to this container; never {@code null}
+	 */
+	protected BaseToolHandler createToolHandler() {
+		return new BaseToolHandler(this);
 	}
 
 	/**
@@ -879,13 +891,18 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	}
 
 	/**
-	 * File drag and drop handler. Define the logic for what happens once files are
-	 * validated. Overriding this allows subclasses to handle files differently, but
-	 * the expectation is the the view will handle the drop.
+	 * Called when files are dropped onto this container's canvas.
+	 *
+	 * <p>The default implementation logs each dropped filename and then
+	 * delegates to {@link BaseView#filesDropped(List)} if a view is attached.
+	 * Subclasses may override this to handle files differently before or
+	 * instead of passing them to the view.</p>
+	 *
+	 * @param files the validated files that were dropped; never {@code null}
 	 */
 	protected void onFilesDropped(List<File> files) {
 		for (File f : files) {
-			System.out.println("Processing: " + f.getName());
+			Log.getInstance().info("File dropped: " + f.getName());
 		}
 		if (_view != null) {
 			_view.filesDropped(files);
@@ -893,46 +910,45 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Responds to item change events fired by layers owned by this container.
+	 *
+	 * <p>The base implementation:
+	 * <ul>
+	 *   <li>Updates the toolbar state (e.g. enables/disables the delete button)
+	 *       when an item is selected or deselected.</li>
+	 *   <li>Marks the affected item dirty on any change, triggering a repaint
+	 *       on the next {@link #refresh()} call.</li>
+	 * </ul>
+	 * All other change types are no-ops in the base class. Subclasses may
+	 * override to add behaviour for specific types such as {@code MOVED} or
+	 * {@code DELETED}.</p>
+	 *
+	 * @param layer the layer containing the changed item
+	 * @param item  the affected item; may be {@code null} for layer-level events
+	 * @param type  the type of change
 	 */
 	@Override
 	public void itemChanged(Layer layer, AItem item, ItemChangeType type) {
-
 		switch (type) {
-		case ADDED:
-			break;
-
 		case SELECTED:
 		case DESELECTED:
 			setToolBarState();
 			break;
 
-		case DOUBLECLICKED:
-			break;
-
-		case HIDDEN:
-			break;
-
-		case MODIFIED:
-			break;
-
-		case MOVED:
-			break;
-
+		case ADDED:
 		case DELETED:
-			break;
-
+		case DOUBLECLICKED:
+		case HIDDEN:
+		case MODIFIED:
+		case MOVED:
 		case RESIZED:
-			break;
-
 		case ROTATED:
-			break;
-
 		case SHOWN:
+			// Intentional no-op in the base class. Subclasses may override.
 			break;
 		}
 
-		// conservative default: if an item changed, mark it dirty
+		// Conservative default: mark the item dirty so it is redrawn.
 		if (item != null) {
 			item.setDirty(true);
 		}
@@ -1021,7 +1037,6 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	 */
 	protected void setAffineTransforms() {
 		Rectangle bounds = getBounds();
-		bounds = new Rectangle(0, 0, bounds.width, bounds.height);
 
 		if ((bounds == null) || (bounds.width < 1) || (bounds.height < 1)) {
 			localToWorld = null;
@@ -1046,7 +1061,12 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 		try {
 			worldToLocal = localToWorld.createInverse();
 		} catch (NoninvertibleTransformException e) {
-			e.printStackTrace();
+			// The guards above (non-zero bounds, non-zero world extents) make this
+			// branch unreachable in practice. If it somehow fires, leave both
+			// transforms null so callers get a clean no-op rather than stale data.
+			localToWorld = null;
+			worldToLocal = null;
+			Log.getInstance().error("Non-invertible affine transform in setAffineTransforms: " + e.getMessage());
 		}
 	}
 

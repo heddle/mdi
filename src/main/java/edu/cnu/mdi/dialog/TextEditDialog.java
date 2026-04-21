@@ -13,7 +13,7 @@ import javax.swing.JPanel;
 import edu.cnu.mdi.component.TextEditPanel;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.Styled;
-import edu.cnu.mdi.item.TextItem;
+import edu.cnu.mdi.item.ITextEditable;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 
@@ -38,11 +38,11 @@ public class TextEditDialog extends JDialog {
 	}
 
 	/**
-	 * Create a dialog for editing text from the given TextItem.
+	 * Create a dialog pre-populated from any text-editable item.
 	 *
-	 * @param item the TextItem to edit
+	 * @param item the item to edit; must not be {@code null}
 	 */
-	public TextEditDialog(TextItem item) {
+	public TextEditDialog(ITextEditable item) {
 		this("Edit Text", item.getText(), item.getStyle(), item.getFont());
 	}
 
@@ -160,11 +160,11 @@ public class TextEditDialog extends JDialog {
 	}
 
 	/**
-	 * Update the given TextItem with the edited text, font, and style.
+	 * Apply the edited text, font, and style back to the given item.
 	 *
-	 * @param item the TextItem to update.
+	 * @param item the item to update; a no-op if {@code null}
 	 */
-	public void updateTextItem(TextItem item) {
+	public void updateTextItem(ITextEditable item) {
 		if (item == null) {
 			return;
 		}

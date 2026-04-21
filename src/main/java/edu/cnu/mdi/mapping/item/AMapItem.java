@@ -8,79 +8,109 @@ import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.mapping.container.MapContainer;
 
+/**
+ * Abstract base class for map-native items whose geometry is stored in
+ * geographic coordinates (longitude/latitude in radians) rather than in the
+ * container's affine-transform world coordinate system.
+ *
+ * <h2>Coordinate convention</h2>
+ * <p>
+ * All geographic points follow the MDI mapping convention: a
+ * {@link Point2D.Double} where {@code x = λ} (longitude) and
+ * {@code y = φ} (latitude), both in radians. Longitude is wrapped to the
+ * half-open range {@code (-π, π]}.
+ * </p>
+ *
+ * <h2>Focus semantics</h2>
+ * <p>
+ * The {@link #_focus} field inherited from {@link AItem} is repurposed to hold
+ * a geographic point rather than a world (projection-space) point. Subclasses
+ * are responsible for keeping {@code _focus} updated (typically in
+ * {@link #updateFocus()}) to a meaningful geographic reference point such as
+ * the arc midpoint or the polygon centroid.
+ * </p>
+ *
+ * <h2>Screen-space focus</h2>
+ * <p>
+ * {@link #getFocusPoint(IContainer)} is overridden to convert the geographic
+ * focus through the active map projection rather than through the container's
+ * plain affine transform. If the container is not a {@link MapContainer}, or
+ * if the geographic focus projects to a non-finite point (e.g. the far
+ * hemisphere on an orthographic projection), the method returns {@code null}.
+ * </p>
+ *
+ * <h2>Subclass responsibilities</h2>
+ * <ul>
+ *   <li>Store geometry in geographic coordinates (radians).</li>
+ *   <li>Override {@link #updateFocus()} to keep {@link #_focus} current.</li>
+ *   <li>Override {@link #drawItem}, {@link #shouldDraw}, {@link #contains},
+ *       {@link #getBounds}, and {@link #translateWorld} to operate in
+ *       geographic space.</li>
+ * </ul>
+ */
 public abstract class AMapItem extends AItem {
 
-	/**
-	 * Constructs a new AMapItem with the given layer and key-value pairs.
-	 * @param layer the layer this item belongs to; must not be {@code null}
-	 * @param keyVals  alternating keys and values for this item; must be an even number of arguments, with keys as Strings
-	 */
-	public AMapItem(Layer layer, Object[] keyVals) {
-		super(layer, keyVals);
-	}
-	
     /**
-     * Return the world-coordinate focus of this item.
+     * Constructs a new map item on the given layer.
      *
-     * <p>The focus is the item's conceptual center: for point-like items it
-     * is their location; for polygon items it is typically the centroid.
-     * Returns {@code null} if no focus has been set.</p>
-     *
-     * @return the world-coordinate focus, or {@code null}
+     * @param layer   the layer this item belongs to; must not be {@code null}
+     * @param keyVals optional alternating {@link edu.cnu.mdi.util.PropertyUtils}
+     *                key/value pairs applied to behavior flags and style
      */
-    public Point2D.Double getFocus() {
-        return _focus;
+    public AMapItem(Layer layer, Object... keyVals) {
+        super(layer, keyVals);
     }
 
     /**
-     * Set the lat-lon focus of this item.
+     * Returns the screen-coordinate pixel position of this item's geographic
+     * focus point.
      *
-     * <p>Subclasses should override this to enforce any constraints on the
-     * focus (e.g. ensuring it stays within the item's bounding geometry).
-     * The base implementation simply stores the point.</p>
+     * <p>The conversion path is: geographic focus → projection-space (x, y)
+     * via the active {@link edu.cnu.mdi.mapping.projection.IMapProjection} →
+     * device pixels via {@link MapContainer#worldToLocal}.</p>
      *
-     * @param latlon the new focus; may be {@code null} to clear. The point's x and y 
-     * are interpreted as longitude and latitude in radians, respectively, 
-     * with longitude wrapped to (-π, π].
-     * 
-     */
-    public void setFocus(Point2D.Double latlon) {
-        _focus = latlon;
-    }
-
-    /**
-     * Return the screen-coordinate (pixel) location of this item's focus
-     * point, or {@code null} if the focus is not set.
+     * <p>Returns {@code null} if:
+     * <ul>
+     *   <li>{@code container} is not a {@link MapContainer},</li>
+     *   <li>the geographic focus is {@code null}, or</li>
+     *   <li>the focus projects to a non-finite coordinate (e.g. behind the
+     *       globe in an orthographic projection).</li>
+     * </ul>
+     * </p>
      *
-     * @param container the container rendering this item (used for the
-     *                  world-to-screen transform)
-     * @return the pixel location of the focus, or {@code null}
+     * @param container the container rendering this item
+     * @return the device-space focus position, or {@code null}
      */
     @Override
     public Point getFocusPoint(IContainer container) {
-    	if (container instanceof MapContainer) {
-    		MapContainer mapContainer = (MapContainer) container;
-    	    Point2D.Double latlon = getFocus();
-    	    if (latlon == null) return null;
-            Point pp = new Point();
-    	    mapContainer.latLonToLocal(pp, latlon);
-    	    return pp;
-    	}
- 
-        return null;
+        if (!(container instanceof MapContainer mc)) return null;
+        Point2D.Double latlon = getFocus();
+        if (latlon == null) return null;
+
+        // Check the projection result for finiteness before converting to pixels.
+        // A non-finite result means the point is off-map (e.g. the far hemisphere
+        // on an orthographic projection) and should not be drawn.
+        if (!(mc.getView() instanceof edu.cnu.mdi.mapping.MapView2D mv)) return null;
+        Point2D.Double xy = new Point2D.Double();
+        mv.getProjection().latLonToXY(latlon, xy);
+        if (!Double.isFinite(xy.x) || !Double.isFinite(xy.y)) return null;
+
+        Point pp = new Point();
+        mc.latLonToLocal(pp, latlon);
+        return pp;
     }
 
     /**
-     * Hook called when geometry changes and the focus point should be
+     * Hook called when geometry changes and the geographic focus should be
      * recomputed.
      *
      * <p>The default implementation is a no-op. Subclasses that maintain a
-     * derived focus (e.g. a centroid) should override this to recompute it
-     * from the current geometry.</p>
+     * derived focus (e.g. the geodesic midpoint of a great-circle arc, or the
+     * geographic centroid of a polygon) should override this to recompute
+     * {@link #_focus} from the current geometry.</p>
      */
+    @Override
     protected void updateFocus() {
         // default: nothing to do
     }
-
-
 }

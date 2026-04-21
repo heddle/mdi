@@ -216,15 +216,13 @@ public interface IContainer {
 
 	/**
 	 * Delete all selected items, across all item lists.
-	 *
-	 * @param container the container they lived on.
 	 */
 	public void deleteSelectedItems();
 
 	/**
 	 * Get all selected items, across all item lists.
 	 *
-	 * @param container the container they lived on.
+	 * @return a list of all currently selected items; never {@code null}
 	 */
 	public List<AItem> getSelectedItems();
 

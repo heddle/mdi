@@ -39,7 +39,7 @@ import edu.cnu.mdi.util.UnicodeUtils;
  * </ul>
  * </p>
  */
-public class TextItem extends RectangleItem {
+public class TextItem extends RectangleItem implements ITextEditable {
 
 	private static final int   MARGIN   = 4;
 	private static final float LINESIZE = 1.0f;

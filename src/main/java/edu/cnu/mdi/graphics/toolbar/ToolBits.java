@@ -225,8 +225,11 @@ public final class ToolBits {
 	public static final long ANNOTATIONTOOLS = POINTER | ELLIPSE | TEXT | RECTANGLE | POLYGON | LINE
 			| POLYLINE | STYLEB | DELETE;
 
-	/** A set of tools suitable for annotating a plot. */
+	/** A set of tools suitable for the drawing view. */
 	public static final long DRAWINGTOOLS = ANNOTATIONTOOLS | RADARC;
+	
+	public static final long MAPTOOLS = POINTER | TEXT | POLYGON | LINE
+			| POLYLINE | STYLEB | DELETE | CENTER | MAGNIFY | INFO | STATUS;
 
 	/** A set of tools suitable for zooming and panning. */
 	public static final long ZOOMTOOLS = BOXZOOM | UNDOZOOM | ZOOMIN | ZOOMOUT

@@ -550,10 +550,10 @@ public final class MapGraphics {
              * of the next when they happen to begin after a seam break or an
              * invisible region.
              */
-            prevSample = null;
-            prevVisible = false;
-            prevPixel = null;
-            currentPath = null;
+//            prevSample = null;
+//            prevVisible = false;
+//            prevPixel = null;
+//            currentPath = null;
         }
 
         if (closed) {

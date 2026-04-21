@@ -57,25 +57,20 @@ import edu.cnu.mdi.view.BaseView;
  *       the item should be drawn at all (e.g. it intersects the visible
  *       area).</li>
  * </ul>
- * <p>
- * {@code draw} handles visibility, optional special clipping from the owning
- * view, stroke save/restore, and the overlay of selection and rotation
- * handles.
- * </p>
  *
  * <h2>Behavior flags and the lock</h2>
  * <p>
  * Each interactive behavior (dragging, resizing, rotating, deleting) is
  * individually controlled by a boolean flag. However, the {@link #_locked}
  * flag is a master override: when {@code true} it suppresses dragging,
- * resizing, rotating, and deleting <em>regardless</em> of the individual
- * flags. Locking does not suppress visibility or selection display.
+ * resizing, rotating, and deleting <em>regardless</em> of the individual flags.
+ * Locking does not suppress visibility or selection display.
  * </p>
  * <p>
- * <strong>Important:</strong> items are locked by default ({@code _locked =
- * true}). Applications must explicitly call {@link #setLocked(boolean) setLocked(false)}
- * (or supply {@link edu.cnu.mdi.util.PropertyUtils#LOCKED LOCKED} in the
- * constructor key-value pairs) to make an item interactive.
+ * <strong>Items are locked by default ({@code _locked = true}).</strong>
+ * Call {@link #setLocked(boolean) setLocked(false)} or supply
+ * {@link PropertyUtils#LOCKED LOCKED=false} in the constructor key-value pairs
+ * to make an item interactive.
  * </p>
  *
  * <h2>Property-based construction</h2>
@@ -84,8 +79,7 @@ import edu.cnu.mdi.view.BaseView;
  * {@link PropertyUtils} key/value pairs. These are parsed and applied by
  * {@link #applyProperties(Properties)}, which covers behavior flags, style
  * attributes, and display name. Subclasses that need geometry parameters
- * (e.g. radius, width) should override {@link #applyGeometryProperties(Properties)}
- * rather than the constructor.
+ * should override {@link #applyGeometryProperties(Properties)}.
  * </p>
  *
  * <h2>Geometry</h2>
@@ -95,31 +89,18 @@ import edu.cnu.mdi.view.BaseView;
  * <ul>
  *   <li>{@link #_path} — a world-coordinate {@link Path2D.Double} for
  *       polygon-like items.</li>
- *   <li>{@link #_line} — a world-coordinate {@link Line2D.Double} for
- *       line items.</li>
+ *   <li>{@link #_line} — a world-coordinate {@link Line2D.Double} for line
+ *       items.</li>
  *   <li>{@link #_focus} — a world-coordinate {@link Point2D.Double} that
- *       represents the item's conceptual center (centroid, anchor point,
- *       etc.).</li>
+ *       represents the item's conceptual center.</li>
  * </ul>
- * <p>
- * Not every subclass uses all three. The focus is drawn as a small filled
- * square when the item is selected.
- * </p>
  *
  * <h2>Modification lifecycle</h2>
- * <p>
- * Interactive modifications (drag, resize, rotate) follow a three-step
- * lifecycle managed by the container's interaction layer:
- * </p>
  * <ol>
- *   <li>{@link #setModification(ItemModification)} — attaches an
- *       {@link ItemModification} record describing the operation.</li>
- *   <li>{@link #startModification()} — classifies the operation (drag,
- *       resize, or rotate) based on which part of the item was clicked.</li>
- *   <li>{@link #modify()} — called repeatedly during the gesture to update
- *       the item's geometry.</li>
- *   <li>{@link #stopModification()} — finalises the operation, notifies
- *       listeners, and clears the modification record.</li>
+ *   <li>{@link #setModification(ItemModification)} — attaches the context.</li>
+ *   <li>{@link #startModification()} — classifies the operation.</li>
+ *   <li>{@link #modify()} — called repeatedly during the gesture.</li>
+ *   <li>{@link #stopModification()} — finalises, notifies, clears.</li>
  * </ol>
  */
 public abstract class AItem implements IDrawable, IFeedbackProvider {
@@ -128,83 +109,44 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     // Shared visual constants
     // -----------------------------------------------------------------------
 
-    /**
-     * Semi-transparent grey fill used to draw the focus point indicator when
-     * the item is selected.
-     */
+    /** Semi-transparent grey fill for the focus-point indicator. */
     protected static final Color _FOCUSFILL = new Color(128, 128, 128, 128);
 
-    /**
-     * Pixel size of the square hit-test area centerd on each selection handle.
-     *
-     * @see #SPSIZE2
-     */
-    protected static final int SPSIZE = 10;
-
-    /**
-     * Half of {@link #SPSIZE}, used to center selection handles on their
-     * nominal points.
-     */
+    /** Pixel size of each selection-handle hit rectangle. */
+    protected static final int SPSIZE  = 10;
+    /** Half of {@link #SPSIZE}. */
     protected static final int SPSIZE2 = SPSIZE / 2;
 
-    /**
-     * Pixel size of the square hit-test area centerd on the rotation handle.
-     *
-     * @see #RPSIZE2
-     */
-    protected static final int RPSIZE = 14;
-
-    /**
-     * Half of {@link #RPSIZE}, used to center the rotation handle on its
-     * nominal point.
-     */
+    /** Pixel size of the rotation-handle hit rectangle. */
+    protected static final int RPSIZE  = 14;
+    /** Half of {@link #RPSIZE}. */
     protected static final int RPSIZE2 = RPSIZE / 2;
 
-    /**
-     * Icon rendered inside the rotation handle when the item is selected and
-     * rotatable. Loaded lazily from the MDI SVG resource bundle.
-     */
+    /** Icon rendered inside the rotation handle when the item is selected. */
     protected static Icon rotateIcon =
             ImageManager.getInstance().loadUiIcon(
-                    Environment.MDI_RESOURCE_PATH + "images/svg/rotate.svg",
-                    16);
+                    Environment.MDI_RESOURCE_PATH + "images/svg/rotate.svg", 16);
 
-    /** Fill color used for selection handle ovals. */
     private static final Color _selectFill = Color.white;
-
-    /** Outline color used for selection handle ovals. */
     private static final Color _selectLine = Color.black;
-
-    /** Fill color used for the rotation handle oval. */
-    private static final Color _rotateFill =
-            X11Colors.getX11Color("yellow", 64);
+    private static final Color _rotateFill = X11Colors.getX11Color("yellow", 64);
 
     // -----------------------------------------------------------------------
-    // Geometry fields
+    // Geometry fields (protected — subclass use)
     // -----------------------------------------------------------------------
 
-    /**
-     * Optional world-coordinate path used by polygon-like items.
-     * Not all subclasses use this field.
-     */
+    /** World-coordinate path for polygon-like items; may be {@code null}. */
     protected Path2D.Double _path;
 
-    /**
-     * Optional world-coordinate line used by line-based items.
-     * Not all subclasses use this field.
-     */
+    /** World-coordinate line for line items; may be {@code null}. */
     protected Line2D.Double _line;
 
-    /**
-     * Optional secondary world-coordinate points (e.g. internal control
-     * points). Not all subclasses use this field.
-     */
+    /** Optional secondary world-coordinate control points; may be {@code null}. */
     protected Point2D.Double[] _secondaryPoints;
 
     /**
-     * The world-coordinate focus of this item — typically its center,
-     * centroid, or anchor point. Drawn as a small filled square when the
-     * item is selected. May be {@code null} if the item has no defined focus.
+     * World-coordinate focus — typically the centroid or anchor.
+     * Drawn as a small square when the item is selected.
      */
     protected Point2D.Double _focus;
 
@@ -213,15 +155,14 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     // -----------------------------------------------------------------------
 
     /**
-     * The {@link Layer} on which this item lives. Set at construction and
-     * nulled out by {@link #prepareForRemoval()}.
+     * The layer this item lives on. Set at construction; nulled by
+     * {@link #prepareForRemoval()}.
      */
     protected Layer _layer;
 
     /**
-     * The drawing style for this item (fill color, line color, line style,
-     * symbol type, etc.). Initialized to a default {@link Styled} instance;
-     * never {@code null} under normal operation but may be {@code null} after
+     * The drawing style (colors, line style, symbol type, etc.).
+     * Never {@code null} under normal operation; may be {@code null} after
      * {@link #prepareForRemoval()}.
      *
      * @see #getStyleSafe()
@@ -232,134 +173,88 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     // Behavior flags
     // -----------------------------------------------------------------------
 
-    /**
-     * Resize policy applied when this item is resized interactively.
-     */
+    /** Resize policy applied during interactive resizing. */
     protected ResizePolicy _resizePolicy = ResizePolicy.NORMAL;
 
-    /**
-     * Controls whether this item is rendered. Invisible items are completely
-     * skipped by the drawing pipeline, including selection handles.
-     */
-    protected boolean _visible = true;
+    /** Whether this item is rendered. */
+    protected boolean _visible      = true;
 
-    /**
-     * Controls whether this item can be dragged by the user.
-     * Suppressed by {@link #_locked}.
-     */
-    protected boolean _draggable = false;
+    /** Whether this item can be dragged. Suppressed by {@link #_locked}. */
+    protected boolean _draggable    = false;
 
-    /**
-     * Controls whether this item can be rotated by the user.
-     * Suppressed by {@link #_locked}.
-     */
-    protected boolean _rotatable = false;
+    /** Whether this item can be rotated. Suppressed by {@link #_locked}. */
+    protected boolean _rotatable    = false;
 
-    /**
-     * Controls whether this item responds to a right-click gesture.
-     */
+    /** Whether this item responds to right-click. */
     protected boolean _rightClickable = true;
 
-    /**
-     * Controls whether this item can be selected by the user.
-     */
-    protected boolean _selectable = true;
+    /** Whether this item can be selected. */
+    protected boolean _selectable   = true;
 
-    /**
-     * Controls whether this item can be connected to other items.
-     */
-    protected boolean _connectable = false;
+    /** Whether this item can be connected to other items. */
+    protected boolean _connectable  = false;
 
-    /**
-     * Controls whether this item responds to a double-click gesture.
-     */
+    /** Whether this item responds to double-click. */
     protected boolean _doubleClickable = false;
 
     /**
-     * Master lock flag. When {@code true}, the item cannot be dragged,
-     * rotated, resized, or deleted, regardless of the individual behavior
-     * flags. Locking does not affect visibility or selection display.
-     *
-     * <p><strong>Default is {@code true}.</strong> Newly created items are
-     * locked; call {@link #setLocked(boolean) setLocked(false)} or supply
-     * {@link PropertyUtils#LOCKED LOCKED=false} in the constructor to enable
-     * interaction.</p>
+     * Master lock flag.  When {@code true} drag, resize, rotate, and delete
+     * are all suppressed, regardless of the individual flags.
+     * <p><b>Default is {@code true}.</b></p>
      */
-    protected boolean _locked = true;
+    protected boolean _locked       = true;
 
     /**
-     * Controls whether this item can be resized by the user.
-     * Suppressed by {@link #_locked}.
-     */
-    private boolean _resizable = true;
-
-    /**
-     * Controls whether this item can be deleted by the user.
-     * Suppressed by {@link #_locked}.
-     */
-    protected boolean _deletable = false;
-
-    /**
-     * Whether this item is currently selected.
-     * Selected items display selection handles and a focus indicator.
-     */
-    protected boolean _selected = false;
-
-    /**
-     * Whether this item is enabled. Disabled items are inert — they do not
-     * respond to interaction — and may be rendered in a ghosted style.
-     */
-    protected boolean _enabled = true;
-
-    /**
-     * Whether this item's cached rendering data is stale.
+     * Whether this item can be resized.  Suppressed by {@link #_locked}.
      * <p>
-     * When {@code true} the item must be redrawn from scratch on the next
-     * paint cycle. Items that cache intermediate geometry (e.g. a
-     * pre-computed screen polygon) use this flag to decide whether to
-     * recompute. Setting dirty to {@code true} also clears
-     * {@link #_lastDrawnPolygon}.
+     * This field is {@code protected} (not {@code private}) so that
+     * subclasses can read the raw flag value independently of the lock — for
+     * example, to include it in a serialised representation.  The effective
+     * resizability is always exposed through {@link #isResizable()}, which
+     * also checks {@link #_locked}.
      * </p>
      */
-    protected boolean _dirty = true;
+    protected boolean _resizable    = true;
+
+    /** Whether this item can be deleted. Suppressed by {@link #_locked}. */
+    protected boolean _deletable    = false;
+
+    /** Whether this item is currently selected. */
+    protected boolean _selected     = false;
+
+    /** Whether this item is enabled (responds to interaction). */
+    protected boolean _enabled      = true;
+
+    /**
+     * Whether the item's cached rendering data is stale.
+     * Setting this to {@code true} also clears {@link #_lastDrawnPolygon}.
+     */
+    protected boolean _dirty        = true;
 
     // -----------------------------------------------------------------------
     // State
     // -----------------------------------------------------------------------
 
     /**
-     * The screen polygon produced by the most recent {@link #drawItem} call,
-     * or {@code null} if the item has not yet been drawn, has been marked
-     * dirty, or does not cache a polygon.
-     * <p>
-     * Used for hit-testing ({@link #contains}) and rubber-band selection
-     * ({@link #enclosed}).
-     * </p>
+     * The screen polygon from the most recent {@link #drawItem} call.
+     * {@code null} when dirty or not yet drawn. Used for hit-testing and
+     * rubber-band selection.
      */
     protected Polygon _lastDrawnPolygon;
 
-    /**
-     * The active modification record during an interactive drag, resize, or
-     * rotate gesture. {@code null} when no modification is in progress.
-     */
+    /** Active modification during a drag/resize/rotate gesture. */
     protected ItemModification _modification;
 
     /**
-     * Reference rotation angle in degrees, in the range {@code (-180, 180]}.
-     * Normalised automatically by {@link #setAzimuth(double)}.
+     * Rotation angle in degrees, range {@code (-180, 180]}.
+     * Normalised by {@link #setAzimuth(double)}.
      */
     private double _azimuth = 0.0;
 
-    /**
-     * Human-readable display name for this item. Used in feedback strings,
-     * popup menus, and debugging. Defaults to {@code "no name"}.
-     */
+    /** Human-readable display name for feedback and menus. */
     protected String _displayName = "no name";
 
-    /**
-     * The right-click popup menu for this item. Created lazily by
-     * {@link #createPopupMenu()} on first access via {@link #getPopupMenu()}.
-     */
+    /** Right-click popup menu; created lazily by {@link #createPopupMenu()}. */
     protected JPopupMenu _popupMenu;
 
     // -----------------------------------------------------------------------
@@ -368,26 +263,41 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 
     /**
      * Construct an item on the given layer, optionally configuring it from
-     * property key-value pairs.
+     * property key-value pairs, and immediately register it.
      *
-     * <p>The item is added to {@code layer} immediately and registered as a
-     * feedback provider with the container's feedback control. If
-     * {@code keyVals} are supplied, they are parsed and applied via
-     * {@link #applyProperties(Properties)}, which sets behavior flags,
-     * style, and display name. Subclass geometry can be initialized by
-     * overriding {@link #applyGeometryProperties(Properties)}.</p>
+     * <p>Registration adds the item to its layer (firing an
+     * {@link ItemChangeType#ADDED} event) and registers it as a feedback
+     * provider with the container's feedback control. Registration happens
+     * inside the constructor so that callers — including factory methods such
+     * as those in {@code CreationSupport} — do not need to take any extra
+     * step after construction.</p>
+     *
+     * <h3>Construction-time event caveat</h3>
+     * <p>
+     * Because registration fires the {@code ADDED} event before any subclass
+     * constructor body has run, a listener that immediately queries the item's
+     * geometry on {@code ADDED} will see only the state that
+     * {@link #applyProperties} has set — not any geometry a subclass sets
+     * after {@code super()} returns. In practice, MDI listeners that care
+     * about geometry wait for a subsequent draw or modification event, so
+     * this has not been a problem. If a future listener does need to read
+     * geometry on {@code ADDED}, the creation call-site should set geometry
+     * before adding the listener, or the listener should guard against
+     * uninitialized state.
+     * </p>
      *
      * @param layer   the layer to add this item to; must not be {@code null}
      * @param keyVals optional alternating {@link PropertyUtils} key/value
-     *                pairs (may be empty)
+     *                pairs (may be empty or {@code null})
+     * @throws IllegalArgumentException if {@code layer} is {@code null}
      */
     public AItem(Layer layer, Object... keyVals) {
+        if (layer == null) throw new IllegalArgumentException("layer cannot be null");
         _layer = layer;
-        _layer.add(this);
-        _layer.getContainer().getFeedbackControl().addFeedbackProvider(this);
-
         Properties props = PropertyUtils.fromKeyValues(keyVals);
         applyProperties(props);
+        _layer.add(this);
+        _layer.getContainer().getFeedbackControl().addFeedbackProvider(this);
     }
 
     // -----------------------------------------------------------------------
@@ -398,20 +308,14 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
      * Apply a set of properties to this item's behavior flags, style, name,
      * and geometry.
      *
-     * <p>This method is called by the constructor but can also be called at
-     * any later time to reconfigure the item. The application order is:
-     * behavior flags → display name → style → geometry. Subclasses that
-     * need to apply additional properties should override
-     * {@link #applyGeometryProperties(Properties)} for geometry, or call
-     * {@code super.applyProperties(props)} before their own logic for
-     * anything else.</p>
+     * <p>Called from the Phase-1 constructor. May also be called later to
+     * reconfigure the item. Order: flags → name → style → geometry.</p>
      *
-     * @param props the properties to apply; a no-op if {@code null}
+     * @param props properties to apply; a no-op if {@code null}
      */
     protected void applyProperties(Properties props) {
         if (props == null) return;
 
-        // Behavior flags
         setVisible(PropertyUtils.getBoolean(props, PropertyUtils.VISIBLE, _visible));
         setLocked(PropertyUtils.getLocked(props));
         setDraggable(PropertyUtils.getDraggable(props));
@@ -422,30 +326,22 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
         setDoubleClickable(PropertyUtils.getDoubleClickable(props));
         setRotatable(PropertyUtils.getRotatable(props));
 
-        // Display name
         String title = PropertyUtils.getTitle(props);
         if (title != null) _displayName = title;
 
-        // Style and geometry (delegated)
         applyStyleProperties(props);
         applyGeometryProperties(props);
     }
 
     /**
-     * Apply style-related properties (colors, line style, line width, symbol
-     * type and size) from {@code props}.
+     * Apply style-related properties from {@code props}.
      *
-     * <p>Each property is applied only if it is actually present in
-     * {@code props}, so missing keys leave the current style unchanged. The
-     * style object is accessed via {@link #getStyleSafe()} so a missing
-     * {@code _style} is recreated rather than causing a
-     * {@link NullPointerException}.</p>
+     * <p>Each property is applied only when the key is present; missing keys
+     * leave the current style unchanged. Subclasses that support additional
+     * style properties should override this method and call
+     * {@code super.applyStyleProperties(props)} first.</p>
      *
-     * <p>Subclasses that support additional style properties should override
-     * this method and call {@code super.applyStyleProperties(props)} first.</p>
-     *
-     * @param props the properties to read style values from; must not be
-     *              {@code null}
+     * @param props the properties to read; must not be {@code null}
      */
     protected void applyStyleProperties(Properties props) {
         IStyled s = getStyleSafe();
@@ -461,13 +357,11 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /**
      * Apply geometry-specific properties from {@code props}.
      *
-     * <p>The default implementation is a no-op. Subclasses that accept
-     * geometric constructor parameters (radius, width, endpoint coordinates,
-     * etc.) should override this method to read those values from
-     * {@code props} rather than adding constructor parameters.</p>
+     * <p>Default implementation is a no-op. Subclasses with geometric
+     * constructor parameters (radius, width, endpoint coordinates, etc.)
+     * should override this rather than adding constructor parameters.</p>
      *
-     * @param props the properties to read geometry values from; never
-     *              {@code null}
+     * @param props the properties to read; never {@code null}
      */
     protected void applyGeometryProperties(Properties props) {
         // default: nothing to do
@@ -481,23 +375,18 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
      * Draw this item onto the container.
      *
      * <p>This is the method called by the container's rendering pipeline.
-     * Subclasses must <em>not</em> override it; they implement
+     * Subclasses must <em>not</em> override it; implement
      * {@link #drawItem(Graphics2D, IContainer)} instead.</p>
      *
-     * <p>The method performs the following steps, in order:</p>
+     * <p>Steps performed:</p>
      * <ol>
-     *   <li>Skip everything if {@link #_visible} is {@code false}.</li>
-     *   <li>Call {@link #shouldDraw} — skip {@code drawItem} if it returns
+     *   <li>Skip if {@link #_visible} is {@code false}.</li>
+     *   <li>Call {@link #shouldDraw} — skip {@link #drawItem} if
      *       {@code false}.</li>
-     *   <li>Install any special clip provided by the owning
-     *       {@link BaseView}.</li>
-     *   <li>Save and restore the {@link java.awt.Stroke} around
-     *       {@link #drawItem}, so subclasses can freely change the stroke
-     *       without affecting other items.</li>
-     *   <li>Call {@link #drawSelections} to overlay selection handles and the
-     *       focus indicator, even if {@code shouldDraw} returned
-     *       {@code false} (because a selected item may still need its handles
-     *       drawn when it is temporarily out of the visible area).</li>
+     *   <li>Install any special clip from the owning {@link BaseView}.</li>
+     *   <li>Save and restore the {@link Stroke} around {@link #drawItem}.</li>
+     *   <li>Call {@link #drawSelections} unconditionally (selected items need
+     *       handles even when scrolled partially out of view).</li>
      * </ol>
      *
      * @param g2        the graphics context
@@ -532,10 +421,9 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /**
      * Perform the actual rendering of this item's geometry.
      *
-     * <p>This method is called by {@link #draw} after visibility and clip
-     * setup. Subclasses implement their drawing here. The stroke is saved and
-     * restored by {@code draw}, so subclasses may freely set any stroke
-     * without cleaning up.</p>
+     * <p>Called by {@link #draw} after visibility and clip setup. The stroke
+     * is saved and restored by {@code draw}, so subclasses may freely change
+     * the stroke without cleanup.</p>
      *
      * @param g2        the graphics context
      * @param container the container being rendered
@@ -543,17 +431,15 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     public abstract void drawItem(Graphics2D g2, IContainer container);
 
     /**
-     * Determine whether this item should be drawn on the current frame.
+     * Return {@code true} if this item should be drawn on the current frame.
      *
-     * <p>This is a secondary visibility check, beyond the simple
+     * <p>This is a secondary visibility check beyond the simple
      * {@link #_visible} flag. A typical implementation checks whether the
-     * item's screen bounds intersect the current clip rectangle. The method
-     * is called by {@link #draw} before {@link #drawItem} is invoked.</p>
+     * item's screen bounds intersect the current clip rectangle.</p>
      *
      * @param g2        the graphics context (may be used to read clip bounds)
      * @param container the container being rendered
-     * @return {@code true} if {@link #drawItem} should be called for this
-     *         frame
+     * @return {@code true} if {@link #drawItem} should be called
      */
     public abstract boolean shouldDraw(Graphics2D g2, IContainer container);
 
@@ -562,21 +448,17 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     // -----------------------------------------------------------------------
 
     /**
-     * Draw the selection handles and focus indicator for this item.
+     * Draw selection handles and the focus indicator for this item.
      *
-     * <p>Called unconditionally by {@link #draw} whenever the item is
-     * visible, even if {@link #shouldDraw} returned {@code false}. This
-     * ensures handles remain visible for selected items that are partially
-     * scrolled out of view.</p>
+     * <p>Called unconditionally by {@link #draw} whenever the item is visible,
+     * even when {@link #shouldDraw} returned {@code false}, so handles remain
+     * visible for selected items that are partially scrolled out of view.</p>
      *
-     * <p>If the item is not selected this method returns immediately without
-     * drawing anything. When selected it draws:</p>
+     * <p>When selected, draws:</p>
      * <ul>
-     *   <li>A small white oval at each selection point (from
-     *       {@link #getSelectionPoints}).</li>
-     *   <li>A yellow rotation-handle oval plus the {@link #rotateIcon} at
-     *       the rotation point (from {@link #getRotatePoint}), if the item
-     *       is rotatable.</li>
+     *   <li>A white oval at each selection point.</li>
+     *   <li>A yellow rotation-handle oval plus {@link #rotateIcon}, if
+     *       rotatable.</li>
      *   <li>The focus indicator via {@link #focusFill}.</li>
      * </ul>
      *
@@ -611,12 +493,10 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     }
 
     /**
-     * Draw the focus indicator — a small filled square at the item's screen
-     * focus point.
+     * Draw a small filled square at the item's focus point.
      *
      * <p>Only drawn when {@link #getFocus()} returns a non-null point.
-     * The indicator is a 6×6 pixel square filled with {@link #_FOCUSFILL}.
-     * </p>
+     * The indicator is a 6×6 pixel square filled with {@link #_FOCUSFILL}.</p>
      *
      * @param g2        the graphics context
      * @param container the container being rendered
@@ -636,14 +516,11 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /**
      * Test whether this item, as rendered, contains the given screen point.
      *
-     * <p>The test uses the best available geometry, in priority order:</p>
+     * <p>Priority order:</p>
      * <ol>
-     *   <li>{@link #_lastDrawnPolygon} — if the item cached a screen polygon
-     *       from its last draw, use that for an exact hit test.</li>
-     *   <li>{@link #getBounds(IContainer)} — fall back to the axis-aligned
-     *       bounding rectangle.</li>
-     *   <li>{@link #inASelectRect} — as a last resort, check the selection
-     *       and rotation handle rectangles.</li>
+     *   <li>{@link #_lastDrawnPolygon} — exact hit test.</li>
+     *   <li>{@link #getBounds(IContainer)} — axis-aligned bounding rectangle.</li>
+     *   <li>{@link #inASelectRect} — selection/rotation handle rectangles.</li>
      * </ol>
      *
      * @param container   the container rendering this item
@@ -664,10 +541,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
      * Test whether the screen point falls inside any selection or rotation
      * handle rectangle.
      *
-     * <p>Used as a last-resort hit-test by {@link #contains} when neither the
-     * cached polygon nor the bounding rectangle contains the point. This
-     * ensures that selection handles themselves are always clickable.</p>
-     *
      * @param container   the container rendering this item
      * @param screenPoint the pixel point to test
      * @return {@code true} if the point is inside any handle rectangle
@@ -678,15 +551,14 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     }
 
     /**
-     * Test whether the screen point falls inside the hit-test rectangle
-     * around the rotation handle.
+     * Test whether the screen point falls inside the rotation-handle rectangle.
      *
-     * <p>Returns {@code false} immediately if the item is not rotatable or
-     * not selected.</p>
+     * <p>Returns {@code false} immediately if the item is not rotatable or not
+     * selected.</p>
      *
      * @param container   the container rendering this item
      * @param screenPoint the pixel point to test
-     * @return {@code true} if the point is inside the rotation handle area
+     * @return {@code true} if the point is inside the rotation handle
      */
     public boolean inRotatePoint(IContainer container, Point screenPoint) {
         if (!isRotatable() || !isSelected()) return false;
@@ -701,14 +573,12 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
      * contains the given screen point, or {@code -1} if none does.
      *
      * <p>Returns {@code -1} immediately if the item is not selected, or if
-     * {@code checkResizable} is {@code true} and the item is not resizable.
-     * </p>
+     * {@code checkResizable} is {@code true} and the item is not resizable.</p>
      *
      * @param container      the container rendering this item
      * @param screenPoint    the pixel point to test
-     * @param checkResizable if {@code true}, skip the test when the item is
-     *                       not resizable
-     * @return the zero-based index of the hit selection point, or {@code -1}
+     * @param checkResizable if {@code true}, skip the test when not resizable
+     * @return the zero-based handle index, or {@code -1}
      */
     public int inSelectPoint(IContainer container, Point screenPoint,
             boolean checkResizable) {
@@ -728,12 +598,11 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     }
 
     /**
-     * Check whether a rubber-band rectangle completely encloses this item.
+     * Test whether a rubber-band rectangle completely encloses this item.
      *
-     * <p>Used during rubber-band selection. The default implementation tests
-     * the cached screen polygon (if available) or the bounding rectangle.
-     * Subclasses with non-rectangular shapes may override for a more precise
-     * test.</p>
+     * <p>The default implementation uses the cached screen polygon if
+     * available, otherwise the bounding rectangle. Subclasses with
+     * non-rectangular shapes may override for a more precise test.</p>
      *
      * @param container the rendering container
      * @param r         the rubber-band rectangle in screen coordinates
@@ -755,151 +624,95 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
      * Return the screen-coordinate bounding rectangle of this item.
      *
      * <p>The default implementation returns {@code null}. Subclasses should
-     * override to return a meaningful bounding box, which is used for
-     * hit-testing and rubber-band selection when no cached polygon is
-     * available.</p>
+     * override to return a meaningful bounding box used for hit-testing and
+     * rubber-band selection.</p>
      *
      * @param container the container rendering this item
      * @return the pixel bounding rectangle, or {@code null} if unavailable
      */
-    public Rectangle getBounds(IContainer container) {
-        return null;
-    }
+    public Rectangle getBounds(IContainer container) { return null; }
 
     /**
      * Return the world-coordinate bounding rectangle of this item.
      *
-     * @return the world-coordinate bounding rectangle; must not be
-     *         {@code null} in a concrete implementation
+     * @return the world-coordinate bounding rectangle
      */
     public abstract Rectangle2D.Double getWorldBounds();
 
     /**
      * Return the selection handles for this item in screen coordinates.
      *
-     * <p>The default implementation uses the vertices of
-     * {@link #_lastDrawnPolygon} if it exists and has more than one point,
-     * otherwise falls back to the four corners of {@link #getBounds}.</p>
-     *
-     * <p>Subclasses may override to return a custom set of handles (e.g. for
-     * a line item: just the two endpoints).</p>
+     * <p>The default uses the vertices of {@link #_lastDrawnPolygon} if
+     * available, otherwise the four corners of {@link #getBounds}.</p>
      *
      * @param container the container rendering this item
-     * @return array of selection handle points, or {@code null} if bounds
-     *         are unavailable
+     * @return array of handle points, or {@code null} if bounds are unavailable
      */
     public Point[] getSelectionPoints(IContainer container) {
         if (_lastDrawnPolygon != null && _lastDrawnPolygon.npoints > 1) {
             Point[] pp = new Point[_lastDrawnPolygon.npoints];
             for (int i = 0; i < _lastDrawnPolygon.npoints; i++) {
-                pp[i] = new Point(
-                        _lastDrawnPolygon.xpoints[i],
-                        _lastDrawnPolygon.ypoints[i]);
+                pp[i] = new Point(_lastDrawnPolygon.xpoints[i],
+                                  _lastDrawnPolygon.ypoints[i]);
             }
             return pp;
         }
-
         Rectangle r = getBounds(container);
         if (r == null) return null;
-
         int right  = r.x + r.width;
         int bottom = r.y + r.height;
         return new Point[] {
-            new Point(r.x,    r.y),
-            new Point(r.x,    bottom),
-            new Point(right,  bottom),
-            new Point(right,  r.y)
+            new Point(r.x,   r.y),
+            new Point(r.x,   bottom),
+            new Point(right, bottom),
+            new Point(right, r.y)
         };
     }
 
     /**
-     * Return the screen-coordinate rotation handle point for this item.
-     *
-     * <p>The default implementation returns {@code null}, meaning the item
-     * has no rotation handle. Subclasses that support rotation should
-     * override to return a meaningful point — typically near one corner of
-     * the item's bounding box.</p>
+     * Return the screen-coordinate rotation handle point, or {@code null} if
+     * the item does not support rotation.
      *
      * @param container the container rendering this item
-     * @return the rotation handle point, or {@code null} if not applicable
+     * @return the rotation handle point, or {@code null}
      */
-    public Point getRotatePoint(IContainer container) {
-        return null;
-    }
+    public Point getRotatePoint(IContainer container) { return null; }
 
-    /**
-     * Return the last screen polygon produced by {@link #drawItem}, or
-     * {@code null} if the item has not been drawn, is dirty, or does not
-     * cache a polygon.
-     *
-     * @return the last drawn polygon, or {@code null}
-     */
-    public Polygon getLastDrawnPolygon() {
-        return _lastDrawnPolygon;
-    }
+    /** @return the last drawn polygon, or {@code null} */
+    public Polygon getLastDrawnPolygon() { return _lastDrawnPolygon; }
 
-    /**
-     * Return the world-coordinate path used by this item, or {@code null} if
-     * the item does not use a path.
-     *
-     * @return the world-coordinate path, or {@code null}
-     */
-    public Path2D.Double getPath() {
-        return _path;
-    }
+    /** @return the world-coordinate path, or {@code null} */
+    public Path2D.Double getPath() { return _path; }
 
-    /**
-     * Return the world-coordinate line used by this item, or {@code null} if
-     * the item does not use a line.
-     *
-     * @return the world-coordinate line, or {@code null}
-     */
-    public Line2D.Double getLine() {
-        return _line;
-    }
+    /** @return the world-coordinate line, or {@code null} */
+    public Line2D.Double getLine() { return _line; }
 
-    /**
-     * Return the optional secondary world-coordinate points (e.g. internal
-     * control points), or {@code null} if none are defined.
-     *
-     * @return the secondary points array, or {@code null}
-     */
-    public Point2D.Double[] getSecondaryPoints() {
-        return _secondaryPoints;
-    }
+    /** @return the secondary world-coordinate points, or {@code null} */
+    public Point2D.Double[] getSecondaryPoints() { return _secondaryPoints; }
 
     /**
      * Return the world-coordinate focus of this item.
      *
-     * <p>The focus is the item's conceptual center: for point-like items it
-     * is their location; for polygon items it is typically the centroid.
+     * <p>The focus is the item's conceptual center: for point items it is
+     * their location; for polygon items it is typically the centroid.
      * Returns {@code null} if no focus has been set.</p>
      *
      * @return the world-coordinate focus, or {@code null}
      */
-    public Point2D.Double getFocus() {
-        return _focus;
-    }
+    public Point2D.Double getFocus() { return _focus; }
 
     /**
      * Set the world-coordinate focus of this item.
      *
-     * <p>Subclasses should override this to enforce any constraints on the
-     * focus (e.g. ensuring it stays within the item's bounding geometry).
-     * The base implementation simply stores the point.</p>
-     *
      * @param wp the new focus; may be {@code null} to clear
      */
-    public void setFocus(Point2D.Double wp) {
-        _focus = wp;
-    }
+    public void setFocus(Point2D.Double wp) { _focus = wp; }
 
     /**
-     * Return the screen-coordinate (pixel) location of this item's focus
-     * point, or {@code null} if the focus is not set.
+     * Return the screen-coordinate location of the focus, or {@code null} if
+     * the focus is not set.
      *
-     * @param container the container rendering this item (used for the
-     *                  world-to-screen transform)
+     * @param container the container (used for world-to-screen transform)
      * @return the pixel location of the focus, or {@code null}
      */
     public Point getFocusPoint(IContainer container) {
@@ -911,22 +724,14 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     }
 
     /**
-     * Hook called when geometry changes and the focus point should be
-     * recomputed.
-     *
-     * <p>The default implementation is a no-op. Subclasses that maintain a
-     * derived focus (e.g. a centroid) should override this to recompute it
-     * from the current geometry.</p>
+     * Hook called when geometry changes and the focus should be recomputed.
+     * The default implementation is a no-op.
      */
-    protected void updateFocus() {
-        // default: nothing to do
-    }
+    protected void updateFocus() { }
 
     /**
      * Notify the item that its geometry has changed.
-     *
-     * <p>Calls {@link #updateFocus()} to recompute the focus, then marks the
-     * item dirty so it is redrawn from scratch on the next paint cycle.</p>
+     * Recomputes the focus and marks the item dirty.
      */
     public void geometryChanged() {
         updateFocus();
@@ -940,9 +745,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /**
      * Translate this item by {@code (dx, dy)} in world coordinates.
      *
-     * <p>All concrete subclasses must implement this to move their geometry
-     * accordingly.</p>
-     *
      * @param dx the world-coordinate offset along the X axis
      * @param dy the world-coordinate offset along the Y axis
      */
@@ -951,19 +753,16 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /**
      * Translate this item by {@code (dx, dy)} in screen (pixel) coordinates.
      *
-     * <p>The pixel deltas are converted to world-coordinate deltas using the
-     * current container transform, then delegated to
-     * {@link #translateWorld(double, double)}. This method is a no-op if
-     * both deltas are zero or if the container is unavailable.</p>
+     * <p>Pixel deltas are converted to world deltas via the container
+     * transform, then delegated to {@link #translateWorld}.</p>
      *
-     * @param dx the horizontal pixel offset (positive = right)
-     * @param dy the vertical pixel offset (positive = down)
+     * @param dx horizontal pixel offset (positive = right)
+     * @param dy vertical pixel offset (positive = down)
      */
     public void translateLocal(int dx, int dy) {
         if (dx == 0 && dy == 0) return;
         IContainer container = getContainer();
         if (container == null) return;
-
         Point2D.Double w0 = new Point2D.Double();
         Point2D.Double w1 = new Point2D.Double();
         container.localToWorld(new Point(0,  0),  w0);
@@ -976,48 +775,24 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     // -----------------------------------------------------------------------
 
     /**
-     * Attach an {@link ItemModification} record to this item, signalling that
-     * an interactive modification is about to begin.
+     * Attach a modification context to begin an interactive gesture.
      *
-     * <p>Called by the container's interaction layer before
-     * {@link #startModification()}. The modification record carries the
-     * container reference, the mouse start point, and will receive the
-     * resolved {@link ModificationType} from {@link #startModification()}.
-     * </p>
-     *
-     * @param itemModification the modification context; may be {@code null}
-     *                         to cancel any pending modification
+     * @param itemModification the modification context; {@code null} to cancel
      */
     public void setModification(ItemModification itemModification) {
         _modification = itemModification;
     }
 
-    /**
-     * Return the current modification record, or {@code null} if no
-     * modification is in progress.
-     *
-     * @return the active {@link ItemModification}, or {@code null}
-     */
-    public ItemModification getItemModification() {
-        return _modification;
-    }
+    /** @return the active modification context, or {@code null} */
+    public ItemModification getItemModification() { return _modification; }
 
     /**
      * Classify and begin a drag, resize, or rotate modification.
      *
-     * <p>Called once, immediately after {@link #setModification}, to
-     * determine which kind of modification the mouse-down position implies.
-     * Priority order is:</p>
-     * <ol>
-     *   <li><strong>Rotate</strong> — if the start point is inside the
-     *       rotation handle.</li>
-     *   <li><strong>Resize</strong> — if the start point is inside a
-     *       selection handle and the item is resizable.</li>
-     *   <li><strong>Drag</strong> — otherwise.</li>
-     * </ol>
-     * <p>
-     * This method is a no-op if {@link #_modification} is {@code null}.
-     * </p>
+     * <p>Priority: rotate (if start point is in rotation handle) → resize (if
+     * start point is in a selection handle) → drag (otherwise).</p>
+     *
+     * <p>This method is a no-op if {@link #_modification} is {@code null}.</p>
      */
     public void startModification() {
         if (_modification == null) return;
@@ -1025,55 +800,43 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
         IContainer container = _modification.getContainer();
         Point smp = _modification.getStartMousePoint();
 
-        _modification.setType(ModificationType.DRAG); // defensive default
+        _modification.setType(ModificationType.DRAG);   // safe default
 
         if (inRotatePoint(container, smp)) {
             _modification.setType(ModificationType.ROTATE);
             return;
         }
-
         int index = inSelectPoint(container, smp, true);
         if (index >= 0) {
             _modification.setSelectIndex(index);
             _modification.setType(ModificationType.RESIZE);
-            return;
         }
-
-        _modification.setType(ModificationType.DRAG);
     }
 
     /**
      * Update this item's geometry in response to a mouse movement during an
      * active modification.
      *
-     * <p>Called repeatedly by the container's interaction layer while the
-     * user is dragging, resizing, or rotating. The current mouse position
-     * is available through {@link #_modification}. Subclasses implement
-     * this to move, resize, or rotate their geometry accordingly.</p>
+     * <p>Called repeatedly while the user is dragging, resizing, or rotating.
+     * The current mouse position is available through {@link #_modification}.</p>
      */
     public abstract void modify();
 
     /**
-     * Finalise the current modification, notify layer listeners, and clear
-     * the modification record.
+     * Finalise the current modification, notify layer listeners, and clear the
+     * modification record.
      *
-     * <p>This method is a no-op if {@link #_modification} is {@code null}.
-     * After notifying listeners the modification record is set to
-     * {@code null} so subsequent calls are safe.</p>
+     * <p>Fires {@link ItemChangeType#MOVED}, {@link ItemChangeType#ROTATED}, or
+     * {@link ItemChangeType#RESIZED} depending on the modification type.
+     * This method is a no-op if {@link #_modification} is {@code null}.</p>
      */
     public void stopModification() {
         if (_modification == null) return;
 
         switch (_modification.getType()) {
-            case DRAG:
-                _layer.notifyItemChangeListeners(this, ItemChangeType.MOVED);
-                break;
-            case ROTATE:
-                _layer.notifyItemChangeListeners(this, ItemChangeType.ROTATED);
-                break;
-            case RESIZE:
-                _layer.notifyItemChangeListeners(this, ItemChangeType.RESIZED);
-                break;
+            case DRAG:   _layer.notifyItemChangeListeners(this, ItemChangeType.MOVED);   break;
+            case ROTATE: _layer.notifyItemChangeListeners(this, ItemChangeType.ROTATED); break;
+            case RESIZE: _layer.notifyItemChangeListeners(this, ItemChangeType.RESIZED); break;
         }
         _modification = null;
     }
@@ -1082,185 +845,86 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     // Behavior flags — getters and setters
     // -----------------------------------------------------------------------
 
-    /**
-     * Return {@code true} if this item is visible.
-     *
-     * @return the visibility flag
-     */
-    @Override
-    public boolean isVisible() { return _visible; }
+    /** @return {@code true} if this item is visible */
+    @Override public boolean isVisible() { return _visible; }
 
-    /**
-     * Set the visibility of this item. Invisible items are completely skipped
-     * by the drawing pipeline, including their selection handles.
-     *
-     * @param visible {@code true} to make the item visible
-     */
-    @Override
-    public void setVisible(boolean visible) { _visible = visible; }
+    /** @param visible {@code true} to make the item visible */
+    @Override public void setVisible(boolean visible) { _visible = visible; }
 
     /**
      * Return {@code true} if this item can be dragged.
+     * Returns {@code false} when locked, regardless of the drag flag.
      *
-     * <p>Returns {@code false} if the item is locked, regardless of the
-     * individual drag flag.</p>
-     *
-     * @return {@code true} if the item can be dragged
+     * @return effective draggability
      */
-    public boolean isDraggable() {
-        return !_locked && _draggable;
-    }
-
-    /**
-     * Set whether this item can be dragged.
-     *
-     * @param draggable {@code true} to allow dragging
-     */
-    public void setDraggable(boolean draggable) { _draggable = draggable; }
+    public boolean isDraggable()           { return !_locked && _draggable; }
+    /** @param draggable {@code true} to allow dragging */
+    public void setDraggable(boolean draggable)     { _draggable = draggable; }
 
     /**
      * Return {@code true} if this item can be deleted.
+     * Returns {@code false} when locked.
      *
-     * <p>Returns {@code false} if the item is locked.</p>
-     *
-     * @return {@code true} if the item can be deleted
+     * @return effective deletability
      */
-    public boolean isDeletable() {
-        return !_locked && _deletable;
-    }
-
-    /**
-     * Set whether this item can be deleted.
-     *
-     * @param deletable {@code true} to allow deletion
-     */
-    public void setDeletable(boolean deletable) { _deletable = deletable; }
+    public boolean isDeletable()           { return !_locked && _deletable; }
+    /** @param deletable {@code true} to allow deletion */
+    public void setDeletable(boolean deletable)     { _deletable = deletable; }
 
     /**
      * Return {@code true} if this item can be resized.
+     * Returns {@code false} when locked.
      *
-     * <p>Returns {@code false} if the item is locked.</p>
-     *
-     * @return {@code true} if the item can be resized
+     * @return effective resizability
      */
-    public boolean isResizable() {
-        return !_locked && _resizable;
-    }
-
-    /**
-     * Set whether this item can be resized.
-     *
-     * @param resizable {@code true} to allow resizing
-     */
-    public void setResizable(boolean resizable) { _resizable = resizable; }
+    public boolean isResizable()           { return !_locked && _resizable; }
+    /** @param resizable {@code true} to allow resizing */
+    public void setResizable(boolean resizable)     { _resizable = resizable; }
 
     /**
      * Return {@code true} if this item can be rotated.
+     * Returns {@code false} when locked.
      *
-     * <p>Returns {@code false} if the item is locked.</p>
-     *
-     * @return {@code true} if the item can be rotated
+     * @return effective rotatability
      */
-    public boolean isRotatable() {
-        return !_locked && _rotatable;
-    }
+    public boolean isRotatable()           { return !_locked && _rotatable; }
+    /** @param rotatable {@code true} to allow rotation */
+    public void setRotatable(boolean rotatable)     { _rotatable = rotatable; }
 
-    /**
-     * Set whether this item can be rotated.
-     *
-     * @param rotatable {@code true} to allow rotation
-     */
-    public void setRotatable(boolean rotatable) { _rotatable = rotatable; }
+    /** @return {@code true} if this item can be connected to other items */
+    public boolean isConnectable()         { return _connectable; }
+    /** @param connectable {@code true} to allow connections */
+    public void setConnectable(boolean connectable) { _connectable = connectable; }
 
-    /**
-     * Return {@code true} if this item can be connected to other items.
-     *
-     * @return {@code true} if connectable
-     */
-    public boolean isConnectable() { return _connectable; }
+    /** @return {@code true} if this item responds to double-click */
+    public boolean isDoubleClickable()     { return _doubleClickable; }
+    /** @param doubleClickable {@code true} to enable double-click */
+    public void setDoubleClickable(boolean doubleClickable) { _doubleClickable = doubleClickable; }
 
-    /**
-     * Set whether this item can be connected to other items.
-     *
-     * @param connectable {@code true} to allow connections
-     */
-    public void setConnectable(boolean connectable) {
-        _connectable = connectable;
-    }
-
-    /**
-     * Return {@code true} if this item responds to double-click gestures.
-     *
-     * @return {@code true} if double-clickable
-     */
-    public boolean isDoubleClickable() { return _doubleClickable; }
-
-    /**
-     * Set whether this item responds to double-click gestures.
-     *
-     * @param doubleClickable {@code true} to enable double-click response
-     */
-    public void setDoubleClickable(boolean doubleClickable) {
-        _doubleClickable = doubleClickable;
-    }
-
-    /**
-     * Return {@code true} if this item can be selected.
-     *
-     * @return {@code true} if selectable
-     */
-    public boolean isSelectable() { return _selectable; }
-
-    /**
-     * Set whether this item can be selected.
-     *
-     * @param selectable {@code true} to allow selection
-     */
-    public void setSelectable(boolean selectable) {
-        _selectable = selectable;
-    }
+    /** @return {@code true} if this item can be selected */
+    public boolean isSelectable()          { return _selectable; }
+    /** @param selectable {@code true} to allow selection */
+    public void setSelectable(boolean selectable) { _selectable = selectable; }
 
     /**
      * Return {@code true} if this item is locked.
      *
      * <p>A locked item ignores drag, resize, rotate, and delete operations
-     * regardless of its individual behavior flags. See the class-level
-     * documentation for the default-locked note.</p>
+     * regardless of its individual flags. Items are locked by default.</p>
      *
-     * @return {@code true} if the item is locked
+     * @return {@code true} if locked
      */
-    public boolean isLocked() { return _locked; }
+    public boolean isLocked()              { return _locked; }
+    /** @param locked {@code true} to lock the item */
+    public void setLocked(boolean locked)  { _locked = locked; }
 
-    /**
-     * Set the locked state of this item.
-     *
-     * @param locked {@code true} to lock the item; {@code false} to enable
-     *               interactive behavior
-     */
-    public void setLocked(boolean locked) { _locked = locked; }
+    /** @return {@code true} if this item responds to right-click */
+    public boolean isRightClickable()      { return _rightClickable; }
+    /** @param rightClickable {@code true} to enable right-click */
+    public void setRightClickable(boolean rightClickable) { _rightClickable = rightClickable; }
 
-    /**
-     * Return {@code true} if this item responds to right-click gestures.
-     *
-     * @return {@code true} if right-clickable
-     */
-    public boolean isRightClickable() { return _rightClickable; }
-
-    /**
-     * Set whether this item responds to right-click gestures.
-     *
-     * @param rightClickable {@code true} to enable right-click response
-     */
-    public void setRightClickable(boolean rightClickable) {
-        _rightClickable = rightClickable;
-    }
-
-    /**
-     * Return {@code true} if this item is currently selected.
-     *
-     * @return {@code true} if selected
-     */
-    public boolean isSelected() { return _selected; }
+    /** @return {@code true} if this item is currently selected */
+    public boolean isSelected()            { return _selected; }
 
     /**
      * Set the selected state of this item and request a container refresh.
@@ -1272,141 +936,80 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
         _layer.getContainer().refresh();
     }
 
-    /**
-     * Return {@code true} if this item is enabled.
-     *
-     * <p>Disabled items are inert — they do not respond to interaction — and
-     * may be rendered differently (e.g. ghosted).</p>
-     *
-     * @return {@code true} if the item is enabled
-     */
-    @Override
-    public boolean isEnabled() { return _enabled; }
-
-    /**
-     * Set whether this item is enabled.
-     *
-     * @param enabled {@code true} to enable the item
-     */
-    @Override
+    /** @return {@code true} if this item is enabled */
+    public boolean isEnabled()             { return _enabled; }
+    /** @param enabled {@code true} to enable the item */
     public void setEnabled(boolean enabled) { _enabled = enabled; }
 
     /**
      * Return {@code true} if this item's cached rendering data is stale.
      *
-     * <p>When dirty, the item must be redrawn from scratch on the next paint
-     * cycle. Items that cache intermediate geometry use this flag to decide
-     * whether to recompute.</p>
-     *
-     * @return {@code true} if the item is dirty
+     * @return the dirty flag
      */
-    public boolean isDirty() { return _dirty; }
+    public boolean isDirty()              { return _dirty; }
 
     /**
-     * Set whether this item's cached rendering data is stale.
+     * Set the dirty flag.  Setting to {@code true} also clears
+     * {@link #_lastDrawnPolygon}.
      *
-     * <p>Setting dirty to {@code true} also clears {@link #_lastDrawnPolygon}
-     * so that subsequent hit-testing falls back to the bounding rectangle
-     * rather than stale polygon data.</p>
-     *
-     * @param dirty {@code true} to mark the item dirty
+     * @param dirty new dirty state
      */
-    @Override
     public void setDirty(boolean dirty) {
         _dirty = dirty;
         if (dirty) _lastDrawnPolygon = null;
     }
 
+    // -----------------------------------------------------------------------
+    // Trackability
+    // -----------------------------------------------------------------------
+
     /**
      * Return {@code true} if this item is "trackable" — that is, eligible to
-     * receive drag, resize, or rotate gestures.
+     * receive drag, resize, or rotate gestures from the interaction layer.
      *
      * <p>An item is trackable only when it is unlocked, enabled, and at least
-     * one of draggable, rotatable, or resizable is set.</p>
+     * one of {@link #_draggable}, {@link #_rotatable}, or {@link #_resizable}
+     * is {@code true}.  The interaction layer uses this as a fast pre-check
+     * before performing the more expensive hit-test against individual
+     * selection and rotation handles.</p>
      *
      * @return {@code true} if the item should be tracked during mouse gestures
      */
     public boolean isTrackable() {
         if (_locked || !_enabled) return false;
-        return _rotatable || _draggable || _resizable;
+        return _draggable || _rotatable || _resizable;
     }
-
-    // -----------------------------------------------------------------------
-    // Resize policy
-    // -----------------------------------------------------------------------
-
-    /**
-     * Return the resize policy applied when this item is resized
-     * interactively.
-     *
-     * @return the current {@link ResizePolicy}
-     */
-    public ResizePolicy getResizePolicy() { return _resizePolicy; }
-
-    /**
-     * Set the resize policy applied when this item is resized interactively.
-     *
-     * @param resizePolicy the new policy; must not be {@code null}
-     */
-    public void setResizePolicy(ResizePolicy resizePolicy) {
-        _resizePolicy = resizePolicy;
-    }
-
-    // -----------------------------------------------------------------------
-    // Azimuth (rotation angle)
-    // -----------------------------------------------------------------------
-
-    /**
-     * Return the reference rotation angle in degrees, in the range
-     * {@code (-180, 180]}.
-     *
-     * @return the azimuth in degrees
-     */
-    public double getAzimuth() { return _azimuth; }
-
-    /**
-     * Set the reference rotation angle and normalise it to
-     * {@code (-180, 180]}.
-     *
-     * @param azimuth the new azimuth in degrees (any value is accepted and
-     *                will be normalised)
-     */
-    public void setAzimuth(double azimuth) {
-        _azimuth = azimuth;
-        while (_azimuth >  180.0) _azimuth -= 360.0;
-        while (_azimuth < -180.0) _azimuth += 360.0;
-    }
-
-    // -----------------------------------------------------------------------
-    // Display name
-    // -----------------------------------------------------------------------
-
-    /**
-     * Return the human-readable display name of this item.
-     *
-     * @return the display name; never {@code null}
-     */
-    public String getDisplayName() { return _displayName; }
-
-    /**
-     * Set the human-readable display name of this item.
-     *
-     * @param name the new name; {@code null} is accepted but discouraged
-     */
-    public void setDisplayName(String name) { _displayName = name; }
 
     // -----------------------------------------------------------------------
     // Style
     // -----------------------------------------------------------------------
 
     /**
-     * Return the drawing style for this item, creating a default
-     * {@link Styled} instance if {@link #_style} is {@code null}.
+     * Return this item's style object.
      *
-     * <p>This "safe" accessor is used internally (e.g. in
-     * {@link #applyStyleProperties}) to avoid null-pointer exceptions if the
-     * style was cleared by {@link #prepareForRemoval()}. Prefer
-     * {@link #getStyle()} in normal usage.</p>
+     * @return the style; may be {@code null} after {@link #prepareForRemoval()}
+     */
+    public IStyled getStyle() { return _style; }
+
+    /**
+     * Replace the drawing style for this item.
+     *
+     * <p>Passing {@code null} is accepted but will cause
+     * {@link NullPointerException}s in the drawing pipeline unless
+     * {@link #getStyleSafe()} is used for all subsequent style accesses.</p>
+     *
+     * @param style the new style; {@code null} is technically permitted but
+     *              discouraged
+     */
+    public void setStyle(IStyled style) { _style = style; }
+
+    /**
+     * Return this item's style, recreating it as a default {@link Styled}
+     * instance if {@link #_style} is {@code null}.
+     *
+     * <p>Used internally (e.g. in {@link #applyStyleProperties}) to guard
+     * against the style having been cleared by {@link #prepareForRemoval()}.
+     * Prefer {@link #getStyle()} in normal usage.</p>
      *
      * @return the style object; never {@code null}
      */
@@ -1415,55 +1018,75 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
         return _style;
     }
 
-    /**
-     * Return the drawing style for this item.
-     *
-     * <p>Through this object fill color, line color, line style, line
-     * width, symbol type, and symbol size can all be read and changed.</p>
-     *
-     * @return the style; may be {@code null} after {@link #prepareForRemoval}
-     */
-    public IStyled getStyle() { return _style; }
+    // -----------------------------------------------------------------------
+    // Azimuth
+    // -----------------------------------------------------------------------
 
     /**
-     * Replace the drawing style for this item.
+     * Return the rotation angle in degrees, range {@code (-180, 180]}.
      *
-     * @param style the new style; {@code null} is accepted but will cause
-     *              null-pointer exceptions unless {@link #getStyleSafe()} is
-     *              used subsequently
+     * @return the azimuth in degrees
      */
-    public void setStyle(IStyled style) { _style = style; }
+    public double getAzimuth()            { return _azimuth; }
+
+    /**
+     * Set the rotation angle, normalising the value to {@code (-180, 180]}.
+     *
+     * @param azimuth the new azimuth in degrees
+     */
+    public void setAzimuth(double azimuth) {
+        while (azimuth >  180.0) azimuth -= 360.0;
+        while (azimuth <= -180.0) azimuth += 360.0;
+        _azimuth = azimuth;
+    }
+
+    // -----------------------------------------------------------------------
+    // Display name
+    // -----------------------------------------------------------------------
+
+    /** @return the human-readable display name */
+    public String getDisplayName()              { return _displayName; }
+    /** @param name the new display name */
+    public void setDisplayName(String name)     { _displayName = name; }
+
+    // -----------------------------------------------------------------------
+    // Resize policy
+    // -----------------------------------------------------------------------
+
+    /** @return the resize policy */
+    public ResizePolicy getResizePolicy()              { return _resizePolicy; }
+    /** @param policy the new resize policy */
+    public void setResizePolicy(ResizePolicy policy)   { _resizePolicy = policy; }
 
     // -----------------------------------------------------------------------
     // Container / layer / view
     // -----------------------------------------------------------------------
 
     /**
-     * Return the {@link IContainer} that hosts this item.
+     * Return the {@link IContainer} that hosts this item's layer.
      *
-     * @return the container; may be {@code null} after
-     *         {@link #prepareForRemoval}
+     * @return the container; may be {@code null} after {@link #prepareForRemoval()}
      */
     public IContainer getContainer() {
-        return getLayer().getContainer();
+        return (_layer != null) ? _layer.getContainer() : null;
     }
 
     /**
      * Return the {@link Layer} on which this item lives.
      *
-     * @return the layer; may be {@code null} after {@link #prepareForRemoval}
+     * @return the layer; may be {@code null} after {@link #prepareForRemoval()}
      */
     public Layer getLayer() { return _layer; }
 
     /**
      * Return the {@link BaseView} that owns the container hosting this item,
-     * or {@code null} if the container or view is unavailable.
+     * or {@code null} if unavailable.
      *
      * @return the owning view, or {@code null}
      */
     public BaseView getView() {
         IContainer container = getContainer();
-        return container != null ? container.getView() : null;
+        return (container != null) ? container.getView() : null;
     }
 
     // -----------------------------------------------------------------------
@@ -1471,7 +1094,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     // -----------------------------------------------------------------------
 
     /**
-     * Return the popup menu for this item, creating it lazily on first call.
+     * Return this item's popup menu, creating it lazily on first call.
      *
      * @return the popup menu; never {@code null}
      */
@@ -1483,27 +1106,23 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /**
      * Build the basic popup menu for this item.
      *
-     * <p>The default menu contains an item-ordering sub-menu and a
-     * "Locked" checkbox that toggles {@link #isLocked()}. Subclasses may
-     * override this method to add additional menu items, but should call
-     * {@code super.createPopupMenu()} first and then add to the returned
-     * menu.</p>
+     * <p>The default menu contains an item-ordering sub-menu and a "Locked"
+     * checkbox. Subclasses may override and call {@code super.createPopupMenu()}
+     * before adding their own items.</p>
      *
-     * @return the newly created popup menu (also stored in
-     *         {@link #_popupMenu})
+     * @return the newly created popup menu
      */
     protected JPopupMenu createPopupMenu() {
         _popupMenu = new JPopupMenu();
-        _popupMenu.add(ItemOrderingMenu.getItemOrderingMenu(this, true));
+        _popupMenu.add(ItemOrderingMenu.forItem(this, true));
 
-        JCheckBoxMenuItem cbitem =
-                new JCheckBoxMenuItem("Locked", isLocked());
+        JCheckBoxMenuItem cbitem = new JCheckBoxMenuItem("Locked", isLocked());
         cbitem.addItemListener(e -> {
             setLocked(cbitem.isSelected());
             if (isLocked()) {
                 setSelected(false);
-                IContainer cont = getLayer().getContainer();
-                if (cont != null) getContainer().refresh();
+                IContainer cont = getContainer();
+                if (cont != null) cont.refresh();
             }
         });
         _popupMenu.add(cbitem);
@@ -1513,22 +1132,14 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /**
      * Show this item's popup menu at the given screen point.
      *
-     * <p>Calls {@link #getPopupMenu()} (creating it lazily if needed) and
-     * shows it relative to the container's component. This is a no-op if the
-     * container is unavailable.</p>
-     *
-     * @param pp the screen point at which to show the menu; must not be
-     *           {@code null}
-     * @throws NullPointerException if {@code pp} is {@code null}
+     * @param pp the screen point; must not be {@code null}
      */
     public void prepareForPopup(Point pp) {
         java.util.Objects.requireNonNull(pp, "Popup location cannot be null");
         IContainer container = getContainer();
         if (container == null) return;
         JPopupMenu menu = getPopupMenu();
-        if (menu != null) {
-            menu.show(container.getComponent(), pp.x, pp.y);
-        }
+        if (menu != null) menu.show(container.getComponent(), pp.x, pp.y);
     }
 
     // -----------------------------------------------------------------------
@@ -1537,27 +1148,19 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 
     /**
      * Called when this item receives a double-click.
-     *
-     * <p>The default implementation is a no-op. Subclasses that want to
-     * respond to double-clicks (e.g. to open an editor dialog) should
-     * override this method.</p>
+     * The default implementation is a no-op.
      *
      * @param mouseEvent the double-click event
      */
-    public void doubleClicked(MouseEvent mouseEvent) {
-        // default: nothing to do
-    }
+    public void doubleClicked(MouseEvent mouseEvent) { }
 
     // -----------------------------------------------------------------------
     // Feedback
     // -----------------------------------------------------------------------
 
     /**
-     * Populate the feedback string list with any information this item wants
-     * to contribute when the mouse is near it.
-     *
-     * <p>The default implementation is a no-op. Subclasses should override
-     * to add status-bar or tooltip strings relevant to the item's state.</p>
+     * Populate the feedback string list with information about this item.
+     * The default implementation is a no-op.
      *
      * @param container       the container rendering this item
      * @param pp              the current mouse position in screen coordinates
@@ -1566,29 +1169,27 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
      */
     @Override
     public void getFeedbackStrings(IContainer container, Point pp,
-            Point2D.Double wp, List<String> feedbackStrings) {
-        // default: nothing to add
-    }
+            Point2D.Double wp, List<String> feedbackStrings) { }
 
     // -----------------------------------------------------------------------
     // Equality
     // -----------------------------------------------------------------------
 
     /**
-     * Identity-based equality.
-     *
-     * <p>Two {@code AItem} references are equal only when they refer to the
-     * same object ({@code this == o}). This is the correct semantic for items,
-     * since each item is a unique graphical entity even if two items have
-     * identical geometry and style.</p>
+     * Identity-based equality: two {@code AItem} references are equal only
+     * when they are the same object.
      *
      * @param o the object to compare
-     * @return {@code true} only if {@code o} is this exact object
+     * @return {@code true} only if {@code o == this}
      */
     @Override
     public boolean equals(Object o) {
         return (o instanceof AItem) && (this == o);
     }
+
+    /** {@inheritDoc} */
+    @Override
+    public int hashCode() { return System.identityHashCode(this); }
 
     // -----------------------------------------------------------------------
     // Lifecycle
@@ -1597,49 +1198,28 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /**
      * Prepare this item for removal from its layer.
      *
-     * <p>Called by the layer when the item is being deleted. This method
-     * performs two distinct responsibilities:</p>
-     *
+     * <p>Performs two operations:</p>
      * <ol>
-     *   <li><strong>Feedback de-registration.</strong> The item unregisters
-     *       itself from the container's {@link edu.cnu.mdi.feedback.FeedbackControl}
-     *       so that it is no longer polled on mouse-move events after removal.
-     *       Failing to do this would leave a stale reference in the listener
-     *       list, causing every subsequent mouse event to invoke
-     *       {@link #getFeedbackStrings} on a partially-destroyed object whose
-     *       geometry fields ({@link #_path}, {@link #_focus}, etc.) have already
-     *       been nulled. The container reference is captured <em>before</em>
-     *       {@link #_layer} is nulled, because {@link #getContainer()} delegates
-     *       through the layer.</li>
-     *   <li><strong>Reference nulling.</strong> All heavyweight references
-     *       (geometry, style, layer) are set to {@code null} to assist garbage
-     *       collection and to cause a fast, obvious {@link NullPointerException}
-     *       rather than subtle incorrect behaviour if the item is accidentally
-     *       used after removal.</li>
+     *   <li><b>Feedback de-registration.</b> The item unregisters itself from
+     *       the container's {@link edu.cnu.mdi.feedback.FeedbackControl} so
+     *       that it is no longer polled after removal. The container reference
+     *       is captured before {@link #_layer} is nulled.</li>
+     *   <li><b>Reference nulling.</b> Heavyweight references are set to
+     *       {@code null} to assist garbage collection and to cause fast,
+     *       obvious {@link NullPointerException}s if the item is used
+     *       after removal.</li>
      * </ol>
      *
-     * <p>After this call the item must not be used. Subclasses that hold
-     * additional heavyweight references (e.g. cached screen shapes, secondary
-     * data structures) should override this method and null those fields out,
-     * calling {@code super.prepareForRemoval()} either first or last — the
-     * order is immaterial as long as the super call is included.</p>
+     * <p>Subclasses holding additional heavyweight references should override
+     * this method, null those fields, and call {@code super.prepareForRemoval()}
+     * either first or last.</p>
      */
     @Override
     public void prepareForRemoval() {
-        // Capture the container reference now, before _layer is set to null.
-        // getContainer() delegates through _layer, so we must read it while
-        // the chain is still intact.
         IContainer cont = (_layer != null) ? _layer.getContainer() : null;
-
-        // De-register from feedback polling. removeFeedbackProvider is a
-        // safe no-op when the controller has no listener list (i.e. initFeedback
-        // was never called on the owning view), so no guard is needed here.
         if (cont != null) {
             cont.getFeedbackControl().removeFeedbackProvider(this);
         }
-
-        // Null out heavyweight references to assist GC and catch accidental
-        // post-removal usage quickly.
         _focus            = null;
         _lastDrawnPolygon = null;
         _layer            = null;
