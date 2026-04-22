@@ -44,8 +44,6 @@ public class DemoMap {
 			//subset of drawing tools for maps because some do not make sense
 			long toolBits = ToolBits.MAPTOOLS | ToolBits.ZOOMTOOLS;
 
-			//for proof of principle of military symbology support
-			NatoIconPicker iconPicker;
 			
 			ContainerFactory mapContainerFactory = MapContainer::new;
 

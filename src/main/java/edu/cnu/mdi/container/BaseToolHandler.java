@@ -27,20 +27,20 @@ import edu.cnu.mdi.util.PrintUtils;
 import edu.cnu.mdi.util.TakePicture;
 import edu.cnu.mdi.view.BaseView;
 
-public class BaseToolHandler implements IToolHandler  {
+public class BaseToolHandler implements IToolHandler {
 
 	// Zoom factor for each zoom in/out action
 	private static final double ZOOM_FACTOR = 0.8;
 
 	// for panning
-	//for panning
+	// for panning
 	private BufferedImage base;
 	private BufferedImage buffer;
 
 	// Container that owns this tool handler
 	private final BaseContainer container;
 
-	//for modifying items
+	// for modifying items
 	private AItem modifyItem;
 	private boolean modifying;
 
@@ -65,7 +65,6 @@ public class BaseToolHandler implements IToolHandler  {
 		}
 	}
 
-
 	/**
 	 * Hit test at the given point on the canvas.
 	 *
@@ -83,16 +82,16 @@ public class BaseToolHandler implements IToolHandler  {
 	 * Handle pointer click on an object at the given point.
 	 *
 	 * @param toolBar ToolBar that owns this tool
-	 * @param canvas JComponent on which the click is occurring
-	 * @param p      Point where the click occurred
-	 * @param obj    Object that was clicked or null if none
-	 * @param e      MouseEvent that triggered the click
+	 * @param canvas  JComponent on which the click is occurring
+	 * @param p       Point where the click occurred
+	 * @param obj     Object that was clicked or null if none
+	 * @param e       MouseEvent that triggered the click
 	 */
 	@Override
 	public void pointerClick(GestureContext gc) {
 		AItem item = container.getItemAtPoint(gc.getPressPoint());
 		MouseEvent e = gc.getSourceEvent();
-		if (item != null && item.isEnabled() && item.isTrackable()) {
+		if (item != null && item.isEnabled() && item.isSelectable()) {
 			if (item.isRightClickable() && (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e))) {
 				// Show popup menu
 				JPopupMenu menu = item.getPopupMenu();
@@ -102,8 +101,7 @@ public class BaseToolHandler implements IToolHandler  {
 				return;
 			}
 			selectItemsFromClick(item, e);
-		}
-		else {
+		} else {
 			// Clicked on empty space: deselect all
 			container.selectAllItems(false);
 			container.refresh();
@@ -115,10 +113,10 @@ public class BaseToolHandler implements IToolHandler  {
 	 * Handle pointer double click on an object at the given point.
 	 *
 	 * @param toolBar ToolBar that owns this tool
-	 * @param canvas JComponent on which the double click is occurring
-	 * @param p      Point where the double click occurred
-	 * @param obj    Object that was double clicked or null if none
-	 * @param e      MouseEvent that triggered the click
+	 * @param canvas  JComponent on which the double click is occurring
+	 * @param p       Point where the double click occurred
+	 * @param obj     Object that was double clicked or null if none
+	 * @param e       MouseEvent that triggered the click
 	 */
 	@Override
 	public void pointerDoubleClick(GestureContext gc) {
@@ -153,8 +151,8 @@ public class BaseToolHandler implements IToolHandler  {
 		modifyItem = null;
 		modifying = false;
 
-	    // Cache a defensive copy (Point is mutable)
-	    dragPressPoint = (gc.getPressPoint() == null) ? null : new Point(gc.getPressPoint());
+		// Cache a defensive copy (Point is mutable)
+		dragPressPoint = (gc.getPressPoint() == null) ? null : new Point(gc.getPressPoint());
 	}
 
 	@Override
@@ -162,69 +160,60 @@ public class BaseToolHandler implements IToolHandler  {
 
 		MouseEvent e = gc.getSourceEvent();
 		Object obj = gc.getTarget();
-	    if (!(obj instanceof AItem)) {
-	        return;
-	    }
+		if (!(obj instanceof AItem)) {
+			return;
+		}
 
-	    AItem item = (AItem) obj;
-	    if (!item.isTrackable()) {
-	        return;
-	    }
+		AItem item = (AItem) obj;
+		if (!item.isTrackable()) {
+			return;
+		}
 
-	    if (!modifying) {
-	        modifyItem = item;
-	        modifying = true;
+		if (!modifying) {
+			modifyItem = item;
+			modifying = true;
 
-	        Point current = e.getPoint();
+			Point current = e.getPoint();
 
-	        // Prefer explicit press point from beginDragObject; fall back to offset trick.
-	        Point press = (dragPressPoint != null)
-	                ? new Point(dragPressPoint)
-	                : new Point(current.x - dx, current.y - dy);
+			// Prefer explicit press point from beginDragObject; fall back to offset trick.
+			Point press = (dragPressPoint != null) ? new Point(dragPressPoint)
+					: new Point(current.x - dx, current.y - dy);
 
-	        ItemModification mod = new ItemModification(
-	                modifyItem,
-	                container,
-	                press,
-	                current,
-	                e.isShiftDown(),
-	                e.isControlDown()
-	        );
+			ItemModification mod = new ItemModification(modifyItem, container, press, current, e.isShiftDown(),
+					e.isControlDown());
 
-	        modifyItem.setModification(mod);
-	        modifyItem.startModification();
-	    }
+			modifyItem.setModification(mod);
+			modifyItem.startModification();
+		}
 
-	    if (modifyItem != null) {
-	        ItemModification mod = modifyItem.getItemModification();
-	        if (mod != null) {
-	            mod.setCurrentMousePoint(e.getPoint());
-	        }
-	        modifyItem.modify();
-	    }
+		if (modifyItem != null) {
+			ItemModification mod = modifyItem.getItemModification();
+			if (mod != null) {
+				mod.setCurrentMousePoint(e.getPoint());
+			}
+			modifyItem.modify();
+		}
 	}
-
 
 	@Override
 	public void endDragObject(GestureContext gc) {
 
-	    if (modifyItem != null) {
-	        modifyItem.stopModification();
-	        // stopModification already nulls _modification in your AItem; this line is redundant:
-	        // modifyItem.setModification(null);
-	    }
+		if (modifyItem != null) {
+			modifyItem.stopModification();
+			// stopModification already nulls _modification in your AItem; this line is
+			// redundant:
+			// modifyItem.setModification(null);
+		}
 
-	    modifyItem = null;
-	    modifying = false;
-	    dragPressPoint = null;
+		modifyItem = null;
+		modifying = false;
+		dragPressPoint = null;
 	}
-
 
 	@Override
 	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
 		container.rubberBanded(bounds);
 	}
-
 
 	@Override
 	public void panStartDrag(GestureContext gc) {
@@ -248,7 +237,7 @@ public class BaseToolHandler implements IToolHandler  {
 		gg.dispose();
 
 		Graphics g = gc.getCanvas().getGraphics();
-		g.drawImage(buffer, 0, 0, 	gc.getCanvas());
+		g.drawImage(buffer, 0, 0, gc.getCanvas());
 		g.dispose();
 	}
 
@@ -290,8 +279,16 @@ public class BaseToolHandler implements IToolHandler  {
 
 	@Override
 	public void recenter(GestureContext gc) {
+		Point p = (gc != null) ? gc.getPressPoint() : null;
+		if (p == null && gc != null && gc.getSourceEvent() != null) {
+			p = gc.getSourceEvent().getPoint();
+		}
+		if (p == null) {
+			return;
+		}
+
 		container.prepareToZoom();
-		container.recenter(gc.getCurrentPoint());
+		container.recenter(p);
 		container.refresh();
 	}
 
@@ -371,7 +368,7 @@ public class BaseToolHandler implements IToolHandler  {
 		AItem item = container.getItemAtPoint(p);
 		if (item != null) {
 			boolean enabled = item.isEnabled();
-            boolean connectable = item.isConnectable();
+			boolean connectable = item.isConnectable();
 			return enabled && connectable;
 		}
 		return false;
@@ -412,25 +409,24 @@ public class BaseToolHandler implements IToolHandler  {
 		container.refresh();
 	}
 
-
 	@Override
 	public void createRadArc(GestureContext gc, Point[] pp) {
 
-	    if (pp == null || pp.length != 3) {
-	        return;
-	    }
+		if (pp == null || pp.length != 3) {
+			return;
+		}
 
-	    // If RubberRadArc provided an unwrapped signed sweep, use it directly.
-	    Double sweep = (gc != null) ? gc.getRubberbandAngleDeg() : null;
+		// If RubberRadArc provided an unwrapped signed sweep, use it directly.
+		Double sweep = (gc != null) ? gc.getRubberbandAngleDeg() : null;
 
-	    if (sweep == null) {
-	        // Fallback only (should be rare): compute minor signed angle
-	        // NOTE: pp are screen points; CreationSupport likely converts to world.
-	        // Keep your existing behavior if needed.
-	        return;
-	    }
+		if (sweep == null) {
+			// Fallback only (should be rare): compute minor signed angle
+			// NOTE: pp are screen points; CreationSupport likely converts to world.
+			// Keep your existing behavior if needed.
+			return;
+		}
 
-	    CreationSupport.createRadArcItem(container.getAnnotationLayer(), pp[0], pp[1], sweep);
+		CreationSupport.createRadArcItem(container.getAnnotationLayer(), pp[0], pp[1], sweep);
 		container.setDirty(true);
 		container.refresh();
 	}
@@ -441,7 +437,6 @@ public class BaseToolHandler implements IToolHandler  {
 		container.setDirty(true);
 		container.refresh();
 	}
-
 
 	@Override
 	public void captureImage(GestureContext gc) {
@@ -479,14 +474,9 @@ public class BaseToolHandler implements IToolHandler  {
 		container.refresh();
 	}
 
-
 	@Override
 	public boolean doNotDrag(GestureContext gc) {
 		return false;
 	}
 
-
-
-
 }
-

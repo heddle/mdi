@@ -13,97 +13,73 @@ import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
-import java.awt.dnd.DragGestureListener;
-import java.awt.dnd.DragGestureRecognizer;
 import java.awt.dnd.DragSource;
 import java.awt.dnd.DragSourceAdapter;
 import java.awt.dnd.DragSourceDropEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Palette panel that displays NATO military symbols in a compact grid and lets
- * the user <b>drag</b> an icon onto the map canvas to place a
- * {@link MapMilSymbolItem}.
+ * Palette panel that displays NATO military symbols in a compact table and
+ * supports drag-and-drop placement onto a map.
  *
- * <h2>Drag-and-drop protocol</h2>
- * <ol>
- *   <li>The user clicks a cell in the icon table. The row selects normally.</li>
- *   <li>The user begins dragging that cell. A {@link DragGestureRecognizer}
- *       detects the gesture and calls {@link #startDrag}.</li>
- *   <li>{@link #startDrag} converts the selected {@link ImageIcon} to a
- *       {@link Cursor} that follows the pointer, then initiates the AWT drag
- *       with a {@link MilSymbolTransferable} payload.</li>
- *   <li>The map's {@link edu.cnu.mdi.mapping.container.MapContainer} drop
- *       target receives the drop, converts the drop point to lat/lon, and
- *       creates a {@link edu.cnu.mdi.mapping.item.MapMilSymbolItem}.</li>
- *   <li>On drag end (success or cancel) the cursor is restored and the table
- *       selection is cleared so the status bar shows "None".</li>
- * </ol>
- *
- * <h2>Toolbar interaction</h2>
- * <p>The drag gesture is entirely independent of the active toolbar tool.
- * Whatever tool is selected remains active after the drop (Option C behavior):
- * the symbol placement is additive and does not switch modes.</p>
+ * <p>
+ * Dragging is initiated only from icon cells (Friendly, Hostile, Neutral,
+ * Unknown). When supported by the platform, the drag uses the symbol image
+ * itself as the drag image. Symbol placement is handled by the map canvas
+ * drop target.
+ * </p>
  */
 @SuppressWarnings("serial")
 public class NatoIconPicker extends JPanel {
 
-    // -------------------------------------------------------------------------
-    // Layout constants
-    // -------------------------------------------------------------------------
+    /** Table icon size in pixels. */
+    private static final int ICON_SIZE = 20;
 
-    /** Icon size in the table cells, kept small to minimise panel width. */
-    private static final int ICON_SIZE    = 20;
+    /** Drag image size in pixels. */
+    private static final int DRAG_IMAGE_SIZE = 28;
 
-    /** Size of the drag cursor built from the icon image. */
-    private static final int CURSOR_SIZE  = 28;
+    /** Preferred width of the type column. */
+    private static final int COL_LABEL_W = 75;
 
-    private static final int COL_LABEL_W  = 75;
-    private static final int COL_ICON_W   = 36;
-    private static final int PANEL_WIDTH  = COL_LABEL_W + 4 * COL_ICON_W + 12;
+    /** Preferred width of each icon column. */
+    private static final int COL_ICON_W = 36;
 
-    /** Light gray shared by all surfaces. */
-    private static final Color PANEL_BG   = new Color(235, 235, 235);
+    /** Preferred total panel width. */
+    private static final int PANEL_WIDTH = COL_LABEL_W + 4 * COL_ICON_W + 12;
 
-    // -------------------------------------------------------------------------
-    // State
-    // -------------------------------------------------------------------------
+    /** Shared background color. */
+    private static final Color PANEL_BG = new Color(235, 235, 235);
 
-    private JTable  table;
-    private JLabel  statusLabel;
+    /** Symbol table. */
+    private JTable table;
 
-    // -------------------------------------------------------------------------
-    // Construction
-    // -------------------------------------------------------------------------
+    /** Bottom status label. */
+    private JLabel statusLabel;
 
     /**
-     * Creates the NATO Icon Picker panel.
-     *
-     * <p>No external listener is needed: symbol placement is handled entirely
-     * by the drag-and-drop mechanism. The constructor no longer accepts a
-     * {@code Consumer<String>} callback.</p>
+     * Creates the NATO symbol picker.
      */
     public NatoIconPicker() {
-
         setLayout(new BorderLayout(2, 2));
         setBackground(PANEL_BG);
         setPreferredSize(new Dimension(PANEL_WIDTH, 0));
 
-        // ---- table model ----
-        String[] columnNames = { "Type", "F", "H", "N", "U" };
-        DefaultTableModel model = new DefaultTableModel(columnNames, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
-            @Override public Class<?> getColumnClass(int c) {
-                return c == 0 ? String.class : Icon.class;
+        DefaultTableModel model = new DefaultTableModel(
+                new String[] { "Type", "F", "H", "N", "U" }, 0) {
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
+
+            @Override
+            public Class<?> getColumnClass(int c) {
+                return (c == 0) ? String.class : Icon.class;
             }
         };
         loadIconData(model);
 
-        // ---- table ----
         table = new JTable(model);
         table.setBackground(PANEL_BG);
         table.setRowHeight(ICON_SIZE + 8);
@@ -113,17 +89,15 @@ public class NatoIconPicker extends JPanel {
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(1, 1));
 
-        // Label column
         DefaultTableCellRenderer labelRenderer = new DefaultTableCellRenderer();
         labelRenderer.setBackground(PANEL_BG);
         labelRenderer.setFont(Fonts.tinyFont);
         table.getColumnModel().getColumn(0).setCellRenderer(labelRenderer);
 
-        // Icon columns
         DefaultTableCellRenderer iconRenderer = new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable t, Object val,
-                    boolean sel, boolean foc, int row, int col) {
+            public Component getTableCellRendererComponent(
+                    JTable t, Object val, boolean sel, boolean foc, int row, int col) {
                 JLabel lbl = new JLabel((Icon) val, JLabel.CENTER);
                 lbl.setBackground(sel ? t.getSelectionBackground() : PANEL_BG);
                 lbl.setOpaque(true);
@@ -134,11 +108,11 @@ public class NatoIconPicker extends JPanel {
             table.getColumnModel().getColumn(c).setCellRenderer(iconRenderer);
         }
 
-        // Lock column widths
         TableColumn labelCol = table.getColumnModel().getColumn(0);
         labelCol.setPreferredWidth(COL_LABEL_W);
         labelCol.setMinWidth(COL_LABEL_W);
         labelCol.setMaxWidth(COL_LABEL_W);
+
         for (int c = 1; c <= 4; c++) {
             TableColumn tc = table.getColumnModel().getColumn(c);
             tc.setPreferredWidth(COL_ICON_W);
@@ -146,26 +120,21 @@ public class NatoIconPicker extends JPanel {
             tc.setMaxWidth(COL_ICON_W);
         }
 
-        // Header styling
         table.getTableHeader().setBackground(PANEL_BG);
         table.getTableHeader().setFont(Fonts.tinyFont);
         table.getTableHeader().setReorderingAllowed(false);
         table.getTableHeader().setResizingAllowed(false);
 
-        // Update status bar when selection changes
         table.getSelectionModel().addListSelectionListener(e -> updateStatus());
         table.getColumnModel().getSelectionModel().addListSelectionListener(e -> updateStatus());
 
-        // ---- drag-and-drop ----
         installDragGesture();
 
-        // ---- scroll pane ----
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBackground(PANEL_BG);
         scroll.getViewport().setBackground(PANEL_BG);
         scroll.setBorder(BorderFactory.createEmptyBorder());
 
-        // ---- bottom bar ----
         JPanel bottomPanel = new JPanel(new BorderLayout(2, 0));
         bottomPanel.setBackground(PANEL_BG);
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -175,147 +144,132 @@ public class NatoIconPicker extends JPanel {
         statusLabel.setBackground(PANEL_BG);
         statusLabel.setOpaque(true);
 
-        JButton deselectBtn = new JButton("Clear");
-        deselectBtn.setFont(Fonts.tinyFont);
-        deselectBtn.setMargin(new Insets(1, 4, 1, 4));
-        deselectBtn.addActionListener(e -> {
+        JButton clearButton = new JButton("Clear");
+        clearButton.setFont(Fonts.tinyFont);
+        clearButton.setMargin(new Insets(1, 4, 1, 4));
+        clearButton.addActionListener(e -> {
             table.clearSelection();
             updateStatus();
         });
 
-        bottomPanel.add(statusLabel,  BorderLayout.CENTER);
-        bottomPanel.add(deselectBtn,  BorderLayout.EAST);
+        bottomPanel.add(statusLabel, BorderLayout.CENTER);
+        bottomPanel.add(clearButton, BorderLayout.EAST);
 
-        add(scroll,       BorderLayout.CENTER);
-        add(bottomPanel,  BorderLayout.SOUTH);
+        add(scroll, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
+        
+        setBorder(BorderFactory.createEtchedBorder());
     }
 
-    // -------------------------------------------------------------------------
-    // Drag-and-drop
-    // -------------------------------------------------------------------------
-
     /**
-     * Registers an AWT {@link DragGestureRecognizer} on the table so that a
-     * click-and-drag on any icon cell initiates the symbol placement gesture.
-     *
-     * <p>Only icon cells (columns 1–4) produce a drag; clicking the label
-     * column (column 0) or an empty cell is silently ignored.</p>
+     * Installs the drag gesture recognizer on the table.
      */
     private void installDragGesture() {
-        DragSource ds = DragSource.getDefaultDragSource();
-        ds.createDefaultDragGestureRecognizer(
-                table,
-                DnDConstants.ACTION_COPY,
-                new DragGestureListener() {
-                    @Override
-                    public void dragGestureRecognized(DragGestureEvent dge) {
-                        startDrag(dge);
-                    }
-                });
+        DragSource.getDefaultDragSource().createDefaultDragGestureRecognizer(
+                table, DnDConstants.ACTION_COPY, this::startDrag);
     }
 
     /**
-     * Initiates an AWT drag if the gesture originated over a valid icon cell.
+     * Starts a drag operation if the gesture began on an icon cell.
      *
-     * <p>The drag payload is a {@link MilSymbolTransferable} built from the
-     * icon's embedded {@link MilSymbolDescriptor}. The drag cursor is a
-     * scaled version of the icon image so the user sees exactly what they are
-     * about to place.</p>
-     *
-     * @param dge the gesture event from the recognizer
+     * @param dge the drag gesture event
      */
     private void startDrag(DragGestureEvent dge) {
-        // Resolve the table cell under the drag origin.
         Point origin = dge.getDragOrigin();
         int row = table.rowAtPoint(origin);
         int col = table.columnAtPoint(origin);
 
-        // Only icon columns (1-4) are draggable.
         if (row < 0 || col < 1) {
             return;
         }
 
         Object cellValue = table.getValueAt(row, col);
-        if (!(cellValue instanceof ImageIcon icon)) {
+        if (!(cellValue instanceof ImageIcon cellIcon)) {
             return;
         }
 
-        // The descriptor is stored in the icon's description field as a
-        // resource path. Resolve it to a MilSymbolDescriptor.
-        String resourcePath = icon.getDescription();
-        MilSymbolDescriptor descriptor = MilSymbolDescriptor.fromResourcePath(resourcePath, icon);
+        String resourcePath = cellIcon.getDescription();
+        MilSymbolDescriptor descriptor =
+                MilSymbolDescriptor.fromResourcePath(resourcePath, cellIcon);
         if (descriptor == null) {
             return;
         }
 
-        // Select the cell so the status bar reflects the drag source.
         table.setRowSelectionInterval(row, row);
         table.setColumnSelectionInterval(col, col);
         updateStatus();
 
-        // Build a cursor from the icon image.
-        Cursor dragCursor = buildDragCursor(icon);
+        Transferable payload = new MilSymbolTransferable(descriptor);
 
-        // Build the transferable payload.
-        Transferable transferable = new MilSymbolTransferable(descriptor);
-
-        // Register a drag-source listener that clears selection when the drag ends,
-        // whether dropped successfully or cancelled.
-        dge.getDragSource().addDragSourceListener(new DragSourceAdapter() {
+        DragSourceAdapter dragListener = new DragSourceAdapter() {
             @Override
             public void dragDropEnd(DragSourceDropEvent dsde) {
                 SwingUtilities.invokeLater(() -> {
                     table.clearSelection();
                     updateStatus();
                 });
-                // Self-removing listener to avoid accumulation.
-                dge.getDragSource().removeDragSourceListener(this);
             }
-        });
+        };
 
-        // Start the drag. The cursor changes back automatically when the drag ends.
-        dge.startDrag(dragCursor, transferable);
-    }
-
-    /**
-     * Builds a {@link Cursor} from the given icon by scaling it to
-     * {@value #CURSOR_SIZE}×{@value #CURSOR_SIZE} pixels and using the
-     * icon centre as the hot-spot.
-     *
-     * <p>Falls back to the default move cursor if the toolkit does not support
-     * custom cursors at the required size.</p>
-     *
-     * @param icon source icon; its {@code Image} is scaled
-     * @return a custom cursor, or {@link Cursor#getDefaultCursor()} on failure
-     */
-    private static Cursor buildDragCursor(ImageIcon icon) {
         try {
-            Toolkit tk = Toolkit.getDefaultToolkit();
+            if (DragSource.isDragImageSupported()) {
+                BufferedImage dragImage = buildDragImage(resourcePath);
+                if (dragImage != null) {
+                    Point offset = new Point(dragImage.getWidth() / 2, dragImage.getHeight() / 2);
+                    dge.startDrag(
+                            DragSource.DefaultCopyDrop,
+                            dragImage,
+                            offset,
+                            payload,
+                            dragListener);
+                    return;
+                }
+            }
 
-            // Scale the icon image to the preferred cursor size.
-            // The toolkit may round this to its supported size.
-            Image scaled = icon.getImage()
-                    .getScaledInstance(CURSOR_SIZE, CURSOR_SIZE, Image.SCALE_SMOOTH);
-
-            // Convert to BufferedImage so we can hand it to createCustomCursor.
-            BufferedImage bi = new BufferedImage(CURSOR_SIZE, CURSOR_SIZE,
-                    BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2 = bi.createGraphics();
-            g2.drawImage(scaled, 0, 0, null);
-            g2.dispose();
-
-            Point hotSpot = new Point(CURSOR_SIZE / 2, CURSOR_SIZE / 2);
-            return tk.createCustomCursor(bi, hotSpot, "milsym-drag");
+            dge.startDrag(DragSource.DefaultCopyDrop, payload, dragListener);
 
         } catch (Exception ex) {
-            return Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
+            table.clearSelection();
+            updateStatus();
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
+    /**
+     * Builds a drag image from the original icon resource.
+     *
+     * @param resourcePath icon resource path
+     * @return drag image, or {@code null} if the resource cannot be loaded
+     */
+    private BufferedImage buildDragImage(String resourcePath) {
+        try {
+            ImageIcon original = ImageManager.getInstance().loadImageIcon(resourcePath);
+            if (original == null) {
+                return null;
+            }
 
+            BufferedImage bi = new BufferedImage(
+                    DRAG_IMAGE_SIZE, DRAG_IMAGE_SIZE, BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2 = bi.createGraphics();
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+                    RenderingHints.VALUE_RENDER_QUALITY);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.drawImage(original.getImage(), 0, 0, DRAG_IMAGE_SIZE, DRAG_IMAGE_SIZE, null);
+            g2.dispose();
+
+            return bi;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    /**
+     * Loads icon data into the table model.
+     *
+     * @param model the table model to populate
+     */
     private void loadIconData(DefaultTableModel model) {
         String resourcePath = Environment.MDI_RESOURCE_PATH + "images/nato_icons/";
         List<String> folders = new ArrayList<>();
@@ -323,71 +277,92 @@ public class NatoIconPicker extends JPanel {
         try {
             var resourceUri = getClass().getResource(resourcePath).toURI();
             java.nio.file.Path rootPath;
+
             if (resourceUri.getScheme().equals("jar")) {
-                var fileSystem = java.nio.file.FileSystems.newFileSystem(
+                var fs = java.nio.file.FileSystems.newFileSystem(
                         resourceUri, java.util.Collections.emptyMap());
-                rootPath = fileSystem.getPath(resourcePath);
+                rootPath = fs.getPath(resourcePath);
             } else {
                 rootPath = java.nio.file.Paths.get(resourceUri);
             }
+
             try (var stream = java.nio.file.Files.list(rootPath)) {
                 folders = stream
                         .filter(java.nio.file.Files::isDirectory)
-                        .map(path -> path.getFileName().toString())
+                        .map(p -> p.getFileName().toString())
                         .filter(name -> !name.startsWith("."))
                         .sorted()
                         .toList();
             }
         } catch (Exception e) {
-            System.err.println("Failed to load NATO icon folders: " + e.getMessage());
+            System.err.println("NatoIconPicker: failed to enumerate icon folders: " + e.getMessage());
         }
 
         for (String folder : folders) {
-            model.addRow(new Object[]{
-                folder.replace("_", " "),
-                getIcon(folder, "friendly.png"),
-                getIcon(folder, "hostile.png"),
-                getIcon(folder, "neutral.png"),
-                getIcon(folder, "unknown.png")
+            model.addRow(new Object[] {
+                    folder.replace("_", " "),
+                    loadScaledIcon(folder, "friendly.png"),
+                    loadScaledIcon(folder, "hostile.png"),
+                    loadScaledIcon(folder, "neutral.png"),
+                    loadScaledIcon(folder, "unknown.png")
             });
         }
     }
 
-    // Loads an icon from the given folder and filename, scales it to the table cell size,
-    private ImageIcon getIcon(String folder, String filename) {
+    /**
+     * Loads and scales a palette icon for table display.
+     *
+     * @param folder   icon category folder
+     * @param filename icon file name
+     * @return scaled icon, or {@code null} if not found
+     */
+    private ImageIcon loadScaledIcon(String folder, String filename) {
         String fullPath = Environment.MDI_RESOURCE_PATH
                 + "images/nato_icons/" + folder + "/" + filename;
+
         ImageIcon original = ImageManager.getInstance().loadImageIcon(fullPath);
         if (original == null) {
             return null;
         }
-        Image scaled = original.getImage()
-                .getScaledInstance(ICON_SIZE, ICON_SIZE, Image.SCALE_SMOOTH);
-        ImageIcon icon = new ImageIcon(scaled);
-        icon.setDescription(fullPath); // full resource path stored for DnD
-        return icon;
+
+        BufferedImage bi = new BufferedImage(
+                ICON_SIZE, ICON_SIZE, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = bi.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.drawImage(original.getImage(), 0, 0, ICON_SIZE, ICON_SIZE, null);
+        g2.dispose();
+
+        ImageIcon scaled = new ImageIcon(bi);
+        scaled.setDescription(fullPath);
+        return scaled;
     }
 
-    /** Updates the status bar to reflect the current table selection. */
+    /**
+     * Updates the status label to reflect the current cell selection.
+     */
     private void updateStatus() {
         int row = table.getSelectedRow();
         int col = table.getSelectedColumn();
 
-        if (row != -1 && col > 0) {
-            ImageIcon icon = (ImageIcon) table.getValueAt(row, col);
-            if (icon != null) {
+        if (row >= 0 && col > 0) {
+            Object val = table.getValueAt(row, col);
+            if (val instanceof ImageIcon icon) {
                 statusLabel.setText(shortPath(icon.getDescription()));
                 statusLabel.setIcon(icon);
                 return;
             }
         }
+
         statusLabel.setText("None");
         statusLabel.setIcon(null);
     }
 
     /**
-     * Returns the last two path segments — parent folder + filename —
-     * e.g. {@code "Armour/friendly.png"}.
+     * Returns the last two path segments of a resource path.
+     *
+     * @param path full resource path
+     * @return short display form
      */
     private static String shortPath(String path) {
         if (path == null) {
@@ -400,18 +375,4 @@ public class NatoIconPicker extends JPanel {
         return path;
     }
 
-    // -------------------------------------------------------------------------
-    // Standalone test
-    // -------------------------------------------------------------------------
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("NATO Icon Picker — Drag to map");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.add(new NatoIconPicker());
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
-    }
 }

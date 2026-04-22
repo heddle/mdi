@@ -274,20 +274,34 @@ public class OrthographicProjection implements IMapProjection {
         latLon.y = lat;
         double step = 2.0 * Math.PI / NUM_SEGMENTS;
 
+        boolean penDown = false;
+
         for (int i = 0; i <= NUM_SEGMENTS; i++) {
             latLon.x = -Math.PI + i * step;
-            if (!isPointVisible(latLon)) continue;
+
+            if (!isPointVisible(latLon)) {
+                penDown = false;
+                continue;
+            }
 
             latLonToXY(latLon, xy);
-            if (Double.isNaN(xy.x) || Double.isNaN(xy.y)) continue;
+            if (Double.isNaN(xy.x) || Double.isNaN(xy.y)) {
+                penDown = false;
+                continue;
+            }
 
             container.worldToLocal(screen, xy);
-            if (path.getCurrentPoint() == null) path.moveTo(screen.x, screen.y);
-            else                                path.lineTo(screen.x, screen.y);
+
+            if (!penDown) {
+                path.moveTo(screen.x, screen.y);
+                penDown = true;
+            } else {
+                path.lineTo(screen.x, screen.y);
+            }
         }
 
         Color oldColor = g2.getColor();
-        g2.setColor(theme.getGraticuleColor());   // fixed: was Color.LIGHT_GRAY
+        g2.setColor(theme.getGraticuleColor());
         g2.draw(path);
         g2.setColor(oldColor);
     }
@@ -313,26 +327,39 @@ public class OrthographicProjection implements IMapProjection {
         List<double[]> ranges = getVisibleLatitudeRanges(centerLat);
 
         for (double[] range : ranges) {
+            boolean penDown = false;
+
             for (int i = 0; i <= NUM_SEGMENTS; i++) {
                 double t = (double) i / NUM_SEGMENTS;
                 latLon.y = range[0] + t * (range[1] - range[0]);
-                if (!isPointVisible(latLon)) continue;
+
+                if (!isPointVisible(latLon)) {
+                    penDown = false;
+                    continue;
+                }
 
                 latLonToXY(latLon, xy);
-                if (Double.isNaN(xy.x) || Double.isNaN(xy.y)) continue;
+                if (Double.isNaN(xy.x) || Double.isNaN(xy.y)) {
+                    penDown = false;
+                    continue;
+                }
 
                 container.worldToLocal(screen, xy);
-                if (path.getCurrentPoint() == null) path.moveTo(screen.x, screen.y);
-                else                                path.lineTo(screen.x, screen.y);
+
+                if (!penDown) {
+                    path.moveTo(screen.x, screen.y);
+                    penDown = true;
+                } else {
+                    path.lineTo(screen.x, screen.y);
+                }
             }
         }
 
         Color oldColor = g2.getColor();
-        g2.setColor(theme.getGraticuleColor());   // fixed: was Color.LIGHT_GRAY
+        g2.setColor(theme.getGraticuleColor());
         g2.draw(path);
         g2.setColor(oldColor);
     }
-
     // -------------------------------------------------------------------------
     // IMapProjection — metadata
     // -------------------------------------------------------------------------

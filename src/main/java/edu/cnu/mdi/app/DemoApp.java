@@ -155,8 +155,8 @@ public class DemoApp extends BaseMDIApplication {
 		// positions were just restored from a saved config are not overwritten.
 		// On first run (no config file) hasSavedLayout() returns false for all
 		// views and every moveTo() fires normally.
-		if (!hasSavedLayout(mapView))               vv.moveTo(mapView,                   0, VirtualView.BOTTOMCENTER);
-		if (!hasSavedLayout(drawingView))           vv.moveTo(drawingView,               0, VirtualView.UPPERLEFT);
+		if (!hasSavedLayout(mapView))               vv.moveTo(mapView,                   0, VirtualView.BOTTOMLEFT);
+		if (!hasSavedLayout(drawingView))           vv.moveTo(drawingView,               0, VirtualView.UPPERRIGHT);
 		if (!hasSavedLayout(plotView))              vv.moveTo(plotView,                  1, VirtualView.CENTER);
 		if (!hasSavedLayout(networkDeclutterDemoView)) vv.moveTo(networkDeclutterDemoView, 2, VirtualView.CENTER);
 		if (!hasSavedLayout(tspDemoView))           vv.moveTo(tspDemoView,               3, VirtualView.CENTER);

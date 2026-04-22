@@ -76,30 +76,27 @@ public class MilSymbolDescriptor {
 	 * @return a symbol descriptor for the given resource path
 	 */
 	public static MilSymbolDescriptor fromResourcePath(String resourcePath, ImageIcon icon) {
-		// In a real implementation, this would look up the symbol by resource path.
-		// For this demo, we just create a dummy descriptor with the resource path as
-		// the id and display name.
-		// In the demo the resource path looks like:
-		// "/edu/cnu/mdi/images/nato_icons/Air_Defence/friendly.png"
-		// try to build a reasonable descriptor from that path, e.g.
-		// id = "Air_Defence_friendly", displayName = "Air Defence (Friendly)",
-		// category = "Air Defence"
+	    if (resourcePath == null || resourcePath.isEmpty()) {
+	        return new MilSymbolDescriptor("unknown", "Unknown", "Unknown", "unknown", icon);
+	    }
 
-		if (resourcePath == null || resourcePath.isEmpty()) {
-			return new MilSymbolDescriptor("unknown", "Unknown", "Unknown", "unknown", icon);
-		}
+	    if (resourcePath.contains("/nato_icons/")) {
+	        String[] parts = resourcePath.split("/nato_icons/")[1].split("/");
+	        if (parts.length == 2) {
+	            String category = parts[0];
+	            String affiliation = parts[1].replace(".png", "");
 
-		if (resourcePath.contains("/nato_icons/")) {
-			String[] parts = resourcePath.split("/nato_icons/")[1].split("/");
-			if (parts.length == 2) {
-				String category = parts[0];
-				String name = parts[1].replace(".png", "");
-				String displayName = name.replace("_", " ") + " (" + category + ")";
-				return new MilSymbolDescriptor(category + "_" + name, displayName, category, resourcePath, icon);
-			}
-		}
+	            String prettyCategory = category.replace("_", " ");
+	            String prettyAffiliation =
+	                    affiliation.substring(0, 1).toUpperCase() + affiliation.substring(1).toLowerCase();
 
-		//fallback for unexpected resource paths
-		return new MilSymbolDescriptor(resourcePath, resourcePath, "Unknown", resourcePath, icon);
+	            String id = category + "_" + affiliation;
+	            String displayName = prettyCategory + " (" + prettyAffiliation + ")";
+
+	            return new MilSymbolDescriptor(id, displayName, prettyCategory, resourcePath, icon);
+	        }
+	    }
+
+	    return new MilSymbolDescriptor(resourcePath, resourcePath, "Unknown", resourcePath, icon);
 	}
 }

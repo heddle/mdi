@@ -274,6 +274,7 @@ public class MapPointItem extends AMapItem {
         double dLat = currentMouseLL.y - startMouseLL.y;
 
         _focus = new Point2D.Double(startFocusLL.x + dLon, startFocusLL.y + dLat);
+        setDirty(true);
         mc.refresh();
     }
 

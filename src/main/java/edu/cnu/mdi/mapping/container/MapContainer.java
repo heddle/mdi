@@ -11,6 +11,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
+import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.container.BaseContainer;
@@ -31,378 +32,249 @@ import edu.cnu.mdi.mapping.projection.MercatorProjection;
 import edu.cnu.mdi.mapping.projection.MollweideProjection;
 import edu.cnu.mdi.mapping.projection.OrthographicProjection;
 import edu.cnu.mdi.util.UnicodeUtils;
-import edu.cnu.mdi.view.ContainerFactory;
 
 /**
- * Map-specific {@link edu.cnu.mdi.container.IContainer} that adds:
- * <ul>
- * <li><b>Projection-aware recentering</b> — double-click (or toolbar recenter
- *     gesture) re-centers the active projection on the geographic point under
- *     the cursor rather than simply scrolling the viewport.</li>
- * <li><b>Lat/lon coordinate conversion</b> — convenience helpers that convert
- *     between screen, world, and geographic coordinates.</li>
- * <li><b>Country-name hover popup</b> — a {@link HoverInfoWindow} that appears
- *     after the cursor dwells over a country polygon.</li>
- * <li><b>Military symbol drop target</b> — accepts a
- *     {@link MilSymbolTransferable} dragged from the
- *     {@link edu.cnu.mdi.mapping.milsym.NatoIconPicker} palette and creates a
- *     {@link MapMilSymbolItem} at the geographic location of the drop point.
- *     The active toolbar tool is <em>not</em> changed by the drop.</li>
- * </ul>
- *
- * <h2>ContainerFactory compatibility</h2>
- * <p>The single-argument constructor {@link #MapContainer(Rectangle2D.Double)}
- * satisfies the {@link ContainerFactory} functional interface and can therefore
- * be referenced as a constructor reference:</p>
- * <pre>{@code
- * ContainerFactory factory = MapContainer::new;
- * }</pre>
- *
- * <h2>Hover popup lifecycle</h2>
- * <p>The {@link HoverInfoWindow} is created lazily on the first
- * {@link #hoverUp(HoverEvent)} event. Call {@link #prepareForExit()} when the
- * owning view is closing to unregister the hover listener and dispose the
- * popup window.</p>
+ * Map-specific container supporting projection-aware recentering, geographic
+ * coordinate conversion, country-name hover popups, and drag-and-drop placement
+ * of military symbols.
  */
 @SuppressWarnings("serial")
 public class MapContainer extends BaseContainer implements HoverListener {
 
-    /**
-     * Lazily-created popup window used to display a country name near the cursor.
-     *
-     * <p>{@code null} until the first {@link #hoverUp(HoverEvent)} that
-     * successfully resolves the window ancestor. Set back to {@code null} by
-     * {@link #prepareForExit()}.</p>
-     */
-    private HoverInfoWindow hoverWindow;
+	/** Lazily-created popup window used for hover country names. */
+	private HoverInfoWindow hoverWindow;
 
-    // -------------------------------------------------------------------------
-    // Construction
-    // -------------------------------------------------------------------------
+	/**
+	 * Creates a map container with the given initial world coordinate system.
+	 *
+	 * @param worldSystem the initial world coordinate rectangle
+	 */
+	public MapContainer(Rectangle2D.Double worldSystem) {
+		super(worldSystem);
+		HoverManager.getInstance().registerComponent(getComponent(), this);
+		installMilSymbolDropTarget();
+	}
 
-    /**
-     * Creates a map container with the given initial world coordinate system.
-     *
-     * <p>This constructor intentionally has a single {@link Rectangle2D.Double}
-     * parameter so it satisfies the {@link ContainerFactory} functional
-     * interface:</p>
-     * <pre>{@code
-     * ContainerFactory factory = MapContainer::new;
-     * }</pre>
-     *
-     * <p>Standard panning is disabled because map views re-center the
-     * projection on right-click rather than scrolling a viewport. A
-     * {@link DropTarget} is installed immediately so the canvas can receive
-     * military symbol drops from the palette.</p>
-     *
-     * @param worldSystem the initial world coordinate rectangle; must not be
-     *                    {@code null}
-     */
-    public MapContainer(Rectangle2D.Double worldSystem) {
-        super(worldSystem);
+	/**
+	 * Installs an AWT drop target that accepts military symbol payloads from the
+	 * NATO palette and places a map symbol at the drop location.
+	 */
+	private void installMilSymbolDropTarget() {
+		new DropTarget(getComponent(), DnDConstants.ACTION_COPY, new DropTargetAdapter() {
+			@Override
+			public void drop(DropTargetDropEvent event) {
 
-        // Register for hover events so the country-name popup fires after
-        // the cursor dwells over the map.
-        HoverManager.getInstance().registerComponent(getComponent(), this);
+				if (!event.isDataFlavorSupported(MilSymbolTransferable.FLAVOR)) {
+					event.rejectDrop();
+					return;
+				}
 
-        // Install the drop target that accepts MilSymbolTransferable payloads.
-        installMilSymbolDropTarget();
-    }
+				event.acceptDrop(DnDConstants.ACTION_COPY);
+				try {
+					Transferable t = event.getTransferable();
+					MilSymbolDescriptor descriptor = (MilSymbolDescriptor) t
+							.getTransferData(MilSymbolTransferable.FLAVOR);
+					placeSymbol(descriptor, event.getLocation());
+					event.dropComplete(true);
+				} catch (Exception ex) {
+					event.dropComplete(false);
+				}
+			}
+		}, true);
+	}
 
-    // -------------------------------------------------------------------------
-    // Military symbol drop target
-    // -------------------------------------------------------------------------
+	/**
+	 * Creates a military symbol item at the geographic location corresponding to
+	 * the supplied screen-space point.
+	 *
+	 * @param descriptor  the symbol descriptor
+	 * @param screenPoint the drop point in canvas coordinates
+	 */
+	void placeSymbol(MilSymbolDescriptor descriptor, Point screenPoint) {
+		if (descriptor == null || screenPoint == null) {
+			return;
+		}
 
-    /**
-     * Installs an AWT {@link DropTarget} on the map canvas that listens for
-     * {@link MilSymbolTransferable} payloads.
-     *
-     * <h2>Behavior on drop</h2>
-     * <ol>
-     *   <li>Rejects drops that do not carry {@link MilSymbolTransferable#FLAVOR}.</li>
-     *   <li>Converts the drop screen point to a geographic lat/lon coordinate.</li>
-     *   <li>Creates and adds a {@link MapMilSymbolItem} on the annotation layer.</li>
-     *   <li>Does <em>not</em> alter the active toolbar tool — the user continues
-     *       with whatever tool was active before the drag (Option C behavior).</li>
-     * </ol>
-     *
-     * <h2>Mid-gesture safety</h2>
-     * <p>If the {@link MapToolHandler} reports that a drawing gesture is in
-     * progress ({@link MapToolHandler#isDrawing()}), the drop is rejected so
-     * that the in-progress shape is not corrupted.</p>
-     */
-    private void installMilSymbolDropTarget() {
-        new DropTarget(getComponent(), DnDConstants.ACTION_COPY,
-                new DropTargetAdapter() {
+		Point2D.Double latLon = new Point2D.Double();
+		localToLatLon(screenPoint, latLon);
 
-                    @Override
-                    public void drop(DropTargetDropEvent event) {
+		ImageIcon icon = descriptor.getIcon();
+		Layer layer = getAnnotationLayer();
+		new MapMilSymbolItem(layer, latLon, descriptor, icon);
 
-                        // Reject if a drawing gesture is in progress.
-                        if (toolHandler instanceof MapToolHandler mth && mth.isDrawing()) {
-                            event.rejectDrop();
-                            return;
-                        }
+		setDirty(true);
+		refresh();
+	}
 
-                        // Reject if the payload doesn't carry our flavor.
-                        if (!event.isDataFlavorSupported(MilSymbolTransferable.FLAVOR)) {
-                            event.rejectDrop();
-                            return;
-                        }
+	@Override
+	public void recenter(Point pp) {
+	    if (pp == null) {
+	        return;
+	    }
 
-                        event.acceptDrop(DnDConstants.ACTION_COPY);
+	    MapView2D mapView = getMapView2D();
+	    IMapProjection mp = mapView.getProjection();
+	    if (mp == null) {
+	        return;
+	    }
 
-                        try {
-                            Transferable t = event.getTransferable();
-                            MilSymbolDescriptor descriptor =
-                                    (MilSymbolDescriptor) t.getTransferData(
-                                            MilSymbolTransferable.FLAVOR);
+	    // Convert the clicked screen point to geographic coordinates
+	    // using the current transform and current projection.
+	    Point2D.Double ll = new Point2D.Double();
+	    localToLatLon(pp, ll);
 
-                            // The drop location is in the canvas's coordinate space.
-                            Point dropPoint = event.getLocation();
-                            placeSymbol(descriptor, dropPoint);
+	    // Ignore invalid clicks.
+	    if (!Double.isFinite(ll.x) || !Double.isFinite(ll.y)) {
+	        return;
+	    }
 
-                            event.dropComplete(true);
+	    // Update the projection's recenter parameters.
+	    switch (mp.getProjection()) {
+	    case MERCATOR ->
+	        ((MercatorProjection) mp).setCentralLongitude(ll.x);
 
-                        } catch (Exception ex) {
-                            event.dropComplete(false);
-                        }
-                    }
-                },
-                true /* active */);
-    }
+	    case MOLLWEIDE ->
+	        ((MollweideProjection) mp).setCentralLongitude(ll.x);
 
-    /**
-     * Creates a {@link MapMilSymbolItem} at the geographic location
-     * corresponding to {@code screenPoint} and adds it to the annotation layer.
-     *
-     * <p>This is the single placement method used by the drop target. It is
-     * intentionally package-private so {@link MapToolHandler} can call it if
-     * needed in the future, but it is not part of the public API.</p>
-     *
-     * @param descriptor the symbol metadata; must not be {@code null}
-     * @param screenPoint the canvas-space drop location
-     */
-    void placeSymbol(MilSymbolDescriptor descriptor, Point screenPoint) {
-        if (descriptor == null || screenPoint == null) {
-            return;
-        }
+	    case ORTHOGRAPHIC ->
+	        ((OrthographicProjection) mp).setCenter(ll.x, ll.y);
 
-        Point2D.Double latLon = new Point2D.Double();
-        localToLatLon(screenPoint, latLon);
+	    case LAMBERT_EQUAL_AREA ->
+	        ((LambertEqualAreaProjection) mp).setCenter(ll.x, ll.y);
+	    }
 
-        Layer layer = getAnnotationLayer();
+	    // Re-project the same geographic point through the updated projection.
+	    // This is the world-space point that must become the new viewport center.
+	    Point2D.Double xy = new Point2D.Double();
+	    mp.latLonToXY(ll, xy);
 
-        new MapMilSymbolItem(layer, latLon, descriptor, descriptor.getIcon());
+	    if (!Double.isFinite(xy.x) || !Double.isFinite(xy.y) || _worldSystem == null) {
+	        return;
+	    }
 
-        setDirty(true);
-        refresh();
-    }
+	    _worldSystem.x = xy.x - _worldSystem.width / 2.0;
+	    _worldSystem.y = xy.y - _worldSystem.height / 2.0;
 
-    // -------------------------------------------------------------------------
-    // Projection-aware recentering
-    // -------------------------------------------------------------------------
+	    setDirty(true);
+	    refresh();
+	}
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Overridden to re-center the active map projection on the geographic
-     * point under the cursor rather than shifting the viewport. The correct
-     * setter is dispatched based on the active {@link EProjection} type.</p>
-     */
-    @Override
-    public void recenter(Point pp) {
-        IMapProjection mp = getMapView2D().getProjection();
-        EProjection proj = mp.getProjection();
+	/**
+	 * Converts a screen-space point to geographic lon/lat in radians.
+	 *
+	 * @param pp screen-space point
+	 * @param ll output geographic point
+	 */
+	public void localToLatLon(Point pp, Point2D.Double ll) {
+		Point2D.Double wp = new Point2D.Double();
+		localToWorld(pp, wp);
+		getMapView2D().getProjection().latLonFromXY(ll, wp);
+	}
 
-        Point2D.Double wp = new Point2D.Double();
-        Point2D.Double ll = new Point2D.Double();
-        localToWorld(pp, wp);
-        mp.latLonFromXY(ll, wp);
+	/**
+	 * Converts geographic lon/lat in radians to screen-space coordinates.
+	 *
+	 * @param pp output screen-space point
+	 * @param ll input geographic point
+	 */
+	public void latLonToLocal(Point pp, Point2D.Double ll) {
+		Point2D.Double wp = new Point2D.Double();
+		getMapView2D().getProjection().latLonToXY(ll, wp);
+		worldToLocal(pp, wp);
+	}
 
-        switch (proj) {
-            case MERCATOR          -> ((MercatorProjection) mp).setCentralLongitude(ll.x);
-            case MOLLWEIDE         -> ((MollweideProjection) mp).setCentralLongitude(ll.x);
-            case ORTHOGRAPHIC      -> ((OrthographicProjection) mp).setCenter(ll.x, ll.y);
-            case LAMBERT_EQUAL_AREA -> ((LambertEqualAreaProjection) mp).setCenter(ll.x, ll.y);
-        }
+	/**
+	 * Converts projection world coordinates to geographic lon/lat.
+	 *
+	 * @param ll output geographic point
+	 * @param wp input world point
+	 */
+	public void worldToLatLon(Point2D.Double ll, Point2D.Double wp) {
+		getMapView2D().getProjection().latLonFromXY(ll, wp);
+	}
 
-        getMapView2D().invalidate();
-        setDirty(true);
-        refresh();
-    }
+	@Override
+	public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging) {
+		Point2D.Double wp = getLocation(mouseEvent);
 
-    // -------------------------------------------------------------------------
-    // Coordinate conversion helpers
-    // -------------------------------------------------------------------------
+		if (_feedbackControl != null) {
+			_feedbackControl.updateFeedback(mouseEvent, wp, dragging);
+		}
 
-    /**
-     * Converts a screen-space (local) point to a geographic lat/lon point.
-     *
-     * <p>The conversion path is: local → world (via container transform) →
-     * lat/lon (via projection inverse).</p>
-     *
-     * @param pp screen-space pixel coordinate
-     * @param ll output lat/lon point in radians ({@code x=λ, y=φ}); populated
-     *           in-place
-     */
-    public void localToLatLon(Point pp, Point2D.Double ll) {
-        Point2D.Double wp = new Point2D.Double();
-        localToWorld(pp, wp);
-        getMapView2D().getProjection().latLonFromXY(ll, wp);
-    }
+		if (_toolBar != null) {
+			Point2D.Double ll = new Point2D.Double();
+			worldToLatLon(ll, wp);
+			String latLon = String.format("%.2f%s %s, %.2f%s %s", Math.abs(Math.toDegrees(ll.y)), UnicodeUtils.DEGREE,
+					(ll.y >= 0) ? "N" : "S", Math.abs(Math.toDegrees(ll.x)), UnicodeUtils.DEGREE,
+					(ll.x >= 0) ? "E" : "W");
+			_toolBar.updateStatusText(latLon);
+		}
+	}
 
-    /**
-     * Converts a geographic lat/lon point to a screen-space (local) point.
-     *
-     * @param pp output screen-space pixel coordinate; populated in-place
-     * @param ll input lat/lon point in radians ({@code x=λ, y=φ})
-     */
-    public void latLonToLocal(Point pp, Point2D.Double ll) {
-        Point2D.Double wp = new Point2D.Double();
-        getMapView2D().getProjection().latLonToXY(ll, wp);
-        worldToLocal(pp, wp);
-    }
+	@Override
+	public void hoverUp(HoverEvent he) {
+		Point p = he.getLocation();
+		String countryName = getMapView2D().getCountryAtPoint(p, this);
+		if (countryName == null) {
+			return;
+		}
 
-    /**
-     * Converts a world (projection-space) point to a geographic lat/lon point.
-     *
-     * @param ll output lat/lon point in radians ({@code x=λ, y=φ}); populated
-     *           in-place
-     * @param wp input world-space coordinate
-     */
-    public void worldToLatLon(Point2D.Double ll, Point2D.Double wp) {
-        getMapView2D().getProjection().latLonFromXY(ll, wp);
-    }
+		HoverInfoWindow win = getHoverWindow();
+		if (win == null) {
+			return;
+		}
 
-    // -------------------------------------------------------------------------
-    // Feedback
-    // -------------------------------------------------------------------------
+		SwingUtilities.convertPointToScreen(p, he.getSource());
+		win.showMessage(countryName, p);
+	}
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Overridden to push a formatted lat/lon string (e.g.
-     * {@code "37.77°N, 122.41°W"}) to the toolbar status area in addition to
-     * the standard feedback-pane update performed by the superclass.</p>
-     */
-    @Override
-    public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging) {
-        Point2D.Double wp = getLocation(mouseEvent);
+	@Override
+	public void hoverDown(HoverEvent he) {
+		if (hoverWindow != null) {
+			hoverWindow.hideMessage();
+		}
+	}
 
-        if (_feedbackControl != null) {
-            _feedbackControl.updateFeedback(mouseEvent, wp, dragging);
-        }
+	/**
+	 * Releases hover resources held by this container.
+	 */
+	public void prepareForExit() {
+		HoverManager.getInstance().unregisterComponent(getComponent());
 
-        if (_toolBar != null) {
-            Point2D.Double ll = new Point2D.Double();
-            worldToLatLon(ll, wp);
-            String latLon = String.format("%.2f%s %s, %.2f%s %s",
-                    Math.abs(Math.toDegrees(ll.y)), UnicodeUtils.DEGREE,
-                    (ll.y >= 0) ? "N" : "S",
-                    Math.abs(Math.toDegrees(ll.x)), UnicodeUtils.DEGREE,
-                    (ll.x >= 0) ? "E" : "W");
-            _toolBar.updateStatusText(latLon);
-        }
-    }
+		if (hoverWindow != null) {
+			hoverWindow.hideMessage();
+			hoverWindow.dispose();
+			hoverWindow = null;
+		}
+	}
 
-    // -------------------------------------------------------------------------
-    // HoverListener — country-name popup
-    // -------------------------------------------------------------------------
+	@Override
+	protected BaseToolHandler createToolHandler() {
+		return new MapToolHandler(this);
+	}
 
-    /**
-     * Called by {@link HoverManager} after the cursor has rested over this
-     * component for the configured dwell time.
-     */
-    @Override
-    public void hoverUp(HoverEvent he) {
-        Point p = he.getLocation();
-        String countryName = getMapView2D().getCountryAtPoint(p, this);
-        if (countryName == null) {
-            return;
-        }
+	/**
+	 * Gets the owning map view.
+	 *
+	 * @return the parent map view
+	 */
+	private MapView2D getMapView2D() {
+		return (MapView2D) getView();
+	}
 
-        HoverInfoWindow win = getHoverWindow();
-        if (win == null) {
-            return;
-        }
-
-        SwingUtilities.convertPointToScreen(p, he.getSource());
-        win.showMessage(countryName, p);
-    }
-
-    /**
-     * Called by {@link HoverManager} when the cursor leaves the component or
-     * moves after a hover was triggered.
-     */
-    @Override
-    public void hoverDown(HoverEvent he) {
-        if (hoverWindow != null) {
-            hoverWindow.hideMessage();
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Resource cleanup
-    // -------------------------------------------------------------------------
-
-    /**
-     * Releases all hover-related resources held by this container.
-     *
-     * <p>Unregisters the canvas from {@link HoverManager}, hides and disposes
-     * the {@link HoverInfoWindow} if one was created. Safe to call multiple
-     * times.</p>
-     */
-    public void prepareForExit() {
-        HoverManager.getInstance().unregisterComponent(getComponent());
-
-        if (hoverWindow != null) {
-            hoverWindow.hideMessage();
-            hoverWindow.dispose();
-            hoverWindow = null;
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Tool handler factory
-    // -------------------------------------------------------------------------
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Returns a {@link MapToolHandler} so that map-specific gestures are
-     * used instead of the generic {@link BaseToolHandler} defaults.</p>
-     */
-    @Override
-    protected BaseToolHandler createToolHandler() {
-        return new MapToolHandler(this);
-    }
-
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
-    /**
-     * Returns the owning {@link MapView2D} by casting the base-class view
-     * reference.
-     */
-    private MapView2D getMapView2D() {
-        return (MapView2D) getView();
-    }
-
-    /**
-     * Returns the hover popup window, creating it lazily on first call.
-     *
-     * @return the hover popup, or {@code null} if not yet constructable
-     */
-    private HoverInfoWindow getHoverWindow() {
-        if (hoverWindow == null) {
-            Window ownerWin = SwingUtilities.getWindowAncestor(getComponent());
-            if (ownerWin == null) {
-                return null;
-            }
-            hoverWindow = new HoverInfoWindow(ownerWin);
-        }
-        return hoverWindow;
-    }
+	/**
+	 * Lazily creates the hover popup window.
+	 *
+	 * @return the hover popup, or {@code null} if the component is not yet realized
+	 */
+	private HoverInfoWindow getHoverWindow() {
+		if (hoverWindow == null) {
+			Window owner = SwingUtilities.getWindowAncestor(getComponent());
+			if (owner == null) {
+				return null;
+			}
+			hoverWindow = new HoverInfoWindow(owner);
+		}
+		return hoverWindow;
+	}
 }

@@ -16,7 +16,6 @@ import java.util.List;
 
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackPane;
@@ -39,6 +38,8 @@ import edu.cnu.mdi.mapping.shapefile.ShapeFeatureRenderer;
 import edu.cnu.mdi.mapping.shapefile.ShapeFeatureStyle;
 import edu.cnu.mdi.mapping.shapefile.ShapefileFeatureLoader;
 import edu.cnu.mdi.mapping.theme.MapTheme;
+import edu.cnu.mdi.mapping.util.GeoUtils;
+import edu.cnu.mdi.mapping.util.UTMCoordinate;
 import edu.cnu.mdi.util.UnicodeUtils;
 import edu.cnu.mdi.view.AbstractViewInfo;
 import edu.cnu.mdi.view.BaseView;
@@ -547,7 +548,9 @@ public class MapView2D extends BaseView {
 			double dLon = Math.toDegrees(latLon.x);
 			feedbackStrings.add(String.format("%s %.2f%s", LAT_PREFIX, dLat, DEG));
 			feedbackStrings.add(String.format("%s %.2f%s", LON_PREFIX, dLon, DEG));
-
+		    UTMCoordinate utm = GeoUtils.fromDecimalDegrees(dLat, dLon);
+		    feedbackStrings.add("UTM " + utm.toString());
+		 
 			if (countryRenderer != null) {
 				GeoJsonCountryLoader.CountryFeature countryHit = countryRenderer.pickCountry(pp, container);
 				if (countryHit != null) {
