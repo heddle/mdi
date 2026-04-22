@@ -16,6 +16,7 @@ import java.util.List;
 
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackPane;

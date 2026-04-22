@@ -80,6 +80,7 @@ public class DemoApp extends BaseMDIApplication {
 
 		// Log environment information early.
 		Log.getInstance().info(Environment.getInstance().toString());
+		defaultViewLayout();
 	}
 
 	@Override
@@ -150,13 +151,17 @@ public class DemoApp extends BaseMDIApplication {
 	@Override
 	protected void defaultViewLayout() {
 		VirtualView vv = VirtualView.getInstance();
-		vv.moveTo(mapView, 0, VirtualView.BOTTOMRIGHT);
-		vv.moveTo(drawingView, 0, VirtualView.TOPCENTER);
-		vv.moveTo(plotView, 1, VirtualView.CENTER);
-		vv.moveTo(networkDeclutterDemoView, 2, VirtualView.CENTER);
-		vv.moveTo(tspDemoView, 3, VirtualView.CENTER);
-		vv.moveTo(imageEvolutionDemoView, 5, VirtualView.CENTER);
-		vv.moveTo(logView, 6, VirtualView.UPPERLEFT);
+		// Guard each placement with hasSavedLayout() so that views whose
+		// positions were just restored from a saved config are not overwritten.
+		// On first run (no config file) hasSavedLayout() returns false for all
+		// views and every moveTo() fires normally.
+		if (!hasSavedLayout(mapView))               vv.moveTo(mapView,                   0, VirtualView.BOTTOMCENTER);
+		if (!hasSavedLayout(drawingView))           vv.moveTo(drawingView,               0, VirtualView.UPPERLEFT);
+		if (!hasSavedLayout(plotView))              vv.moveTo(plotView,                  1, VirtualView.CENTER);
+		if (!hasSavedLayout(networkDeclutterDemoView)) vv.moveTo(networkDeclutterDemoView, 2, VirtualView.CENTER);
+		if (!hasSavedLayout(tspDemoView))           vv.moveTo(tspDemoView,               3, VirtualView.CENTER);
+		if (!hasSavedLayout(imageEvolutionDemoView)) vv.moveTo(imageEvolutionDemoView,   5, VirtualView.CENTER);
+		if (!hasSavedLayout(logView))               vv.moveTo(logView,                   6, VirtualView.UPPERLEFT);
 	}
 
 	/**

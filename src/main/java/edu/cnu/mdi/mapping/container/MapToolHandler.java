@@ -28,44 +28,41 @@ import edu.cnu.mdi.util.UnicodeUtils;
  * than projection-space world coordinates.
  *
  * <h2>Responsibilities</h2>
- * <p>
- * This handler supplements {@link BaseToolHandler} with overrides for
- * operations that have a geographic interpretation on a map view:
- * </p>
  * <ul>
- *   <li>{@link #createLine} — creates a {@link MapLineItem} (a great-circle
- *       route) rather than a plain {@code LineItem}.</li>
- *   <li>{@link #createPolyline} — creates a {@link MapPolylineItem} (a
- *       multi-vertex great-circle polyline).</li>
- *   <li>{@link #createPolygon} — creates a {@link MapPolygonItem} (a closed
+ *   <li>{@link #createLine} — creates a {@link MapLineItem} (great-circle
+ *       route).</li>
+ *   <li>{@link #createPolyline} — creates a {@link MapPolylineItem} (multi-
+ *       vertex great-circle polyline).</li>
+ *   <li>{@link #createPolygon} — creates a {@link MapPolygonItem} (closed
  *       great-circle polygon).</li>
  *   <li>{@link #createTextItem} — creates a {@link MapTextItem} anchored to
- *       the geographic location of the click, with the text collected via a
- *       {@link edu.cnu.mdi.dialog.TextEditDialog}.</li>
+ *       the geographic location of the click.</li>
  * </ul>
- * <p>
- * All other tool operations (pan, zoom, rubber-band selection, pointer, style
- * editing, deletion, etc.) delegate to the superclass.
- * </p>
  *
- * <h2>Obtaining an instance</h2>
- * <p>
- * Instances are created by {@link MapContainer#createToolHandler()}, which is
- * called from {@link edu.cnu.mdi.container.BaseContainer#setToolBar}.
- * Application code does not normally construct this class directly.
- * </p>
+ * <h2>Military symbol placement</h2>
+ * <p>Symbol placement is now handled entirely by the AWT drag-and-drop
+ * mechanism in {@link MapContainer}. This handler no longer participates in
+ * symbol placement and does not override {@link #pointerClick}.</p>
+ *
+ * <h2>Drawing guard</h2>
+ * <p>{@link #isDrawing()} returns {@code true} while a multi-step drawing
+ * gesture (polyline, polygon) is in progress. The map's drop target checks
+ * this flag and rejects symbol drops while drawing is active so that the
+ * in-progress shape is not corrupted.</p>
  */
 public class MapToolHandler extends BaseToolHandler {
 
     /**
      * The owning map container, narrowed from the superclass's generic
      * {@code BaseContainer} reference.
-     *
-     * <p>This is stored as a {@link MapContainer} so that map-specific
-     * operations ({@link MapContainer#localToLatLon}, etc.) are directly
-     * accessible without repeated casting.</p>
      */
     private final MapContainer mapContainer;
+
+    /**
+     * {@code true} while a multi-step drawing gesture (polyline or polygon)
+     * is in progress. Read by the drop target via {@link #isDrawing()}.
+     */
+    private boolean drawing = false;
 
     /**
      * Creates a map tool handler bound to the given container.
@@ -80,15 +77,31 @@ public class MapToolHandler extends BaseToolHandler {
         this.mapContainer = (MapContainer) container;
     }
 
+    // -------------------------------------------------------------------------
+    // Drawing guard
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns {@code true} while a multi-step drawing gesture (polyline or
+     * polygon rubberband) is in progress.
+     *
+     * <p>The map's {@link DropTarget} checks this flag before accepting a
+     * military symbol drop so that an in-flight drawing gesture is never
+     * interrupted.</p>
+     *
+     * @return {@code true} if a drawing gesture is active
+     */
+    public boolean isDrawing() {
+        return drawing;
+    }
+
+    // -------------------------------------------------------------------------
+    // Line
+    // -------------------------------------------------------------------------
+
     /**
      * Creates a {@link MapLineItem} (a great-circle route) between the two
      * screen-space endpoints.
-     *
-     * <p>Both endpoints are converted from device pixels to geographic
-     * coordinates (longitude/latitude in radians) via
-     * {@link MapContainer#localToLatLon} before the item is constructed.
-     * The item is placed on the annotation layer and given a default red
-     * style with a 2-pixel line width.</p>
      *
      * @param gc    the gesture context from the toolbar
      * @param start the screen-space start point of the drawn line
@@ -117,28 +130,30 @@ public class MapToolHandler extends BaseToolHandler {
         mapContainer.refresh();
     }
 
+    // -------------------------------------------------------------------------
+    // Polyline
+    // -------------------------------------------------------------------------
 
     /**
-     * Creates a {@link MapPolylineItem} (a sequence of great-circle arcs) from
-     * the screen-space vertices produced by the polyline rubberband tool.
+     * Creates a {@link MapPolylineItem} from screen-space vertices.
      *
-     * <p>Vertices are converted from device pixels to geographic coordinates via
-     * {@link MapContainer#localToLatLon}. At least 2 valid vertices are required;
-     * the call is silently ignored if the vertex array is too short.</p>
+     * <p>Sets {@link #drawing} to {@code false} when the gesture completes.</p>
      *
      * @param gc       the gesture context from the toolbar
      * @param vertices the screen-space vertices in draw order
      */
     @Override
     public void createPolyline(GestureContext gc, Point[] vertices) {
+        drawing = false;
+
         if (vertices == null || vertices.length < 2) {
-			return;
-		}
+            return;
+        }
 
         Point2D.Double[] latLons = toLatLons(vertices);
         if (latLons == null) {
-			return;
-		}
+            return;
+        }
 
         MapPolylineItem item = new MapPolylineItem(
                 mapContainer.getAnnotationLayer(), latLons);
@@ -148,27 +163,30 @@ public class MapToolHandler extends BaseToolHandler {
         mapContainer.refresh();
     }
 
+    // -------------------------------------------------------------------------
+    // Polygon
+    // -------------------------------------------------------------------------
+
     /**
-     * Creates a {@link MapPolygonItem} (a closed great-circle polygon) from
-     * the screen-space vertices produced by the polygon rubberband tool.
+     * Creates a {@link MapPolygonItem} from screen-space vertices.
      *
-     * <p>Vertices are converted from device pixels to geographic coordinates via
-     * {@link MapContainer#localToLatLon}. At least 3 valid vertices are required;
-     * the call is silently ignored if the vertex array is too short.</p>
+     * <p>Sets {@link #drawing} to {@code false} when the gesture completes.</p>
      *
      * @param gc       the gesture context from the toolbar
      * @param vertices the screen-space vertices in draw order
      */
     @Override
     public void createPolygon(GestureContext gc, Point[] vertices) {
+        drawing = false;
+
         if (vertices == null || vertices.length < 3) {
-			return;
-		}
+            return;
+        }
 
         Point2D.Double[] latLons = toLatLons(vertices);
         if (latLons == null) {
-			return;
-		}
+            return;
+        }
 
         MapPolygonItem item = new MapPolygonItem(
                 mapContainer.getAnnotationLayer(), latLons);
@@ -178,17 +196,13 @@ public class MapToolHandler extends BaseToolHandler {
         mapContainer.refresh();
     }
 
+    // -------------------------------------------------------------------------
+    // Text
+    // -------------------------------------------------------------------------
+
     /**
      * Creates a {@link MapTextItem} at the geographic location corresponding to
      * the given screen-space click point.
-     *
-     * <p>Opens a {@link TextEditDialog} to collect the text, font, and colors
-     * from the user. If the dialog is cancelled, or the user enters empty text,
-     * no item is created. The item is placed on the annotation layer.</p>
-     *
-     * <p>The text item is not resizable (its size is determined by the font and
-     * content), but it is draggable, selectable, and deletable. Its popup menu
-     * includes an "Edit Text…" entry that re-opens the dialog.</p>
      *
      * @param gc       the gesture context from the toolbar
      * @param location the screen-space click point
@@ -200,18 +214,18 @@ public class MapToolHandler extends BaseToolHandler {
         dialog.setVisible(true);
 
         if (dialog.isCancelled()) {
-			return;
-		}
+            return;
+        }
 
         String text = UnicodeUtils.specialCharReplace(dialog.getText());
         if (text == null || text.isBlank()) {
-			return;
-		}
+            return;
+        }
 
         Font font = dialog.getSelectedFont();
         if (font == null) {
-			font = Fonts.defaultFont;
-		}
+            font = Fonts.defaultFont;
+        }
 
         Point2D.Double anchor = new Point2D.Double();
         mapContainer.localToLatLon(location, anchor);
@@ -221,8 +235,8 @@ public class MapToolHandler extends BaseToolHandler {
                 dialog.getLineColor(), dialog.getFillColor(), dialog.getTextColor());
 
         defaultConfigureItem(item);
-        item.setResizable(false);    // size is driven by font + content
-        item.setRotatable(false);    // geographic labels are always upright
+        item.setResizable(false);
+        item.setRotatable(false);
 
         addTextEditMenuItem(item);
 
@@ -231,19 +245,47 @@ public class MapToolHandler extends BaseToolHandler {
     }
 
     // -------------------------------------------------------------------------
+    // Drawing-gesture lifecycle hooks
+    // -------------------------------------------------------------------------
+
+    /**
+     * Called by the toolbar framework when a multi-vertex rubberband gesture
+     * begins (polyline or polygon tool activated).
+     *
+     * <p>Sets the {@link #drawing} flag so the drop target knows to reject
+     * symbol drops while the gesture is live.</p>
+     *
+     * <p><b>Note:</b> Hook this into whatever callback the rubberband tool
+     * fires when the user commits the first vertex. If {@link BaseToolHandler}
+     * already exposes such a callback, override it here; otherwise wire it from
+     * the toolbar button's action listener.</p>
+     */
+    public void onDrawingStarted() {
+        drawing = true;
+    }
+
+    /**
+     * Called if a multi-vertex drawing gesture is cancelled (e.g. Escape key).
+     * Clears the {@link #drawing} flag.
+     */
+    public void onDrawingCancelled() {
+        drawing = false;
+    }
+
+    // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
 
     /**
-     * Converts an array of screen-space points to geographic lon/lat coordinates.
+     * Converts an array of screen-space points to geographic lon/lat.
      *
      * @param screenPoints device-space points
      * @return geographic points in radians, or {@code null} if the array is null
      */
     private Point2D.Double[] toLatLons(Point[] screenPoints) {
         if (screenPoints == null) {
-			return null;
-		}
+            return null;
+        }
         Point2D.Double[] latLons = new Point2D.Double[screenPoints.length];
         for (int i = 0; i < screenPoints.length; i++) {
             latLons[i] = new Point2D.Double();
@@ -253,12 +295,7 @@ public class MapToolHandler extends BaseToolHandler {
     }
 
     /**
-     * Applies the standard interactive behavior flags to a newly created item:
-     * right-clickable, draggable, selectable, resizable, rotatable, deletable,
-     * and unlocked.
-     *
-     * <p>Callers that need to suppress a specific behavior (e.g. text items
-     * are not resizable) should call the relevant setter after this method.</p>
+     * Applies the standard interactive behavior flags to a newly created item.
      *
      * @param item the item to configure
      */
@@ -274,10 +311,6 @@ public class MapToolHandler extends BaseToolHandler {
 
     /**
      * Adds an "Edit Text…" popup menu item to the given {@link MapTextItem}.
-     *
-     * <p>Selecting the menu item re-opens the {@link TextEditDialog} and applies
-     * any changes. The item is re-populated from its current text, font, and
-     * style so edits are cumulative.</p>
      *
      * @param item the item to attach the menu item to
      */

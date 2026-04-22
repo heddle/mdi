@@ -995,25 +995,39 @@ public class BaseView extends JInternalFrame
 
             int left   = PropertyUtils.getLeft(props);
             int top    = PropertyUtils.getTop(props);
-            int width  = Math.max(100, PropertyUtils.getWidth(props));
-            int height = Math.max(100, PropertyUtils.getHeight(props));
 
-            // Fraction + aspect-ratio sizing (overrides explicit width/height).
-			double fraction = PropertyUtils.getFraction(props);
-			if (Double.isFinite(fraction) && fraction > 0.0 && fraction < 1.0) {
-				BaseMDIApplication app = BaseMDIApplication.getApplication();
-				if (app != null) {
-					Dimension appSize = app.getSize();
-					double aspect = PropertyUtils.getAspectRatio(props);
-					if (aspect <= 0.001) { // ignore invalid aspect ratios
-						height = (int) (fraction * appSize.height);
-						width = (int) (fraction * appSize.width);
-					} else {
-						// Calculate size based on height
-						height = (int) (fraction * appSize.height);
-						width = (int) (height * aspect);
-					}
-				}
+            // Explicit WIDTH/HEIGHT take highest priority.
+            int explicitWidth  = PropertyUtils.getWidth(props);
+            int explicitHeight = PropertyUtils.getHeight(props);
+
+            int width;
+            int height;
+
+            if (explicitWidth > 0 && explicitHeight > 0) {
+                // Caller gave an exact pixel size — honour it directly.
+                width  = Math.max(100, explicitWidth);
+                height = Math.max(100, explicitHeight);
+            } else {
+                // Fall back to FRACTION + optional ASPECT sizing relative to
+                // the application main window (not the screen).
+                width  = 400; // safe fallback
+                height = 300;
+                double fraction = PropertyUtils.getFraction(props);
+                if (Double.isFinite(fraction) && fraction > 0.0 && fraction < 1.0) {
+                    BaseMDIApplication app = BaseMDIApplication.getApplication();
+                    if (app != null) {
+                        Dimension appSize = app.getSize();
+                        double aspect = PropertyUtils.getAspectRatio(props);
+                        height = (int) (fraction * appSize.height);
+                        if (aspect > 0.001) {
+                            // Width derived from requested height and aspect ratio.
+                            width = (int) (height * aspect);
+                        } else {
+                            // No aspect given: match the height fraction on width too.
+                            width = (int) (fraction * appSize.width);
+                        }
+                    }
+                }
             }
 
             // Cascading placement when explicit left/top are not given.
@@ -1194,6 +1208,40 @@ public class BaseView extends JInternalFrame
         }
     }
 
+	// -------------------------------------------------------------------------
+	// Post-placement panel additions
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Adds a component to the {@code WEST} slot of this view's content pane,
+	 * expanding the frame width to accommodate it.
+	 *
+	 * <p>
+	 * Uses a double {@code invokeLater} to guarantee execution after all
+	 * construction-time {@code invokeLater} calls have been processed —
+	 * including {@link BaseView}'s deferred {@code setVisible} and
+	 * {@link edu.cnu.mdi.view.ViewConfiguration}'s placement call.  A single
+	 * {@code invokeLater} is not sufficient because the placement work is
+	 * itself queued at the same EDT level as a naive single defer.
+	 * </p>
+	 *
+	 * @param panel the component to place in the WEST slot; must not be null
+	 */
+	public void addWestPanel(javax.swing.JComponent panel) {
+		// Outer invokeLater: runs after the BaseView constructor's setVisible defer.
+		SwingUtilities.invokeLater(() ->
+			// Inner invokeLater: runs after VirtualView placement, which is itself
+			// queued in an invokeLater inside ViewConfiguration.realizeView().
+			SwingUtilities.invokeLater(() -> {
+				getContentPane().add(panel, BorderLayout.WEST);
+				int extra = panel.getPreferredSize().width;
+				java.awt.Rectangle r = getBounds();
+				setBounds(r.x, r.y, r.width + extra, r.height);
+				revalidate();
+				repaint();
+			})
+		);
+	}
     // -----------------------------------------------------------------------
     // ViewContentBuilder — compose Swing content for container-backed views
     // -----------------------------------------------------------------------
@@ -1224,33 +1272,38 @@ public class BaseView extends JInternalFrame
                 container.getComponent().setBackground(cfg.background);
             }
 
-            // Preferred size.
+            // ------------------------------------------------------------------
+            // Pin the container component to the requested canvas size.
+            //
+            // Both preferredSize AND minimumSize are set so that:
+            //   • pack() sizes the frame around the requested canvas area
+            //     (accounting for insets and toolbar height automatically).
+            //   • Later additions of EAST/WEST panels cause the frame to
+            //     *expand* rather than squishing the canvas below its
+            //     requested size.
+            // ------------------------------------------------------------------
             if (cfg.width > 0 && cfg.height > 0
                     && container.getComponent() != null) {
-                container.getComponent().setPreferredSize(
-                        new Dimension(cfg.width, cfg.height));
+                Dimension canvasSize = new Dimension(cfg.width, cfg.height);
+                container.getComponent().setPreferredSize(canvasSize);
+                container.getComponent().setMinimumSize(canvasSize);
             }
 
-            // center component — optionally wrapped in a scroll pane.
+            // Center component — optionally wrapped in a scroll pane.
             Component center = container.getComponent();
             if (cfg.scrollable && center != null) {
                 view.scrollPane = new JScrollPane(center);
                 center = view.scrollPane;
             }
 
+            // ------------------------------------------------------------------
+            // Add the toolbar FIRST, then the center content.
+            // This ensures pack() (called by the constructor after build())
+            // measures all child components — toolbar height is included in the
+            // final frame height so the canvas is never shrunk by it.
+            // ------------------------------------------------------------------
 
-            // Optional split pane west component.
-            if (cfg.splitWestComponent != null) {
-                JSplitPane split = new JSplitPane(
-                        JSplitPane.HORIZONTAL_SPLIT, false,
-                        cfg.splitWestComponent, center);
-                split.setResizeWeight(0.0);
-                view.getContentPane().add(split, BorderLayout.CENTER);
-            } else {
-                view.getContentPane().add(center, BorderLayout.CENTER);
-            }
-
-            // Optional toolbar.
+            // Optional toolbar (added before center so pack() sees full height).
             if (cfg.toolBits > 0) {
                 view.toolBar = new BaseToolBar(
                         container.getComponent(), null,
@@ -1261,6 +1314,17 @@ public class BaseView extends JInternalFrame
                 if (container instanceof BaseContainer) {
                     ((BaseContainer) container).setToolBar(view.toolBar);
                 }
+            }
+
+            // Optional split pane west component.
+            if (cfg.splitWestComponent != null) {
+                JSplitPane split = new JSplitPane(
+                        JSplitPane.HORIZONTAL_SPLIT, false,
+                        cfg.splitWestComponent, center);
+                split.setResizeWeight(0.0);
+                view.getContentPane().add(split, BorderLayout.CENTER);
+            } else {
+                view.getContentPane().add(center, BorderLayout.CENTER);
             }
 
             if (cfg.addWheelZoom) {

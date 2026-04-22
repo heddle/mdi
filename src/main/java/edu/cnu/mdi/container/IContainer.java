@@ -356,10 +356,6 @@ public interface IContainer {
 	 */
 	public void setWorldSystem(Rectangle2D.Double wr);
 
-	public boolean isStandardPanning();
-
-	public void setStandardPanning(boolean standardPanning);
-
 	/**
 	 * Get the approximate zoom factor based on the current and default world
 	 * systems.

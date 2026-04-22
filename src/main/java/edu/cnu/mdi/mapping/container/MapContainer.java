@@ -2,6 +2,11 @@ package edu.cnu.mdi.mapping.container;
 
 import java.awt.Point;
 import java.awt.Window;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -14,7 +19,11 @@ import edu.cnu.mdi.hover.HoverEvent;
 import edu.cnu.mdi.hover.HoverInfoWindow;
 import edu.cnu.mdi.hover.HoverListener;
 import edu.cnu.mdi.hover.HoverManager;
+import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.mapping.MapView2D;
+import edu.cnu.mdi.mapping.item.MapMilSymbolItem;
+import edu.cnu.mdi.mapping.milsym.MilSymbolDescriptor;
+import edu.cnu.mdi.mapping.milsym.MilSymbolTransferable;
 import edu.cnu.mdi.mapping.projection.EProjection;
 import edu.cnu.mdi.mapping.projection.IMapProjection;
 import edu.cnu.mdi.mapping.projection.LambertEqualAreaProjection;
@@ -27,51 +36,39 @@ import edu.cnu.mdi.view.ContainerFactory;
 /**
  * Map-specific {@link edu.cnu.mdi.container.IContainer} that adds:
  * <ul>
- *   <li><b>Projection-aware recentering</b> — double-click (or toolbar
- *       recenter gesture) re-centers the active projection on the geographic
- *       point under the cursor rather than simply scrolling the viewport.</li>
- *   <li><b>Lat/lon coordinate conversion</b> — convenience helpers that
- *       convert between screen, world, and geographic coordinates.</li>
- *   <li><b>Country-name hover popup</b> — a {@link HoverInfoWindow} that
- *       appears after the cursor dwells over a country polygon.</li>
+ * <li><b>Projection-aware recentering</b> — double-click (or toolbar recenter
+ *     gesture) re-centers the active projection on the geographic point under
+ *     the cursor rather than simply scrolling the viewport.</li>
+ * <li><b>Lat/lon coordinate conversion</b> — convenience helpers that convert
+ *     between screen, world, and geographic coordinates.</li>
+ * <li><b>Country-name hover popup</b> — a {@link HoverInfoWindow} that appears
+ *     after the cursor dwells over a country polygon.</li>
+ * <li><b>Military symbol drop target</b> — accepts a
+ *     {@link MilSymbolTransferable} dragged from the
+ *     {@link edu.cnu.mdi.mapping.milsym.NatoIconPicker} palette and creates a
+ *     {@link MapMilSymbolItem} at the geographic location of the drop point.
+ *     The active toolbar tool is <em>not</em> changed by the drop.</li>
  * </ul>
  *
  * <h2>ContainerFactory compatibility</h2>
- * <p>The single-argument constructor
- * {@link #MapContainer(Rectangle2D.Double)} satisfies the
- * {@link ContainerFactory} functional interface and can therefore be
- * referenced as a constructor reference:</p>
+ * <p>The single-argument constructor {@link #MapContainer(Rectangle2D.Double)}
+ * satisfies the {@link ContainerFactory} functional interface and can therefore
+ * be referenced as a constructor reference:</p>
  * <pre>{@code
  * ContainerFactory factory = MapContainer::new;
  * }</pre>
- * <p>This reference is stored under
- * {@link edu.cnu.mdi.util.PropertyUtils#CONTAINERFACTORY} and used by the
- * framework to instantiate the container without reflection.</p>
- *
- * <h2>Standard panning</h2>
- * <p>Standard viewport panning is disabled in the constructor because map
- * views handle panning differently: a right-click recenter updates the
- * projection center rather than scrolling a fixed background image.</p>
  *
  * <h2>Hover popup lifecycle</h2>
  * <p>The {@link HoverInfoWindow} is created lazily on the first
- * {@link #hoverUp(HoverEvent)} event because the component's window ancestor
- * is not guaranteed to be available at construction time. If the window
- * ancestor is still unavailable when the first hover fires, the popup is
- * silently suppressed for that event and attempted again on the next one.</p>
- *
- * <h2>Resource cleanup</h2>
- * <p>Call {@link #prepareForExit()} when the owning view is closing to
- * unregister the hover listener and dispose the popup window. Failing to do
- * so leaves a {@link HoverManager} registration and a potentially visible
- * {@link HoverInfoWindow} in memory.</p>
+ * {@link #hoverUp(HoverEvent)} event. Call {@link #prepareForExit()} when the
+ * owning view is closing to unregister the hover listener and dispose the
+ * popup window.</p>
  */
 @SuppressWarnings("serial")
 public class MapContainer extends BaseContainer implements HoverListener {
 
     /**
-     * Lazily-created popup window used to display a country name near the
-     * cursor.
+     * Lazily-created popup window used to display a country name near the cursor.
      *
      * <p>{@code null} until the first {@link #hoverUp(HoverEvent)} that
      * successfully resolves the window ancestor. Set back to {@code null} by
@@ -94,18 +91,112 @@ public class MapContainer extends BaseContainer implements HoverListener {
      * }</pre>
      *
      * <p>Standard panning is disabled because map views re-center the
-     * projection on right-click rather than scrolling a viewport.</p>
+     * projection on right-click rather than scrolling a viewport. A
+     * {@link DropTarget} is installed immediately so the canvas can receive
+     * military symbol drops from the palette.</p>
      *
      * @param worldSystem the initial world coordinate rectangle; must not be
      *                    {@code null}
      */
     public MapContainer(Rectangle2D.Double worldSystem) {
         super(worldSystem);
-        setStandardPanning(false);
 
         // Register for hover events so the country-name popup fires after
         // the cursor dwells over the map.
         HoverManager.getInstance().registerComponent(getComponent(), this);
+
+        // Install the drop target that accepts MilSymbolTransferable payloads.
+        installMilSymbolDropTarget();
+    }
+
+    // -------------------------------------------------------------------------
+    // Military symbol drop target
+    // -------------------------------------------------------------------------
+
+    /**
+     * Installs an AWT {@link DropTarget} on the map canvas that listens for
+     * {@link MilSymbolTransferable} payloads.
+     *
+     * <h2>Behavior on drop</h2>
+     * <ol>
+     *   <li>Rejects drops that do not carry {@link MilSymbolTransferable#FLAVOR}.</li>
+     *   <li>Converts the drop screen point to a geographic lat/lon coordinate.</li>
+     *   <li>Creates and adds a {@link MapMilSymbolItem} on the annotation layer.</li>
+     *   <li>Does <em>not</em> alter the active toolbar tool — the user continues
+     *       with whatever tool was active before the drag (Option C behavior).</li>
+     * </ol>
+     *
+     * <h2>Mid-gesture safety</h2>
+     * <p>If the {@link MapToolHandler} reports that a drawing gesture is in
+     * progress ({@link MapToolHandler#isDrawing()}), the drop is rejected so
+     * that the in-progress shape is not corrupted.</p>
+     */
+    private void installMilSymbolDropTarget() {
+        new DropTarget(getComponent(), DnDConstants.ACTION_COPY,
+                new DropTargetAdapter() {
+
+                    @Override
+                    public void drop(DropTargetDropEvent event) {
+
+                        // Reject if a drawing gesture is in progress.
+                        if (toolHandler instanceof MapToolHandler mth && mth.isDrawing()) {
+                            event.rejectDrop();
+                            return;
+                        }
+
+                        // Reject if the payload doesn't carry our flavor.
+                        if (!event.isDataFlavorSupported(MilSymbolTransferable.FLAVOR)) {
+                            event.rejectDrop();
+                            return;
+                        }
+
+                        event.acceptDrop(DnDConstants.ACTION_COPY);
+
+                        try {
+                            Transferable t = event.getTransferable();
+                            MilSymbolDescriptor descriptor =
+                                    (MilSymbolDescriptor) t.getTransferData(
+                                            MilSymbolTransferable.FLAVOR);
+
+                            // The drop location is in the canvas's coordinate space.
+                            Point dropPoint = event.getLocation();
+                            placeSymbol(descriptor, dropPoint);
+
+                            event.dropComplete(true);
+
+                        } catch (Exception ex) {
+                            event.dropComplete(false);
+                        }
+                    }
+                },
+                true /* active */);
+    }
+
+    /**
+     * Creates a {@link MapMilSymbolItem} at the geographic location
+     * corresponding to {@code screenPoint} and adds it to the annotation layer.
+     *
+     * <p>This is the single placement method used by the drop target. It is
+     * intentionally package-private so {@link MapToolHandler} can call it if
+     * needed in the future, but it is not part of the public API.</p>
+     *
+     * @param descriptor the symbol metadata; must not be {@code null}
+     * @param screenPoint the canvas-space drop location
+     */
+    void placeSymbol(MilSymbolDescriptor descriptor, Point screenPoint) {
+        if (descriptor == null || screenPoint == null) {
+            return;
+        }
+
+        Point2D.Double latLon = new Point2D.Double();
+        localToLatLon(screenPoint, latLon);
+
+        Layer layer = getAnnotationLayer();
+
+        new MapMilSymbolItem(layer, latLon, descriptor, descriptor.getIcon());
+
+        setDirty(true);
+        refresh();
     }
 
     // -------------------------------------------------------------------------
@@ -117,22 +208,12 @@ public class MapContainer extends BaseContainer implements HoverListener {
      *
      * <p>Overridden to re-center the active map projection on the geographic
      * point under the cursor rather than shifting the viewport. The correct
-     * setter is dispatched based on the active {@link EProjection} type:
-     * <ul>
-     *   <li>{@link EProjection#MERCATOR} →
-     *       {@link MercatorProjection#setCentralLongitude(double)}</li>
-     *   <li>{@link EProjection#MOLLWEIDE} →
-     *       {@link MollweideProjection#setCentralLongitude(double)}</li>
-     *   <li>{@link EProjection#ORTHOGRAPHIC} →
-     *       {@link OrthographicProjection#setCenter(double, double)}</li>
-     *   <li>{@link EProjection#LAMBERT_EQUAL_AREA} →
-     *       {@link LambertEqualAreaProjection#setCenter(double, double)}</li>
-     * </ul>
+     * setter is dispatched based on the active {@link EProjection} type.</p>
      */
     @Override
     public void recenter(Point pp) {
-        IMapProjection mp   = getMapView2D().getProjection();
-        EProjection    proj = mp.getProjection();
+        IMapProjection mp = getMapView2D().getProjection();
+        EProjection proj = mp.getProjection();
 
         Point2D.Double wp = new Point2D.Double();
         Point2D.Double ll = new Point2D.Double();
@@ -140,9 +221,9 @@ public class MapContainer extends BaseContainer implements HoverListener {
         mp.latLonFromXY(ll, wp);
 
         switch (proj) {
-            case MERCATOR       -> ((MercatorProjection)         mp).setCentralLongitude(ll.x);
-            case MOLLWEIDE      -> ((MollweideProjection)        mp).setCentralLongitude(ll.x);
-            case ORTHOGRAPHIC   -> ((OrthographicProjection)     mp).setCenter(ll.x, ll.y);
+            case MERCATOR          -> ((MercatorProjection) mp).setCentralLongitude(ll.x);
+            case MOLLWEIDE         -> ((MollweideProjection) mp).setCentralLongitude(ll.x);
+            case ORTHOGRAPHIC      -> ((OrthographicProjection) mp).setCenter(ll.x, ll.y);
             case LAMBERT_EQUAL_AREA -> ((LambertEqualAreaProjection) mp).setCenter(ll.x, ll.y);
         }
 
@@ -158,41 +239,36 @@ public class MapContainer extends BaseContainer implements HoverListener {
     /**
      * Converts a screen-space (local) point to a geographic lat/lon point.
      *
-     * <p>The conversion path is:
-     * local → world (via container transform) → lat/lon (via projection
-     * inverse).</p>
+     * <p>The conversion path is: local → world (via container transform) →
+     * lat/lon (via projection inverse).</p>
      *
      * @param pp screen-space pixel coordinate
-     * @param ll output lat/lon point in radians ({@code x=λ, y=φ});
-     *           populated in-place
+     * @param ll output lat/lon point in radians ({@code x=λ, y=φ}); populated
+     *           in-place
      */
     public void localToLatLon(Point pp, Point2D.Double ll) {
         Point2D.Double wp = new Point2D.Double();
         localToWorld(pp, wp);
         getMapView2D().getProjection().latLonFromXY(ll, wp);
     }
-    
+
     /**
-	 * Converts a geographic lat/lon point to a screen-space (local) point.
-	 *
-	 * <p>The conversion path is:
-	 * lat/lon → world (via projection forward) → local (via container
-	 * inverse transform).</p>
-	 *
-	 * @param pp output screen-space pixel coordinate; populated in-place
-	 * @param ll input lat/lon point in radians ({@code x=λ, y=φ})
-	 */
+     * Converts a geographic lat/lon point to a screen-space (local) point.
+     *
+     * @param pp output screen-space pixel coordinate; populated in-place
+     * @param ll input lat/lon point in radians ({@code x=λ, y=φ})
+     */
     public void latLonToLocal(Point pp, Point2D.Double ll) {
-		Point2D.Double wp = new Point2D.Double();
-		getMapView2D().getProjection().latLonToXY(ll, wp);
-		worldToLocal(pp, wp);
-	}
+        Point2D.Double wp = new Point2D.Double();
+        getMapView2D().getProjection().latLonToXY(ll, wp);
+        worldToLocal(pp, wp);
+    }
 
     /**
      * Converts a world (projection-space) point to a geographic lat/lon point.
      *
-     * @param ll output lat/lon point in radians ({@code x=λ, y=φ});
-     *           populated in-place
+     * @param ll output lat/lon point in radians ({@code x=λ, y=φ}); populated
+     *           in-place
      * @param wp input world-space coordinate
      */
     public void worldToLatLon(Point2D.Double ll, Point2D.Double wp) {
@@ -237,24 +313,19 @@ public class MapContainer extends BaseContainer implements HoverListener {
     /**
      * Called by {@link HoverManager} after the cursor has rested over this
      * component for the configured dwell time.
-     *
-     * <p>Looks up the country polygon under the cursor via
-     * {@link MapView2D#getCountryAtPoint(Point, edu.cnu.mdi.container.IContainer)}
-     * and shows the country name in the hover popup. If no country is found,
-     * or if the popup window cannot yet be created (component not yet
-     * realized), this method returns silently.</p>
-     *
-     * @param he the hover event containing the source component and cursor
-     *           location
      */
     @Override
     public void hoverUp(HoverEvent he) {
-        Point  p           = he.getLocation();
+        Point p = he.getLocation();
         String countryName = getMapView2D().getCountryAtPoint(p, this);
-        if (countryName == null) return;
+        if (countryName == null) {
+            return;
+        }
 
         HoverInfoWindow win = getHoverWindow();
-        if (win == null) return; // window ancestor not yet available
+        if (win == null) {
+            return;
+        }
 
         SwingUtilities.convertPointToScreen(p, he.getSource());
         win.showMessage(countryName, p);
@@ -263,12 +334,6 @@ public class MapContainer extends BaseContainer implements HoverListener {
     /**
      * Called by {@link HoverManager} when the cursor leaves the component or
      * moves after a hover was triggered.
-     *
-     * <p>Hides the country-name popup. If the popup was never created this is
-     * a no-op.</p>
-     *
-     * @param he the hover event (the location is not used; only the event
-     *           occurrence matters)
      */
     @Override
     public void hoverDown(HoverEvent he) {
@@ -285,12 +350,8 @@ public class MapContainer extends BaseContainer implements HoverListener {
      * Releases all hover-related resources held by this container.
      *
      * <p>Unregisters the canvas from {@link HoverManager}, hides and disposes
-     * the {@link HoverInfoWindow} if one was created, and clears the reference
-     * so it can be garbage-collected. Should be called from
-     * {@link MapView2D#prepareForExit()} when the view is closing.</p>
-     *
-     * <p>Safe to call multiple times; subsequent calls after the first are
-     * no-ops.</p>
+     * the {@link HoverInfoWindow} if one was created. Safe to call multiple
+     * times.</p>
      */
     public void prepareForExit() {
         HoverManager.getInstance().unregisterComponent(getComponent());
@@ -309,11 +370,8 @@ public class MapContainer extends BaseContainer implements HoverListener {
     /**
      * {@inheritDoc}
      *
-     * <p>Returns a {@link MapToolHandler} so that map-specific gestures
-     * (e.g. great-circle line creation via {@link MapToolHandler#createLine})
-     * are used instead of the generic {@link BaseToolHandler} defaults.</p>
-     *
-     * @return a new {@link MapToolHandler} bound to this container
+     * <p>Returns a {@link MapToolHandler} so that map-specific gestures are
+     * used instead of the generic {@link BaseToolHandler} defaults.</p>
      */
     @Override
     protected BaseToolHandler createToolHandler() {
@@ -327,9 +385,6 @@ public class MapContainer extends BaseContainer implements HoverListener {
     /**
      * Returns the owning {@link MapView2D} by casting the base-class view
      * reference.
-     *
-     * @return the parent map view; never {@code null} once the container is
-     *         attached to a view
      */
     private MapView2D getMapView2D() {
         return (MapView2D) getView();
@@ -338,17 +393,14 @@ public class MapContainer extends BaseContainer implements HoverListener {
     /**
      * Returns the hover popup window, creating it lazily on first call.
      *
-     * <p>Returns {@code null} if the component's window ancestor is not yet
-     * available (the component has not yet been added to a realized Swing
-     * hierarchy). Callers must null-check the return value before using the
-     * window.</p>
-     *
      * @return the hover popup, or {@code null} if not yet constructable
      */
     private HoverInfoWindow getHoverWindow() {
         if (hoverWindow == null) {
             Window ownerWin = SwingUtilities.getWindowAncestor(getComponent());
-            if (ownerWin == null) return null;
+            if (ownerWin == null) {
+                return null;
+            }
             hoverWindow = new HoverInfoWindow(ownerWin);
         }
         return hoverWindow;

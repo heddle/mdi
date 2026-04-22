@@ -1,16 +1,20 @@
 package edu.cnu.mdi.mapping;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.swing.JLabel;
+
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.mapping.container.MapContainer;
 import edu.cnu.mdi.mapping.loader.GeoJsonCityLoader;
 import edu.cnu.mdi.mapping.loader.GeoJsonCountryLoader;
 import edu.cnu.mdi.mapping.loader.GeoJsonCountryLoader.CountryFeature;
+import edu.cnu.mdi.mapping.milsym.NatoIconPicker;
 import edu.cnu.mdi.mapping.shapefile.ShapeFeature;
 import edu.cnu.mdi.mapping.shapefile.ShapeFeatureRenderer;
 import edu.cnu.mdi.mapping.shapefile.ShapeFeatureStyle;
@@ -40,9 +44,13 @@ public class DemoMap {
 			//subset of drawing tools for maps because some do not make sense
 			long toolBits = ToolBits.MAPTOOLS | ToolBits.ZOOMTOOLS;
 
+			//for proof of principle of military symbology support
+			NatoIconPicker iconPicker;
+			
 			ContainerFactory mapContainerFactory = MapContainer::new;
 
-			MapView2D mapView = new MapView2D(PropertyUtils.TITLE, "Sample 2D Map View", PropertyUtils.FRACTION, 0.6,
+			MapView2D mapView = new MapView2D(PropertyUtils.TITLE, "Sample 2D Map View", 
+					PropertyUtils.FRACTION, 0.6,
 					PropertyUtils.ASPECT, 1.5, PropertyUtils.CONTAINERFACTORY, mapContainerFactory,
 					PropertyUtils.TOOLBARBITS, toolBits, PropertyUtils.WHEELZOOM, true);
 
@@ -115,6 +123,12 @@ public class DemoMap {
 				// Cities — use GeoJSON so the population slider works
 				mapView.setCities(GeoJsonCityLoader.loadFromResourceStatic(resPrefix + MapResources.CITIES_GEOJSON));
 
+				NatoIconPicker picker = new NatoIconPicker();
+				
+				// addWestPanel uses a double-invokeLater to run after all
+				// construction placement has settled.
+				mapView.addWestPanel(picker);
+				
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

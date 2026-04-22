@@ -1036,9 +1036,22 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	 * Compute transforms for world <-> local conversion.
 	 */
 	protected void setAffineTransforms() {
-		Rectangle bounds = getBounds();
+		// Use getWidth()/getHeight() rather than getBounds() here.
+		//
+		// getBounds() returns the component's rectangle in its *parent's*
+		// coordinate space (bounds.x/y = offset within parent). But
+		// paintComponent() receives a Graphics2D already translated to the
+		// component's own origin — (0,0) in that context is always the
+		// component's top-left corner regardless of parent position.
+		//
+		// The old code subtracted bounds.x/bounds.y in the affine translate,
+		// double-correcting for the parent offset and corrupting the world↔screen
+		// mapping whenever the container was not at (0,0) in its parent — e.g.
+		// after adding a WEST panel that shifts the canvas rightward.
+		int w = getWidth();
+		int h = getHeight();
 
-		if ((bounds == null) || (bounds.width < 1) || (bounds.height < 1)) {
+		if (w < 1 || h < 1) {
 			localToWorld = null;
 			worldToLocal = null;
 			return;
@@ -1051,12 +1064,13 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 			return;
 		}
 
-		double scaleX = _worldSystem.width / bounds.width;
-		double scaleY = _worldSystem.height / bounds.height;
+		double scaleX = _worldSystem.width / w;
+		double scaleY = _worldSystem.height / h;
 
+		// Map pixel (0,0) → world top-left; y-axis flipped because screen y
+		// increases downward while world y increases upward.
 		localToWorld = AffineTransform.getTranslateInstance(_worldSystem.getMinX(), _worldSystem.getMaxY());
 		localToWorld.concatenate(AffineTransform.getScaleInstance(scaleX, -scaleY));
-		localToWorld.concatenate(AffineTransform.getTranslateInstance(-bounds.x, -bounds.y));
 
 		try {
 			worldToLocal = localToWorld.createInverse();
@@ -1111,18 +1125,6 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 		BufferedImage image = GraphicsUtils.getComponentImageBuffer(this);
 		GraphicsUtils.paintComponentOnImage(this, image);
 		return image;
-	}
-
-	private boolean _standardPanning = true;
-
-	@Override
-	public boolean isStandardPanning() {
-		return _standardPanning;
-	}
-
-	@Override
-	public void setStandardPanning(boolean standardPanning) {
-		_standardPanning = standardPanning;
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package edu.cnu.mdi.mapping;
 
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
@@ -9,7 +10,6 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.SwingConstants;
@@ -64,6 +64,8 @@ public class MapControlPanel extends JPanel {
     private final MapTheme darkTheme  = MapTheme.dark();
     private final MapTheme lightTheme = MapTheme.light();
     private final MapTheme blueTheme  = MapTheme.blue();
+    
+    private final Font font = Fonts.plainFontDelta(-2);
 
     /** The theme currently selected by the radio buttons. */
     private MapTheme currentTheme = lightTheme;
@@ -128,21 +130,17 @@ public class MapControlPanel extends JPanel {
      * @param panel the panel to add the combo box to
      */
     private void createProjectionCombo(JPanel panel) {
-        JLabel projLabel = new JLabel("Projection");
-        projLabel.setFont(Fonts.mediumFont);
-        leftAlign(projLabel);
 
         EnumComboBox<EProjection> projCombo = EProjection.createComboBox();
         projCombo.addActionListener(e -> {
             EProjection selected = projCombo.getSelectedEnum();
             mapView.setProjection(selected);
         });
+        projCombo.setFont(font);
         leftAlign(projCombo);
 
-        panel.add(projLabel);
-        panel.add(Box.createVerticalStrut(4));
         panel.add(projCombo);
-        panel.add(Box.createVerticalStrut(12));
+        panel.add(Box.createVerticalStrut(6));
     }
 
     /**
@@ -156,7 +154,7 @@ public class MapControlPanel extends JPanel {
      */
     private void createCheckboxes(JPanel panel) {
         JCheckBox showCityNamesCheckBox = new JCheckBox("Show city names", true);
-        showCityNamesCheckBox.setFont(Fonts.mediumFont);
+        showCityNamesCheckBox.setFont(font);
         showCityNamesCheckBox.setHorizontalAlignment(SwingConstants.LEFT);
         showCityNamesCheckBox.addActionListener(e -> {
             showNames = showCityNamesCheckBox.isSelected();
@@ -164,7 +162,7 @@ public class MapControlPanel extends JPanel {
         });
         leftAlign(showCityNamesCheckBox);
         panel.add(showCityNamesCheckBox);
-        panel.add(Box.createVerticalStrut(12));
+        panel.add(Box.createVerticalStrut(6));
     }
 
     /**
@@ -184,7 +182,8 @@ public class MapControlPanel extends JPanel {
         minPopSlider.setBorder(new CommonBorder("Minimum Population"));
         leftAlign(minPopSlider);
         panel.add(minPopSlider);
-        panel.add(Box.createVerticalStrut(12));
+        panel.add(Box.createVerticalStrut(6));
+       
     }
 
     /**
@@ -219,7 +218,7 @@ public class MapControlPanel extends JPanel {
         subPanel.add(lightThemeButton);
         subPanel.add(darkThemeButton);
         subPanel.add(blueThemeButton);
-        subPanel.add(Box.createVerticalStrut(8));
+        subPanel.add(Box.createVerticalStrut(6));
         subPanel.setBorder(new CommonBorder("Map Theme"));
         panel.add(subPanel);
     }
@@ -237,7 +236,7 @@ public class MapControlPanel extends JPanel {
                                            ActionListener al, boolean selected) {
         JRadioButton button = new JRadioButton(label);
         button.setSelected(selected);
-        button.setFont(Fonts.mediumFont);
+        button.setFont(font);
         bg.add(button);
         button.addActionListener(al);
         return button;

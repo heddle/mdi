@@ -20,6 +20,12 @@ import javax.swing.JMenuBar;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.UIManager;
+import javax.swing.JLabel;
+import javax.swing.JWindow;
+import javax.swing.BorderFactory;
+import java.awt.Font;
+import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
@@ -32,6 +38,7 @@ import edu.cnu.mdi.ui.menu.FileMenu;
 import edu.cnu.mdi.ui.menu.MenuManager;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.util.PropertyUtils;
+import edu.cnu.mdi.view.BaseView;
 import edu.cnu.mdi.view.ViewManager;
 import edu.cnu.mdi.view.VirtualView;
 
@@ -333,17 +340,92 @@ public class BaseMDIApplication extends JFrame {
 	protected void standardVirtualDesktopReady(VirtualView vv, Runnable defaultLayout, boolean applySavedLayout) {
 		if (vv != null) {
 			vv.reconfigure();
-			if (defaultLayout != null) {
-				defaultLayout.run();
-			}
 		}
+		// Apply saved layout FIRST — persisted positions are the baseline.
+		// defaultLayout runs second and should skip views that already have a
+		// saved position by guarding each moveTo() with hasSavedLayout(view).
 		if (applySavedLayout) {
 			Desktop.getInstance().loadConfigurationFile();
 			Desktop.getInstance().configureViews();
+			// Notify developers (and users) when a saved layout is applied so
+			// that "my coded placement is being ignored" confusion is avoided.
+			// The toast dismisses itself after 3 seconds — no user action needed.
+			if (Desktop.getInstance().getSavedProperties() != null) {
+				showConfigToast();
+			}
+		}
+		if (vv != null && defaultLayout != null) {
+			defaultLayout.run();
 		}
 		Log.getInstance().config(vv != null ? "Virtual desktop enabled" : "Virtual desktop disabled");
 	}
 
+	/**
+	 * Shows a brief self-dismissing toast notification indicating that a saved
+	 * layout configuration has been found and applied.
+	 *
+	 * <p>The toast appears in the bottom-right corner of the screen and
+	 * automatically fades out after 3 seconds. It requires no user interaction.
+	 * Its primary purpose is to prevent developer confusion when coded placements
+	 * in {@link #defaultViewLayout()} appear to be ignored — a symptom of a saved
+	 * config silently overriding them.</p>
+	 */
+	private void showConfigToast() {
+		final int DISPLAY_MS   = 3000;
+		final int MARGIN       = 20;
+
+		JLabel label = new JLabel("  ℹ  Saved layout configuration applied  ");
+		label.setFont(label.getFont().deriveFont(Font.PLAIN, 12f));
+		label.setForeground(new Color(240, 240, 240));
+		label.setBackground(new Color(60, 60, 60, 220));
+		label.setOpaque(true);
+		label.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createLineBorder(new Color(100, 100, 100), 1),
+				BorderFactory.createEmptyBorder(6, 10, 6, 10)));
+
+		JWindow toast = new JWindow(this);
+		toast.setBackground(new Color(0, 0, 0, 0)); // transparent frame
+		toast.add(label);
+		toast.pack();
+
+		// Position in the bottom-right corner of the screen.
+		Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment()
+				.getMaximumWindowBounds();
+		int x = screen.x + screen.width  - toast.getWidth()  - MARGIN;
+		int y = screen.y + screen.height - toast.getHeight() - MARGIN;
+		toast.setLocation(x, y);
+		toast.setVisible(true);
+
+		// Auto-dismiss after DISPLAY_MS milliseconds.
+		new Timer(DISPLAY_MS, e -> {
+			((Timer) e.getSource()).stop();
+			toast.setVisible(false);
+			toast.dispose();
+		}) {{ setRepeats(false); }}.start();
+	}
+
+	/**
+	 * Returns {@code true} if the desktop has a saved layout entry for the
+	 * given view (i.e. it was present in the configuration file).
+	 *
+	 * <p>Use this in {@link #defaultViewLayout()} to skip views whose positions
+	 * have already been restored from saved config:</p>
+	 * <pre>
+	 *   if (!hasSavedLayout(myView)) vv.moveTo(myView, col, constraint);
+	 * </pre>
+	 *
+	 * @param view the view to check
+	 * @return {@code true} if a saved position exists for this view
+	 */
+	protected boolean hasSavedLayout(BaseView view) {
+		if (view == null) return false;
+		java.util.Properties saved = Desktop.getInstance().getSavedProperties();
+		if (saved == null || saved.isEmpty()) return false;
+		return saved.containsKey(view.getPropertyName() + ".x");
+	}
+
+
+	// in BaseMDIApplication
 	protected void standardVirtualDesktopRelayout(VirtualView vv) {
 		if (vv != null) {
 			vv.reconfigure();
