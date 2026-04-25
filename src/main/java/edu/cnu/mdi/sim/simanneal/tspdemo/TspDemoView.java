@@ -20,6 +20,7 @@ import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingSimulation;
 import edu.cnu.mdi.sim.simanneal.TemperatureHeuristic;
 import edu.cnu.mdi.sim.simanneal.heuristics.EnergyDistributionHeuristic;
 import edu.cnu.mdi.sim.ui.SimulationView;
+import edu.cnu.mdi.view.AbstractViewInfo;
 
 /**
  * Traveling Salesperson Problem (TSP) simulated annealing demo, hosted in an
@@ -225,6 +226,16 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
         pack();
         startSimulation();
     }
+
+    
+	/**
+	 *  Get an information object describing this view,
+	 *  used in the UI and for help.
+	 */
+	@Override
+	public AbstractViewInfo getViewInfo() {
+		return new TspDemoViewInfo();
+	}
 
     // -------------------------------------------------------------------------
     // Factory helpers

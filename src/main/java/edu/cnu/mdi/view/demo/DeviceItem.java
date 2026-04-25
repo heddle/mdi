@@ -48,6 +48,7 @@ public class DeviceItem extends PointItem {
 				PropertyUtils.RIGHTCLICKABLE, true,
 				PropertyUtils.DRAGGABLE, true,
 				PropertyUtils.ROTATABLE, false,
+				PropertyUtils.STYLEEDITABLE, false,
 				PropertyUtils.RESIZABLE, false,
 				PropertyUtils.DELETABLE, true,
 				PropertyUtils.LOCKED, false,

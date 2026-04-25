@@ -50,11 +50,9 @@ public class HelloMDI extends BaseMDIApplication {
 		// specify (bitwise) what will be on the toolbar
 		long toolBits = ToolBits.INFO | ToolBits.STATUS | ToolBits.DRAWINGTOOLS | ToolBits.ZOOMTOOLS | ToolBits.PAN;
 
-		new DrawingView(PropertyUtils.WORLDSYSTEM, new Rectangle2D.Double(0, 0, 1, 1), 
+		new DrawingView(
 				PropertyUtils.FRACTION, 0.8,
 				PropertyUtils.TOOLBARBITS, toolBits, 
-				PropertyUtils.VISIBLE, true, 
-				PropertyUtils.BACKGROUND, Color.white, 
 				PropertyUtils.TITLE, "Drawing View");
 	}
 

@@ -49,6 +49,7 @@ public class PropertyUtils {
 	public static final String SCROLLABLE = "SCROLLABLE";
 	public static final String SPLITWESTCOMPONENT = "SPLITWESTCOMPONENT";
 	public static final String STANDARDVIEWDECORATIONS = "STANDARDVIEWDECORATIONS";
+	public static final String STYLEEDITABLE = "STYLEEDITABLE";
 	public static final String SYMBOL = "SYMBOL";
 	public static final String SYMBOLSIZE = "SYMBOLSIZE";
 	public static final String TEXTCOLOR = "TEXTCOLOR";
@@ -112,6 +113,7 @@ public class PropertyUtils {
 	    KNOWN_KEYS.put(SCROLLABLE, Boolean.class);
 	    KNOWN_KEYS.put(SPLITWESTCOMPONENT, JComponent.class);
 	    KNOWN_KEYS.put(STANDARDVIEWDECORATIONS, Boolean.class);
+	    KNOWN_KEYS.put(STYLEEDITABLE, Boolean.class);
 	    KNOWN_KEYS.put(SYMBOL, SymbolType.class);
 	    KNOWN_KEYS.put(SYMBOLSIZE, Integer.class);
 	    KNOWN_KEYS.put(TEXTCOLOR, Color.class);
@@ -460,6 +462,16 @@ public class PropertyUtils {
 	 */
 	public static boolean getRotatable(Properties props) {
 		return getBoolean(props, ROTATABLE, false);
+	}
+	
+	/**
+	 * Get the style editable boolean flag. For items.
+	 *
+	 * @param props the properties
+	 * @return the style editable flag. On error, return false.
+	 */
+	public static boolean getStyleEditable(Properties props) {
+		return getBoolean(props, STYLEEDITABLE, false);
 	}
 
 	/**

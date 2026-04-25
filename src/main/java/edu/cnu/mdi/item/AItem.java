@@ -184,6 +184,9 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 
     /** Whether this item can be rotated. Suppressed by {@link #_locked}. */
     protected boolean _rotatable    = false;
+    
+    /** Whether this item can be styled via the style editor. */
+    protected boolean _styleEditable = true;
 
     /** Whether this item responds to right-click. */
     protected boolean _rightClickable = true;
@@ -325,6 +328,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
         setConnectable(PropertyUtils.getConnectable(props));
         setDoubleClickable(PropertyUtils.getDoubleClickable(props));
         setRotatable(PropertyUtils.getRotatable(props));
+        setStyleEditable(PropertyUtils.getStyleEditable(props));
 
         String title = PropertyUtils.getTitle(props);
         if (title != null) _displayName = title;
@@ -890,6 +894,11 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     public boolean isRotatable()           { return !_locked && _rotatable; }
     /** @param rotatable {@code true} to allow rotation */
     public void setRotatable(boolean rotatable)     { _rotatable = rotatable; }
+    
+    /** @return {@code true} if this item can be styled via the style editor */
+    public boolean isStyleEditable()       { return _styleEditable; }
+    /** @param styleEditable {@code true} to allow styling via the style editor */
+    public void setStyleEditable(boolean styleEditable) { _styleEditable = styleEditable; }
 
     /** @return {@code true} if this item can be connected to other items */
     public boolean isConnectable()         { return _connectable; }

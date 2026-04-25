@@ -29,16 +29,16 @@ import edu.cnu.mdi.ui.fonts.Fonts;
 @SuppressWarnings("serial")
 public class NetworkDeclutterControlPanel extends JPanel implements ISimulationControlPanel, SimulationListener {
 	// Server slider parameters
-	private static final int MIN_SERVERS = 5;
-	private static final int MAX_SERVERS = 45;
+	static final int MIN_SERVERS = 5;
+	static final int MAX_SERVERS = 45;
 
 	// Client slider parameters
-	private static final int MIN_CLIENTS = 10;
-	private static final int MAX_CLIENTS = 210;
+	static final int MIN_CLIENTS = 10;
+	static final int MAX_CLIENTS = 210;
 
 	// Printer slider parameters
-	private static final int MIN_PRINTERS = 0;
-	private static final int MAX_PRINTERS = 20;
+	static final int MIN_PRINTERS = 0;
+	static final int MAX_PRINTERS = 20;
 
 	// Base panel with buttons + progress
 	private final IconSimulationControlPanel basePanel;

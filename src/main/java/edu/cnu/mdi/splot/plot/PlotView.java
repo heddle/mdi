@@ -25,17 +25,35 @@ import edu.cnu.mdi.splot.io.PlotFileFilter;
 import edu.cnu.mdi.splot.io.PlotIO;
 import edu.cnu.mdi.splot.io.RecentPlotFiles;
 import edu.cnu.mdi.splot.io.RecentPlotsMenu;
-import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.util.PropertyUtils;
 import edu.cnu.mdi.view.AbstractViewInfo;
 import edu.cnu.mdi.view.BaseView;
 
 /**
- * This is a predefined view used to display a plot from splot
+ * Predefined view that displays a plot loaded from an splot JSON file.
  *
- * @author heddle
+ * <p>{@code PlotView} hosts a {@link CardLayout} deck with two cards:</p>
+ * <ul>
+ *   <li>{@link #CARD_PLOT} — the standard {@link PlotPanel} / {@link PlotCanvas}
+ *       rendering.</li>
+ *   <li>{@link #CARD_HISTO2D} — an optional 2-D histogram panel, enabled only
+ *       when the loaded data contains a {@code Histo2D} dataset.</li>
+ * </ul>
  *
+ * <h2>File drag-and-drop</h2>
+ * <p>Drop support for {@code .plot.json} and {@code .splot.json} files is
+ * activated in the constructor via
+ * {@link BaseView#enableFileDrop(java.util.function.Predicate)}.
+ * Subclasses that need to accept additional file types should call
+ * {@code enableFileDrop} with a broader predicate and extend
+ * {@link #filesDropped} accordingly.</p>
+ *
+ * <h2>Plot lifecycle</h2>
+ * <p>All panel swaps (open, drag-and-drop, external programmatic switch) flow
+ * through {@link #setPlotPanel}, which is the single choke-point responsible
+ * for keeping the canvas reference, the edit menu, and the View menu
+ * in sync.</p>
  */
 @SuppressWarnings("serial")
 public class PlotView extends BaseView {
@@ -62,14 +80,32 @@ public class PlotView extends BaseView {
 	private JRadioButtonMenuItem _plotMenuItem;
 	private JMenuItem _histoMenuItem;
 
+	/**
+	 * Create a {@code PlotView} with the default title {@code "sPlot"}.
+	 */
 	public PlotView() {
 		this("sPlot");
 	}
 
 	/**
-	 * Create a PlotView
+	 * Create a {@code PlotView} from alternating key/value property pairs.
 	 *
-	 * @param title the view title
+	 * <p>The view is built in four steps:</p>
+	 * <ol>
+	 *   <li>A {@link CardLayout} deck is created holding the standard plot card
+	 *       ({@link #CARD_PLOT}) and the 2-D histogram card
+	 *       ({@link #CARD_HISTO2D}).</li>
+	 *   <li>File drag-and-drop is enabled for {@code .plot.json} and
+	 *       {@code .splot.json} files via {@link #enableFileDrop(Predicate)}.
+	 *       The handler is installed once on all appropriate surfaces (canvas,
+	 *       viewport, and frame); it does <em>not</em> need to be re-installed
+	 *       when the plot panel is replaced by {@link #setPlotPanel}.</li>
+	 *   <li>Plot and edit menus are added to the menu bar.</li>
+	 *   <li>The View menu state is synchronised with the current panel's
+	 *       capabilities.</li>
+	 * </ol>
+	 *
+	 * @param keyVals alternating {@link PropertyUtils} key/value pairs
 	 */
 	public PlotView(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
@@ -88,14 +124,14 @@ public class PlotView extends BaseView {
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
 
-		Predicate<File> plotFilter = f -> {
-			if (!f.isFile()) {
-				return false;
-			}
-			String name = f.getName().toLowerCase();
-			return name.endsWith(".plot.json") || name.endsWith(".splot.json");
-		};
-		setFileFilter(plotFilter);
+		// Enable drop for splot plot files.  enableFileDrop installs the handler
+		// on the canvas, viewport, and view frame, so it covers the full card
+		// deck regardless of which card is currently visible.  There is no need
+		// to re-install the handler when the plot panel is swapped.
+		enableFileDrop(f -> f.isFile()
+				&& (f.getName().toLowerCase().endsWith(".plot.json")
+						|| f.getName().toLowerCase().endsWith(".splot.json")));
+
 		addMenus();
 		// Initial sync of the menu state
 		updateViewMenuState();
@@ -236,11 +272,21 @@ public class PlotView extends BaseView {
 		_cardLayout.show(_cardDeck, cardName);
 	}
 
-	// create the plot panel
+	/**
+	 * Create the initial plot panel and its canvas.
+	 *
+	 * <p>No {@link edu.cnu.mdi.transfer.FileDropHandler} is installed here.
+	 * Drop support for the canvas is handled once, centrally, by the
+	 * {@link #enableFileDrop(Predicate)} call in the constructor.  When the
+	 * canvas is replaced later (via {@link #setPlotPanel}), the view-frame
+	 * surface installed by {@code enableFileDrop} continues to receive drops
+	 * without any re-wiring.</p>
+	 *
+	 * @return the newly created {@link PlotPanel}
+	 */
 	private PlotPanel createPlotPanel() {
 		_plotCanvas = new PlotCanvas(null, "Empty Plot", "X Axis", "Y axis");
 		_plotPanel = new PlotPanel(_plotCanvas);
-		_plotCanvas.setTransferHandler(new FileDropHandler(this));
 
 		_plotPanel.getToolBar().addInfoButton();
 		return _plotPanel;
@@ -267,31 +313,57 @@ public class PlotView extends BaseView {
 	/**
 	 * Updated to ensure every new plot starts on the "Plot" card.
 	 */
+	/**
+	 * Replace the current plot panel with a new one and update all dependent state.
+	 *
+	 * <p>This method is the single choke-point through which every panel swap
+	 * flows, whether triggered by opening a file, an external call to
+	 * {@link #switchToPlotPanel}, or any future code path.</p>
+	 *
+	 * <p>The following updates are performed atomically before the card deck is
+	 * repainted:</p>
+	 * <ol>
+	 *   <li>The old panel is removed from the deck.</li>
+	 *   <li>{@link #_plotPanel} and {@link #_plotCanvas} are updated.</li>
+	 *   <li>The View menu is re-evaluated for 2-D histogram capability.</li>
+	 *   <li>The deck is reset to the {@link #CARD_PLOT} card so that the user
+	 *       always starts on the standard plot after a load.</li>
+	 *   <li>The 2-D histogram panel ({@link #CARD_HISTO2D}) is rebuilt for the
+	 *       new canvas.</li>
+	 * </ol>
+	 *
+	 * <p><strong>No {@link edu.cnu.mdi.transfer.FileDropHandler} is installed
+	 * here.</strong>  Drop support was established once by
+	 * {@link #enableFileDrop(Predicate)} in the constructor; the view-frame
+	 * surface it installed remains active regardless of how many times the
+	 * canvas is swapped.</p>
+	 *
+	 * @param plotPanel the new panel to install; must not be {@code null}
+	 */
 	private void setPlotPanel(PlotPanel plotPanel) {
-	    _cardDeck.remove(_plotPanel);
+		_cardDeck.remove(_plotPanel);
 
-	    _plotPanel = plotPanel;
+		_plotPanel = plotPanel;
 		_plotPanel.getToolBar().addInfoButton();
-	    _plotCanvas = plotPanel.getPlotCanvas();
-	    _plotCanvas.setTransferHandler(new FileDropHandler(this));
+		_plotCanvas = plotPanel.getPlotCanvas();
 
-	    _cardDeck.add(_plotPanel, CARD_PLOT);
+		_cardDeck.add(_plotPanel, CARD_PLOT);
 
-	    // 1. Update menu enablement
-	    updateViewMenuState();
+		// 1. Update menu enablement
+		updateViewMenuState();
 
-	    // 2. ALWAYS reset to the standard Plot card for new panels
-	    showCard(CARD_PLOT);
+		// 2. ALWAYS reset to the standard Plot card for new panels
+		showCard(CARD_PLOT);
 
-	    // 3. Ensure the radio button in the menu matches the reset
-	    if (_plotMenuItem != null) {
-	        _plotMenuItem.setSelected(true);
-	    }
+		// 3. Ensure the radio button in the menu matches the reset
+		if (_plotMenuItem != null) {
+			_plotMenuItem.setSelected(true);
+		}
 
-	    setHisto2DPanel();
+		setHisto2DPanel();
 
-	    _cardDeck.revalidate();
-	    _cardDeck.repaint();
+		_cardDeck.revalidate();
+		_cardDeck.repaint();
 	}
 	/**
 	 * Switch to a different plot panel (and its canvas)
@@ -349,9 +421,18 @@ public class PlotView extends BaseView {
 	// -----------------------------
 
 	/**
-	 * Handle files dropped on this view through drag and drop.
+	 * Handle plot files dropped on this view through drag-and-drop.
 	 *
-	 * @param files the dropped files.
+	 * <p>Only the first file in the list is used; the filter set by
+	 * {@link #enableFileDrop(Predicate)} in the constructor already guarantees
+	 * every entry ends with {@code .plot.json} or {@code .splot.json}, so no
+	 * second format check is required here.</p>
+	 *
+	 * <p>The parent directory of the dropped file is recorded in
+	 * {@link edu.cnu.mdi.util.Environment} so that the next "Open" dialog opens
+	 * in the same location.</p>
+	 *
+	 * @param files the accepted dropped files; never {@code null}, never empty
 	 */
 	@Override
 	public void filesDropped(List<File> files) {
@@ -363,7 +444,6 @@ public class PlotView extends BaseView {
 		File file = files.get(0);
 		updateEnvironmentDataDirectory(file);
 		openPlotFile(file);
-
 	}
 
 	// Get initial directory for file chooser from Environment

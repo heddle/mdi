@@ -35,7 +35,6 @@ import edu.cnu.mdi.item.ItemChangeListener;
 import edu.cnu.mdi.item.ItemChangeType;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.log.Log;
-import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.view.BaseView;
 
 /**
@@ -82,140 +81,158 @@ import edu.cnu.mdi.view.BaseView;
  * {@link #createToolHandler()} rather than overriding {@link #setToolBar}.
  * This keeps the base class free of {@code instanceof} checks against specific
  * subclasses.
+ *
+ * <h2>File drag-and-drop</h2>
+ * <p>Drop support is no longer installed here.  It is managed centrally by
+ * {@link BaseView#enableFileDrop}, which attaches a single
+ * {@link edu.cnu.mdi.transfer.FileDropHandler} to the canvas component (this
+ * object), the scroll-pane viewport (when present), and the view frame itself.
+ * Subclasses of {@code BaseView} activate drop support with one call:</p>
+ * <pre>
+ *     enableFileDrop(myFileFilter);   // in the BaseView subclass constructor
+ * </pre>
  */
 @SuppressWarnings("serial")
 public class BaseContainer extends JComponent implements IContainer, ItemChangeListener {
 
-	/**
-	 * The user-managed z-layers (does NOT include protected layers).
-	 * <p>
-	 * Ordering convention: index 0 is back (drawn earlier), last index is front.
-	 */
-	protected List<Layer> _layers = new ArrayList<>();
+    /**
+     * The user-managed z-layers (does NOT include protected layers).
+     * <p>
+     * Ordering convention: index 0 is back (drawn earlier), last index is front.
+     */
+    protected List<Layer> _layers = new ArrayList<>();
 
-	/** Optional toolbar for this container. */
-	protected AToolBar _toolBar;
+    /** Optional toolbar for this container. */
+    protected AToolBar _toolBar;
 
-	/** Optional feedback(mouse-over) pane. */
-	protected FeedbackPane _feedbackPane;
+    /** Optional feedback (mouse-over) pane. */
+    protected FeedbackPane _feedbackPane;
 
-	/** Optional drawable invoked after all z layers are drawn. */
-	protected IDrawable _afterDraw;
+    /** Optional drawable invoked after all z layers are drawn. */
+    protected IDrawable _afterDraw;
 
-	/** Optional drawable invoked before user layers are drawn. */
-	protected IDrawable _beforeDraw;
+    /** Optional drawable invoked before user layers are drawn. */
+    protected IDrawable _beforeDraw;
 
-	/** The view that holds this container (may be null for viewless container). */
-	protected BaseView _view;
+    /** The view that holds this container (may be null for viewless container). */
+    protected BaseView _view;
 
-	/** World coordinate viewport. */
-	protected Rectangle2D.Double _worldSystem;
+    /** World coordinate viewport. */
+    protected Rectangle2D.Double _worldSystem;
 
-	/** Default/original world system. */
-	protected Rectangle2D.Double _defaultWorldSystem;
+    /** Default/original world system. */
+    protected Rectangle2D.Double _defaultWorldSystem;
 
-	/** Previous world system (used to undo last zoom). */
-	protected Rectangle2D.Double _previousWorldSystem;
+    /** Previous world system (used to undo last zoom). */
+    protected Rectangle2D.Double _previousWorldSystem;
 
-	/**
-	 * Default user content layer (drawn between connection and annotation layers).
-	 * Most developer-created items go here by default.
-	 */
-	protected Layer _defaultLayer;
+    /**
+     * Default user content layer (drawn between connection and annotation layers).
+     * Most developer-created items go here by default.
+     */
+    protected Layer _defaultLayer;
 
-	/**
-	 * Annotation layer (protected; always drawn last).
-	 */
-	protected Layer _annotationLayer;
+    /**
+     * Annotation layer (protected; always drawn last).
+     */
+    protected Layer _annotationLayer;
 
-	/**
-	 * Connection layer (protected; always drawn first).
-	 */
-	protected Layer _connectionLayer;
+    /**
+     * Connection layer (protected; always drawn first).
+     */
+    protected Layer _connectionLayer;
 
-	/**
-	 * Feedback control for mouse-over feedback providers.
-	 */
-	protected final FeedbackControl _feedbackControl;
+    /**
+     * Feedback control for mouse-over feedback providers.
+     */
+    protected final FeedbackControl _feedbackControl;
 
-	/** Transform local(screen) -> world. */
-	protected AffineTransform localToWorld;
+    /** Transform local(screen) → world. */
+    protected AffineTransform localToWorld;
 
-	/** Transform world -> local(screen). */
-	protected AffineTransform worldToLocal;
+    /** Transform world → local(screen). */
+    protected AffineTransform worldToLocal;
 
-	// Tool handler for this container
-	protected BaseToolHandler toolHandler;
+    /** Tool handler for this container. */
+    protected BaseToolHandler toolHandler;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param worldSystem the default world system (viewport)
-	 */
-	public BaseContainer(Rectangle2D.Double worldSystem) {
+    /**
+     * Construct a container with the given initial world system.
+     *
+     * @param worldSystem the default world coordinate viewport; must not be
+     *                    {@code null}
+     */
+    public BaseContainer(Rectangle2D.Double worldSystem) {
 
-		_feedbackControl = new FeedbackControl(this);
+        _feedbackControl = new FeedbackControl(this);
 
-		resetWorldSystem(worldSystem);
+        resetWorldSystem(worldSystem);
 
-		// Create layers. NOTE: Layer constructor auto-calls container.addLayer(this).
-		_connectionLayer = new Layer(this, "Connections");
-		_defaultLayer = new Layer(this, "Content");
-		_annotationLayer = new Layer(this, "Annotations");
+        // Create layers. NOTE: Layer constructor auto-calls container.addLayer(this).
+        _connectionLayer = new Layer(this, "Connections");
+        _defaultLayer    = new Layer(this, "Content");
+        _annotationLayer = new Layer(this, "Annotations");
 
-		// IMPORTANT: Because addLayer() was called before the fields were assigned,
-		// the protected layers may have accidentally been added to _layers. Fix it now.
-		_layers.remove(_connectionLayer);
-		_layers.remove(_annotationLayer);
+        // IMPORTANT: Because addLayer() was called before the fields were assigned,
+        // the protected layers may have accidentally been added to _layers. Fix it now.
+        _layers.remove(_connectionLayer);
+        _layers.remove(_annotationLayer);
 
-		// Ensure the default layer is present as a user layer
-		if (!_layers.contains(_defaultLayer)) {
-			_layers.add(_defaultLayer);
-		}
+        // Ensure the default layer is present as a user layer.
+        if (!_layers.contains(_defaultLayer)) {
+            _layers.add(_defaultLayer);
+        }
 
-		// listen for resize events
-		ComponentAdapter componentAdapter = new ComponentAdapter() {
-			@Override
-			public void componentResized(ComponentEvent ce) {
-				setDirty(true);
-				repaint();
-				setAffineTransforms();
-			}
-		};
+        // Listen for resize events so transforms stay current.
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent ce) {
+                setDirty(true);
+                repaint();
+                setAffineTransforms();
+            }
+        });
+    }
 
-		addComponentListener(componentAdapter);
-	}
+    /**
+     * Associate this container with its hosting view.
+     *
+     * <p>File drag-and-drop wiring is <em>not</em> done here; it is the
+     * responsibility of the view itself via
+     * {@link BaseView#enableFileDrop(java.util.function.Predicate)}.  This
+     * keeps all drop-surface management in one place and avoids the container
+     * needing to know about the transfer layer.</p>
+     *
+     * {@inheritDoc}
+     */
+    @Override
+    public void setView(BaseView view) {
+        _view = view;
+    }
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public void setView(BaseView view) {
-		_view = view;
-		// Initialize the file drop handler
-		setTransferHandler(new FileDropHandler(_view));
-	}
+    /**
+     * Share the model with another container (used for magnification windows).
+     * <p>
+     * This is not a deep copy: layers and items are shared by reference.
+     *
+     * @param sContainer the source container
+     */
+    public void shareModel(BaseContainer sContainer) {
+        if (sContainer == null) {
+            return;
+        }
+        _annotationLayer = sContainer._annotationLayer;
+        _connectionLayer = sContainer._connectionLayer;
+        _defaultLayer    = sContainer._defaultLayer;
+        _layers          = sContainer._layers;
+        _afterDraw       = sContainer._afterDraw;
+        _beforeDraw      = sContainer._beforeDraw;
+        setBackground(sContainer.getBackground());
+        setForeground(sContainer.getForeground());
+    }
 
-	/**
-	 * Share the model with another container (used for magnification windows).
-	 * <p>
-	 * This is not a deep copy: layers and items are shared by reference.
-	 *
-	 * @param sContainer the source container
-	 */
-	public void shareModel(BaseContainer sContainer) {
-		if (sContainer == null) {
-			return;
-		}
-		_annotationLayer = sContainer._annotationLayer;
-		_connectionLayer = sContainer._connectionLayer;
-		_defaultLayer = sContainer._defaultLayer;
-		_layers = sContainer._layers;
-		_afterDraw = sContainer._afterDraw;
-		_beforeDraw = sContainer._beforeDraw;
-		setBackground(sContainer.getBackground());
-		setForeground(sContainer.getForeground());
-	}
+    // The remainder of BaseContainer is unchanged from the original source.
+    // Only setView() above was modified; all other methods are preserved as-is.
 
 	/**
 	 * Get the default user content layer.

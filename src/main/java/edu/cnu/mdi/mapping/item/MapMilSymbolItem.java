@@ -72,6 +72,7 @@ public class MapMilSymbolItem extends MapPointItem {
         setResizable(false);
         setRotatable(false);
         setLocked(false);
+        setStyleEditable(false); // it is an icon, so no style properties to edit
     }
 
     // -------------------------------------------------------------------------

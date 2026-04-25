@@ -320,24 +320,36 @@ public class BaseToolHandler implements IToolHandler {
 			java.awt.Toolkit.getDefaultToolkit().beep();
 			return;
 		}
+		
+		//some items may not be editable, so filter out non-editable items
+		List<AItem> editableItems = new ArrayList<>();
+		for (AItem item : selected) {
+			if (item.isStyleEditable()) {
+				editableItems.add(item);
+			}
+		}
+		if (editableItems.isEmpty()) {
+			java.awt.Toolkit.getDefaultToolkit().beep();
+			return;
+		}
 
 		// text items are special - cannot style multiple at once
 		// have their own editor
 
-		if (selected.size() == 1 && selected.get(0) instanceof TextItem) {
-			TextItem item = (TextItem) selected.get(0);
+		if (editableItems.size() == 1 && editableItems.get(0) instanceof TextItem) {
+			TextItem item = (TextItem) editableItems.get(0);
 			item.edit();
 			return;
 		}
 
 		// seed from first selected item
-		IStyled seed = selected.get(0).getStyleSafe();
+		IStyled seed = editableItems.get(0).getStyleSafe();
 		Styled edited = StyleEditorDialog.edit(container.getComponent(), seed, false);
 		if (edited == null) {
 			return;
 		}
 
-		for (AItem item : selected) {
+		for (AItem item : editableItems) {
 			item.setStyle(edited.copy()); // avoid shared mutable style objects
 			item.setDirty(true);
 		}

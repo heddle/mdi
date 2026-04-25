@@ -28,7 +28,6 @@ import java.util.function.Predicate;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
-import javax.swing.Icon;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
@@ -53,11 +52,11 @@ import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.format.DoubleFormat;
-import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
+import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.transfer.IFileDropHandler;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
 import edu.cnu.mdi.util.PropertyUtils;
@@ -94,6 +93,28 @@ import edu.cnu.mdi.util.PropertyUtils;
  * continue to work.
  * </p>
  *
+ * <h2>File drag-and-drop</h2>
+ * <p>
+ * Drop support is activated by calling {@link #enableFileDrop(Predicate)} in
+ * the subclass constructor (after {@code super(...)}).  That single call
+ * installs a {@link FileDropHandler} on every appropriate surface — the
+ * container canvas, the scroll-pane viewport (when present), and the frame
+ * itself — and stores the filter.  Subclasses then override
+ * {@link #filesDropped(List)} to handle the accepted files.  No other wiring
+ * is required.
+ * </p>
+ * <pre>
+ * public MyView(Object... keyVals) {
+ *     super(PropertyUtils.fromKeyValues(keyVals));
+ *     enableFileDrop(f -> f.getName().endsWith(".csv"));
+ * }
+ *
+ * {@literal @}Override
+ * public void filesDropped(List{@literal <}File{@literal >} files) {
+ *     openCsvFile(files.get(0));
+ * }
+ * </pre>
+ *
  * <h2>Design notes</h2>
  * <ul>
  *   <li>All property parsing happens once in {@link ViewInitConfig#from},
@@ -128,16 +149,6 @@ public class BaseView extends JInternalFrame
     /** Lazily-shown dialog displaying view information. */
     protected JDialog infoDialog;
 
-    /** Icon displayed in the floating info button. */
-    protected static final Icon infoIcon;
-
-    static {
-        String path = ToolBits.getResourcePath(ToolBits.INFO);
-        infoIcon = ImageManager.getInstance().loadUiIcon(
-                path,
-                BaseToolBar.DEFAULT_ICON_SIZE,
-                BaseToolBar.DEFAULT_ICON_SIZE);
-    }
 
     // -----------------------------------------------------------------------
     // Instance state
@@ -369,11 +380,112 @@ public class BaseView extends JInternalFrame
         return container;
     }
 
+    // -----------------------------------------------------------------------
+    // File drag-and-drop
+    // -----------------------------------------------------------------------
+
     /**
-     * Set the drag-and-drop file filter for this view.
+     * Activate file drag-and-drop for this view, accepting all dropped files.
      *
-     * @param filter predicate that accepts only the desired file types; pass
-     *               {@code null} to accept all files
+     * <p>Equivalent to {@code enableFileDrop(null)}.  Every file the user
+     * drops on the view is forwarded to {@link #filesDropped} without any
+     * filtering.</p>
+     *
+     * <p>Call this from the subclass constructor after {@code super(...)}.</p>
+     *
+     * @see #enableFileDrop(Predicate)
+     */
+    protected final void enableFileDrop() {
+        enableFileDrop(null);
+    }
+
+    /**
+     * Activate file drag-and-drop for this view with a type filter.
+     *
+     * <p>Installs a single {@link FileDropHandler} instance on every surface
+     * that can realistically receive a drop in this view:</p>
+     * <ol>
+     *   <li><b>Container canvas</b> — the primary drawing surface for
+     *       container-backed views.</li>
+     *   <li><b>Scroll-pane and its viewport</b> — present when the view was
+     *       constructed with a scroll pane; without this, drops on the
+     *       scroll-bar gutters would be silently ignored.</li>
+     *   <li><b>The view frame itself</b> — a fallback that covers
+     *       container-less views (e.g. log or config panels) and any area of
+     *       the frame chrome not covered by the surfaces above.</li>
+     * </ol>
+     *
+     * <p>The supplied {@code filter} is stored via {@link #setFileFilter} and
+     * is evaluated by {@link FileDropHandler} before {@link #filesDropped} is
+     * called.  Files that do not match the filter are silently discarded; if
+     * every file in a drop is rejected, Swing renders the "no-drop" cursor so
+     * the user receives clear feedback.</p>
+     *
+     * <p><strong>Usage pattern</strong> — call once from the subclass
+     * constructor, then override {@link #filesDropped}:</p>
+     * <pre>
+     * public MyView(Object... keyVals) {
+     *     super(PropertyUtils.fromKeyValues(keyVals));
+     *     enableFileDrop(f -> f.getName().endsWith(".csv"));
+     * }
+     *
+     * {@literal @}Override
+     * public void filesDropped(List{@literal <}File{@literal >} files) {
+     *     openCsvFile(files.get(0));
+     * }
+     * </pre>
+     *
+     * <p>This method is {@code final} to guarantee that the surface coverage
+     * described above is always complete.  Subclasses that need finer control
+     * (e.g. canvas-only drops) may call {@link #setTransferHandler} directly
+     * after calling this method.</p>
+     *
+     * @param filter acceptance predicate applied to each dropped file; pass
+     *               {@code null} to accept all files without screening
+     */
+    protected final void enableFileDrop(Predicate<File> filter) {
+        setFileFilter(filter);
+        FileDropHandler handler = new FileDropHandler(this);
+
+        // 1. Container canvas — primary drop target for drawing views.
+        //    getComponent() returns java.awt.Component, but setTransferHandler
+        //    is defined on javax.swing.JComponent.  All concrete IContainer
+        //    implementations (BaseContainer and its subclasses) extend JComponent,
+        //    so the cast is safe.  The instanceof guard keeps things honest if
+        //    a non-Swing container is ever introduced.
+        if (container != null) {
+            Component canvas = container.getComponent();
+            if (canvas instanceof JComponent) {
+                ((JComponent) canvas).setTransferHandler(handler);
+            }
+        }
+
+        // 2. Scroll pane and its viewport — needed so that drops landing on
+        //    the scroll-bar gutters are not silently swallowed by Swing.
+        if (scrollPane != null) {
+            scrollPane.setTransferHandler(handler);
+            if (scrollPane.getViewport() != null) {
+                scrollPane.getViewport().setTransferHandler(handler);
+            }
+        }
+
+        // 3. The view frame itself — covers container-less views and acts as a
+        //    reliable fallback for any area not covered by the surfaces above.
+        setTransferHandler(handler);
+    }
+
+    /**
+     * Set the file filter used to screen dropped files.
+     *
+     * <p>Prefer calling {@link #enableFileDrop(Predicate)} rather than this
+     * method directly; {@code enableFileDrop} both stores the filter <em>and</em>
+     * installs the {@link FileDropHandler} on all required surfaces.  This
+     * setter is part of the {@link IFileDropHandler} contract and is also
+     * useful when the filter needs to be swapped at runtime without
+     * reinstalling the handler.</p>
+     *
+     * @param filter the acceptance predicate, or {@code null} to accept all
+     *               files
      */
     @Override
     public void setFileFilter(Predicate<File> filter) {
@@ -381,9 +493,9 @@ public class BaseView extends JInternalFrame
     }
 
     /**
-     * Returns the drag-and-drop file filter, or {@code null} if none is set.
+     * Returns the current file filter, or {@code null} if none is set.
      *
-     * @return the file filter
+     * @return the acceptance predicate
      */
     @Override
     public Predicate<File> getFileFilter() {
@@ -391,14 +503,19 @@ public class BaseView extends JInternalFrame
     }
 
     /**
-     * Called when files are dropped on this view.  The default is a no-op;
-     * see {@code PlotView} and {@code DrawingView} for example overrides.
+     * Called on the EDT when one or more accepted files are dropped on this
+     * view.
      *
-     * @param files the dropped files
+     * <p>The default implementation is a no-op.  Subclasses that have called
+     * {@link #enableFileDrop(Predicate)} should override this method to handle
+     * the dropped files.  The list is never {@code null} and is never empty;
+     * the filter (if any) has already been applied.</p>
+     *
+     * @param files the accepted dropped files; never {@code null}, never empty
      */
     @Override
     public void filesDropped(List<File> files) {
-        // no-op
+        // no-op — subclasses override after calling enableFileDrop(...)
     }
 
     /**
@@ -776,6 +893,17 @@ public class BaseView extends JInternalFrame
                     JOptionPane.INFORMATION_MESSAGE);
         }
     }
+    
+    /**
+	 * Returns a button that triggers the view info dialog when clicked.
+	 * This is primarily for views that don't have a toolbar where the user 
+	 * might expect to find an info button, but it can be used by any view.
+	 *
+	 * @return the info button
+	 */
+    public ViewInfoButton getInfoButton() {
+		return new ViewInfoButton(this);
+	}
 
     /**
      * Override to supply structured information for the info dialog.
@@ -1154,13 +1282,13 @@ public class BaseView extends JInternalFrame
          */
         static IContainer resolveContainer(Properties props,
                 Rectangle2D.Double worldSystem) {
-     
+
             // 1. Explicit container instance takes highest priority.
             IContainer fromProps = PropertyUtils.getContainer(props);
             if (fromProps != null) {
                 return fromProps;
             }
-     
+
             // 2. ContainerFactory functional interface — preferred over Class.
             //    Use the fully-qualified name to disambiguate from this inner class.
             Object rawFactory = props.get(PropertyUtils.CONTAINERFACTORY);
@@ -1168,7 +1296,7 @@ public class BaseView extends JInternalFrame
                 return ((edu.cnu.mdi.view.ContainerFactory) rawFactory)
                         .create(worldSystem);
             }
-     
+
             // 3. Container class via reflection — legacy path, kept for
             //    backward compatibility with existing call sites.
             Object rawClass = props.get(PropertyUtils.CONTAINERCLASS);
@@ -1179,7 +1307,7 @@ public class BaseView extends JInternalFrame
                         (Class<? extends IContainer>) rawClass;
                 return instantiateContainer(cc, worldSystem);
             }
-     
+
             // 4. Fall back to the default container.
             return new BaseContainer(worldSystem);
         }
@@ -1310,6 +1438,22 @@ public class BaseView extends JInternalFrame
                         cfg.toolBits,
                         ARubberband.Policy.RECTANGLE,
                         cfg.boxZoomPolicy);
+
+                // When the INFO button is the only toolbar content, the standard
+                // toolbar height wastes a visible strip of space beneath a single
+                // small icon. Pin the preferred, minimum, and maximum height to
+                // the icon size plus 2 px of padding on each side so the toolbar
+                // hugs the button rather than filling the full row height.
+                if (cfg.toolBits == ToolBits.INFO) {
+                    int slimH = BaseToolBar.DEFAULT_ICON_SIZE + 4;
+                    Dimension slim = new Dimension(
+                            view.toolBar.getPreferredSize().width, slimH);
+                    view.toolBar.setPreferredSize(slim);
+                    view.toolBar.setMinimumSize(slim);
+                    view.toolBar.setMaximumSize(
+                            new Dimension(Integer.MAX_VALUE, slimH));
+                }
+
                 view.getContentPane().add(view.toolBar, BorderLayout.NORTH);
                 if (container instanceof BaseContainer) {
                     ((BaseContainer) container).setToolBar(view.toolBar);

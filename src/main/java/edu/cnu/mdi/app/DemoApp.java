@@ -16,6 +16,7 @@ import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.util.PropertyUtils;
 import edu.cnu.mdi.view.DrawingView;
+import edu.cnu.mdi.view.JsonView;
 import edu.cnu.mdi.view.LogView;
 import edu.cnu.mdi.view.ViewManager;
 import edu.cnu.mdi.view.VirtualView;
@@ -62,6 +63,7 @@ public class DemoApp extends BaseMDIApplication {
 	private DrawingView drawingView;
 	private MapView2D mapView;
 	private LogView logView;
+	private JsonView jsonView;
 	private PlotView plotView;
 	private NetworkDeclutterDemoView networkDeclutterDemoView;
 	private TspDemoView tspDemoView;
@@ -115,6 +117,8 @@ public class DemoApp extends BaseMDIApplication {
 		// Log view is useful but not always visible.
 		logView = new LogView();
 		logView.setVisible(false);
+		
+		jsonView = new JsonView();
 
 		ViewManager.getInstance().getViewMenu().addSeparator();
 
@@ -162,6 +166,7 @@ public class DemoApp extends BaseMDIApplication {
 		if (!hasSavedLayout(tspDemoView))           vv.moveTo(tspDemoView,               3, VirtualView.CENTER);
 		if (!hasSavedLayout(imageEvolutionDemoView)) vv.moveTo(imageEvolutionDemoView,   5, VirtualView.CENTER);
 		if (!hasSavedLayout(logView))               vv.moveTo(logView,                   6, VirtualView.UPPERLEFT);
+		if (!hasSavedLayout(jsonView))              vv.moveTo(jsonView,                  6, VirtualView.BOTTOMRIGHT);
 	}
 
 	/**
@@ -182,8 +187,10 @@ public class DemoApp extends BaseMDIApplication {
 	 * @return a new {@link TspDemoView}
 	 */
 	TspDemoView createTspDemoView() {
+		long toolBits = ToolBits.INFO;
 		return new TspDemoView(PropertyUtils.TITLE, "TSP Demo View", PropertyUtils.FRACTION, 0.6, PropertyUtils.ASPECT,
-				1.2, PropertyUtils.BACKGROUND, X11Colors.getX11Color("lavender blush"), PropertyUtils.WORLDSYSTEM,
+				1.2, PropertyUtils.TOOLBARBITS, toolBits,
+				PropertyUtils.BACKGROUND, X11Colors.getX11Color("lavender blush"), PropertyUtils.WORLDSYSTEM,
 				new Rectangle2D.Double(0.0, 0.0, 1, 1));
 	}
 

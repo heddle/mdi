@@ -27,9 +27,21 @@ import edu.cnu.mdi.util.PropertyUtils;
 @SuppressWarnings("serial")
 public class DrawingView extends BaseView implements IFeedbackProvider {
 
+	/**
+	 * Construct a {@code DrawingView} from alternating key/value property pairs.
+	 *
+	 * <p>File drag-and-drop for image files is enabled automatically via
+	 * {@link #enableFileDrop(java.util.function.Predicate)}.  The filter used
+	 * is {@link ImageFilters#isActualImage}, which verifies a file is a
+	 * readable image by attempting to decode it — slower than an extension
+	 * check but immune to mis-named files.</p>
+	 *
+	 * @param keyVals alternating {@link edu.cnu.mdi.util.PropertyUtils}
+	 *                key/value pairs
+	 */
 	public DrawingView(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
-		setFileFilter(ImageFilters.isActualImage);
+		enableFileDrop(ImageFilters.isActualImage);
 		initFeedback();
 	}
 
@@ -82,6 +94,26 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 		return new DrawingViewInfo();
 	}
 
+	/**
+	 * Handle image files dropped onto this view.
+	 *
+	 * <p>Only the first file in the list is used; multi-file drops are accepted
+	 * by the framework but silently truncated here because a drawing view has a
+	 * single canvas and loading several images simultaneously would require an
+	 * explicit layout policy that does not yet exist.</p>
+	 *
+	 * <p>The dropped image is placed on the annotation layer so it is always
+	 * rendered above other items.  If the file cannot be decoded
+	 * ({@link ImageIO#read} returns {@code null} or throws), an error is
+	 * logged to {@code System.err} and the view is left unchanged.</p>
+	 *
+	 * <p>This method is called on the EDT by {@link edu.cnu.mdi.transfer.FileDropHandler}
+	 * after the filter set in the constructor ({@link edu.cnu.mdi.transfer.ImageFilters#isActualImage})
+	 * has already accepted the file, so no second format check is needed
+	 * here.</p>
+	 *
+	 * @param files the accepted dropped files; never {@code null}, never empty
+	 */
 	@Override
 	public void filesDropped(List<File> files) {
 		if (files == null || files.isEmpty()) return;
