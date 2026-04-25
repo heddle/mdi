@@ -1,13 +1,10 @@
 package edu.cnu.mdi.mapping;
 
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import javax.swing.JLabel;
 
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.mapping.container.MapContainer;
