@@ -331,6 +331,16 @@ public class BaseMDIApplication extends JFrame {
 	public static BaseMDIApplication getApplication() {
 		return INSTANCE.get();
 	}
+	
+	/**
+	 * Returns the parsed application properties created from constructor key-value
+	 * pairs.
+	 *
+	 * @return application properties
+	 */
+	Properties getProperties() {
+		return _properties;
+	}
 
 	// ======================================================================
 	// Virtual Desktop Support
