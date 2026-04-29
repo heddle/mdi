@@ -211,13 +211,13 @@ public final class Desktop extends JDesktopPane {
      */
     public void loadConfigurationFile() {
         Log log = Log.getInstance();
-
+        
         final File file = Environment.getInstance().getConfigurationFile();
 
         if (file == null || !file.exists() || !file.isFile() || !file.canRead()) {
             _properties = null;
             if (log != null) {
-                log.info("No layout configuration file found; using defaults.");
+                log.info("No saved layout file found; using defaults.");
             }
             return;
         }
