@@ -112,13 +112,5 @@ public class MenuManager {
 
 
 
-	/**
-	 * Singleton objects cannot be cloned, so we override clone to throw a
-	 * CloneNotSupportedException.
-	 */
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-		throw new CloneNotSupportedException();
-	}
 
 }

@@ -66,7 +66,7 @@ public class JsonView extends BaseView {
      * Create a {@code JsonView} with default dimensions, initially hidden.
      */
     public JsonView() {
-        this(DEFAULT_WIDTH, DEFAULT_HEIGHT, false);
+        this(DEFAULT_WIDTH, DEFAULT_HEIGHT, true);
     }
 
     /**
