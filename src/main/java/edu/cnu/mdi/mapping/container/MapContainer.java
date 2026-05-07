@@ -118,8 +118,8 @@ public class MapContainer extends BaseContainer implements HoverListener {
 	        return;
 	    }
 
-	    // Convert the clicked screen point to geographic coordinates
-	    // using the current transform and current projection.
+	    // Convert the clicked screen point to geographic coordinates using the
+	    // current transform and current projection.
 	    Point2D.Double ll = new Point2D.Double();
 	    localToLatLon(pp, ll);
 
@@ -128,19 +128,48 @@ public class MapContainer extends BaseContainer implements HoverListener {
 	        return;
 	    }
 
-	    // Update the projection's recenter parameters.
-	    switch (mp.getProjection()) {
-	    case MERCATOR ->
-	        ((MercatorProjection) mp).setCentralLongitude(ll.x);
+	    boolean projectionChanged = false;
 
-	    case MOLLWEIDE ->
-	        ((MollweideProjection) mp).setCentralLongitude(ll.x);
+	    /*
+	     * First give the projection itself a chance to handle recentering. This is
+	     * the extension point for application-supplied projections whose
+	     * getProjection() method returns null.
+	     */
+	    if (mp.supportsRecenter()) {
+	        projectionChanged = mp.recenterOn(ll);
+	    }
 
-	    case ORTHOGRAPHIC ->
-	        ((OrthographicProjection) mp).setCenter(ll.x, ll.y);
+	    /*
+	     * Backward-compatible handling for the built-in MDI projections. This keeps
+	     * the old behavior intact and avoids forcing every existing projection class
+	     * to override recenterOn immediately.
+	     */
+	    if (!projectionChanged && mp.getProjection() != null) {
+	        switch (mp.getProjection()) {
+	        case MERCATOR -> {
+	            ((MercatorProjection) mp).setCentralLongitude(ll.x);
+	            projectionChanged = true;
+	        }
 
-	    case LAMBERT_EQUAL_AREA ->
-	        ((LambertEqualAreaProjection) mp).setCenter(ll.x, ll.y);
+	        case MOLLWEIDE -> {
+	            ((MollweideProjection) mp).setCentralLongitude(ll.x);
+	            projectionChanged = true;
+	        }
+
+	        case ORTHOGRAPHIC -> {
+	            ((OrthographicProjection) mp).setCenter(ll.x, ll.y);
+	            projectionChanged = true;
+	        }
+
+	        case LAMBERT_EQUAL_AREA -> {
+	            ((LambertEqualAreaProjection) mp).setCenter(ll.x, ll.y);
+	            projectionChanged = true;
+	        }
+	        }
+	    }
+
+	    if (!projectionChanged) {
+	        return;
 	    }
 
 	    // Re-project the same geographic point through the updated projection.

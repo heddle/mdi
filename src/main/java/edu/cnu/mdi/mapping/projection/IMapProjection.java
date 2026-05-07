@@ -175,11 +175,19 @@ public interface IMapProjection {
 
     /**
      * Returns the {@link EProjection} enum constant that identifies this
-     * implementation.
+     * implementation, if this projection is one of MDI's built-in projections.
      *
-     * @return the projection type; never {@code null}
+     * <p>
+     * Application-supplied projections are allowed to return {@code null}. This
+     * permits an application to provide a projection without modifying
+     * {@link EProjection}, {@link ProjectionFactory}, or other MDI built-in
+     * projection registries.
+     * </p>
+     *
+     * @return the built-in projection type, or {@code null} for a custom
+     *         application-supplied projection
      */
-    EProjection getProjection();
+    EProjection getProjection(); 
 
     /**
      * Returns a human-readable name for this projection, suitable for UI
@@ -305,6 +313,40 @@ public interface IMapProjection {
      *         otherwise
      */
     default boolean crossesSeam(double lon1, double lon2) {
+        return false;
+    }
+    
+    /**
+     * Tests whether this projection can update its own centering parameters in
+     * response to a map recenter request.
+     *
+     * <p>
+     * Built-in MDI projections may handle recentering in {@code MapContainer}
+     * for backward compatibility. Custom application projections should override
+     * this method and {@link #recenterOn(Point2D.Double)} if they support
+     * recentering.
+     * </p>
+     *
+     * @return {@code true} if this projection supports recentering itself
+     */
+    default boolean supportsRecenter() {
+        return false;
+    }
+
+    /**
+     * Recenters this projection on the supplied geographic location.
+     *
+     * <p>
+     * The supplied point uses the standard MDI map convention:
+     * {@code x = longitude λ}, {@code y = latitude φ}, both in radians.
+     * The default implementation does nothing and returns {@code false}.
+     * </p>
+     *
+     * @param latLon the requested new center in radians
+     * @return {@code true} if the projection accepted and applied the new center;
+     *         {@code false} otherwise
+     */
+    default boolean recenterOn(Point2D.Double latLon) {
         return false;
     }
 }
