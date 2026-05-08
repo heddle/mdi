@@ -81,7 +81,7 @@ import edu.cnu.mdi.view.BaseView;
  * <p>
  * The control panel ({@link MapControlPanel}) and feedback pane
  * ({@link FeedbackPane}) are placed together in a combined east-side strip
- * whose preferred width is {@code SIDE_PANEL_WIDTH} pixels.
+ * whose preferred width in pixels is controlled by {@link #getSidePanelWidth()}.
  * </p>
  */
 @SuppressWarnings("serial")
@@ -92,11 +92,11 @@ public class MapView2D extends BaseView {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Preferred width in pixels of the combined east-side strip containing the
-	 * control panel and the feedback pane.
+	 * Default preferred width in pixels of the combined east-side strip containing
+	 * the control panel and the feedback pane.
 	 */
-	private static final int SIDE_PANEL_WIDTH = 220;
-
+	private static final int DEFAULT_SIDE_PANEL_WIDTH = 220;
+	
 	// -------------------------------------------------------------------------
 	// Feedback label prefixes (static because they never change)
 	// -------------------------------------------------------------------------
@@ -287,6 +287,23 @@ public class MapView2D extends BaseView {
 	 */
 	protected boolean useStandardGraticules() {
 	    return true;
+	}
+	
+	/**
+	 * Gets the preferred width of the east-side strip containing the map control
+	 * panel, custom application panels, and feedback pane.
+	 *
+	 * <p>
+	 * Subclasses may override this to request a wider or narrower side panel. The
+	 * override should not depend on subclass instance fields, because this method is
+	 * called during {@link MapView2D} construction before the subclass constructor
+	 * body has run. Returning a literal or subclass static constant is safe.
+	 * </p>
+	 *
+	 * @return preferred side-panel width in pixels
+	 */
+	protected int getSidePanelWidth() {
+	    return DEFAULT_SIDE_PANEL_WIDTH;
 	}
 
 	/**
@@ -712,10 +729,10 @@ public class MapView2D extends BaseView {
 	    customSidePanelHost = new JPanel();
 	    customSidePanelHost.setLayout(new javax.swing.BoxLayout(customSidePanelHost, javax.swing.BoxLayout.Y_AXIS));
 
-	    fbp.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, fbp.getPreferredSize().height));
+	    fbp.setPreferredSize(new Dimension(getSidePanelWidth(), fbp.getPreferredSize().height));
 
 	    if (controlPanel != null) {
-	        controlPanel.setMaximumSize(new Dimension(SIDE_PANEL_WIDTH, Integer.MAX_VALUE));
+	        controlPanel.setMaximumSize(new Dimension(getSidePanelWidth(), Integer.MAX_VALUE));
 	        sideTopStack.add(controlPanel);
 	    }
 
@@ -723,7 +740,7 @@ public class MapView2D extends BaseView {
 
 	    sidePanel.add(sideTopStack, BorderLayout.NORTH);
 	    sidePanel.add(fbp, BorderLayout.CENTER);
-	    sidePanel.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, getHeight()));
+	    sidePanel.setPreferredSize(new Dimension(getSidePanelWidth(), getHeight()));
 
 	    add(sidePanel, BorderLayout.EAST);
 	}
