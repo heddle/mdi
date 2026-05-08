@@ -22,7 +22,6 @@ public class PropertyUtils {
 	public static final String BACKGROUND = "BACKGROUND";
 	public static final String BACKGROUNDIMAGE = "BACKGROUNDIMAGE";
 	public static final String BOXZOOMRBPOLICY = "BOXZOOMRBPOLICY";
-	public static final String CLOSABLE = "CLOSABLE";
 	public static final String CONNECTABLE = "CONNECTABLE";
 	public static final String CONSOLELOG = "CONSOLELOG";
 	public static final String CONTAINER = "CONTAINER";
@@ -34,13 +33,11 @@ public class PropertyUtils {
 	public static final String FILLCOLOR = "FILLCOLOR";
 	public static final String FRACTION = "FRACTION";
 	public static final String HEIGHT = "HEIGHT";
-	public static final String ICONIFIABLE = "ICONIFIABLE";
 	public static final String LEFT = "LEFT";
 	public static final String LINECOLOR = "LINECOLOR";
 	public static final String LINESTYLE = "LINESTYLE";
 	public static final String LINEWIDTH = "LINEWIDTH";
 	public static final String MAXIMIZE = "MAXIMIZE";
-	public static final String MAXIMIZABLE = "MAXIMIZABLE";
 	public static final String LOCKED = "LOCKED";
 	public static final String RADIUS = "RADIUS";
 	public static final String RESIZABLE = "RESIZABLE";
@@ -48,7 +45,6 @@ public class PropertyUtils {
 	public static final String ROTATABLE = "ROTATABLE";
 	public static final String SCROLLABLE = "SCROLLABLE";
 	public static final String SPLITWESTCOMPONENT = "SPLITWESTCOMPONENT";
-	public static final String STANDARDVIEWDECORATIONS = "STANDARDVIEWDECORATIONS";
 	public static final String STYLEEDITABLE = "STYLEEDITABLE";
 	public static final String SYMBOL = "SYMBOL";
 	public static final String SYMBOLSIZE = "SYMBOLSIZE";
@@ -83,7 +79,6 @@ public class PropertyUtils {
 	    KNOWN_KEYS.put(BACKGROUND, Color.class);
 	    KNOWN_KEYS.put(BACKGROUNDIMAGE, String.class);
 	    KNOWN_KEYS.put(BOXZOOMRBPOLICY, ARubberband.Policy.class);
-	    KNOWN_KEYS.put(CLOSABLE, Boolean.class);
 	    KNOWN_KEYS.put(CONNECTABLE, Boolean.class);
 	    KNOWN_KEYS.put(CONSOLELOG, Boolean.class);
 	    KNOWN_KEYS.put(CONTAINER, IContainer.class);
@@ -98,21 +93,18 @@ public class PropertyUtils {
 	    KNOWN_KEYS.put(FILLCOLOR, Color.class);
 	    KNOWN_KEYS.put(FRACTION, Double.class);
 	    KNOWN_KEYS.put(HEIGHT, Integer.class);
-	    KNOWN_KEYS.put(ICONIFIABLE, Boolean.class);
 	    KNOWN_KEYS.put(LEFT, Integer.class);
 	    KNOWN_KEYS.put(LINECOLOR, Color.class);
 	    KNOWN_KEYS.put(LINESTYLE, LineStyle.class);
 	    KNOWN_KEYS.put(LINEWIDTH, Float.class);
 	    KNOWN_KEYS.put(LOCKED, Boolean.class);
 	    KNOWN_KEYS.put(MAXIMIZE, Boolean.class);
-	    KNOWN_KEYS.put(MAXIMIZABLE, Boolean.class);
 	    KNOWN_KEYS.put(RADIUS, Double.class);
 	    KNOWN_KEYS.put(RESIZABLE, Boolean.class);
 	    KNOWN_KEYS.put(RIGHTCLICKABLE, Boolean.class);
 	    KNOWN_KEYS.put(ROTATABLE, Boolean.class);
 	    KNOWN_KEYS.put(SCROLLABLE, Boolean.class);
 	    KNOWN_KEYS.put(SPLITWESTCOMPONENT, JComponent.class);
-	    KNOWN_KEYS.put(STANDARDVIEWDECORATIONS, Boolean.class);
 	    KNOWN_KEYS.put(STYLEEDITABLE, Boolean.class);
 	    KNOWN_KEYS.put(SYMBOL, SymbolType.class);
 	    KNOWN_KEYS.put(SYMBOLSIZE, Integer.class);
@@ -345,26 +337,6 @@ public class PropertyUtils {
 	}
 
 	/**
-	 * Get the "use standard view decorations" boolean flag.
-	 *
-	 * @param props the properties
-	 * @return the decorations flag. On error, return true.
-	 */
-	public static boolean getStandardViewDecorations(Properties props) {
-		return getBoolean(props, STANDARDVIEWDECORATIONS, true);
-	}
-
-	/**
-	 * Get the closable boolean flag.
-	 *
-	 * @param props the properties
-	 * @return the closable flag. On error, return true.
-	 */
-	public static boolean getClosable(Properties props) {
-		return getBoolean(props, CLOSABLE, true);
-	}
-
-	/**
 	 * Get the draggable boolean flag.
 	 *
 	 * @param props the properties
@@ -372,16 +344,6 @@ public class PropertyUtils {
 	 */
 	public static boolean getDraggable(Properties props) {
 		return getBoolean(props, DRAGGABLE, false);
-	}
-
-	/**
-	 * Get the view iconifiable boolean flag.
-	 *
-	 * @param props the properties
-	 * @return the iconifiable flag. On error, return true.
-	 */
-	public static boolean getIconifiable(Properties props) {
-		return getBoolean(props, ICONIFIABLE, true);
 	}
 
 	/**
@@ -394,16 +356,6 @@ public class PropertyUtils {
 		return getBoolean(props, MAXIMIZE, false);
 	}
 
-	/**
-	 * Get the view maximizable boolean flag. For views.
-	 *
-	 * @param props the properties
-	 * @return the maximizable flag. On error, return true.
-	 */
-	public static boolean getMaximizable(Properties props) {
-		return getBoolean(props, MAXIMIZABLE, true);
-	}
-	
 	/**
 	 * Get the item connectable boolean flag. 
 	 *
@@ -435,7 +387,7 @@ public class PropertyUtils {
 	}
 
 	/**
-	 * Get the view resizable boolean flag. For views.
+	 * Get the view resizable boolean flag. For items.
 	 *
 	 * @param props the properties
 	 * @return the resizable flag. On error, return true.

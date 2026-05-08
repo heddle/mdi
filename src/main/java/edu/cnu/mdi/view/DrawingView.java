@@ -71,8 +71,7 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 				PropertyUtils.TOOLBARBITS, toolBits,
 				PropertyUtils.VISIBLE,     true,
 				PropertyUtils.BACKGROUND,  Color.white,
-				PropertyUtils.TITLE,       "Drawing View",
-				PropertyUtils.STANDARDVIEWDECORATIONS, true);
+				PropertyUtils.TITLE,       "Drawing View");
 
 		// BaseView defers setVisible via its own invokeLater. We queue our
 		// resize AFTER that by nesting a second invokeLater — it is guaranteed

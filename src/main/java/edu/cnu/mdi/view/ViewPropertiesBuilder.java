@@ -262,56 +262,6 @@ public class ViewPropertiesBuilder {
     }
 
     /**
-     * Set standard view decorations.
-     *
-     * @param enabled {@code true} to use standard decorations
-     * @return this builder
-     */
-    public ViewPropertiesBuilder standardDecorations(boolean enabled) {
-        return put(PropertyUtils.STANDARDVIEWDECORATIONS, enabled);
-    }
-
-    /**
-     * Set whether the view is iconifiable.
-     *
-     * @param enabled {@code true} if iconifiable
-     * @return this builder
-     */
-    public ViewPropertiesBuilder iconifiable(boolean enabled) {
-        return put(PropertyUtils.ICONIFIABLE, enabled);
-    }
-
-    /**
-     * Set whether the view is maximizable.
-     *
-     * @param enabled {@code true} if maximizable
-     * @return this builder
-     */
-    public ViewPropertiesBuilder maximizable(boolean enabled) {
-        return put(PropertyUtils.MAXIMIZABLE, enabled);
-    }
-
-    /**
-     * Set whether the view is resizable.
-     *
-     * @param enabled {@code true} if resizable
-     * @return this builder
-     */
-    public ViewPropertiesBuilder resizable(boolean enabled) {
-        return put(PropertyUtils.RESIZABLE, enabled);
-    }
-
-    /**
-     * Set whether the view is closable.
-     *
-     * @param enabled {@code true} if closable
-     * @return this builder
-     */
-    public ViewPropertiesBuilder closable(boolean enabled) {
-        return put(PropertyUtils.CLOSABLE, enabled);
-    }
-
-    /**
      * Set a split-pane west component.
      *
      * @param component the west component

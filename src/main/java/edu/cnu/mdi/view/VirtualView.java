@@ -213,6 +213,13 @@ public class VirtualView extends BaseView
 
         // Track views added/removed after we are created.
         ViewManager.getInstance().addViewListener(this);
+        
+        // VirtualView is a fixed, non-interactive overview; disable all internal frame interactions.
+        setMaximizable(false);
+        setIconifiable(false);
+        setResizable(false);
+        setClosable(false);
+
 
         // Add items representing currently existing views.
         addItems();
@@ -277,12 +284,7 @@ public class VirtualView extends BaseView
                 PropertyUtils.HEIGHT,                  height,
                 PropertyUtils.VISIBLE,                 true,
                 PropertyUtils.BACKGROUND,              Color.white,
-                PropertyUtils.TITLE,                   VVTITLE,
-                PropertyUtils.STANDARDVIEWDECORATIONS, false,
-                PropertyUtils.ICONIFIABLE,             false,
-                PropertyUtils.RESIZABLE,               false,
-                PropertyUtils.MAXIMIZABLE,             false,
-                PropertyUtils.CLOSABLE,                false);
+                PropertyUtils.TITLE,                   VVTITLE);
 
         view._offsets = new Point[_numcol];
 
