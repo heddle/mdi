@@ -56,9 +56,9 @@ public abstract class PlotLine {
 	}
 
 	/**
-	 * Draw the line
+	 * Draw the line on the given graphics context
 	 *
-	 * @param g the graphis context
+	 * @param g2 the graphics context to draw on
 	 */
 	public void draw(Graphics2D g2) {
 		wp.setLocation(getX0(), getY0());

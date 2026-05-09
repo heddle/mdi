@@ -11,13 +11,13 @@ import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
  * polygonal approximation.
  * <p>
  * Key invariants:
+ * </p>
  * <ul>
  * <li>The ellipse center is the item's focus (world coordinates).</li>
  * <li>Width/height are stored as full extents in world units.</li>
  * <li>Selection handles are the four cardinal points of the ellipse in its
  * rotated frame (top/right/bottom/left).</li>
  * </ul>
- * </p>
  * <p>
  * Resize correctness after rotation depends on using the same azimuth
  * convention everywhere. In this codebase, azimuth behaves like a compass

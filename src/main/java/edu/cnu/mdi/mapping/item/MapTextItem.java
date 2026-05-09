@@ -338,7 +338,7 @@ public class MapTextItem extends AMapItem implements ITextEditable {
     // Accessors
     // -------------------------------------------------------------------------
 
-    /** @return the current text alignment ({@link SwingConstants#LEFT/CENTER/RIGHT}) */
+    /** @return the current text alignment */
     public int getAlignment()           { return _alignment; }
     /** @param align text alignment constant from {@link SwingConstants} */
     public void setAlignment(int align) { _alignment = align; }

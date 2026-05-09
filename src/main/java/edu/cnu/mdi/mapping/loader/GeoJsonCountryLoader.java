@@ -132,7 +132,7 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
          * radians) and {@code y = φ} (latitude, radians).
          *
          * <p>A ring with fewer than 3 points is degenerate and renderers may
-         * safely skip it (see {@link CountryRenderer}).</p>
+         * safely skip it.</p>
          *
          * @return unmodifiable list of polygon rings
          */

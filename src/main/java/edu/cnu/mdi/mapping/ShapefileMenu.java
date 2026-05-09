@@ -38,6 +38,7 @@ import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader;
  * {@code .shp} files. The companion {@code .dbf} is located automatically
  * from the same directory. After loading, a default style is chosen based
  * on the geometry type of the first feature in the file:
+ * </p>
  * <ul>
  *   <li><b>Polygon</b> — semi-transparent blue fill with a slightly darker
  *       border, suitable for lakes, urban areas, or any filled area.</li>
@@ -46,7 +47,7 @@ import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader;
  *   <li><b>Point</b> — red dot markers.</li>
  * </ul>
  * The style can be refined programmatically via
- * {@link ShapeFeatureRenderer#setStyle} after the layer is added.</p>
+ * {@link ShapeFeatureRenderer#setStyle} after the layer is added.
  *
  * <h2>Programmatic layers</h2>
  * <p>Layers added at startup via

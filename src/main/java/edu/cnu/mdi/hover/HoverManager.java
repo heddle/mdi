@@ -342,7 +342,7 @@ public final class HoverManager {
      * Transient state for the pending or active hover gesture on a single
      * component.
      *
-     * <h3>lastPoint semantics</h3>
+     * <p>lastPoint semantics</p>
      * <p>{@code lastPoint} is <em>mutable</em> and is updated by
      * {@link HoverManager#handleMove} on every mouse event so that the point
      * passed to {@link HoverListener#hoverDown} reflects where the cursor

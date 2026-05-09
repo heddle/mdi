@@ -22,6 +22,7 @@ import edu.cnu.mdi.util.UnicodeUtils;
  * A drawable item that renders text with a rectangular background/border.
  * <p>
  * Key invariants:
+ * </p>
  * <ul>
  * <li>{@link #_focus} is the world-coordinate center of the text box.</li>
  *
@@ -37,7 +38,6 @@ import edu.cnu.mdi.util.UnicodeUtils;
  *     text drawn by {@link TextUtils#drawRotatedText}, which rotates in screen
  *     space. The fix: rotate the four screen corners, then convert to world.</li>
  * </ul>
- * </p>
  */
 public class TextItem extends RectangleItem implements ITextEditable {
 

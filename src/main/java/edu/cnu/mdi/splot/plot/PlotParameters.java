@@ -163,10 +163,9 @@ public class PlotParameters {
 	}
 
 	/**
-	 * Set whether to show empty bins in heatmap/2D histogram rendering.
+	 * Check whether to show empty bins in heatmap/2D histogram rendering.
 	 *
-	 * @param showEmptyBins true to show empty bins
-	 * @return this parameters instance (for chaining)
+	 * @return true to show empty bins
 	 */
 	public boolean showEmptyBins() {
 	    return _showEmptyBins;

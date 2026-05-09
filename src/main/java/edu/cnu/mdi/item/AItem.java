@@ -275,7 +275,7 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
      * as those in {@code CreationSupport} — do not need to take any extra
      * step after construction.</p>
      *
-     * <h3>Construction-time event caveat</h3>
+     * <p>Construction-time event caveat</p>
      * <p>
      * Because registration fires the {@code ADDED} event before any subclass
      * constructor body has run, a listener that immediately queries the item's

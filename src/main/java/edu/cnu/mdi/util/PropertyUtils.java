@@ -673,7 +673,6 @@ public class PropertyUtils {
 	 *
 	 * @param props        the properties
 	 * @param key          the key
-	 * @param defaultValue the default value
 	 * @return the JComponent value, or on error <code>null</code>.
 	 */
 	public static JComponent getJComponent(Properties props, String key) {
@@ -884,7 +883,7 @@ public class PropertyUtils {
 	 *
 	 * @param props   the properties
 	 * @param key     the key
-	 * @param boolean defaultVal
+	 * @param defaultVal the default value
 	 * @return the boolean value, or on error the default
 	 */
 	public static boolean getBoolean(Properties props, String key, boolean defaultVal) {

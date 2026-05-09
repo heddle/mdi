@@ -9,6 +9,15 @@ import java.util.Objects;
 import javax.swing.JToggleButton;
 
 @SuppressWarnings("serial")
+/**
+ * A base class for toolbar buttons that perform an action on a single click. This
+ * class implements MouseListener to handle mouse events on the canvas, and
+ * provides a framework for subclasses to define specific actions when the button
+ * is clicked.
+ *
+ * @author heddle
+ *
+ */
 public abstract class ASingleClickButton  extends JToggleButton implements MouseListener {
 
 	/** Component that owns the current gesture (null when idle). */
@@ -19,7 +28,8 @@ public abstract class ASingleClickButton  extends JToggleButton implements Mouse
 
 	/**
 	 * Create a single-click button that performs an action when clicked.
-	 *
+	 * @param canvas  the component that will receive mouse events when this tool is active
+	 * @param toolBar the toolbar that owns this button
 	 */
 	public ASingleClickButton(Component canvas, AToolBar toolBar) {
 		this.toolBar = toolBar;
@@ -59,6 +69,12 @@ public abstract class ASingleClickButton  extends JToggleButton implements Mouse
 		// No action needed on mouse exit
 	}
 
+	/**
+	 * Handle a mouse click on the canvas. Subclasses should implement this to
+	 * perform the desired action.
+	 *
+	 * @param e the mouse event representing the click
+	 */
 	public abstract void canvasClick(MouseEvent e);
 
 }

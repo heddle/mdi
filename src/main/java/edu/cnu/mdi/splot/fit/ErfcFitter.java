@@ -25,7 +25,7 @@ import edu.cnu.mdi.splot.pdata.FitVectors;
  *   y(x) = A * erfc((x - x0)/sigma) + B
  * </pre>
  *
- * <h3>Parameter ordering</h3>
+ * <p>Parameter ordering</p>
  * <ul>
  * <li>{@code params[0] = A}</li>
  * <li>{@code params[1] = x0}</li>
@@ -52,15 +52,18 @@ public final class ErfcFitter extends ALeastSquaresFitter {
 	public static final double DEFAULT_MIN_SIGMA = 1e-12;
 
 	/**
-	 * Create an Erfc fitter with default optimizer (Levenberg-Marquardt).
-	 *
-	 * @param kind which function to fit
+	 * Create an ErfcFitter with the default optimizer and initial guess strategy.
 	 */
-
 	public ErfcFitter() {
 		this(new LevenbergMarquardtOptimizer());
 	}
 
+	/**
+	 * Create an ErfcFitter with a custom optimizer and the default initial guess
+	 * strategy.
+	 *
+	 * @param optimizer the least squares optimizer to use, not null
+	 */
 	public ErfcFitter(LeastSquaresOptimizer optimizer) {
 		super(Objects.requireNonNull(optimizer, "optimizer"), (x, y, w) -> InitialGuess.guess(x, y));
 	}

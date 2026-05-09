@@ -14,7 +14,8 @@ import javax.swing.tree.DefaultTreeCellRenderer;
  * palette used by the raw-text pane.
  *
  * <h2>Color mapping</h2>
- * <table border="1" summary="Color mapping by node kind">
+ * <table border="1">
+ * <caption>JSON tree renderer color mapping</caption>
  *   <tr><th>Kind</th><th>Key color</th><th>Value color</th></tr>
  *   <tr><td>ROOT</td>
  *       <td colspan="2">plain ({@link JsonRawPane#COLOR_PLAIN})</td></tr>

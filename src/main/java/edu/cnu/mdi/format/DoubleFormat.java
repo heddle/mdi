@@ -58,34 +58,13 @@ public class DoubleFormat {
 	}
 
 	/**
-	 * Format a double, switching from fixed to scientific notation.
-	 * <p>
-	 * Example: <br>
-	 * <code>
-	 * numdec = 6 <br>
-	 * minExponent = 2 <br>
-	 * value starts at 12345.67 and keep dividing by 10 gives <br>
-	 * 1.234567E4 <br>
-	 * 1.234567E3 <br>
-	 * 1.234567E2 <br>
-	 * 12.345670 <br>
-	 * 1.234567 <br>
-	 * 0.123457 <br>
-	 * 1.234567E-2 <br>
-	 * 1.234567E-3  <br>
-	 * 1.234567E-4 <br>
-	 * 1.234567E-5 <br>
-	 * 1.234567E-6 <br>
-	 * 1.234567E-7 <br>
-	 * </code>
+	 * Format a double, using scientific notation if the exponent is less than
+	 * the specified minimum.
 	 *
 	 * @param value       the value to format.
-	 * @param numdec      the number of digits right of the decimal. If the
-	 *                    exponent is >= n or <= -n it will use sci notation.
-	 * @param minExponent the minimum (absolute value) index for scientific
-	 *                    notation.
+	 * @param numdec      the number of digits right of the decimal.
+	 * @param minExponent the minimum exponent for using scientific notation.
 	 */
-
 	public static String doubleFormat(double value, int numdec, int minExponent) {
 
 		if (Math.abs(value) < 1.0e-30) {

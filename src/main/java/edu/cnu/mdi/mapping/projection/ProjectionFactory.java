@@ -64,7 +64,7 @@ public final class ProjectionFactory {
     /**
      * Creates a projection with the given type, theme, and optional center.
      *
-     * <h3>Center conventions</h3>
+     * <p>Center conventions</p>
      * <ul>
      *   <li>The {@code center} parameter is a {@link Point2D.Double} with
      *       {@code x = λ₀} (longitude, radians) and {@code y = φ₀}
@@ -76,7 +76,7 @@ public final class ProjectionFactory {
      *       ignore the latitude component.</li>
      * </ul>
      *
-     * <h3>Default centers</h3>
+     * <p>Default centers</p>
      * <ul>
      *   <li><b>MERCATOR</b> — central longitude fixed at -70° by the
      *       {@link MercatorProjection} constructor; the {@code center}

@@ -10,7 +10,7 @@ import java.util.List;
  * was previously embedded in {@link HistoData}, keeping {@code HistoData}
  * focused on data storage.</p>
  *
- * <h3>Fit-vector layout</h3>
+ * <p>Fit-vector layout</p>
  * <p>All {@code prepare*} methods return a {@link FitVectors} (or the richer
  * {@link FitWindowData} subtype) whose arrays follow this convention:</p>
  * <ul>
@@ -21,7 +21,7 @@ import java.util.List;
  *       requested and the bin is included)</li>
  * </ul>
  *
- * <h3>Peak-finding strategies</h3>
+ * <p>Peak-finding strategies</p>
  * <ul>
  *   <li>{@link #findPeakBin(HistoData)} &mdash; raw maximum (first occurrence
  *       on ties)</li>

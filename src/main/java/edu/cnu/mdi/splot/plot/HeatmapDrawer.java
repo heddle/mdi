@@ -18,7 +18,6 @@ public final class HeatmapDrawer {
 	 * @param g2  graphics context on which to draw
 	 * @param canvas  plot canvas for coordinate transforms
 	 * @param h2d  2D histogram data to draw
-	 * @param opt  heatmap drawing options (if null, defaults used)
 	 */
     public static void drawHeatmap(Graphics2D g2, PlotCanvas canvas, Histo2DData h2d) {
 

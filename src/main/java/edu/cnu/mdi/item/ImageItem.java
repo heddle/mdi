@@ -40,7 +40,7 @@ public class ImageItem extends RectangleItem {
 	/**
 	 * Custom drawer for the item.
 	 *
-	 * @param g         the graphics context.
+	 * @param g2         the graphics context.
 	 * @param container the graphical container being rendered.
 	 */
 	@Override

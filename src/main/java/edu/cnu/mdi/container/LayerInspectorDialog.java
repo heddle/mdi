@@ -45,7 +45,7 @@ import edu.cnu.mdi.item.Layer;
  * <ul>
  * <li>Toggle {@link Layer#setVisible(boolean)} for any layer.</li>
  * <li>Toggle {@link Layer#setLocked(boolean)} for any layer.</li>
- * <li>Reorder user layers via drag & drop and Up/Down buttons.</li>
+ * <li>Reorder user layers via drag and drop and Up/Down buttons.</li>
  * <li>Add/Rename/Delete user layers.</li>
  * </ul>
  *

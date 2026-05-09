@@ -544,7 +544,7 @@ public class MapView2D extends BaseView {
 	}
 
 	/**
-	 * Removes all extra layers added via {@link #addLayer}. The base layers
+	 * Removes all extra layers added via addLayer. The base layers
 	 * (countries, cities, graticule) are unaffected.
 	 */
 	public void clearLayers() {

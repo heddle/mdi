@@ -1,6 +1,13 @@
 package edu.cnu.mdi.splot.edit;
 
 import java.awt.Color;
+
+/**
+ * This class creates and manages the table for curve data in sPlot.
+ *
+ * @author heddle
+ *
+ */
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;

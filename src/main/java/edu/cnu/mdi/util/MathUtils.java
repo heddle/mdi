@@ -19,7 +19,7 @@ public class MathUtils {
 	 *                   containing p0-p1. It may or may not actually be between p0
 	 *                   and p1, as specified by the return argument.
 	 * @return the value of the t parameter. If it is between 0 and 1 the
-	 *         intersection is on the line. If t < 0 the intersection is on the
+	 *         intersection is on the line. If t less than 0 the intersection is on the
 	 *         "infinite line" but not on p0->p1, it is on the p0 side. If t > 1 the
 	 *         intersection is on the p1 side.
 	 */

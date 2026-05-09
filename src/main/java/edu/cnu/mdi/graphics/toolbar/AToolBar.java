@@ -469,6 +469,11 @@ public abstract class AToolBar extends JToolBar {
 		}
 	}
 
+	/**
+	 * Add a spacer of the given size in pixels.
+	 *
+	 * @param pixels the size of the spacer in pixels.
+	 */
 	public void spacer(int pixels) {
 		if (getOrientation() == SwingConstants.HORIZONTAL) {
 			add(Box.createHorizontalStrut(pixels));

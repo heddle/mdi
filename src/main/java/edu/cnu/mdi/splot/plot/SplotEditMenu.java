@@ -34,8 +34,6 @@ public class SplotEditMenu extends JMenu implements ActionListener {
 	 * Create a set of menus and items for sPlot
 	 *
 	 * @param canvas  the plot canvas being controlled
-	 * @param menuBar the menu bar
-	 * @param addQuit if <code>true</code> include a quit item
 	 */
 	public SplotEditMenu(PlotCanvas canvas) {
 		super(MENU_TITLE);

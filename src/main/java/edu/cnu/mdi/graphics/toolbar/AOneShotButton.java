@@ -10,7 +10,7 @@ import javax.swing.JButton;
  * A non-toggle toolbar button that performs an immediate action (one-shot).
  * <p>
 
- * Unlike {@link ToolToggleButton}, this class does not change the active tool.
+ * Unlike ToolToggleButton, this class does not change the active tool.
  * </p>
  *
  * @author heddle

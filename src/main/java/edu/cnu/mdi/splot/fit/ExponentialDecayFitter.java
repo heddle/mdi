@@ -21,25 +21,25 @@ import edu.cnu.mdi.splot.pdata.FitVectors;
  * y(x) = A * exp(-x / &tau;) + C
  * </pre>
  *
- * <h3>Parameter ordering</h3>
+ * <p>Parameter ordering</p>
  * <ul>
  *   <li>{@code params[0] = A}  &mdash; amplitude</li>
  *   <li>{@code params[1] = τ}  &mdash; decay constant (enforced {@code > 0})</li>
  *   <li>{@code params[2] = C}  &mdash; baseline offset</li>
  * </ul>
  *
- * <h3>Typical applications</h3>
+ * <p>Typical applications</p>
  * <p>Radioactive decay, RC circuit discharge, fluorescence lifetime,
  * exponential growth (negative τ via sign of A).</p>
  *
- * <h3>Initial guess strategy</h3>
+ * <p>Initial guess strategy</p>
  * <p>The offset {@code C} is estimated from the tail of the data. The
  * amplitude {@code A} comes from the first point minus the offset. The
  * decay constant {@code τ} is estimated by log-linearising the
  * offset-subtracted data and fitting a line through the log-transformed
  * values.</p>
  *
- * <h3>Constraint</h3>
+ * <p>Constraint</p>
  * <p>{@code τ >= DEFAULT_MIN_TAU} is enforced by a clamping parameter
  * validator to prevent division by zero in the Jacobian.</p>
  *

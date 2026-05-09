@@ -53,7 +53,7 @@ import edu.cnu.mdi.container.IContainer;
  * <p>
  * When no {@code ContainerFactory} is registered, the framework falls back
  * to constructing a default {@link edu.cnu.mdi.container.BaseContainer}. The
- * legacy {@link PropertyUtils#CONTAINERCLASS} key is still honoured for
+ * legacy PropertyUtils.CONTAINERCLASS key is still honoured for
  * backward compatibility, but new code should always prefer this interface.
  * </p>
  *

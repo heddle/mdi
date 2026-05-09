@@ -12,88 +12,91 @@ import javax.swing.JPanel;
  * @author heddle
  */
 
+/**
+ * A reusable panel for buttons. The constructor takes an array of button labels
+ * and an optional action listener. The buttons are created and added to the
+ * panel, and the action listener is added to each button. The buttons can be
+ * enabled or disabled by index, or all at once by using index -1.
+ *
+ * The class also provides a static method for creating a button panel with
+ * combinations of OK, Cancel, Apply, and Delete buttons.
+ *
+ * Subclasses can override the userSetup() method to add additional components
+ * before the buttons are added.
+ *
+ */
 @SuppressWarnings("serial")
 public class ButtonPanel extends JPanel {
 
-	/**
-	 * Bits indicating use OK, Cancel, ...
-	 */
-
+	/** Bit indicating using OK button */
 	public static final int USE_OK = 01;
 
+	/** Bit indicating using Cancel button */
 	public static final int USE_CANCEL = 02;
 
+	/** Bit indicating using Apply button */
 	public static final int USE_APPLY = 04;
 
+	/** Bit indicating using Delete button */
 	public static final int USE_DELETE = 010;
 
-	/**
-	 * Bit indicating using combinations OK and CANCEL
-	 */
+	/** Bit indicating using OK and Cancel buttons */
 	public static final int USE_OKCANCEL = USE_OK | USE_CANCEL;
 
+	/** Bit indicating using OK, Cancel, and Apply buttons */
 	public static final int USE_OKCANCELAPPLY = USE_OK | USE_CANCEL | USE_APPLY;
 
+	/** Bit indicating using OK, Cancel, and Delete buttons */
 	public static final int USE_OKCANCELDELETE = USE_OK | USE_CANCEL | USE_DELETE;
 
 	/**
-	 * Constant indicating an "OK" response
+	 * Constant indicating an "ok" response
 	 */
-
 	public static final int OK_RESPONSE = 0;
 
 	/**
 	 * Constant indicating a "cancel" response
 	 */
-
 	public static final int CANCEL_RESPONSE = 1;
 
 	/**
 	 * Constant indicating an "apply" response
 	 */
-
 	public static final int APPLY_RESPONSE = 2;
 
-	/*
+	/**
 	 * Constant indicating a "delete" response
 	 */
-
 	public static final int DELETE_RESPONSE = 3;
 
 	/**
 	 * Constant string for "ok" label
 	 */
-
 	public static final String OK_LABEL = " OK ";
 
 	/**
 	 * Constant string for "cancel" label
 	 */
-
 	public static final String CANCEL_LABEL = " Cancel ";
 
 	/**
 	 * Constant string for "apply" label
 	 */
-
 	public static final String APPLY_LABEL = " Apply ";
 
 	/**
 	 * Constant string for "delete" label
 	 */
-
 	public static final String DELETE_LABEL = " Delete ";
 
 	/**
 	 * The buttons
 	 */
-
 	protected JButton[] buttons = null;
 
 	/**
 	 * The labels
 	 */
-
 	protected String[] labels = null;
 
 	/**
@@ -101,7 +104,6 @@ public class ButtonPanel extends JPanel {
 	 *
 	 * @param labels The button labels.
 	 */
-
 	public ButtonPanel(String labels[]) {
 		this(labels, null, -1);
 	}
@@ -112,7 +114,6 @@ public class ButtonPanel extends JPanel {
 	 * @param labels The button labels.
 	 * @param alist  Optional action listener.
 	 */
-
 	public ButtonPanel(String labels[], ActionListener alist) {
 		this(labels, alist, 4, -1);
 	}

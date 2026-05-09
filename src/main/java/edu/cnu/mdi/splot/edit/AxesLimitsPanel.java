@@ -2,6 +2,13 @@ package edu.cnu.mdi.splot.edit;
 
 import java.awt.GridLayout;
 
+/**
+ * A panel for editing the axes limits. It contains two OneAxisLimitsPanel, one for x and one for y.
+ *
+ * @author heddle
+ *
+ */
+
 import javax.swing.JPanel;
 
 import edu.cnu.mdi.component.CommonBorder;
@@ -17,7 +24,7 @@ public class AxesLimitsPanel extends JPanel {
 	/**
 	 * Create the panel for editing the axes limits
 	 *
-	 * @param canvas
+	 * @param canvas the plot canvas being controlled
 	 */
 	public AxesLimitsPanel(PlotCanvas canvas) {
 		setLayout(new GridLayout(2, 1, 4, 4));

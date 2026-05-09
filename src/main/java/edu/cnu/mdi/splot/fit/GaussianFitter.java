@@ -22,7 +22,7 @@ import edu.cnu.mdi.splot.pdata.FitVectors;
  * y(x) = A * exp(-(x - mu) ^ 2 / (2 * sigma ^ 2)) + B
  * </pre>
  *
- * <h3>Parameter ordering</h3>
+ * <p>Parameter ordering</p>
  * <ul>
  * <li>{@code params[0] = A}</li>
  * <li>{@code params[1] = mu}</li>
@@ -30,7 +30,7 @@ import edu.cnu.mdi.splot.pdata.FitVectors;
  * <li>{@code params[3] = B}</li>
  * </ul>
  *
- * <h3>Bounds / validation</h3> This fitter enforces
+ * <p>Bounds / validation</p> This fitter enforces
  * {@code sigma >= DEFAULT_MIN_SIGMA} by default using a parameter clamping
  * validator. Optional bounds can also be supplied via {@link ParameterBounds}.
  */

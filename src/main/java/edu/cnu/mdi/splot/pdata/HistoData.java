@@ -11,7 +11,7 @@ import edu.cnu.mdi.util.UnicodeUtils;
  * <p>Bin edges are stored in {@code grid[]} of length {@code (numBins + 1)}.
  * Counts are stored in {@code counts[]} of length {@code numBins}.</p>
  *
- * <h3>Responsibilities</h3>
+ * <p>Responsibilities</p>
  * <p>This class is responsible <em>only</em> for data storage and bin
  * arithmetic:</p>
  * <ul>
@@ -21,7 +21,7 @@ import edu.cnu.mdi.util.UnicodeUtils;
  *   <li>Display preferences (rms vs sigma in legend, stat error flag)</li>
  * </ul>
  *
- * <h3>Out-of-scope (separated into dedicated classes)</h3>
+ * <p>Out-of-scope (separated into dedicated classes)</p>
  * <ul>
  *   <li>Peak finding and fit-vector preparation &mdash; see {@link HistoFitPrep}</li>
  *   <li>Screen polygon and status-string rendering &mdash; see

@@ -146,7 +146,7 @@ public class FeedbackPane extends TextPaneScrollPane {
     /**
      * Appends a feedback line, applying the simple prefix-based styling rules.
      *
-     * <h3>Prefix syntax</h3>
+     * <p>Prefix syntax</p>
      * <ul>
      *   <li>{@code "$mono$"} (case-insensitive: {@code $Mono$}, {@code $MONO$},
      *       etc. are all accepted) — the prefix is stripped and the remainder
@@ -163,7 +163,7 @@ public class FeedbackPane extends TextPaneScrollPane {
      *       swallowed.</li>
      * </ul>
      *
-     * <h3>Validation rules for the color prefix</h3>
+     * <p>Validation rules for the color prefix</p>
      * <ol>
      *   <li>The message must start with {@code $}.</li>
      *   <li>A closing {@code $} must appear such that the enclosed name is

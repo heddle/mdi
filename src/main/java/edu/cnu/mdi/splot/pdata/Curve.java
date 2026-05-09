@@ -24,7 +24,7 @@ import edu.cnu.mdi.splot.fit.IFitter;
  * {@code Curve} supports two distinct modes of use:
  * </p>
  *
- * <h3>1) Thread-safe mutation via {@code add(...)} / {@code addAll(...)}</h3>
+ * <p>1) Thread-safe mutation via {@code add(...)} / {@code addAll(...)}</p>
  * <p>
  * Methods such as {@link #add(double, double)} and
  * {@link #addAll(double[], double[])} may be called from <em>any</em> thread.
@@ -39,8 +39,8 @@ import edu.cnu.mdi.splot.fit.IFitter;
  * DATA change event.</li>
  * </ul>
  *
- * <h3>2) Streaming / DAQ mode via {@code enqueue(...)} +
- * {@code drainPendingOnEDT(...)}</h3>
+ * <p>2) Streaming / DAQ mode via {@code enqueue(...)} +
+ * {@code drainPendingOnEDT(...)}</p>
  * <p>
  * Background producer threads may call {@link #enqueue(double, double)} /
  * {@link #enqueue(double, double, double)} and the UI (EDT) drains periodically

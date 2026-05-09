@@ -27,7 +27,7 @@ import edu.cnu.mdi.util.UnicodeUtils;
  * {@link MouseListener}, {@link MouseMotionListener}, and
  * {@link MouseWheelListener} logic lives here.</p>
  *
- * <h3>Responsibilities</h3>
+ * <p>Responsibilities</p>
  * <ul>
  *   <li>Legend and extra-text dragging ({@link #mousePressed},
  *       {@link #mouseDragged}, {@link #mouseReleased})</li>
@@ -37,7 +37,7 @@ import edu.cnu.mdi.util.UnicodeUtils;
  *   <li>Scroll-wheel zoom ({@link #mouseWheelMoved})</li>
  * </ul>
  *
- * <h3>Canvas coupling</h3>
+ * <p>Canvas coupling</p>
  * <p>The handler holds a reference back to its owning {@code PlotCanvas} for
  * coordinate transforms, data access, and repaint requests. It does
  * <em>not</em> hold any state that could not be reconstructed from the

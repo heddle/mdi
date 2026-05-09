@@ -10,7 +10,7 @@ import java.util.Map;
  *
  * Design goals:
  * <ul>
- *   <li>Centralize look & feel (typography, spacing, section layout)</li>
+ *   <li>Centralize look and feel (typography, spacing, section layout)</li>
  *   <li>Prefer structured data over ad-hoc HTML snippets</li>
  *   <li>Still allow optional raw HTML fragments when needed</li>
  * </ul>
@@ -34,6 +34,7 @@ public abstract class AbstractViewInfo {
     /**
      * Usage bullets (preferred).
      * Each bullet should be plain text (not HTML). The framework will escape it.
+     * @return List of usage bullets, or empty list if none.
      */
     public List<String> getUsageBullets() {
         return Collections.emptyList();
@@ -42,6 +43,7 @@ public abstract class AbstractViewInfo {
     /**
      * Usage steps (optional alternative to bullets).
      * Each step should be plain text (not HTML). The framework will escape it.
+     * @return List of usage steps, or empty list if none.
      */
     public List<String> getUsageSteps() {
         return Collections.emptyList();
@@ -50,6 +52,7 @@ public abstract class AbstractViewInfo {
     /**
      * A map of Key Combo -> Action (e.g., "Ctrl+S" -> "Save").
      * Keys and actions are treated as plain text.
+     * @return Map of keyboard shortcuts, or empty map if none.
      */
     public Map<String, String> getKeyboardShortcuts() {
         return Collections.emptyMap();
@@ -82,6 +85,7 @@ public abstract class AbstractViewInfo {
      * here (e.g., a table, links, etc.). If non-blank, it is inserted as-is.
      *
      * Prefer getUsageBullets() / getUsageSteps() when possible.
+     * @return Raw HTML fragment for usage instructions, or null/blank to use structured bullets/steps.
      */
     public String getUsageHtml() {
         return null;
@@ -110,6 +114,10 @@ public abstract class AbstractViewInfo {
     // HTML generation
     // ------------------------------------------------------------------------
 
+    /**
+     * Generates an HTML string representing this view info, suitable for display in a Swing HTML component.
+     * @return An HTML string representing this view info.
+     */
     public final String getAsHTML() {
         StringBuilder sb = new StringBuilder(2048);
 

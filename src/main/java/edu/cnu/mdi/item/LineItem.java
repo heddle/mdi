@@ -19,8 +19,8 @@ import edu.cnu.mdi.util.MathUtils;
  * {@link IContainer} transforms.
  * </p>
  * <p>
- * This item supports {@link ItemModification.Type#DRAG} and
- * {@link ItemModification.Type#RESIZE} modifications. Rotation is currently a
+ * This item supports ItemModificationType DRAG and
+ * ItemModificationType RESIZE modifications. Rotation is currently a
  * no-op (consistent with the prior implementation).
  * </p>
  */
@@ -94,7 +94,7 @@ public class LineItem extends AItem {
 	 * the simple visibility flag check. For example, it might check whether the
 	 * item intersects the area being drawn.
 	 *
-	 * @param g         the graphics context.
+	 * @param g2         the graphics context.
 	 * @param container the graphical container being rendered.
 	 * @return <code>true</code> if the item passes any and all tests, and should be
 	 *         drawn.

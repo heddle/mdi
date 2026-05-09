@@ -51,7 +51,7 @@ import edu.cnu.mdi.view.BaseView;
  *   <li><b>Annotations</b> (protected; drawn last / top)</li>
  * </ul>
  *
- * <h3>Important implementation note</h3>
+ * <p>Important implementation note</p>
  * {@link Layer}'s constructor auto-registers the new layer with the container
  * via {@link IContainer#addLayer(Layer)}. During this container's constructor,
  * the protected layer fields are not yet assigned when the first
@@ -326,7 +326,7 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	 * Get the approximate zoom factor based on the current and default world
 	 * systems.
 	 *
-	 * @return the approximate zoom factor. Numbers > 1 mean zoomed in; < 1 mean
+	 * @return the approximate zoom factor. Numbers greater than 1 mean zoomed in; less than 1 mean
 	 *         zoomed out.
 	 */
 	@Override
@@ -929,7 +929,7 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	/**
 	 * Responds to item change events fired by layers owned by this container.
 	 *
-	 * <p>The base implementation:
+	 * <p>The base implementation:</p>
 	 * <ul>
 	 *   <li>Updates the toolbar state (e.g. enables/disables the delete button)
 	 *       when an item is selected or deselected.</li>
@@ -938,7 +938,7 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	 * </ul>
 	 * All other change types are no-ops in the base class. Subclasses may
 	 * override to add behaviour for specific types such as {@code MOVED} or
-	 * {@code DELETED}.</p>
+	 * {@code DELETED}.
 	 *
 	 * @param layer the layer containing the changed item
 	 * @param item  the affected item; may be {@code null} for layer-level events

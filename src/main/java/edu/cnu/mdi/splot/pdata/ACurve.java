@@ -332,6 +332,7 @@ public abstract class ACurve {
 	 * This method does not notify listeners. Prefer {@link #markDataChanged()} or
 	 * {@link #markStyleChanged()} when you want notifications.
 	 * </p>
+	 * @param dirty dirty flag
 	 */
 	public void setDirty(boolean dirty) {
 		this.dirty = dirty;
@@ -348,6 +349,7 @@ public abstract class ACurve {
 	 * This does not notify listeners; it is typically called during
 	 * {@link #doFit(boolean)}.
 	 * </p>
+	 * @param cubicSpline cubic spline to cache (may be null)
 	 */
 	public void setCubicSpline(CubicSpline cubicSpline) {
 		this.cubicSpline = cubicSpline;
