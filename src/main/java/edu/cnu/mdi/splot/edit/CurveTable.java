@@ -2,12 +2,7 @@ package edu.cnu.mdi.splot.edit;
 
 import java.awt.Color;
 
-/**
- * This class creates and manages the table for curve data in sPlot.
- *
- * @author heddle
- *
- */
+
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -28,6 +23,22 @@ import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
+/**
+ * A table for curve data in sPlot. This table allows users to toggle the
+ * visibility of curves and edit their names. It is designed to be used within
+ * the sPlot editing interface, providing an intuitive way to manage curve
+ * properties.
+ *
+ * <p>The table consists of two columns: a checkbox for visibility and a text
+ * field for the curve name. The visibility column uses a custom cell renderer
+ * to display checkboxes, while the name column uses a custom renderer to
+ * display text fields with appropriate styling.</p>
+ *
+ * <p>When the visibility checkbox is toggled or the curve name is edited, the
+ * plot canvas is repainted to reflect the changes immediately.</p>
+ *
+ * @author heddle
+ */
 @SuppressWarnings("serial")
 public class CurveTable extends JTable {
 

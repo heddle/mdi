@@ -26,10 +26,10 @@ public abstract class AOneShotButton extends JButton {
 	protected AToolBar toolBar;
 
 	/**
-	 * Create a new action button.
+	 * Creates a one-shot button.
 	 *
-	 * @param imageFile for example, "images/svg/delete.svg".
-	 * @param toolTip   tooltip text.
+	 * @param canvas  the component that owns the current gesture
+	 * @param toolBar the toolbar that owns this button
 	 */
 	protected AOneShotButton(Component canvas, AToolBar toolBar) {
 		this.toolBar = toolBar;

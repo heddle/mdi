@@ -28,20 +28,12 @@ public final class Bits {
 	}
 
 	/**
-	 * Tests whether <em>all</em> bits specified by {@code mask} are set within
-	 * {@code bits}. This is the typical idiom for multi-bit presence checks.
+	 * Tests whether all bits specified by {@code mask} are set to {@code 1} in
+	 * the given value.
 	 *
-	 * <p>
-	 * Example: to test whether bit 5 is set:
-	 * </p>
-	 *
-	 * <pre>
-	 * Bits.check(bits, 1L << 5);
-	 * </pre>
-	 *
-	 * @param bits the 64-bit value to check
-	 * @param mask the bit mask to test (usually {@code 1L << n} or a combination)
-	 * @return {@code true} if all mask bits are set, {@code false} otherwise
+	 * @param bits the 64-bit word to test
+	 * @param mask the mask of bits to check
+	 * @return {@code true} if all masked bits are set, {@code false} otherwise
 	 */
 	public static boolean check(long bits, long mask) {
 		return (bits & mask) == mask;

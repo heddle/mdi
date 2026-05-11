@@ -55,7 +55,7 @@ import edu.cnu.mdi.util.UnicodeUtils;
  * All drawing methods accept {@link Graphics2D} directly. No casts from
  * {@link java.awt.Graphics} are performed in this class. Callers that receive
  * a {@link java.awt.Graphics} from AWT (e.g. inside
- * {@link java.awt.Component#paintComponent}) should cast once at the call
+ * paintComponent) should cast once at the call
  * site:
  * </p>
  * <pre>

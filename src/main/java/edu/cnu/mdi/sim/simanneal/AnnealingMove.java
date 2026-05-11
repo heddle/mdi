@@ -1,5 +1,10 @@
 package edu.cnu.mdi.sim.simanneal;
 
+/**
+ * A move that can be applied to an annealing solution.
+ *
+ * @param <S> the type of annealing solution
+ */
 public interface AnnealingMove<S extends AnnealingSolution> {
 
     /**

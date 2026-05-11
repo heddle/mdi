@@ -31,6 +31,7 @@ import edu.cnu.mdi.graphics.GraphicsUtils;
  */
 public abstract class ARubberband implements MouseListener, MouseMotionListener {
 
+	/** Rubberband policy, defining behavior and drawing rules. */
 	public static enum Policy {
 		NONE,
 		RECTANGLE,

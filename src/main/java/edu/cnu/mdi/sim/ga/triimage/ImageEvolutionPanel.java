@@ -35,7 +35,7 @@ import javax.swing.JPanel;
  *
  * <h2>Threading</h2>
  * <p>
- * {@link #updateBest(BufferedImage)} and {@link #updatePopulation(List)} are
+ * updateBest(BufferedImage) and updatePopulation(List) are
  * called from {@code onSimulationRefresh}, which is already on the EDT
  * (guaranteed by {@link edu.cnu.mdi.sim.SimulationEngine}). No additional
  * synchronization is needed.

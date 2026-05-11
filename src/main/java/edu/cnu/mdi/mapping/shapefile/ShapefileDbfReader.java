@@ -20,7 +20,7 @@ import java.util.Map;
  * used in ESRI Shapefiles.
  *
  * <h2>File format overview</h2>
- * <p>A {@code .dbf} file consists of:
+ * <p>A {@code .dbf} file consists of:</p>
  * <ol>
  *   <li>A 32-byte file header containing the record count, header size, and
  *       record size.</li>
@@ -29,7 +29,7 @@ import java.util.Map;
  *   <li>A sequence of fixed-width data records, each preceded by a one-byte
  *       deletion flag ({@code 0x20} = valid, {@code 0x2A} = deleted).</li>
  * </ol>
- * All integers in the header are little-endian. Field values are stored as
+ * <p>All integers in the header are little-endian. Field values are stored as
  * fixed-width, space-padded ASCII (or the file's declared charset).</p>
  *
  * <h2>Usage</h2>

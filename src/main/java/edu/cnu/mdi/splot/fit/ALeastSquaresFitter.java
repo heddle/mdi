@@ -38,7 +38,7 @@ import edu.cnu.mdi.util.UnicodeUtils;
  * <li>optionally
  * {@link #defaultInitialGuess(double[], double[], double[])}</li>
  * <li>optionally {@link #defaultValidator()}</li>
- * <li>optionally {@link #getModelName()}</li>
+ * <li>optionally getModelName()</li>
  * </ul>
  *
  * <p>Chi-square note (Commons Math 3.6.1)</p> {@code Optimum.getCost()}
@@ -361,16 +361,15 @@ public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
 	public abstract Evaluator asEvaluator(final FitResult fit);
 
 	/**
-	 * Create a {@link FitResult} from an Apache least-squares optimum.
+	 * Build a FitResult from the given components.
 	 *
-	 * @param modelName     label for FitResult
-	 * @param modelFunction model function as a string
-	 * @param params        fitted parameters
-	 * @param covariance    covariance matrix or null
-	 * @param nPoints       number of data points
-	 * @param nParams       number of fitted parameters
-	 * @param opt           optimizer optimum
-	 * @return FitResult
+	 * @param stringGetter       string getter for this fitter
+	 * @param params             fitted parameters
+	 * @param covariance         covariance matrix (may be null)
+	 * @param nPoints            number of data points
+	 * @param nParams            number of fitted parameters
+	 * @param opt                optimization result from Commons Math
+	 * @return a FitResult instance
 	 */
 	protected static FitResult buildFitResult(IFitStringGetter stringGetter, double[] params, RealMatrix covariance,
 			int nPoints, int nParams, LeastSquaresOptimizer.Optimum opt) {

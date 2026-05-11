@@ -5,6 +5,9 @@ import java.awt.BorderLayout;
 import edu.cnu.mdi.dialog.SimpleDialog;
 import edu.cnu.mdi.splot.plot.PlotCanvas;
 
+/**
+ * A dialog for editing curve properties in a plot.
+ */
 @SuppressWarnings("serial")
 public class CurveEditorDialog extends SimpleDialog {
 

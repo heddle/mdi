@@ -56,7 +56,7 @@ import javax.swing.SwingConstants;
  * <ul>
  * <li>You may still add non-toggle components (regular buttons, separators,
  * etc.) using {@link #add(Component)} from {@link JToolBar}.</li>
- * <li>Only toggles added via {@link #addToggle(JToggleButton)} or
+ * <li>Only toggles added via
  * {@link #addToggle(JToggleButton, boolean)} are managed by the primary
  * group.</li>
  * <li>The registry is populated by using the id-aware overloads

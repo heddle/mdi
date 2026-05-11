@@ -1050,7 +1050,7 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	}
 
 	/**
-	 * Compute transforms for world <-> local conversion.
+	 * Compute transforms for world to local and local to world conversion.
 	 */
 	protected void setAffineTransforms() {
 		// Use getWidth()/getHeight() rather than getBounds() here.

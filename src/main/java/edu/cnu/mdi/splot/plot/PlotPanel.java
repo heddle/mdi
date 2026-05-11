@@ -45,21 +45,19 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 	protected int _decorations;
 
 	/**
-	 * Create a plot panel for a single xy dataset and a toolbar
+	 * Create a plot panel for a single xy dataset with standard decorations
 	 *
-	 * @param dataSet   the data set
-	 * @param plotTitle the title of the plot
+	 * @param canvas    the plot canvas
 	 */
 	public PlotPanel(PlotCanvas canvas) {
 		this(canvas, STANDARD);
 	}
 
 	/**
-	 * Create a plot panel for a single xy dataset
+	 * Create a plot panel for a single xy dataset with specified decorations
 	 *
-	 * @param dataSet     the data set
-	 * @param plotTitle   the title of the plot
-	 * @param decorations (stripped down panel?)
+	 * @param canvas      the plot canvas
+	 * @param decorations the level of decorations (VERYBARE, BARE, or STANDARD)
 	 */
 	public PlotPanel(PlotCanvas canvas, int decorations) {
 		_canvas = canvas;

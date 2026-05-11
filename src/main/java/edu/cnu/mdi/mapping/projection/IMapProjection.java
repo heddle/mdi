@@ -28,7 +28,7 @@ import edu.cnu.mdi.mapping.theme.MapTheme;
  *   <li>Implement this interface (forward, inverse, visibility, bounds,
  *       outline, graticule drawing).</li>
  *   <li>Add a {@code case} to {@link ProjectionFactory#create(EProjection, MapTheme, Point2D.Double)}.</li>
- *   <li>Add a {@code case} to {@link MapContainer#recenter(java.awt.Point)} if
+ *   <li>Add a {@code case} to recenter(Point) if
  *       the projection supports re-centering.</li>
  * </ol>
  *
