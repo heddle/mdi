@@ -21,23 +21,23 @@ import edu.cnu.mdi.splot.pdata.FitVectors;
  * y(x) = A * x^n + C
  * </pre>
  *
- * <h3>Parameter ordering</h3>
+ * <p>Parameter ordering</p>
  * <ul>
  *   <li>{@code params[0] = A}  &mdash; amplitude</li>
  *   <li>{@code params[1] = n}  &mdash; exponent (real-valued, unconstrained)</li>
  *   <li>{@code params[2] = C}  &mdash; baseline offset</li>
  * </ul>
  *
- * <h3>Typical applications</h3>
+ * <p>Typical applications</p>
  * <p>Log-log scaling laws, stellar flux vs distance, turbulence spectra,
  * fractal relationships, and any data that appears linear on a log-log plot.</p>
  *
- * <h3>Important: domain restriction</h3>
+ * <p>Important: domain restriction</p>
  * <p>The model {@code A * x^n} is only defined for {@code x > 0}. Any data
  * point with {@code x <= 0} will cause the fit to fail. If your data includes
  * non-positive x values, shift or truncate before fitting.</p>
  *
- * <h3>Initial guess strategy</h3>
+ * <p>Initial guess strategy</p>
  * <p>The baseline {@code C} is estimated from the smallest-y points. The
  * offset-subtracted data is log-log linearised: fitting a line to
  * {@code log(y − C)} vs {@code log(x)} gives {@code n} as the slope and

@@ -43,7 +43,7 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * <li>Trigonometric values are cached per frame.</li>
  * </ul>
  *
- * <h3>Drop-in behavior</h3> This is intended as a drop-in replacement for the
+ * <p>Drop-in behavior</p> This is intended as a drop-in replacement for the
  * prototype {@code BackedHistogram2D} you shared: same package/class name, same
  * constructor signature, same mouse gestures, and it still directly reads
  * {@code data._bins}.

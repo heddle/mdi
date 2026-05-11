@@ -2,6 +2,12 @@ package edu.cnu.mdi.sim.simanneal;
 
 import java.util.Random;
 
+/**
+ * An annealing problem defines the energy function and move generation for
+ * simulated annealing.
+ *
+ * @param <S> the type of annealing solution
+ */
 public interface AnnealingProblem<S extends AnnealingSolution> {
     /**
      * Compute the energy of a solution.

@@ -226,6 +226,12 @@ public class BaseView extends JInternalFrame
         addMouseListener(this);
         addFocusListener(this);
         addComponentListener(this);
+        
+        // Enable all standard frame operations by default; subclasses can disable
+        setMaximizable(true);
+        setIconifiable(true);
+        setResizable(true);
+        setClosable(true);
 
         // Register with the manager before the view becomes visible.
         ViewManager.getInstance().add(this);
@@ -1047,11 +1053,6 @@ public class BaseView extends JInternalFrame
     private static final class ViewInitConfig {
 
         final String title;
-        final boolean standardDecorations;
-        final boolean iconifiable;
-        final boolean maximizable;
-        final boolean resizable;
-        final boolean closable;
         final boolean addWheelZoom;
         final boolean scrollable;
         final boolean useContainer;
@@ -1066,20 +1067,14 @@ public class BaseView extends JInternalFrame
         final long toolBits;
         final ARubberband.Policy boxZoomPolicy;
 
-        private ViewInitConfig(String title, boolean standardDecorations,
-                boolean iconifiable, boolean maximizable,
-                boolean resizable, boolean closable, boolean scrollable,
+        private ViewInitConfig(String title, 
+                boolean scrollable,
                 boolean visible, int left, int top, int width, int height,
                 Rectangle2D.Double worldSystem, Color background,
                 JComponent splitWestComponent, long toolBits,
                 ARubberband.Policy boxZoomPolicy, boolean addWheelZoom,
                 boolean useContainer) {
             this.title               = title;
-            this.standardDecorations = standardDecorations;
-            this.iconifiable         = iconifiable;
-            this.maximizable         = maximizable;
-            this.resizable           = resizable;
-            this.closable            = closable;
             this.scrollable          = scrollable;
             this.visible             = visible;
             this.left                = left;
@@ -1112,11 +1107,6 @@ public class BaseView extends JInternalFrame
                 title = "A View";
             }
 
-            boolean standardDecorations = PropertyUtils.getStandardViewDecorations(props);
-            boolean iconifiable         = PropertyUtils.getIconifiable(props);
-            boolean maximizable         = PropertyUtils.getMaximizable(props);
-            boolean resizable           = PropertyUtils.getResizable(props);
-            boolean closable            = PropertyUtils.getClosable(props);
             boolean scrollable          = PropertyUtils.getScrollable(props);
             boolean useContainer        = PropertyUtils.getUseContainer(props);
             boolean visible             = PropertyUtils.getVisible(props);
@@ -1170,8 +1160,7 @@ public class BaseView extends JInternalFrame
             ARubberband.Policy  policy         = PropertyUtils.getBoxZoomRubberbandPolicy(props);
             boolean             addWheelZoom   = PropertyUtils.addWheelZoom(props);
 
-            return new ViewInitConfig(title, standardDecorations,
-                    iconifiable, maximizable, resizable, closable, scrollable,
+            return new ViewInitConfig(title, scrollable,
                     visible, left, top, width, height, worldSystem, background,
                     west, bits, policy, addWheelZoom, useContainer);
         }
@@ -1227,10 +1216,6 @@ public class BaseView extends JInternalFrame
          */
         static void apply(BaseView view, ViewInitConfig cfg) {
             view.setTitle(cfg.title);
-            view.setIconifiable (cfg.standardDecorations || cfg.iconifiable);
-            view.setMaximizable (cfg.standardDecorations || cfg.maximizable);
-            view.setResizable   (cfg.standardDecorations || cfg.resizable);
-            view.setClosable    (cfg.standardDecorations || cfg.closable);
             view.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
             view.setFrameIcon(null);
             view.setLocation(cfg.left, cfg.top);

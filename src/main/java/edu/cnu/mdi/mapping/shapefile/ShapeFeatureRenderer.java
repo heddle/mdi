@@ -178,7 +178,7 @@ public class ShapeFeatureRenderer implements IPickable {
      *
      * <p>Hidden layers ({@code visible = false}) skip all rendering and
      * return {@code null} from {@link #pick}. The layer remains in the
-     * {@link MapView2D} extra-layer list so it can be re-shown instantly
+     * MapView2D extra-layer list so it can be re-shown instantly
      * without reloading the data.</p>
      *
      * @param visible {@code true} to show this layer; {@code false} to hide it
@@ -197,11 +197,11 @@ public class ShapeFeatureRenderer implements IPickable {
 
     /**
      * Updates the projection used for coordinate transforms and visibility
-     * tests. Must be called whenever the owning {@link MapView2D} switches
+     * tests. Must be called whenever the owning MapView2D switches
      * projections so that this layer renders in the correct coordinate space.
      *
-     * <p>{@link MapView2D#setProjection(EProjection)} calls this automatically
-     * for every layer registered via {@link MapView2D#addLayer}.</p>
+     * <p>MapView2D setProjection(EProjection) calls this automatically
+     * for every layer registered via MapView2D addLayer.</p>
      *
      * @param projection the new projection; must not be {@code null}
      */

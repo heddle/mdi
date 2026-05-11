@@ -31,6 +31,7 @@ import edu.cnu.mdi.graphics.GraphicsUtils;
  */
 public abstract class ARubberband implements MouseListener, MouseMotionListener {
 
+	/** Rubberband policy, defining behavior and drawing rules. */
 	public static enum Policy {
 		NONE,
 		RECTANGLE,
@@ -91,7 +92,11 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 		component.addMouseMotionListener(this);
 	}
 
-	/** For toolbars that construct the rubberband after the press event. */
+	/**
+	 * Begin rubberbanding with the given anchor point. For drag-based policies, this is typically called from mousePressed();
+	 * for toolbar-initiated gestures, this is called by the toolbar to start the gesture with a specific anchor point.
+	 * @param anchorPt the initial point of the gesture, which may be used as the start point and for initial drawing; may be null but is typically not.
+	 */
 	public final void begin(Point anchorPt) {
 		startRubberbanding(anchorPt);
 	}
@@ -117,6 +122,7 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 	/**
 	 * True if this rubberband collects points on click rather than drag. Used
 	 * by toolbars to determine when to call isGestureValid() and getRubberbandVertices().
+	 * @return true if this rubberband collects points on click rather than drag, false if it is drag-based.
 	 */
 	public boolean isClickBased() {
 		return false;
@@ -162,6 +168,7 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 
 	/**
 	 * Primary highlight color, used for borders or 1-color gradients.
+	 * @param c the primary highlight color to use when drawing this rubberband; may be null if not used.
 	 */
 	public final void setHighlightColor1(Color c) {
 		highlightColor1 = c;
@@ -169,6 +176,7 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 
 	/**
 	 * Secondary highlight color, used for 2-color gradients or borders.
+	 * @param c the secondary highlight color to use when drawing this rubberband; may be null if not used.
 	 */
 	public final void setHighlightColor2(Color c) {
 		highlightColor2 = c;
@@ -195,6 +203,7 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 	/**
 	 * Normal completion. Preserves results long enough for the toolbar to read them
 	 * in {@link IRubberbanded#doneRubberbanding()}.
+	 * @param p the final point of the gesture, which may be used for final drawing and bounds calculations; may be null if not applicable.
 	 */
 	public void endRubberbanding(Point p) {
 

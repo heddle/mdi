@@ -73,8 +73,7 @@ public class DateString {
 	/**
 	 * Returns the current time.
 	 *
-	 * @param longtime the time in millis.
-	 * @return a string representation of the current time, down to minutes.
+	 * @return a string representation of the current time, down to seconds.
 	 */
 	public static String dateStringLong() {
 		return formatterlong.format(new Date(System.currentTimeMillis()));

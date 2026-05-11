@@ -27,6 +27,13 @@ import edu.cnu.mdi.util.PrintUtils;
 import edu.cnu.mdi.util.TakePicture;
 import edu.cnu.mdi.view.BaseView;
 
+/**
+ * Default tool handler for BaseContainer. This class provides standard
+ * implementations for all tools, which can be used as-is or overridden by
+ * subclasses.
+ *
+ * @author heddle
+ */
 public class BaseToolHandler implements IToolHandler {
 
 	// Zoom factor for each zoom in/out action
@@ -68,8 +75,7 @@ public class BaseToolHandler implements IToolHandler {
 	/**
 	 * Hit test at the given point on the canvas.
 	 *
-	 * @param toolBar ToolBar that owns this tool
-	 * @param canvas  JComponent on which the hit test is occurring
+	 * @param gc	  GestureContext providing context for the hit test
 	 * @param p       Point to hit test
 	 * @return Object that was hit, or null if nothing was hit
 	 */
@@ -81,11 +87,7 @@ public class BaseToolHandler implements IToolHandler {
 	/**
 	 * Handle pointer click on an object at the given point.
 	 *
-	 * @param toolBar ToolBar that owns this tool
-	 * @param canvas  JComponent on which the click is occurring
-	 * @param p       Point where the click occurred
-	 * @param obj     Object that was clicked or null if none
-	 * @param e       MouseEvent that triggered the click
+	 * @param gc GestureContext providing context for the click
 	 */
 	@Override
 	public void pointerClick(GestureContext gc) {
@@ -112,11 +114,7 @@ public class BaseToolHandler implements IToolHandler {
 	/**
 	 * Handle pointer double click on an object at the given point.
 	 *
-	 * @param toolBar ToolBar that owns this tool
-	 * @param canvas  JComponent on which the double click is occurring
-	 * @param p       Point where the double click occurred
-	 * @param obj     Object that was double clicked or null if none
-	 * @param e       MouseEvent that triggered the click
+	 * @param gc GestureContext providing context for the double click
 	 */
 	@Override
 	public void pointerDoubleClick(GestureContext gc) {

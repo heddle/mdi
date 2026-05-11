@@ -9,21 +9,21 @@ import java.util.Arrays;
  * {@code [xmin, xmax]} and {@code [ymin, ymax]}.
  * </p>
  *
- * <h3>Bin conventions</h3>
+ * <p>Bin conventions</p>
  * <ul>
  *   <li>Bins are uniform in x and y.</li>
  *   <li>Values strictly below min or strictly above max are out of range.</li>
  *   <li>Values exactly equal to max are included in the last bin.</li>
  * </ul>
  *
- * <h3>Under/over handling</h3>
+ * <p>Under/over handling</p>
  * <p>
  * Like {@link HistoData}, values outside the range are not binned; instead
  * they are counted in under/over counters. In 2D there are edge regions and
  * corners (both x and y out of range).
  * </p>
  *
- * <h3>Threading</h3>
+ * <p>Threading</p>
  * This class is safe to fill from a worker thread while the EDT paints by using
  * {@link #snapshotBins()} in the painter. All mutations and snapshots are guarded
  * by an internal lock.
@@ -704,7 +704,6 @@ public final class Histo2DData {
     /**
      * Return a human-readable summary of in-range and out-of-range fills.
      * <p>
-     * Mirrors the intent of {@link HistoData#rangeSummary()} but extended to 2D.
      * Only non-zero out-of-range categories are reported.
      * </p>
      *

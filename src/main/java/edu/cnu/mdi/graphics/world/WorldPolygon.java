@@ -257,9 +257,14 @@ public class WorldPolygon {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Determines whether the specified coordinates are inside this
+	 * <code>Polygon</code>.
+	 * <p>
 	 *
-	 * @since 1.2
+	 * @param x the specified X coordinate to be tested
+	 * @param y the specified Y coordinate to be tested
+	 * @return {@code true} if this {@code Polygon} contains the specified
+	 *         coordinates {@code (x,y)}; {@code false} otherwise.
 	 */
 	public boolean contains(double x, double y) {
 		if (npoints <= 2 || !getBoundingBox().contains(x, y)) {
@@ -341,8 +346,14 @@ public class WorldPolygon {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Determines whether the specified <code>Point2D</code> is inside this
+	 * <code>Polygon</code>.
 	 *
+	 * @param p the specified <code>Point2D</code> to be tested
+	 * @return {@code true} if this {@code Polygon} contains the specified
+	 *         <code>Point2D</code>; {@code false} otherwise.
+	 * @see #contains(double, double)
+	 * @since 1.1
 	 */
 	public boolean contains(Point2D p) {
 		return contains(p.getX(), p.getY());

@@ -4,12 +4,12 @@ package edu.cnu.mdi.sim;
  * Convenience interface for any object that *hosts* a {@link SimulationEngine}.
  * <p>
  * This interface is intentionally minimal and MDI-agnostic. It provides:
+ * </p>
  * <ul>
  * <li>a single accessor for the underlying {@link SimulationEngine}</li>
  * <li>default lifecycle control methods (start, run, pause, resume, stop,
  * cancel)</li>
  * </ul>
- * </p>
  *
  * <h2>Typical Usage</h2>
  *

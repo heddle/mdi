@@ -38,10 +38,10 @@ import edu.cnu.mdi.util.UnicodeUtils;
  * <li>optionally
  * {@link #defaultInitialGuess(double[], double[], double[])}</li>
  * <li>optionally {@link #defaultValidator()}</li>
- * <li>optionally {@link #getModelName()}</li>
+ * <li>optionally getModelName()</li>
  * </ul>
  *
- * <h3>Chi-square note (Commons Math 3.6.1)</h3> {@code Optimum.getCost()}
+ * <p>Chi-square note (Commons Math 3.6.1)</p> {@code Optimum.getCost()}
  * returns {@code sqrt(sum r_i^2)}. Therefore:
  *
  * <pre>
@@ -53,21 +53,48 @@ import edu.cnu.mdi.util.UnicodeUtils;
  */
 public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
 
-	// helpers from unicode
+	// Subscript/superscript symbols for parameter labels.
+	
+	/** The "sub 0" symbol is used in some fitters (e.g. Gaussian) and is more distinctive than "0" for parameters. */
 	public static final String SUB0 = UnicodeUtils.SUB0;
+	
+	/** The "sub 1" symbol is used in some fitters (e.g. Gaussian) and is more distinctive than "1" for parameters. */
 	public static final String SUB1 = UnicodeUtils.SUB1;
+	
+	/** The "sub 2" symbol is used in some fitters (e.g. Gaussian) and is more distinctive than "2" for parameters. */
 	public static final String SUB2 = UnicodeUtils.SUB2;
+	
+	/** The "sub n" symbol is used in some fitters (e.g. Gaussian) and is more distinctive than "n" for parameters. */
 	public static final String SUBN = UnicodeUtils.SUBN;
+	
+	/** The "super 0" symbol is used in some fitters (e.g. Gaussian) and is more distinctive than "0" for parameters. */
 	public static final String SUP0 = UnicodeUtils.SUPER0;
+	
+	/** The "super 1" symbol is used in some fitters (e.g. Gaussian) and is more distinctive than "1" for parameters. */
 	public static final String SUP1 = UnicodeUtils.SUPER1;
+	
+	/** The "super 2" symbol is used in some fitters (e.g. Gaussian) and is more distinctive than "2" for parameters. */
 	public static final String SUP2 = UnicodeUtils.SUPER2;
+	
+	/** The "super n" symbol is used in some fitters (e.g. Gaussian) and is more distinctive than "n" for parameters. */
 	public static final String SUPN = UnicodeUtils.SUPERN;
+	
+	/** The "mu" symbol is used in some fitters (e.g. Gaussian) and is more distinctive than "m" for parameters. */
 	public static final String MU = UnicodeUtils.SMALL_MU;
+	
+	/** The "sigma" symbol is used in some fitters (e.g. Fourier) and is more distinctive than "s" for parameters. */
 	public static final String SMALLSIG = UnicodeUtils.SMALL_SIGMA;
+	
+	/** The "capital sigma" symbol is used in some fitters (e.g. Fourier) and is more distinctive than "S" for parameters. */
 	public static final String CAPSIG = UnicodeUtils.CAPITAL_SIGMA;
+	
+	/** The "omega" symbol is used in some fitters (e.g. Fourier) and is more distinctive than "w" for parameters. */
 	public static final String OMEGA = UnicodeUtils.SMALL_OMEGA;
+	
+	/** The "phi" symbol is used in some fitters (e.g. Fourier) and is more distinctive than "p" for parameters. */
 	public static final String PHI = UnicodeUtils.SMALL_PHI;
 
+	/** Subscript array for parameter labels (e.g. p₁, p₂, ...). */
 	public String[] subArray = { SUB0, SUB1, SUB2, UnicodeUtils.SUB3, UnicodeUtils.SUB4, UnicodeUtils.SUB5,
 			UnicodeUtils.SUB6, UnicodeUtils.SUB7, UnicodeUtils.SUB8, UnicodeUtils.SUB9 };
 
@@ -334,16 +361,15 @@ public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
 	public abstract Evaluator asEvaluator(final FitResult fit);
 
 	/**
-	 * Create a {@link FitResult} from an Apache least-squares optimum.
+	 * Build a FitResult from the given components.
 	 *
-	 * @param modelName     label for FitResult
-	 * @param modelFunction model function as a string
-	 * @param params        fitted parameters
-	 * @param covariance    covariance matrix or null
-	 * @param nPoints       number of data points
-	 * @param nParams       number of fitted parameters
-	 * @param opt           optimizer optimum
-	 * @return FitResult
+	 * @param stringGetter       string getter for this fitter
+	 * @param params             fitted parameters
+	 * @param covariance         covariance matrix (may be null)
+	 * @param nPoints            number of data points
+	 * @param nParams            number of fitted parameters
+	 * @param opt                optimization result from Commons Math
+	 * @return a FitResult instance
 	 */
 	protected static FitResult buildFitResult(IFitStringGetter stringGetter, double[] params, RealMatrix covariance,
 			int nPoints, int nParams, LeastSquaresOptimizer.Optimum opt) {

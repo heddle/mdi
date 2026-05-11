@@ -216,28 +216,17 @@ public class CubicSpline implements Evaluator {
 	}
 
 	/**
-	 * Find the roots of the interpolated function in a range.
+	 * Find roots of the spline in a given range.
 	 * <p>
-	 * This method:
-	 * <ol>
-	 * <li>Uses {@link Zbrak#zbrak(UniVarRealValueFun, double, double, int)} to
-	 * bracket sign changes.</li>
-	 * <li>For each bracketed interval, refines the root using
-	 * {@link RtSafe#rtsafe(UniVarRealValueFun, double, double, double)}.</li>
-	 * </ol>
+	 * The method scans the range with a fixed number of samples to find sign
+	 * changes, then applies Brent's method to refine each root. The results are
+	 * deduplicated and returned sorted.
 	 *
-	 * <p>
-	 * <b>Dependencies:</b> This assumes your project provides
-	 * Numerical-Recipes-like helpers: {@code UniVarRealValueFun}, {@code Zbrak},
-	 * and {@code RtSafe}.
-	 *
-	 * @param xmin the min value of the search range
-	 * @param xmax the max value of the search range
-	 * @return an array of roots (sorted ascending), or {@code null} if none are
-	 *         found
+	 * @param xmin minimum x value of the search range
+	 * @param xmax maximum x value of the search range
+	 * @return array of roots in the range, or {@code null} if none found
 	 * @throws IllegalArgumentException if {@code xmax <= xmin}
 	 */
-
 	public double[] findRoots(double xmin, double xmax) {
 		if (xmax <= xmin) {
 			throw new IllegalArgumentException("xmax must be > xmin.");

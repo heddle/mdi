@@ -16,7 +16,7 @@ import javax.swing.event.EventListenerList;
  * {@link DataChangeListener} on the {@code PlotData} and repaint when notified.
  * </p>
  *
- * <h3>Notifications</h3> There are two kinds of changes:
+ * <p>Notifications</p> There are two kinds of changes:
  * <ul>
  * <li><b>Structural</b> changes to the model (curves added/removed/cleared)
  * &mdash; fired by {@code PlotData}.</li>
@@ -25,13 +25,13 @@ import javax.swing.event.EventListenerList;
  * view can listen in one place.</li>
  * </ul>
  *
- * <h3>Threading</h3> {@code PlotData} is not synchronized. If curves are
+ * <p>Threading</p> {@code PlotData} is not synchronized. If curves are
  * updated from a background sampler (e.g. {@link StripChartCurve}), the view
  * should use its existing snapshot/copy strategy when rendering.
  *
- * <h3>Thread-safety</h3>
+ * <p>Thread-safety</p>
  * {@code PlotData} is <em>not</em> thread-safe. All structural mutations
- * ({@link #addCurve}, {@link #removeCurve}, {@link #clear}) and all
+ * ({@link #addCurve}) and all
  * listener notifications MUST be called on the Swing EDT.
  *
  * Background producers should call only the thread-safe methods on the

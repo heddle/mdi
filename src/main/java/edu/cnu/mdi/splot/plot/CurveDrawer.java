@@ -32,19 +32,18 @@ import edu.cnu.mdi.ui.fonts.Fonts;
 
 public class CurveDrawer {
 
+	// a transparent gray for default bar borders
 	private static final Color _transGray = new Color(80, 80, 80, 16);
 
+	// lock for synchronizing access to curve data when drawing
 	protected final Object lock = new Object();
 
 	/**
-	 * Draw a curve with x and y error bars
+	 * Draw the given curve on the given plot canvas
 	 *
 	 * @param g2         the graphics context
 	 * @param plotCanvas the plot canvas
-	 * @param xcol       the x data column
-	 * @param ycol       the y data column
-	 * @param xerrCol    the x error bar column (often <code>null</code>)
-	 * @param yerrCol    the y error bar column
+	 * @param curve      the curve to be drawn
 	 */
 	public static void drawCurve(Graphics2D g2, PlotCanvas plotCanvas, ACurve curve) {
 
@@ -73,11 +72,11 @@ public class CurveDrawer {
 	}
 
 	/**
-	 * Draw a bar for a bar plot
+	 * Draw a bar for the given curve. The curve must have exactly 4 points, which are the corners of the bar.
 	 *
 	 * @param g2         the graphics context
-	 * @param plotCanvas the plot canvas
-	 * @param curve      the bar curve to be drawn
+	 * @param canvas the plot canvas
+	 * @param curve      the curve to be drawn as a bar
 	 */
 	public static void drawBar(Graphics2D g2, PlotCanvas canvas, Curve curve) {
 		if (!curve.isVisible()) {
@@ -135,7 +134,7 @@ public class CurveDrawer {
 	 * Draw a standard XY(with optional errors) curve
 	 *
 	 * @param g2         the graphics context
-	 * @param plotCanvas the plot canvas
+	 * @param canvas the plot canvas
 	 * @param curve      the XY(E)curve to be drawn
 	 */
 	public static void drawXYCurve(Graphics2D g2, PlotCanvas canvas, Curve curve) {
@@ -194,7 +193,7 @@ public class CurveDrawer {
 	 * Draw a strip chart
 	 *
 	 * @param g2              the graphics context
-	 * @param plotCanvas      the plot canvas
+	 * @param canvas      the plot canvas
 	 * @param stripChartCurve the strip chart curve
 	 */
 	public static void drawStripChart(Graphics2D g2, PlotCanvas canvas, StripChartCurve stripChartCurve) {

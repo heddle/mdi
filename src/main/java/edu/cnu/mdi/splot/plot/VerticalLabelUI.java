@@ -16,9 +16,9 @@ import javax.swing.plaf.basic.BasicLabelUI;
 
 /**
  * A UI delegate for JLabel that rotates the label 90 deg
- * <P>
+ * <p>
  * Extends {@link BasicLabelUI}.
- * <P>
+ * </p>
  */
 public class VerticalLabelUI extends BasicLabelUI {
 

@@ -13,6 +13,13 @@ import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.ui.colors.ScientificColorMap;
 
+/**
+ * A utility class for creating and managing bar plots in sPlot. It actually creates an XY plot with special styling to mimic a bar plot.
+ *
+ * @author heddle
+ *
+ */
+
 public class BarPlot {
 
 
@@ -83,8 +90,9 @@ public class BarPlot {
 	}
 
 	/**
-	 * Reset the plot lines to default for bar plots
-	 * @param canvas
+	 * Reset the plot lines to match the current data world and log state.
+	 *
+	 * @param canvas the plot canvas
 	 */
 	public static void resetPlotLines(PlotCanvas canvas) {
 		PlotParameters params = canvas.getParameters();

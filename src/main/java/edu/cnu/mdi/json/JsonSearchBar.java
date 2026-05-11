@@ -34,7 +34,7 @@ import javax.swing.event.DocumentListener;
  * <h2>Behaviour</h2>
  * <ul>
  *   <li>Typing in the field immediately highlights all matching spans in the
- *       raw pane via {@link JsonRawPane#highlight(String)} and filters the
+ *       raw pane via JsonRawPane#highlight(String) and filters the
  *       tree to show only matching paths via
  *       {@link JsonTreePane#search(String)}.</li>
  *   <li>The <b>▲</b> / <b>▼</b> buttons (and F3 / Shift+F3 key bindings)

@@ -23,7 +23,7 @@ import edu.cnu.mdi.splot.pdata.FitVectors;
  * y(x) = A * erf((x - x0) / sigma) + B
  * </pre>
  *
- * <h3>Parameter ordering</h3>
+ * <p>Parameter ordering</p>
  * <ul>
  * <li>{@code params[0] = A}</li>
  * <li>{@code params[1] = x0}</li>

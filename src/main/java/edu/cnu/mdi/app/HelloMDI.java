@@ -26,9 +26,6 @@ public class HelloMDI extends BaseMDIApplication {
 	 */
 	private HelloMDI(Object... keyVals) {
 		super(keyVals);
-
-		// Create internal views.
-		addInitialViews();
 	}
 
 	/**
@@ -46,7 +43,7 @@ public class HelloMDI extends BaseMDIApplication {
 
 	// This method creates and registers the initial set of views.
 	//For this demo, only one view is created.
-	private void addInitialViews() {
+	protected void addInitialViews() {
 		// specify (bitwise) what will be on the toolbar
 		long toolBits = ToolBits.INFO | ToolBits.STATUS | ToolBits.DRAWINGTOOLS | ToolBits.ZOOMTOOLS | ToolBits.PAN;
 

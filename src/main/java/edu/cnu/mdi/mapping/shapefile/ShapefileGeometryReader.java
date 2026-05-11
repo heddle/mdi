@@ -35,6 +35,7 @@ import edu.cnu.mdi.mapping.projection.IMapProjection;
  *
  * <h2>Supported shape types</h2>
  * <table border="1">
+ *  <caption>Reader for the binary geometry data in ESRI Shapefile</caption>
  *   <tr><th>Type value</th><th>Name</th><th>Used for</th></tr>
  *   <tr><td>0</td><td>Null Shape</td><td>Silently skipped</td></tr>
  *   <tr><td>1</td><td>Point</td><td>City / populated-place data</td></tr>

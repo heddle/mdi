@@ -16,7 +16,7 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
  * removes that dependency from {@code HistoData} itself while keeping the
  * functionality in a single, discoverable place.</p>
  *
- * <h3>Usage</h3>
+ * <p>Usage</p>
  * <pre>{@code
  * // Build the screen polygon for hit-testing or filled drawing
  * Polygon poly = HistoDrawingUtils.buildScreenPolygon(canvas, histoData);

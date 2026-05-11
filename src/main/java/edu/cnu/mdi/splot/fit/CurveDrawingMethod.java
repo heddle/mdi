@@ -59,7 +59,9 @@ public enum CurveDrawingMethod {
 		this.displayName = displayName;
 	}
 
-	/** UI-friendly name for combo boxes, menus, etc. */
+	/** UI-friendly name for combo boxes, menus, etc. 
+	* @return display name
+	*/
 	public String getName() {
 		return displayName;
 	}

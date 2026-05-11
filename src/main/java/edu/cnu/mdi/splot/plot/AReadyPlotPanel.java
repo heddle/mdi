@@ -34,6 +34,11 @@ public abstract class AReadyPlotPanel extends JPanel implements PlotChangeListen
 
 	private final boolean includeMenu;
 
+	/**
+	 * Create the plot panel, optionally including the menu bar.
+	 *
+	 * @param includeMenu whether to include the menu bar
+	 */
 	public AReadyPlotPanel(boolean includeMenu) {
 		super();
 		this.includeMenu = includeMenu;

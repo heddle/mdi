@@ -37,6 +37,7 @@ public class CurveDataModel extends DefaultTableModel {
 
 	/**
 	 * Constructor
+	 * @param curves the initial data to populate the model with.
 	 */
 	public CurveDataModel(List<ACurve> curves) {
 		super(colNames, 2);

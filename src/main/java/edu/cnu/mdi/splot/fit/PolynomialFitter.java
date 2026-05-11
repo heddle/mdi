@@ -30,7 +30,7 @@ import edu.cnu.mdi.splot.pdata.FitVectors;
  * params[k] = c_k
  * </pre>
  *
- * <h3>Initial guess</h3> If the caller does not supply an initial guess, the
+ * <p>Initial guess</p> If the caller does not supply an initial guess, the
  * fitter computes a weighted linear least-squares solution (via
  * {@link LinearLeastSquaresGuesser}) which is an excellent starting point
  * (often already the solution) for polynomials.

@@ -203,7 +203,7 @@ public interface IContainer {
 	 *
 	 * @param lp the pixel point in question.
 	 * @return all items across all item lists that contain the given point. It may
-	 *         be an empty vector, but it won't be <code>null</null>.
+	 *         be an empty vector, but it won't be <code>null</code>.
 	 */
 	public ArrayList<AItem> getItemsAtPoint(Point lp);
 

@@ -30,7 +30,7 @@ import edu.cnu.mdi.splot.pdata.Snapshot;
 /**
  * The primary Swing component for rendering a 2-D scientific plot.
  *
- * <h3>Responsibilities</h3>
+ * <p>Responsibilities</p>
  * <ul>
  *   <li>Owning the coordinate-system geometry ({@link #_worldSystem},
  *       {@link #setWorldSystem()}, affine transforms)</li>
@@ -42,13 +42,13 @@ import edu.cnu.mdi.splot.pdata.Snapshot;
  *   <li>Data management: {@link #setPlotData}, {@link #clearData}</li>
  * </ul>
  *
- * <h3>Mouse handling</h3>
+ * <p>Mouse handling</p>
  * <p>All mouse interaction (legend dragging, feedback readout, scroll-wheel
  * zoom) is delegated to {@link PlotMouseHandler}, which is wired up in the
  * constructor. {@code PlotCanvas} no longer implements any mouse listener
  * interfaces directly.</p>
  *
- * <h3>Coordinate systems</h3>
+ * <p>Coordinate systems</p>
  * <p>Three coordinate spaces are in play:</p>
  * <ol>
  *   <li><b>Screen (local)</b> &mdash; Swing pixel coordinates,

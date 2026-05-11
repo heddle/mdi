@@ -340,7 +340,7 @@ public final class SimulationEngine {
 	 * because each requires additional logic around which lifecycle method to
 	 * fire and whether to suppress {@code onDone} after a cancel.</p>
 	 *
-	 * <h3>Cancellation vs. normal termination</h3>
+	 * <p>Cancellation vs. normal termination</p>
 	 * <p>The {@code cancelledCleanly} flag records whether the loop exited due
 	 * to a cancel request. If {@code true}, {@link SimulationListener#onDone}
 	 * is suppressed; cancellation is communicated via
@@ -349,7 +349,7 @@ public final class SimulationEngine {
 	 * {@link Simulation#shutdown} is always called, regardless of the exit
 	 * reason, so simulations can release resources unconditionally.</p>
 	 *
-	 * <h3>Cooperative yield</h3>
+	 * <p>Cooperative yield</p>
 	 * <p>{@link Thread#yield()} is used (rate-limited by {@code coopEveryNs})
 	 * rather than {@code park}/{@code sleep}. A tiny {@code park} inside a
 	 * tight simulation loop can incur OS timer-granularity delays orders of
@@ -512,7 +512,7 @@ public final class SimulationEngine {
 	 * additionally fire the targeted lifecycle callback for states that are
 	 * always entered via this method.
 	 *
-	 * <h3>Which states fire a targeted callback here</h3>
+	 * <p>Which states fire a targeted callback here</p>
 	 * <ul>
 	 *   <li>{@link SimulationState#INITIALIZING} → {@link SimulationListener#onInit}</li>
 	 *   <li>{@link SimulationState#READY}        → {@link SimulationListener#onReady}</li>

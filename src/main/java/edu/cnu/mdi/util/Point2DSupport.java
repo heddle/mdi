@@ -125,10 +125,11 @@ public class Point2DSupport {
 	}
 
 	/**
-	 * Computes the distance between this world point and another.
+	 * Get the distance between two world points.
 	 *
-	 * @param wp the other world point.
-	 * @return the distance, i.e., the length of (wp - this).
+	 * @param wp0 the first world point.
+	 * @param wp1 the second world point.
+	 * @return the distance between the two world points.
 	 */
 	public static double distance(Point2D.Double wp0, Point2D.Double wp1) {
 		double delx = wp1.x - wp0.x;
@@ -137,10 +138,13 @@ public class Point2DSupport {
 	}
 
 	/**
-	 * Computes the azimuth between this world point and another.
+	 * Computes the azimuth from this world point to another. The azimuth is the
+	 * angle, in degrees, measured clockwise from north (the positive y axis) to
+	 * the line connecting the two points.
 	 *
-	 * @param wp the other world point.
-	 * @return the azimuth in degrees, where 0 is north, 90 east, etc.
+	 * @param wp0 the starting world point.
+	 * @param wp1 the ending world point.
+	 * @return the azimuth from wp0 to wp1, in degrees.
 	 */
 	public static double azimuth(Point2D.Double wp0, Point2D.Double wp1) {
 		double delx = wp1.x - wp0.x;

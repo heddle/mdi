@@ -340,18 +340,18 @@ public class MapLineItem extends AMapItem {
     /**
      * Continues an interactive modification.
      *
-     * <h3>Drag</h3>
+     * <p>Drag</p>
      * <p>Moves the start endpoint by the great-circle displacement between the
      * drag start and current mouse positions (converted to geographic
      * coordinates). The end endpoint is then recomputed from the new start
      * using the preserved great-circle azimuth and length, keeping the arc's
      * shape invariant across latitudes.</p>
      *
-     * <h3>Resize</h3>
+     * <p>Resize</p>
      * <p>Replaces the selected endpoint (index 0 = start, 1 = end) with the
      * current geographic cursor location. The opposite endpoint is unchanged.</p>
      *
-     * <h3>Rotate</h3>
+     * <p>Rotate</p>
      * <p>Rotates both endpoints around the geodesic midpoint (the item focus)
      * by the screen-space three-point angle dragged by the user. Both half-arc
      * lengths (midpoint→start and midpoint→end) are preserved; only the

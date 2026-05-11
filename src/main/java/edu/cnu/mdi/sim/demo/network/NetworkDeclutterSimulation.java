@@ -18,7 +18,7 @@ import edu.cnu.mdi.sim.SimulationEngine;
  * <p>
  * Rendering is responsible for mapping world coordinates into pixel
  * coordinates. The view should also compute and populate
- * {@link NetworkModel.Node#worldRadius} for each node every frame (or whenever
+ * NetworkModel.Node.worldRadius for each node every frame (or whenever
  * the viewport size changes), so this simulation can:
  * </p>
  * <ul>
@@ -63,8 +63,8 @@ import edu.cnu.mdi.sim.SimulationEngine;
  * </p>
  *
  * <pre>
- * v <- damping * v + dt * F
- * x <- x + v
+ * v from damping * v + dt * F
+ * x from x + v
  * </pre>
  * <p>
  * A per-component velocity clamp ({@link #vmax}) limits occasional numeric

@@ -404,8 +404,8 @@ public final class Environment {
 			sb.append(message).append('\n');
 		}
 		sb.append("Total memory in JVM: ").append(df.format(total)).append(" MB\n");
-		sb.append(" Free memory in JVM: ").append(df.format(free)).append(" MB\n");
-		sb.append(" Used memory in JVM: ").append(df.format(used)).append(" MB\n");
+		sb.append("  Free memory in JVM: ").append(df.format(free)).append(" MB\n");
+		sb.append("  Used memory in JVM: ").append(df.format(used)).append(" MB\n");
 
 		return sb.toString();
 	}
@@ -435,25 +435,26 @@ public final class Environment {
 		StringBuilder sb = new StringBuilder(512);
 		sb.append("Environment:\n");
 
+		sb.append("  Application Name: ").append(getApplicationName()).append('\n');
 		File cfg = getConfigurationFile();
-		sb.append("Config File: ").append(cfg == null ? "null" : cfg.getAbsolutePath()).append('\n');
-		sb.append("Host Address: ").append(getHostAddress()).append('\n');
-		sb.append("User Name: ").append(userName).append('\n');
-		sb.append("Temp Directory: ").append(tempDirectory).append('\n');
-		sb.append("OS Name: ").append(osName).append('\n');
-		sb.append("Home Directory: ").append(homeDirectory).append('\n');
-		sb.append("Current Working Directory: ").append(currentWorkingDirectory).append('\n');
+		sb.append("  Config File: ").append(cfg == null ? "null" : cfg.getAbsolutePath()).append('\n');
+		sb.append("  Host Address: ").append(getHostAddress()).append('\n');
+		sb.append("  User Name: ").append(userName).append('\n');
+		sb.append("  Temp Directory: ").append(tempDirectory).append('\n');
+		sb.append("  OS Name: ").append(osName).append('\n');
+		sb.append("  Home Directory: ").append(homeDirectory).append('\n');
+		sb.append("  Current Working Directory: ").append(currentWorkingDirectory).append('\n');
 
-		sb.append("PNG Writer: ").append(pngWriter == null ? "none" : pngWriter).append('\n');
+		sb.append("  PNG Writer: ").append(pngWriter == null ? "none" : pngWriter).append('\n');
 
-		sb.append("Monitors:\n");
+		sb.append("  Monitors:\n");
 		GraphicsDevice[] devices = getGraphicsDevices();
 		if (devices != null) {
 			for (GraphicsDevice device : devices) {
 				Rectangle bounds = device.getDefaultConfiguration().getBounds();
 				int width = device.getDisplayMode().getWidth();
 				int height = device.getDisplayMode().getHeight();
-				sb.append("   [W, H] = [").append(width).append(", ").append(height).append("] bounds: ").append(bounds)
+				sb.append("     [W, H] = [").append(width).append(", ").append(height).append("] bounds: ").append(bounds)
 						.append('\n');
 			}
 		}

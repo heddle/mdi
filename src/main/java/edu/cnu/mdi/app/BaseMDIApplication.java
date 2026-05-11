@@ -242,12 +242,27 @@ public class BaseMDIApplication extends JFrame {
 		    }
 
 		    prepareForVirtualDesktop();
+		    addInitialViews();
+		    Log.getInstance().config(applicationId + " initializing");
+		    Log.getInstance().info(Environment.getInstance().toString());
 		} catch (RuntimeException | Error e) {
 			// If construction fails, clear the singleton so a retry is possible (tests,
 			// tooling).
 			INSTANCE.compareAndSet(this, null);
 			throw e;
 		}
+	}
+	
+	/**
+	 * Create and register the initial set of views shown in the application.
+	 *
+	 * <p>
+	 * The default implementation does not add any views. Subclasses should
+	 * override to create and register their initial set of views.
+	 * </p>
+	 */
+	protected void addInitialViews() {
+		// no default views
 	}
 
 	/**
@@ -293,9 +308,9 @@ public class BaseMDIApplication extends JFrame {
 	 * placement, saved desktop configuration, etc.).
 	 *
 	 * <p>
-	 * The default implementation returns {@code getClass().getName()}, which is
-	 * typically the fully-qualified name of the concrete application subclass and
-	 * tends to be stable across runs. Subclasses may override to provide a shorter
+	 * The default implementation returns {@code getClass().getSimpleName()}, which is
+	 * the simple name of the class that contains the main program.
+	 * Subclasses may override to provide a shorter
 	 * or more user-friendly identifier, but it should remain stable over time to
 	 * avoid breaking persisted settings.
 	 * </p>
@@ -303,7 +318,7 @@ public class BaseMDIApplication extends JFrame {
 	 * @return a stable, non-null application identifier
 	 */
 	protected String getApplicationId() {
-		return getClass().getName(); // fully-qualified is most stable/unique
+		return this.getClass().getSimpleName(); // fully-qualified is most stable/unique
 	}
 
 	// initialize the FlatLaf UI
@@ -330,6 +345,16 @@ public class BaseMDIApplication extends JFrame {
 	 */
 	public static BaseMDIApplication getApplication() {
 		return INSTANCE.get();
+	}
+	
+	/**
+	 * Returns the parsed application properties created from constructor key-value
+	 * pairs.
+	 *
+	 * @return application properties
+	 */
+	Properties getProperties() {
+		return _properties;
 	}
 
 	// ======================================================================
@@ -424,6 +449,28 @@ public class BaseMDIApplication extends JFrame {
 		return saved.containsKey(view.getPropertyName() + ".x");
 	}
 
+	/**
+	 * Moves the given view to the specified virtual desktop column and position.
+	 * @param view the view to move
+	 * @param col the target virtual desktop column
+	 * @param delh horizontal delta from constraint position (positive = right, negative = left)
+	 * @param delv vertical delta from constraint position (positive = down, negative = up)
+	 * @param constraint position constraint (e.g., VirtualView.UPPERLEFT, CENTER)
+	 */
+	protected void virtualViewMove(BaseView view, int col, int delh, int delv, int constraint) {
+		VirtualView vv = VirtualView.getInstance();
+		if ((vv == null) || (view == null) || hasSavedLayout(view)) {
+			return;	
+		}
+		vv.moveTo(view, col, delh, delv, constraint);
+	}
+	
+	/**
+	 * Overload of {@link #virtualViewMove(BaseView, int, int, int, int)} for zero deltas.
+	 */
+	protected void virtualViewMove(BaseView view, int col, int constraint) {
+		virtualViewMove(view, col, 0, 0, constraint);
+	}
 
 	// in BaseMDIApplication
 	protected void standardVirtualDesktopRelayout(VirtualView vv) {

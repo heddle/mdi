@@ -66,7 +66,7 @@ public class JsonView extends BaseView {
      * Create a {@code JsonView} with default dimensions, initially hidden.
      */
     public JsonView() {
-        this(DEFAULT_WIDTH, DEFAULT_HEIGHT, false);
+        this(DEFAULT_WIDTH, DEFAULT_HEIGHT, true);
     }
 
     /**
@@ -84,10 +84,6 @@ public class JsonView extends BaseView {
      */
     public JsonView(int width, int height, boolean visible) {
         super(PropertyUtils.TITLE,       TITLE,
-              PropertyUtils.ICONIFIABLE, true,
-              PropertyUtils.MAXIMIZABLE,  true,
-              PropertyUtils.CLOSABLE,     true,
-              PropertyUtils.RESIZABLE,    true,
               PropertyUtils.WIDTH,        width,
               PropertyUtils.HEIGHT,       height,
               PropertyUtils.VISIBLE,      visible);

@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
-import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.mapping.DemoMap;
 import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
@@ -56,8 +55,7 @@ public class DemoApp extends BaseMDIApplication {
 	private static DemoApp INSTANCE;
 
 	// -------------------------------------------------------------------------
-	// Sample views used by the demo. None are meant to be completely realistic
-	// or functional, except for the LogView.
+	// Sample views used by the demo.
 	// -------------------------------------------------------------------------
 
 	private DrawingView drawingView;
@@ -76,13 +74,6 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	private DemoApp(Object... keyVals) {
 		super(keyVals);
-
-		// Create internal views.
-		addInitialViews();
-
-		// Log environment information early.
-		Log.getInstance().info(Environment.getInstance().toString());
-		defaultViewLayout();
 	}
 
 	@Override
@@ -112,7 +103,8 @@ public class DemoApp extends BaseMDIApplication {
 	 * shown or on final geometry.
 	 * </p>
 	 */
-	private void addInitialViews() {
+	@Override
+	protected void addInitialViews() {
 
 		// Log view is useful but not always visible.
 		logView = new LogView();
@@ -125,7 +117,7 @@ public class DemoApp extends BaseMDIApplication {
 		// Drawing view
 		drawingView = DrawingView.createDrawingView();
 
-		// Map view (also loads demo GeoJSON and tries to load some shapefiles
+		// Map view (also loads demo GeoJSON)
 		mapView = DemoMap.createDemoMapView();
 
 		// Plot view
@@ -144,31 +136,26 @@ public class DemoApp extends BaseMDIApplication {
 		imageEvolutionDemoView = createImageEvolutionDemoView();
 	}
 
-	@Override
-	protected String getApplicationId() {
-		return "mdiDemoApp";
-	}
-
 	/**
 	 * Place the views in the virtual desktop in a reasonable default layout.
+	 * 
+	 * <p>
+	 * Note: this placements will be ignored if the user has a persisted layout/config.
+	 * </p>
 	 */
 	@Override
 	protected void defaultViewLayout() {
-		VirtualView vv = VirtualView.getInstance();
-		// Guard each placement with hasSavedLayout() so that views whose
-		// positions were just restored from a saved config are not overwritten.
-		// On first run (no config file) hasSavedLayout() returns false for all
-		// views and every moveTo() fires normally.
-		if (!hasSavedLayout(mapView))               vv.moveTo(mapView,                   0, VirtualView.BOTTOMLEFT);
-		if (!hasSavedLayout(drawingView))           vv.moveTo(drawingView,               0, VirtualView.UPPERRIGHT);
-		if (!hasSavedLayout(plotView))              vv.moveTo(plotView,                  1, VirtualView.CENTER);
-		if (!hasSavedLayout(networkDeclutterDemoView)) vv.moveTo(networkDeclutterDemoView, 2, VirtualView.CENTER);
-		if (!hasSavedLayout(tspDemoView))           vv.moveTo(tspDemoView,               3, VirtualView.CENTER);
-		if (!hasSavedLayout(imageEvolutionDemoView)) vv.moveTo(imageEvolutionDemoView,   5, VirtualView.CENTER);
-		if (!hasSavedLayout(logView))               vv.moveTo(logView,                   6, VirtualView.UPPERLEFT);
-		if (!hasSavedLayout(jsonView))              vv.moveTo(jsonView,                  6, VirtualView.BOTTOMRIGHT);
+		virtualViewMove(mapView,                  0, VirtualView.BOTTOMLEFT);
+		virtualViewMove(drawingView,              0, VirtualView.UPPERRIGHT);
+		virtualViewMove(plotView,                 1, VirtualView.CENTER);
+		virtualViewMove(networkDeclutterDemoView, 2, VirtualView.CENTER);
+		virtualViewMove(tspDemoView,              3, VirtualView.CENTER);
+		virtualViewMove(imageEvolutionDemoView,   5, VirtualView.CENTER);
+		virtualViewMove(logView,                  6, VirtualView.UPPERLEFT);
+		virtualViewMove(jsonView,                 6, VirtualView.BOTTOMRIGHT);	
 	}
 
+	
 	/**
 	 * Create the network declutter demo view.
 	 *

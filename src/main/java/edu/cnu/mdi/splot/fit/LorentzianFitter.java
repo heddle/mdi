@@ -22,13 +22,13 @@ import edu.cnu.mdi.splot.pdata.FitVectors;
  * y(x) = A * (&Gamma;/2)&sup2; / [(x - x&sub0;)&sup2; + (&Gamma;/2)&sup2;] + B
  * </pre>
  *
- * <h3>Normalisation</h3>
+ * <p>Normalisation</p>
  * <p>The parameter {@code A} is the peak height above baseline (i.e.
  * {@code y(x₀) = A + B}), not the area. This matches the Gaussian fitter
  * convention used elsewhere in splot, making it easy to switch between the
  * two.</p>
  *
- * <h3>Parameter ordering</h3>
+ * <p>Parameter ordering</p>
  * <ul>
  *   <li>{@code params[0] = A}   &mdash; peak height above baseline</li>
  *   <li>{@code params[1] = x₀}  &mdash; peak center</li>
@@ -37,13 +37,13 @@ import edu.cnu.mdi.splot.pdata.FitVectors;
  *   <li>{@code params[3] = B}   &mdash; baseline offset</li>
  * </ul>
  *
- * <h3>Relationship to Gaussian</h3>
+ * <p>Relationship to Gaussian</p>
  * <p>A Lorentzian has heavier tails than a Gaussian of the same FWHM. For a
  * Gaussian, {@code FWHM = 2√(2 ln 2)·σ ≈ 2.355·σ}. Both models have the same
  * peak-height parameter {@code A} and baseline {@code B}, so they can be
  * compared directly.</p>
  *
- * <h3>Typical applications</h3>
+ * <p>Typical applications</p>
  * <p>Resonance peaks in nuclear/particle physics (Breit-Wigner), spectral
  * line shapes in atomic spectroscopy, quality-factor measurements in
  * mechanical or electrical resonators, natural line widths.</p>

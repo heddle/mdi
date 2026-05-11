@@ -22,12 +22,12 @@ import edu.cnu.mdi.sim.SimulationState;
  * This panel is MDI-agnostic and can be embedded anywhere (views, dialogs, side
  * panels). It binds to a host and listens to the host engine via
  * {@link SimulationListener} events, updating:
+ * </p>
  * <ul>
  * <li>buttons enabled/disabled based on state</li>
  * <li>progress bar (indeterminate or determinate)</li>
  * <li>status and message labels</li>
  * </ul>
- * </p>
  *
  * <h2>Binding</h2>
  * <p>
@@ -120,12 +120,12 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 	 * Bind this panel to a host.
 	 * <p>
 	 * This method:
+	 * </p>
 	 * <ul>
 	 * <li>stores the host reference</li>
 	 * <li>registers this panel as a {@link SimulationListener}</li>
 	 * <li>updates UI to reflect the host's current state</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * @param host the simulation host (non-null)
 	 */

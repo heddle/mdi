@@ -30,7 +30,7 @@ import edu.cnu.mdi.mapping.util.UTMCoordinate;
  *
  * <h2>Context menu</h2>
  * <p>In addition to the standard ordering/lock items inherited from
- * {@link AItem}, the right-click menu includes an <em>Edit Location…</em>
+ * AItem, the right-click menu includes an <em>Edit Location…</em>
  * entry (after a separator) that opens a {@link LatLongEditorDialog}.
  * If the user saves a new position the item is moved there and the map
  * is refreshed; cancelling the dialog leaves the item unchanged.</p>

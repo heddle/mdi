@@ -10,6 +10,7 @@ package edu.cnu.mdi.splot.pdata;
  *         <li><code>H1D</code> Data values for a 1D histogram
  *         <li><code>STRIP</code> xy strip chart
  *         <li><code>H2D</code> Data values for a 2D histogram
+ *         </ul>
  */
 public enum PlotDataType {
 	XYXY, XYEXYE, H1D, STRIP, H2D;

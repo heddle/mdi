@@ -45,10 +45,18 @@ public abstract class AExample extends JFrame implements PlotChangeListener {
 	// headless mode
 	protected boolean headless = false;
 
+	/**
+	 * Create the example plot in non-headless mode
+	 */
 	public AExample() {
 		this(false);
 	}
 
+	/**
+	 * Create the example plot, optionally in headless mode
+	 *
+	 * @param headless if true, do not create the GUI
+	 */
 	public AExample(boolean headless) {
 		super("sPlot");
 		this.headless = headless;
@@ -151,10 +159,10 @@ public abstract class AExample extends JFrame implements PlotChangeListener {
 	/** get the plot title */
 	protected abstract String getPlotTitle();
 
-	// fill the plot data
+	/** fill the plot data with values */
 	public abstract void fillData();
 
-	// set the preferences
+	/** set the plot parameters */
 	public abstract void setParameters();
 
 }

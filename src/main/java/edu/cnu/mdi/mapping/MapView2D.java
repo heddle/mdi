@@ -10,6 +10,7 @@ import java.awt.geom.Point2D.Double;
 import java.awt.geom.Rectangle2D;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +41,9 @@ import edu.cnu.mdi.mapping.shapefile.ShapefileFeatureLoader;
 import edu.cnu.mdi.mapping.theme.MapTheme;
 import edu.cnu.mdi.mapping.util.GeoUtils;
 import edu.cnu.mdi.mapping.util.UTMCoordinate;
+import edu.cnu.mdi.util.PropertyUtils;
+import edu.cnu.mdi.view.ContainerFactory;
+
 import edu.cnu.mdi.util.UnicodeUtils;
 import edu.cnu.mdi.view.AbstractViewInfo;
 import edu.cnu.mdi.view.BaseView;
@@ -77,7 +81,7 @@ import edu.cnu.mdi.view.BaseView;
  * <p>
  * The control panel ({@link MapControlPanel}) and feedback pane
  * ({@link FeedbackPane}) are placed together in a combined east-side strip
- * whose preferred width is {@code SIDE_PANEL_WIDTH} pixels.
+ * whose preferred width in pixels is controlled by {@link #getSidePanelWidth()}.
  * </p>
  */
 @SuppressWarnings("serial")
@@ -88,18 +92,18 @@ public class MapView2D extends BaseView {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Preferred width in pixels of the combined east-side strip containing the
-	 * control panel and the feedback pane.
+	 * Default preferred width in pixels of the combined east-side strip containing
+	 * the control panel and the feedback pane.
 	 */
-	private static final int SIDE_PANEL_WIDTH = 220;
-
+	private static final int DEFAULT_SIDE_PANEL_WIDTH = 220;
+	
 	// -------------------------------------------------------------------------
 	// Feedback label prefixes (static because they never change)
 	// -------------------------------------------------------------------------
 
-	private static final String LAT_PREFIX = "$yellow$Lat (" + UnicodeUtils.SMALL_PHI + ")";
-	private static final String LON_PREFIX = "$yellow$Lon (" + UnicodeUtils.SMALL_LAMBDA + ")";
-	private static final String DEG = UnicodeUtils.DEGREE;
+	protected static final String LAT_PREFIX = "$yellow$Lat (" + UnicodeUtils.SMALL_PHI + ")";
+	protected static final String LON_PREFIX = "$yellow$Lon (" + UnicodeUtils.SMALL_LAMBDA + ")";
+	protected static final String DEG = UnicodeUtils.DEGREE;
 
 	// -------------------------------------------------------------------------
 	// Instance state — geographic data
@@ -143,6 +147,9 @@ public class MapView2D extends BaseView {
 
 	/** Renderer for city marker dots and labels. */
 	private CityPointRenderer cityRenderer;
+	
+	// Menu bar
+	private JMenuBar menuBar;
 
 	/**
 	 * Ordered list of additional rendering layers added via
@@ -157,10 +164,28 @@ public class MapView2D extends BaseView {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Side control panel (projection selector, theme buttons, population slider).
+	 * Default side control panel. May be {@code null} if a subclass replaces the
+	 * control panel with a custom component.
 	 */
 	private MapControlPanel controlPanel;
 
+	/**
+	 * The component currently occupying the top control-panel position in the
+	 * side strip.
+	 */
+	private JPanel sidePanel;
+
+	/**
+	 * Stack used for the control panel and custom application panels above the
+	 * feedback pane.
+	 */
+	private JPanel sideTopStack;
+
+	/**
+	 * Host panel for application-supplied side-panel components.
+	 */
+	private JPanel customSidePanelHost;
+		
 	/** Menu providing shapefile open and per-layer visibility controls. */
 	private ShapefileMenu shapefileMenu;
 
@@ -169,7 +194,7 @@ public class MapView2D extends BaseView {
 	// -------------------------------------------------------------------------
 
 	/** Reusable lat/lon workspace for the feedback method. */
-	private final Point2D.Double latLon = new Point2D.Double();
+	protected final Point2D.Double latLon = new Point2D.Double();
 
 	// -------------------------------------------------------------------------
 	// Construction
@@ -190,21 +215,96 @@ public class MapView2D extends BaseView {
 	 * @param keyVals framework key-value pairs forwarded to {@link BaseView}
 	 */
 	public MapView2D(Object... keyVals) {
-		super(keyVals);
+	    super(withMapContainerFactory(keyVals));
 
-		JMenuBar menuBar = new JMenuBar();
-		setJMenuBar(menuBar);
+	    menuBar = new JMenuBar();
+	    setJMenuBar(menuBar);
 
-		controlPanel = new MapControlPanel(this);
+	    controlPanel = new MapControlPanel(this);
 
-		// Start with the application-wide default projection.
-		setProjection(MapConstants.DEFAULT_PROJECTION);
+	    setProjection(MapConstants.DEFAULT_PROJECTION);
 
-		initSidePanel();
-		setAfterDraw();
-		initShapefileMenu();
+	    initSidePanel();
+	    setAfterDraw();
+	    initShapefileMenu();
 	}
+	
+	
+	/**
+	 * Ensures that a {@link MapView2D} is created with a {@link MapContainer}
+	 * unless the caller has explicitly supplied a container, container class, or
+	 * container factory.
+	 *
+	 * <p>
+	 * This helper exists because {@link BaseView} creates the container during
+	 * superclass construction. Therefore the map-container choice must be inserted
+	 * into the key/value list before {@code super(...)} is called.
+	 * </p>
+	 *
+	 * @param keyVals original key/value arguments
+	 * @return key/value arguments with a map container factory added if needed
+	 */
+	private static Object[] withMapContainerFactory(Object... keyVals) {
+	    if (keyVals == null || keyVals.length == 0) {
+	        return new Object[] {
+	                PropertyUtils.CONTAINERFACTORY,
+	                (ContainerFactory) MapContainer::new
+	        };
+	    }
 
+	    if ((keyVals.length % 2) != 0) {
+	        throw new IllegalArgumentException("Key/value arguments must come in pairs.");
+	    }
+
+	    for (int i = 0; i < keyVals.length; i += 2) {
+	        Object key = keyVals[i];
+
+	        if (PropertyUtils.CONTAINER.equals(key)
+	                || PropertyUtils.CONTAINERCLASS.equals(key)
+	                || PropertyUtils.CONTAINERFACTORY.equals(key)) {
+	            return keyVals;
+	        }
+	    }
+
+	    Object[] augmented = Arrays.copyOf(keyVals, keyVals.length + 2);
+	    augmented[keyVals.length] = PropertyUtils.CONTAINERFACTORY;
+	    augmented[keyVals.length + 1] = (ContainerFactory) MapContainer::new;
+
+	    return augmented;
+	}
+	
+	/**
+	 * Returns whether the standard graticule layer should be included in this view.
+	 *
+	 * <p>
+	 * Subclasses that don't want the standard graticule can override this to return
+	 * {@code false} and then provide their own graticule implementation as an extra
+	 * layer.
+	 * </p>
+	 *
+	 * @return {@code true} to include the standard graticule, {@code false} to
+	 *         omit it
+	 */
+	protected boolean useStandardGraticules() {
+	    return true;
+	}
+	
+	/**
+	 * Gets the preferred width of the east-side strip containing the map control
+	 * panel, custom application panels, and feedback pane.
+	 *
+	 * <p>
+	 * Subclasses may override this to request a wider or narrower side panel. The
+	 * override should not depend on subclass instance fields, because this method is
+	 * called during {@link MapView2D} construction before the subclass constructor
+	 * body has run. Returning a literal or subclass static constant is safe.
+	 * </p>
+	 *
+	 * @return preferred side-panel width in pixels
+	 */
+	protected int getSidePanelWidth() {
+	    return DEFAULT_SIDE_PANEL_WIDTH;
+	}
 
 	/**
 	 * Sets the country boundary features used by this view's
@@ -274,27 +374,23 @@ public class MapView2D extends BaseView {
 	 *
 	 * @param projectionType the new projection type; must not be {@code null}
 	 */
+	/**
+	 * Switches the active projection to one of MDI's built-in projection types.
+	 *
+	 * <p>
+	 * This method preserves the existing MDI enum-based projection API. For
+	 * application-supplied projections, use {@link #setProjection(IMapProjection)}.
+	 * </p>
+	 *
+	 * @param projectionType the new built-in projection type; must not be
+	 *        {@code null}
+	 */
 	public void setProjection(EProjection projectionType) {
-		projection = ProjectionFactory.create(projectionType, controlPanel.getCurrentTheme());
-		gratRenderer = new GraticuleRenderer(projection);
-
-		getIContainer().resetWorldSystem(getWorldSystem(projectionType));
-
-		if (countries != null) {
-			countryRenderer = new CountryRenderer(countries, projection);
-		}
-
-		rebuildCityRenderer();
-
-		// Notify any extra shapefile layers of the new projection so they
-		// re-project their geometry on the next render call.
-		for (ShapeFeatureRenderer layer : extraLayers) {
-			layer.setProjection(projection);
-		}
-
-		refresh();
+	    IMapProjection builtInProjection = ProjectionFactory.create(
+	            projectionType, getCurrentMapTheme());
+	    setProjection(builtInProjection);
 	}
-
+	
 	// -------------------------------------------------------------------------
 	// Accessors used by MapControlPanel and MapContainer
 	// -------------------------------------------------------------------------
@@ -448,7 +544,7 @@ public class MapView2D extends BaseView {
 	}
 
 	/**
-	 * Removes all extra layers added via {@link #addLayer}. The base layers
+	 * Removes all extra layers added via addLayer. The base layers
 	 * (countries, cities, graticule) are unaffected.
 	 */
 	public void clearLayers() {
@@ -589,10 +685,18 @@ public class MapView2D extends BaseView {
 	 * {@link edu.cnu.mdi.hover.HoverInfoWindow} instances.
 	 * </p>
 	 */
+	/**
+	 * Releases hover and popup resources held by the {@link MapContainer} when the
+	 * view is closing.
+	 */
 	public void prepareForExit() {
-		((MapContainer) getIContainer()).prepareForExit();
-	}
+	    IContainer container = getIContainer();
 
+	    if (container instanceof MapContainer mapContainer) {
+	        mapContainer.prepareForExit();
+	    }
+	}
+	
 	// -------------------------------------------------------------------------
 	// Private helpers
 	// -------------------------------------------------------------------------
@@ -603,29 +707,44 @@ public class MapView2D extends BaseView {
 	 * the same pattern used by {@code SplotDemoView}.
 	 */
 	private void initShapefileMenu() {
+		if (!includeShapeFileMenu()) {
+			return; // Subclass has opted out of shapefile functionality
+		}
 		shapefileMenu = new ShapefileMenu(this);
 		applyFocusFix(shapefileMenu, this);
 		getJMenuBar().add(shapefileMenu);
 	}
 
 	/**
-	 * Initializes and lays out the east-side strip containing the control panel
-	 * ({@link MapControlPanel}) above the feedback pane ({@link FeedbackPane}).
+	 * Initializes and lays out the east-side strip containing the map control
+	 * panel, optional application-supplied panels, and the feedback pane.
 	 */
 	private void initSidePanel() {
-		FeedbackPane fbp = initFeedback();
+	    FeedbackPane fbp = initFeedback();
 
-		JPanel sidePanel = new JPanel(new BorderLayout());
-		fbp.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, fbp.getPreferredSize().height));
-		controlPanel.setMaximumSize(new Dimension(SIDE_PANEL_WIDTH, Integer.MAX_VALUE));
+	    sidePanel = new JPanel(new BorderLayout());
+	    sideTopStack = new JPanel();
+	    sideTopStack.setLayout(new javax.swing.BoxLayout(sideTopStack, javax.swing.BoxLayout.Y_AXIS));
 
-		sidePanel.add(controlPanel, BorderLayout.NORTH);
-		sidePanel.add(fbp, BorderLayout.CENTER);
-		sidePanel.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, getHeight()));
+	    customSidePanelHost = new JPanel();
+	    customSidePanelHost.setLayout(new javax.swing.BoxLayout(customSidePanelHost, javax.swing.BoxLayout.Y_AXIS));
 
-		add(sidePanel, BorderLayout.EAST);
+	    fbp.setPreferredSize(new Dimension(getSidePanelWidth(), fbp.getPreferredSize().height));
+
+	    if (controlPanel != null) {
+	        controlPanel.setMaximumSize(new Dimension(getSidePanelWidth(), Integer.MAX_VALUE));
+	        sideTopStack.add(controlPanel);
+	    }
+
+	    sideTopStack.add(customSidePanelHost);
+
+	    sidePanel.add(sideTopStack, BorderLayout.NORTH);
+	    sidePanel.add(fbp, BorderLayout.CENTER);
+	    sidePanel.setPreferredSize(new Dimension(getSidePanelWidth(), getHeight()));
+
+	    add(sidePanel, BorderLayout.EAST);
 	}
-
+	
 	/**
 	 * Registers the after-draw {@link IDrawable} that executes the complete
 	 * rendering pipeline each frame:
@@ -653,22 +772,27 @@ public class MapView2D extends BaseView {
 
 				// 2. Ocean fill inside projection boundary
 				projection.fillOcean(g, container);
+				
+				// 3. Custom map content drawn by subclasses between ocean and graticule layers.
+				drawCustomMapContent(g, container); // Extension point for subclasses to draw custom content between ocean and graticule
 
-				// 3. Graticule and outline
-				gratRenderer.render(g, container);
+				// 4. Graticule and outline
+				if ((gratRenderer != null) && useStandardGraticules()) {
+					gratRenderer.render(g, container);
+				}
 
-				// 4. Country polygons (null-safe: data may not be loaded yet)
+				// 5. Country polygons (null-safe: data may not be loaded yet)
 				if (countryRenderer != null) {
 					countryRenderer.render(g, container);
 				}
 
-				// 5. Extra layers: rivers, lakes, and any other shapefile
+				// 6. Extra layers: rivers, lakes, and any other shapefile
 				// overlays added via addLayer(), in insertion order.
 				for (ShapeFeatureRenderer layer : extraLayers) {
 					layer.render(g, container);
 				}
 
-				// 6. City dots and labels (null-safe)
+				// 7. City dots and labels (null-safe)
 				if (cityRenderer != null) {
 					cityRenderer.render(g, container);
 				}
@@ -676,6 +800,33 @@ public class MapView2D extends BaseView {
 		};
 
 		getIContainer().setAfterDraw(afterDraw);
+	}
+	
+	/**
+	 * Returns whether the Shapefile menu should be included in this view's menu
+	 * bar. Subclasses that don't support shapefile layers can override this to
+	 * return {@code false} to exclude the menu and its associated functionality.
+	 *
+	 * @return {@code true} to include the Shapefile menu, {@code false} to omit it
+	 */
+	protected boolean includeShapeFileMenu() { return true; }
+	
+	/**
+	 * Placeholder method for subclasses to override and draw custom map content
+	 * after the standard layers. Not called by default since most views won't need
+	 * it, but available for extensibility when needed.
+	 *
+	 * <p>
+	 * This is not registered as an after-draw {@link IDrawable} since that would
+	 * require a separate registration and coordinate transform for each subclass;
+	 * instead, subclasses can call this method directly from their own after-draw
+	 * implementation after calling {@code super.drawCustomMapContent(g2)}.
+	 * </p>
+	 *
+	 * @param g2 the Graphics2D context to draw on
+	 */
+	protected void drawCustomMapContent(Graphics2D g2, IContainer container) {
+		//no-op by default; intended for subclasses to override and draw custom content
 	}
 
 	/**
@@ -699,21 +850,155 @@ public class MapView2D extends BaseView {
 	}
 
 	/**
-	 * Returns the default world coordinate bounding rectangle for the given
-	 * projection type. This rectangle is passed to
-	 * {@link IContainer#resetWorldSystem(Rectangle2D.Double)} so that the entire
-	 * projection domain fits within the viewport on first display.
+	 * Returns a world coordinate rectangle suitable for displaying the supplied
+	 * projection.
 	 *
-	 * @param type the projection type
-	 * @return a symmetric world-space bounding rectangle
+	 * <p>
+	 * For both built-in and custom projections, this uses the projection's own
+	 * {@link IMapProjection#getXYBounds()} and adds a small margin. This avoids
+	 * requiring {@link MapView2D} to know about every possible application-defined
+	 * projection.
+	 * </p>
+	 *
+	 * @param mapProjection the projection
+	 * @return the initial world rectangle
 	 */
-	private Rectangle2D.Double getWorldSystem(EProjection type) {
-		double lim = switch (type) {
-		case MOLLWEIDE -> 2.9;
-		case MERCATOR -> 1.1 * Math.PI;
-		case ORTHOGRAPHIC -> 1.1;
-		case LAMBERT_EQUAL_AREA -> 1.5 * Math.PI / 2.0;
-		};
-		return new Rectangle2D.Double(-lim, -lim, 2 * lim, 2 * lim);
+	private Rectangle2D.Double getWorldSystem(IMapProjection mapProjection) {
+	    Rectangle2D.Double bounds = mapProjection.getXYBounds();
+
+	    double marginX = 0.05 * bounds.width;
+	    double marginY = 0.05 * bounds.height;
+
+	    return new Rectangle2D.Double(
+	            bounds.x - marginX,
+	            bounds.y - marginY,
+	            bounds.width + 2.0 * marginX,
+	            bounds.height + 2.0 * marginY);
+	}
+	
+	/**
+	 * Returns the map theme that should be used when creating a new projection.
+	 *
+	 * <p>
+	 * If the standard {@link MapControlPanel} is installed, this delegates to that
+	 * panel. If a subclass has replaced the control panel, this falls back to the
+	 * active projection's theme, and finally to the light theme.
+	 * </p>
+	 *
+	 * @return the current map theme
+	 */
+	public MapTheme getCurrentMapTheme() {
+	    if (controlPanel != null) {
+	        return controlPanel.getCurrentTheme();
+	    }
+
+	    if (projection != null && projection.getTheme() != null) {
+	        return projection.getTheme();
+	    }
+
+	    return MapTheme.light();
+	}
+
+	/**
+	 * Switches the active projection to an application-supplied projection.
+	 *
+	 * <p>
+	 * This is the extensibility path for projections that are not represented by
+	 * {@link EProjection}. The supplied projection must be fully initialized,
+	 * including its {@link MapTheme}. The view rebuilds its graticule, country,
+	 * city, and extra-layer renderers and resets the world coordinate system using
+	 * the projection's own {@link IMapProjection#getXYBounds()}.
+	 * </p>
+	 *
+	 * @param newProjection the new projection; must not be {@code null}
+	 */
+	public void setProjection(IMapProjection newProjection) {
+	    projection = Objects.requireNonNull(newProjection, "newProjection");
+
+	    if (projection.getTheme() == null) {
+	        projection.setTheme(getCurrentMapTheme());
+	    }
+
+	    gratRenderer = new GraticuleRenderer(projection);
+
+	    getIContainer().resetWorldSystem(getWorldSystem(projection));
+
+	    if (countries != null) {
+	        countryRenderer = new CountryRenderer(countries, projection);
+	    }
+
+	    rebuildCityRenderer();
+
+	    for (ShapeFeatureRenderer layer : extraLayers) {
+	        layer.setProjection(projection);
+	    }
+
+	    refresh();
+	}
+
+	/**
+	 * Replaces the standard map control panel with a subclass/application supplied
+	 * component.
+	 *
+	 * <p>
+	 * This method is intended for subclasses such as Mosaic views that want their
+	 * own projection selector and display controls. It is safe to call from the
+	 * subclass constructor after {@code super(...)} returns.
+	 * </p>
+	 *
+	 * @param newControlPanel the replacement control panel; must not be
+	 *        {@code null}
+	 */
+	protected void setMapControlPanel(JPanel newControlPanel) {
+	    Objects.requireNonNull(newControlPanel, "newControlPanel");
+
+	    if (sideTopStack == null) {
+	        return;
+	    }
+
+	    if (controlPanel != null) {
+	        sideTopStack.remove(controlPanel);
+	    }
+
+	    controlPanel = (newControlPanel instanceof MapControlPanel mcp) ? mcp : null;
+	    sideTopStack.add(newControlPanel, 0);
+
+	    sideTopStack.revalidate();
+	    sideTopStack.repaint();
+	}
+
+	/**
+	 * Adds an application-supplied component to the side panel, below the map
+	 * control panel and above the feedback pane.
+	 *
+	 * <p>
+	 * This is intended for domain-specific controls such as Mosaic buttons for
+	 * Monte Carlo points, prepatches, theta patches, final patches, and patch
+	 * labels.
+	 * </p>
+	 *
+	 * @param component the component to add; ignored if {@code null}
+	 */
+	protected void addCustomSidePanelComponent(JPanel component) {
+	    if (component == null || customSidePanelHost == null) {
+	        return;
+	    }
+
+	    customSidePanelHost.add(component);
+	    customSidePanelHost.revalidate();
+	    customSidePanelHost.repaint();
+	}
+
+	/**
+	 * Removes all custom application components from the side panel.
+	 */
+	protected void clearCustomSidePanelComponents() {
+	    if (customSidePanelHost == null) {
+	        return;
+	    }
+
+	    customSidePanelHost.removeAll();
+	    customSidePanelHost.revalidate();
+	    customSidePanelHost.repaint();
 	}
 }

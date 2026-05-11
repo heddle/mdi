@@ -15,14 +15,14 @@ import org.apache.commons.math3.util.Pair;
 /**
  * Fit a sum of Gaussians (optionally with a constant baseline).
  *
- * <h3>Model</h3>
+ * <p>Model</p>
  *
  * <pre>
  * y(x) = sum_{k=0..m-1} A_k * exp(-(x - mu_k)^2 / (2*sigma_k^2))  +  B   (if includeBaseline)
  * y(x) = sum_{k=0..m-1} A_k * exp(-(x - mu_k)^2 / (2*sigma_k^2))        (otherwise)
  * </pre>
  *
- * <h3>Parameter vector</h3> For each component k, parameters appear in blocks:
+ * <p>Parameter vector</p> For each component k, parameters appear in blocks:
  *
  * <pre>
  *   A_k, mu_k, sigma_k
@@ -58,7 +58,7 @@ public final class MultiGaussianFitter extends ALeastSquaresFitter {
 	/**
 	 * Create a MultiGaussianFitter.
 	 *
-	 * @param m               number of Gaussian components (must be >= 1 and <= 6)
+	 * @param m               number of Gaussian components (must be [1..6])
 	 * @param includeBaseline true to include constant baseline term
 	 * @param optimizer       least squares optimizer to use
 	 */

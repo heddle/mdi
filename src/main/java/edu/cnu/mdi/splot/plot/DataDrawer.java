@@ -10,6 +10,12 @@ import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.splot.pdata.ACurve;
 import edu.cnu.mdi.splot.pdata.PlotData;
 
+/**
+ * Draws the data on the plot canvas. It draws the fixed lines, then the curves.
+ *
+ * @author heddle
+ *
+ */
 public class DataDrawer {
 
 	// the owner canvas

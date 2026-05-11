@@ -25,6 +25,7 @@ public class FileMenu extends JMenu {
 	/** Label used for the File menu. */
 	public static final String MENU_LABEL = "File";
 
+	/** Create the File menu with all items. Called by BaseMDIApplication. */
 	public FileMenu() {
 		this(true);
 	}
@@ -56,7 +57,7 @@ public class FileMenu extends JMenu {
 		return os.contains("mac") ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK;
 	}
 
-	/** Add the "Save View Configuration" menu item. */
+	/** Add the "Save Layout" menu item. */
 	private void addSaveConfigurationItem() {
 		JMenuItem item = new JMenuItem("Save Layout...");
 		item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, shortcutKeyMask()));
@@ -64,7 +65,7 @@ public class FileMenu extends JMenu {
 		add(item);
 	}
 
-	/** Add the "Delete View Configuration" menu item. */
+	/** Add the "Delete Layout" menu item. */
 	private void addDeleteConfigurationItem() {
 		JMenuItem item = new JMenuItem("Delete Layout...");
 		item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, shortcutKeyMask()));

@@ -24,7 +24,7 @@ import edu.cnu.mdi.splot.fit.IFitter;
  * {@code Curve} supports two distinct modes of use:
  * </p>
  *
- * <h3>1) Thread-safe mutation via {@code add(...)} / {@code addAll(...)}</h3>
+ * <p>1) Thread-safe mutation via {@code add(...)} / {@code addAll(...)}</p>
  * <p>
  * Methods such as {@link #add(double, double)} and
  * {@link #addAll(double[], double[])} may be called from <em>any</em> thread.
@@ -39,8 +39,8 @@ import edu.cnu.mdi.splot.fit.IFitter;
  * DATA change event.</li>
  * </ul>
  *
- * <h3>2) Streaming / DAQ mode via {@code enqueue(...)} +
- * {@code drainPendingOnEDT(...)}</h3>
+ * <p>2) Streaming / DAQ mode via {@code enqueue(...)} +
+ * {@code drainPendingOnEDT(...)}</p>
  * <p>
  * Background producer threads may call {@link #enqueue(double, double)} /
  * {@link #enqueue(double, double, double)} and the UI (EDT) drains periodically
@@ -304,7 +304,9 @@ public class Curve extends ACurve {
 	 * Safe to call from any thread. Off-EDT calls enqueue and schedule a coalesced
 	 * EDT drain.
 	 * </p>
-	 *
+	 * @param x  array of x values
+	 * @param y  array of y values
+	 * @param ey array of y error values (must be same length as x and y
 	 * @throws IllegalStateException if this curve has no error column (eData is
 	 *                               null)
 	 */
@@ -444,6 +446,14 @@ public class Curve extends ACurve {
 		return pendingCount.get();
 	}
 
+	/**
+	 * Drain up to {@code max} pending points on the EDT, applying them to the
+	 * curve's data columns and firing a single DATA change event.
+	 *
+	 * @param max the maximum number of pending points to apply in this pass (must be
+	 *            positive)
+	 * @return the number of points actually drained and applied
+	 */
 	public int drainPendingOnEDT(int max) {
 		requireEdt("drainPendingOnEDT");
 		if (max <= 0) {
@@ -502,6 +512,9 @@ public class Curve extends ACurve {
 		pendingDrainTimer.start();
 	}
 
+	/**
+	 * Stop the pending drain timer if it's running. Safe to call from any thread.
+	 */
 	public void stopPendingDrainTimer() {
 		Timer t = pendingDrainTimer;
 		pendingDrainTimer = null;
@@ -510,6 +523,10 @@ public class Curve extends ACurve {
 		}
 	}
 
+	/**
+	 * Clear all pending (not-yet-applied) points from the staging queue. Safe to call
+	 * from any thread.
+	 */
 	public void clearPending() {
 		pending.clear();
 		pendingCount.set(0);

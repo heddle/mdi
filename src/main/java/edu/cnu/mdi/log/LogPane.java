@@ -2,6 +2,8 @@ package edu.cnu.mdi.log;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.EnumMap;
 
 import javax.swing.SwingUtilities;
@@ -50,18 +52,14 @@ public class LogPane extends TextPaneScrollPane {
     // -----------------------------------------------------------------------
     // Style constants
     // -----------------------------------------------------------------------
+	
 
-    /** Font size for INFO messages. */
-    private static final int INFO_FONT_SIZE      = 12;
+    /** Formatter for the HH:mm:ss timestamp prefix. */
+    private static final DateTimeFormatter TIME_FMT =
+            DateTimeFormatter.ofPattern("HH:mm:ss");
 
-    /** Font size for CONFIG messages. */
-    private static final int CONFIG_FONT_SIZE    = 12;
 
-    /** Font size for WARNING messages. */
-    private static final int WARNING_FONT_SIZE   = 11;
-
-    /** Font size for ERROR messages. */
-    private static final int ERROR_FONT_SIZE     = 11;
+    private static final int FONT_SIZE      = 11;
 
     /**
      * Font size for EXCEPTION messages.
@@ -81,21 +79,27 @@ public class LogPane extends TextPaneScrollPane {
      * </p>
      */
     private static final EnumMap<Log.Level, SimpleAttributeSet> STYLES;
+    
+    /// Style for timestamps 
+    private static final SimpleAttributeSet TIME_STYLE;
 
     static {
+    	TIME_STYLE = createStyle(X11Colors.getX11Color("dark green"),
+				"monospaced", FONT_SIZE, false, false);
+    	
         STYLES = new EnumMap<>(Log.Level.class);
         STYLES.put(Log.Level.INFO,
                 createStyle(Color.black,
-                        "sansserif", INFO_FONT_SIZE, false, false));
+                        "sansserif", FONT_SIZE, false, false));
         STYLES.put(Log.Level.CONFIG,
                 createStyle(Color.blue,
-                        "sansserif", CONFIG_FONT_SIZE, false, false));
+                        "sansserif", FONT_SIZE, false, false));
         STYLES.put(Log.Level.WARNING,
                 createStyle(X11Colors.getX11Color("orange red"),
-                        "monospaced", WARNING_FONT_SIZE, false, true));
+                        "monospaced", FONT_SIZE, false, true));
         STYLES.put(Log.Level.ERROR,
                 createStyle(Color.red,
-                        "sansserif", ERROR_FONT_SIZE, false, true));
+                        "sansserif", FONT_SIZE, false, true));
         // Fixed: was accidentally overwriting the ERROR entry with ERROR key.
         STYLES.put(Log.Level.EXCEPTION,
                 createStyle(Color.red,
@@ -164,19 +168,28 @@ public class LogPane extends TextPaneScrollPane {
     // -----------------------------------------------------------------------
 
     /**
-     * Append {@code message} at {@code level} on the Swing EDT.
-     * <p>
-     * If the calling thread is already the EDT the append happens
-     * synchronously via a direct {@code invokeLater} queue entry; either
-     * way Swing's single-threaded rule is respected.
-     * </p>
-     *
-     * @param level   the log level whose style should be applied
-     * @param message the raw message text
-     */
-    private void appendOnEdt(Log.Level level, String message) {
-        SwingUtilities.invokeLater(() -> appendStyled(level, message));
-    }
+	 * Append {@code message} at {@code level} on the Swing EDT.
+	 * <p>
+	 * If the calling thread is already the EDT the append happens synchronously via
+	 * a direct {@code invokeLater} queue entry; either way Swing's single-threaded
+	 * rule is respected.
+	 * </p>
+	 *
+	 * @param level   the log level whose style should be applied
+	 * @param message the raw message text
+	 */
+	private void appendOnEdt(Log.Level level, String message) {
+
+		SwingUtilities.invokeLater(() -> {
+			appendTimeStamp();
+			appendStyled(level, message);
+		});
+	}
+
+    private void appendTimeStamp() {
+		String timeStamp = LocalTime.now().format(TIME_FMT);
+		append(timeStamp + " ", TIME_STYLE, false);
+	}
 
     /**
      * Append {@code message} to the text pane using the style registered for
@@ -197,11 +210,9 @@ public class LogPane extends TextPaneScrollPane {
      * @param message the message text
      */
     private void appendStyled(Log.Level level, String message) {
-        boolean writeTime = (level == Log.Level.ERROR)
-                         || (level == Log.Level.EXCEPTION);
         String text = (message == null) ? "\n"
                     : message.endsWith("\n") ? message
                     : message + "\n";
-        append(text, STYLES.get(level), writeTime);
+        append(text, STYLES.get(level), false);
     }
 }
