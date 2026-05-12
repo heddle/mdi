@@ -393,6 +393,7 @@ public final class Environment {
 		System.gc();
 		System.gc();
 
+		double maxmem = Runtime.getRuntime().maxMemory() / 1048576.0;
 		double total = Runtime.getRuntime().totalMemory() / 1048576.0;
 		double free = Runtime.getRuntime().freeMemory() / 1048576.0;
 		double used = total - free;
@@ -403,6 +404,7 @@ public final class Environment {
 		if (message != null) {
 			sb.append(message).append('\n');
 		}
+		sb.append("Max memory in JVM: ").append(df.format(maxmem)).append(" MB\n");
 		sb.append("Total memory in JVM: ").append(df.format(total)).append(" MB\n");
 		sb.append("  Free memory in JVM: ").append(df.format(free)).append(" MB\n");
 		sb.append("  Used memory in JVM: ").append(df.format(used)).append(" MB\n");

@@ -4,13 +4,14 @@ import java.awt.BorderLayout;
 import java.io.File;
 import java.util.List;
 
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import edu.cnu.mdi.json.JsonSplitPane;
 import edu.cnu.mdi.util.PropertyUtils;
 
 /**
- * A container-less view that displays a JSON file as both colorized raw text
+ * A container-less demo view that displays a JSON file as both colorized raw text
  * and a collapsible tree, side by side in a split pane.
  *
  * <h2>Usage</h2>
@@ -41,6 +42,10 @@ public class JsonView extends BaseView {
     // -------------------------------------------------------------------------
     // Constants
     // -------------------------------------------------------------------------
+	
+	/** Maximum recommended JSON file size in bytes. Files larger than this may
+	 * cause performance issues or excessive memory usage. */
+	private static final long MAX_RECOMMENDED_JSON_VIEW_BYTES = 10L * 1024L * 1024L;
 
     /** Title shown in the internal frame's title bar. */
     private static final String TITLE = "JSON Viewer";
@@ -121,9 +126,31 @@ public class JsonView extends BaseView {
      * @param file the JSON file to display; must not be {@code null}
      */
     public void loadFile(File file) {
+        if (file == null) {
+            return;
+        }
+
+        if (file.length() > MAX_RECOMMENDED_JSON_VIEW_BYTES) {
+        	double fileSizeMB = file.length() / (1024.0 * 1024.0);
+        	double limitMB = MAX_RECOMMENDED_JSON_VIEW_BYTES / (1024.0 * 1024.0);
+
+        	JOptionPane.showMessageDialog(
+        	        this,
+        	        String.format(
+        	                "This JSON file is %.1f MB.\n\n"
+        	                + "The MDI JSON viewer is intended for JSON files up to %.0f MB. "
+        	                + "Large scientific export files can require far more memory "
+        	                + "than their file size because the viewer builds styled text "
+        	                + "and a tree model.\n\n"
+        	                + "Use a dedicated editor or command-line JSON tool for this file.",
+        	                fileSizeMB,
+        	                limitMB),
+        	        "JSON File Too Large",
+        	        JOptionPane.WARNING_MESSAGE);            return;
+        }
+
         splitPane.loadFile(file);
     }
-
     // -------------------------------------------------------------------------
     // BaseView overrides
     // -------------------------------------------------------------------------
