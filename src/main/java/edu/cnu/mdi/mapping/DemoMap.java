@@ -33,7 +33,7 @@ public class DemoMap {
 
 			MapView2D mapView = new MapView2D(PropertyUtils.TITLE, "Sample 2D Map View",
 					PropertyUtils.FRACTION, 0.6,
-					PropertyUtils.ASPECT, 1.5, PropertyUtils.CONTAINERFACTORY, mapContainerFactory,
+					PropertyUtils.ASPECT, 1.4, PropertyUtils.CONTAINERFACTORY, mapContainerFactory,
 					PropertyUtils.TOOLBARBITS, toolBits, PropertyUtils.WHEELZOOM, true);
 
 			// now for the data loading. We load the GeoJson data (countries and cities)

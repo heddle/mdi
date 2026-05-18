@@ -878,20 +878,30 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 		localToWorld(me.getPoint(), wp);
 		return wp;
 	}
+	
+	/**
+	 * Update the toolbar status text with the current mouse location.
+	 *
+	 * @param pp the current mouse location in local (screen) coordinates
+	 * @param wp the current mouse location in world coordinates
+	 */
+	@Override
+	public void updateStatusText(Point pp, Point2D.Double wp) {
+		if (_toolBar != null && _toolBar.hasStatusField()) {
+			String statusText = String.format("Local: (%d, %d) World: (%.2f, %.2f)", pp.x, pp.y, wp.x, wp.y);
+			_toolBar.updateStatusText(statusText);
+		}	
+	}
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * <p>Updates the toolbar status text (if present) and feedback control (if present) with
+	 * the current mouse location in both local and world coordinates.</p>
 	 */
 	@Override
 	public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging) {
 		Point2D.Double wp = getLocation(mouseEvent);
-		Point pp = mouseEvent.getPoint();
-
-		// Update toolbar text (if present)
-		if (_toolBar != null) {
-			String statusText = String.format("Local: (%d, %d) World: (%.2f, %.2f)", pp.x, pp.y, wp.x, wp.y);
-			_toolBar.updateStatusText(statusText);
-		}
 
 		// Update feedback (if present)
 		if (_feedbackControl != null) {

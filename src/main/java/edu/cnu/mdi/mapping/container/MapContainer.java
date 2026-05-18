@@ -25,7 +25,6 @@ import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.mapping.item.MapMilSymbolItem;
 import edu.cnu.mdi.mapping.milsym.MilSymbolDescriptor;
 import edu.cnu.mdi.mapping.milsym.MilSymbolTransferable;
-import edu.cnu.mdi.mapping.projection.EProjection;
 import edu.cnu.mdi.mapping.projection.IMapProjection;
 import edu.cnu.mdi.mapping.projection.LambertEqualAreaProjection;
 import edu.cnu.mdi.mapping.projection.MercatorProjection;
@@ -43,6 +42,9 @@ public class MapContainer extends BaseContainer implements HoverListener {
 
 	/** Lazily-created popup window used for hover country names. */
 	private HoverInfoWindow hoverWindow;
+	
+	// Reusable point objects to avoid unnecessary allocations during coordinate conversions.
+	Point2D.Double latLonPoint = new Point2D.Double();
 
 	/**
 	 * Creates a map container with the given initial world coordinate system.
@@ -221,6 +223,24 @@ public class MapContainer extends BaseContainer implements HoverListener {
 	public void worldToLatLon(Point2D.Double ll, Point2D.Double wp) {
 		getMapView2D().getProjection().latLonFromXY(ll, wp);
 	}
+	
+	/**
+	 * Update the toolbar status text with the current mouse location.
+	 *
+	 * @param pp the current mouse location in local (screen) coordinates
+	 * @param wp the current mouse location in world coordinates
+	 */
+	@Override
+	public void updateStatusText(Point pp, Point2D.Double wp) {
+		if (_toolBar != null && _toolBar.hasStatusField()) {
+			worldToLatLon(latLonPoint, wp);
+			String latLon = String.format("%.2f%s %s, %.2f%s %s", Math.abs(Math.toDegrees(latLonPoint.y)), UnicodeUtils.DEGREE,
+					(latLonPoint.y >= 0) ? "N" : "S", Math.abs(Math.toDegrees(latLonPoint.x)), UnicodeUtils.DEGREE,
+					(latLonPoint.x >= 0) ? "E" : "W");
+			_toolBar.updateStatusText(latLon);
+		}	
+	}
+
 
 	@Override
 	public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging) {
@@ -228,15 +248,6 @@ public class MapContainer extends BaseContainer implements HoverListener {
 
 		if (_feedbackControl != null) {
 			_feedbackControl.updateFeedback(mouseEvent, wp, dragging);
-		}
-
-		if (_toolBar != null) {
-			Point2D.Double ll = new Point2D.Double();
-			worldToLatLon(ll, wp);
-			String latLon = String.format("%.2f%s %s, %.2f%s %s", Math.abs(Math.toDegrees(ll.y)), UnicodeUtils.DEGREE,
-					(ll.y >= 0) ? "N" : "S", Math.abs(Math.toDegrees(ll.x)), UnicodeUtils.DEGREE,
-					(ll.x >= 0) ? "E" : "W");
-			_toolBar.updateStatusText(latLon);
 		}
 	}
 

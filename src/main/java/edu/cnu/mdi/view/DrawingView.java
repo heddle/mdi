@@ -40,9 +40,9 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 	 *                key/value pairs
 	 */
 	public DrawingView(Object... keyVals) {
-		super(PropertyUtils.fromKeyValues(keyVals));
+		super(PropertyUtils.fromKeyValues(keyVals != null ? keyVals : defaults()));
 		enableFileDrop(ImageFilters.isActualImage);
-		initFeedback();
+		pack();
 	}
 
 	/**
@@ -56,36 +56,25 @@ public class DrawingView extends BaseView implements IFeedbackProvider {
 	 * </p>
 	 */
 	public static DrawingView createDrawingView() {
-
-		Dimension d = WindowPlacement.screenFraction(0.4);
-		final int width = d.width;
-		final int height = d.height + 100;
-
-		long toolBits = ToolBits.STATUS | ToolBits.DRAWINGTOOLS
-				| ToolBits.ZOOMTOOLS | ToolBits.PAN | ToolBits.INFO;
-
-		DrawingView view = new DrawingView(
-				PropertyUtils.WORLDSYSTEM, new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0),
-				PropertyUtils.WIDTH,       width,
-				PropertyUtils.HEIGHT,      height,
-				PropertyUtils.TOOLBARBITS, toolBits,
+		return new DrawingView((Object[])null);
+	}
+	
+	/**
+	 * Default key-value pairs for the DrawingView constructor. These are used when
+	 * the constructor is called with no arguments or with a null array. The defaults
+	 * can be overridden by passing explicit key-value pairs to the constructor, which
+	 * will take precedence over these defaults.
+	 * @return an array of alternating keys and values for configuring the DrawingView
+	 */
+	private static Object[] defaults() {
+		return new Object[] {
+				PropertyUtils.FRACTION, 0.5,
+				PropertyUtils.TOOLBARBITS, ToolBits.STATUS | ToolBits.DRAWINGTOOLS
+						| ToolBits.ZOOMTOOLS | ToolBits.PAN | ToolBits.INFO,
 				PropertyUtils.VISIBLE,     true,
 				PropertyUtils.BACKGROUND,  Color.white,
-				PropertyUtils.TITLE,       "Drawing View");
-
-		// BaseView defers setVisible via its own invokeLater. We queue our
-		// resize AFTER that by nesting a second invokeLater — it is guaranteed
-		// to run after the first one has completed, so the frame is fully
-		// realized and component sizes are the ground truth.
-		SwingUtilities.invokeLater(() -> SwingUtilities.invokeLater(() -> {
-			Dimension frameSize     = view.getSize();
-			Dimension containerSize = view.getIContainer().getComponent().getSize();
-			int chromeW = frameSize.width  - containerSize.width;
-			int chromeH = frameSize.height - containerSize.height;
-			view.setSize(width + chromeW, height + chromeH);
-		}));
-
-		return view;
+				PropertyUtils.TITLE,       "Drawing View"
+		};
 	}
 
 	@Override

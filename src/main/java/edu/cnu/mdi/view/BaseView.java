@@ -18,7 +18,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -42,7 +44,6 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-import edu.cnu.mdi.app.BaseMDIApplication;
 import edu.cnu.mdi.component.MagnifyWindow;
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.IContainer;
@@ -59,6 +60,7 @@ import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.transfer.IFileDropHandler;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
+import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.util.PropertyUtils;
 
 /**
@@ -186,6 +188,9 @@ public class BaseView extends JInternalFrame
 
     /** Optional drag-and-drop file filter. */
     private Predicate<File> fileFilter;
+    
+    /// Temporary field used during mouse-dragged events to avoid creating new
+    protected Point2D.Double statusWP = new Point2D.Double();
 
     // -----------------------------------------------------------------------
     // Construction
@@ -1131,21 +1136,19 @@ public class BaseView extends JInternalFrame
                 width  = 400; // safe fallback
                 height = 300;
                 double fraction = PropertyUtils.getFraction(props);
-                if (Double.isFinite(fraction) && fraction > 0.0 && fraction < 1.0) {
-                    BaseMDIApplication app = BaseMDIApplication.getApplication();
-                    if (app != null) {
-                        Dimension appSize = app.getSize();
-                        double aspect = PropertyUtils.getAspectRatio(props);
-                        height = (int) (fraction * appSize.height);
-                        if (aspect > 0.001) {
-                            // Width derived from requested height and aspect ratio.
-                            width = (int) (height * aspect);
-                        } else {
-                            // No aspect given: match the height fraction on width too.
-                            width = (int) (fraction * appSize.width);
-                        }
+                if (Double.isFinite(fraction) && fraction > 0.05 && fraction <= 1.0) {
+                	
+                	Dimension size = Environment.getInstance().getFrameSize();
+                    double aspect = PropertyUtils.getAspectRatio(props);
+                    height = (int) (fraction * size.height);
+                    if (aspect > 0.001) {
+                        // Width derived from requested height and aspect ratio.
+                        width = (int) (height * aspect);
+                    } else {
+                        // No aspect given: match the height fraction on width too.
+                        width = (int) (fraction * size.width);
                     }
-                }
+               }
             }
 
             // Cascading placement when explicit left/top are not given.
@@ -1438,6 +1441,26 @@ public class BaseView extends JInternalFrame
                     view.toolBar.setMaximumSize(
                             new Dimension(Integer.MAX_VALUE, slimH));
                 }
+                
+                if (view.toolBar.hasStatusField()) {
+					IContainer cont = view.getIContainer();
+					if (cont != null) {
+						Component comp = cont.getComponent();
+						if (comp != null) {
+							comp.addMouseMotionListener(new MouseMotionAdapter() {
+							    private void updateStatus(MouseEvent e) {
+							        cont.localToWorld(e.getPoint(), view.statusWP);
+							        cont.updateStatusText(e.getPoint(), view.statusWP);
+							    }
+
+							    @Override
+							    public void mouseMoved(MouseEvent e) { updateStatus(e); }
+
+							    @Override
+							    public void mouseDragged(MouseEvent e) { updateStatus(e); }
+							});						}
+					}
+				}
 
                 view.getContentPane().add(view.toolBar, BorderLayout.NORTH);
                 if (container instanceof BaseContainer) {

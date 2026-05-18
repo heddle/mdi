@@ -256,6 +256,19 @@ public interface IContainer {
 	 * @param toolBar the new toolbar interface.
 	 */
 	public void setToolBar(AToolBar toolBar);
+	
+	/**
+	 * Update the status text in the toolbar, if any. This is a convenience method
+	 * that calls <code>getToolBar().updateStatusText()</code> if a toolbar is
+	 * present.
+	 *
+	 * @param pp the pixel point to include in the status text.
+	 * @param wp the world point to include in the status text.
+	 */
+	public default void updateStatusText(Point pp, Point2D.Double wp) {
+		// no default implementation
+	}
+
 
 	/**
 	 * Convenience method to update the location string in the toolbar.

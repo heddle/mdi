@@ -468,6 +468,14 @@ public abstract class AToolBar extends JToolBar {
 			statusField.setText(text);
 		}
 	}
+	
+	/**
+	 * Check if this toolbar has a status field.
+	 * @return true if this toolbar has a status field, false if not.
+	 */
+	public boolean hasStatusField() {
+		return statusField != null;
+	}
 
 	/**
 	 * Add a spacer of the given size in pixels.

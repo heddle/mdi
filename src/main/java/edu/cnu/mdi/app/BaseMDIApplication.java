@@ -183,6 +183,7 @@ public class BaseMDIApplication extends JFrame {
 						dispose();
 					}
 				}
+				
 			});
 			
 			//console logging of log events for debugging?
@@ -225,6 +226,9 @@ public class BaseMDIApplication extends JFrame {
 				setSize(width, height);
 			}
 
+			// Set the Environment frame size so that views can use it during their own construction and layout. 
+			// This is updated on every resize via the component listener installed in prepareForVirtualDesktop().
+			Environment.getInstance().setFrameSize(getSize());;
 			WindowPlacement.centerComponent(this);
 
 			// --------------------------------------------------------------------
@@ -541,6 +545,7 @@ public class BaseMDIApplication extends JFrame {
 		addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
+				Environment.getInstance().setFrameSize(getSize());
 				debounce.restart();
 			}
 
