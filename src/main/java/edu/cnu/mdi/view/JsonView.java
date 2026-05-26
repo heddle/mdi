@@ -91,6 +91,7 @@ public class JsonView extends BaseView {
         super(PropertyUtils.TITLE,       TITLE,
               PropertyUtils.WIDTH,        width,
               PropertyUtils.HEIGHT,       height,
+              PropertyUtils.USECONTAINER, false,
               PropertyUtils.VISIBLE,      visible);
 
         splitPane = new JsonSplitPane();

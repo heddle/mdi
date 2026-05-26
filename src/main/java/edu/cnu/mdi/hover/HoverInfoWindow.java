@@ -14,6 +14,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JWindow;
+import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.ui.fonts.Fonts;
 
@@ -51,7 +52,18 @@ public class HoverInfoWindow extends JWindow {
         setFocusableWindowState(false);    }
 
  
-    public void showMessage(String message, Point screenPoint) {
+    /**
+	 * Show the hover message at the location of the given HoverEvent.
+	 *
+	 * @param he      the HoverEvent containing the location to show the message
+	 * @param message the message to display, or null/empty to hide
+	 */
+    public void showMessage(HoverEvent he, String message) {
+    	
+		// Convert the point from container-relative to screen coordinates for the window
+		Point screenPoint = he.getLocation();
+		SwingUtilities.convertPointToScreen(screenPoint, he.getSource());
+
         label.setText(message == null ? "" : message);
         pack();
 

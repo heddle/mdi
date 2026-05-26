@@ -63,13 +63,8 @@ public class MapToolHandler extends BaseToolHandler {
         mapContainer.localToLatLon(end, ll2);
 
         AItem item = new MapLineItem(mapContainer.getAnnotationLayer(), ll1, ll2);
-        item.setRightClickable(true);
-        item.setDraggable(true);
-        item.setSelectable(true);
-        item.setResizable(true);
-        item.setRotatable(true);
-        item.setDeletable(true);
-        item.setLocked(false);
+        
+        defaultConfigureItem(item);
         item.setDisplayName("GC line");
         item.getStyleSafe().setLineColor(Color.red);
         item.getStyleSafe().setLineWidth(2.0f);
@@ -201,6 +196,7 @@ public class MapToolHandler extends BaseToolHandler {
         item.setResizable(true);
         item.setRotatable(true);
         item.setDeletable(true);
+        item.setStyleEditable(true);
         item.setLocked(false);
     }
 

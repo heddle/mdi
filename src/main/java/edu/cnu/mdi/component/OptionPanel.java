@@ -18,125 +18,299 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 
 /**
- * A panel that arranges a set of boolean options (JCheckBoxes) in a
+ * A panel that arranges a set of boolean options ({@link JCheckBox}es) in a
  * multi-column layout suitable for use in MDI views.
+ *
+ * <h2>Option Data Format</h2>
  * <p>
- * The options are specified via an array of arrays of strings:
+ * Options are specified as an array of three-element {@code String} arrays:
+ * </p>
  *
  * <pre>
- * { { "Option 1", "true", "false" }, { "Option 2", "true", "true" } }
+ * { { "Option 1", "true",  "false" },
+ *   { "Option 2", "true",  "true"  },
+ *   { "Option 3", "false", "false" } }
  * </pre>
  *
- * where each inner array contains:
+ * <p>Each inner array must contain exactly three elements:</p>
+ * <ol>
+ *   <li><b>label</b>   – the text shown beside the checkbox (index 0)</li>
+ *   <li><b>enabled</b> – {@code "true"} or {@code "false"} (index 1)</li>
+ *   <li><b>selected</b>– {@code "true"} or {@code "false"} (index 2)</li>
+ * </ol>
+ *
+ * <h2>Layout</h2>
+ * <p>
+ * Checkboxes are distributed across the requested number of columns in
+ * column-major order (filled top-to-bottom, then left-to-right). Three
+ * ordering modes are available via the {@code layoutOption} constructor
+ * parameter:
+ * </p>
  * <ul>
- * <li>label: the checkbox label (index 0)</li>
- * <li>enabled: "true" or "false" (index 1)</li>
- * <li>selected:"true" or "false" (index 2)</li>
+ *   <li>{@link #AS_ORDERED}   – options appear in the order supplied</li>
+ *   <li>{@link #ALPHABETICAL} – options are sorted by label (case-insensitive)</li>
+ *   <li>{@link #MINSIZE}      – options are sorted so the widest labels are
+ *       spread across columns, minimising overall panel width</li>
  * </ul>
  * <p>
- * The panel arranges the checkboxes into a specified number of columns using
- * one of three layout modes: {@link #AS_ORDERED}, {@link #ALPHABETICAL}, or
- * {@link #MINSIZE}.
+ * Each column is only as wide as its widest checkbox. Columns are separated by
+ * {@link #HGAP} pixels, and rows are spaced by font-height plus {@link #VGAP}
+ * pixels.
+ * </p>
+ *
+ * <h2>Preferred-size and borders</h2>
  * <p>
- * Columns are sized only as wide as necessary to fit the longest label in that
- * column. Horizontal gaps between columns are controlled by {@link #HGAP}, and
- * vertical spacing is based on the font height plus {@link #VGAP}. The "active"
- * checkbox icons are vertically aligned within each column.
+ * Layout is performed once at construction time using a null layout (absolute
+ * positioning). The <em>content</em> size (the area required by the checkboxes
+ * themselves, <em>excluding</em> any border insets) is captured in
+ * {@code _contentSize}. {@link #getPreferredSize()} then adds the panel's
+ * <em>current</em> insets to that content size each time it is called, so the
+ * result is always correct even when a border — such as a
+ * {@link CommonBorder} — is applied <em>after</em> construction (which would
+ * otherwise cause the border's title area to be clipped).
+ * </p>
+ *
+ * <h2>Thread safety</h2>
+ * <p>
+ * This class is not thread-safe. All interactions must occur on the
+ * Swing Event Dispatch Thread (EDT).
+ * </p>
+ *
+ * @see OptionPanelListener
+ * @see CommonBorder
  */
 @SuppressWarnings("serial")
 public class OptionPanel extends JPanel {
 
-	/** Layout option: use the options in the order provided. */
+	// ----------------------------------------------------------------
+	// Layout option constants
+	// ----------------------------------------------------------------
+
+	/**
+	 * Layout option: display options in the order they were supplied to the
+	 * constructor, with no reordering.
+	 */
 	public static final int AS_ORDERED = 0;
 
-	/** Layout option: sort options alphabetically by label. */
+	/**
+	 * Layout option: sort options alphabetically by label (case-insensitive) before
+	 * laying them out in columns.
+	 */
 	public static final int ALPHABETICAL = 1;
 
 	/**
-	 * Layout option: minimize overall width by grouping widest labels into the same
-	 * column. Internally, options are sorted by descending label width, then
-	 * grouped into columns.
+	 * Layout option: sort options by descending label pixel width before laying them
+	 * out in columns. This tends to produce the narrowest overall panel width
+	 * because the widest labels are distributed evenly across columns rather than
+	 * all ending up in the same one.
 	 */
 	public static final int MINSIZE = 2;
 
-	/** Default horizontal gap between columns in pixels. */
-	public static final int HGAP = 4;
-
-	/** Default additional vertical gap between rows in pixels. */
-	public static final int VGAP = 2;
+	// ----------------------------------------------------------------
+	// Spacing constants
+	// ----------------------------------------------------------------
 
 	/**
-	 * Listener interface for {@link OptionPanel} selection changes.
-	 * <p>
-	 * This is a convenience wrapper around {@link ItemListener} that provides the
-	 * label and new selection state of the changed option.
+	 * Horizontal gap in pixels between adjacent columns of checkboxes.
+	 * Callers who need a different gap should subclass or wrap the panel.
+	 */
+	public static final int HGAP = 10;
+
+	/**
+	 * Additional vertical gap in pixels added to the font height to determine the
+	 * height of each row.
+	 */
+	public static final int VGAP = 6;
+
+	// ----------------------------------------------------------------
+	// Listener interface
+	// ----------------------------------------------------------------
+
+	/**
+	 * Callback interface for changes to checkbox selection state within an
+	 * {@link OptionPanel}.
+	 *
+	 * <p>This is a convenience wrapper around {@link ItemListener} that surfaces
+	 * the human-readable label of the changed option rather than requiring callers
+	 * to interrogate the raw {@link java.awt.event.ItemEvent ItemEvent}.</p>
 	 */
 	public interface OptionPanelListener {
 
 		/**
-		 * Called when a checkbox in the {@link OptionPanel} changes state.
+		 * Invoked when a checkbox inside an {@link OptionPanel} changes state.
 		 *
-		 * @param source   the {@code OptionPanel} where the change occurred
-		 * @param label    the label associated with the checkbox
-		 * @param selected the new selected state of the checkbox
+		 * @param source   the {@code OptionPanel} that contains the changed checkbox;
+		 *                 never {@code null}
+		 * @param label    the label text of the checkbox whose state changed;
+		 *                 never {@code null}
+		 * @param selected {@code true} if the checkbox is now selected,
+		 *                 {@code false} if it is now deselected
 		 */
 		void optionStateChanged(OptionPanel source, String label, boolean selected);
 	}
 
+	// ----------------------------------------------------------------
+	// Private inner class
+	// ----------------------------------------------------------------
+
 	/**
-	 * Internal representation of an option in the panel.
+	 * Internal record that pairs a checkbox with its metadata and computed layout
+	 * position. Instances are created once during {@link #buildEntries} and are
+	 * mutated in-place during {@link #layoutEntries}.
 	 */
 	private static class OptionEntry {
+
+		/** The label text used to identify this option. */
 		final String label;
+
+		/** The Swing component rendered for this option. */
 		final JCheckBox checkBox;
+
+		/** Zero-based column index assigned during layout. */
 		int columnIndex;
+
+		/** Zero-based row index within its column, assigned during layout. */
 		int rowIndex;
+
+		/**
+		 * Width of {@link #label} in pixels at the panel's font, measured by
+		 * {@link FontMetrics#stringWidth}. Used by the {@link OptionPanel#MINSIZE}
+		 * layout option.
+		 */
 		int labelPixelWidth;
 
+		/**
+		 * Constructs an entry for the given label/checkbox pair.
+		 *
+		 * @param label    the option label; never {@code null}
+		 * @param checkBox the checkbox component; never {@code null}
+		 */
 		OptionEntry(String label, JCheckBox checkBox) {
 			this.label = label;
 			this.checkBox = checkBox;
 		}
 	}
 
-	// configuration
+	// ----------------------------------------------------------------
+	// Fields
+	// ----------------------------------------------------------------
+
+	// --- constructor-supplied configuration --------------------------
+
+	/** Number of columns requested by the caller. */
 	private final int _columnCount;
+
+	/**
+	 * One of {@link #AS_ORDERED}, {@link #ALPHABETICAL}, or {@link #MINSIZE}.
+	 */
 	private final int _layoutOption;
+
+	/** Font applied to all checkbox labels. */
 	private final Font _font;
+
+	/** Foreground colour for labels, or {@code null} to use the default. */
 	private final Color _foreground;
+
+	/**
+	 * Background colour for the panel and all checkboxes, or {@code null} to use
+	 * the default.
+	 */
 	private final Color _background;
+
+	/**
+	 * Delegate notified when any checkbox changes state, or {@code null} if no
+	 * notification is required.
+	 */
 	private final OptionPanelListener _listener;
 
-	// data
+	// --- data --------------------------------------------------------
+
+	/**
+	 * All entries in their original (constructor-supplied) order. Used by
+	 * {@link #getSelectedOptionLabels()} to preserve insertion order.
+	 */
 	private final List<OptionEntry> _entries = new ArrayList<>();
+
+	/**
+	 * Fast lookup from label to entry. Labels are assumed to be unique; if
+	 * duplicates are present, the later entry silently overwrites the earlier one.
+	 */
 	private final Map<String, OptionEntry> _entryByLabel = new LinkedHashMap<>();
 
-	// computed layout data
-	private Dimension _preferredSize;
+	// --- computed layout data ----------------------------------------
+
+	/**
+	 * The size required to display all checkboxes, <em>excluding</em> any border
+	 * insets. Set by {@link #layoutEntries()} and consumed by
+	 * {@link #getPreferredSize()}.
+	 *
+	 * <p><b>Design note – why content size rather than full preferred size:</b><br>
+	 * Layout is performed once at construction time. If a border is attached
+	 * <em>after</em> construction (a common pattern when the border is set in a
+	 * subclass constructor after {@code super()} returns), the insets reported by
+	 * {@link #getInsets()} during layout are zero and therefore cannot be included
+	 * in a size snapshot.  By storing only the border-inset-free content size here,
+	 * {@link #getPreferredSize()} can add the <em>current</em> insets at call time,
+	 * giving a correct result regardless of when the border is applied.</p>
+	 */
+	private Dimension _contentSize;
+
+	/**
+	 * Width of each column in pixels, indexed by zero-based column index. Set by
+	 * {@link #layoutEntries()} and consumed by {@link #doLayout()}.
+	 */
 	private int[] _columnWidths;
+
+	/** Height of a single row in pixels (font height + {@link #VGAP}). Set by
+	 * {@link #layoutEntries()} and consumed by {@link #doLayout()}.
+	 */
 	private int _rowHeight;
+
+	/**
+	 * Maximum number of rows across all columns. Equal to the number of entries in
+	 * the tallest column after distribution.
+	 */
 	private int _maxRows;
 
-    /**
-	 * Creates an {@code OptionPanel}.
+	/**
+	 * Entries in the order they should be rendered (possibly reordered from
+	 * {@link #_entries} depending on {@link #_layoutOption}). Set once by
+	 * {@link #layoutEntries()} and used by {@link #doLayout()} to position
+	 * checkboxes with the correct live insets.
+	 */
+	private List<OptionEntry> _orderedEntries;
+
+	// ----------------------------------------------------------------
+	// Constructor
+	// ----------------------------------------------------------------
+
+	/**
+	 * Creates an {@code OptionPanel} with the specified configuration.
 	 *
-	 * @param listener     listener notified when any checkbox changes state; may be
+	 * <p>Layout is performed immediately during construction. If a border will be
+	 * added after construction (e.g. in a subclass), {@link #getPreferredSize()}
+	 * will still return the correct size because it adds the current insets
+	 * dynamically rather than relying on a snapshot taken at construction time.</p>
+	 *
+	 * @param listener     callback notified when any checkbox changes state;
+	 *                     {@code null} is permitted and means no notification
+	 * @param columnCount  desired number of columns; must be &ge; 1
+	 * @param font         font used for all checkbox labels; must not be
 	 *                     {@code null}
-	 * @param columnCount  desired number of columns (must be &gt;= 1)
-	 * @param font         font used for the checkbox labels (must not be
-	 *                     {@code null})
-	 * @param foreground   foreground color for the labels (may be {@code null} for
-	 *                     default)
-	 * @param background   background color for the panel and checkboxes (may be
-	 *                     {@code null} for default)
-	 * @param layoutOption layout option, one of {@link #AS_ORDERED},
+	 * @param foreground   foreground (text) colour for labels; {@code null} uses
+	 *                     the look-and-feel default
+	 * @param background   background colour for the panel and all checkboxes;
+	 *                     {@code null} uses the look-and-feel default and leaves
+	 *                     the panel non-opaque
+	 * @param layoutOption ordering mode; one of {@link #AS_ORDERED},
 	 *                     {@link #ALPHABETICAL}, or {@link #MINSIZE}
-	 * @param optionData   array of option specifications: {@code {label, enabled,
-	 *                     selected}} for each option
+	 * @param optionData   option specifications; each element must be a
+	 *                     three-element array {@code {label, enabled, selected}}
 	 *
 	 * @throws IllegalArgumentException if {@code columnCount < 1}, {@code font} is
-	 *                                  {@code null}, or {@code optionData} is
-	 *                                  invalid
+	 *                                  {@code null}, {@code optionData} is
+	 *                                  {@code null}, or any inner array has fewer
+	 *                                  than three elements
 	 */
 	public OptionPanel(OptionPanelListener listener, int columnCount, Font font, Color foreground, Color background,
 			int layoutOption, String[][] optionData) {
@@ -158,7 +332,7 @@ public class OptionPanel extends JPanel {
 		_foreground = foreground;
 		_background = background;
 
-		setLayout(null); // we will perform absolute layout
+		setLayout(null); // absolute positioning; bounds are set in layoutEntries()
 		if (_background != null) {
 			setBackground(_background);
 			setOpaque(true);
@@ -168,22 +342,32 @@ public class OptionPanel extends JPanel {
 		layoutEntries();
 	}
 
+	// ----------------------------------------------------------------
+	// Private layout helpers
+	// ----------------------------------------------------------------
+
 	/**
-	 * Builds the {@link JCheckBox} components and internal {@link OptionEntry}
-	 * structures from the raw option data.
+	 * Creates {@link JCheckBox} components and populates {@link #_entries} and
+	 * {@link #_entryByLabel} from the raw option data.
 	 *
-	 * @param optionData the raw option specification array
+	 * <p>An internal {@link ItemListener} is attached to each checkbox. It
+	 * delegates to {@link #_listener} (if non-null), passing the label and new
+	 * selection state.</p>
+	 *
+	 * @param optionData the raw option specification array; validated by the caller
+	 * @throws IllegalArgumentException if any inner array has fewer than three
+	 *                                  elements
 	 */
 	private void buildEntries(String[][] optionData) {
 
-		// Build entries in initial order
 		for (String[] row : optionData) {
 			if (row == null || row.length < 3) {
-				throw new IllegalArgumentException("Each option must have label, enabled, and selected entries.");
+				throw new IllegalArgumentException(
+						"Each option entry must have three elements: label, enabled, selected.");
 			}
 
-			final String label = row[0];
-			final boolean enabled = Boolean.parseBoolean(row[1]);
+			final String label    = row[0];
+			final boolean enabled  = Boolean.parseBoolean(row[1]);
 			final boolean selected = Boolean.parseBoolean(row[2]);
 
 			JCheckBox checkBox = new JCheckBox(label, selected);
@@ -199,26 +383,27 @@ public class OptionPanel extends JPanel {
 			checkBox.setEnabled(enabled);
 			checkBox.setOpaque(_background != null);
 
-			// Internal listener that delegates to the OptionPanelListener
+			// Delegate state changes to the panel listener, if any.
 			checkBox.addItemListener(new ItemListener() {
 				@Override
 				public void itemStateChanged(ItemEvent e) {
 					if (_listener != null) {
-						_listener.optionStateChanged(OptionPanel.this, label,
-								(e.getStateChange() == ItemEvent.SELECTED));
+						_listener.optionStateChanged(
+								OptionPanel.this,
+								label,
+								e.getStateChange() == ItemEvent.SELECTED);
 					}
 				}
 			});
 
 			OptionEntry entry = new OptionEntry(label, checkBox);
 			_entries.add(entry);
-			// assumes labels are unique; if not, later entries overwrite earlier
-			_entryByLabel.put(label, entry);
-
+			_entryByLabel.put(label, entry); // last entry wins on duplicate labels
 			add(checkBox);
 		}
 
-		// Compute label widths
+		// Measure label widths once, after the component is added (so getFontMetrics
+		// is backed by a Graphics context from the toolkit).
 		FontMetrics fm = getFontMetrics(_font);
 		for (OptionEntry entry : _entries) {
 			entry.labelPixelWidth = fm.stringWidth(entry.label);
@@ -226,118 +411,166 @@ public class OptionPanel extends JPanel {
 	}
 
 	/**
-	 * Computes the layout (column and row indices, column widths, and preferred
-	 * size) and sets component bounds accordingly.
+	 * Computes the column/row assignment for every entry and determines per-column
+	 * widths and the overall content size. Stores results in {@link #_orderedEntries},
+	 * {@link #_columnWidths}, {@link #_rowHeight}, and {@link #_contentSize} for
+	 * later use by {@link #doLayout()}.
+	 *
+	 * <p><b>Important:</b> this method deliberately does <em>not</em> call
+	 * {@link java.awt.Component#setBounds setBounds()} on the checkboxes and does
+	 * <em>not</em> include border insets in {@link #_contentSize}. Actual
+	 * positioning is deferred to {@link #doLayout()}, which is called by Swing
+	 * with the real insets in place. This avoids the problem of a border applied
+	 * after construction (e.g. in a subclass) being invisible to the layout.</p>
 	 */
 	private void layoutEntries() {
 		if (_entries.isEmpty()) {
-			_preferredSize = new Dimension(0, 0);
+			_contentSize = new Dimension(0, 0);
+			_orderedEntries = new ArrayList<>();
 			return;
 		}
 
-		// Make a working list of entries for possible reordering
+		// Working list — may be reordered without affecting _entries.
 		List<OptionEntry> working = new ArrayList<>(_entries);
 
-		// Apply layout option ordering
 		switch (_layoutOption) {
 		case ALPHABETICAL:
 			working.sort(Comparator.comparing(e -> e.label, String.CASE_INSENSITIVE_ORDER));
 			break;
 		case MINSIZE:
-			// Sort by decreasing label width, so widest are grouped together
+			// Widest labels first so they are spread across columns rather than stacked.
 			working.sort(Comparator.comparingInt((OptionEntry e) -> e.labelPixelWidth).reversed());
 			break;
 		case AS_ORDERED:
 		default:
-			// keep original order
+			// No reordering required.
 			break;
 		}
 
-		// Determine how many columns we will actually use (cannot exceed number of
-		// options)
 		int optionCount = working.size();
-		int effectiveColumns = Math.min(_columnCount, optionCount);
-		if (effectiveColumns < 1) {
-			effectiveColumns = 1;
-		}
+		int effectiveColumns = Math.max(1, Math.min(_columnCount, optionCount));
 
-		// Determine how many entries go into each column (column-major grouping)
+		// Distribute entries into columns as evenly as possible (column-major order).
 		int basePerColumn = optionCount / effectiveColumns;
-		int remainder = optionCount % effectiveColumns;
+		int remainder     = optionCount % effectiveColumns;
 
 		int[] columnSizes = new int[effectiveColumns];
 		for (int c = 0; c < effectiveColumns; c++) {
-			columnSizes[c] = basePerColumn + ((c < remainder) ? 1 : 0);
+			columnSizes[c] = basePerColumn + (c < remainder ? 1 : 0);
 		}
 
-		// Assign entries to columns and rows
+		// Assign column/row indices.
 		int index = 0;
 		_maxRows = 0;
 		for (int c = 0; c < effectiveColumns; c++) {
-			int rowsInColumn = columnSizes[c];
-			for (int r = 0; r < rowsInColumn; r++) {
+			for (int r = 0; r < columnSizes[c]; r++) {
 				OptionEntry entry = working.get(index++);
 				entry.columnIndex = c;
-				entry.rowIndex = r;
+				entry.rowIndex    = r;
 				_maxRows = Math.max(_maxRows, r + 1);
 			}
 		}
 
-		// Compute per-column widths based on checkbox preferred sizes
+		// Each column is as wide as its widest checkbox preferred size.
 		_columnWidths = new int[effectiveColumns];
 		for (OptionEntry entry : working) {
-			int col = entry.columnIndex;
 			int prefWidth = entry.checkBox.getPreferredSize().width;
-			_columnWidths[col] = Math.max(_columnWidths[col], prefWidth);
+			_columnWidths[entry.columnIndex] = Math.max(_columnWidths[entry.columnIndex], prefWidth);
 		}
 
 		FontMetrics fm = getFontMetrics(_font);
 		_rowHeight = fm.getHeight() + VGAP;
 
-		// Compute preferred size
-		Insets insets = getInsets();
-		int totalWidth = insets.left + insets.right;
-		if (effectiveColumns > 0) {
-			totalWidth += Arrays.stream(_columnWidths).sum();
-			totalWidth += HGAP * (effectiveColumns - 1);
-		}
+		// Store content size without border insets; getPreferredSize() and
+		// doLayout() both add live insets at call time.
+		int contentWidth  = Arrays.stream(_columnWidths).sum() + HGAP * (effectiveColumns - 1);
+		int contentHeight = _maxRows * _rowHeight;
+		_contentSize = new Dimension(contentWidth, contentHeight);
 
-		int totalHeight = insets.top + insets.bottom;
-		totalHeight += _maxRows * _rowHeight;
+		// Preserve the ordered list for doLayout().
+		_orderedEntries = working;
 
-		_preferredSize = new Dimension(totalWidth, totalHeight);
-
-		// Apply bounds to each checkbox to align active parts in columns
-		int x = insets.left;
-		for (int c = 0; c < effectiveColumns; c++) {
-			final int colWidth = _columnWidths[c];
-			for (OptionEntry entry : working) {
-				if (entry.columnIndex == c) {
-					int y = insets.top + entry.rowIndex * _rowHeight;
-					entry.checkBox.setBounds(x, y, colWidth, _rowHeight);
-				}
-			}
-			x += colWidth + HGAP;
-		}
-
+		// doLayout() will be called by Swing when the component is realised;
+		// trigger it now so the panel renders correctly if already visible.
 		revalidate();
 		repaint();
 	}
 
-	@Override
-	public Dimension getPreferredSize() {
-		return (_preferredSize != null) ? _preferredSize : super.getPreferredSize();
-	}
-
 	// ----------------------------------------------------------------
-	// Convenience API for interacting with options
+	// Overrides
 	// ----------------------------------------------------------------
 
 	/**
-	 * Returns whether the option with the given label is currently selected.
+	 * Returns the preferred size of this panel, dynamically adding the panel's
+	 * current border insets to the pre-computed content size.
 	 *
-	 * @param label the label of the option
-	 * @return {@code true} if selected, {@code false} if not selected or not found
+	 * <p>Because insets are read at call time rather than snapshotted at
+	 * construction time, this method returns a correct value even when a border
+	 * (e.g. a {@link CommonBorder}) is applied <em>after</em> the constructor
+	 * returns — a pattern used by subclasses such as {@code ChimeraOptionPanel}.</p>
+	 *
+	 * @return the preferred {@link Dimension}; never {@code null}
+	 */
+	@Override
+	public Dimension getPreferredSize() {
+		if (_contentSize == null) {
+			return super.getPreferredSize();
+		}
+		Insets insets = getInsets();
+		return new Dimension(
+				_contentSize.width  + insets.left + insets.right,
+				_contentSize.height + insets.top  + insets.bottom);
+	}
+
+	/**
+	 * Positions each checkbox using the panel's current insets as the content
+	 * origin.
+	 *
+	 * <p>Because this method is called by Swing every time the component is
+	 * validated — including after a border is applied post-construction — the
+	 * checkboxes are always placed below the titled border's title text and inside
+	 * any other inset region, regardless of when {@link javax.swing.border.Border
+	 * Border} was set.</p>
+	 *
+	 * <p>The column/row assignments and column widths computed by
+	 * {@link #layoutEntries()} are reused here; only the pixel coordinates are
+	 * recalculated.</p>
+	 */
+	@Override
+	public void doLayout() {
+		if (_orderedEntries == null || _columnWidths == null) {
+			super.doLayout();
+			return;
+		}
+
+		Insets insets = getInsets(); // live insets — correct even after setBorder()
+
+		int x = insets.left;
+		int lastCol = -1;
+		for (OptionEntry entry : _orderedEntries) {
+			int c = entry.columnIndex;
+			// Accumulate x only when moving to the next column.
+			if (c != lastCol) {
+				if (lastCol >= 0) {
+					x += _columnWidths[lastCol] + HGAP;
+				}
+				lastCol = c;
+			}
+			int y = insets.top + entry.rowIndex * _rowHeight;
+			entry.checkBox.setBounds(x, y, _columnWidths[c], _rowHeight);
+		}
+	}
+
+	// ----------------------------------------------------------------
+	// Public API
+	// ----------------------------------------------------------------
+
+	/**
+	 * Returns whether the option identified by {@code label} is currently selected.
+	 *
+	 * @param label the label of the option to query; must not be {@code null}
+	 * @return {@code true} if the option exists and its checkbox is selected;
+	 *         {@code false} otherwise (including when the label is not found)
 	 */
 	public boolean isOptionSelected(String label) {
 		OptionEntry entry = _entryByLabel.get(label);
@@ -345,10 +578,15 @@ public class OptionPanel extends JPanel {
 	}
 
 	/**
-	 * Sets the selected state of the option with the given label.
+	 * Programmatically sets the selected state of the checkbox identified by
+	 * {@code label}.
 	 *
-	 * @param label    the label of the option
-	 * @param selected the new selected state
+	 * <p>If the label is not found, this method does nothing. The call will
+	 * fire any registered {@link OptionPanelListener} (via the checkbox's own
+	 * {@link ItemListener}) if the state actually changes.</p>
+	 *
+	 * @param label    the label of the option to update; must not be {@code null}
+	 * @param selected {@code true} to select, {@code false} to deselect
 	 */
 	public void setOptionSelected(String label, boolean selected) {
 		OptionEntry entry = _entryByLabel.get(label);
@@ -358,9 +596,12 @@ public class OptionPanel extends JPanel {
 	}
 
 	/**
-	 * Enables or disables the option with the given label.
+	 * Enables or disables the checkbox identified by {@code label}.
 	 *
-	 * @param label   the label of the option
+	 * <p>A disabled checkbox is visible but cannot be interacted with by the user.
+	 * If the label is not found, this method does nothing.</p>
+	 *
+	 * @param label   the label of the option to update; must not be {@code null}
 	 * @param enabled {@code true} to enable, {@code false} to disable
 	 */
 	public void setOptionEnabled(String label, boolean enabled) {
@@ -371,9 +612,11 @@ public class OptionPanel extends JPanel {
 	}
 
 	/**
-	 * Returns a defensive copy of the labels of all currently selected options.
+	 * Returns the labels of all currently <em>selected</em> options, in the order
+	 * they were originally supplied to the constructor.
 	 *
-	 * @return an array of selected option labels; never {@code null}
+	 * @return a new array containing the labels of all selected options;
+	 *         never {@code null}, but may be empty
 	 */
 	public String[] getSelectedOptionLabels() {
 		List<String> selected = new ArrayList<>();
@@ -386,11 +629,16 @@ public class OptionPanel extends JPanel {
 	}
 
 	/**
-	 * Returns the underlying {@link JCheckBox} for the given label, or {@code null}
-	 * if not found. This can be useful for advanced customization.
+	 * Returns the underlying {@link JCheckBox} for the option identified by
+	 * {@code label}, or {@code null} if no such option exists.
 	 *
-	 * @param label the label of the option
-	 * @return the {@code JCheckBox}, or {@code null} if not found
+	 * <p>This method is intended for advanced customisation (e.g. attaching
+	 * additional listeners or tweaking renderer properties). Prefer the
+	 * higher-level methods ({@link #isOptionSelected}, {@link #setOptionSelected},
+	 * etc.) for normal use.</p>
+	 *
+	 * @param label the label of the option; must not be {@code null}
+	 * @return the {@link JCheckBox}, or {@code null} if the label is not found
 	 */
 	public JCheckBox getCheckBox(String label) {
 		OptionEntry entry = _entryByLabel.get(label);

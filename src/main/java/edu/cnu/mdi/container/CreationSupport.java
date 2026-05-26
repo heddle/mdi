@@ -13,6 +13,7 @@ import javax.swing.JPopupMenu;
 import edu.cnu.mdi.dialog.TextEditDialog;
 import edu.cnu.mdi.graphics.style.Styled;
 import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
+import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.EllipseItem;
 import edu.cnu.mdi.item.Layer;
@@ -118,29 +119,36 @@ public class CreationSupport {
 	 * @param pc       the center of the arc
 	 * @param p1       the point at the end of the first leg. Thus pc->p1 determine
 	 *                 the radius.
-	 * @param arcAngle the opening angle COUNTERCLOCKWISE in degrees.
+	 * @param p2	   the point at the end of the second leg. Thus pc->p1->p2 determine the
+	 * 			   angle of the arc.
 	 * @return the new item
 	 */
-	public static AItem createRadArcItem(Layer layer, Point pc, Point p1, double arcAngle) {
-		IContainer container = layer.getContainer();
-		Point2D.Double wpc = new Point2D.Double();
-		Point2D.Double wp1 = new Point2D.Double();
-		container.localToWorld(pc, wpc);
-		container.localToWorld(p1, wp1);
-		RadArcItem item =  new RadArcItem(layer, wpc, wp1, arcAngle) {
-			@Override
-			public JPopupMenu createPopupMenu() {
-				JPopupMenu menu = super.createPopupMenu();
-				menu.addSeparator();
-				// Add custom menu items
-				addStyleEdit(menu, this);
-				return menu;
-			}
-		};
-		defaultConfigureItem(item);
-		return item;
-	}
+	public static AItem createRadArcItem(Layer layer, Point pc, Point p1, Point p2) {
+	    IContainer container = layer.getContainer();
 
+	    Point2D.Double wpc = new Point2D.Double();
+	    Point2D.Double wp1 = new Point2D.Double();
+	    Point2D.Double wp2 = new Point2D.Double();
+
+	    container.localToWorld(pc, wpc);
+	    container.localToWorld(p1, wp1);
+	    container.localToWorld(p2, wp2);
+
+	    double arcAngle = WorldGraphicsUtils.signedSweepDeg(wpc, wp1, wp2);
+
+	    RadArcItem item = new RadArcItem(layer, wpc, wp1, arcAngle) {
+	        @Override
+	        public JPopupMenu createPopupMenu() {
+	            JPopupMenu menu = super.createPopupMenu();
+	            menu.addSeparator();
+	            addStyleEdit(menu, this);
+	            return menu;
+	        }
+	    };
+
+	    defaultConfigureItem(item);
+	    return item;
+	}
 	/**
 	 * Create a text item at the given screen location.
 	 *
@@ -220,6 +228,7 @@ public class CreationSupport {
 		item.setRotatable(true);
 		item.setDeletable(true);
 		item.setLocked(false);
+		item.setStyleEditable(true);
 	}
 
 	/**

@@ -421,26 +421,17 @@ public class BaseToolHandler implements IToolHandler {
 
 	@Override
 	public void createRadArc(GestureContext gc, Point[] pp) {
+	    if (pp == null || pp.length != 3) {
+	        return;
+	    }
 
-		if (pp == null || pp.length != 3) {
-			return;
-		}
+	    CreationSupport.createRadArcItem(
+	            container.getAnnotationLayer(),
+	            pp[0], pp[1], pp[2]);
 
-		// If RubberRadArc provided an unwrapped signed sweep, use it directly.
-		Double sweep = (gc != null) ? gc.getRubberbandAngleDeg() : null;
-
-		if (sweep == null) {
-			// Fallback only (should be rare): compute minor signed angle
-			// NOTE: pp are screen points; CreationSupport likely converts to world.
-			// Keep your existing behavior if needed.
-			return;
-		}
-
-		CreationSupport.createRadArcItem(container.getAnnotationLayer(), pp[0], pp[1], sweep);
-		container.setDirty(true);
-		container.refresh();
+	    container.setDirty(true);
+	    container.refresh();
 	}
-
 	@Override
 	public void createTextItem(GestureContext gc, Point location) {
 		CreationSupport.createTextItem(container.getAnnotationLayer(), location);

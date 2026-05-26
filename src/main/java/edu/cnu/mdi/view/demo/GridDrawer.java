@@ -9,7 +9,10 @@ import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 
 public class GridDrawer extends DrawableAdapter {
 
+	// grid cell size in pixels
 	private int gridSize;
+	
+	// grid line color
 	private Color gridColor;
 
 	/**
@@ -20,14 +23,10 @@ public class GridDrawer extends DrawableAdapter {
 	 * @param gridSize  the size of the grid cells in pixels
 	 * @param gridColor the color of the grid lines
 	 */
-	public GridDrawer(IContainer container, int gridSize, Color gridColor) {
+	public GridDrawer(int gridSize, Color gridColor) {
 		super("SnapToGrid");
 		this.gridSize = gridSize;
 		this.gridColor = gridColor;
-
-		// this will cause the drawing to occur before items are drawn.
-		// alternatively, use setAfterDraw to draw on top of items.
-		container.setBeforeDraw(this);
 	}
 
 	/**

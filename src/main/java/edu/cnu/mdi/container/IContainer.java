@@ -16,6 +16,7 @@ import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
+import edu.cnu.mdi.hover.HoverInfoWindow;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.view.BaseView;
@@ -267,6 +268,15 @@ public interface IContainer {
 	 */
 	public default void updateStatusText(Point pp, Point2D.Double wp) {
 		// no default implementation
+	}
+	
+	/**
+	 * Get the hover info window for this container, if any.
+	 *
+	 * @return the hover info window for this container, or <code>null</code>.
+	 */
+	public default HoverInfoWindow getHoverWindow() {
+		return null; // default implementation returns null
 	}
 
 

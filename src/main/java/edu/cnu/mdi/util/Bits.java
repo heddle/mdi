@@ -62,6 +62,36 @@ public final class Bits {
 	public static long clear(long bits, long mask) {
 		return bits & ~mask;
 	}
+	
+	/**
+	 * Counts and returns the number of set bits in the given value.
+	 *
+	 * @param bits the value to count bits in
+	 * @return number of set bits (range {@code 0}–{@code 64})
+	 */
+	public static int countBits(long bits) {
+		int count = 0;
+		while (bits != 0) {
+			count += (bits & 1);
+			bits >>>= 1; // unsigned right shift
+		}
+		return count;
+	}
+	
+	/**
+	 * Counts and returns the number of set bits in the given value.
+	 *
+	 * @param bits the value to count bits in
+	 * @return number of set bits (range {@code 0}–{@code 32})
+	 */
+	public static int countBits(int bits) {
+		int count = 0;
+		while (bits != 0) {
+			count += (bits & 1);
+			bits >>>= 1; // unsigned right shift
+		}
+		return count;
+	}
 
 	/**
 	 * Returns a value in which all bits specified by {@code mask} have been toggled

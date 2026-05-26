@@ -392,7 +392,8 @@ public final class MapGraphics {
      *
      * @param projection the active map projection; must not be {@code null}
      * @param latLon     the geographic point in radians; must not be
-     *                   {@code null}
+     *                   {@code null} The x coordinate is interpreted as longitude 
+     *                   and the y coordinate as latitude.
      * @return a normalized copy of the input point
      */
     public static Point2D.Double normalizeLatLon(IMapProjection projection,

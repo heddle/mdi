@@ -1,7 +1,6 @@
 package edu.cnu.mdi.mapping.container;
 
 import java.awt.Point;
-import java.awt.Window;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
@@ -12,13 +11,9 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.ImageIcon;
-import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.BaseToolHandler;
-import edu.cnu.mdi.hover.HoverEvent;
-import edu.cnu.mdi.hover.HoverInfoWindow;
-import edu.cnu.mdi.hover.HoverListener;
 import edu.cnu.mdi.hover.HoverManager;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.mapping.MapView2D;
@@ -38,11 +33,8 @@ import edu.cnu.mdi.util.UnicodeUtils;
  * of military symbols.
  */
 @SuppressWarnings("serial")
-public class MapContainer extends BaseContainer implements HoverListener {
+public class MapContainer extends BaseContainer {
 
-	/** Lazily-created popup window used for hover country names. */
-	private HoverInfoWindow hoverWindow;
-	
 	// Reusable point objects to avoid unnecessary allocations during coordinate conversions.
 	Point2D.Double latLonPoint = new Point2D.Double();
 
@@ -194,7 +186,8 @@ public class MapContainer extends BaseContainer implements HoverListener {
 	 * Converts a screen-space point to geographic lon/lat in radians.
 	 *
 	 * @param pp screen-space point
-	 * @param ll output geographic point
+	 * @param ll A geographic point is represented as a {@link Point2D.Double} where
+     * {@code x = λ} (longitude) and {@code y = φ} (latitude).
 	 */
 	public void localToLatLon(Point pp, Point2D.Double ll) {
 		Point2D.Double wp = new Point2D.Double();
@@ -206,7 +199,8 @@ public class MapContainer extends BaseContainer implements HoverListener {
 	 * Converts geographic lon/lat in radians to screen-space coordinates.
 	 *
 	 * @param pp output screen-space point
-	 * @param ll input geographic point
+	 * @param ll A geographic point is represented as a {@link Point2D.Double} where
+     * {@code x = λ} (longitude) and {@code y = φ} (latitude).
 	 */
 	public void latLonToLocal(Point pp, Point2D.Double ll) {
 		Point2D.Double wp = new Point2D.Double();
@@ -217,13 +211,14 @@ public class MapContainer extends BaseContainer implements HoverListener {
 	/**
 	 * Converts projection world coordinates to geographic lon/lat.
 	 *
-	 * @param ll output geographic point
+	 * @param ll A geographic point is represented as a {@link Point2D.Double} where
+     * {@code x = λ} (longitude) and {@code y = φ} (latitude).
 	 * @param wp input world point
 	 */
 	public void worldToLatLon(Point2D.Double ll, Point2D.Double wp) {
 		getMapView2D().getProjection().latLonFromXY(ll, wp);
 	}
-	
+
 	/**
 	 * Update the toolbar status text with the current mouse location.
 	 *
@@ -238,7 +233,7 @@ public class MapContainer extends BaseContainer implements HoverListener {
 					(latLonPoint.y >= 0) ? "N" : "S", Math.abs(Math.toDegrees(latLonPoint.x)), UnicodeUtils.DEGREE,
 					(latLonPoint.x >= 0) ? "E" : "W");
 			_toolBar.updateStatusText(latLon);
-		}	
+		}
 	}
 
 
@@ -248,43 +243,6 @@ public class MapContainer extends BaseContainer implements HoverListener {
 
 		if (_feedbackControl != null) {
 			_feedbackControl.updateFeedback(mouseEvent, wp, dragging);
-		}
-	}
-
-	@Override
-	public void hoverUp(HoverEvent he) {
-		Point p = he.getLocation();
-		String countryName = getMapView2D().getCountryAtPoint(p, this);
-		if (countryName == null) {
-			return;
-		}
-
-		HoverInfoWindow win = getHoverWindow();
-		if (win == null) {
-			return;
-		}
-
-		SwingUtilities.convertPointToScreen(p, he.getSource());
-		win.showMessage(countryName, p);
-	}
-
-	@Override
-	public void hoverDown(HoverEvent he) {
-		if (hoverWindow != null) {
-			hoverWindow.hideMessage();
-		}
-	}
-
-	/**
-	 * Releases hover resources held by this container.
-	 */
-	public void prepareForExit() {
-		HoverManager.getInstance().unregisterComponent(getComponent());
-
-		if (hoverWindow != null) {
-			hoverWindow.hideMessage();
-			hoverWindow.dispose();
-			hoverWindow = null;
 		}
 	}
 
@@ -302,19 +260,4 @@ public class MapContainer extends BaseContainer implements HoverListener {
 		return (MapView2D) getView();
 	}
 
-	/**
-	 * Lazily creates the hover popup window.
-	 *
-	 * @return the hover popup, or {@code null} if the component is not yet realized
-	 */
-	private HoverInfoWindow getHoverWindow() {
-		if (hoverWindow == null) {
-			Window owner = SwingUtilities.getWindowAncestor(getComponent());
-			if (owner == null) {
-				return null;
-			}
-			hoverWindow = new HoverInfoWindow(owner);
-		}
-		return hoverWindow;
-	}
 }

@@ -2,6 +2,7 @@ package edu.cnu.mdi.mapping;
 
 import java.io.IOException;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -20,8 +21,12 @@ import javax.swing.JPanel;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.feedback.FeedbackPane;
+import edu.cnu.mdi.graphics.SymbolDraw;
 import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
+import edu.cnu.mdi.graphics.style.SymbolType;
+import edu.cnu.mdi.hover.HoverEvent;
+import edu.cnu.mdi.hover.HoverInfoWindow;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.mapping.container.MapContainer;
 import edu.cnu.mdi.mapping.loader.GeoJsonCityLoader;
@@ -225,7 +230,7 @@ public class MapView2D extends BaseView {
 	    setProjection(MapConstants.DEFAULT_PROJECTION);
 
 	    initSidePanel();
-	    setAfterDraw();
+	    setBeforeDraw();
 	    initShapefileMenu();
 	}
 	
@@ -553,6 +558,15 @@ public class MapView2D extends BaseView {
 			refresh();
 		}
 	}
+	
+	public void drawSymbol(Graphics2D g, double lat, double lon, SymbolType type, int size,
+			Color lineColor, Color fillColor) {
+		MapContainer container = (MapContainer) getIContainer();
+		Point pp = new Point();
+		Point2D.Double ll = new Point2D.Double(lon, lat);
+		container.latLonToLocal(pp, ll);
+		SymbolDraw.drawSymbol(g, pp.x, pp.y, type, size, lineColor, fillColor);
+	}
 
 	/**
 	 * Returns an unmodifiable view of the current extra-layer list.
@@ -676,17 +690,7 @@ public class MapView2D extends BaseView {
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Releases hover and popup resources held by the {@link MapContainer} when the
-	 * view is closing.
-	 *
-	 * <p>
-	 * Must be called from the owning window's close handler to prevent orphaned
-	 * {@link edu.cnu.mdi.hover.HoverManager} registrations and leaked
-	 * {@link edu.cnu.mdi.hover.HoverInfoWindow} instances.
-	 * </p>
-	 */
-	/**
-	 * Releases hover and popup resources held by the {@link MapContainer} when the
+	 * Releases resources held by the {@link MapContainer} when the
 	 * view is closing.
 	 */
 	public void prepareForExit() {
@@ -762,7 +766,7 @@ public class MapView2D extends BaseView {
 	 * NullPointerExceptions if data has not been set before the first paint.
 	 * </p>
 	 */
-	private void setAfterDraw() {
+	private void setBeforeDraw() {
 		IDrawable afterDraw = new DrawableAdapter() {
 			@Override
 			public void draw(Graphics2D g, IContainer container) {
@@ -799,7 +803,7 @@ public class MapView2D extends BaseView {
 			}
 		};
 
-		getIContainer().setAfterDraw(afterDraw);
+		setAfterDraw(afterDraw);
 	}
 	
 	/**
@@ -987,6 +991,32 @@ public class MapView2D extends BaseView {
 	    customSidePanelHost.add(component);
 	    customSidePanelHost.revalidate();
 	    customSidePanelHost.repaint();
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * When the user hovers over the map, this method displays a small window with the
+	 * name and ISO code of the country under the cursor, if any. The tooltip is
+	 * shown in the {@link HoverInfoWindow} provided by the {@link MapContainer}.
+	 * </p>
+	 */
+	@Override
+	public void hoverUpdate(HoverEvent he) {
+
+		Point pp = he.getLocation();
+		HoverInfoWindow win = container.getHoverWindow();
+	
+		if ((win == null) || (pp == null)) {
+			return;
+		}
+		String countryName = getCountryAtPoint(pp, container);
+		if (countryName == null) {
+			return;
+		}
+		
+		win.showMessage(he, countryName);
 	}
 
 	/**
