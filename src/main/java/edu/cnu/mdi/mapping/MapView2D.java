@@ -559,6 +559,24 @@ public class MapView2D extends BaseView {
 		}
 	}
 	
+	/**
+	 * Draws a map symbol at the given latitude and longitude using the active
+	 * projection to convert to screen coordinates.
+	 *
+	 * <p>
+	 * Used by {@link MapControlPanel} to draw the projection center marker. Can also
+	 * be used by application code to draw symbols on top of the map without
+	 * managing coordinate transforms.
+	 * </p>
+	 *
+	 * @param g         graphics context to draw on; must not be {@code null}
+	 * @param lat       latitude in degrees; must be between -90 and 90
+	 * @param lon       longitude in degrees; must be between -180 and 180
+	 * @param type      symbol type; must not be {@code null}
+	 * @param size      symbol size in pixels; must be positive
+	 * @param lineColor color for symbol outlines and lines; must not be {@code null}
+	 * @param fillColor color for symbol fills; must not be {@code null}
+	 */
 	public void drawSymbol(Graphics2D g, double lat, double lon, SymbolType type, int size,
 			Color lineColor, Color fillColor) {
 		MapContainer container = (MapContainer) getIContainer();

@@ -1207,6 +1207,10 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 		if (hoverWindow != null) {
 			hoverWindow.hideMessage();
 		}
+		if (_view != null) {
+			_view.hoverClosed(he);
+		}
+
 	}
 
 }

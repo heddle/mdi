@@ -1592,6 +1592,10 @@ public class BaseView extends JInternalFrame
 		// no-op by default; subclasses can override to respond to hover events.
 	}
 
+	public void hoverClosed(HoverEvent he) {
+		// no-op by default; subclasses can override to respond to hover close events.
+	}
+	
     // -----------------------------------------------------------------------
     // ViewKeyBindings — keyboard shortcuts
     // -----------------------------------------------------------------------
