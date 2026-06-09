@@ -457,24 +457,24 @@ public class BaseToolHandler implements IToolHandler {
 	 */
 	private void selectItemsFromClick(AItem item, MouseEvent e) {
 
-		// Only left-click participates in selection changes.
-		// Clicking a locked or already-selected item: do nothing.
-		if (!SwingUtilities.isLeftMouseButton(e) || item.isLocked() || item.isSelected()) {
-			return;
-		}
+	    // Only left-click participates in selection changes.
+	    // Clicking a locked or already-selected item: do nothing.
+	    if (!SwingUtilities.isLeftMouseButton(e) || item.isLocked() || item.isSelected()) {
+	        return;
+	    }
 
-		// If Ctrl not held, deselect all first.
-		if (!e.isControlDown()) {
-			container.selectAllItems(false);
-		}
+	    // Plain click replaces the selection.
+	    // Ctrl-click or Shift-click adds to the existing selection.
+	    if (!e.isControlDown() && !e.isShiftDown()) {
+	        container.selectAllItems(false);
+	    }
 
-		// Select the clicked item.
-		item.getLayer().selectItem(item, true);
+	    // Select the clicked item.
+	    item.getLayer().selectItem(item, true);
 
-		container.setDirty(true);
-		container.refresh();
+	    container.setDirty(true);
+	    container.refresh();
 	}
-
 	@Override
 	public boolean doNotDrag(GestureContext gc) {
 		return false;
