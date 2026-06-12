@@ -196,6 +196,10 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
     public static List<CountryFeature> loadFromResourceStatic(String resourcePath)
             throws IOException {
         Objects.requireNonNull(resourcePath, "resourcePath");
+        
+        //just to be safe, fix any double separators in the resource path (e.g. "/data//countries.geojson")
+        resourcePath = resourcePath.replaceAll("/{2,}", "/");
+        
         InputStream in = GeoJsonCountryLoader.class.getResourceAsStream(resourcePath);
         if (in == null) {
             throw new IOException("Resource not found: " + resourcePath);

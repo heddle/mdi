@@ -1,4 +1,4 @@
-package edu.cnu.mdi.view.demo;
+package edu.cnu.mdi.view.demo.layout;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -19,7 +19,6 @@ public class GridDrawer extends DrawableAdapter {
 	 * Create a grid drawer that draws a grid of the given size and color on the
 	 * given container.
 	 *
-	 * @param container the container on which to draw the grid
 	 * @param gridSize  the size of the grid cells in pixels
 	 * @param gridColor the color of the grid lines
 	 */
