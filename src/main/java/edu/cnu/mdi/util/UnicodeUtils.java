@@ -1,6 +1,29 @@
 package edu.cnu.mdi.util;
 
-public class UnicodeUtils {
+/**
+ * Utility constants and helpers for rendering mathematical and Greek text using
+ * Unicode code points instead of a custom font or markup.
+ * <p>
+ * The class exposes three things:
+ * <ul>
+ *   <li>A large set of named {@code String} constants for individual Unicode
+ *       characters (Greek letters, sub/superscripts, operators, arrows, ...).</li>
+ *   <li>{@link #specialCharReplace(String)}, which rewrites a small set of
+ *       LaTeX-like escapes (e.g. {@code \alpha}, {@code \leq}) into the matching
+ *       Unicode characters.</li>
+ *   <li>{@link #getSuperscript(int, boolean)}, which renders an integer using
+ *       superscript digit glyphs.</li>
+ * </ul>
+ * <p>
+ * All members are {@code static}; the class is not meant to be instantiated.
+ *
+ * <h2>Implementation notes</h2>
+ * The replacement set and the superscript digits are kept in small lookup tables
+ * ({@link #SPECIAL_CHAR_REPLACEMENTS} and {@link #SUPERSCRIPT_DIGITS}) rather than
+ * being hard-coded into the method bodies. The public constants and method
+ * signatures are unchanged, so this is a drop-in replacement.
+ */
+public final class UnicodeUtils {
 
 	// subscripts and superscripts
 	public static final String SUB0 = "₀";
@@ -44,7 +67,7 @@ public class UnicodeUtils {
 	public static final String SUPERMINUS = "⁻";
 	public static final String SUBMINUS = "₋";
 	public static final String DEGREE = "°";
-	public static final String TIMES = "✕";
+	public static final String TIMES = "×";
 	public static final String PLUSMINUS = "±";
 	public static final String APPROX = "≈";
 	public static final String BULLET = "∙";
@@ -56,7 +79,7 @@ public class UnicodeUtils {
 	public static final String GG = "≫"; // much greater than
 	public static final String PROPTO = "∝";
 	public static final String EQUIV = "≡";
-	public static final String SIM = "∶";
+	public static final String SIM = "∼";
 	public static final String SIMEQ = "≃";
 	public static final String NEQ = "≠";
 	public static final String PERP = "⊥";
@@ -133,170 +156,137 @@ public class UnicodeUtils {
 	public static final String SMALL_OMEGA_WITH_TONOS = "ώ";
 
 	/**
-	 * Replace the Latex-like special characters with their unicode equivalents.
+	 * Ordered {@code {escape, replacement}} table used by
+	 * {@link #specialCharReplace(String)}.
+	 * <p>
+	 * Order matters: when one escape is a prefix of another (for example
+	 * {@code \sim} is a prefix of {@code \simeq}), the longer escape must appear
+	 * first, otherwise the shorter one consumes part of it. The original code
+	 * listed {@code \sim} before {@code \simeq}, which meant {@code \simeq} could
+	 * never match; that ordering is corrected here.
+	 */
+	private static final String[][] SPECIAL_CHAR_REPLACEMENTS = {
+		// Greek letters (capital then small)
+		{ "\\Alpha", CAPITAL_ALPHA }, { "\\alpha", SMALL_ALPHA },
+		{ "\\Beta", CAPITAL_BETA }, { "\\beta", SMALL_BETA },
+		{ "\\Gamma", CAPITAL_GAMMA }, { "\\gamma", SMALL_GAMMA },
+		{ "\\Delta", CAPITAL_DELTA }, { "\\delta", SMALL_DELTA },
+		{ "\\Epsilon", CAPITAL_EPSILON }, { "\\epsilon", SMALL_EPSILON },
+		{ "\\Zeta", CAPITAL_ZETA }, { "\\zeta", SMALL_ZETA },
+		{ "\\Eta", CAPITAL_ETA }, { "\\eta", SMALL_ETA },
+		{ "\\Theta", CAPITAL_THETA }, { "\\theta", SMALL_THETA },
+		{ "\\Iota", CAPITAL_IOTA }, { "\\iota", SMALL_IOTA },
+		{ "\\Kappa", CAPITAL_KAPPA }, { "\\kappa", SMALL_KAPPA },
+		{ "\\Lambda", CAPITAL_LAMBDA }, { "\\lambda", SMALL_LAMBDA },
+		{ "\\Mu", CAPITAL_MU }, { "\\mu", SMALL_MU },
+		{ "\\Nu", CAPITAL_NU }, { "\\nu", SMALL_NU },
+		{ "\\Xi", CAPITAL_XI }, { "\\xi", SMALL_XI },
+		{ "\\Omicron", CAPITAL_OMICRON }, { "\\omicron", SMALL_OMICRON },
+		{ "\\Pi", CAPITAL_PI }, { "\\pi", SMALL_PI },
+		{ "\\Rho", CAPITAL_RHO }, { "\\rho", SMALL_RHO },
+		{ "\\Sigma", CAPITAL_SIGMA }, { "\\sigma", SMALL_SIGMA },
+		{ "\\Tau", CAPITAL_TAU }, { "\\tau", SMALL_TAU },
+		{ "\\Upsilon", CAPITAL_UPSILON }, { "\\upsilon", SMALL_UPSILON },
+		{ "\\Phi", CAPITAL_PHI }, { "\\phi", SMALL_PHI },
+		{ "\\Chi", CAPITAL_CHI }, { "\\chi", SMALL_CHI },
+		{ "\\Psi", CAPITAL_PSI }, { "\\psi", SMALL_PSI },
+		{ "\\Omega", CAPITAL_OMEGA }, { "\\omega", SMALL_OMEGA },
+
+		// math symbols
+		{ "\\times", TIMES },
+		{ "\\degree", DEGREE },
+		{ "\\pm", PLUSMINUS },
+		{ "\\approx", APPROX },
+		{ "\\bullet", BULLET },
+		{ "\\leq", LEQ },
+		{ "\\geq", GEQ },
+		{ "\\ll", LL },
+		{ "\\gg", GG },
+		{ "\\propto", PROPTO },
+		{ "\\equiv", EQUIV },
+		{ "\\simeq", SIMEQ }, // must precede "\\sim" (prefix conflict)
+		{ "\\sim", SIM },
+		{ "\\neq", NEQ },
+		{ "\\perp", PERP },
+		{ "\\parallel", PARALLEL },
+		{ "\\infinity", INFINITY },
+		{ "\\larrow", LARROW },
+		{ "\\uarrow", UARROW },
+		{ "\\rarrow", RARROW },
+		{ "\\darrow", DARROW },
+		{ "\\lrarrow", LRARROW },
+		{ "\\udarrow", UDARROW },
+		{ "\\dagger", DAGGER },
+	};
+
+	/** Superscript glyphs indexed by digit value, i.e. {@code SUPERSCRIPT_DIGITS[7]} is {@code ⁷}. */
+	private static final String[] SUPERSCRIPT_DIGITS = {
+		SUPER0, SUPER1, SUPER2, SUPER3, SUPER4,
+		SUPER5, SUPER6, SUPER7, SUPER8, SUPER9
+	};
+
+	/** Not instantiable. */
+	private UnicodeUtils() {
+	}
+
+	/**
+	 * Replace the LaTeX-like escape sequences in the given string with their
+	 * Unicode equivalents.
+	 * <p>
+	 * Recognized escapes include the Greek letters ({@code \alpha}, {@code \Omega},
+	 * ...) and a selection of math operators and arrows ({@code \leq},
+	 * {@code \approx}, {@code \rarrow}, ...). See
+	 * {@link #SPECIAL_CHAR_REPLACEMENTS} for the full set. Unrecognized text,
+	 * including unknown backslash sequences, is left untouched.
+	 * <p>
+	 * Replacement is purely textual and applied in table order, so an escape that
+	 * forms the prefix of a longer one is handled before the shorter one.
 	 *
-	 * @param s the input string
-	 * @return the output, where special character sequences are replaced by unicode
-	 *         characters.
+	 * @param s the input string; may be {@code null}
+	 * @return {@code null} if {@code s} is {@code null}; otherwise {@code s} with
+	 *         every recognized escape replaced by its Unicode character
 	 */
 	public static String specialCharReplace(String s) {
 		if (s == null) {
 			return null;
 		}
 
-		if (s.indexOf("\\") < 0) {
+		// Fast path: nothing to do if there is no backslash to begin an escape.
+		if (s.indexOf('\\') < 0) {
 			return s;
 		}
 
-		s = s.replace("\\Alpha", CAPITAL_ALPHA);
-		s = s.replace("\\alpha", SMALL_ALPHA);
-
-		s = s.replace("\\Beta", CAPITAL_BETA);
-		s = s.replace("\\beta", SMALL_BETA);
-
-		s = s.replace("\\Gamma", CAPITAL_GAMMA);
-		s = s.replace("\\gamma", SMALL_GAMMA);
-
-		s = s.replace("\\Delta", CAPITAL_DELTA);
-		s = s.replace("\\delta", SMALL_DELTA);
-
-		s = s.replace("\\Epsilon", CAPITAL_EPSILON);
-		s = s.replace("\\epsilon", SMALL_EPSILON);
-
-		s = s.replace("\\Zeta", CAPITAL_ZETA);
-		s = s.replace("\\zeta", SMALL_ZETA);
-
-		s = s.replace("\\Eta", CAPITAL_ETA);
-		s = s.replace("\\eta", SMALL_ETA);
-
-		s = s.replace("\\Theta", CAPITAL_THETA);
-		s = s.replace("\\theta", SMALL_THETA);
-
-		s = s.replace("\\Iota", CAPITAL_IOTA);
-		s = s.replace("\\iota", SMALL_IOTA);
-
-		s = s.replace("\\Kappa", CAPITAL_KAPPA);
-		s = s.replace("\\kappa", SMALL_KAPPA);
-
-		s = s.replace("\\Lambda", CAPITAL_LAMBDA);
-		s = s.replace("\\lambda", SMALL_LAMBDA);
-
-		s = s.replace("\\Mu", CAPITAL_MU);
-		s = s.replace("\\mu", SMALL_MU);
-
-		s = s.replace("\\Nu", CAPITAL_NU);
-		s = s.replace("\\nu", SMALL_NU);
-
-		s = s.replace("\\Xi", CAPITAL_XI);
-		s = s.replace("\\xi", SMALL_XI);
-
-		s = s.replace("\\Omicron", CAPITAL_OMICRON);
-		s = s.replace("\\omicron", SMALL_OMICRON);
-
-		s = s.replace("\\Pi", CAPITAL_PI);
-		s = s.replace("\\pi", SMALL_PI);
-
-		s = s.replace("\\Rho", CAPITAL_RHO);
-		s = s.replace("\\rho", SMALL_RHO);
-
-		s = s.replace("\\Sigma", CAPITAL_SIGMA);
-		s = s.replace("\\sigma", SMALL_SIGMA);
-
-		s = s.replace("\\Tau", CAPITAL_TAU);
-		s = s.replace("\\tau", SMALL_TAU);
-
-		s = s.replace("\\Upsilon", CAPITAL_UPSILON);
-		s = s.replace("\\upsilon", SMALL_UPSILON);
-
-		s = s.replace("\\Phi", CAPITAL_PHI);
-		s = s.replace("\\phi", SMALL_PHI);
-
-		s = s.replace("\\Chi", CAPITAL_CHI);
-		s = s.replace("\\chi", SMALL_CHI);
-
-		s = s.replace("\\Psi", CAPITAL_PSI);
-		s = s.replace("\\psi", SMALL_PSI);
-
-		s = s.replace("\\Omega", CAPITAL_OMEGA);
-		s = s.replace("\\omega", SMALL_OMEGA);
-
-		// some math symbols
-		s = s.replace("\\times", TIMES);
-		s = s.replace("\\degree", DEGREE);
-		s = s.replace("\\pm", PLUSMINUS);
-		s = s.replace("\\approx", APPROX);
-		s = s.replace("\\bullet", BULLET);
-
-		s = s.replace("\\leq", LEQ);
-		s = s.replace("\\geq", GEQ);
-		s = s.replace("\\ll", LL);
-		s = s.replace("\\gg", GG);
-		s = s.replace("\\propto", PROPTO);
-		s = s.replace("\\equiv", EQUIV);
-		s = s.replace("\\sim", SIM);
-		s = s.replace("\\simeq", SIMEQ);
-		s = s.replace("\\neq", NEQ);
-		s = s.replace("\\perp", PERP);
-		s = s.replace("\\parallel", PARALLEL);
-		s = s.replace("\\infinity", INFINITY);
-
-		s = s.replace("\\larrow", LARROW);
-		s = s.replace("\\uarrow", UARROW);
-		s = s.replace("\\rarrow", RARROW);
-		s = s.replace("\\darrow", DARROW);
-		s = s.replace("\\lrarrow", LRARROW);
-		s = s.replace("\\udarrow", UDARROW);
-
-		s = s.replace("\\dagger", DAGGER);
+		for (String[] replacement : SPECIAL_CHAR_REPLACEMENTS) {
+			s = s.replace(replacement[0], replacement[1]);
+		}
 		return s;
 	}
 
 	/**
-	 * Get the superscript string for the given integer.
+	 * Render an integer's digits as Unicode superscript characters.
+	 * <p>
+	 * The sign is supplied separately via {@code isNegative} rather than being
+	 * read from {@code n}; callers normally pass the magnitude in {@code n}. Only
+	 * the decimal digits {@code 0}-{@code 9} are converted, so any non-digit
+	 * character in the textual form of {@code n} (such as a leading minus from a
+	 * negative value) is ignored.
 	 *
-	 * @param n the integer
-	 * @return the superscript string
+	 * @param n          the number whose digits are rendered as superscripts
+	 * @param isNegative if {@code true}, a superscript minus sign is prepended
+	 * @return the superscript representation, e.g. {@code getSuperscript(12, true)}
+	 *         returns {@code "⁻¹²"}
 	 */
 	public static String getSuperscript(int n, boolean isNegative) {
 		StringBuilder sb = new StringBuilder();
+		if (isNegative) {
+			sb.append(SUPERMINUS);
+		}
 		String numStr = Integer.toString(n);
 		for (int i = 0; i < numStr.length(); i++) {
 			char c = numStr.charAt(i);
-			switch (c) {
-			case '0':
-				sb.append(SUPER0);
-				break;
-			case '1':
-				sb.append(SUPER1);
-				break;
-			case '2':
-				sb.append(SUPER2);
-				break;
-			case '3':
-				sb.append(SUPER3);
-				break;
-			case '4':
-				sb.append(SUPER4);
-				break;
-			case '5':
-				sb.append(SUPER5);
-				break;
-			case '6':
-				sb.append(SUPER6);
-				break;
-			case '7':
-				sb.append(SUPER7);
-				break;
-			case '8':
-				sb.append(SUPER8);
-				break;
-			case '9':
-				sb.append(SUPER9);
-				break;
+			if (c >= '0' && c <= '9') {
+				sb.append(SUPERSCRIPT_DIGITS[c - '0']);
 			}
-		}
-		if (isNegative) {
-			sb.insert(0, SUPERMINUS);
 		}
 		return sb.toString();
 	}
