@@ -194,12 +194,6 @@ public class PathBasedItem extends AItem {
 			AffineTransform at = AffineTransform.getTranslateInstance(dx, dy);
 			_path.transform(at);
 
-			if (_secondaryPoints != null) {
-				Path2D.Double path2 = (Path2D.Double) _modification.getSecondaryPath().clone();
-				path2.transform(at);
-				WorldGraphicsUtils.pathToWorldPolygon(path2, _secondaryPoints);
-			}
-
 			// fix focus
 			Point2D.Double sf = _modification.getStartFocus();
 
@@ -229,12 +223,6 @@ public class PathBasedItem extends AItem {
 			// minus is for cw v. ccw
 			at = AffineTransform.getRotateInstance(Math.toRadians(-angle), anchor.x, anchor.y);
 			_path.transform(at);
-
-			if (_secondaryPoints != null) {
-				Path2D.Double path2 = (Path2D.Double) _modification.getSecondaryPath().clone();
-				path2.transform(at);
-				WorldGraphicsUtils.pathToWorldPolygon(path2, _secondaryPoints);
-			}
 
 			setAzimuth(_modification.getStartAzimuth() + angle);
 			break;
@@ -274,12 +262,6 @@ public class PathBasedItem extends AItem {
 		AffineTransform at = AffineTransform.getRotateInstance(Math.toRadians(-angle), anchor.x, anchor.y);
 		_path.transform(at);
 
-		if (_secondaryPoints != null) {
-			Path2D.Double path2 = (Path2D.Double) _modification.getSecondaryPath().clone();
-			path2.transform(at);
-			WorldGraphicsUtils.pathToWorldPolygon(path2, _secondaryPoints);
-		}
-
 		setAzimuth(azim + angle);
 		geometryChanged();
 	}
@@ -296,12 +278,6 @@ public class PathBasedItem extends AItem {
 		at.concatenate(AffineTransform.getScaleInstance(scale, scale));
 		at.concatenate(AffineTransform.getTranslateInstance(-_focus.x, -_focus.y));
 		_path.transform(at);
-
-		if (_secondaryPoints != null) {
-			Path2D.Double path2 = (Path2D.Double) _modification.getSecondaryPath().clone();
-			path2.transform(at);
-			WorldGraphicsUtils.pathToWorldPolygon(path2, _secondaryPoints);
-		}
 
 	}
 
@@ -392,13 +368,6 @@ public class PathBasedItem extends AItem {
 		// Translate the primary path in world space.
 		AffineTransform at = AffineTransform.getTranslateInstance(dx, dy);
 		_path.transform(at);
-		// Keep any secondary points in sync (mirrors your DRAG logic in modify()).
-		if (_secondaryPoints != null) {
-			Path2D.Double path2 = (Path2D.Double) _path.clone();
-			// _path is already translated; path2 now represents the updated geometry.
-			// Convert to polygon storage used by selection handles.
-			WorldGraphicsUtils.pathToWorldPolygon(path2, _secondaryPoints);
-		}
 		// Recompute focus, invalidate caches, etc.
 		geometryChanged();
 	}

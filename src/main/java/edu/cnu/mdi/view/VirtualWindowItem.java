@@ -84,12 +84,6 @@ public class VirtualWindowItem extends RectangleItem {
 			AffineTransform at = AffineTransform.getTranslateInstance(dx, dy);
 			_path.transform(at);
 
-			if (_secondaryPoints != null) {
-				Path2D.Double path2 = (Path2D.Double) _modification.getSecondaryPath().clone();
-				path2.transform(at);
-				WorldGraphicsUtils.pathToWorldPolygon(path2, _secondaryPoints);
-			}
-
 			// fix focus
 			Point2D.Double sf = _modification.getStartFocus();
 

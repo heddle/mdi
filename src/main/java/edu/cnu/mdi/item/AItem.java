@@ -141,9 +141,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /** World-coordinate line for line items; may be {@code null}. */
     protected Line2D.Double _line;
 
-    /** Optional secondary world-coordinate control points; may be {@code null}. */
-    protected Point2D.Double[] _secondaryPoints;
-
     /**
      * World-coordinate focus — typically the centroid or anchor.
      * Drawn as a small square when the item is selected.
@@ -691,9 +688,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
     /** @return the world-coordinate line, or {@code null} */
     public Line2D.Double getLine() { return _line; }
 
-    /** @return the secondary world-coordinate points, or {@code null} */
-    public Point2D.Double[] getSecondaryPoints() { return _secondaryPoints; }
-
     /**
      * Return the world-coordinate focus of this item.
      *
@@ -1233,7 +1227,6 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
         _lastDrawnPolygon = null;
         _layer            = null;
         _path             = null;
-        _secondaryPoints  = null;
         _style            = null;
     }
 }
