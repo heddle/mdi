@@ -245,7 +245,7 @@ public final class ToolBits {
 	public static final long PLOTTOOLS = POINTER | (ZOOMTOOLS & ~UNDOZOOM) | PICVIEWSTOOLS;
 	
 	/** A set with all bits on, for use in testing. */
-	public static final long EVERYTHING = 01777777777777777777777L;
+	public static final long EVERYTHING = 0177777777777777777777L;
 
 	/**
 	 * Get the icon path relative to the MDI resource root for a predefined button.
