@@ -10,10 +10,6 @@ import edu.cnu.mdi.graphics.GraphicsUtils;
 /**
  * Rubberband "XONLY" policy: a vertical band spanning the full component height,
  * with x determined by the drag.
- *
- * This mirrors the old Rubberband behavior:
- * - anchor y is set to component top on start
- * - current y is forced to component bottom during drag
  */
 public class RubberXOnly extends ADragRubberband {
 
@@ -22,14 +18,26 @@ public class RubberXOnly extends ADragRubberband {
 	}
 
 	@Override
+	protected void startRubberbanding(Point anchorPt) {
+		super.startRubberbanding(anchorPt);
+
+		Rectangle b = getLocalBounds();
+
+		// Preserve the clicked x anchor, but force the y anchor to the top.
+		startPt.y = b.y;
+
+		// Also initialize current y consistently.
+		currentPt.y = b.y + b.height - 1;
+	}
+
+	@Override
 	protected void modifyCurrentPoint(Point cp) {
-		super.modifyCurrentPoint(cp); // clamp x/y first
+		super.modifyCurrentPoint(cp);
 
-		Rectangle b = component.getBounds();
-		// Force the band to full height.
+		Rectangle b = getLocalBounds();
+
+		// Force the band to the bottom.
 		cp.y = b.y + b.height - 1;
-
-		// no need to re-clamp x; it was clamped above
 	}
 
 	@Override
@@ -41,10 +49,20 @@ public class RubberXOnly extends ADragRubberband {
 
 	@Override
 	public Rectangle getRubberbandBounds() {
+		Rectangle b = getLocalBounds();
+
+		int x = Math.min(currentPt.x, startPt.x);
+		int w = Math.abs(currentPt.x - startPt.x);
+
 		return new Rectangle(
-				(currentPt.x < startPt.x) ? currentPt.x : startPt.x,
-				(currentPt.y < startPt.y) ? currentPt.y : startPt.y,
-				Math.abs(currentPt.x - startPt.x),
-				Math.abs(currentPt.y - startPt.y));
+				x,
+				b.y,
+				w,
+				b.height - 1);
+	}
+
+	// Get the bounds of the component in local coordinates.
+	private Rectangle getLocalBounds() {
+		return new Rectangle(0, 0, component.getWidth(), component.getHeight());
 	}
 }
