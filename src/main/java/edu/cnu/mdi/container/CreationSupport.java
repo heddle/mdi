@@ -190,7 +190,6 @@ public class CreationSupport {
 			}
 		};
 		defaultConfigureItem(item);
-		item.setResizable(false); // Text items are not resizable by default.
 		return item;
 	}
 

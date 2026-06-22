@@ -639,6 +639,7 @@ public class WorldGraphicsUtils {
         Point p0 = new Point();
         Point pW = new Point();
         Point pH = new Point();
+
         container.worldToLocal(p0, w0);
         container.worldToLocal(pW, wW);
         container.worldToLocal(pH, wH);
@@ -654,8 +655,13 @@ public class WorldGraphicsUtils {
             double ox0 = x0, oy0 = y0;
             double ox1 = x1, oy1 = y1;
             double ox2 = x2, oy2 = y2;
-            x0 = ox2; y0 = oy2;
-            x2 = ox0; y2 = oy0;
+
+            x0 = ox2;
+            y0 = oy2;
+
+            x2 = ox0;
+            y2 = oy0;
+
             x1 = ox1 + (ox2 - ox0);
             y1 = oy1 + (oy2 - oy0);
         }
@@ -668,6 +674,13 @@ public class WorldGraphicsUtils {
         // create() returns Graphics, so the cast is unavoidable here.
         Graphics2D g2d = (Graphics2D) g2.create();
         try {
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING,
+                    RenderingHints.VALUE_RENDER_QUALITY);
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+
             g2d.drawImage(image,
                     new AffineTransform(m00, m10, m01, m11, x0, y0), null);
         } finally {
