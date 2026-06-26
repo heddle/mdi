@@ -99,6 +99,32 @@ public class MapContainer extends BaseContainer {
 		setDirty(true);
 		refresh();
 	}
+	
+	public void zoomLatLon(double minLat, double maxLat, double minLon, double maxLon) {
+			
+		prepareToZoom();
+		//convert bounds to world coordinates
+		Point2D.Double ll = new Point2D.Double();
+		getMapView2D().getProjection().latLonToXY(new Point2D.Double
+				(Math.toRadians(minLon), Math.toRadians(minLat)), ll);
+		
+		double txmin = ll.x;
+		double tymin = ll.y;
+		getMapView2D().getProjection().latLonToXY(new Point2D.Double
+				(Math.toRadians(maxLon), Math.toRadians(maxLat)), ll);
+		double txmax = ll.x;
+		double tymax = ll.y;
+		
+		double xmin = Math.min(txmin, txmax);
+		double xmax = Math.max(txmin, txmax);
+		double ymin = Math.min(tymin, tymax);
+		double ymax = Math.max(tymin, tymax);
+		
+		_worldSystem = new Rectangle2D.Double(xmin, ymin, xmax - xmin, ymax - ymin);
+		setDirty(true);
+		refresh();
+	}
+
 
 	@Override
 	public void recenter(Point pp) {
@@ -200,7 +226,7 @@ public class MapContainer extends BaseContainer {
 	 *
 	 * @param pp output screen-space point
 	 * @param ll A geographic point is represented as a {@link Point2D.Double} where
-     * {@code x = λ} (longitude) and {@code y = φ} (latitude).
+     * {@code x = λ} (longitude) and {@code y = φ} (latitude) in radians.
 	 */
 	public void latLonToLocal(Point pp, Point2D.Double ll) {
 		Point2D.Double wp = new Point2D.Double();
@@ -227,15 +253,52 @@ public class MapContainer extends BaseContainer {
 	 */
 	@Override
 	public void updateStatusText(Point pp, Point2D.Double wp) {
-		if (_toolBar != null && _toolBar.hasStatusField()) {
-			worldToLatLon(latLonPoint, wp);
-			String latLon = String.format("%.2f%s %s, %.2f%s %s", Math.abs(Math.toDegrees(latLonPoint.y)), UnicodeUtils.DEGREE,
-					(latLonPoint.y >= 0) ? "N" : "S", Math.abs(Math.toDegrees(latLonPoint.x)), UnicodeUtils.DEGREE,
-					(latLonPoint.x >= 0) ? "E" : "W");
-			_toolBar.updateStatusText(latLon);
-		}
-	}
+	    if ((_toolBar == null) || !_toolBar.hasStatusField()) {
+	        return;
+	    }
 
+	    worldToLatLon(latLonPoint, wp);
+
+	    double latDeg = Math.toDegrees(latLonPoint.y);
+	    double lonDeg = Math.toDegrees(latLonPoint.x);
+
+	    String latLon = String.format("%.2f%s %s, %.2f%s %s",
+	            Math.abs(latDeg), UnicodeUtils.DEGREE, (latDeg >= 0.0) ? "N" : "S",
+	            Math.abs(lonDeg), UnicodeUtils.DEGREE, (lonDeg >= 0.0) ? "E" : "W");
+
+	    double elevation = getMapView2D().getElevation(latDeg, lonDeg);
+	    if (!Double.isNaN(elevation)) {
+	        boolean onLand = getMapView2D().onLand(pp, this);
+	        latLon += "   " + formatElevationStatus(elevation, onLand);
+	    }
+
+	    _toolBar.updateStatusText(latLon);
+	}
+	
+	/**
+	 * Formats the elevation status string for display in the toolbar.
+	 *
+	 * @param elevationMeters the elevation in meters
+	 * @param onLand          {@code true} if the point is on land, {@code false} if over water
+	 * @return a formatted string representing the elevation or depth
+	 */
+	public static String formatElevationStatus(double elevationMeters, boolean onLand) {
+	    long meters = Math.round(elevationMeters);
+
+	    if ((meters < 0) && !onLand) {
+	        return String.format("depth %,d m", Math.abs(meters));
+	    }
+
+	    return "elev " + formatSignedMeters(meters) + " m";
+	}
+	
+	private static String formatSignedMeters(long meters) {
+	    if (meters < 0) {
+	        return "\u2212" + String.format("%,d", Math.abs(meters));
+	    }
+
+	    return String.format("%,d", meters);
+	}
 
 	@Override
 	public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging) {

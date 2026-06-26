@@ -7,7 +7,6 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.awt.geom.Rectangle2D;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -113,6 +112,7 @@ public class MapView2D extends BaseView {
 	// -------------------------------------------------------------------------
 	// Instance state — geographic data
 	// -------------------------------------------------------------------------
+	
 
 	/**
 	 * Country boundary features used by this view's {@link CountryRenderer}.
@@ -172,7 +172,7 @@ public class MapView2D extends BaseView {
 	 * Default side control panel. May be {@code null} if a subclass replaces the
 	 * control panel with a custom component.
 	 */
-	private MapControlPanel controlPanel;
+	protected MapControlPanel controlPanel;
 
 	/**
 	 * The component currently occupying the top control-panel position in the
@@ -230,7 +230,7 @@ public class MapView2D extends BaseView {
 	    setProjection(MapConstants.DEFAULT_PROJECTION);
 
 	    initSidePanel();
-	    setBeforeDraw();
+	    setViewBeforeDraw();
 	    initShapefileMenu();
 	}
 	
@@ -309,6 +309,18 @@ public class MapView2D extends BaseView {
 	 */
 	protected int getSidePanelWidth() {
 	    return DEFAULT_SIDE_PANEL_WIDTH;
+	}
+	
+	
+	/**
+	 * Returns the interpolated elevation in meters at the given latitude and longitude.
+	 * Up to subclasses to implement the actual elevation data source. The default implementation returns Double.NaN.
+	 * @param lat latitude in degrees
+	 * @param lon longitude in degrees
+	 * @return interpolated elevation in meters, or Double.NaN if the ETOPO5 dataset is not loaded
+	 */
+	public double getElevation(double lat, double lon) {
+		return Double.NaN;
 	}
 
 	/**
@@ -635,6 +647,42 @@ public class MapView2D extends BaseView {
 		GeoJsonCountryLoader.CountryFeature hit = countryRenderer.pickCountry(pp, container);
 		return (hit != null) ? String.format("%s (%s)", hit.getAdminName(), hit.getIsoA3()) : null;
 	}
+	
+	/**
+	 * Returns whether the given screen-space point is on land (inside a country
+	 * polygon).
+	 *
+	 * <p>
+	 * Delegates to {@link CountryRenderer#pickCountry} and returns {@code true} if
+	 * a hit is found.
+	 * </p>
+	 *
+	 * @param pp        screen-space point to test; must not be {@code null}
+	 * @param container container providing the coordinate transform
+	 * @return {@code true} if the point is on land, {@code false} otherwise
+	 */
+	public boolean onLand(Point pp, IContainer container) {
+		GeoJsonCountryLoader.CountryFeature hit = countryRenderer.pickCountry(pp, container);
+		return (hit != null);
+	}
+	
+	/**
+	 * Converts a screen-space point to latitude and longitude in degrees.
+	 *
+	 * <p>
+	 * Delegates to {@link MapContainer#localToLatLon} for the actual conversion.
+	 * </p>
+	 *
+	 * @param pp     screen-space point to convert; must not be {@code null}
+	 * @param latLon output parameter to receive the latitude and longitude in
+	 *               degrees; must not be {@code null}
+	 */
+	public void localToLatLonDeg(Point pp, Point2D.Double latLon) {
+		MapContainer container = (MapContainer) getIContainer();
+		container.localToLatLon(pp, latLon);
+		latLon.x = Math.toDegrees(latLon.x);
+		latLon.y = Math.toDegrees(latLon.y);
+	}
 
 	// -------------------------------------------------------------------------
 	// Feedback
@@ -662,13 +710,15 @@ public class MapView2D extends BaseView {
 	 * </ol>
 	 */
 	@Override
-	public void getFeedbackStrings(IContainer container, Point pp, Double wp, List<String> feedbackStrings) {
+	public void getFeedbackStrings(IContainer container, Point pp, 
+			Point2D.Double wp, List<String> feedbackStrings) {
 
 		feedbackStrings.add(String.format("Countries loaded: %d", getCountryCount()));
 		feedbackStrings.add(String.format("Cities loaded: %d", getCityCount()));
 		feedbackStrings.add(String.format("Projection: %s", projection.name()));
 		feedbackStrings.add(String.format("Screen [%d, %d]", pp.x, pp.y));
-		feedbackStrings.add(String.format("World [%6.2f, %6.2f]", wp.x, wp.y));
+		feedbackStrings.add(String.format("World [%.2f, %.2f]", wp.x, wp.y));
+		
 
 		if (projection.isPointOnMap(wp)) {
 			projection.latLonFromXY(latLon, wp);
@@ -678,6 +728,14 @@ public class MapView2D extends BaseView {
 			feedbackStrings.add(String.format("%s %.2f%s", LON_PREFIX, dLon, DEG));
 		    UTMCoordinate utm = GeoUtils.fromDecimalDegrees(dLat, dLon);
 		    feedbackStrings.add("UTM " + utm.toString());
+		    
+		    double elevation = getElevation(dLat, dLon);
+		    if (!Double.isNaN(elevation)) {
+		        boolean onLand = onLand(pp, getIContainer());
+		        String eStr = MapContainer.formatElevationStatus(elevation, onLand);
+		        feedbackStrings.add(eStr);
+		    }
+
 		 
 			if (countryRenderer != null) {
 				GeoJsonCountryLoader.CountryFeature countryHit = countryRenderer.pickCountry(pp, container);
@@ -784,8 +842,8 @@ public class MapView2D extends BaseView {
 	 * NullPointerExceptions if data has not been set before the first paint.
 	 * </p>
 	 */
-	private void setBeforeDraw() {
-		IDrawable afterDraw = new DrawableAdapter() {
+	private void setViewBeforeDraw() {
+		IDrawable beforeDraw = new DrawableAdapter() {
 			@Override
 			public void draw(Graphics2D g, IContainer container) {
 				// 1. Background
@@ -807,7 +865,10 @@ public class MapView2D extends BaseView {
 				if (countryRenderer != null) {
 					countryRenderer.render(g, container);
 				}
-
+				
+				// 5.5 Extension point for subclasses to draw custom content after countries but before extra layers
+				afterCountryDraw(g, container); 
+				
 				// 6. Extra layers: rivers, lakes, and any other shapefile
 				// overlays added via addLayer(), in insertion order.
 				for (ShapeFeatureRenderer layer : extraLayers) {
@@ -821,7 +882,26 @@ public class MapView2D extends BaseView {
 			}
 		};
 
-		setAfterDraw(afterDraw);
+		setBeforeDraw(beforeDraw);
+	}
+	
+	/**
+	 * Extension point for subclasses to draw custom content after countries but
+	 * before extra layers. Called from the after-draw {@link IDrawable} registered
+	 * in {@link #setViewBeforeDraw()}.
+	 *
+	 * <p>
+	 * Subclasses can override this method to draw additional map content (e.g.
+	 * terrain) after the country polygons have been
+	 * drawn but before any extra layers added via {@link #addShapefileLayer} are
+	 * rendered. 
+	 * </p>
+	 *
+	 * @param g         graphics context to draw on; never {@code null}
+	 * @param container container providing coordinate transforms; never {@code null}
+	 */
+	protected void afterCountryDraw(Graphics2D g, IContainer container) {
+		// No-op by default; subclasses can override to draw custom content after countries but before extra layers
 	}
 	
 	/**
@@ -987,6 +1067,16 @@ public class MapView2D extends BaseView {
 
 	    sideTopStack.revalidate();
 	    sideTopStack.repaint();
+	}
+	
+	/**
+	 * Returns the standard map control panel, or {@code null} if a subclass has
+	 * replaced it with a custom component.
+	 *
+	 * @return the map control panel, or {@code null}
+	 */
+	public MapControlPanel getMapControlPanel() {
+	    return controlPanel;
 	}
 
 	/**

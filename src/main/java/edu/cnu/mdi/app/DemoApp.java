@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
-import edu.cnu.mdi.mapping.DemoMap;
+import edu.cnu.mdi.mapping.DemoMapView;
 import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
 import edu.cnu.mdi.sim.ga.triimage.ImageEvolutionDemoView;
@@ -120,7 +120,7 @@ public class DemoApp extends BaseMDIApplication {
 		drawingView = DrawingView.createDrawingView();
 
 		// Map view (also loads demo GeoJSON)
-		mapView = DemoMap.createDemoMapView();
+		mapView = new DemoMapView();
 
 		// Plot view
 		plotView = SplotDemoView.createDemoView();

@@ -282,6 +282,30 @@ public abstract class AToolBar extends JToolBar {
 		Object v = button.getClientProperty(CLIENTPROP_TOOL_ID);
 		return (v instanceof String s && !s.isBlank()) ? s : null;
 	}
+	
+	/**
+	 * Registers an external toggle button with this toolbar's primary toggle group
+	 * without adding the button to the toolbar component hierarchy.
+	 *
+	 * <p>This is useful for palette buttons that should behave like tools and be
+	 * mutually exclusive with toolbar toggles, while remaining visually located
+	 * outside the toolbar.</p>
+	 *
+	 * @param id stable identifier for the external tool
+	 * @param toggleButton external toggle button
+	 * @return the same toggle button
+	 */
+	public JToggleButton registerExternalToggle(String id, JToggleButton toggleButton) {
+	    Objects.requireNonNull(toggleButton, "toggleButton");
+
+	    registerButton(id, toggleButton);
+
+	    toggleGroup.add(toggleButton);
+	    toggleButton.removeItemListener(toggleSelectionListener);
+	    toggleButton.addItemListener(toggleSelectionListener);
+
+	    return toggleButton;
+	}
 
 	/**
 	 * @return an unmodifiable view of the current button registry.
