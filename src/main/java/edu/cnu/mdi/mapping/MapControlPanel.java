@@ -172,7 +172,17 @@ public class MapControlPanel extends JPanel {
         });
         leftAlign(showCityNamesCheckBox);
         checkboxPanel.add(showCityNamesCheckBox);
-        
+
+        // Graticule controls. These reuse the same checkbox panel, font, and
+        // alignment as "Show city names". Both default to selected, matching
+        // the renderer's defaults (adaptive spacing + edge labels on).
+        addCheckbox("Adaptive grid spacing", true,
+                e -> mapView.setGraticuleAdaptive(
+                        ((JCheckBox) e.getSource()).isSelected()));
+        addCheckbox("Grid coordinate labels", true,
+                e -> mapView.setGraticuleLabels(
+                        ((JCheckBox) e.getSource()).isSelected()));
+
         panel.add(checkboxPanel);
         panel.add(Box.createVerticalStrut(6));
     }

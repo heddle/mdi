@@ -112,7 +112,7 @@ public class CityPointRenderer {
     private int labelOffsetY = -2;
 
     /** Font used for city name labels. */
-    private Font labelFont = Fonts.smallFont;
+    private Font labelFont = Fonts.tinyFont;
 
     // -------------------------------------------------------------------------
     // Construction

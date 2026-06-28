@@ -147,6 +147,21 @@ public class MapView2D extends BaseView {
 	/** Graticule renderer backed by the active projection. */
 	private GraticuleRenderer gratRenderer;
 
+	/**
+	 * Persisted graticule "adaptive spacing" preference. Stored on the view
+	 * (not just the renderer) because {@link #setProjection} rebuilds the
+	 * renderer; the new instance is initialized from this value so the user's
+	 * choice survives a projection switch. Defaults to {@code true}.
+	 */
+	private boolean graticuleAdaptive = true;
+
+	/**
+	 * Persisted graticule "edge labels" preference. See
+	 * {@link #graticuleAdaptive} for why this lives on the view. Defaults to
+	 * {@code true}.
+	 */
+	private boolean graticuleLabels = true;
+
 	/** Renderer for country polygons. */
 	private CountryRenderer countryRenderer;
 
@@ -424,6 +439,53 @@ public class MapView2D extends BaseView {
 	 */
 	protected CityPointRenderer getCityRenderer() {
 		return cityRenderer;
+	}
+
+	/**
+	 * Returns the active graticule renderer.
+	 *
+	 * <p>
+	 * Used by {@link MapControlPanel} to toggle adaptive spacing and edge
+	 * labels. The instance is replaced whenever the projection changes (see
+	 * {@link #setProjection}), so callers should re-read it rather than caching
+	 * the reference; the view re-applies the persisted toggle state to each
+	 * newly built renderer, so the user's choices survive a projection switch.
+	 * </p>
+	 *
+	 * @return the graticule renderer; never {@code null} after construction
+	 */
+	protected GraticuleRenderer getGraticuleRenderer() {
+		return gratRenderer;
+	}
+
+	/**
+	 * Enables or disables zoom-adaptive graticule spacing, persisting the
+	 * choice across projection switches and refreshing the view.
+	 *
+	 * @param adaptive {@code true} for adaptive spacing; {@code false} for the
+	 *                 fixed step
+	 */
+	protected void setGraticuleAdaptive(boolean adaptive) {
+		graticuleAdaptive = adaptive;
+		if (gratRenderer != null) {
+			gratRenderer.setAdaptive(adaptive);
+			refresh();
+		}
+	}
+
+	/**
+	 * Enables or disables graticule edge labels, persisting the choice across
+	 * projection switches and refreshing the view.
+	 *
+	 * @param labels {@code true} to draw coordinate labels along the viewport
+	 *               edges
+	 */
+	protected void setGraticuleLabels(boolean labels) {
+		graticuleLabels = labels;
+		if (gratRenderer != null) {
+			gratRenderer.setDrawLabels(labels);
+			refresh();
+		}
 	}
 
 	/**
@@ -856,19 +918,20 @@ public class MapView2D extends BaseView {
 				// 3. Custom map content drawn by subclasses between ocean and graticule layers.
 				drawCustomMapContent(g, container); // Extension point for subclasses to draw custom content between ocean and graticule
 
-				// 4. Graticule and outline
-				if ((gratRenderer != null) && useStandardGraticules()) {
-					gratRenderer.render(g, container);
-				}
 
-				// 5. Country polygons (null-safe: data may not be loaded yet)
+				// 4. Country polygons (null-safe: data may not be loaded yet)
 				if (countryRenderer != null) {
 					countryRenderer.render(g, container);
 				}
 				
-				// 5.5 Extension point for subclasses to draw custom content after countries but before extra layers
+				// 4.5 Extension point for subclasses to draw custom content after countries but before extra layers
 				afterCountryDraw(g, container); 
-				
+
+				// 5. Graticule and outline
+				if ((gratRenderer != null) && useStandardGraticules()) {
+					gratRenderer.render(g, container);
+				}
+
 				// 6. Extra layers: rivers, lakes, and any other shapefile
 				// overlays added via addLayer(), in insertion order.
 				for (ShapeFeatureRenderer layer : extraLayers) {
@@ -947,7 +1010,7 @@ public class MapView2D extends BaseView {
 
 		cityRenderer = new CityPointRenderer(cities, projection);
 		cityRenderer.setPointRadius(1.5);
-		cityRenderer.setMinPopulation(MapConstants.MAX_POP_SLIDER_VALUE);
+		cityRenderer.setMinPopulation(MapConstants.MIN_POP_DEFAULT);
 		cityRenderer.setDrawLabels(true);
 	}
 
@@ -1022,6 +1085,8 @@ public class MapView2D extends BaseView {
 	    }
 
 	    gratRenderer = new GraticuleRenderer(projection);
+	    gratRenderer.setAdaptive(graticuleAdaptive);
+	    gratRenderer.setDrawLabels(graticuleLabels);
 
 	    getIContainer().resetWorldSystem(getWorldSystem(projection));
 
