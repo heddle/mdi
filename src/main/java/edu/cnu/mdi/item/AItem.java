@@ -25,6 +25,7 @@ import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.Styled;
+import edu.cnu.mdi.graphics.toolbar.GestureContext;
 import edu.cnu.mdi.item.ItemModification.ModificationType;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.util.Environment;
@@ -852,6 +853,41 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	// Modification lifecycle
 	// -----------------------------------------------------------------------
 
+	/**
+	 * Gives an item a final chance to accept or reject an interactive modification.
+	 *
+	 * <p>
+	 * The default implementation accepts all modifications. Subclasses may override
+	 * this to enforce domain constraints after a drag, resize, or rotation gesture.
+	 * For example, a map-native radar item can reject a drag that leaves a
+	 * ground-based radar over water.
+	 * </p>
+	 *
+	 * <p>
+	 * This method is called near the end of the tool-handler gesture, before
+	 * {@link #stopModification()} clears the active modification context.
+	 * </p>
+	 *
+	 * @param gc the gesture context for the interaction
+	 * @return {@code true} to keep the modified state; {@code false} to reject it
+	 */
+	public boolean acceptModification(GestureContext gc) {
+	    return true;
+	}
+
+	/**
+	 * Called when {@link #acceptModification(GestureContext)} rejects a modification.
+	 *
+	 * <p>
+	 * The default implementation does nothing. Subclasses that reject modifications
+	 * should usually restore their pre-gesture geometry here.
+	 * </p>
+	 *
+	 * @param gc the gesture context for the rejected interaction
+	 */
+	public void modificationRejected(GestureContext gc) {
+	    // default: no-op
+	}
 	/**
 	 * Attach a modification context to begin an interactive gesture.
 	 *

@@ -36,7 +36,7 @@ import edu.cnu.mdi.util.UnicodeUtils;
 public class MapToolHandler extends BaseToolHandler {
 
     /** Owning map container. */
-    private final MapContainer mapContainer;
+    protected final MapContainer mapContainer;
 
     /**
      * Creates a map tool handler bound to the given container.
@@ -72,7 +72,7 @@ public class MapToolHandler extends BaseToolHandler {
         mapContainer.setDirty(true);
         mapContainer.refresh();
     }
-
+    
     /**
      * Creates a great-circle polyline from the supplied screen-space vertices.
      *

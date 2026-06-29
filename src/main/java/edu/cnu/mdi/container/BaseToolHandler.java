@@ -37,22 +37,22 @@ import edu.cnu.mdi.view.BaseView;
 public class BaseToolHandler implements IToolHandler {
 
 	// Zoom factor for each zoom in/out action
-	private static final double ZOOM_FACTOR = 0.8;
+	protected static final double ZOOM_FACTOR = 0.8;
 
 	// for panning
 	// for panning
-	private BufferedImage base;
-	private BufferedImage buffer;
+	protected BufferedImage base;
+	protected BufferedImage buffer;
 
 	// Container that owns this tool handler
-	private final BaseContainer container;
+	protected final BaseContainer container;
 
 	// for modifying items
-	private AItem modifyItem;
-	private boolean modifying;
+	protected AItem modifyItem;
+	protected boolean modifying;
 
 	// cached press point for the current drag gesture
-	private Point dragPressPoint;
+	protected Point dragPressPoint;
 
 	/**
 	 * Constructor.
@@ -196,18 +196,22 @@ public class BaseToolHandler implements IToolHandler {
 	@Override
 	public void endDragObject(GestureContext gc) {
 
-		if (modifyItem != null) {
-			modifyItem.stopModification();
-			// stopModification already nulls _modification in your AItem; this line is
-			// redundant:
-			// modifyItem.setModification(null);
-		}
+	    if (modifyItem != null) {
+	        if (!modifyItem.acceptModification(gc)) {
+	            modifyItem.modificationRejected(gc);
+	        }
 
-		modifyItem = null;
-		modifying = false;
-		dragPressPoint = null;
+	        modifyItem.stopModification();
+
+	        container.setDirty(true);
+	        container.refresh();
+	    }
+
+	    modifyItem = null;
+	    modifying = false;
+	    dragPressPoint = null;
 	}
-
+	
 	@Override
 	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
 		container.rubberBanded(bounds);
