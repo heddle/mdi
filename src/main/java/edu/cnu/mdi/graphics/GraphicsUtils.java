@@ -500,6 +500,51 @@ public class GraphicsUtils {
         paintComponentOnImage(c, image);
         return image;
     }
+    
+    /**
+     * Draws a simple one-pixel 3D border around a rectangle using brighter and
+     * darker variants of the graphics context's current color.
+     *
+     * @param g2     the graphics context
+     * @param x      the left edge
+     * @param y      the top edge
+     * @param width  the rectangle width
+     * @param height the rectangle height
+     * @param raised {@code true} for a raised appearance; {@code false} for a
+     *               recessed appearance
+     */
+    public static void drawSimple3DRect(Graphics2D g2,
+            int x, int y, int width, int height, boolean raised) {
+
+        if ((g2 == null) || (width <= 0) || (height <= 0)) {
+            return;
+        }
+
+        Color oldColor = g2.getColor();
+        Color brighter = oldColor.brighter();
+        Color darker = oldColor.darker();
+
+        Color topLeft = raised ? brighter : darker;
+        Color bottomRight = raised ? darker : brighter;
+
+        int right = x + width - 1;
+        int bottom = y + height - 1;
+
+        try {
+            // Top and left edges.
+            g2.setColor(topLeft);
+            g2.drawLine(x, y, right - 1, y);
+            g2.drawLine(x, y, x, bottom - 1);
+
+            // Bottom and right edges.
+            g2.setColor(bottomRight);
+            g2.drawLine(x, bottom, right, bottom);
+            g2.drawLine(right, y, right, bottom);
+        }
+        finally {
+            g2.setColor(oldColor);
+        }
+    }
 
     // -----------------------------------------------------------------------
     // Text drawing

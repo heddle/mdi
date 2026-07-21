@@ -304,7 +304,7 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 				5, // eliteCount
 				50, // progressEveryGens — update progress every 50 generations
 				40, // refreshEveryGens — update display every 10 generations (every 300ms at 30Hz refresh)
-				0L); // randomSeed — set to 0 for true randomness; non-zero for reproducibility
+				1234567L); // randomSeed — set to 0 for true randomness; non-zero for reproducibility
 
 		GAOperators<PolygonChromosome> operators = new GAOperators<>(new TournamentSelection<>(2), // was 5
 				new UniformBlendCrossover(), new GaussianMutation(cfg.mutationRate(), 0.08, 0.15), // rate from cfg,
