@@ -1,5 +1,6 @@
 package edu.cnu.mdi.mapping.milsym;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -25,12 +26,11 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
+import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.transfer.PaletteDragSupport;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.Environment;
-
-import java.awt.BorderLayout;
 
 /**
  * Palette panel that displays NATO military symbols in a compact table and
@@ -110,17 +110,25 @@ public class NatoIconPicker extends JPanel {
     // -------------------------------------------------------------------------
 
     /**
-     * Creates the NATO symbol picker, loads icon data, and installs
-     * drag-and-drop support.
+     * Creates the NATO symbol picker, loads icon data, installs drag-and-drop
+     * support, and sizes the panel compactly to its actual contents.
      */
     public NatoIconPicker() {
         setLayout(new BorderLayout(2, 2));
         setBackground(PANEL_BG);
-        setPreferredSize(new Dimension(PANEL_WIDTH, 0));
 
         buildTable();
         buildBottomPanel();
-        setBorder(BorderFactory.createEtchedBorder());
+
+        setBorder(new CommonBorder("Drag and Drop MilSymbols"));
+
+        Dimension preferred = new Dimension(PANEL_WIDTH, preferredPanelHeight());
+        setPreferredSize(preferred);
+
+        // Important when this picker is placed in a BoxLayout.Y_AXIS parent:
+        // without a maximum height, BoxLayout may stretch the scroll pane and
+        // produce a large blank area below the table rows.
+        setMaximumSize(preferred);
 
         // Delegate all Swing DnD ceremony to PaletteDragSupport.
         // We supply:
@@ -204,8 +212,7 @@ public class NatoIconPicker extends JPanel {
      * if the resource cannot be loaded, in which case
      * {@link PaletteDragSupport} falls back to the default system cursor.</p>
      *
-     * @param dragOrigin the point where the drag gesture began (used to identify
-     *                   the cell and therefore the resource path)
+     * @param dragOrigin the point where the drag gesture began
      * @return the scaled drag image, or {@code null}
      */
     private BufferedImage buildDragImage(Point dragOrigin) {
@@ -345,6 +352,41 @@ public class NatoIconPicker extends JPanel {
         add(bottomPanel, BorderLayout.SOUTH);
     }
 
+    /**
+     * Returns a compact preferred height for the picker based on the table and
+     * bottom strip content.
+     *
+     * @return preferred panel height
+     */
+    private int preferredPanelHeight() {
+        int tableHeight = tablePreferredHeight();
+
+        int bottomHeight = 0;
+        Component bottom = ((BorderLayout) getLayout()).getLayoutComponent(BorderLayout.SOUTH);
+        if (bottom != null) {
+            bottomHeight = bottom.getPreferredSize().height;
+        }
+
+        Insets insets = getInsets();
+        int borderHeight = insets.top + insets.bottom;
+
+        // A small allowance for BorderLayout vertical gap and scroll-pane details.
+        return tableHeight + bottomHeight + borderHeight + 6;
+    }
+
+    /**
+     * Returns the preferred height of the table including its header.
+     *
+     * @return table preferred height
+     */
+    private int tablePreferredHeight() {
+        int headerHeight = (table.getTableHeader() == null)
+                ? 0
+                : table.getTableHeader().getPreferredSize().height;
+
+        return headerHeight + table.getRowCount() * table.getRowHeight();
+    }
+
     // -------------------------------------------------------------------------
     // Data loading
     // -------------------------------------------------------------------------
@@ -409,8 +451,8 @@ public class NatoIconPicker extends JPanel {
      * {@link #buildTransferable} and {@link #buildDragImage} can recover it
      * later without an additional table-to-path lookup.
      *
-     * @param folder   the icon category folder name (e.g. {@code "infantry"})
-     * @param filename the icon file name (e.g. {@code "friendly.png"})
+     * @param folder   the icon category folder name
+     * @param filename the icon file name
      * @return a scaled {@link ImageIcon} with its description set, or
      *         {@code null} if the resource cannot be found or loaded
      */

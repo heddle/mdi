@@ -37,22 +37,22 @@ import edu.cnu.mdi.view.BaseView;
 public class BaseToolHandler implements IToolHandler {
 
 	// Zoom factor for each zoom in/out action
-	private static final double ZOOM_FACTOR = 0.8;
+	protected static final double ZOOM_FACTOR = 0.8;
 
 	// for panning
 	// for panning
-	private BufferedImage base;
-	private BufferedImage buffer;
+	protected BufferedImage base;
+	protected BufferedImage buffer;
 
 	// Container that owns this tool handler
-	private final BaseContainer container;
+	protected final BaseContainer container;
 
 	// for modifying items
-	private AItem modifyItem;
-	private boolean modifying;
+	protected AItem modifyItem;
+	protected boolean modifying;
 
 	// cached press point for the current drag gesture
-	private Point dragPressPoint;
+	protected Point dragPressPoint;
 
 	/**
 	 * Constructor.
@@ -196,18 +196,22 @@ public class BaseToolHandler implements IToolHandler {
 	@Override
 	public void endDragObject(GestureContext gc) {
 
-		if (modifyItem != null) {
-			modifyItem.stopModification();
-			// stopModification already nulls _modification in your AItem; this line is
-			// redundant:
-			// modifyItem.setModification(null);
-		}
+	    if (modifyItem != null) {
+	        if (!modifyItem.acceptModification(gc)) {
+	            modifyItem.modificationRejected(gc);
+	        }
 
-		modifyItem = null;
-		modifying = false;
-		dragPressPoint = null;
+	        modifyItem.stopModification();
+
+	        container.setDirty(true);
+	        container.refresh();
+	    }
+
+	    modifyItem = null;
+	    modifying = false;
+	    dragPressPoint = null;
 	}
-
+	
 	@Override
 	public void boxZoomRubberbanding(GestureContext gc, Rectangle bounds) {
 		container.rubberBanded(bounds);
@@ -421,26 +425,17 @@ public class BaseToolHandler implements IToolHandler {
 
 	@Override
 	public void createRadArc(GestureContext gc, Point[] pp) {
+	    if (pp == null || pp.length != 3) {
+	        return;
+	    }
 
-		if (pp == null || pp.length != 3) {
-			return;
-		}
+	    CreationSupport.createRadArcItem(
+	            container.getAnnotationLayer(),
+	            pp[0], pp[1], pp[2]);
 
-		// If RubberRadArc provided an unwrapped signed sweep, use it directly.
-		Double sweep = (gc != null) ? gc.getRubberbandAngleDeg() : null;
-
-		if (sweep == null) {
-			// Fallback only (should be rare): compute minor signed angle
-			// NOTE: pp are screen points; CreationSupport likely converts to world.
-			// Keep your existing behavior if needed.
-			return;
-		}
-
-		CreationSupport.createRadArcItem(container.getAnnotationLayer(), pp[0], pp[1], sweep);
-		container.setDirty(true);
-		container.refresh();
+	    container.setDirty(true);
+	    container.refresh();
 	}
-
 	@Override
 	public void createTextItem(GestureContext gc, Point location) {
 		CreationSupport.createTextItem(container.getAnnotationLayer(), location);
@@ -466,24 +461,24 @@ public class BaseToolHandler implements IToolHandler {
 	 */
 	private void selectItemsFromClick(AItem item, MouseEvent e) {
 
-		// Only left-click participates in selection changes.
-		// Clicking a locked or already-selected item: do nothing.
-		if (!SwingUtilities.isLeftMouseButton(e) || item.isLocked() || item.isSelected()) {
-			return;
-		}
+	    // Only left-click participates in selection changes.
+	    // Clicking a locked or already-selected item: do nothing.
+	    if (!SwingUtilities.isLeftMouseButton(e) || item.isLocked() || item.isSelected()) {
+	        return;
+	    }
 
-		// If Ctrl not held, deselect all first.
-		if (!e.isControlDown()) {
-			container.selectAllItems(false);
-		}
+	    // Plain click replaces the selection.
+	    // Ctrl-click or Shift-click adds to the existing selection.
+	    if (!e.isControlDown() && !e.isShiftDown()) {
+	        container.selectAllItems(false);
+	    }
 
-		// Select the clicked item.
-		item.getLayer().selectItem(item, true);
+	    // Select the clicked item.
+	    item.getLayer().selectItem(item, true);
 
-		container.setDirty(true);
-		container.refresh();
+	    container.setDirty(true);
+	    container.refresh();
 	}
-
 	@Override
 	public boolean doNotDrag(GestureContext gc) {
 		return false;

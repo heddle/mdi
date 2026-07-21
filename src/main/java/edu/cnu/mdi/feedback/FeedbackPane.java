@@ -102,7 +102,7 @@ public class FeedbackPane extends TextPaneScrollPane {
      * overlay-style feedback. Uses cyan foreground and 9 pt font size.
      */
     public FeedbackPane() {
-        this(Color.cyan, Color.black, 9);
+        this(Color.cyan, Color.black, 11);
     }
 
     /**
@@ -120,6 +120,7 @@ public class FeedbackPane extends TextPaneScrollPane {
         this.fontSize = fontSize;
 
         DEFAULT_STYLE = createStyle(fg, bg, "SansSerif", fontSize, false, true);
+        setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, fontSize));
 
         int smallFontSize = Math.max(6, fontSize - 3);
         SMALL_MONO_STYLE  = createStyle(fg, bg, "Monospaced", smallFontSize, false, true);

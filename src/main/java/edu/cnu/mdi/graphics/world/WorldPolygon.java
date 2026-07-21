@@ -153,11 +153,11 @@ public class WorldPolygon {
 	 * @param npoints the total number of points
 	 */
 	void calculateBounds(double xpoints[], double ypoints[], int npoints) {
-		double boundsMinX = Double.MAX_VALUE;
-		double boundsMinY = Double.MAX_VALUE;
-		double boundsMaxX = Double.MIN_VALUE;
-		double boundsMaxY = Double.MIN_VALUE;
-
+		double boundsMinX = Double.POSITIVE_INFINITY;
+		double boundsMinY = Double.POSITIVE_INFINITY;
+		double boundsMaxX = Double.NEGATIVE_INFINITY;
+		double boundsMaxY = Double.NEGATIVE_INFINITY;
+		
 		for (int i = 0; i < npoints; i++) {
 			double x = xpoints[i];
 			boundsMinX = Math.min(boundsMinX, x);

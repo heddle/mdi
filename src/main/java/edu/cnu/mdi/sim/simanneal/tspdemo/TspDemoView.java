@@ -172,60 +172,53 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
     // -------------------------------------------------------------------------
 
     /**
-     * Create the TSP demo view.
-     *
-     * <p>
-     * The constructor calls {@link #createSimulationAndStashBundle} to build
-     * the initial simulation and stash the model in {@link #BUNDLE_TL}, then
-     * passes the simulation to {@code super(...)}. After {@code super()} returns
-     * it recovers the model from the thread-local and wires up the remaining
-     * references.
-     * </p>
-     *
-     * @param keyVals standard {@link edu.cnu.mdi.view.BaseView} key-value args
-     */
-    public TspDemoView(Object... keyVals) {
-        super(
-            createSimulationAndStashBundle(DEFAULT_NUM_CITY, DEFAULT_RIVER_PENALTY, seed),
-            new SimulationEngineConfig(
-                    33,    // refreshIntervalMs  ~30 Hz
-                    250,   // progressIntervalMs ~4 Hz
-                    30,    // cooperativeYieldMs
-                    false  // autoRun
-            ),
-            true,
-            (SimulationView.ControlPanelFactory) TspDemoControlPanel::new,
-            true,                        // include diagnostics panel
-            TspDemoView::createScatterPanel,
-            0.6,                         // main panel gets 60% of width
-            keyVals
-        );
+	 * Create the TSP demo view.
+	 *
+	 * <p>
+	 * The constructor calls {@link #createSimulationAndStashBundle} to build the
+	 * initial simulation and stash the model in {@link #BUNDLE_TL}, then passes the
+	 * simulation to {@code super(...)}. After {@code super()} returns it recovers
+	 * the model from the thread-local and wires up the remaining references.
+	 * </p>
+	 *
+	 * @param keyVals standard {@link edu.cnu.mdi.view.BaseView} key-value args
+	 */
+	public TspDemoView(Object... keyVals) {
+		super(createSimulationAndStashBundle(DEFAULT_NUM_CITY, DEFAULT_RIVER_PENALTY, seed),
+				new SimulationEngineConfig(33, // refreshIntervalMs ~30 Hz
+						250, // progressIntervalMs ~4 Hz
+						30, // cooperativeYieldMs
+						false // autoRun
+				), true, (SimulationView.ControlPanelFactory) TspDemoControlPanel::new, true, // include diagnostics
+																								// panel
+				TspDemoView::createScatterPanel, 0.6, // main panel gets 60% of width
+				keyVals);
 
-        this.evtPlot = (EvsTPlotPanel) getDiagnosticsComponent();
+		this.evtPlot = (EvsTPlotPanel) getDiagnosticsComponent();
 
-        // Recover bundle created during createSimulationAndStashBundle().
-        Bundle b = BUNDLE_TL.get();
-        BUNDLE_TL.remove();
+		// Recover bundle created during createSimulationAndStashBundle().
+		Bundle b = BUNDLE_TL.get();
+		BUNDLE_TL.remove();
 
-        this.model = b.model;
+		this.model = b.model;
 
-        @SuppressWarnings("unchecked")
-        SimulatedAnnealingSimulation<TspSolution> s =
-                (SimulatedAnnealingSimulation<TspSolution>) getSimulationEngine().getSimulation();
-        this.sim = s;
-        this.sim.addAcceptedMoveListener(this);
-        this.sim.setEngine(getSimulationEngine());
+		@SuppressWarnings("unchecked")
+		SimulatedAnnealingSimulation<TspSolution> s = (SimulatedAnnealingSimulation<TspSolution>) getSimulationEngine()
+				.getSimulation();
+		this.sim = s;
+		this.sim.addAcceptedMoveListener(this);
+		this.sim.setEngine(getSimulationEngine());
 
-        setBeforeDraw();
-        setAfterDraw();
+		setBeforeDraw();
+		setAfterDraw();
 
-        if (getIContainer() != null) {
-            getIContainer().scale(1.25);
-        }
+		if (getIContainer() != null) {
+			getIContainer().scale(1.25);
+		}
 
-        pack();
-        startSimulation();
-    }
+		pack();
+		startSimulation();
+	}
 
     
 	/**

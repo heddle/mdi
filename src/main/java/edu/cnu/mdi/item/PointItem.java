@@ -86,23 +86,17 @@ public class PointItem extends AItem {
 	@Override
 	public void drawItem(Graphics2D g2, IContainer container) {
 
-		// draw icon?
-		if (icon != null) {
+		if (icon != null) { //has icon
 			Point p = getFocusPoint(container);
-			int w = icon.getIconWidth();
-			int h = icon.getIconHeight();
-
-			int x = p.x;
-			int y = p.y;
 
 			switch (_xAlignment) {
 			case SwingUtilities.LEFT:
 				break;
 			case SwingUtilities.CENTER:
-				x -= w / 2;
+				p.x -= icon.getIconWidth() / 2;
 				break;
 			case SwingUtilities.RIGHT:
-				x -= w;
+				p.x -= icon.getIconWidth();
 				break;
 			}
 
@@ -110,16 +104,15 @@ public class PointItem extends AItem {
 			case SwingUtilities.TOP:
 				break;
 			case SwingUtilities.CENTER:
-				y -= h / 2;
+				p.y -= icon.getIconHeight() / 2;
 				break;
 			case SwingUtilities.BOTTOM:
-				y -= h;
+				p.y -= icon.getIconHeight();
 				break;
 			}
 
-			g2.drawImage(icon.getImage(), x, y, container.getComponent());
-		} else {
-			// draw symbol?
+			g2.drawImage(icon.getImage(), p.x, p.y, container.getComponent());
+		} else { //use smbol
 			if (_style.getSymbolType() != SymbolType.NOSYMBOL) {
 				Rectangle r = getBounds(container);
 				int xc = r.x + r.width / 2;

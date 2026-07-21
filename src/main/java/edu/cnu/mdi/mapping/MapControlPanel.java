@@ -77,6 +77,9 @@ public class MapControlPanel extends JPanel {
     private JRadioButton lightThemeButton;
     private JRadioButton darkThemeButton;
     private JRadioButton blueThemeButton;
+    
+    //holds display checkboxes for city names and other future options
+    private JPanel checkboxPanel;
 
     /** Whether city name labels are visible. Tracks the checkbox state. */
     private boolean showNames = true;
@@ -114,6 +117,12 @@ public class MapControlPanel extends JPanel {
         createMinPopRangeSlider(this);
         createThemeSelector(this);
     }
+    
+    private void createCheckboxPanel() {
+		checkboxPanel = new JPanel();
+		checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
+		checkboxPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+	}
 
     // -------------------------------------------------------------------------
     // Widget builders
@@ -153,6 +162,7 @@ public class MapControlPanel extends JPanel {
      * @param panel the panel to add the checkbox to
      */
     private void createCheckboxes(JPanel panel) {
+    	createCheckboxPanel();
         JCheckBox showCityNamesCheckBox = new JCheckBox("Show city names", true);
         showCityNamesCheckBox.setFont(font);
         showCityNamesCheckBox.setHorizontalAlignment(SwingConstants.LEFT);
@@ -161,10 +171,55 @@ public class MapControlPanel extends JPanel {
             updateCityLabelVisibility();
         });
         leftAlign(showCityNamesCheckBox);
-        panel.add(showCityNamesCheckBox);
+        checkboxPanel.add(showCityNamesCheckBox);
+
+        // Graticule controls. These reuse the same checkbox panel, font, and
+        // alignment as "Show city names". Both default to selected, matching
+        // the renderer's defaults (adaptive spacing + edge labels on).
+        addCheckbox("Adaptive grid spacing", true,
+                e -> mapView.setGraticuleAdaptive(
+                        ((JCheckBox) e.getSource()).isSelected()));
+        addCheckbox("Grid coordinate labels", true,
+                e -> mapView.setGraticuleLabels(
+                        ((JCheckBox) e.getSource()).isSelected()));
+
+        panel.add(checkboxPanel);
         panel.add(Box.createVerticalStrut(6));
     }
+    
+    /**
+     * Adds a checkbox to the checkbox panel with the given label, initial state,
+     * and optional action listener.
+     *
+     * <p>The returned checkbox may be retained by the caller if later programmatic
+     * changes are needed.</p>
+     *
+     * @param label        the text label for the checkbox
+     * @param initialState the initial selected state of the checkbox
+     * @param listener     listener notified when the checkbox is toggled; may be {@code null}
+     * @return the constructed checkbox
+     */
+    public JCheckBox addCheckbox(String label, boolean initialState, ActionListener listener) {
+        if (checkboxPanel == null) {
+            createCheckboxPanel();
+        }
 
+        JCheckBox checkbox = new JCheckBox(label, initialState);
+        checkbox.setFont(font);
+        checkbox.setHorizontalAlignment(SwingConstants.LEFT);
+        leftAlign(checkbox);
+
+        if (listener != null) {
+            checkbox.addActionListener(listener);
+        }
+
+        checkboxPanel.add(checkbox);
+        checkboxPanel.revalidate();
+        checkboxPanel.repaint();
+
+        return checkbox;
+    }
+    
     /**
      * Adds the minimum-population range slider to {@code panel}.
      *

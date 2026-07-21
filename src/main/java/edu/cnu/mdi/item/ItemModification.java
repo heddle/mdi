@@ -97,10 +97,6 @@ public class ItemModification {
 		Line2D.Double l = item.getLine();
 		this.startLine = (l == null) ? null : (Line2D.Double) l.clone();
 
-		if (item.getSecondaryPoints() != null) {
-			secondaryPath = WorldGraphicsUtils.worldPolygonToPath(item.getSecondaryPoints());
-		}
-
 		startWorldPoint = new Point2D.Double();
 		currentWorldPoint = new Point2D.Double();
 		container.localToWorld(startMousePoint, startWorldPoint);

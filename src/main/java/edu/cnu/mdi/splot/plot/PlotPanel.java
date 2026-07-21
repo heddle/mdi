@@ -98,7 +98,7 @@ public class PlotPanel extends JPanel implements PropertyChangeListener {
 		// status label
 		if (_decorations == STANDARD) {
 			_feedbackPane = new FeedbackPane();
-			FontMetrics fm = getFontMetrics(getFont());
+			FontMetrics fm = getFontMetrics(_feedbackPane.getFont());
 			int h = 3 * fm.getHeight() + 4;
 			Dimension d = new Dimension(super.getPreferredSize().width, h);
 			_feedbackPane.getViewport().setPreferredSize(d);

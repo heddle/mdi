@@ -1,4 +1,4 @@
-package edu.cnu.mdi.view.demo;
+package edu.cnu.mdi.view.demo.layout;
 
 import java.awt.event.MouseEvent;
 
@@ -13,9 +13,17 @@ public class DeviceButton extends ASingleClickButton {
 	private NetworkLayoutDemoView view;
 
 
+	// the layer to which the created device items will be added
 	private Layer deviceLayer;
+	
+	// the symbol to be created when this button is clicked
 	private EDeviceSymbol symbol;
 
+	/**
+	 * Constructor
+	 * @param view the parent view being controlled
+	 * @param symbol the symbol to be created when this button is clicked
+	 */
 	public DeviceButton(NetworkLayoutDemoView view, EDeviceSymbol symbol) {
 		super(view.getIContainer().getComponent(), view.getToolBar());
 		this.view = view;
@@ -28,6 +36,10 @@ public class DeviceButton extends ASingleClickButton {
 
 	}
 
+	/**
+	 * When the button is clicked, create a new device item at the clicked location
+	 * and refresh the view.
+	 */
 	@Override
 	public void canvasClick(MouseEvent e) {
 		DeviceItem.createDeviceItem(deviceLayer, e.getPoint(), symbol);

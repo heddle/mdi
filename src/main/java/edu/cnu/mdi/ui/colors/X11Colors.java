@@ -2,37 +2,48 @@ package edu.cnu.mdi.ui.colors;
 
 import java.awt.Color;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Utility for looking up colors by X11-style name.
- *
+ * Look up colors by their standard web ("X11") name.
  * <p>
- * Names are case-insensitive and normalized by:
+ * Despite the class name, the values here are the HTML4/CSS/SVG <em>web</em>
+ * color set (the so-called "X11 web colors"), not the classic X.Org
+ * {@code rgb.txt} palette. The two clash for a handful of names: web
+ * {@code gray}/{@code green}/{@code maroon}/{@code purple} differ from the
+ * brighter X11 originals (for example X11 {@code green} is {@code 0,255,0},
+ * which CSS calls {@code lime}). All 148-ish web names resolve to the CSS
+ * standard RGB values.
+ * <p>
+ * Lookups are forgiving. A queried name is matched after:
  * <ul>
- * <li>trimming leading/trailing whitespace</li>
- * <li>converting to lower-case</li>
- * <li>collapsing internal whitespace to a single space</li>
+ * <li>trimming and lower-casing</li>
+ * <li>removing <em>all</em> internal whitespace, so {@code "Deep Sky Blue"},
+ * {@code "deepskyblue"} and {@code "deep   sky   blue"} all resolve to the same
+ * color</li>
  * </ul>
- *
- * Example:
+ * British {@code grey} spellings are accepted as aliases for every {@code gray}
+ * name. {@link #getAllColors()} still exposes the canonical names in their
+ * readable, single-spaced form.
  *
  * <pre>
  * Color c1 = X11Colors.getX11Color("Deep Sky Blue");
- * Color c2 = X11Colors.getX11Color("deep sky blue", 128); // half transparent
+ * Color c2 = X11Colors.getX11Color("deepskyblue", 128); // half transparent
  * </pre>
  */
 public final class X11Colors {
 
-	// normalizedName -> Color (immutable)
+	/** Canonical display name (lower-case, single spaces) -&gt; Color. Backs {@link #getAllColors()}. */
 	private static final Map<String, Color> COLORS;
 
+	/** Whitespace-stripped lookup key -&gt; Color, including British "grey" aliases. Backs lookups. */
+	private static final Map<String, Color> LOOKUP;
+
 	static {
-		Map<String, Color> m = new HashMap<>(180);
+		Map<String, Color> m = new LinkedHashMap<>(220);
 
-		// ---- base X11 color set ----
-
+		// ---- web ("X11") color set: values are the CSS/SVG standard ----
 		put(m, "alice blue", 240, 248, 255);
 		put(m, "antique white", 250, 235, 215);
 		put(m, "aqua", 0, 255, 255);
@@ -74,7 +85,6 @@ public final class X11Colors {
 		put(m, "dark slate gray", 47, 79, 79);
 		put(m, "dark turquoise", 0, 206, 209);
 		put(m, "dark violet", 148, 0, 211);
-
 		put(m, "deep pink", 255, 20, 147);
 		put(m, "deep sky blue", 0, 191, 255);
 		put(m, "dim gray", 105, 105, 105);
@@ -89,8 +99,8 @@ public final class X11Colors {
 		put(m, "ghost white", 248, 248, 255);
 		put(m, "gold", 255, 215, 0);
 		put(m, "goldenrod", 218, 165, 32);
-		put(m, "gray", 128, 128, 128); // X11 gray
-		put(m, "green", 0, 128, 0); // X11 green (note: different from CSS 'lime')
+		put(m, "gray", 128, 128, 128);  // web/CSS gray (X11 'gray' is 190,190,190)
+		put(m, "green", 0, 128, 0);  // web/CSS green (X11 'green' is 0,255,0, i.e. CSS 'lime')
 		put(m, "green yellow", 173, 255, 47);
 
 		put(m, "honeydew", 240, 255, 240);
@@ -119,13 +129,12 @@ public final class X11Colors {
 		put(m, "light slate gray", 119, 136, 153);
 		put(m, "light steel blue", 176, 196, 222);
 		put(m, "light yellow", 255, 255, 224);
-
 		put(m, "lime", 0, 255, 0);
 		put(m, "lime green", 50, 205, 50);
 		put(m, "linen", 250, 240, 230);
 
 		put(m, "magenta", 255, 0, 255);
-		put(m, "maroon", 128, 0, 0);
+		put(m, "maroon", 128, 0, 0);  // web/CSS maroon (X11 'maroon' is 176,48,96)
 		put(m, "medium aquamarine", 102, 205, 170);
 		put(m, "medium blue", 0, 0, 205);
 		put(m, "medium orchid", 186, 85, 211);
@@ -160,7 +169,7 @@ public final class X11Colors {
 		put(m, "pink", 255, 192, 203);
 		put(m, "plum", 221, 160, 221);
 		put(m, "powder blue", 176, 224, 230);
-		put(m, "purple", 128, 0, 128);
+		put(m, "purple", 128, 0, 128);  // web/CSS purple (X11 'purple' is 160,32,240)
 
 		put(m, "red", 255, 0, 0);
 		put(m, "rosy brown", 188, 143, 143);
@@ -196,6 +205,18 @@ public final class X11Colors {
 		put(m, "yellow green", 154, 205, 50);
 
 		COLORS = Collections.unmodifiableMap(m);
+
+		// Build the forgiving lookup map: whitespace-stripped keys, plus a
+		// British "grey" alias for every American "gray" entry.
+		Map<String, Color> lookup = new LinkedHashMap<>(m.size() * 2);
+		for (Map.Entry<String, Color> e : m.entrySet()) {
+			String key = lookupKey(e.getKey());
+			lookup.put(key, e.getValue());
+			if (key.contains("gray")) {
+				lookup.put(key.replace("gray", "grey"), e.getValue());
+			}
+		}
+		LOOKUP = Collections.unmodifiableMap(lookup);
 	}
 
 	private X11Colors() {
@@ -203,21 +224,27 @@ public final class X11Colors {
 	}
 
 	private static void put(Map<String, Color> map, String name, int r, int g, int b) {
-		map.put(normalizeName(name), new Color(r, g, b));
+		map.put(displayName(name), new Color(r, g, b));
 	}
 
-	private static String normalizeName(String name) {
-		// lower-case, trim, collapse internal whitespace to single spaces
-		String trimmed = name.trim().toLowerCase();
-		return trimmed.replaceAll("\\s+", " ");
+	/** Canonical readable form: trimmed, lower-cased, internal whitespace collapsed to single spaces. */
+	private static String displayName(String name) {
+		return name.trim().toLowerCase().replaceAll("\\s+", " ");
+	}
+
+	/** Lookup form: lower-cased with all whitespace removed, so spacing never matters. */
+	private static String lookupKey(String name) {
+		return name.toLowerCase().replaceAll("\\s+", "");
 	}
 
 	/**
-	 * Gets an X11 color and sets the alpha.
+	 * Gets a web/X11 color and applies the given alpha.
 	 *
-	 * @param name  the name of the color
-	 * @param alpha 0..255 (255 is fully opaque)
-	 * @return a new Color with the given alpha, or null if not found
+	 * @param name  the color name (case- and whitespace-insensitive)
+	 * @param alpha alpha channel, 0..255 (255 is fully opaque)
+	 * @return a new {@link Color} with the given alpha, or {@code null} if the name
+	 *         is unknown
+	 * @throws IllegalArgumentException if {@code alpha} is outside 0..255
 	 */
 	public static Color getX11Color(String name, int alpha) {
 		Color base = getX11Color(name);
@@ -228,21 +255,28 @@ public final class X11Colors {
 	}
 
 	/**
-	 * Gets the named color from the X11 color list.
+	 * Gets a color by its web/X11 name.
+	 * <p>
+	 * Matching ignores case and all whitespace, and accepts British {@code grey}
+	 * spellings, so {@code "Light Gray"}, {@code "lightgrey"} and
+	 * {@code "  LIGHT  GREY "} all resolve to the same color.
 	 *
-	 * @param name the name of the X11 color
-	 * @return the named color, or null if not found
+	 * @param name the color name; may be {@code null}
+	 * @return the named color, or {@code null} if {@code name} is {@code null} or
+	 *         unknown
 	 */
 	public static Color getX11Color(String name) {
 		if (name == null) {
 			return null;
 		}
-		return COLORS.get(normalizeName(name));
+		return LOOKUP.get(lookupKey(name));
 	}
 
 	/**
-	 * Returns an unmodifiable view of all available X11 colors. Keys are normalized
-	 * (lowercase, single spaces).
+	 * Returns an unmodifiable view of all available colors, keyed by their
+	 * canonical display names (lower-case, single-spaced).
+	 *
+	 * @return the immutable name-to-color map
 	 */
 	public static Map<String, Color> getAllColors() {
 		return COLORS;

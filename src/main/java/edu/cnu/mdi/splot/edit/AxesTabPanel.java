@@ -220,7 +220,7 @@ public class AxesTabPanel extends JPanel {
 		// Apply limits/methods first (may set manual ranges)
 		_limitsPanel.apply();
 
-		_params.setColorMap(_colorMapPanel.getCurrentMap());
+		_params.setColorMap(_colorMapPanel.getSelectedColorMap());
 
 		// Apply scale before include-zero, since include-zero is disabled in log mode.
 		_params.setXScale(_logX.isSelected() ? PlotParameters.AxisScale.LOG10 : PlotParameters.AxisScale.LINEAR);

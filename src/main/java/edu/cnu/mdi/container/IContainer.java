@@ -16,6 +16,7 @@ import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
+import edu.cnu.mdi.hover.HoverInfoWindow;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.view.BaseView;
@@ -256,6 +257,28 @@ public interface IContainer {
 	 * @param toolBar the new toolbar interface.
 	 */
 	public void setToolBar(AToolBar toolBar);
+	
+	/**
+	 * Update the status text in the toolbar, if any. This is a convenience method
+	 * that calls <code>getToolBar().updateStatusText()</code> if a toolbar is
+	 * present.
+	 *
+	 * @param pp the pixel point to include in the status text.
+	 * @param wp the world point to include in the status text.
+	 */
+	public default void updateStatusText(Point pp, Point2D.Double wp) {
+		// no default implementation
+	}
+	
+	/**
+	 * Get the hover info window for this container, if any.
+	 *
+	 * @return the hover info window for this container, or <code>null</code>.
+	 */
+	public default HoverInfoWindow getHoverWindow() {
+		return null; // default implementation returns null
+	}
+
 
 	/**
 	 * Convenience method to update the location string in the toolbar.

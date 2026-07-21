@@ -11,6 +11,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.mapping.container.MapContainer;
+import edu.cnu.mdi.mapping.graphics.MapGraphics;
 import edu.cnu.mdi.mapping.render.CountryRenderer;
 import edu.cnu.mdi.mapping.theme.MapTheme;
 
@@ -259,28 +261,12 @@ public class MercatorProjection implements IMapProjection {
      */
     @Override
     public void drawLatitudeLine(Graphics2D g2, IContainer container, double latitude) {
-        double lat = Math.max(MIN_LAT, Math.min(MAX_LAT, latitude));
-
-        Path2D path = new Path2D.Double();
-        Point2D.Double latLon = new Point2D.Double();
-        Point2D.Double xy     = new Point2D.Double();
-        Point screen          = new Point();
-
-        latLon.y = lat;
-        double dLon = (MAX_LON - MIN_LON) / 360;
-
-        for (int i = 0; i <= 360; i++) {
-            latLon.x = MIN_LON + i * dLon;
-            latLonToXY(latLon, xy);
-            container.worldToLocal(screen, xy);
-            if (i == 0) path.moveTo(screen.x, screen.y);
-            else        path.lineTo(screen.x, screen.y);
-        }
-
-        Color oldColor = g2.getColor();
-        g2.setColor(theme.getGraticuleColor());   // fixed: was Color.LIGHT_GRAY
-        g2.draw(path);
-        g2.setColor(oldColor);
+       	
+    	if (latitude < MIN_LAT || latitude > MAX_LAT) {
+			return; // Latitude is out of bounds, so skip drawing
+		}
+    	MapGraphics.drawHorizontalLatitudeLine(g2, (MapContainer)container, latitude,
+    			getCentralLongitude(), theme);
     }
 
     /**
@@ -294,28 +280,8 @@ public class MercatorProjection implements IMapProjection {
     @Override
     public void drawLongitudeLine(Graphics2D g2, IContainer container, double longitude) {
         double lon = wrapLongitude(longitude);
-
-        Path2D path = new Path2D.Double();
-        Point2D.Double latLon = new Point2D.Double();
-        Point2D.Double xy     = new Point2D.Double();
-        Point screen          = new Point();
-
-        latLon.x = lon;
-        double dLat = (MAX_LAT - MIN_LAT) / 360;
-
-        for (int i = 0; i <= 360; i++) {
-            latLon.y = MIN_LAT + i * dLat;
-            latLonToXY(latLon, xy);
-            container.worldToLocal(screen, xy);
-            if (i == 0) path.moveTo(screen.x, screen.y);
-            else        path.lineTo(screen.x, screen.y);
-        }
-
-        Color oldColor = g2.getColor();
-        g2.setColor(theme.getGraticuleColor());   // fixed: was Color.LIGHT_GRAY
-        g2.draw(path);
-        g2.setColor(oldColor);
-    }
+    	MapGraphics.drawVerticalLongitudeLine(g2, (MapContainer)container, lon, theme);
+   }
 
     // -------------------------------------------------------------------------
     // IMapProjection — metadata
@@ -372,4 +338,6 @@ public class MercatorProjection implements IMapProjection {
         path.closePath();
         return path;
     }
+    
+
 }

@@ -349,4 +349,5 @@ public interface IMapProjection {
     default boolean recenterOn(Point2D.Double latLon) {
         return false;
     }
+    
 }

@@ -61,27 +61,42 @@ public class ImageItem extends RectangleItem {
 		WorldGraphicsUtils.drawImageOnQuad(g2, image, wpoly, container);
 	}
 
+	// get the bounds of the image in world coordinates, centered in the container
 	private static Rectangle2D.Double createDefaultBounds(IContainer container, BufferedImage image) {
-		Rectangle r = image.getRaster().getBounds();
-		Rectangle2D.Double wr = container.getWorldSystem();
-		// Center the image in the world system
-		// and make it not larger that 80% of the world system
-		// preserving aspect ratio
-		double width = r.width;
-		double height = r.height;
-		double maxWidth = 0.8 * wr.width;
-		double maxHeight = 0.8 * wr.height;
-		double scaleX = width / maxWidth;
-		double scaleY = height / maxHeight;
-		double scale = Math.max(scaleX, scaleY);
+		Objects.requireNonNull(container, "container cannot be null");
+		Objects.requireNonNull(image, "image cannot be null");
 
-		if (scale > 1.0) {
-			width = width / scale;
-			height = height / scale;
-		}
-		double x = wr.x + (wr.width - width) / 2;
-		double y = wr.y + (wr.height - height) / 2;
-		Rectangle2D.Double wbounds = new Rectangle2D.Double(x, y, width, height);
-		return wbounds;
+		Rectangle cb = container.getComponent().getBounds();
+
+		int cw = Math.max(1, cb.width);
+		int ch = Math.max(1, cb.height);
+
+		// Center in screen coordinates.
+		int cx = cw / 2;
+		int cy = ch / 2;
+
+		// Use the image's native pixel size as the initial displayed size.
+		// This preserves readability. Large images may extend beyond the view,
+		// but that is better than silently downsampling them into illegibility.
+		int iw = Math.max(1, image.getWidth());
+		int ih = Math.max(1, image.getHeight());
+
+		int left   = cx - iw / 2;
+		int right  = left + iw;
+		int top    = cy - ih / 2;
+		int bottom = top + ih;
+
+		Point2D.Double wtl = new Point2D.Double();
+		Point2D.Double wbr = new Point2D.Double();
+
+		container.localToWorld(new java.awt.Point(left,  top),    wtl);
+		container.localToWorld(new java.awt.Point(right, bottom), wbr);
+
+		double wx = Math.min(wtl.x, wbr.x);
+		double wy = Math.min(wtl.y, wbr.y);
+		double ww = Math.abs(wbr.x - wtl.x);
+		double wh = Math.abs(wbr.y - wtl.y);
+
+		return new Rectangle2D.Double(wx, wy, ww, wh);
 	}
 }

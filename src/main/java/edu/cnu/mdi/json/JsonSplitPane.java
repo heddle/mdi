@@ -113,7 +113,7 @@ public class JsonSplitPane extends JPanel {
         // Header strip — shows the current file name or a prompt.
         header = new JPanel(new BorderLayout());
         headerLabel = new JLabel(
-                "Drop a .json file onto this view", SwingConstants.CENTER);
+                "Drop a .json file onto the right panel below.", SwingConstants.CENTER);
         headerLabel.setForeground(HEADER_FG);
         headerLabel.setFont(new Font(Font.SANS_SERIF, Font.ITALIC, 12));
         headerLabel.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));

@@ -14,6 +14,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JWindow;
+import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.ui.fonts.Fonts;
 
@@ -51,8 +52,19 @@ public class HoverInfoWindow extends JWindow {
         setFocusableWindowState(false);    }
 
  
-    public void showMessage(String message, Point screenPoint) {
-        label.setText(message == null ? "" : message);
+    /**
+	 * Show the hover message at the location of the given HoverEvent.
+	 *
+	 * @param he      the HoverEvent containing the location to show the message
+	 * @param message the message to display, or null/empty to hide
+	 */
+    public void showMessage(HoverEvent he, String message) {
+    	
+		// Convert the point from container-relative to screen coordinates for the window
+		Point screenPoint = he.getLocation();
+		SwingUtilities.convertPointToScreen(screenPoint, he.getSource());
+
+        label.setText(message == null ? "" : toHtml(message));
         pack();
 
         int x = screenPoint.x + 12;
@@ -102,6 +114,20 @@ public class HoverInfoWindow extends JWindow {
         // Fall back to the default screen.
         return GraphicsEnvironment.getLocalGraphicsEnvironment()
                 .getDefaultScreenDevice().getDefaultConfiguration();
+    }
+    
+    // Converts a plain text message to HTML, escaping special characters and 
+    // replacing newlines with <br> tags.
+    private static String toHtml(String message) {
+        if (message == null || message.isEmpty()) {
+            return "";
+        }
+        String escaped = message
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\n", "<br>");
+        return "<html>" + escaped + "</html>";
     }
     /**
 	 * Hide the hover message.

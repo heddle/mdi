@@ -1,5 +1,6 @@
 package edu.cnu.mdi.util;
 
+import java.awt.Dimension;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
@@ -47,6 +48,9 @@ public final class Environment {
 	private final String tempDirectory;
 	private final String classPath;
 	private String dataDirectory;
+	
+	// cached frame size for new frames (updated by BaseMDIApplication)
+	private Dimension frameSize;
 
 	// cached host address
 	private String hostAddress;
@@ -112,6 +116,28 @@ public final class Environment {
 			LOGGER.log(Level.FINE, "Unable to read system property: " + key, e);
 			return null;
 		}
+	}
+	
+	/**
+	 * Get the current frame size. This is updated by BaseMDIApplication
+	 * when the main application window is resized, and can be used by views to
+	 * set their initial size.
+	 *
+	 * @return the default frame size for new frames
+	 */
+	public Dimension getFrameSize() {
+		return frameSize;
+	}
+	
+	/**
+	 * Set the current frame size. This is updated by BaseMDIApplication
+	 * when the main application window is resized, and can be used by views to
+	 * set their initial size.
+	 *
+	 * @param frameSize the default frame size for new frames
+	 */
+	public void setFrameSize(Dimension frameSize) {
+		this.frameSize = frameSize;
 	}
 
 	/*
@@ -393,6 +419,7 @@ public final class Environment {
 		System.gc();
 		System.gc();
 
+		double maxmem = Runtime.getRuntime().maxMemory() / 1048576.0;
 		double total = Runtime.getRuntime().totalMemory() / 1048576.0;
 		double free = Runtime.getRuntime().freeMemory() / 1048576.0;
 		double used = total - free;
@@ -403,6 +430,7 @@ public final class Environment {
 		if (message != null) {
 			sb.append(message).append('\n');
 		}
+		sb.append("Max memory in JVM: ").append(df.format(maxmem)).append(" MB\n");
 		sb.append("Total memory in JVM: ").append(df.format(total)).append(" MB\n");
 		sb.append("  Free memory in JVM: ").append(df.format(free)).append(" MB\n");
 		sb.append("  Used memory in JVM: ").append(df.format(used)).append(" MB\n");

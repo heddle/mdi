@@ -75,37 +75,23 @@ public class HistoCurve extends ACurve {
 	}
 
 	/**
-	 * Build fit vectors from histogram bin centers and bin counts.
-	 * <p>
-	 * Bin centers are computed from the histogram grid edges:
-	 * {@code center[i] = 0.5*(grid[i] + grid[i+1])}.
-	 * </p>
+	 * Build fit vectors from the histogram using Poisson statistical weights.
+	 *
+	 * <p>Empty bins are omitted because their observed Poisson uncertainty
+	 * cannot be represented by {@code 1 / count}. For every retained bin,
+	 * the weight is {@code 1 / count}, corresponding to
+	 * {@code sigma = sqrt(count)}.</p>
+	 *
+	 * @return weighted histogram fit vectors
 	 */
 	private FitVectors fitVectors() {
-		final int n = histoData.getNumberBins();
-		if (n < 1) {
-			return new FitVectors(new double[0], new double[0], null);
-		}
-
-		final double[] grid = histoData.getGridCopy(); // length n+1
-		final long[] counts = histoData.getCountsCopy(); // length n
-
-		// Defensive: if something is inconsistent, fail soft with empty vectors.
-		if (grid == null || grid.length != n + 1 || counts == null || counts.length != n) {
-			return new FitVectors(new double[0], new double[0], null);
-		}
-
-		final double[] x = new double[n];
-		final double[] y = new double[n];
-
-		for (int i = 0; i < n; i++) {
-			x[i] = 0.5 * (grid[i] + grid[i + 1]);
-			y[i] = counts[i];
-		}
-
-		return new FitVectors(x, y, null);
+	    return histoData.prepareForFit(
+	            false,
+	            histoData.getMinX(),
+	            histoData.getMaxX(),
+	            true);
 	}
-
+	
 	/**
 	 * Perform a curve computation (fit or spline) depending on the
 	 * {@link CurveDrawingMethod}.

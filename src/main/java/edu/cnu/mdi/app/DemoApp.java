@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
-import edu.cnu.mdi.mapping.DemoMap;
+import edu.cnu.mdi.mapping.DemoMapView;
 import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
 import edu.cnu.mdi.sim.ga.triimage.ImageEvolutionDemoView;
@@ -19,7 +19,8 @@ import edu.cnu.mdi.view.JsonView;
 import edu.cnu.mdi.view.LogView;
 import edu.cnu.mdi.view.ViewManager;
 import edu.cnu.mdi.view.VirtualView;
-import edu.cnu.mdi.view.demo.NetworkLayoutDemoView;
+import edu.cnu.mdi.view.demo.geoslice.GeometrySliceDemoView;
+import edu.cnu.mdi.view.demo.layout.NetworkLayoutDemoView;
 
 /**
  * Demo application for the MDI framework.
@@ -66,6 +67,7 @@ public class DemoApp extends BaseMDIApplication {
 	private NetworkDeclutterDemoView networkDeclutterDemoView;
 	private TspDemoView tspDemoView;
 	private ImageEvolutionDemoView imageEvolutionDemoView;
+	private GeometrySliceDemoView geometrySliceDemoView;
 
 	/**
 	 * Private constructor: use {@link #getInstance()}.
@@ -78,7 +80,7 @@ public class DemoApp extends BaseMDIApplication {
 
 	@Override
 	protected int getVirtualDesktopColumns() {
-		return 7;
+		return 8;
 	} // opts in; 0 = disabled
 
 	/**
@@ -118,7 +120,7 @@ public class DemoApp extends BaseMDIApplication {
 		drawingView = DrawingView.createDrawingView();
 
 		// Map view (also loads demo GeoJSON)
-		mapView = DemoMap.createDemoMapView();
+		mapView = new DemoMapView();
 
 		// Plot view
 		plotView = SplotDemoView.createDemoView();
@@ -134,6 +136,9 @@ public class DemoApp extends BaseMDIApplication {
 
 		// Image evolution demo view
 		imageEvolutionDemoView = createImageEvolutionDemoView();
+		
+		// Geometry slice demo view
+		geometrySliceDemoView = GeometrySliceDemoView.create();
 	}
 
 	/**
@@ -151,8 +156,9 @@ public class DemoApp extends BaseMDIApplication {
 		virtualViewMove(networkDeclutterDemoView, 2, VirtualView.CENTER);
 		virtualViewMove(tspDemoView,              3, VirtualView.CENTER);
 		virtualViewMove(imageEvolutionDemoView,   5, VirtualView.CENTER);
-		virtualViewMove(logView,                  6, VirtualView.UPPERLEFT);
-		virtualViewMove(jsonView,                 6, VirtualView.BOTTOMRIGHT);	
+		virtualViewMove(geometrySliceDemoView,    6, VirtualView.CENTER);
+		virtualViewMove(logView,                  7, VirtualView.UPPERLEFT);
+		virtualViewMove(jsonView,                 7, VirtualView.BOTTOMRIGHT);	
 	}
 
 	

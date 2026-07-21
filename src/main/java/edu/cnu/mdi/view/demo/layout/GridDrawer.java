@@ -1,4 +1,4 @@
-package edu.cnu.mdi.view.demo;
+package edu.cnu.mdi.view.demo.layout;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -9,25 +9,23 @@ import edu.cnu.mdi.graphics.drawable.DrawableAdapter;
 
 public class GridDrawer extends DrawableAdapter {
 
+	// grid cell size in pixels
 	private int gridSize;
+	
+	// grid line color
 	private Color gridColor;
 
 	/**
 	 * Create a grid drawer that draws a grid of the given size and color on the
 	 * given container.
 	 *
-	 * @param container the container on which to draw the grid
 	 * @param gridSize  the size of the grid cells in pixels
 	 * @param gridColor the color of the grid lines
 	 */
-	public GridDrawer(IContainer container, int gridSize, Color gridColor) {
+	public GridDrawer(int gridSize, Color gridColor) {
 		super("SnapToGrid");
 		this.gridSize = gridSize;
 		this.gridColor = gridColor;
-
-		// this will cause the drawing to occur before items are drawn.
-		// alternatively, use setAfterDraw to draw on top of items.
-		container.setBeforeDraw(this);
 	}
 
 	/**

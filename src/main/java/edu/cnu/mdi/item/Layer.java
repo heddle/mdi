@@ -273,20 +273,6 @@ public class Layer {
         synchronized (this) { return new ArrayList<>(items); }
     }
 
-    /**
-     * Return an unmodifiable view of the items list for read-only iteration.
-     * <p>
-     * Unlike {@link #getAllItems()} this does <em>not</em> copy the list, but
-     * callers must not call methods that would mutate the layer while iterating.
-     * Prefer {@link #getAllItems()} when iteration may interleave with mutation.
-     * </p>
-     *
-     * @return an unmodifiable view of the item list
-     */
-    public List<AItem> itemsView() {
-        return Collections.unmodifiableList(items);
-    }
-
     // -------------------------------------------------------------------------
     // Drawing
     // -------------------------------------------------------------------------
@@ -520,11 +506,14 @@ public class Layer {
      *
      * @param item the item to move; no-op if not on this layer
      */
-    public void sendToFront(AItem item) {
-        synchronized (this) {
-            if (items.remove(item)) items.add(item);
-        }
-    }
+	public void sendToFront(AItem item) {
+		synchronized (this) {
+			if (items.remove(item)) {
+				items.add(item);
+				container.refresh(); // force redraw to show the new order immediately
+			}
+		}
+	}
 
     /**
      * Send an item to the very back (bottom draw order) of this layer.
@@ -533,7 +522,10 @@ public class Layer {
      */
     public void sendToBack(AItem item) {
         synchronized (this) {
-            if (items.remove(item)) items.add(0, item);
+            if (items.remove(item)) {
+            	items.add(0, item);
+                container.refresh();   // force redraw to show the new order immediately
+           }
         }
     }
 
@@ -548,6 +540,7 @@ public class Layer {
             if (src < 0 || src == items.size() - 1) return;
             items.remove(src);
             items.add(src + 1, item);
+            container.refresh();   // force redraw to show the new order immediately
         }
     }
 
@@ -562,6 +555,7 @@ public class Layer {
             if (src <= 0) return;
             items.remove(src);
             items.add(src - 1, item);
+            container.refresh();   // force redraw to show the new order immediately
         }
     }
 

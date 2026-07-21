@@ -3,6 +3,7 @@ package edu.cnu.mdi.view;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Insets;
@@ -18,7 +19,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseMotionListener;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.lang.reflect.Constructor;
@@ -42,7 +45,6 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-import edu.cnu.mdi.app.BaseMDIApplication;
 import edu.cnu.mdi.component.MagnifyWindow;
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.IContainer;
@@ -52,13 +54,17 @@ import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.feedback.IFeedbackProvider;
 import edu.cnu.mdi.format.DoubleFormat;
+import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
+import edu.cnu.mdi.hover.HoverEvent;
+import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.transfer.IFileDropHandler;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
+import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.util.PropertyUtils;
 
 /**
@@ -82,7 +88,7 @@ import edu.cnu.mdi.util.PropertyUtils;
  * and special characters that are awkward inside XML property keys, and they
  * can change between releases.  The sanitised form is stable and safe.
  * </p>
- *
+ * 
  * <h2>Persistence format</h2>
  * <p>
  * Properties are written using dotted keys: {@code prefix.x},
@@ -186,6 +192,9 @@ public class BaseView extends JInternalFrame
 
     /** Optional drag-and-drop file filter. */
     private Predicate<File> fileFilter;
+    
+    /// Temporary field used during mouse-dragged events to avoid creating new
+    protected Point2D.Double statusWP = new Point2D.Double();
 
     // -----------------------------------------------------------------------
     // Construction
@@ -474,11 +483,19 @@ public class BaseView extends JInternalFrame
                 scrollPane.getViewport().setTransferHandler(handler);
             }
         }
+        
+        // 3. The view frame itself — a fallback that covers container-less views and
+        //    any area of the frame chrome not covered by the surfaces above.
+        Component centerComponent = getCenterComponent();
+        if (centerComponent != null && centerComponent instanceof JComponent) {
+			((JComponent) centerComponent).setTransferHandler(handler);
+		}
+        else {
+        	// If there is no center component, or if it is not a JComponent, we still want to set the transfer handler on the view itself as a fallback.
+			setTransferHandler(handler);
+        }
 
-        // 3. The view frame itself — covers container-less views and acts as a
-        //    reliable fallback for any area not covered by the surfaces above.
-        setTransferHandler(handler);
-    }
+     }
 
     /**
      * Set the file filter used to screen dropped files.
@@ -766,12 +783,12 @@ public class BaseView extends JInternalFrame
             throw new IllegalStateException(
                     "initFeedback requires a container-backed view.");
         }
-        FeedbackControl fbc = getIContainer().getFeedbackControl();
+        IContainer cont = getIContainer();
+        FeedbackControl fbc = cont.getFeedbackControl();
         fbc.addFeedbackProvider(this);
 
         FeedbackPane fbp = new FeedbackPane(fg, bg, fontSize);
         fbp.setBorder(null);
-        IContainer cont = getIContainer();
         cont.setFeedbackPane(fbp);
 
         cont.getComponent().addMouseMotionListener(new MouseMotionListener() {
@@ -1131,21 +1148,19 @@ public class BaseView extends JInternalFrame
                 width  = 400; // safe fallback
                 height = 300;
                 double fraction = PropertyUtils.getFraction(props);
-                if (Double.isFinite(fraction) && fraction > 0.0 && fraction < 1.0) {
-                    BaseMDIApplication app = BaseMDIApplication.getApplication();
-                    if (app != null) {
-                        Dimension appSize = app.getSize();
-                        double aspect = PropertyUtils.getAspectRatio(props);
-                        height = (int) (fraction * appSize.height);
-                        if (aspect > 0.001) {
-                            // Width derived from requested height and aspect ratio.
-                            width = (int) (height * aspect);
-                        } else {
-                            // No aspect given: match the height fraction on width too.
-                            width = (int) (fraction * appSize.width);
-                        }
+                if (Double.isFinite(fraction) && fraction > 0.05 && fraction <= 1.0) {
+                	
+                	Dimension size = Environment.getInstance().getFrameSize();
+                    double aspect = PropertyUtils.getAspectRatio(props);
+                    height = (int) (fraction * size.height);
+                    if (aspect > 0.001) {
+                        // Width derived from requested height and aspect ratio.
+                        width = (int) (height * aspect);
+                    } else {
+                        // No aspect given: match the height fraction on width too.
+                        width = (int) (fraction * size.width);
                     }
-                }
+               }
             }
 
             // Cascading placement when explicit left/top are not given.
@@ -1438,6 +1453,26 @@ public class BaseView extends JInternalFrame
                     view.toolBar.setMaximumSize(
                             new Dimension(Integer.MAX_VALUE, slimH));
                 }
+                
+                if (view.toolBar.hasStatusField()) {
+					IContainer cont = view.getIContainer();
+					if (cont != null) {
+						Component comp = cont.getComponent();
+						if (comp != null) {
+							comp.addMouseMotionListener(new MouseMotionAdapter() {
+							    private void updateStatus(MouseEvent e) {
+							        cont.localToWorld(e.getPoint(), view.statusWP);
+							        cont.updateStatusText(e.getPoint(), view.statusWP);
+							    }
+
+							    @Override
+							    public void mouseMoved(MouseEvent e) { updateStatus(e); }
+
+							    @Override
+							    public void mouseDragged(MouseEvent e) { updateStatus(e); }
+							});						}
+					}
+				}
 
                 view.getContentPane().add(view.toolBar, BorderLayout.NORTH);
                 if (container instanceof BaseContainer) {
@@ -1486,7 +1521,81 @@ public class BaseView extends JInternalFrame
         }
     }
 
+    /**
+     * Helper method to the the annotation layer from the container, if available.
+     * @return the annotation layer, or null if no container or annotation layer is available
+     */
+	public Layer getAnnotationLayer() {
+		IContainer cont = getIContainer();
+		if (cont != null) {
+			return cont.getAnnotationLayer();
+		}
+		return null;
+	}
 
+	/**
+	 * Helper method to the get the connection layer from the container, if available.
+	 * @return the connection layer, or null if no container or connection layer is available
+	 */
+	public Layer getConnectionLayer() {
+		IContainer cont = getIContainer();
+		if (cont != null) {
+			return cont.getConnectionLayer();
+		}
+		return null;
+	}
+
+	/**
+	 * Helper method to the get the default layer from the container, if available.
+	 * @return the default layer, or null if no container or default layer is available
+	 */
+	public Layer getDefaultLayer() {
+		IContainer cont = getIContainer();
+		if (cont != null) {
+			return cont.getDefaultLayer();
+		}
+		return null;
+	}
+	
+	/**
+	 * Helper method to set the after-draw layer in the container, if available.
+	 * @param afterDraw the drawable to set as the after-draw layer
+	 */
+	public void setAfterDraw(IDrawable afterDraw) {
+		IContainer cont = getIContainer();
+		if (cont != null) {
+			cont.setAfterDraw(afterDraw);
+		}
+	}
+	
+	/**
+	 * Helper method to set the before-draw layer in the container, if available.
+	 * @param beforeDraw the drawable to set as the before-draw layer
+	 */
+	public void setBeforeDraw(IDrawable beforeDraw) {
+		IContainer cont = getIContainer();
+		if (cont != null) {
+			cont.setBeforeDraw(beforeDraw);
+		}
+	}
+
+	/**
+	 * Handle a hover event.
+	 *
+	 * <p>Subclasses can override this method to respond to hover events, which
+	 * are triggered by mouse movement with no buttons down.  The default
+	 * implementation is a no-op.</p>
+	 *
+	 * @param he the hover event
+	 */
+	public void hoverUpdate(HoverEvent he) {
+		// no-op by default; subclasses can override to respond to hover events.
+	}
+
+	public void hoverClosed(HoverEvent he) {
+		// no-op by default; subclasses can override to respond to hover close events.
+	}
+	
     // -----------------------------------------------------------------------
     // ViewKeyBindings — keyboard shortcuts
     // -----------------------------------------------------------------------
@@ -1744,4 +1853,21 @@ public class BaseView extends JInternalFrame
             }
         }
     }
+    
+	/**
+	 * Returns the Component currently in the CENTER position of the content pane,
+	 * 
+	 * @return The Component in the CENTER position, or null if empty or if the
+	 *         layout manager was changed from BorderLayout.
+	 */
+	protected Component getCenterComponent() {
+
+		Container contentPane = getContentPane();
+		if (contentPane != null && contentPane.getLayout() instanceof BorderLayout) {
+			BorderLayout layout = (BorderLayout) contentPane.getLayout();
+			return layout.getLayoutComponent(BorderLayout.CENTER);
+		}
+
+		return null;
+	}
 }

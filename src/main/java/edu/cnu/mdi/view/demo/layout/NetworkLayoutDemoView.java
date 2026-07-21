@@ -1,4 +1,4 @@
-package edu.cnu.mdi.view.demo;
+package edu.cnu.mdi.view.demo.layout;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -63,7 +63,8 @@ public class NetworkLayoutDemoView extends BaseView {
 		addToToolBar();
 
 		// add an underlying snap-to grid drawer
-		gridDrawer = new GridDrawer(getIContainer(), 20, X11Colors.getX11Color("light gray"));
+		gridDrawer = new GridDrawer(20, Color.lightGray);
+		setBeforeDraw(gridDrawer);
 
 		// add an east side panel with a control panel and feedback
 		initEastSidePanel();

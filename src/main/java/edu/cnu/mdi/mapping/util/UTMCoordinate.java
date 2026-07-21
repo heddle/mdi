@@ -5,7 +5,7 @@ public class UTMCoordinate {
     public final double northing;
     public final int zone;
     public final char letter; // Latitude band
-    private boolean ousideRange = false;
+    private boolean outsideRange = false;
 
     /**
 	 * Constructs a UTM coordinate with the given parameters.
@@ -25,17 +25,17 @@ public class UTMCoordinate {
     /**
 	 * Constructs a UTM coordinate representing an out-of-range location.
 	 */
-    public UTMCoordinate(boolean ousideRange) {
+    public UTMCoordinate(boolean outsideRange) {
 		this.easting = 0;
 		this.northing = 0;
 		this.zone = 0;
 		this.letter = ' ';
-		this.ousideRange = ousideRange;
+		this.outsideRange = outsideRange;
 	}
 
     @Override
     public String toString() {
-    	return ousideRange ? "outside valid range" :
+    	return outsideRange ? "outside valid range" :
         String.format("%d%c %.2f E, %.2f N", zone, letter, easting, northing);
     }
 }

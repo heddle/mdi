@@ -6,6 +6,7 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 
 import javax.swing.JComponent;
+import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
@@ -30,6 +32,10 @@ import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.world.WorldPolygon;
+import edu.cnu.mdi.hover.HoverEvent;
+import edu.cnu.mdi.hover.HoverInfoWindow;
+import edu.cnu.mdi.hover.HoverListener;
+import edu.cnu.mdi.hover.HoverManager;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.ItemChangeListener;
 import edu.cnu.mdi.item.ItemChangeType;
@@ -93,7 +99,7 @@ import edu.cnu.mdi.view.BaseView;
  * </pre>
  */
 @SuppressWarnings("serial")
-public class BaseContainer extends JComponent implements IContainer, ItemChangeListener {
+public class BaseContainer extends JComponent implements IContainer, ItemChangeListener, HoverListener {
 
     /**
      * The user-managed z-layers (does NOT include protected layers).
@@ -125,6 +131,9 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 
     /** Previous world system (used to undo last zoom). */
     protected Rectangle2D.Double _previousWorldSystem;
+    
+	/** Lazily-created popup window used for hover messages. */
+	protected HoverInfoWindow hoverWindow;
 
     /**
      * Default user content layer (drawn between connection and annotation layers).
@@ -878,20 +887,30 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 		localToWorld(me.getPoint(), wp);
 		return wp;
 	}
+	
+	/**
+	 * Update the toolbar status text with the current mouse location.
+	 *
+	 * @param pp the current mouse location in local (screen) coordinates
+	 * @param wp the current mouse location in world coordinates
+	 */
+	@Override
+	public void updateStatusText(Point pp, Point2D.Double wp) {
+		if (_toolBar != null && _toolBar.hasStatusField()) {
+			String statusText = String.format("Local: (%d, %d) World: (%.2f, %.2f)", pp.x, pp.y, wp.x, wp.y);
+			_toolBar.updateStatusText(statusText);
+		}	
+	}
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * <p>Updates the toolbar status text (if present) and feedback control (if present) with
+	 * the current mouse location in both local and world coordinates.</p>
 	 */
 	@Override
 	public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging) {
 		Point2D.Double wp = getLocation(mouseEvent);
-		Point pp = mouseEvent.getPoint();
-
-		// Update toolbar text (if present)
-		if (_toolBar != null) {
-			String statusText = String.format("Local: (%d, %d) World: (%.2f, %.2f)", pp.x, pp.y, wp.x, wp.y);
-			_toolBar.updateStatusText(statusText);
-		}
 
 		// Update feedback (if present)
 		if (_feedbackControl != null) {
@@ -1144,9 +1163,54 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 		return image;
 	}
 
+	/**
+	 * Releases hover resources held by this container.
+	 */
 	@Override
 	public void prepareForExit() {
-		// no op
+		HoverManager.getInstance().unregisterComponent(getComponent());
+
+		if (hoverWindow != null) {
+			hoverWindow.hideMessage();
+			hoverWindow.dispose();
+			hoverWindow = null;
+		}
+	}
+
+	/**
+	 * Lazily creates the hover popup window.
+	 *
+	 * @return the hover popup, or {@code null} if the component is not yet realized
+	 */
+	@Override
+	public HoverInfoWindow getHoverWindow() {
+		if (hoverWindow == null) {
+			Window owner = SwingUtilities.getWindowAncestor(getComponent());
+			if (owner == null) {
+				return null;
+			}
+			hoverWindow = new HoverInfoWindow(owner);
+		}
+		return hoverWindow;
+	}
+
+
+	@Override
+	public void hoverUp(HoverEvent he) {
+		if (_view != null) {
+			_view.hoverUpdate(he);
+		}
+	}
+
+	@Override
+	public void hoverDown(HoverEvent he) {
+		if (hoverWindow != null) {
+			hoverWindow.hideMessage();
+		}
+		if (_view != null) {
+			_view.hoverClosed(he);
+		}
+
 	}
 
 }

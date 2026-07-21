@@ -11,6 +11,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.mapping.container.MapContainer;
+import edu.cnu.mdi.mapping.graphics.MapGraphics;
 import edu.cnu.mdi.mapping.theme.MapTheme;
 
 /**
@@ -70,7 +72,7 @@ public class MollweideProjection implements IMapProjection {
     private static final double MIN_LAT = -MAX_LAT;
 
     private static final int NUM_SEGMENTS = 360;
-
+    
     // -------------------------------------------------------------------------
     // State
     // -------------------------------------------------------------------------
@@ -275,34 +277,19 @@ public class MollweideProjection implements IMapProjection {
 
     /**
      * {@inheritDoc}
-     *
-     * <p>Samples 360 evenly spaced longitudes at the given latitude and
-     * connects the projected screen points. Uses
-     * {@link MapTheme#getGraticuleColor()} — <em>not</em> a hardcoded color —
-     * so the line color correctly reflects the active theme.</p>
+     * Draws a horizontal line across the map at the given latitude. The line is
+     * clipped to the Mollweide ellipse boundary, so it may be shorter than the
+     * full width of the map if the latitude is near the poles. Uses
+     * {@link MapTheme#getGraticuleColor()} so the color respects theme switching.
      */
     @Override
     public void drawLatitudeLine(Graphics2D g2, IContainer container, double latitude) {
-        double lat = Math.max(MIN_LAT, Math.min(MAX_LAT, latitude));
-
-        Path2D path = new Path2D.Double();
-        Point2D.Double latLon = new Point2D.Double();
-        Point2D.Double xy     = new Point2D.Double();
-        Point screen          = new Point();
-
-        latLon.y = lat;
-        for (int i = 0; i <= NUM_SEGMENTS; i++) {
-            latLon.x = -Math.PI + 2.0 * Math.PI * i / NUM_SEGMENTS;
-            latLonToXY(latLon, xy);
-            container.worldToLocal(screen, xy);
-            if (i == 0) path.moveTo(screen.x, screen.y);
-            else        path.lineTo(screen.x, screen.y);
-        }
-
-        Color oldColor = g2.getColor();
-        g2.setColor(theme.getGraticuleColor());   // fixed: was Color.LIGHT_GRAY
-        g2.draw(path);
-        g2.setColor(oldColor);
+    	
+    	if (latitude < MIN_LAT || latitude > MAX_LAT) {
+			return; // Latitude is out of bounds, so skip drawing
+		}
+    	MapGraphics.drawHorizontalLatitudeLine(g2, (MapContainer)container, latitude,
+    			getCentralLongitude(), theme);
     }
 
     /**
@@ -395,4 +382,5 @@ public class MollweideProjection implements IMapProjection {
         path.closePath();
         return path;
     }
+     
 }

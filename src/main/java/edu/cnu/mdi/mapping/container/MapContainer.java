@@ -1,7 +1,6 @@
 package edu.cnu.mdi.mapping.container;
 
 import java.awt.Point;
-import java.awt.Window;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
@@ -12,20 +11,15 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.ImageIcon;
-import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.BaseToolHandler;
-import edu.cnu.mdi.hover.HoverEvent;
-import edu.cnu.mdi.hover.HoverInfoWindow;
-import edu.cnu.mdi.hover.HoverListener;
 import edu.cnu.mdi.hover.HoverManager;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.mapping.item.MapMilSymbolItem;
 import edu.cnu.mdi.mapping.milsym.MilSymbolDescriptor;
 import edu.cnu.mdi.mapping.milsym.MilSymbolTransferable;
-import edu.cnu.mdi.mapping.projection.EProjection;
 import edu.cnu.mdi.mapping.projection.IMapProjection;
 import edu.cnu.mdi.mapping.projection.LambertEqualAreaProjection;
 import edu.cnu.mdi.mapping.projection.MercatorProjection;
@@ -39,10 +33,10 @@ import edu.cnu.mdi.util.UnicodeUtils;
  * of military symbols.
  */
 @SuppressWarnings("serial")
-public class MapContainer extends BaseContainer implements HoverListener {
+public class MapContainer extends BaseContainer {
 
-	/** Lazily-created popup window used for hover country names. */
-	private HoverInfoWindow hoverWindow;
+	// Reusable point objects to avoid unnecessary allocations during coordinate conversions.
+	Point2D.Double latLonPoint = new Point2D.Double();
 
 	/**
 	 * Creates a map container with the given initial world coordinate system.
@@ -105,6 +99,32 @@ public class MapContainer extends BaseContainer implements HoverListener {
 		setDirty(true);
 		refresh();
 	}
+	
+	public void zoomLatLon(double minLat, double maxLat, double minLon, double maxLon) {
+			
+		prepareToZoom();
+		//convert bounds to world coordinates
+		Point2D.Double ll = new Point2D.Double();
+		getMapView2D().getProjection().latLonToXY(new Point2D.Double
+				(Math.toRadians(minLon), Math.toRadians(minLat)), ll);
+		
+		double txmin = ll.x;
+		double tymin = ll.y;
+		getMapView2D().getProjection().latLonToXY(new Point2D.Double
+				(Math.toRadians(maxLon), Math.toRadians(maxLat)), ll);
+		double txmax = ll.x;
+		double tymax = ll.y;
+		
+		double xmin = Math.min(txmin, txmax);
+		double xmax = Math.max(txmin, txmax);
+		double ymin = Math.min(tymin, tymax);
+		double ymax = Math.max(tymin, tymax);
+		
+		_worldSystem = new Rectangle2D.Double(xmin, ymin, xmax - xmin, ymax - ymin);
+		setDirty(true);
+		refresh();
+	}
+
 
 	@Override
 	public void recenter(Point pp) {
@@ -192,7 +212,8 @@ public class MapContainer extends BaseContainer implements HoverListener {
 	 * Converts a screen-space point to geographic lon/lat in radians.
 	 *
 	 * @param pp screen-space point
-	 * @param ll output geographic point
+	 * @param ll A geographic point is represented as a {@link Point2D.Double} where
+     * {@code x = λ} (longitude) and {@code y = φ} (latitude).
 	 */
 	public void localToLatLon(Point pp, Point2D.Double ll) {
 		Point2D.Double wp = new Point2D.Double();
@@ -204,7 +225,8 @@ public class MapContainer extends BaseContainer implements HoverListener {
 	 * Converts geographic lon/lat in radians to screen-space coordinates.
 	 *
 	 * @param pp output screen-space point
-	 * @param ll input geographic point
+	 * @param ll A geographic point is represented as a {@link Point2D.Double} where
+     * {@code x = λ} (longitude) and {@code y = φ} (latitude) in radians.
 	 */
 	public void latLonToLocal(Point pp, Point2D.Double ll) {
 		Point2D.Double wp = new Point2D.Double();
@@ -215,11 +237,67 @@ public class MapContainer extends BaseContainer implements HoverListener {
 	/**
 	 * Converts projection world coordinates to geographic lon/lat.
 	 *
-	 * @param ll output geographic point
+	 * @param ll A geographic point is represented as a {@link Point2D.Double} where
+     * {@code x = λ} (longitude) and {@code y = φ} (latitude).
 	 * @param wp input world point
 	 */
 	public void worldToLatLon(Point2D.Double ll, Point2D.Double wp) {
 		getMapView2D().getProjection().latLonFromXY(ll, wp);
+	}
+
+	/**
+	 * Update the toolbar status text with the current mouse location.
+	 *
+	 * @param pp the current mouse location in local (screen) coordinates
+	 * @param wp the current mouse location in world coordinates
+	 */
+	@Override
+	public void updateStatusText(Point pp, Point2D.Double wp) {
+	    if ((_toolBar == null) || !_toolBar.hasStatusField()) {
+	        return;
+	    }
+
+	    worldToLatLon(latLonPoint, wp);
+
+	    double latDeg = Math.toDegrees(latLonPoint.y);
+	    double lonDeg = Math.toDegrees(latLonPoint.x);
+
+	    String latLon = String.format("%.2f%s %s, %.2f%s %s",
+	            Math.abs(latDeg), UnicodeUtils.DEGREE, (latDeg >= 0.0) ? "N" : "S",
+	            Math.abs(lonDeg), UnicodeUtils.DEGREE, (lonDeg >= 0.0) ? "E" : "W");
+
+	    double elevation = getMapView2D().getElevation(latDeg, lonDeg);
+	    if (!Double.isNaN(elevation)) {
+	        boolean onLand = getMapView2D().onLand(pp, this);
+	        latLon += "   " + formatElevationStatus(elevation, onLand);
+	    }
+
+	    _toolBar.updateStatusText(latLon);
+	}
+	
+	/**
+	 * Formats the elevation status string for display in the toolbar.
+	 *
+	 * @param elevationMeters the elevation in meters
+	 * @param onLand          {@code true} if the point is on land, {@code false} if over water
+	 * @return a formatted string representing the elevation or depth
+	 */
+	public static String formatElevationStatus(double elevationMeters, boolean onLand) {
+	    long meters = Math.round(elevationMeters);
+
+	    if ((meters < 0) && !onLand) {
+	        return String.format("depth %,d m", Math.abs(meters));
+	    }
+
+	    return "elev " + formatSignedMeters(meters) + " m";
+	}
+	
+	private static String formatSignedMeters(long meters) {
+	    if (meters < 0) {
+	        return "\u2212" + String.format("%,d", Math.abs(meters));
+	    }
+
+	    return String.format("%,d", meters);
 	}
 
 	@Override
@@ -228,52 +306,6 @@ public class MapContainer extends BaseContainer implements HoverListener {
 
 		if (_feedbackControl != null) {
 			_feedbackControl.updateFeedback(mouseEvent, wp, dragging);
-		}
-
-		if (_toolBar != null) {
-			Point2D.Double ll = new Point2D.Double();
-			worldToLatLon(ll, wp);
-			String latLon = String.format("%.2f%s %s, %.2f%s %s", Math.abs(Math.toDegrees(ll.y)), UnicodeUtils.DEGREE,
-					(ll.y >= 0) ? "N" : "S", Math.abs(Math.toDegrees(ll.x)), UnicodeUtils.DEGREE,
-					(ll.x >= 0) ? "E" : "W");
-			_toolBar.updateStatusText(latLon);
-		}
-	}
-
-	@Override
-	public void hoverUp(HoverEvent he) {
-		Point p = he.getLocation();
-		String countryName = getMapView2D().getCountryAtPoint(p, this);
-		if (countryName == null) {
-			return;
-		}
-
-		HoverInfoWindow win = getHoverWindow();
-		if (win == null) {
-			return;
-		}
-
-		SwingUtilities.convertPointToScreen(p, he.getSource());
-		win.showMessage(countryName, p);
-	}
-
-	@Override
-	public void hoverDown(HoverEvent he) {
-		if (hoverWindow != null) {
-			hoverWindow.hideMessage();
-		}
-	}
-
-	/**
-	 * Releases hover resources held by this container.
-	 */
-	public void prepareForExit() {
-		HoverManager.getInstance().unregisterComponent(getComponent());
-
-		if (hoverWindow != null) {
-			hoverWindow.hideMessage();
-			hoverWindow.dispose();
-			hoverWindow = null;
 		}
 	}
 
@@ -291,19 +323,4 @@ public class MapContainer extends BaseContainer implements HoverListener {
 		return (MapView2D) getView();
 	}
 
-	/**
-	 * Lazily creates the hover popup window.
-	 *
-	 * @return the hover popup, or {@code null} if the component is not yet realized
-	 */
-	private HoverInfoWindow getHoverWindow() {
-		if (hoverWindow == null) {
-			Window owner = SwingUtilities.getWindowAncestor(getComponent());
-			if (owner == null) {
-				return null;
-			}
-			hoverWindow = new HoverInfoWindow(owner);
-		}
-		return hoverWindow;
-	}
 }

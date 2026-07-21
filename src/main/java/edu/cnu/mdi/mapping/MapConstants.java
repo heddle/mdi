@@ -30,6 +30,16 @@ public final class MapConstants {
      * city with a known population is shown.</p>
      */
     public static final int MAX_POP_SLIDER_VALUE = 2_000_000;
+    
+    /**
+	 * Default value of the minimum-population slider used by
+	 * {@link MapControlPanel} and the initial population threshold applied in
+	 * {@link MapView2D#setProjection(EProjection)}.
+	 *
+	 * <p>Cities whose recorded population is below this value are hidden on
+	 * first render.</p>
+	 */
+    public static final int MIN_POP_DEFAULT = 1_000_000;
 
     /**
      * The default map projection shown when a new {@link MapView2D} is created

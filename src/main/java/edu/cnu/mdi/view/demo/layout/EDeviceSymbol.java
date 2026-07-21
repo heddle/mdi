@@ -1,4 +1,4 @@
-package edu.cnu.mdi.view.demo;
+package edu.cnu.mdi.view.demo.layout;
 
 import edu.cnu.mdi.util.Environment;
 
