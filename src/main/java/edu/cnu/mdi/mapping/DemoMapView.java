@@ -15,6 +15,7 @@ import java.util.List;
 import javax.swing.JCheckBox;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.mapping.container.MapContainer;
 import edu.cnu.mdi.mapping.loader.Etopo5Loader;
@@ -97,76 +98,102 @@ public class DemoMapView extends MapView2D {
 		}
 	}
 	
-	private void drawEtopo5(Graphics2D g, IContainer container) {
-	    if (etopo5 == null) {
-	        return;
-	    }
+	   /**
+     * Draws ETOPO5 terrain and bathymetry over the visible part of the map.
+     *
+     * <p>
+     * The loop is intentionally restricted to the intersection of the projection
+     * clip, component bounds, and current graphics clip. Projection clip bounds can
+     * become very large when zoomed in, so iterating over the raw map-clip bounds
+     * would waste time checking many offscreen pixels.
+     * </p>
+     *
+     * @param g         graphics context
+     * @param container rendering container
+     */
+    private void drawEtopo5(Graphics2D g, IContainer container) {
+        if (etopo5 == null || container == null) {
+            return;
+        }
 
-	    Shape mapClip = getProjection().createClipShape(container);
-	    if (mapClip == null) {
-	        return;
-	    }
+        Shape mapClip = getProjection().createClipShape(container);
+        if (mapClip == null) {
+            return;
+        }
 
-	    Shape oldClip = g.getClip();
-	    Composite oldComposite = g.getComposite();
-	    Color oldColor = g.getColor();
+        Shape oldClip = g.getClip();
+        Composite oldComposite = g.getComposite();
+        Color oldColor = g.getColor();
 
-	    try {
-	        g.clip(mapClip);
+        try {
+            g.clip(mapClip);
+            
+            g.setComposite(
+                    AlphaComposite.getInstance(
+                        AlphaComposite.SRC_OVER, 0.75f));
 
-	        Rectangle bounds = mapClip.getBounds();
 
-	        // Larger blocks are faster; smaller blocks look smoother.
-	        // For a demo, 2 is a nice compromise.
-	        final int step = 2;
+            Rectangle visible = container.getComponent().getBounds();
+            visible.x = 0;
+            visible.y = 0;
 
-	        Point screen = new Point();
-	        Point2D.Double world = new Point2D.Double();
-	        Point2D.Double latLon = new Point2D.Double();
+            Rectangle drawBounds = mapClip.getBounds().intersection(visible);
 
-	        // Slight transparency lets country outlines/fills still read through.
-	        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f));
+            Rectangle graphicsClip = g.getClipBounds();
+            if (graphicsClip != null) {
+                drawBounds = drawBounds.intersection(graphicsClip);
+            }
 
-	        for (int y = bounds.y; y < bounds.y + bounds.height; y += step) {
-	            for (int x = bounds.x; x < bounds.x + bounds.width; x += step) {
+            if (drawBounds.isEmpty()) {
+                return;
+            }
 
-	                // Sample at the center of the block.
-	                screen.setLocation(x + step / 2, y + step / 2);
+            final int step = 2;
 
-	                // Cheap rejection before doing projection math.
-	                if (!mapClip.contains(screen)) {
-	                    continue;
-	                }
+            Point screen = new Point();
+            Point2D.Double world = new Point2D.Double();
+            Point2D.Double latLon = new Point2D.Double();
 
-	                container.localToWorld(screen, world);
-	                getProjection().latLonFromXY(latLon, world);
+            int xMax = drawBounds.x + drawBounds.width;
+            int yMax = drawBounds.y + drawBounds.height;
 
-	                if (!Double.isFinite(latLon.x) || !Double.isFinite(latLon.y)) {
-	                    continue;
-	                }
+            for (int y = drawBounds.y; y < yMax; y += step) {
+                for (int x = drawBounds.x; x < xMax; x += step) {
+                    screen.setLocation(x + step / 2, y + step / 2);
 
-	                if (!getProjection().isPointVisible(latLon)) {
-	                    continue;
-	                }
+                    if (!mapClip.contains(screen)) {
+                        continue;
+                    }
 
-	                double lonDeg = Math.toDegrees(latLon.x);
-	                double latDeg = Math.toDegrees(latLon.y);
+                    container.localToWorld(screen, world);
+                    getProjection().latLonFromXY(latLon, world);
 
-	                double elevation = etopo5.getInterpolatedElevationMeters(latDeg, lonDeg);
-	                if (Double.isNaN(elevation)) {
-	                    continue;
-	                }
+                    if (!Double.isFinite(latLon.x) || !Double.isFinite(latLon.y)) {
+                        continue;
+                    }
 
-	                g.setColor(etopo5Color(elevation));
-	                g.fillRect(x, y, step, step);
-	            }
-	        }
-	    } finally {
-	        g.setClip(oldClip);
-	        g.setComposite(oldComposite);
-	        g.setColor(oldColor);
-	    }
-	}
+                    if (!getProjection().isPointVisible(latLon)) {
+                        continue;
+                    }
+
+                    double lonDeg = Math.toDegrees(latLon.x);
+                    double latDeg = Math.toDegrees(latLon.y);
+
+                    double elevation = etopo5.getInterpolatedElevationMeters(latDeg, lonDeg);
+                    if (Double.isNaN(elevation)) {
+                        continue;
+                    }
+
+                    g.setColor(etopo5Color(elevation));
+                    g.fillRect(x, y, step, step);
+                }
+            }
+        } finally {
+            g.setClip(oldClip);
+            g.setComposite(oldComposite);
+            g.setColor(oldColor);
+        }
+    }
 	
 	private static Color etopo5Color(double elevationMeters) {
 	    if (elevationMeters < 0.0) {
@@ -273,7 +300,8 @@ public class DemoMapView extends MapView2D {
 		return new Object[] {
 				PropertyUtils.TITLE, "Sample 2D Map View",
 				PropertyUtils.FRACTION, 0.6,
-				PropertyUtils.ASPECT, 1.4, 
+				PropertyUtils.BOXZOOMRBPOLICY, ARubberband.Policy.RECTANGLE,
+				PropertyUtils.ASPECT, 1.2, 
 				PropertyUtils.CONTAINERFACTORY, mapContainerFactory,
 				PropertyUtils.TOOLBARBITS, ToolBits.MAPTOOLS | ToolBits.ZOOMTOOLS, 
 				PropertyUtils.WHEELZOOM, true		};

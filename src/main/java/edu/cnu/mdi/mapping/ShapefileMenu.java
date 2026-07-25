@@ -51,7 +51,7 @@ import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader;
  *
  * <h2>Programmatic layers</h2>
  * <p>Layers added at startup via
- * {@link MapView2D#addShapefileLayer(ShapeFeatureRenderer, String)} are automatically
+ * {@link MapView2D#addShapefile(ShapeFeatureRenderer, String)} are automatically
  * reflected in the menu with a checkbox. The menu does not need to know
  * whether a layer came from user interaction or from code.</p>
  *
@@ -122,7 +122,7 @@ public class ShapefileMenu extends JMenu {
     /**
      * Registers a newly added layer in the menu by appending a
      * {@link JCheckBoxMenuItem} for it. Called automatically by
-     * {@link MapView2D#addShapefileLayer(ShapeFeatureRenderer, String)} so that both
+     * {@link MapView2D#addShapefile(ShapeFeatureRenderer, String)} so that both
      * programmatic and interactive layers appear in the menu.
      *
      * @param renderer the layer renderer; must not be {@code null}
@@ -176,7 +176,7 @@ public class ShapefileMenu extends JMenu {
                     new ShapeFeatureRenderer(features, mapView.getProjection(), style);
 
             // addLayer notifies the menu via registerLayer automatically.
-            mapView.addShapefileLayer(renderer, name);
+            mapView.addShapefile(renderer, name);
 
         } catch (IOException ex) {
             Log.getInstance().error("Failed to load shapefile: " + shpPath

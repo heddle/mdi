@@ -28,6 +28,7 @@ import edu.cnu.mdi.hover.HoverEvent;
 import edu.cnu.mdi.hover.HoverInfoWindow;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.mapping.container.MapContainer;
+import edu.cnu.mdi.mapping.container.ShapefileLayer;
 import edu.cnu.mdi.mapping.loader.GeoJsonCityLoader;
 import edu.cnu.mdi.mapping.loader.GeoJsonCountryLoader;
 import edu.cnu.mdi.mapping.loader.GeoJsonCountryLoader.CountryFeature;
@@ -173,7 +174,7 @@ public class MapView2D extends BaseView {
 
 	/**
 	 * Ordered list of additional rendering layers added via
-	 * {@link #addShapefileLayer(ShapeFeatureRenderer)}. Drawn after countries and
+	 * {@link #addShapefile(ShapeFeatureRenderer)}. Drawn after countries and
 	 * before cities so that vector overlays (rivers, lakes, etc.) appear beneath
 	 * city markers.
 	 */
@@ -551,8 +552,8 @@ public class MapView2D extends BaseView {
 	 *
 	 * @param renderer the layer to add; must not be {@code null}
 	 */
-	public void addShapefileLayer(ShapeFeatureRenderer renderer) {
-		addShapefileLayer(renderer, "Layer " + (extraLayers.size() + 1));
+	public void addShapefile(ShapeFeatureRenderer renderer) {
+		addShapefile(renderer, "Layer " + (extraLayers.size() + 1));
 	}
 
 	/**
@@ -561,18 +562,19 @@ public class MapView2D extends BaseView {
 	 *
 	 * <p>
 	 * This is the preferred overload for startup layers added from application
-	 * code. The anonymous overload {@link #addShapefileLayer(ShapeFeatureRenderer)}
+	 * code. The anonymous overload {@link #addShapefile(ShapeFeatureRenderer)}
 	 * still works but produces a menu entry with no display name.
 	 * </p>
 	 *
 	 * @param renderer the layer to add; must not be {@code null}
 	 * @param name     display name shown in the Shapefiles menu
 	 */
-	public void addShapefileLayer(ShapeFeatureRenderer renderer, String name) {
+	public void addShapefile(ShapeFeatureRenderer renderer, String name) {
+		
+		// put the shapefile in its own MDI layer
+		new ShapefileLayer(getIContainer(), name, renderer);
+		
 		extraLayers.add(Objects.requireNonNull(renderer, "renderer"));
-		if (shapefileMenu != null) {
-			shapefileMenu.registerLayer(renderer, name);
-		}
 		refresh();
 	}
 
@@ -602,7 +604,7 @@ public class MapView2D extends BaseView {
 
 			List<ShapeFeature> features = new ShapefileFeatureLoader().load(path);
 			ShapeFeatureRenderer renderer = new ShapeFeatureRenderer(features, mapView.getProjection(), style);
-			mapView.addShapefileLayer(renderer, name);
+			mapView.addShapefile(renderer, name);
 			Log.getInstance().info("Shapefile loaded: " + path.toAbsolutePath());
 			return features;
 		} catch (IOException e) {
@@ -932,13 +934,8 @@ public class MapView2D extends BaseView {
 					gratRenderer.render(g, container);
 				}
 
-				// 6. Extra layers: rivers, lakes, and any other shapefile
-				// overlays added via addLayer(), in insertion order.
-				for (ShapeFeatureRenderer layer : extraLayers) {
-					layer.render(g, container);
-				}
 
-				// 7. City dots and labels (null-safe)
+				// 6. City dots and labels (null-safe)
 				if (cityRenderer != null) {
 					cityRenderer.render(g, container);
 				}
