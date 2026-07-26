@@ -1,4 +1,4 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.shapefile;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -13,11 +13,7 @@ import javax.swing.JSeparator;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import edu.cnu.mdi.log.Log;
-import edu.cnu.mdi.mapping.shapefile.ShapeFeature;
-import edu.cnu.mdi.mapping.shapefile.ShapeFeatureRenderer;
-import edu.cnu.mdi.mapping.shapefile.ShapeFeatureStyle;
-import edu.cnu.mdi.mapping.shapefile.ShapefileFeatureLoader;
-import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader;
+import edu.cnu.mdi.mapping.MapView2D;
 
 /**
  * A {@link JMenu} that provides interactive shapefile loading and per-layer

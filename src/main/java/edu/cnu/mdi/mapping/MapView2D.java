@@ -45,6 +45,7 @@ import edu.cnu.mdi.mapping.shapefile.ShapeFeature;
 import edu.cnu.mdi.mapping.shapefile.ShapeFeatureRenderer;
 import edu.cnu.mdi.mapping.shapefile.ShapeFeatureStyle;
 import edu.cnu.mdi.mapping.shapefile.ShapefileFeatureLoader;
+import edu.cnu.mdi.mapping.shapefile.ShapefileMenu;
 import edu.cnu.mdi.mapping.theme.MapTheme;
 import edu.cnu.mdi.mapping.util.GeoUtils;
 import edu.cnu.mdi.mapping.util.UTMCoordinate;
