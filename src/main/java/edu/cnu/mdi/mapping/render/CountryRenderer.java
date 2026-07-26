@@ -145,32 +145,79 @@ public class CountryRenderer {
     // -------------------------------------------------------------------------
 
     /**
-     * Renders all country features onto the given graphics context.
+     * Renders country fills and borders.
      *
-     * <p>This method rebuilds the internal hit-test cache on every call, which
-     * is necessary because the projection may have been re-centered or the
-     * container resized since the last render. The graphics state (color,
-     * stroke, antialiasing hint) is fully saved before rendering and restored
-     * afterward.</p>
+     * <p>
+     * This method preserves the original public behavior. Use
+     * {@link #renderFill(Graphics2D, IContainer)} or
+     * {@link #renderBorders(Graphics2D, IContainer)} when fills and borders
+     * are hosted by separate MDI layers.
+     * </p>
      *
-     * @param g2        graphics context to draw into; must not be {@code null}
-     * @param container container providing the world-to-local transform;
-     *                  must not be {@code null}
+     * @param g2        graphics context
+     * @param container rendering container
      */
     public void render(Graphics2D g2, IContainer container) {
-        Objects.requireNonNull(g2,        "g2");
+        renderInternal(g2, container, fillLand, drawBorders);
+    }
+
+    /**
+     * Renders country polygon fills without drawing political boundaries.
+     *
+     * @param g2        graphics context
+     * @param container rendering container
+     */
+    public void renderFill(Graphics2D g2, IContainer container) {
+        renderInternal(g2, container, true, false);
+    }
+
+    /**
+     * Renders country political boundaries without filling the polygons.
+     *
+     * @param g2        graphics context
+     * @param container rendering container
+     */
+    public void renderBorders(Graphics2D g2, IContainer container) {
+        renderInternal(g2, container, false, true);
+    }
+
+    /**
+     * Performs the common country rendering work.
+     *
+     * <p>
+     * The projected polygon cache is rebuilt on every call. This allows either
+     * the fill layer or the boundary layer to remain visible independently while
+     * preserving country picking.
+     * </p>
+     *
+     * @param g2          graphics context
+     * @param container   rendering container
+     * @param renderFill  whether polygon interiors should be filled
+     * @param renderBorder whether political boundaries should be drawn
+     */
+    private void renderInternal(
+            Graphics2D g2,
+            IContainer container,
+            boolean renderFill,
+            boolean renderBorder) {
+
+        Objects.requireNonNull(g2, "g2");
         Objects.requireNonNull(container, "container");
 
-        // Rebuild the hit-test cache for this render pass.
         countryCache.clear();
 
         Component comp = container.getComponent();
-        if (comp.getWidth() <= 0 || comp.getHeight() <= 0) return;
+        if (comp.getWidth() <= 0 || comp.getHeight() <= 0) {
+            return;
+        }
 
-        Object oldAA = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+        Object oldAA =
+                g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+
         if (useAntialias) {
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(
+                    RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
         }
 
         Rectangle2D xyBounds = projection.getXYBounds();
@@ -180,28 +227,39 @@ public class CountryRenderer {
         }
 
         Stroke oldStroke = g2.getStroke();
-        Color  oldColor  = g2.getColor();
+        Color oldColor = g2.getColor();
 
-        MapTheme theme       = projection.getTheme();
-        Color    landColor   = fillLand    ? theme.getLandColor()   : null;
-        Color    borderColor = drawBorders ? theme.getBorderColor() : null;
+        try {
+            MapTheme theme = projection.getTheme();
 
-        // Use the theme's border stroke; fall back to a sensible default
-        // rather than hardcoding a width here.
-        Stroke borderStroke = theme.getBorderStroke();
-        if (borderStroke == null) {
-            borderStroke = new BasicStroke(0.5f);
+            Color landColor =
+                    renderFill ? theme.getLandColor() : null;
+
+            Color borderColor =
+                    renderBorder ? theme.getBorderColor() : null;
+
+            Stroke borderStroke = theme.getBorderStroke();
+            if (borderStroke == null) {
+                borderStroke = new BasicStroke(0.5f);
+            }
+
+            for (GeoJsonCountryLoader.CountryFeature country
+                    : countryFeatures) {
+
+                drawCountryShape(
+                        g2,
+                        container,
+                        country,
+                        landColor,
+                        borderColor,
+                        borderStroke);
+            }
+        } finally {
+            g2.setStroke(oldStroke);
+            g2.setColor(oldColor);
+            resetAntialias(g2, oldAA);
         }
-
-        for (GeoJsonCountryLoader.CountryFeature country : countryFeatures) {
-            drawCountryShape(g2, container, country, landColor, borderColor, borderStroke);
-        }
-
-        g2.setStroke(oldStroke);
-        g2.setColor(oldColor);
-        resetAntialias(g2, oldAA);
     }
-
     // -------------------------------------------------------------------------
     // Hit-testing
     // -------------------------------------------------------------------------

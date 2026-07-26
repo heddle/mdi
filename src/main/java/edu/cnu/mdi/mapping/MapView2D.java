@@ -26,9 +26,9 @@ import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.hover.HoverEvent;
 import edu.cnu.mdi.hover.HoverInfoWindow;
+import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.mapping.container.MapContainer;
-import edu.cnu.mdi.mapping.container.ShapefileLayer;
 import edu.cnu.mdi.mapping.loader.GeoJsonCityLoader;
 import edu.cnu.mdi.mapping.loader.GeoJsonCountryLoader;
 import edu.cnu.mdi.mapping.loader.GeoJsonCountryLoader.CountryFeature;
@@ -39,6 +39,8 @@ import edu.cnu.mdi.mapping.render.CityPointRenderer;
 import edu.cnu.mdi.mapping.render.CountryRenderer;
 import edu.cnu.mdi.mapping.render.GraticuleRenderer;
 import edu.cnu.mdi.mapping.render.IPickable;
+import edu.cnu.mdi.mapping.loader.Etopo5Loader;
+import edu.cnu.mdi.mapping.render.Etopo5Renderer;
 import edu.cnu.mdi.mapping.shapefile.ShapeFeature;
 import edu.cnu.mdi.mapping.shapefile.ShapeFeatureRenderer;
 import edu.cnu.mdi.mapping.shapefile.ShapeFeatureStyle;
@@ -137,6 +139,15 @@ public class MapView2D extends BaseView {
 	 * </p>
 	 */
 	private List<GeoJsonCityLoader.CityFeature> cities;
+	
+	/** MDI layer that renders country polygon interiors. */
+	private Layer countryFillLayer;
+
+	/** MDI layer that renders country political boundaries. */
+	private Layer countryBoundaryLayer;
+	
+	/** MDI layer that renders the loaded GeoJSON city features. */
+	private Layer cityLayer;
 
 	// -------------------------------------------------------------------------
 	// Instance state — renderers
@@ -147,6 +158,12 @@ public class MapView2D extends BaseView {
 
 	/** Graticule renderer backed by the active projection. */
 	private GraticuleRenderer gratRenderer;
+	
+	/** Renderer for optional ETOPO5 terrain and bathymetry. */
+	private Etopo5Renderer etopo5Renderer;
+
+	/** MDI layer that hosts the ETOPO5 renderer. */
+	private Layer etopo5Layer;
 
 	/**
 	 * Persisted graticule "adaptive spacing" preference. Stored on the view
@@ -155,6 +172,9 @@ public class MapView2D extends BaseView {
 	 * choice survives a projection switch. Defaults to {@code true}.
 	 */
 	private boolean graticuleAdaptive = true;
+	
+	/** MDI layer that renders the standard map graticule. */
+	private Layer graticuleLayer;
 
 	/**
 	 * Persisted graticule "edge labels" preference. See
@@ -236,18 +256,131 @@ public class MapView2D extends BaseView {
 	 * @param keyVals framework key-value pairs forwarded to {@link BaseView}
 	 */
 	public MapView2D(Object... keyVals) {
-	    super(withMapContainerFactory(keyVals));
+		super(withMapContainerFactory(keyVals));
 
-	    menuBar = new JMenuBar();
-	    setJMenuBar(menuBar);
+		menuBar = new JMenuBar();
+		setJMenuBar(menuBar);
 
-	    controlPanel = new MapControlPanel(this);
+		controlPanel = new MapControlPanel(this);
 
-	    setProjection(MapConstants.DEFAULT_PROJECTION);
+		setProjection(MapConstants.DEFAULT_PROJECTION);
 
-	    initSidePanel();
-	    setViewBeforeDraw();
-	    initShapefileMenu();
+		/*
+		 * Create built-in map layers in their default bottom-to-top order.
+		 *
+		 * Country Fill lies beneath ETOPO5 so opaque land coloring does not hide
+		 * terrain. Country Boundaries lie above ETOPO5 and graticules so political
+		 * borders remain crisp.
+		 */
+		createCountryFillLayer();
+		createEtopo5Layer();
+		createGraticuleLayer();
+		createCountryBoundaryLayer();
+		
+		initSidePanel();
+		setViewBeforeDraw();
+		initShapefileMenu();
+	}
+	
+	/**
+	 * Creates the standard country-fill layer.
+	 *
+	 * <p>
+	 * The layer is created before country data are loaded so its position in the
+	 * built-in map stack is deterministic. Until a country renderer exists, the
+	 * layer draws nothing.
+	 * </p>
+	 */
+	private void createCountryFillLayer() {
+	    if (countryFillLayer != null) {
+	        return;
+	    }
+
+	    countryFillLayer = new Layer(
+	            getIContainer(),
+	            "Country Fill") {
+
+	        @Override
+	        public void beforeDraw(
+	                Graphics2D g2,
+	                IContainer container) {
+
+	            if (countryRenderer != null) {
+	                countryRenderer.renderFill(g2, container);
+	            }
+	        }
+	    };
+
+	    countryFillLayer.setLocked(true);
+	}
+	
+	/**
+	 * Creates the standard country-boundary layer.
+	 *
+	 * <p>
+	 * Boundaries are rendered independently from country fills so they may remain
+	 * above terrain and other basemap layers.
+	 * </p>
+	 */
+	private void createCountryBoundaryLayer() {
+	    if (countryBoundaryLayer != null) {
+	        return;
+	    }
+
+	    countryBoundaryLayer = new Layer(
+	            getIContainer(),
+	            "Country Boundaries") {
+
+	        @Override
+	        public void beforeDraw(
+	                Graphics2D g2,
+	                IContainer container) {
+
+	            if (countryRenderer != null) {
+	                countryRenderer.renderBorders(g2, container);
+	            }
+	        }
+	    };
+
+	    countryBoundaryLayer.setLocked(true);
+	}	
+	
+	/**
+	 * Creates the standard ETOPO5 layer in its default position in the map
+	 * layer stack.
+	 *
+	 * <p>
+	 * The layer is created before an ETOPO5 renderer is installed so its
+	 * draw order is deterministic. Until a renderer is supplied through
+	 * {@link #installEtopo5Layer(Etopo5Loader, boolean)}, the layer remains
+	 * hidden and draws nothing.
+	 * </p>
+	 */
+	private void createEtopo5Layer() {
+	    if (etopo5Layer != null) {
+	        return;
+	    }
+
+	    etopo5Layer = new Layer(
+	            getIContainer(),
+	            "ETOPO5") {
+
+	        @Override
+	        public void beforeDraw(
+	                Graphics2D g2,
+	                IContainer container) {
+
+	            if (etopo5Renderer != null) {
+	                etopo5Renderer.render(
+	                        g2,
+	                        container,
+	                        getProjection());
+	            }
+	        }
+	    };
+
+	    etopo5Layer.setLocked(true);
+	    etopo5Layer.setVisible(false);
 	}
 	
 	
@@ -295,6 +428,70 @@ public class MapView2D extends BaseView {
 	}
 	
 	/**
+	 * Creates the standard MDI layer used to render map graticules.
+	 *
+	 * <p>
+	 * The layer delegates its background drawing to the current
+	 * {@link GraticuleRenderer}. Because the renderer field is read on each
+	 * draw, changing projections may replace the renderer without requiring
+	 * the layer itself to be recreated.
+	 * </p>
+	 *
+	 * <p>
+	 * The layer is locked because graticules contain no interactive items.
+	 * It remains visible and reorderable through the Layer Inspector.
+	 * </p>
+	 */
+	private void createGraticuleLayer() {
+	    if (graticuleLayer != null) {
+	        return;
+	    }
+
+	    graticuleLayer = new Layer(
+	            getIContainer(),
+	            "Graticules") {
+
+	        @Override
+	        public void beforeDraw(
+	                Graphics2D g2,
+	                IContainer container) {
+
+	            if (gratRenderer != null
+	                    && useStandardGraticules()) {
+	                gratRenderer.render(g2, container);
+	            }
+	        }
+	    };
+
+	    graticuleLayer.setLocked(true);
+	}
+	
+	/**
+	 * Installs ETOPO5 terrain and bathymetry into the standard ETOPO5 layer.
+	 *
+	 * @param loader         loaded ETOPO5 data
+	 * @param initiallyShown initial layer visibility
+	 * @return the ETOPO5 layer
+	 */
+	protected Layer installEtopo5Layer(
+	        Etopo5Loader loader,
+	        boolean initiallyShown) {
+
+	    Objects.requireNonNull(loader, "loader");
+
+	    /*
+	     * Defensive in case this method is used in an unusual construction path.
+	     */
+	    createEtopo5Layer();
+
+	    etopo5Renderer = new Etopo5Renderer(loader);
+	    etopo5Layer.setVisible(initiallyShown);
+
+	    refresh();
+	    return etopo5Layer;
+	}
+	
+	/**
 	 * Returns whether the standard graticule layer should be included in this view.
 	 *
 	 * <p>
@@ -329,52 +526,66 @@ public class MapView2D extends BaseView {
 	
 	
 	/**
-	 * Returns the interpolated elevation in meters at the given latitude and longitude.
-	 * Up to subclasses to implement the actual elevation data source. The default implementation returns Double.NaN.
-	 * @param lat latitude in degrees
-	 * @param lon longitude in degrees
-	 * @return interpolated elevation in meters, or Double.NaN if the ETOPO5 dataset is not loaded
-	 */
-	public double getElevation(double lat, double lon) {
-		return Double.NaN;
-	}
-
-	/**
-	 * Sets the country boundary features used by this view's
-	 * {@link CountryRenderer}.
+	 * Returns interpolated elevation or bathymetry at a geographic location.
 	 *
 	 * <p>
-	 * Must be called before the first render. If the country renderer has already
-	 * been created (i.e. {@link #setProjection} has been called), the renderer is
-	 * rebuilt immediately so the new data takes effect on the next repaint.
+	 * Elevation remains available even when the ETOPO5 layer is hidden. Layer
+	 * visibility is a presentation choice and should not affect calculations such
+	 * as radar line-of-sight or land-height feedback.
 	 * </p>
 	 *
-	 * @param countries list of country features; must not be {@code null}
+	 * @param lat latitude in degrees
+	 * @param lon longitude in degrees
+	 * @return elevation in metres, or {@code NaN} if ETOPO5 is not installed
+	 */
+	public double getElevation(double lat, double lon) {
+	    return (etopo5Renderer == null)
+	            ? Double.NaN
+	            : etopo5Renderer.getElevation(lat, lon);
+	}
+	
+	/**
+	 * Sets the country features rendered by the standard country-fill and
+	 * country-boundary layers.
+	 *
+	 * @param countries country features; must not be {@code null}
 	 */
 	public void setCountries(List<CountryFeature> countries) {
-		this.countries = countries;
-		if (projection != null) {
-			countryRenderer = new CountryRenderer(this.countries, projection);
-		}
-	}
+	    this.countries =
+	            Objects.requireNonNull(countries, "countries");
 
+	    if (projection != null) {
+	        countryRenderer =
+	                new CountryRenderer(this.countries, projection);
+	    }
+
+	    refresh();
+	}	
 	/**
-	 * Sets the city features used by this view's {@link CityPointRenderer}.
+	 * Sets the city features used by this view.
 	 *
 	 * <p>
-	 * Must be called before the first render. If the city renderer has already been
-	 * created, it is rebuilt immediately.
+	 * The features are rendered by the standard Cities MDI layer. If the
+	 * active projection already exists, the city renderer is rebuilt
+	 * immediately.
 	 * </p>
 	 *
 	 * @param cities list of city features; must not be {@code null}
 	 */
-	public void setCities(List<GeoJsonCityLoader.CityFeature> cities) {
-		this.cities = cities;
-		if (projection != null) {
-			rebuildCityRenderer();
-		}
-	}
+	public void setCities(
+	        List<GeoJsonCityLoader.CityFeature> cities) {
 
+	    this.cities = Objects.requireNonNull(
+	            cities, "cities");
+
+	    if (projection != null) {
+	        rebuildCityRenderer();
+	    }
+
+	    ensureCityLayer();
+	    refresh();
+	}
+	
 	// -------------------------------------------------------------------------
 	// Projection management
 	// -------------------------------------------------------------------------
@@ -569,10 +780,16 @@ public class MapView2D extends BaseView {
 	 * @param renderer the layer to add; must not be {@code null}
 	 * @param name     display name shown in the Shapefiles menu
 	 */
-	public void addShapefile(ShapeFeatureRenderer renderer, String name) {
+	public void addShapefile(final ShapeFeatureRenderer renderer, String name) {
 		
-		// put the shapefile in its own MDI layer
-		new ShapefileLayer(getIContainer(), name, renderer);
+		new Layer(getIContainer(), name) {
+			@Override
+			public void beforeDraw(Graphics2D g, IContainer container) {
+				if (renderer != null && renderer.isVisible()) {
+					renderer.render(g, container);
+				}
+			}
+		};
 		
 		extraLayers.add(Objects.requireNonNull(renderer, "renderer"));
 		refresh();
@@ -705,11 +922,29 @@ public class MapView2D extends BaseView {
 	 * @param container container providing the coordinate transform
 	 * @return formatted country name string, or {@code null}
 	 */
-	public String getCountryAtPoint(Point pp, IContainer container) {
-		if (countryRenderer == null)
-			return null;
-		GeoJsonCountryLoader.CountryFeature hit = countryRenderer.pickCountry(pp, container);
-		return (hit != null) ? String.format("%s (%s)", hit.getAdminName(), hit.getIsoA3()) : null;
+	public String getCountryAtPoint(
+	        Point pp,
+	        IContainer container) {
+
+	    boolean countryDisplayVisible =
+	            (countryFillLayer != null
+	                    && countryFillLayer.isVisible())
+	            || (countryBoundaryLayer != null
+	                    && countryBoundaryLayer.isVisible());
+
+	    if (countryRenderer == null || !countryDisplayVisible) {
+	        return null;
+	    }
+
+	    CountryFeature hit =
+	            countryRenderer.pickCountry(pp, container);
+
+	    return (hit != null)
+	            ? String.format(
+	                    "%s (%s)",
+	                    hit.getAdminName(),
+	                    hit.getIsoA3())
+	            : null;
 	}
 	
 	/**
@@ -801,13 +1036,13 @@ public class MapView2D extends BaseView {
 		    }
 
 		 
-			if (countryRenderer != null) {
-				GeoJsonCountryLoader.CountryFeature countryHit = countryRenderer.pickCountry(pp, container);
-				if (countryHit != null) {
-					feedbackStrings.add(String.format("%s (%s)", countryHit.getAdminName(), countryHit.getIsoA3()));
-				}
-			}
+		    String countryName =
+		            getCountryAtPoint(pp, container);
 
+		    if (countryName != null) {
+		        feedbackStrings.add(countryName);
+		    }
+		    
 			// Extra shapefile layers (rivers, lakes, etc.)
 			for (ShapeFeatureRenderer layer : extraLayers) {
 				String layerHit = layer.pick(pp, container);
@@ -816,7 +1051,9 @@ public class MapView2D extends BaseView {
 				}
 			}
 
-			if (cityRenderer != null) {
+			if (cityRenderer != null
+			        && cityLayer != null
+			        && cityLayer.isVisible()) {
 				GeoJsonCityLoader.CityFeature cityHit = cityRenderer.pickCity(pp, container);
 				if (cityHit != null) {
 					feedbackStrings.add(String.format("%s (pop: %d)", cityHit.getName(), cityHit.getPopulation()));
@@ -824,6 +1061,8 @@ public class MapView2D extends BaseView {
 			}
 		}
 	}
+	
+	
 
 	// -------------------------------------------------------------------------
 	// Lifecycle
@@ -890,79 +1129,42 @@ public class MapView2D extends BaseView {
 	}
 	
 	/**
-	 * Registers the after-draw {@link IDrawable} that executes the complete
-	 * rendering pipeline each frame:
-	 * <ol>
-	 * <li>Fill the panel background with the theme's background color.</li>
-	 * <li>Fill the ocean region inside the projection's clip shape.</li>
-	 * <li>Draw the map outline and graticule lines.</li>
-	 * <li>Draw country polygons.</li>
-	 * <li>Draw extra layers (rivers, lakes, etc.) in insertion order.</li>
-	 * <li>Draw city dots and labels.</li>
-	 * </ol>
+	 * Registers the view-level map background renderer.
 	 *
 	 * <p>
-	 * Null-guards on {@link #countryRenderer} and {@link #cityRenderer} prevent
-	 * NullPointerExceptions if data has not been set before the first paint.
+	 * Feature data such as countries and cities are rendered by ordinary MDI
+	 * layers. This view-level renderer is now limited to content that belongs
+	 * beneath the layer stack.
 	 * </p>
 	 */
 	private void setViewBeforeDraw() {
-		IDrawable beforeDraw = new DrawableAdapter() {
-			@Override
-			public void draw(Graphics2D g, IContainer container) {
-				// 1. Background
-				g.setColor(projection.getTheme().getBackgroundColor());
-				g.fillRect(0, 0, getWidth(), getHeight());
+	    IDrawable beforeDraw = new DrawableAdapter() {
 
-				// 2. Ocean fill inside projection boundary
-				projection.fillOcean(g, container);
-				
-				// 3. Custom map content drawn by subclasses between ocean and graticule layers.
-				drawCustomMapContent(g, container); // Extension point for subclasses to draw custom content between ocean and graticule
+	        @Override
+	        public void draw(
+	                Graphics2D g,
+	                IContainer container) {
 
+	            // 1. Background outside the projection.
+	            g.setColor(
+	                    projection.getTheme().getBackgroundColor());
 
-				// 4. Country polygons (null-safe: data may not be loaded yet)
-				if (countryRenderer != null) {
-					countryRenderer.render(g, container);
-				}
-				
-				// 4.5 Extension point for subclasses to draw custom content after countries but before extra layers
-				afterCountryDraw(g, container); 
+	            g.fillRect(
+	                    0, 0,
+	                    getWidth(), getHeight());
 
-				// 5. Graticule and outline
-				if ((gratRenderer != null) && useStandardGraticules()) {
-					gratRenderer.render(g, container);
-				}
+	            // 2. Ocean inside the projection boundary.
+	            projection.fillOcean(g, container);
 
+	            // 3. Application-supplied basemap content.
+	            drawCustomMapContent(g, container);
 
-				// 6. City dots and labels (null-safe)
-				if (cityRenderer != null) {
-					cityRenderer.render(g, container);
-				}
-			}
-		};
+	        }
+	    };
 
-		setBeforeDraw(beforeDraw);
+	    setBeforeDraw(beforeDraw);
 	}
 	
-	/**
-	 * Extension point for subclasses to draw custom content after countries but
-	 * before extra layers. Called from the after-draw {@link IDrawable} registered
-	 * in {@link #setViewBeforeDraw()}.
-	 *
-	 * <p>
-	 * Subclasses can override this method to draw additional map content (e.g.
-	 * terrain) after the country polygons have been
-	 * drawn but before any extra layers added via {@link #addShapefileLayer} are
-	 * rendered. 
-	 * </p>
-	 *
-	 * @param g         graphics context to draw on; never {@code null}
-	 * @param container container providing coordinate transforms; never {@code null}
-	 */
-	protected void afterCountryDraw(Graphics2D g, IContainer container) {
-		// No-op by default; subclasses can override to draw custom content after countries but before extra layers
-	}
 	
 	/**
 	 * Returns whether the Shapefile menu should be included in this view's menu
@@ -1161,6 +1363,87 @@ public class MapView2D extends BaseView {
 	    customSidePanelHost.add(component);
 	    customSidePanelHost.revalidate();
 	    customSidePanelHost.repaint();
+	}
+	
+	
+	/**
+	 * Returns the ETOPO5 layer.
+	 *
+	 * @return ETOPO5 layer, or {@code null} if not installed
+	 */
+	public Layer getEtopo5Layer() {
+	    return etopo5Layer;
+	}
+
+	/**
+	 * Returns the ETOPO5 renderer.
+	 *
+	 * @return renderer, or {@code null} if not installed
+	 */
+	protected Etopo5Renderer getEtopo5Renderer() {
+	    return etopo5Renderer;
+	}
+
+	/**
+	 * Returns the country-fill layer.
+	 *
+	 * @return country-fill layer
+	 */
+	public Layer getCountryFillLayer() {
+	    return countryFillLayer;
+	}
+
+	/**
+	 * Returns the country-boundary layer.
+	 *
+	 * @return country-boundary layer
+	 */
+	public Layer getCountryBoundaryLayer() {
+	    return countryBoundaryLayer;
+	}
+	/**
+	 * Returns the standard city layer.
+	 *
+	 * @return city layer, or {@code null} if city data have not been set
+	 */
+	public Layer getCityLayer() {
+	    return cityLayer;
+	}
+	
+	/**
+	 * Returns the standard graticule layer.
+	 *
+	 * @return the graticule layer; never {@code null} after construction
+	 */
+	public Layer getGraticuleLayer() {
+	    return graticuleLayer;
+	}
+
+	/**
+	 * Creates the standard city layer if it has not already been created.
+	 *
+	 * <p>
+	 * The layer delegates its background rendering to the current
+	 * {@link CityPointRenderer}. The renderer may therefore be rebuilt when
+	 * the projection changes without replacing the layer.
+	 * </p>
+	 */
+	private void ensureCityLayer() {
+	    if (cityLayer != null) {
+	        return;
+	    }
+
+	    cityLayer = new Layer(getIContainer(), "Cities") {
+
+	        @Override
+	        public void beforeDraw(Graphics2D g2, IContainer container) {
+	            if (cityRenderer != null) {
+	                cityRenderer.render(g2, container);
+	            }
+	        }
+	    };
+
+	    cityLayer.setLocked(true);
 	}
 	
 	/**

@@ -1,10 +1,10 @@
 package edu.cnu.mdi.item;
 
+import java.awt.Component;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.swing.event.EventListenerList;
@@ -78,6 +78,12 @@ public class Layer {
 
     /** Whether this layer is drawn and hit-tested. */
     private boolean visible = true;
+    
+    /**
+	 * Whether this layer is editable, i.e., can layer-level
+	 * parameters be changed.
+	 */
+    private boolean editable = false;
 
     /**
      * Layer-level lock.  When {@code true} all items on this layer behave as
@@ -283,17 +289,87 @@ public class Layer {
      * If this layer is not visible the method returns immediately.
      * </p>
      *
-     * @param g2        the graphics context
+     * @param g        the graphics context
      * @param container the container being rendered
      */
-    public void draw(Graphics2D g2, IContainer container) {
-        if (!visible) return;
-        synchronized (this) {
-            for (AItem item : items) {
-                item.draw(g2, container);
+    public void draw(Graphics2D g, IContainer container) {
+        if (!visible) {
+            return;
+        }
+
+        Graphics2D g2 = (Graphics2D) g.create();
+
+        try {
+            synchronized (this) {
+                beforeDraw(g2, container);
+
+                for (AItem item : items) {
+                    item.draw(g2, container);
+                }
+
+                afterDraw(g2, container);
             }
+        } finally {
+            g2.dispose();
         }
     }
+    
+	/**
+	 * Hook for subclasses to perform custom drawing before the items are drawn.
+	 * <p>
+	 * The default implementation is a no-op.
+	 * </p>
+	 *
+	 * @param g2        the graphics context
+	 * @param container the container being rendered
+	 */
+	public void beforeDraw(Graphics2D g2, IContainer container) {
+		// no-op
+	}
+
+	/**
+	 * Hook for subclasses to perform custom drawing after the items are drawn.
+	 * <p>
+	 * The default implementation is a no-op.
+	 * </p>
+	 *
+	 * @param g2        the graphics context
+	 * @param container the container being rendered
+	 */
+	public void afterDraw(Graphics2D g2, IContainer container) {
+		// no-op
+	}
+	
+	/**
+	 * Return {@code true} if this layer is editable.
+	 *
+	 * @return the editable flag
+	 */
+	public boolean isEditable() {
+	    return editable;
+	}
+	
+	/**
+	 * Set the editable state of this layer.
+	 *
+	 * @param editable {@code true} to make the layer editable
+	 */
+	public void setEditable(boolean editable) {
+	    this.editable = editable;
+	}
+
+	/**
+	 * Edit the layer-level parameters of this layer.
+	 * <p>
+	 * The default implementation is a no-op. Subclasses may override to provide
+	 * a custom editing dialog or panel.
+	 * </p>
+	 *
+	 * @param parent the parent component for any dialogs; may be {@code null}
+	 */
+	public void edit(Component parent) {
+	    // Default: no-op.
+	}
 
     // -------------------------------------------------------------------------
     // Hit testing
