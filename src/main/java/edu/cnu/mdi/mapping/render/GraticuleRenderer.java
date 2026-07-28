@@ -61,10 +61,15 @@ import edu.cnu.mdi.mapping.theme.MapTheme;
  * </p>
  */
 public final class GraticuleRenderer {
-
-    // -------------------------------------------------------------------------
-    // Tuning constants
-    // -------------------------------------------------------------------------
+	
+	/**
+	 * Optional coordinate-label color override.
+	 *
+	 * <p>
+	 * When null, the active map theme supplies the label color.
+	 * </p>
+	 */
+	private Color customLabelColor;
 
     /**
      * Target number of graticule lines to display along each axis. The
@@ -520,10 +525,7 @@ public final class GraticuleRenderer {
         Color oldColor = g2.getColor();
         Font oldFont = g2.getFont();
 
-        MapTheme theme = projection.getTheme();
-        Color labelColor = theme.getLabelColor();
-        if (labelColor == null) labelColor = theme.getGraticuleColor();
-        g2.setColor(labelColor);
+        g2.setColor(getLabelColor());
         g2.setFont(oldFont.deriveFont(Font.PLAIN, 11f));
         FontMetrics fm = g2.getFontMetrics();
         int ascent = fm.getAscent();
@@ -560,6 +562,30 @@ public final class GraticuleRenderer {
         g2.setColor(oldColor);
         g2.setFont(oldFont);
     }
+    
+    /**
+     * Copies user-configurable settings from another graticule renderer.
+     *
+     * <p>
+     * The projection itself is deliberately not copied.
+     * </p>
+     *
+     * @param source source renderer
+     */
+    public void copyStyleFrom(GraticuleRenderer source) {
+        if (source == null) {
+            return;
+        }
+
+        latitudeStepRad = source.latitudeStepRad;
+        longitudeStepRad = source.longitudeStepRad;
+
+        drawOutline = source.drawOutline;
+        adaptive = source.adaptive;
+        drawLabels = source.drawLabels;
+
+        customLabelColor = source.customLabelColor;
+    }
 
     /**
      * Walks longitude across [lonMin, lonMax] at the given fixed latitude,
@@ -584,6 +610,40 @@ public final class GraticuleRenderer {
             }
         }
         return null;
+    }
+    
+    /**
+     * Returns the effective coordinate-label color.
+     *
+     * @return custom color when set; otherwise the theme label or graticule color
+     */
+    public Color getLabelColor() {
+        if (customLabelColor != null) {
+            return customLabelColor;
+        }
+
+        MapTheme theme = projection.getTheme();
+
+        Color color = theme.getLabelColor();
+        return (color != null)
+                ? color
+                : theme.getGraticuleColor();
+    }
+
+    /**
+     * Sets a custom coordinate-label color.
+     *
+     * @param color custom color, or null to use the theme
+     */
+    public void setLabelColor(Color color) {
+        customLabelColor = color;
+    }
+
+    /**
+     * Restores theme-controlled coordinate-label coloring.
+     */
+    public void useThemeLabelColor() {
+        customLabelColor = null;
     }
 
     /**

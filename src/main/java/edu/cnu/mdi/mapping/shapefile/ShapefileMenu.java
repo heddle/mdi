@@ -5,11 +5,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.JSeparator;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import edu.cnu.mdi.log.Log;
@@ -79,11 +77,6 @@ public class ShapefileMenu extends JMenu {
     /** The "Open Shapefile..." menu item. */
     private final JMenuItem openItem;
 
-    /** Separator between the Open item and the layer checkboxes. */
-    private final JSeparator separator;
-
-    /** Whether the separator has been added yet (deferred until first layer). */
-    private boolean separatorAdded = false;
 
     // -------------------------------------------------------------------------
     // Construction
@@ -104,8 +97,6 @@ public class ShapefileMenu extends JMenu {
                 new FileNameExtensionFilter("ESRI Shapefiles (*.shp)", "shp"));
         fileChooser.setAcceptAllFileFilterUsed(false);
 
-        separator = new JSeparator();
-
         openItem = new JMenuItem("Open Shapefile\u2026");
         openItem.addActionListener(e -> openShapefile());
         add(openItem);
@@ -115,29 +106,6 @@ public class ShapefileMenu extends JMenu {
     // Public API — called by MapView2D when a layer is added
     // -------------------------------------------------------------------------
 
-    /**
-     * Registers a newly added layer in the menu by appending a
-     * {@link JCheckBoxMenuItem} for it. Called automatically by
-     * {@link MapView2D#addShapefile(ShapeFeatureRenderer, String)} so that both
-     * programmatic and interactive layers appear in the menu.
-     *
-     * @param renderer the layer renderer; must not be {@code null}
-     * @param name     the display name shown in the menu item
-     */
-    public void registerLayer(ShapeFeatureRenderer renderer, String name) {
-        // Add the separator before the first checkbox item.
-        if (!separatorAdded) {
-            add(separator);
-            separatorAdded = true;
-        }
-
-        JCheckBoxMenuItem item = new JCheckBoxMenuItem(name, renderer.isVisible());
-        item.addActionListener(e -> {
-            renderer.setVisible(item.isSelected());
-            mapView.refresh();
-        });
-        add(item);
-    }
 
     // -------------------------------------------------------------------------
     // Private — interactive file open

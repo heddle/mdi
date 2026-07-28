@@ -21,10 +21,9 @@ import javax.imageio.ImageWriter;
 import edu.cnu.mdi.app.BaseMDIApplication;
 
 /**
- * Environment information and simple application preferences for the mdi
+ * Environment information for the mdi
  * framework. This class acts as a central place to query basic system
- * properties (home directory, host name, screen DPI, etc.) and to persist
- * lightweight, application-specific preferences.
+ * properties (home directory, host name, screen DPI, etc.)
  * <p>
  * The class is implemented as a simple, lazily-initialized singleton.
  */
@@ -62,8 +61,7 @@ public final class Environment {
 	private static String _applicationName;
 
 	/**
-	 * Private constructor for the singleton. Gathers system information and
-	 * attempts to load any previously stored preferences.
+	 * Private constructor for the singleton. Gathers system information.
 	 */
 	private Environment() {
 		homeDirectory = getSystemProperty("user.home");

@@ -121,12 +121,6 @@ public class ShapeFeatureRenderer implements IPickable {
      */
     private final List<PickCache> pickCache = new ArrayList<>();
 
-    /**
-     * Whether this layer is currently visible. When {@code false},
-     * {@link #render} is a no-op and {@link #pick} returns {@code null}.
-     * Controlled by the {@link ShapefileMenu} checkbox for this layer.
-     */
-    private boolean visible = true;
 
     // -------------------------------------------------------------------------
     // Construction
@@ -173,27 +167,6 @@ public class ShapeFeatureRenderer implements IPickable {
         this.labelFont = (font != null) ? font : Fonts.smallFont;
     }
 
-    /**
-     * Sets whether this layer is rendered and participates in picking.
-     *
-     * <p>Hidden layers ({@code visible = false}) skip all rendering and
-     * return {@code null} from {@link #pick}. The layer remains in the
-     * MapView2D extra-layer list so it can be re-shown instantly
-     * without reloading the data.</p>
-     *
-     * @param visible {@code true} to show this layer; {@code false} to hide it
-     */
-    public void setVisible(boolean visible) {
-        this.visible = visible;
-        if (!visible) pickCache.clear(); // stale cache not needed while hidden
-    }
-
-    /**
-     * Returns whether this layer is currently visible.
-     *
-     * @return {@code true} if the layer will be rendered and picked
-     */
-    public boolean isVisible() { return visible; }
 
     /**
      * Updates the projection used for coordinate transforms and visibility
@@ -228,8 +201,6 @@ public class ShapeFeatureRenderer implements IPickable {
     public void render(Graphics2D g2, IContainer container) {
         Objects.requireNonNull(g2,        "g2");
         Objects.requireNonNull(container, "container");
-
-        if (!visible) return; // layer is hidden
 
         Component comp = container.getComponent();
         if (comp.getWidth() <= 0 || comp.getHeight() <= 0) return;
@@ -288,8 +259,6 @@ public class ShapeFeatureRenderer implements IPickable {
         Objects.requireNonNull(mouseLocal, "mouseLocal");
         Objects.requireNonNull(container,  "container");
 
-        if (!visible) return null; // layer is hidden
-
         double mx = mouseLocal.x;
         double my = mouseLocal.y;
 
@@ -308,6 +277,23 @@ public class ShapeFeatureRenderer implements IPickable {
             if (hit) return buildTooltip(entry.feature);
         }
         return null;
+    }
+    
+    /**
+     * Returns the geometry type represented by this renderer.
+     *
+     * <p>
+     * A shapefile normally contains one geometry type, so the first feature
+     * determines which style controls are relevant.
+     * </p>
+     *
+     * @return one of the shapefile {@code TYPE_*} constants, or
+     *         {@link ShapefileGeometryReader#TYPE_NULL} when empty
+     */
+    public int getShapeType() {
+        return features.isEmpty()
+                ? ShapefileGeometryReader.TYPE_NULL
+                : features.get(0).getShapeType();
     }
 
     // -------------------------------------------------------------------------

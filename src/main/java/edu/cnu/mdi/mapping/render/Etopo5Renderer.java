@@ -181,10 +181,13 @@ public class Etopo5Renderer {
      *
      * @param opacity opacity in the range [0, 1]
      */
-    public void setOpacity(float opacity) {
-        this.opacity = Math.max(0.0f, Math.min(1.0f, opacity));
+    public void setOpacity(double opacity) {
+        this.opacity =
+                (float) Math.max(
+                        0.0,
+                        Math.min(1.0, opacity));
     }
-
+    
     /**
      * Returns the screen-space sampling step.
      *

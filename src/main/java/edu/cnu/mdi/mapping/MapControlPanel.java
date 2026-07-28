@@ -8,15 +8,12 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.SwingConstants;
 
 import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.component.EnumComboBox;
-import edu.cnu.mdi.component.RangeSlider;
 import edu.cnu.mdi.mapping.projection.EProjection;
 import edu.cnu.mdi.mapping.projection.IMapProjection;
 import edu.cnu.mdi.mapping.render.CityPointRenderer;
@@ -30,11 +27,6 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * <ul>
  *   <li><b>Projection</b> — an {@link EnumComboBox} that switches the active
  *       {@link EProjection}.</li>
- *   <li><b>City label visibility</b> — a checkbox that toggles city name
- *       labels via {@link CityPointRenderer#setDrawLabels(boolean)}.</li>
- *   <li><b>Minimum population</b> — a {@link RangeSlider} that filters cities
- *       below a given population threshold via
- *       {@link CityPointRenderer#setMinPopulation(long)}.</li>
  *   <li><b>Map theme</b> — radio buttons selecting between the built-in
  *       {@link MapTheme} presets (Light, Dark, Blue).</li>
  * </ul>
@@ -64,7 +56,7 @@ public class MapControlPanel extends JPanel {
     private final MapTheme darkTheme  = MapTheme.dark();
     private final MapTheme lightTheme = MapTheme.light();
     private final MapTheme blueTheme  = MapTheme.blue();
-    
+
     private final Font font = Fonts.plainFontDelta(-2);
 
     /** The theme currently selected by the radio buttons. */
@@ -77,9 +69,7 @@ public class MapControlPanel extends JPanel {
     private JRadioButton lightThemeButton;
     private JRadioButton darkThemeButton;
     private JRadioButton blueThemeButton;
-    
-    //holds display checkboxes for city names and other future options
-    private JPanel checkboxPanel;
+
 
     /** Whether city name labels are visible. Tracks the checkbox state. */
     private boolean showNames = true;
@@ -113,16 +103,8 @@ public class MapControlPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
         createProjectionCombo(this);
-        createCheckboxes(this);
-        createMinPopRangeSlider(this);
         createThemeSelector(this);
     }
-    
-    private void createCheckboxPanel() {
-		checkboxPanel = new JPanel();
-		checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
-		checkboxPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-	}
 
     // -------------------------------------------------------------------------
     // Widget builders
@@ -152,94 +134,6 @@ public class MapControlPanel extends JPanel {
         panel.add(Box.createVerticalStrut(6));
     }
 
-    /**
-     * Adds the "Show city names" checkbox to {@code panel}.
-     *
-     * <p>Toggling the checkbox calls
-     * {@link CityPointRenderer#setDrawLabels(boolean)} and triggers a
-     * repaint.</p>
-     *
-     * @param panel the panel to add the checkbox to
-     */
-    private void createCheckboxes(JPanel panel) {
-    	createCheckboxPanel();
-        JCheckBox showCityNamesCheckBox = new JCheckBox("Show city names", true);
-        showCityNamesCheckBox.setFont(font);
-        showCityNamesCheckBox.setHorizontalAlignment(SwingConstants.LEFT);
-        showCityNamesCheckBox.addActionListener(e -> {
-            showNames = showCityNamesCheckBox.isSelected();
-            updateCityLabelVisibility();
-        });
-        leftAlign(showCityNamesCheckBox);
-        checkboxPanel.add(showCityNamesCheckBox);
-
-        // Graticule controls. These reuse the same checkbox panel, font, and
-        // alignment as "Show city names". Both default to selected, matching
-        // the renderer's defaults (adaptive spacing + edge labels on).
-        addCheckbox("Adaptive grid spacing", true,
-                e -> mapView.setGraticuleAdaptive(
-                        ((JCheckBox) e.getSource()).isSelected()));
-        addCheckbox("Grid coordinate labels", true,
-                e -> mapView.setGraticuleLabels(
-                        ((JCheckBox) e.getSource()).isSelected()));
-
-        panel.add(checkboxPanel);
-        panel.add(Box.createVerticalStrut(6));
-    }
-    
-    /**
-     * Adds a checkbox to the checkbox panel with the given label, initial state,
-     * and optional action listener.
-     *
-     * <p>The returned checkbox may be retained by the caller if later programmatic
-     * changes are needed.</p>
-     *
-     * @param label        the text label for the checkbox
-     * @param initialState the initial selected state of the checkbox
-     * @param listener     listener notified when the checkbox is toggled; may be {@code null}
-     * @return the constructed checkbox
-     */
-    public JCheckBox addCheckbox(String label, boolean initialState, ActionListener listener) {
-        if (checkboxPanel == null) {
-            createCheckboxPanel();
-        }
-
-        JCheckBox checkbox = new JCheckBox(label, initialState);
-        checkbox.setFont(font);
-        checkbox.setHorizontalAlignment(SwingConstants.LEFT);
-        leftAlign(checkbox);
-
-        if (listener != null) {
-            checkbox.addActionListener(listener);
-        }
-
-        checkboxPanel.add(checkbox);
-        checkboxPanel.revalidate();
-        checkboxPanel.repaint();
-
-        return checkbox;
-    }
-    
-    /**
-     * Adds the minimum-population range slider to {@code panel}.
-     *
-     * <p>The slider range is [0, {@link MapConstants#MAX_POP_SLIDER_VALUE}]
-     * and the initial value is half that maximum. Changing the slider value
-     * calls {@link CityPointRenderer#setMinPopulation(long)} and triggers a
-     * repaint.</p>
-     *
-     * @param panel the panel to add the slider to
-     */
-    private void createMinPopRangeSlider(JPanel panel) {
-        int max = MapConstants.MAX_POP_SLIDER_VALUE;  // single source of truth
-        RangeSlider minPopSlider = new RangeSlider(0, max, max / 2, true);
-        minPopSlider.setOnChange(this::updateMinPopulationFilter);
-        minPopSlider.setBorder(new CommonBorder("Minimum Population"));
-        leftAlign(minPopSlider);
-        panel.add(minPopSlider);
-        panel.add(Box.createVerticalStrut(6));
-       
-    }
 
     /**
      * Adds the theme selector (Light / Dark / Blue radio buttons) to
@@ -254,9 +148,13 @@ public class MapControlPanel extends JPanel {
         ButtonGroup themeGroup = new ButtonGroup();
 
         ActionListener themeListener = e -> {
-            if      (lightThemeButton.isSelected()) currentTheme = lightTheme;
-            else if (darkThemeButton.isSelected())  currentTheme = darkTheme;
-            else if (blueThemeButton.isSelected())  currentTheme = blueTheme;
+            if      (lightThemeButton.isSelected()) {
+				currentTheme = lightTheme;
+			} else if (darkThemeButton.isSelected()) {
+				currentTheme = darkTheme;
+			} else if (blueThemeButton.isSelected()) {
+				currentTheme = blueTheme;
+			}
             updateTheme();
         };
 
@@ -301,19 +199,7 @@ public class MapControlPanel extends JPanel {
     // Private update helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Applies a new minimum population filter to the city renderer and
-     * triggers a repaint.
-     *
-     * @param pop the new minimum population value from the slider
-     */
-    private void updateMinPopulationFilter(int pop) {
-        CityPointRenderer renderer = mapView.getCityRenderer();
-        if (renderer != null) {
-            renderer.setMinPopulation(pop);
-            mapView.refresh();
-        }
-    }
+ 
 
     /**
      * Applies the currently selected theme to the active projection and

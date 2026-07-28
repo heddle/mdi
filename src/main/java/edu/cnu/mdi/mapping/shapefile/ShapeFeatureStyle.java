@@ -4,6 +4,7 @@ import java.awt.BasicStroke;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import edu.cnu.mdi.mapping.theme.MapTheme;
 
@@ -127,6 +128,28 @@ public final class ShapeFeatureStyle {
      * documentation for the default values.
      */
     public ShapeFeatureStyle() {}
+    
+    /**
+     * Creates a copy of another shapefile style.
+     *
+     * @param source source style; must not be {@code null}
+     */
+    public ShapeFeatureStyle(ShapeFeatureStyle source) {
+        Objects.requireNonNull(source, "source");
+
+        fillColor = source.fillColor;
+        strokeColor = source.strokeColor;
+        strokeWidth = source.strokeWidth;
+
+        pointColor = source.pointColor;
+        pointRadius = source.pointRadius;
+
+        labelField = source.labelField;
+        labelColor = source.labelColor;
+
+        tooltipFields.addAll(source.tooltipFields);
+        antialias = source.antialias;
+    }
 
     // -------------------------------------------------------------------------
     // Fluent setters — polygon / polyline

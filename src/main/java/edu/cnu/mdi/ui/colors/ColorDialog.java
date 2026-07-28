@@ -50,12 +50,31 @@ public class ColorDialog extends JDialog {
 	 *            chooser's built-in alpha support
 	 */
 	public ColorDialog(Window owner, Color initColor, boolean allowNoColor, boolean allowTransparency) {
-		super(owner, "Color Selection", ModalityType.DOCUMENT_MODAL);
+		this(owner, null, initColor, allowNoColor, allowTransparency);
+	}
+	
+	/**
+	 * Creates a modal color-selection dialog.
+	 *
+	 * @param owner
+	 *            the parent window; may be {@code null}
+	 * @param title the dialog title; may be {@code null}
+	 * @param initColor
+	 *            the initial color; may be {@code null}
+	 * @param allowNoColor
+	 *            if {@code true}, the user may select "No Color"
+	 * @param allowTransparency
+	 *            if {@code true}, transparency selection is allowed through the
+	 *            chooser's built-in alpha support
+	 */
+	public ColorDialog(Window owner, String title, Color initColor, boolean allowNoColor, boolean allowTransparency) {
+		super(owner, title != null ? title : "Color Selection", ModalityType.DOCUMENT_MODAL);
 		setup();
 		addColorPanel(initColor, allowNoColor, allowTransparency);
 		pack();
 		setLocationRelativeTo(owner);
 	}
+
 
 	/**
 	 * Displays a modal color dialog and returns the resulting color.
@@ -73,7 +92,27 @@ public class ColorDialog extends JDialog {
 	 *         {@code initColor}
 	 */
 	public static Color showDialog(Window owner, Color initColor, boolean allowNoColor, boolean allowTransparency) {
-		ColorDialog dialog = new ColorDialog(owner, initColor, allowNoColor, allowTransparency);
+		return showDialog(owner, null, initColor, allowNoColor, allowTransparency);
+	}
+	
+	/**
+	 * Displays a modal color dialog and returns the resulting color.
+	 *
+	 * @param owner
+	 *            the parent window; may be {@code null}
+	 * @param title the dialog title; may be {@code null}
+	 * @param initColor
+	 *            the initial color; may be {@code null}
+	 * @param allowNoColor
+	 *            if {@code true}, the user may select "No Color"
+	 * @param allowTransparency
+	 *            if {@code true}, transparency selection is allowed through the
+	 *            chooser's built-in alpha support
+	 * @return the selected color if the user presses OK; otherwise the original
+	 *         {@code initColor}
+	 */
+	public static Color showDialog(Window owner, String title, Color initColor, boolean allowNoColor, boolean allowTransparency) {
+		ColorDialog dialog = new ColorDialog(owner, title, initColor, allowNoColor, allowTransparency);
 		dialog.setVisible(true);
 
 		if (dialog.getAnswer() == DialogUtils.OK_RESPONSE) {
@@ -82,6 +121,7 @@ public class ColorDialog extends JDialog {
 
 		return initColor;
 	}
+
 
 	/**
 	 * Creates and installs the central {@link ColorPanel}.
