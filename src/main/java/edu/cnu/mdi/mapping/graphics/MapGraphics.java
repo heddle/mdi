@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.style.IStyled;
 import edu.cnu.mdi.graphics.style.LineStyle;
@@ -1236,10 +1237,12 @@ public final class MapGraphics {
 	 * @param theme      the map theme providing styling information; must not be
 	 *                   {@code null}
 	 */
-	public static void drawHorizontalLatitudeLine(Graphics2D g2, MapContainer container, double latitude,
-			double centralLon, MapTheme theme) {
-
-		IMapProjection projection = getProjection(container);
+	public static void drawHorizontalLatitudeLine(Graphics2D g2, 
+			IContainer container,
+			IMapProjection projection,
+			double latitude,
+			double centralLon, 
+			MapTheme theme) {
 
 		Point pp0 = new Point();
 		Point pp1 = new Point();
@@ -1279,10 +1282,11 @@ public final class MapGraphics {
 	 * @param theme     the map theme providing styling information; must not be
 	 *                  {@code null}
 	 */
-	public static void drawVerticalLongitudeLine(Graphics2D g2, MapContainer container, double longitude,
+	public static void drawVerticalLongitudeLine(Graphics2D g2, 
+			IContainer container, 
+			IMapProjection projection,
+			double longitude,
 			MapTheme theme) {
-
-		IMapProjection projection = getProjection(container);
 
 		Point pp0 = new Point();
 		Point pp1 = new Point();

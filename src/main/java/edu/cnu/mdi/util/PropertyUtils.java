@@ -30,6 +30,7 @@ public class PropertyUtils {
 	public static final String DELETABLE = "DELETABLE";
 	public static final String DOUBLECLICKABLE = "DOUBLECLICKABLE";
 	public static final String DRAGGABLE = "DRAGGABLE";
+	public static final String FEEDBACKFONTSIZE = "FEEDBACKFONTSIZE";
 	public static final String FILLCOLOR = "FILLCOLOR";
 	public static final String FRACTION = "FRACTION";
 	public static final String HEIGHT = "HEIGHT";
@@ -90,6 +91,7 @@ public class PropertyUtils {
 	    KNOWN_KEYS.put(DIST_Z, Float.class);
 	    KNOWN_KEYS.put(DOUBLECLICKABLE, Boolean.class);
 	    KNOWN_KEYS.put(DRAGGABLE, Boolean.class);
+	    KNOWN_KEYS.put(FEEDBACKFONTSIZE, Integer.class);
 	    KNOWN_KEYS.put(FILLCOLOR, Color.class);
 	    KNOWN_KEYS.put(FRACTION, Double.class);
 	    KNOWN_KEYS.put(HEIGHT, Integer.class);
@@ -264,6 +266,16 @@ public class PropertyUtils {
 	 */
 	public static boolean getConsoleLog(Properties props) {
 		return getBoolean(props, CONSOLELOG, false);
+	}
+	
+	/**
+	 * Get the feedback font size
+	 * @param props the properties
+	 * @return the (clamped) feedback font size
+	 */
+	public static int getFeedbackFontSize(Properties props) {
+		int size =  getInt(props, FEEDBACKFONTSIZE, 9);
+		return Math.max(8, Math.min(48, size));
 	}
 
 	/**

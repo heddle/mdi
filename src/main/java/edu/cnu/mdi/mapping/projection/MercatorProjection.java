@@ -265,8 +265,13 @@ public class MercatorProjection implements IMapProjection {
     	if (latitude < MIN_LAT || latitude > MAX_LAT) {
 			return; // Latitude is out of bounds, so skip drawing
 		}
-    	MapGraphics.drawHorizontalLatitudeLine(g2, (MapContainer)container, latitude,
-    			getCentralLongitude(), theme);
+    	MapGraphics.drawHorizontalLatitudeLine(
+    	        g2,
+    	        container,
+    	        this,
+    	        latitude,
+    	        getCentralLongitude(),
+    	        theme);    
     }
 
     /**
@@ -280,8 +285,13 @@ public class MercatorProjection implements IMapProjection {
     @Override
     public void drawLongitudeLine(Graphics2D g2, IContainer container, double longitude) {
         double lon = wrapLongitude(longitude);
-    	MapGraphics.drawVerticalLongitudeLine(g2, (MapContainer)container, lon, theme);
-   }
+        MapGraphics.drawVerticalLongitudeLine(
+                g2,
+                container,
+                this,
+                lon,
+                theme);
+    }
 
     // -------------------------------------------------------------------------
     // IMapProjection — metadata

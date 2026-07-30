@@ -63,9 +63,11 @@ public class DemoMapView extends MapView2D {
 				PropertyUtils.FRACTION, 0.6,
 				PropertyUtils.BOXZOOMRBPOLICY, ARubberband.Policy.RECTANGLE,
 				PropertyUtils.ASPECT, 1.2,
+				PropertyUtils.FEEDBACKFONTSIZE, 11,
 				PropertyUtils.CONTAINERFACTORY, mapContainerFactory,
 				PropertyUtils.TOOLBARBITS, ToolBits.MAPTOOLS | ToolBits.ZOOMTOOLS,
-				PropertyUtils.WHEELZOOM, true		};
+				PropertyUtils.WHEELZOOM, true		
+				};
 	}
 
 

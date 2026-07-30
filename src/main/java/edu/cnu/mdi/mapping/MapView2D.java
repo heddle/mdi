@@ -108,7 +108,7 @@ public class MapView2D extends BaseView {
 	 * Default preferred width in pixels of the combined east-side strip containing
 	 * the control panel and the feedback pane.
 	 */
-	private static final int DEFAULT_SIDE_PANEL_WIDTH = 220;
+	private static final int DEFAULT_SIDE_PANEL_WIDTH = 230;
 
 	// -------------------------------------------------------------------------
 	// Feedback label prefixes (static because they never change)
@@ -1120,7 +1120,8 @@ public class MapView2D extends BaseView {
 	 * panel, optional application-supplied panels, and the feedback pane.
 	 */
 	private void initSidePanel() {
-	    FeedbackPane fbp = initFeedback();
+		int fontSize = PropertyUtils.getFeedbackFontSize(properties);
+	    FeedbackPane fbp = initFeedback(Color.cyan, Color.black, fontSize);
 
 	    sidePanel = new JPanel(new BorderLayout());
 	    sideTopStack = new JPanel();

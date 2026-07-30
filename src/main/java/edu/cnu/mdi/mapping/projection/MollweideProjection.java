@@ -288,8 +288,13 @@ public class MollweideProjection implements IMapProjection {
     	if (latitude < MIN_LAT || latitude > MAX_LAT) {
 			return; // Latitude is out of bounds, so skip drawing
 		}
-    	MapGraphics.drawHorizontalLatitudeLine(g2, (MapContainer)container, latitude,
-    			getCentralLongitude(), theme);
+    	MapGraphics.drawHorizontalLatitudeLine(
+    	        g2,
+    	        container,
+    	        this,
+    	        latitude,
+    	        getCentralLongitude(),
+    	        theme);
     }
 
     /**
