@@ -4,6 +4,8 @@ import java.awt.Component;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageOutputStream;
@@ -23,12 +25,17 @@ import edu.cnu.mdi.splot.plot.PlotPanel;
  *       forced to end with <code>.png</code> (case-insensitive) to avoid mismatches such as
  *       saving PNG data to <code>picture.jpg</code> or an extensionless file.</li>
  *   <li>Writing is performed via the configured PNG writer exposed by
- *       {@link Environment#getPngWriter()}. If no writer is available, the method returns
- *       without showing an error dialog (legacy behavior).</li>
+ *       {@link Environment#getPngWriter()}. Access is synchronized and the writer's
+ *       output is cleared after each capture.</li>
  *   <li>If the target file exists, the user is prompted to confirm overwrite.</li>
  * </ul>
  */
-public class TakePicture {
+public final class TakePicture {
+
+	private static final Logger LOGGER = Logger.getLogger(TakePicture.class.getName());
+
+	private TakePicture() {
+	}
 
 	/**
 	 * Captures the provided component as an image and prompts the user to save it as a PNG file.
@@ -40,8 +47,8 @@ public class TakePicture {
 	 * <code>.png</code> (case-insensitive). If the user selects a name without an extension
 	 * (or with a different extension), <code>.png</code> is appended.</p>
 	 *
-	 * <p><strong>Error handling:</strong> Exceptions during capture or write are printed to
-	 * stderr via {@link Throwable#printStackTrace()} (legacy behavior).</p>
+ * <p><strong>Error handling:</strong> Exceptions during capture or writing are
+ * recorded through the platform logger.</p>
 	 *
 	 * @param canvas the component to capture; if {@code null}, nothing is done
 	 */
@@ -67,13 +74,18 @@ public class TakePicture {
 
 			BufferedImage bi = GraphicsUtils.getComponentImage(canvas);
 
-			try (ImageOutputStream ios = ImageIO.createImageOutputStream(file)) {
-				Environment.getInstance().getPngWriter().setOutput(ios);
-				Environment.getInstance().getPngWriter().write(bi);
+			var writer = Environment.getInstance().getPngWriter();
+			synchronized (writer) {
+				try (ImageOutputStream ios = ImageIO.createImageOutputStream(file)) {
+					writer.setOutput(ios);
+					writer.write(bi);
+				} finally {
+					writer.setOutput(null);
+				}
 			}
 		}
 		catch (Exception e) {
-			e.printStackTrace();
+			LOGGER.log(Level.WARNING, "Unable to save component image.", e);
 		}
 	}
 
@@ -133,7 +145,10 @@ public class TakePicture {
 	 * @param selectedFile the file chosen by the user (must not be {@code null})
 	 * @return a file whose name ends with <code>.png</code>
 	 */
-	private static File enforcePngExtension(File selectedFile) {
+	static File enforcePngExtension(File selectedFile) {
+		if (selectedFile == null) {
+			throw new IllegalArgumentException("selectedFile must not be null");
+		}
 		String name = selectedFile.getName();
 		if (name.toLowerCase(Locale.ROOT).endsWith(".png")) {
 			return selectedFile;

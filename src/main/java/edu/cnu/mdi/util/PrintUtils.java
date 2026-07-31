@@ -8,13 +8,19 @@ import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.RepaintManager;
 import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
 
-public class PrintUtils implements Printable {
+/** Prints Swing components either directly or from an EDT-created snapshot. */
+public final class PrintUtils implements Printable {
+
+	private static final Logger LOGGER = Logger.getLogger(PrintUtils.class.getName());
 
     private final Component component;
 
@@ -28,13 +34,15 @@ public class PrintUtils implements Printable {
      * @param c the component to print (must have non-zero size)
      */
     public static void printComponent(Component c) {
+		Objects.requireNonNull(c, "component");
         new PrintUtils(c, true, true, false).print();
     }
 
     /**
      * Convenience constructor with default settings:
      * fitToPage=true, centerOnPage=true, allowUpscale=false
-     * @param componentToBePrinted
+     *
+     * @param componentToBePrinted component to print
      */
     public PrintUtils(Component componentToBePrinted) {
         this(componentToBePrinted, true, true, false);
@@ -42,12 +50,14 @@ public class PrintUtils implements Printable {
 
     /**
      * Full constructor with behavior knobs:
+     *
+	 * @param componentToBePrinted component to print
      * @param fitToPage    if true, scale to fit imageable area
      * @param centerOnPage if true, center within imageable area (after scaling)
      * @param allowUpscale if false, scale will never exceed 1.0 (no enlarging)
      */
     public PrintUtils(Component componentToBePrinted, boolean fitToPage, boolean centerOnPage, boolean allowUpscale) {
-        this.component = componentToBePrinted;
+		this.component = Objects.requireNonNull(componentToBePrinted, "componentToBePrinted");
         this.fitToPage = fitToPage;
         this.centerOnPage = centerOnPage;
         this.allowUpscale = allowUpscale;
@@ -65,7 +75,7 @@ public class PrintUtils implements Printable {
             try {
                 job.print();
             } catch (PrinterException pe) {
-                System.out.println("Error printing: " + pe);
+				LOGGER.log(Level.WARNING, "Unable to print component.", pe);
             }
         }
     }
@@ -76,57 +86,63 @@ public class PrintUtils implements Printable {
             return NO_SUCH_PAGE;
         }
 
-        Graphics2D g2 = (Graphics2D) g.create();
-        try {
-            // Move origin to imageable area
-            g2.translate(pf.getImageableX(), pf.getImageableY());
+		Graphics2D g2 = (Graphics2D) g.create();
+		try {
+			Runnable render = () -> renderComponent(g2, pf);
+			if (SwingUtilities.isEventDispatchThread()) {
+				render.run();
+			} else {
+				SwingUtilities.invokeAndWait(render);
+			}
+			return PAGE_EXISTS;
+		} catch (Exception e) {
+			PrinterException failure = new PrinterException("Unable to render component for printing");
+			failure.initCause(e);
+			throw failure;
+		} finally {
+			g2.dispose();
+		}
+	}
 
-            double scale = 1.0;
-
-            int cw = Math.max(1, component.getWidth());
-            int ch = Math.max(1, component.getHeight());
-
-            if (fitToPage) {
-                double sx = pf.getImageableWidth() / cw;
-                double sy = pf.getImageableHeight() / ch;
-                scale = Math.min(sx, sy);
-                if (!allowUpscale) {
-                    scale = Math.min(1.0, scale);
-                }
-            }
-
-            // Optional centering within imageable area
-            if (centerOnPage) {
-                double printedW = cw * scale;
-                double printedH = ch * scale;
-                double dx = (pf.getImageableWidth() - printedW) / 2.0;
-                double dy = (pf.getImageableHeight() - printedH) / 2.0;
-                if (dx > 0) g2.translate(dx, 0);
-                if (dy > 0) g2.translate(0, dy);
-            }
-
-            g2.scale(scale, scale);
-
-            // Disable double buffering for cleaner printing
-            RepaintManager mgr = RepaintManager.currentManager(component);
-            boolean wasDB = mgr.isDoubleBufferingEnabled();
-            mgr.setDoubleBufferingEnabled(false);
-
-           try {
-                // For Swing components, printAll is usually fine.
-                // component.print(g2) is also valid; printAll is slightly more "include everything".
-                component.printAll(g2);
-            } finally {
-                mgr.setDoubleBufferingEnabled(wasDB);
-            }
-
-            return PAGE_EXISTS;
-        } finally {
-            g2.dispose();
-        }
-    }
+	private void renderComponent(Graphics2D g2, PageFormat pf) {
+		g2.translate(pf.getImageableX(), pf.getImageableY());
+		int cw = Math.max(1, component.getWidth());
+		int ch = Math.max(1, component.getHeight());
+		double scale = 1.0;
+		if (fitToPage) {
+			scale = Math.min(pf.getImageableWidth() / cw, pf.getImageableHeight() / ch);
+			if (!allowUpscale) {
+				scale = Math.min(1.0, scale);
+			}
+		}
+		if (centerOnPage) {
+			double dx = (pf.getImageableWidth() - cw * scale) / 2.0;
+			double dy = (pf.getImageableHeight() - ch * scale) / 2.0;
+			if (dx > 0) {
+				g2.translate(dx, 0);
+			}
+			if (dy > 0) {
+				g2.translate(0, dy);
+			}
+		}
+		g2.scale(scale, scale);
+		RepaintManager manager = RepaintManager.currentManager(component);
+		boolean doubleBuffered = manager.isDoubleBufferingEnabled();
+		manager.setDoubleBufferingEnabled(false);
+		try {
+			component.printAll(g2);
+		} finally {
+			manager.setDoubleBufferingEnabled(doubleBuffered);
+		}
+	}
     
+	/**
+	 * Capture a component on the EDT and print the resulting image.
+	 *
+	 * @param c component to capture and print
+	 */
     public static void printComponentAsImage(Component c) {
+		Objects.requireNonNull(c, "component");
         final BufferedImage[] snap = new BufferedImage[1];
 
         try {
@@ -138,7 +154,7 @@ public class PrintUtils implements Printable {
                 SwingUtilities.invokeAndWait(r);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+			LOGGER.log(Level.WARNING, "Unable to capture component for printing.", e);
             return;
         }
 
@@ -183,7 +199,7 @@ public class PrintUtils implements Printable {
             try {
                 job.print();
             } catch (PrinterException pe) {
-                pe.printStackTrace();
+				LOGGER.log(Level.WARNING, "Unable to print component image.", pe);
             }
         }   
     }

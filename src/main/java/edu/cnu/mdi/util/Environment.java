@@ -4,6 +4,7 @@ import java.awt.Dimension;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.io.File;
@@ -29,7 +30,7 @@ import edu.cnu.mdi.app.BaseMDIApplication;
  */
 public final class Environment {
 
-	//resourcde path prefix for MDI owned resources
+	/** Classpath prefix for resources bundled with MDI. */
 	public static final String MDI_RESOURCE_PATH = "/edu/cnu/mdi/";
 
 	// the logger
@@ -124,7 +125,7 @@ public final class Environment {
 	 * @return the default frame size for new frames
 	 */
 	public Dimension getFrameSize() {
-		return frameSize;
+		return (frameSize == null) ? null : new Dimension(frameSize);
 	}
 	
 	/**
@@ -135,11 +136,12 @@ public final class Environment {
 	 * @param frameSize the default frame size for new frames
 	 */
 	public void setFrameSize(Dimension frameSize) {
-		this.frameSize = frameSize;
+		this.frameSize = (frameSize == null) ? null : new Dimension(frameSize);
 	}
 
-	/*
+	/**
 	 * Get the JVM class path
+	 *
 	 * @return the class path
 	 */
 	public String getClassPath() {
@@ -194,7 +196,7 @@ public final class Environment {
 	}
 
 	/**
-	 * Returns a unique temporary directory.
+	 * Returns the JVM's configured temporary directory.
 	 *
 	 * @return a unique temp directory
 	 */
@@ -272,6 +274,9 @@ public final class Environment {
 	 * @return the display scale factor (typically 1.0, 1.25, 1.5, 2.0, ...)
 	 */
 	public static double getDisplayScaleFactor() {
+		if (GraphicsEnvironment.isHeadless()) {
+			return 1.0;
+		}
 		GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		GraphicsDevice gd = ge.getDefaultScreenDevice();
 		GraphicsConfiguration gc = gd.getDefaultConfiguration();
@@ -285,8 +290,15 @@ public final class Environment {
 	 * @return array of graphics devices
 	 */
 	public static GraphicsDevice[] getGraphicsDevices() {
+		if (GraphicsEnvironment.isHeadless()) {
+			return new GraphicsDevice[0];
+		}
 		GraphicsEnvironment g = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		return g.getScreenDevices();
+		try {
+			return g.getScreenDevices();
+		} catch (HeadlessException e) {
+			return new GraphicsDevice[0];
+		}
 	}
 
 	// ------------------------------------------------------------------------
@@ -436,6 +448,11 @@ public final class Environment {
 		return sb.toString();
 	}
 	
+	/**
+	 * Build a concise framework, JVM, operating-system, and monitor summary.
+	 *
+	 * @return multi-line startup report
+	 */
 	public static String startupReport() {
 		StringBuilder sb = new StringBuilder(256);
 		sb.append("MDI Framework: " +  BaseMDIApplication.getFrameworkVersion() + "\n");
@@ -494,14 +511,26 @@ public final class Environment {
 	 */
 	public static int getJavaMajorVersion() {
 		String version = System.getProperty("java.version");
-		if (version == null || version.isEmpty()) {
+		return parseJavaMajorVersion(version);
+	}
+
+	static int parseJavaMajorVersion(String version) {
+		if (version == null || version.isBlank()) {
 			return -1;
 		}
-		if (version.startsWith("1.")) {
-			return Integer.parseInt(version.substring(2, 3));
+		String candidate = version.startsWith("1.") ? version.substring(2) : version;
+		int end = 0;
+		while (end < candidate.length() && Character.isDigit(candidate.charAt(end))) {
+			end++;
 		}
-		int dotIndex = version.indexOf('.');
-		return (dotIndex != -1) ? Integer.parseInt(version.substring(0, dotIndex)) : Integer.parseInt(version);
+		if (end == 0) {
+			return -1;
+		}
+		try {
+			return Integer.parseInt(candidate.substring(0, end));
+		} catch (NumberFormatException e) {
+			return -1;
+		}
 	}
 
 	/**
@@ -517,29 +546,6 @@ public final class Environment {
 		System.err.println("\nStack trace filtered on \"" + startsWith + "\"");
 		Arrays.stream(stackTrace).filter(element -> element.getClassName().startsWith(startsWith))
 				.forEach(System.err::println);
-	}
-
-	// ------------------------------------------------------------------------
-	// Look & Feel helpers
-	// ------------------------------------------------------------------------
-
-	/**
-	 * Simple test harness that prints the current environment and installed look
-	 * &amp; feels.
-	 */
-	public static void main(String[] args) {
-		Environment env = Environment.getInstance();
-		System.out.println(env);
-		System.out.println("Done.");
-	}
-
-	/**
-	 * Singleton objects cannot be cloned; this method always throws
-	 * {@link CloneNotSupportedException}.
-	 */
-	@Override
-	protected Object clone() throws CloneNotSupportedException {
-		throw new CloneNotSupportedException();
 	}
 
 }

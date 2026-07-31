@@ -8,10 +8,15 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.util.List;
+import java.util.Objects;
 
 import javax.swing.SwingConstants;
 
-public class TextUtils {
+/** Text measurement, comparison, and rotated drawing helpers. */
+public final class TextUtils {
+
+	private TextUtils() {
+	}
 
 	/**
 	 * Draws rotated multi-line text with specified alignment.
@@ -31,6 +36,11 @@ public class TextUtils {
 	 */
 	public static void drawRotatedText(Graphics2D g2, Point cp, String s,
 	        Font font, Color tcolor, double theta, int align) {
+		Objects.requireNonNull(g2, "g2");
+		Objects.requireNonNull(cp, "cp");
+		Objects.requireNonNull(s, "text");
+		Objects.requireNonNull(font, "font");
+		Objects.requireNonNull(tcolor, "text color");
 
 		// Work on a copy so that translate/rotate/dispose never touch the caller's g2.
 		// This is the critical fix: the original code called g2.dispose() on the shared
@@ -42,7 +52,7 @@ public class TextUtils {
 		    g.setColor(tcolor);
 		    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		    String[] lines = s.split("\\R");
+		    String[] lines = textLines(s);
 		    FontMetrics fm = g.getFontMetrics();
 		    int lineHeight = fm.getHeight();
 		    int totalHeight = lineHeight * lines.length;
@@ -69,7 +79,7 @@ public class TextUtils {
 		                x = -maxWidth / 2.0f;
 		                break;
 		            case SwingConstants.RIGHT:
-		                x = -lineWidth;
+		                x = maxWidth / 2.0f - lineWidth;
 		                break;
 		            case SwingConstants.CENTER:
 		            default:
@@ -101,7 +111,8 @@ public class TextUtils {
             int leftMargin, int rightMargin,
             int topMargin, int bottomMargin,
             float lineSpacing) {
-		String lines[] = text.lines().toArray(String[]::new);
+		Objects.requireNonNull(text, "text");
+		String lines[] = textLines(text);
 		return textBounds(lines, fm, leftMargin, rightMargin, topMargin, bottomMargin, lineSpacing);
 	}
 
@@ -122,10 +133,14 @@ public class TextUtils {
 	                            int topMargin, int bottomMargin,
 	                            float lineSpacing) {
 
+		Objects.requireNonNull(fm, "font metrics");
 	    leftMargin   = Math.max(0, Math.min(leftMargin,   500));
 	    rightMargin  = Math.max(0, Math.min(rightMargin,  500));
 	    topMargin    = Math.max(0, Math.min(topMargin,    500));
 	    bottomMargin = Math.max(0, Math.min(bottomMargin, 500));
+		if (!Float.isFinite(lineSpacing)) {
+			throw new IllegalArgumentException("lineSpacing must be finite");
+		}
 	    lineSpacing  = Math.max(0.5f, Math.min(lineSpacing, 3.0f));
 
 	    if (lines == null || lines.length == 0) {
@@ -179,5 +194,9 @@ public class TextUtils {
 			}
 		}
 		return true;
+	}
+
+	private static String[] textLines(String text) {
+		return text.split("\\R", -1);
 	}
 }
