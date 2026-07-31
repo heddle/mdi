@@ -100,11 +100,13 @@ public class HistoCurve extends ACurve {
 	 */
 	@Override
 	public void doFit(boolean force) {
+		requireEdt("doFit");
 
 		if (!force && !isDirty()) {
 			return;
 		}
 
+		boolean success = false;
 		try {
 			final CurveDrawingMethod method = getCurveDrawingMethod();
 
@@ -116,12 +118,14 @@ public class HistoCurve extends ACurve {
 			case NONE:
 			case CONNECT:
 			case STAIRS:
+				success = true;
 				break;
 
 			case CUBICSPLINE: {
 				FitVectors v = fitVectors();
 				if (v != null && v.length() >= 2) {
 					setCubicSpline(new CubicSpline(v.x, v.y));
+					success = true;
 				}
 				break;
 			}
@@ -139,6 +143,7 @@ public class HistoCurve extends ACurve {
 					FitVectors v = fitVectors();
 					FitResult fr = fitWithOptionalWeights(fitter, v);
 					setFitResult(fr);
+					success = (fr != null);
 				}
 				break;
 			}
@@ -150,7 +155,9 @@ public class HistoCurve extends ACurve {
 		} catch (Exception e) {
 			// Fail soft: artifacts already cleared
 		} finally {
-			setDirty(false);
+			if (success) {
+				setDirty(false);
+			}
 		}
 	}
 

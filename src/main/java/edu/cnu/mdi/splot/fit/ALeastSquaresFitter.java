@@ -448,6 +448,10 @@ public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
 		if (p <= 0) {
 			throw new IllegalStateException("parameter count must be > 0");
 		}
+		if (n < p) {
+			throw new IllegalArgumentException(
+					"need at least " + p + " points for " + p + " fit parameters");
+		}
 
 		// Initial guess.
 		final double[] start;
@@ -465,6 +469,12 @@ public abstract class ALeastSquaresFitter implements IFitter, IFitStringGetter {
 				throw new IllegalArgumentException("defaultInitialGuess must return length " + p);
 			}
 			start = guess;
+		}
+		for (int i = 0; i < start.length; i++) {
+			if (!Double.isFinite(start[i])) {
+				throw new IllegalArgumentException(
+						"initial guess must be finite at index " + i);
+			}
 		}
 
 		// Model + validator.

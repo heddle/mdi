@@ -4,9 +4,9 @@ import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,7 +47,7 @@ public final class PlotIO {
 
 		PlotSpec spec = toSpec(canvas);
 
-		try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
+		try (BufferedWriter bw = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
 			bw.write(GSON.toJson(spec));
 		}
 	}
@@ -55,8 +55,12 @@ public final class PlotIO {
 	/** Load a PlotSpec JSON file. */
 	public static PlotSpec loadSpec(File file) throws IOException {
 		Objects.requireNonNull(file, "file");
-		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-			return GSON.fromJson(br, PlotSpec.class);
+		try (BufferedReader br = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
+			PlotSpec spec = GSON.fromJson(br, PlotSpec.class);
+			if (spec == null) {
+				throw new IOException("Plot file is empty or contains JSON null: " + file);
+			}
+			return spec;
 		}
 	}
 
@@ -254,33 +258,6 @@ public final class PlotIO {
 		}
 
 
-		// Heatmap / 2D histogram (best-effort via reflection to avoid tight coupling)
-		try {
-			Object h2 = invokeGetter(curve, "getHisto2DData");
-			if (h2 instanceof Histo2DData h2d) {
-				Histo2DSpec hs2 = new Histo2DSpec();
-				hs2.nx = h2d.nx();
-				hs2.ny = h2d.ny();
-				hs2.xmin = h2d.xMin();
-				hs2.xmax = h2d.xMax();
-				hs2.ymin = h2d.yMin();
-				hs2.ymax = h2d.yMax();
-				hs2.bins = h2d.snapshotBins();
-				hs2.goodCount = h2d.getGoodCount();
-				hs2.xUnderCount = h2d.getXUnderCount();
-				hs2.xOverCount = h2d.getXOverCount();
-				hs2.yUnderCount = h2d.getYUnderCount();
-				hs2.yOverCount = h2d.getYOverCount();
-				hs2.xUnder_yUnder = h2d.getXUnderYUnderCount();
-				hs2.xUnder_yOver = h2d.getXUnderYOverCount();
-				hs2.xOver_yUnder = h2d.getXOverYUnderCount();
-				hs2.xOver_yOver = h2d.getXOverYOverCount();
-				cs.histo2d = hs2;
-				return cs;
-			}
-		} catch (Exception ignore) {
-			// not a heatmap curve
-		}
 		if (curve instanceof Curve xy) {
 			Snapshot snap = xy.snapshot();
 			cs.x = snap.x;
@@ -354,30 +331,6 @@ public final class PlotIO {
 			return pd;
 		}
 
-
-		case H2D: {
-			Histo2DSpec hs2 = spec.histo2d;
-			// Backward compatibility: older format stored heatmap in curves[0].histo2d
-			if (hs2 == null && spec.curves != null && !spec.curves.isEmpty()) {
-				hs2 = spec.curves.get(0).histo2d;
-				if (hs2 != null && hs2.name == null) {
-					hs2.name = spec.curves.get(0).name;
-				}
-			}
-			if (hs2 == null || hs2.bins == null) {
-				throw new PlotDataException("Missing 2D histogram data.");
-			}
-			String name = (hs2.name != null) ? hs2.name : "Heatmap";
-			Histo2DData h2d = new Histo2DData(name, hs2.xmin, hs2.xmax, hs2.nx, hs2.ymin, hs2.ymax, hs2.ny);
-			h2d.setBinsForDeserialization(hs2.bins, hs2.goodCount,
-				hs2.xUnderCount, hs2.xOverCount,
-				hs2.yUnderCount, hs2.yOverCount,
-				hs2.xUnder_yUnder, hs2.xUnder_yOver,
-				hs2.xOver_yUnder, hs2.xOver_yOver);
-
-			PlotData pd = new PlotData(h2d);
-			return pd;
-		}
 
 		case XYXY:
 		case XYEXYE: {
@@ -466,28 +419,9 @@ public final class PlotIO {
 	}
 
 
-	/** Best-effort reflection helper: invoke a no-arg getter. */
-	private static Object invokeGetter(Object target, String method) {
-		try {
-			return target.getClass().getMethod(method).invoke(target);
-		} catch (Exception e) {
-			return null;
-		}
-	}
-
-	/** Construct PlotData for an H2D plot while tolerating constructor variations. */
+	/** Construct plot data for a 2D histogram. */
 	private static PlotData newPlotDataForH2D(Histo2DData h2d) throws PlotDataException {
-		try {
-			// Most likely: new PlotData(Histo2DData)
-			return PlotData.class.getConstructor(Histo2DData.class).newInstance(h2d);
-		} catch (Exception ignore) {
-			// Next: new PlotData(Histo2DData[])
-			try {
-				return PlotData.class.getConstructor(Histo2DData[].class).newInstance((Object) new Histo2DData[] { h2d });
-			} catch (Exception ignore2) {
-				throw new PlotDataException("No PlotData constructor supports Histo2DData. Add PlotData(Histo2DData) or PlotData(Histo2DData[])");
-			}
-		}
+		return new PlotData(h2d);
 	}
 
 

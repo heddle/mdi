@@ -3,6 +3,7 @@ package edu.cnu.mdi.splot.plot;
 import java.awt.Point;
 import java.awt.Rectangle;
 
+/** Rectangle with the interaction state required for draggable plot overlays. */
 @SuppressWarnings("serial")
 public class DraggableRectangle extends Rectangle implements Draggable {
 
@@ -49,7 +50,7 @@ public class DraggableRectangle extends Rectangle implements Draggable {
 
 	@Override
 	public Point getCurrentPoint() {
-		return _currentPoint;
+		return (_currentPoint == null) ? null : new Point(_currentPoint);
 	}
 
 }

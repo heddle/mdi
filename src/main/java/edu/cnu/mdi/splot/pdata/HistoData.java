@@ -289,6 +289,9 @@ public class HistoData {
 	 * @param value the value to fill
 	 */
 	public void add(double value) {
+		if (!Double.isFinite(value)) {
+			return;
+		}
 		stats = null;
 		int bin = getBin(value);
 		if (bin == UNDERFLOW) {
@@ -315,6 +318,9 @@ public class HistoData {
 		stats = null;
 
 		for (double v : values) {
+			if (!Double.isFinite(v)) {
+				continue;
+			}
 			int bin = getBin(v);
 			if (bin == UNDERFLOW) {
 				underCount++;
@@ -336,6 +342,12 @@ public class HistoData {
 	 * @param count count to assign
 	 */
 	public void setCount(double val, int count) {
+		if (!Double.isFinite(val)) {
+			return;
+		}
+		if (count < 0) {
+			throw new IllegalArgumentException("count must be >= 0");
+		}
 		stats = null;
 		int bin = getBin(val);
 		if (bin == UNDERFLOW) {
@@ -464,7 +476,7 @@ public class HistoData {
 	 */
 	public double[] getBasicStatistics() {
 		if (stats != null) {
-			return stats;
+			return stats.clone();
 		}
 
 		stats = new double[] { Double.NaN, Double.NaN, Double.NaN };
@@ -490,7 +502,7 @@ public class HistoData {
 			stats[2] = Math.sqrt(Math.max(0.0, avgSq));
 		}
 
-		return stats;
+		return stats.clone();
 	}
 
 	/**
@@ -761,6 +773,9 @@ public class HistoData {
 		if (numBins <= 0) {
 			throw new IllegalArgumentException("numBins must be >= 1");
 		}
+		if (!Double.isFinite(vmin) || !Double.isFinite(vmax)) {
+			throw new IllegalArgumentException("histogram limits must be finite");
+		}
 		if (!(vmax > vmin)) {
 			throw new IllegalArgumentException("valMax must be > valMin");
 		}
@@ -790,6 +805,12 @@ public class HistoData {
 		}
 
 		double[] g = grid.clone();
+		for (int i = 0; i < g.length; i++) {
+			if (!Double.isFinite(g[i])) {
+				throw new IllegalArgumentException(
+						"grid values must be finite (invalid value at index " + i + ")");
+			}
+		}
 		for (int i = 1; i < g.length; i++) {
 			if (!(g[i] > g[i - 1])) {
 				throw new IllegalArgumentException(

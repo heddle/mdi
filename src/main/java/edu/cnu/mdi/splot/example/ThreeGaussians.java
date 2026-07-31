@@ -13,11 +13,13 @@ import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
+/** Demonstrates fitting a sum of three Gaussians. */
 @SuppressWarnings("serial")
 public class ThreeGaussians extends AExample {
 
 	private static final String curveName = "3 Gaussian Fit";
 
+	/** @param headless whether to construct the example without displaying a window */
 	public ThreeGaussians(boolean headless) {
 		super(headless);
 	}

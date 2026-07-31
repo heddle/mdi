@@ -14,11 +14,13 @@ import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotChangeType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
+/** Demonstrates a histogram that is filled incrementally by a data source. */
 @SuppressWarnings("serial")
 public class GrowingHisto extends AExample {
 
 	private static Thread sourceThread;
 
+	/** @param headless whether to construct the example without displaying a window */
 	public GrowingHisto(boolean headless) {
 		super(headless);
 		double mu = 50.0;

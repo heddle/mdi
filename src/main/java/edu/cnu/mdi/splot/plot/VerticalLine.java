@@ -1,10 +1,16 @@
 package edu.cnu.mdi.splot.plot;
 
+/** Plot annotation spanning the visible y range at a fixed data-space x value. */
 public class VerticalLine extends PlotLine {
 
 	// the x value of the vertical line
 	private double _x;
 
+	/**
+	 * Create a vertical annotation.
+	 * @param canvas owning canvas
+	 * @param x fixed data-space x value
+	 */
 	public VerticalLine(PlotCanvas canvas, double x) {
 		super(canvas);
 		_x = x;

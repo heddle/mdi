@@ -12,9 +12,11 @@ import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
+/** Demonstrates two overlaid one-dimensional histograms. */
 @SuppressWarnings("serial")
 public class TwoHisto extends AExample {
 
+	/** @param headless whether to construct the example without displaying a window */
 	public TwoHisto(boolean headless) {
 		super(headless);
 	}

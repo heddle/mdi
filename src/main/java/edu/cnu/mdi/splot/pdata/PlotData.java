@@ -18,7 +18,7 @@ import javax.swing.event.EventListenerList;
  *
  * <p>Notifications</p> There are two kinds of changes:
  * <ul>
- * <li><b>Structural</b> changes to the model (curves added/removed/cleared)
+	 * <li><b>Structural</b> changes to the model (curves added)
  * &mdash; fired by {@code PlotData}.</li>
  * <li><b>Data</b> changes within a curve (points appended, histogram filled,
  * etc.) &mdash; fired by the curve, and forwarded by {@code PlotData} so the
@@ -136,6 +136,11 @@ public class PlotData implements CurveChangeListener {
 		if (curveCount < 1) {
 			throw new PlotDataException("Must supply at least one curve name.");
 		}
+		for (int i = 0; i < curveCount; i++) {
+			if (curveNames[i] == null) {
+				throw new PlotDataException("Curve name " + i + " is null.");
+			}
+		}
 
 		// fit orders can be null, but if not null lengths must match
 		if (fitOrders != null) {
@@ -232,6 +237,13 @@ public class PlotData implements CurveChangeListener {
 		return (type == PlotDataType.H2D);
 	}
 
+	/**
+	 * Determine whether this model contains ordinary XY data, with or without
+	 * y-error values.
+	 *
+	 * @return {@code true} for {@link PlotDataType#XYXY} or
+	 *         {@link PlotDataType#XYEXYE}
+	 */
 	public boolean isXYData() {
 		return (type == PlotDataType.XYEXYE) || (type == PlotDataType.XYXY);
 	}

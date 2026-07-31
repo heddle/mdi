@@ -99,6 +99,10 @@ public final class Histo2DData {
         if (nx < 1 || ny < 1) {
             throw new IllegalArgumentException("Histo2DData: nx and ny must be >= 1");
         }
+		if (!Double.isFinite(xmin) || !Double.isFinite(xmax)
+				|| !Double.isFinite(ymin) || !Double.isFinite(ymax)) {
+			throw new IllegalArgumentException("Histo2DData: limits must be finite");
+		}
         if (!(xmax > xmin)) {
             throw new IllegalArgumentException("Histo2DData: xmax must be > xmin");
         }

@@ -13,9 +13,11 @@ import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
+/** Demonstrates two weighted linear fits drawn on the same plot. */
 @SuppressWarnings("serial")
 public class TwoLinesWithErrors extends AExample {
 
+	/** @param headless whether to construct the example without displaying a window */
 	public TwoLinesWithErrors(boolean headless) {
 		super(headless);
 	}

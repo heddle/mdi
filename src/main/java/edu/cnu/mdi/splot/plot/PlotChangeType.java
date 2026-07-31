@@ -1,5 +1,9 @@
 package edu.cnu.mdi.splot.plot;
 
+/** Lifecycle changes emitted by a plot canvas. */
 public enum PlotChangeType {
-	STOODUP, SHUTDOWN,
+	/** Canvas became active. */
+	STOODUP,
+	/** Canvas is shutting down. */
+	SHUTDOWN,
 }

@@ -13,7 +13,6 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Pair;
 
-import edu.cnu.mdi.splot.pdata.FitVectors;
 
 /**
  * Nonlinear least-squares fitter for a 4-parameter Gaussian with baseline:
@@ -387,35 +386,4 @@ public final class GaussianFitter extends ALeastSquaresFitter {
 		return this;
 	}
 
-	// --------------------- test main -----------------------
-	public static void main(String arg[]) {
-		final double mu = 1.2;
-		final double sigma = 0.3;
-		final double A = 2.0;
-		final double B = 0.5;
-		int n = 50;
-
-		Evaluator eval = (double x) -> {
-			double z = (x - mu) / sigma;
-			return A * Math.exp(-0.5 * z * z) + B;
-		};
-
-		FitVectors testData = FitVectors.testData(eval, -1.0, 3.0, n, 4.0, 5.0);
-		GaussianFitter fitter = new GaussianFitter();
-		FitResult result = fitter.fit(testData.x, testData.y, testData.w);
-		System.out.println("True parameters: ");
-		System.out.print(" A = " + A);
-		System.out.print(" mu = " + mu);
-		System.out.print(" sigma = " + sigma);
-		System.out.println(" B = " + B);
-		System.out.println(result);
-
-		// print data and fit values
-		for (int i = 0; i < (n - 1); i += 10) {
-			double xv = testData.x[i];
-			double yv = result.evaluator.value(xv);
-			System.out.printf("x=%.3f fit y=%.3f data y=%.3f%n", xv, yv, testData.y[i]);
-		}
-
-	}
 }

@@ -168,7 +168,7 @@ public abstract class ACurve {
 	 * @param name curve name (legend label)
 	 */
 	public ACurve(String name) {
-		this.name = name;
+		this.name = Objects.requireNonNull(name, "name");
 		initStyle();
 	}
 
@@ -254,7 +254,7 @@ public abstract class ACurve {
 	 * @param name curve name
 	 */
 	public final void setName(String name) {
-		this.name = name;
+		this.name = Objects.requireNonNull(name, "name");
 		markStyleChanged();
 	}
 

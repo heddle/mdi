@@ -46,14 +46,6 @@ public class FitVectors {
 	 * @param weights the weights array (may be null)
 	 * @throws IllegalArgumentException if array lengths are inconsistent
 	 */
-	/**
-	 * Create fit vectors from raw arrays.
-	 *
-	 * @param x       the X data array (non-null)
-	 * @param y       the Y data array (non-null)
-	 * @param weights the weights array (may be null)
-	 * @throws IllegalArgumentException if array lengths are inconsistent
-	 */
 	public FitVectors(double[] x, double[] y, double[] weights) {
 		Objects.requireNonNull(x, "X array cannot be null");
 		Objects.requireNonNull(y, "Y array cannot be null");

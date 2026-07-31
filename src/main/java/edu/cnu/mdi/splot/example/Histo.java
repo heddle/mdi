@@ -12,9 +12,11 @@ import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
+/** Demonstrates a fitted one-dimensional histogram. */
 @SuppressWarnings("serial")
 public class Histo extends AExample {
 
+	/** @param headless whether to construct the example without displaying a window */
 	public Histo(boolean headless) {
 		super(headless);
 	}

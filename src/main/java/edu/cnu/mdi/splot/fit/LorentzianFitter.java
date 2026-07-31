@@ -12,7 +12,6 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Pair;
 
-import edu.cnu.mdi.splot.pdata.FitVectors;
 
 /**
  * Nonlinear least-squares fitter for a Lorentzian (Cauchy / Breit-Wigner)
@@ -318,31 +317,4 @@ public final class LorentzianFitter extends ALeastSquaresFitter {
 		}
 	}
 
-	// -----------------------------------------------------------------------
-	// Stand-alone test
-	// -----------------------------------------------------------------------
-
-	/**
-	 * Quick smoke test: fits synthetic Lorentzian data and prints the result.
-	 *
-	 * @param args ignored
-	 */
-	public static void main(String[] args) {
-		final double A  = 10.0;
-		final double x0 = 5.0;
-		final double G  = 1.5;   // FWHM
-		final double B  = 0.5;
-		final double hg = G / 2.0;
-		final double hg2 = hg * hg;
-
-		FitVectors data = FitVectors.testData(
-				x -> A * hg2 / ((x - x0) * (x - x0) + hg2) + B,
-				0.0, 10.0, 80, 3.0, 5.0);
-
-		LorentzianFitter fitter = new LorentzianFitter();
-		FitResult result = fitter.fit(data.x, data.y, data.w);
-
-		System.out.println("True: A=" + A + "  x0=" + x0 + "  Γ=" + G + "  B=" + B);
-		System.out.println(result);
-	}
 }

@@ -9,9 +9,11 @@ import edu.cnu.mdi.splot.pdata.PlotDataException;
 import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
+/** Demonstrates a weighted straight-line fit. */
 @SuppressWarnings("serial")
 public class StraightLine extends AExample {
 
+	/** @param headless whether to construct the example without displaying a window */
 	public StraightLine(boolean headless) {
 		super(headless);
 	}

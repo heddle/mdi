@@ -2,6 +2,9 @@ package edu.cnu.mdi.splot.pdata;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 /**
  * Named list of {@code Double} values with cached min/max tracking.
@@ -41,22 +44,31 @@ public class DataList extends ArrayList<Double> {
 
 	@Override
 	public void add(int index, Double element) {
-		// ensure min/max tracking
-		add(element);
-		// ArrayList.add(element) appends; we need correct insertion behavior:
-		// So perform actual insertion, then remove the appended element.
-		// (This keeps min/max correct and avoids duplicating tracking logic.)
-		if (index < size() - 1) {
-			Double last = super.remove(size() - 1);
-			super.add(index, last);
-		}
+		// Let ArrayList validate the index before changing either data or caches.
+		super.add(index, element);
+		includeInRange(element);
 	}
 
 	@Override
 	public boolean addAll(Collection<? extends Double> c) {
-		boolean changed = false;
-		for (Double d : c) {
-			changed |= add(d);
+		Objects.requireNonNull(c, "collection");
+		boolean changed = super.addAll(c);
+		if (changed) {
+			for (Double value : c) {
+				includeInRange(value);
+			}
+		}
+		return changed;
+	}
+
+	@Override
+	public boolean addAll(int index, Collection<? extends Double> c) {
+		Objects.requireNonNull(c, "collection");
+		boolean changed = super.addAll(index, c);
+		if (changed) {
+			for (Double value : c) {
+				includeInRange(value);
+			}
 		}
 		return changed;
 	}
@@ -94,6 +106,45 @@ public class DataList extends ArrayList<Double> {
 		// prev might have been min/max; element might become min/max
 		recomputeMinMax();
 		return prev;
+	}
+
+	@Override
+	public boolean removeAll(Collection<?> c) {
+		boolean changed = super.removeAll(c);
+		if (changed) {
+			recomputeMinMax();
+		}
+		return changed;
+	}
+
+	@Override
+	public boolean retainAll(Collection<?> c) {
+		boolean changed = super.retainAll(c);
+		if (changed) {
+			recomputeMinMax();
+		}
+		return changed;
+	}
+
+	@Override
+	public boolean removeIf(Predicate<? super Double> filter) {
+		boolean changed = super.removeIf(filter);
+		if (changed) {
+			recomputeMinMax();
+		}
+		return changed;
+	}
+
+	@Override
+	public void replaceAll(UnaryOperator<Double> operator) {
+		super.replaceAll(operator);
+		recomputeMinMax();
+	}
+
+	@Override
+	protected void removeRange(int fromIndex, int toIndex) {
+		super.removeRange(fromIndex, toIndex);
+		recomputeMinMax();
 	}
 
 	/**
@@ -148,5 +199,17 @@ public class DataList extends ArrayList<Double> {
 
 		min = newMin;
 		max = newMax;
+	}
+
+	private void includeInRange(Double value) {
+		if (value == null) {
+			return;
+		}
+		if (value < min) {
+			min = value;
+		}
+		if (value > max) {
+			max = value;
+		}
 	}
 }
