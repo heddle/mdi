@@ -28,13 +28,22 @@ public final class MapUtils {
      * subsystem. The range is half-open: values less than or equal to -π
      * are mapped to their equivalent in (-π, π].</p>
      *
-     * @param lon longitude in radians (any value)
-     * @return equivalent longitude in (-π, π]
+     * @param lon longitude in radians
+     * @return equivalent longitude in (-π, π], or {@link Double#NaN} when
+     *         {@code lon} is not finite
      */
     public static double wrapLongitude(double lon) {
-        while (lon <= -Math.PI) lon += 2 * Math.PI;
-        while (lon >   Math.PI) lon -= 2 * Math.PI;
-        return lon;
+        if (!Double.isFinite(lon)) {
+            return Double.NaN;
+        }
+
+        double wrapped = lon % (2.0 * Math.PI);
+        if (wrapped <= -Math.PI) {
+            wrapped += 2.0 * Math.PI;
+        } else if (wrapped > Math.PI) {
+            wrapped -= 2.0 * Math.PI;
+        }
+        return wrapped;
     }
 
     /**

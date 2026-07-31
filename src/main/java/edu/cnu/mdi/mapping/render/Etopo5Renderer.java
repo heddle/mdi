@@ -156,12 +156,16 @@ public class Etopo5Renderer {
      *
      * @param latitudeDeg  latitude in degrees
      * @param longitudeDeg longitude in degrees
-     * @return elevation in metres, or {@code NaN} if unavailable
+     * @return elevation in metres, or {@code NaN} if unavailable or either
+     *         coordinate is non-finite
      */
     public double getElevation(
             double latitudeDeg,
             double longitudeDeg) {
 
+        if (!Double.isFinite(latitudeDeg) || !Double.isFinite(longitudeDeg)) {
+            return Double.NaN;
+        }
         return loader.getInterpolatedElevationMeters(
                 latitudeDeg,
                 longitudeDeg);

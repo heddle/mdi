@@ -57,6 +57,20 @@ public class ShapefileDbfReaderTest {
         }
     }
 
+    @Test
+    public void testTruncatedRecordIsRejected() throws IOException {
+        Path path = writeDbf(
+                new byte[] { FLAG_VALID, FLAG_VALID },
+                new String[] { "ONE", "TWO" });
+        byte[] completeFile = Files.readAllBytes(path);
+        Files.write(path, java.util.Arrays.copyOf(completeFile, completeFile.length - 1));
+
+        try (ShapefileDbfReader reader = new ShapefileDbfReader(path)) {
+            IOException error = assertThrows(IOException.class, reader::readAllRecords);
+            assertTrue(error.getMessage().contains("Unexpected end of file"));
+        }
+    }
+
     private Path writeDbf(byte[] flags, String[] values) throws IOException {
         int headerSize = 65;
         int recordSize = 5;

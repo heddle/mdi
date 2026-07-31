@@ -7,6 +7,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Shape;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,15 +31,14 @@ import edu.cnu.mdi.mapping.theme.MapTheme;
  * round values as the user zooms.
  * </p>
  * <p>
- * The visible span is measured empirically: the device viewport corners and
- * edge midpoints are inverse-projected back to (λ, φ) via
+ * The visible span is measured empirically: points sampled within the
+ * projection's device-space clip bounds are inverse-projected back to (λ, φ) via
  * {@link MapContainer#localToLatLon(Point, Point2D.Double)}. Because this uses
  * the projection's own inverse, it is correct for every projection — including
  * the azimuthal ones (orthographic, Lambert) where a viewport corner may fall
- * off the projected disk and invert to {@code NaN}. Such samples are skipped;
- * if too few valid samples remain (e.g. the whole globe is in view), the code
- * falls back to the projection's full {@link IMapProjection#getXYBounds()}
- * domain and the configured fixed step.
+ * off the projected disk and invert to {@code NaN}. Such samples are skipped.
+ * Sampling the projection clip rather than the whole component also handles a
+ * fitted map with horizontal or vertical letterboxing.
  * </p>
  *
  * <h2>Fixed spacing</h2>
@@ -46,7 +46,8 @@ import edu.cnu.mdi.mapping.theme.MapTheme;
  * When {@link #isAdaptive()} is {@code false}, the renderer behaves exactly as
  * before: it iterates the whole graticule using {@link #getLatitudeStepRad()}
  * and {@link #getLongitudeStepRad()}. Those setters remain the source of the
- * step in fixed mode and the <em>fallback</em> step in adaptive mode.
+ * step in fixed mode and the <em>fallback</em> step in adaptive mode. Coordinate
+ * labels are available in both fixed and adaptive modes.
  * </p>
  *
  * <h2>Rendering</h2>
@@ -272,8 +273,8 @@ public final class GraticuleRenderer {
     /**
      * Enables or disables coordinate labels along the viewport edges (e.g.
      * "39°N", "132°E"). Labels are placed where each parallel/meridian enters
-     * the viewport and are only available in adaptive mode (they require the
-     * inverse + viewport that {@link MapContainer} supplies).
+     * the viewport in both fixed and adaptive spacing modes. They require the
+     * inverse + viewport that {@link MapContainer} supplies.
      *
      * @param drawLabels {@code true} to draw edge labels
      */
@@ -302,9 +303,11 @@ public final class GraticuleRenderer {
             projection.drawMapOutline(g2, container);
         }
 
-        GeoExtent extent = adaptive ? computeVisibleExtent(container) : null;
-        if (extent == null) {
-            renderFixed(g2, container);
+        GeoExtent extent = (adaptive || drawLabels)
+                ? computeVisibleExtent(container)
+                : null;
+        if (!adaptive || extent == null) {
+            renderFixed(g2, container, extent);
         } else {
             renderAdaptive(g2, container, extent);
         }
@@ -314,7 +317,8 @@ public final class GraticuleRenderer {
     // Fixed-step rendering (original behavior)
     // -------------------------------------------------------------------------
 
-    private void renderFixed(Graphics2D g2, IContainer container) {
+    private void renderFixed(
+            Graphics2D g2, IContainer container, GeoExtent visibleExtent) {
         double latMin = -Math.PI / 2.0;
         double latMax =  Math.PI / 2.0;
         for (double phi = latMin; phi <= latMax + 1e-9; phi += latitudeStepRad) {
@@ -324,6 +328,15 @@ public final class GraticuleRenderer {
         double lonMax =  Math.PI;
         for (double lambda = lonMin; lambda <= lonMax + 1e-9; lambda += longitudeStepRad) {
             projection.drawLongitudeLine(g2, container, lambda);
+        }
+
+        if (drawLabels && container instanceof MapContainer mc) {
+            GeoExtent labelExtent = (visibleExtent != null)
+                    ? visibleExtent
+                    : new GeoExtent(latMin, latMax, lonMin, lonMax);
+            drawEdgeLabels(mc, g2, labelExtent,
+                    latMin, latMax, latitudeStepRad,
+                    lonMin, lonMax, longitudeStepRad);
         }
     }
 
@@ -372,11 +385,10 @@ public final class GraticuleRenderer {
     // -------------------------------------------------------------------------
 
     /**
-     * Inverse-projects a ring of viewport sample points to find the visible
-     * geographic extent. Returns {@code null} (→ caller falls back to fixed
-     * spacing over the full domain) when the container cannot supply an
-     * inverse + viewport, or when too few samples invert validly to trust the
-     * extent (typically means most of the disk/globe is on screen).
+     * Inverse-projects points inside the projection's device-space clip bounds
+     * to find the visible geographic extent. Returns {@code null} when the
+     * container cannot supply an inverse + viewport, or when too few samples
+     * invert validly to trust the extent.
      */
     private GeoExtent computeVisibleExtent(IContainer container) {
         if (!(container instanceof MapContainer)) {
@@ -392,6 +404,25 @@ public final class GraticuleRenderer {
         if (w <= 0 || h <= 0) {
             return null;
         }
+
+        Rectangle sampleBounds = new Rectangle(0, 0, w, h);
+        Shape mapClip = projection.createClipShape(mc);
+        if (mapClip != null) {
+            sampleBounds = sampleBounds.intersection(mapClip.getBounds());
+        }
+        if (sampleBounds.width <= 0 || sampleBounds.height <= 0) {
+            return null;
+        }
+
+        // Stay one pixel inside the clip bounds. Exact right/bottom edges are
+        // commonly outside Rectangle.contains and can also invert just beyond
+        // a projection domain because of integer rounding.
+        int xMin = sampleBounds.x + (sampleBounds.width > 2 ? 1 : 0);
+        int xMax = sampleBounds.x + sampleBounds.width - 1
+                - (sampleBounds.width > 2 ? 1 : 0);
+        int yMin = sampleBounds.y + (sampleBounds.height > 2 ? 1 : 0);
+        int yMax = sampleBounds.y + sampleBounds.height - 1
+                - (sampleBounds.height > 2 ? 1 : 0);
 
         // A 3x3 grid of sample points (corners, edge mids, center). More than
         // four samples makes the extent robust when only part of the viewport
@@ -411,8 +442,8 @@ public final class GraticuleRenderer {
         double prevLon = Double.NaN;
 
         for (int[] f : frac) {
-            p.x = (int) Math.round(f[0] * (w / 2.0));
-            p.y = (int) Math.round(f[1] * (h / 2.0));
+            p.x = (int) Math.round(xMin + f[0] * ((xMax - xMin) / 2.0));
+            p.y = (int) Math.round(yMin + f[1] * ((yMax - yMin) / 2.0));
             mc.localToLatLon(p, ll);
             double lon = ll.x, lat = ll.y;
             if (Double.isNaN(lon) || Double.isNaN(lat)
@@ -430,9 +461,9 @@ public final class GraticuleRenderer {
             prevLon = lon;
         }
 
-        // Need enough valid corners to trust the window; otherwise the whole
-        // globe/disk is effectively visible and fixed spacing is appropriate.
-        if (valid < 6) {
+        // A disk projection normally contributes its four edge midpoints and
+        // center while its bounding-box corners remain outside the disk.
+        if (valid < 5) {
             return null;
         }
 
@@ -442,8 +473,8 @@ public final class GraticuleRenderer {
         if (seamWrap && (lonMax - lonMin) > Math.PI) {
             double lo = Double.POSITIVE_INFINITY, hi = Double.NEGATIVE_INFINITY;
             for (int[] f : frac) {
-                p.x = (int) Math.round(f[0] * (w / 2.0));
-                p.y = (int) Math.round(f[1] * (h / 2.0));
+                p.x = (int) Math.round(xMin + f[0] * ((xMax - xMin) / 2.0));
+                p.y = (int) Math.round(yMin + f[1] * ((yMax - yMin) / 2.0));
                 mc.localToLatLon(p, ll);
                 if (Double.isNaN(ll.x)) continue;
                 double lon = ll.x < 0 ? ll.x + 2 * Math.PI : ll.x;
@@ -507,11 +538,12 @@ public final class GraticuleRenderer {
      *
      * <p>For a parallel, longitude is walked across the visible band and each
      * sample is forward-projected; the first sample landing inside the viewport
-     * marks the entry point, and a "39°N" label is placed clamped to the left
-     * margin at that y. Meridians are handled symmetrically along the bottom
-     * margin. Because the actual projected curve is sampled (not assumed
-     * straight), this is correct for curved graticules — Mollweide arcs,
-     * orthographic meridians fanning from the pole, etc.</p>
+     * marks the entry point, and a "39°N" label is placed immediately to its
+     * left. Meridians are handled symmetrically, with labels immediately below
+     * their lower entry points. Positions are clamped to the component margins
+     * when there is insufficient space outside the projected map. Because the
+     * actual projected curve is sampled (not assumed straight), this follows
+     * curved Mollweide and orthographic boundaries.</p>
      */
     private void drawEdgeLabels(MapContainer mc, Graphics2D g2, GeoExtent e,
                                 double latLo, double latHi, double latStep,
@@ -528,11 +560,12 @@ public final class GraticuleRenderer {
         g2.setFont(oldFont.deriveFont(Font.PLAIN, 11f));
         FontMetrics fm = g2.getFontMetrics();
         int ascent = fm.getAscent();
+        int descent = fm.getDescent();
 
         int latDecimals = stepDecimals(latStep);
         int lonDecimals = stepDecimals(lonStep);
 
-        // Parallels → labels on the left edge, ordered top-to-bottom.
+        // Parallels → labels immediately left of the map boundary.
         List<Integer> usedY = new ArrayList<>();
         for (double phi = latLo; phi <= latHi + 1e-9; phi += latStep) {
             Point entry = lineEntryAlongLongitude(mc, phi, e.lonMin, e.lonMax, view);
@@ -540,11 +573,19 @@ public final class GraticuleRenderer {
             if (tooClose(usedY, entry.y)) continue;
             usedY.add(entry.y);
             String text = formatLat(phi, latDecimals);
-            int y = clamp(entry.y, ascent + LABEL_MARGIN_PX, view.height - LABEL_MARGIN_PX);
-            g2.drawString(text, LABEL_MARGIN_PX, y);
+            int textWidth = fm.stringWidth(text);
+            int x = clamp(entry.x - textWidth - LABEL_MARGIN_PX,
+                    LABEL_MARGIN_PX,
+                    Math.max(LABEL_MARGIN_PX,
+                            view.width - textWidth - LABEL_MARGIN_PX));
+            int y = clamp(entry.y + (ascent - descent) / 2,
+                    ascent + LABEL_MARGIN_PX,
+                    Math.max(ascent + LABEL_MARGIN_PX,
+                            view.height - descent - LABEL_MARGIN_PX));
+            g2.drawString(text, x, y);
         }
 
-        // Meridians → labels on the bottom edge, ordered left-to-right.
+        // Meridians → labels immediately below the map boundary.
         List<Integer> usedX = new ArrayList<>();
         for (double lambda = lonLo; lambda <= lonHi + 1e-9; lambda += lonStep) {
             double lon = projection.wrapLongitude(lambda);
@@ -555,7 +596,11 @@ public final class GraticuleRenderer {
             String text = formatLon(lon, lonDecimals);
             int w = fm.stringWidth(text);
             int x = clamp(entry.x - w / 2, LABEL_MARGIN_PX, view.width - w - LABEL_MARGIN_PX);
-            g2.drawString(text, x, view.height - LABEL_MARGIN_PX);
+            int y = clamp(entry.y + ascent + LABEL_MARGIN_PX,
+                    ascent + LABEL_MARGIN_PX,
+                    Math.max(ascent + LABEL_MARGIN_PX,
+                            view.height - descent - LABEL_MARGIN_PX));
+            g2.drawString(text, x, y);
         }
 
         g2.setColor(oldColor);

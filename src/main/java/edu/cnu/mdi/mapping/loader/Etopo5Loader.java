@@ -166,8 +166,10 @@ public final class Etopo5Loader {
      * @param latitudeDegrees  latitude in degrees, north positive
      * @param longitudeDegrees longitude in degrees, east positive
      * @return elevation in meters; negative values are below sea level
+     * @throws IllegalArgumentException if either coordinate is not finite
      */
     public int getElevationMeters(double latitudeDegrees, double longitudeDegrees) {
+        requireFiniteCoordinates(latitudeDegrees, longitudeDegrees);
         int row = nearestRow(latitudeDegrees);
         int col = nearestCol(longitudeDegrees);
         return elevation[index(row, col)];
@@ -183,9 +185,12 @@ public final class Etopo5Loader {
      * @param latitudeDegrees  latitude in degrees, north positive
      * @param longitudeDegrees longitude in degrees, east positive
      * @return interpolated elevation in meters
+     * @throws IllegalArgumentException if either coordinate is not finite
      */
     public double getInterpolatedElevationMeters(
             double latitudeDegrees, double longitudeDegrees) {
+
+        requireFiniteCoordinates(latitudeDegrees, longitudeDegrees);
 
         double lat = clamp(latitudeDegrees, -90.0, 90.0);
         double lon = normalizeLon360(longitudeDegrees);
@@ -273,6 +278,17 @@ public final class Etopo5Loader {
 
     private static double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
+    }
+
+    private static void requireFiniteCoordinates(
+            double latitudeDegrees,
+            double longitudeDegrees) {
+
+        if (!Double.isFinite(latitudeDegrees) || !Double.isFinite(longitudeDegrees)) {
+            throw new IllegalArgumentException(
+                    "Latitude and longitude must be finite: latitude="
+                    + latitudeDegrees + ", longitude=" + longitudeDegrees);
+        }
     }
 
     private void checkRow(int row) {

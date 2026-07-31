@@ -210,15 +210,10 @@ public final class ShapefileDbfReader implements Closeable {
         // Seek to first data record (immediately after the header).
         channel.position(headerSize);
 
-        ByteBuffer recordBuf = ByteBuffer.allocate(recordSize);
         List<Map<String, String>> result = new ArrayList<>(recordCount);
 
         for (int i = 0; i < recordCount; i++) {
-            recordBuf.clear();
-            int bytesRead = channel.read(recordBuf);
-            if (bytesRead < recordSize) break; // truncated file
-
-            recordBuf.flip();
+            ByteBuffer recordBuf = readBytes(recordSize);
             byte deletionFlag = recordBuf.get(); // consume the deletion-flag byte
 
             if (deletionFlag == FLAG_DELETED) {

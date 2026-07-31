@@ -18,6 +18,7 @@ import java.util.Objects;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.mapping.projection.IMapProjection;
+import edu.cnu.mdi.mapping.projection.MercatorProjection;
 import edu.cnu.mdi.mapping.render.IPickable;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
@@ -70,9 +71,11 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * present.</p>
  *
  * <h2>Seam splitting</h2>
- * <p>Features that cross the antimeridian seam of cylindrical projections
- * are split into two path halves. Both halves are cached and tested during
- * picking.</p>
+ * <p>Mercator polygon rings are unwrapped and clipped to the visible
+ * longitude/latitude domain before projection. This inserts exact vertices at
+ * both the longitude seam and the polar latitude limits, preventing path
+ * closure from drawing map-wide chords. Other seam-bearing geometries are
+ * split into path halves. All resulting paths participate in picking.</p>
  *
  * <h2>Graphics state</h2>
  * <p>Color, stroke, font, and antialiasing hint are saved before rendering
@@ -303,11 +306,9 @@ public class ShapeFeatureRenderer implements IPickable {
     /**
      * Renders one polygon feature and caches its projected closed paths.
      *
-     * <p>Each ring produces up to two {@link GeneralPath} halves (near and
-     * far of the antimeridian seam). Non-empty halves are closed, drawn, and
-     * added to the pick cache. Empty halves (rings entirely outside the
-     * visible area) are skipped — calling {@code closePath()} on an empty
-     * path would throw {@link java.awt.geom.IllegalPathStateException}.</p>
+     * <p>Mercator rings are geographically clipped before projection so seam
+     * and latitude-boundary intersections are part of the closed path. Other
+     * projections retain the projection-defined seam splitting behavior.</p>
      */
     private void renderPolygon(Graphics2D g2, IContainer container,
                                ShapeFeature feature) {
@@ -319,6 +320,11 @@ public class ShapeFeatureRenderer implements IPickable {
         List<GeneralPath> paths = new ArrayList<>();
 
         for (List<Point2D.Double> ring : feature.getRings()) {
+            if (projection instanceof MercatorProjection mercator) {
+                paths.addAll(projectClippedMercatorRing(container, ring, mercator));
+                continue;
+            }
+
             GeneralPath near = new GeneralPath(GeneralPath.WIND_NON_ZERO);
             GeneralPath far  = new GeneralPath(GeneralPath.WIND_NON_ZERO);
             GeneralPath cur  = near;
@@ -345,24 +351,118 @@ public class ShapeFeatureRenderer implements IPickable {
                 else                               cur.lineTo(screen.x, screen.y);
             }
 
-            for (GeneralPath path : new GeneralPath[]{ near, far }) {
-                if (path.getCurrentPoint() == null) continue; // empty — skip
-                path.closePath();
-                paths.add(path);
-                if (fill != null) {
-                    g2.setColor(fill);
-                    g2.fill(path);
-                }
-                if (stroke != null) {
-                    g2.setColor(stroke);
-                    g2.setStroke(strokeObj);
-                    g2.draw(path);
-                }
+            closeAndAdd(paths, near);
+            closeAndAdd(paths, far);
+        }
+
+        for (GeneralPath path : paths) {
+            if (fill != null) {
+                g2.setColor(fill);
+                g2.fill(path);
+            }
+            if (stroke != null) {
+                g2.setColor(stroke);
+                g2.setStroke(strokeObj);
+                g2.draw(path);
             }
         }
 
         if (!paths.isEmpty()) {
             pickCache.add(new PickCache(feature, paths, null));
+        }
+    }
+
+    /**
+     * Clips and projects a Mercator polygon ring into closed screen paths.
+     */
+    private List<GeneralPath> projectClippedMercatorRing(
+            IContainer container,
+            List<Point2D.Double> ring,
+            MercatorProjection mercator) {
+        if (!needsMercatorClipping(ring, mercator)) {
+            GeneralPath path = projectRing(container, ring, mercator);
+            List<GeneralPath> result = new ArrayList<>(1);
+            closeAndAdd(result, path);
+            return result;
+        }
+
+        var xyBounds = mercator.getXYBounds();
+        Point2D.Double lower = new Point2D.Double();
+        Point2D.Double upper = new Point2D.Double();
+        mercator.latLonFromXY(lower,
+                new Point2D.Double(0.0, xyBounds.getMinY()));
+        mercator.latLonFromXY(upper,
+                new Point2D.Double(0.0, xyBounds.getMaxY()));
+
+        double center = mercator.getCentralLongitude();
+        double minLon = center - Math.PI;
+        double maxLon = center + Math.PI;
+        List<List<Point2D.Double>> clipped =
+                GeographicPolygonClipper.clipPeriodicRing(
+                        ring, minLon, maxLon, lower.y, upper.y);
+        List<GeneralPath> result = new ArrayList<>(clipped.size());
+
+        for (List<Point2D.Double> piece : clipped) {
+            GeneralPath path = new GeneralPath(GeneralPath.WIND_NON_ZERO);
+            for (Point2D.Double lonLat : piece) {
+                Point2D.Double xy = new Point2D.Double();
+                mercator.latLonToXY(lonLat, xy);
+
+                // Both geographic seam longitudes normalize to +π in the
+                // projection helper. Preserve which clipped edge they came
+                // from so the western half lands on the left map boundary.
+                if (Math.abs(lonLat.x - minLon) < 1.0e-10) {
+                    xy.x = xyBounds.getMinX();
+                } else if (Math.abs(lonLat.x - maxLon) < 1.0e-10) {
+                    xy.x = xyBounds.getMaxX();
+                }
+
+                Point screen = new Point();
+                container.worldToLocal(screen, xy);
+                if (path.getCurrentPoint() == null) path.moveTo(screen.x, screen.y);
+                else                                path.lineTo(screen.x, screen.y);
+            }
+            closeAndAdd(result, path);
+        }
+        return result;
+    }
+
+    /** Returns whether a ring crosses a seam or Mercator latitude boundary. */
+    private static boolean needsMercatorClipping(
+            List<Point2D.Double> ring, MercatorProjection mercator) {
+        if (ring.isEmpty()) return false;
+        Point2D.Double previous = ring.get(ring.size() - 1);
+        for (Point2D.Double point : ring) {
+            if (!mercator.isPointVisible(point)
+                    || mercator.crossesSeam(previous.x, point.x)) {
+                return true;
+            }
+            previous = point;
+        }
+        return false;
+    }
+
+    /** Projects a ring known to be wholly inside one Mercator map branch. */
+    private static GeneralPath projectRing(
+            IContainer container,
+            List<Point2D.Double> ring,
+            MercatorProjection mercator) {
+        GeneralPath path = new GeneralPath(GeneralPath.WIND_NON_ZERO);
+        for (Point2D.Double lonLat : ring) {
+            Point2D.Double xy = new Point2D.Double();
+            mercator.latLonToXY(lonLat, xy);
+            Point screen = new Point();
+            container.worldToLocal(screen, xy);
+            if (path.getCurrentPoint() == null) path.moveTo(screen.x, screen.y);
+            else                                path.lineTo(screen.x, screen.y);
+        }
+        return path;
+    }
+
+    private static void closeAndAdd(List<GeneralPath> paths, GeneralPath path) {
+        if (path.getCurrentPoint() != null) {
+            path.closePath();
+            paths.add(path);
         }
     }
 

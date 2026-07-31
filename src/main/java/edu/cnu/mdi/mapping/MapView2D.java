@@ -540,9 +540,12 @@ public class MapView2D extends BaseView {
 	 * @param lat latitude in degrees
 	 * @param lon longitude in degrees
 	 * @return elevation in metres, or {@code NaN} if ETOPO5 is not installed
+	 *         or either coordinate is non-finite
 	 */
 	public double getElevation(double lat, double lon) {
-	    return (etopo5Renderer == null)
+	    return (etopo5Renderer == null
+	            || !Double.isFinite(lat)
+	            || !Double.isFinite(lon))
 	            ? Double.NaN
 	            : etopo5Renderer.getElevation(lat, lon);
 	}
@@ -892,9 +895,16 @@ public class MapView2D extends BaseView {
 	public void drawSymbol(Graphics2D g, double lat, double lon, SymbolType type, int size,
 			Color lineColor, Color fillColor) {
 		MapContainer container = (MapContainer) getIContainer();
+		Point2D.Double ll = new Point2D.Double(
+				Math.toRadians(lon),
+				Math.toRadians(lat));
+		Point2D.Double xy = new Point2D.Double();
+		projection.latLonToXY(ll, xy);
+		if (!projection.isPointOnMap(xy)) {
+			return;
+		}
 		Point pp = new Point();
-		Point2D.Double ll = new Point2D.Double(lon, lat);
-		container.latLonToLocal(pp, ll);
+		container.worldToLocal(pp, xy);
 		SymbolDraw.drawSymbol(g, pp.x, pp.y, type, size, lineColor, fillColor);
 	}
 
@@ -1040,6 +1050,9 @@ public class MapView2D extends BaseView {
 
 		if (projection.isPointOnMap(wp)) {
 			projection.latLonFromXY(latLon, wp);
+			if (!Double.isFinite(latLon.x) || !Double.isFinite(latLon.y)) {
+				return;
+			}
 			double dLat = Math.toDegrees(latLon.y);
 			double dLon = Math.toDegrees(latLon.x);
 			feedbackStrings.add(String.format("%s %.2f%s", LAT_PREFIX, dLat, DEG));

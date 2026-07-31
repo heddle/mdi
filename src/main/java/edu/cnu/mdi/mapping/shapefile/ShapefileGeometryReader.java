@@ -37,14 +37,14 @@ import edu.cnu.mdi.mapping.projection.IMapProjection;
  * <table border="1">
  *  <caption>Reader for the binary geometry data in ESRI Shapefile</caption>
  *   <tr><th>Type value</th><th>Name</th><th>Used for</th></tr>
- *   <tr><td>0</td><td>Null Shape</td><td>Silently skipped</td></tr>
+ *   <tr><td>0</td><td>Null Shape</td><td>Returned with empty geometry</td></tr>
  *   <tr><td>1</td><td>Point</td><td>City / populated-place data</td></tr>
+ *   <tr><td>3</td><td>PolyLine</td><td>Road, river, and boundary data</td></tr>
  *   <tr><td>5</td><td>Polygon</td><td>Country boundary data</td></tr>
  *   <tr><td>8</td><td>MultiPoint</td><td>Multi-point city data</td></tr>
  * </table>
- * <p>Shape types 3 (PolyLine), 11–15 (Z/M variants), and 21–25 (M variants)
- * are read but produce empty geometry lists; callers should filter them out.
- * Unrecognized type values cause an {@link IOException}.</p>
+ * <p>Unsupported types, including Z/M variants, cause an
+ * {@link IOException}.</p>
  *
  * <h2>Polygon ring handling</h2>
  * <p>ESRI Polygons store all rings (outer shells and interior holes) in a
@@ -158,6 +158,10 @@ public final class ShapefileGeometryReader implements Closeable {
             // Bytes 24–27: file length in 16-bit words (big-endian)
             // Multiply by 2 to convert to bytes.
             fileLength = (long) header.getInt(24) * 2L;
+            if (fileLength < HEADER_BYTES || fileLength > channel.size()) {
+                throw new IOException("Invalid shapefile length: header declares "
+                        + fileLength + " bytes, actual file has " + channel.size());
+            }
 
             // Bytes 28–35: version and shape type (little-endian)
             header.order(ByteOrder.LITTLE_ENDIAN);
@@ -194,10 +198,9 @@ public final class ShapefileGeometryReader implements Closeable {
      * Reads and returns the next geometry record from the file, or
      * {@code null} when the end of the file is reached.
      *
-     * <p>Null-shape records ({@link #TYPE_NULL}) are silently skipped and do
-     * not produce a return value — the next non-null record is returned
-     * instead. This matches the common convention that null shapes are
-     * placeholders for deleted or missing features.</p>
+     * <p>Null-shape records ({@link #TYPE_NULL}) are returned with empty point
+     * and ring lists. Retaining the record is essential because shapefile
+     * geometry and DBF attributes are paired by record position.</p>
      *
      * <p>The returned {@link ShapeRecord} contains:
      * <ul>
@@ -217,29 +220,43 @@ public final class ShapefileGeometryReader implements Closeable {
      *                     unrecognized shape type
      */
     public ShapeRecord nextRecord() throws IOException {
-        while (channel.position() < fileLength - 8) {
+        while (channel.position() < fileLength) {
+            long bytesRemaining = fileLength - channel.position();
+            if (bytesRemaining < 8) {
+                throw new IOException("Truncated shapefile record header: "
+                        + bytesRemaining + " bytes remain");
+            }
+
             // Record header: 8 bytes, big-endian.
             ByteBuffer recHeader = readBytes(8);
             recHeader.order(ByteOrder.BIG_ENDIAN);
             int recordNumber  = recHeader.getInt();       // 1-based
             int contentWords  = recHeader.getInt();       // content length in 16-bit words
-            int contentBytes  = contentWords * 2;
+            if (contentWords < 2 || contentWords > Integer.MAX_VALUE / 2) {
+                throw new IOException("Invalid content length " + contentWords
+                        + " words in record " + recordNumber);
+            }
+            int contentBytes = contentWords * 2;
 
-            if (contentBytes < 4) {
-                // Degenerate record — skip.
-                channel.position(channel.position() + contentBytes);
-                continue;
+            if (contentBytes > fileLength - channel.position()) {
+                throw new IOException("Record " + recordNumber + " declares "
+                        + contentBytes + " content bytes, but only "
+                        + (fileLength - channel.position()) + " remain");
             }
 
             ByteBuffer content = readBytes(contentBytes);
             content.order(ByteOrder.LITTLE_ENDIAN);
 
             int shapeType = content.getInt();
-
-            // Silently skip null shapes.
-            if (shapeType == TYPE_NULL) continue;
+            if (shapeType != TYPE_NULL && shapeType != fileShapeType) {
+                throw new IOException("Shape type " + shapeType + " in record "
+                        + recordNumber + " does not match file shape type "
+                        + fileShapeType);
+            }
 
             return switch (shapeType) {
+                case TYPE_NULL       -> new ShapeRecord(recordNumber, TYPE_NULL,
+                        Collections.emptyList(), Collections.emptyList());
                 case TYPE_POINT      -> readPoint(recordNumber, content);
                 case TYPE_POLYLINE,
                      TYPE_POLYGON    -> readRings(recordNumber, shapeType, content);
@@ -261,7 +278,7 @@ public final class ShapefileGeometryReader implements Closeable {
      * not rewound before reading — callers that need a fresh read should
      * close and reopen the reader.</p>
      *
-     * @return unmodifiable list of all non-null geometry records
+     * @return unmodifiable list of all geometry records, including null shapes
      * @throws IOException if any read error occurs
      */
     public List<ShapeRecord> readAllRecords() throws IOException {
@@ -328,7 +345,9 @@ public final class ShapefileGeometryReader implements Closeable {
      * @param content      content buffer positioned after the shape-type int
      * @return a {@link ShapeRecord} with a single point
      */
-    private static ShapeRecord readPoint(int recordNumber, ByteBuffer content) {
+    private static ShapeRecord readPoint(int recordNumber, ByteBuffer content)
+            throws IOException {
+        requireRemaining(content, 16, recordNumber, "Point coordinates");
         double x = content.getDouble();
         double y = content.getDouble();
         List<Point2D.Double> pts = Collections.singletonList(new Point2D.Double(x, y));
@@ -349,9 +368,16 @@ public final class ShapefileGeometryReader implements Closeable {
      * @param content      content buffer positioned after the shape-type int
      * @return a {@link ShapeRecord} with all points in a flat list
      */
-    private static ShapeRecord readMultiPoint(int recordNumber, ByteBuffer content) {
+    private static ShapeRecord readMultiPoint(int recordNumber, ByteBuffer content)
+            throws IOException {
+        requireRemaining(content, 36, recordNumber, "MultiPoint header");
         content.position(content.position() + 32); // skip bounding box
         int numPoints = content.getInt();
+        if (numPoints < 0 || numPoints > 2_000_000) {
+            throw new IOException("Implausible point count " + numPoints
+                    + " in record " + recordNumber);
+        }
+        requireRemaining(content, 16L * numPoints, recordNumber, "MultiPoint coordinates");
         List<Point2D.Double> pts = new ArrayList<>(numPoints);
         for (int i = 0; i < numPoints; i++) {
             pts.add(new Point2D.Double(content.getDouble(), content.getDouble()));
@@ -386,24 +412,36 @@ public final class ShapefileGeometryReader implements Closeable {
      */
     private static ShapeRecord readRings(int recordNumber, int shapeType,
                                          ByteBuffer content) throws IOException {
+        requireRemaining(content, 40, recordNumber, "shape-part header");
         content.position(content.position() + 32); // skip bounding box
 
         int numParts  = content.getInt();
         int numPoints = content.getInt();
 
-        if (numParts < 0 || numParts > 65536) {
+        if (numParts <= 0 || numParts > 65536) {
             throw new IOException("Implausible part count " + numParts
                                   + " in record " + recordNumber);
         }
-        if (numPoints < 0 || numPoints > 2_000_000) {
+        if (numPoints <= 0 || numPoints > 2_000_000) {
             throw new IOException("Implausible point count " + numPoints
                                   + " in record " + recordNumber);
         }
+
+        requireRemaining(content,
+                4L * numParts + 16L * numPoints,
+                recordNumber,
+                "shape parts and coordinates");
 
         // Read start indices for each part.
         int[] partStart = new int[numParts];
         for (int i = 0; i < numParts; i++) {
             partStart[i] = content.getInt();
+            if (partStart[i] < 0 || partStart[i] >= numPoints
+                    || (i == 0 && partStart[i] != 0)
+                    || (i > 0 && partStart[i] <= partStart[i - 1])) {
+                throw new IOException("Invalid part start index " + partStart[i]
+                        + " for part " + i + " in record " + recordNumber);
+            }
         }
 
         // Read the flat point array.
@@ -417,8 +455,6 @@ public final class ShapefileGeometryReader implements Closeable {
         for (int p = 0; p < numParts; p++) {
             int start = partStart[p];
             int end   = (p + 1 < numParts) ? partStart[p + 1] : numPoints;
-            if (start < 0 || end > numPoints || start >= end) continue;
-
             List<Point2D.Double> ring = new ArrayList<>(end - start);
             for (int i = start; i < end; i++) {
                 ring.add(allPoints[i]);
@@ -434,6 +470,19 @@ public final class ShapefileGeometryReader implements Closeable {
     // -------------------------------------------------------------------------
     // Channel helper
     // -------------------------------------------------------------------------
+
+    private static void requireRemaining(
+            ByteBuffer content,
+            long requiredBytes,
+            int recordNumber,
+            String section) throws IOException {
+
+        if (requiredBytes > content.remaining()) {
+            throw new IOException("Truncated " + section + " in record "
+                    + recordNumber + ": need " + requiredBytes
+                    + " bytes, have " + content.remaining());
+        }
+    }
 
     /**
      * Reads exactly {@code n} bytes from the current channel position.

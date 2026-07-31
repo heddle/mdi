@@ -234,7 +234,10 @@ public class LambertEqualAreaProjection implements IMapProjection {
 	 */
 	@Override
 	public boolean isPointVisible(Point2D.Double latLon) {
-		return latLon.y >= MIN_LAT && latLon.y <= MAX_LAT;
+		return Double.isFinite(latLon.x)
+				&& Double.isFinite(latLon.y)
+				&& latLon.y >= MIN_LAT
+				&& latLon.y <= MAX_LAT;
 	}
 
 	/**

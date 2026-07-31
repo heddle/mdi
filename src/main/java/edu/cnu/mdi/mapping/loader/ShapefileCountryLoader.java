@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import edu.cnu.mdi.mapping.render.CountryRenderer;
+import edu.cnu.mdi.mapping.shapefile.ShapefileCrsValidator;
 import edu.cnu.mdi.mapping.shapefile.ShapefileDbfReader;
 import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader;
 import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader.ShapeRecord;
@@ -46,12 +47,11 @@ import edu.cnu.mdi.mapping.theme.MapUtils;
  * {@link ShapefileGeometryReader#isClockwise(List)}.</p>
  *
  * <h2>Coordinate assumptions</h2>
- * <p>Input coordinates are assumed to be in WGS84 geographic degrees
- * (longitude, latitude order) as used by all Natural Earth shapefiles. They
- * are converted to radians and the longitude is wrapped to (-π, π] before
- * being stored in the returned features. If the shapefile has a {@code .prj}
- * companion file declaring a different CRS, it is ignored — callers are
- * responsible for ensuring the file uses WGS84.</p>
+ * <p>Input coordinates must be WGS84 geographic degrees (longitude, latitude
+ * order), as used by Natural Earth shapefiles. A companion {@code .prj}, when
+ * present, is validated and incompatible or unrecognized coordinate systems
+ * are rejected. If it is absent, WGS84 is assumed. Coordinates are converted
+ * to radians and longitude is wrapped to (-π, π] before being stored.</p>
  *
  * <h2>Multi-record countries</h2>
  * <p>Natural Earth shapefiles use one Polygon record per country, so each
@@ -118,6 +118,7 @@ public final class ShapefileCountryLoader implements ICountryLoader {
     @Override
     public List<GeoJsonCountryLoader.CountryFeature> load(Path path) throws IOException {
         Objects.requireNonNull(path, "path");
+        ShapefileCrsValidator.validate(path);
         Path dbfPath = replaceExtension(path, ".dbf");
         return loadFromPaths(path, dbfPath);
     }
@@ -178,9 +179,8 @@ public final class ShapefileCountryLoader implements ICountryLoader {
             while ((geomRecord = shp.nextRecord()) != null) {
 
                 // Retrieve the corresponding attribute row.
-                // Null-shape records are skipped by the geometry reader but
-                // still have a corresponding DBF row, so we must advance the
-                // attribute cursor regardless of whether we produced a feature.
+                // Advance once for every geometry record, including null-shape
+                // placeholders, so DBF attributes remain positionally aligned.
                 Map<String, String> attrs = (attrIndex < attributes.size())
                         ? attributes.get(attrIndex)
                         : Collections.emptyMap();

@@ -197,6 +197,10 @@ public class MollweideProjection implements IMapProjection {
     /** {@inheritDoc} */
     @Override
     public void latLonFromXY(Point2D.Double latLon, Point2D.Double xy) {
+        if (!isPointOnMap(xy)) {
+            latLon.setLocation(Double.NaN, Double.NaN);
+            return;
+        }
         double x     = xy.x / R;
         double y     = xy.y / R;
         double theta = Math.asin(y / SQRT2);
@@ -226,7 +230,10 @@ public class MollweideProjection implements IMapProjection {
      */
     @Override
     public boolean isPointVisible(Point2D.Double latLon) {
-        return latLon.y >= MIN_LAT && latLon.y <= MAX_LAT;
+        return Double.isFinite(latLon.x)
+            && Double.isFinite(latLon.y)
+            && latLon.y >= MIN_LAT
+            && latLon.y <= MAX_LAT;
     }
 
     /**

@@ -288,6 +288,8 @@ public final class GeoJsonCityLoader implements ICityLoader {
      *   <li>The feature type is not {@code Feature}.</li>
      *   <li>The geometry type is not {@code Point}.</li>
      *   <li>The coordinate array has fewer than 2 elements.</li>
+     *   <li>Longitude or latitude is non-numeric or non-finite, or latitude
+     *       falls outside [-90°, 90°].</li>
      * </ul>
      *
      * @param featureNode a single GeoJSON feature node
@@ -301,10 +303,17 @@ public final class GeoJsonCityLoader implements ICityLoader {
 
         JsonNode coords = geometry.path("coordinates");
         if (!coords.isArray() || coords.size() < 2) return null;
+        if (!coords.get(0).isNumber() || !coords.get(1).isNumber()) return null;
 
         // GeoJSON coordinates are in degrees; convert and wrap longitude.
-        double lon = MapUtils.lonDegreesToRadians(coords.get(0).asDouble());
-        double lat = Math.toRadians(coords.get(1).asDouble());
+        double lonDegrees = coords.get(0).asDouble();
+        double latDegrees = coords.get(1).asDouble();
+        if (!Double.isFinite(lonDegrees) || !Double.isFinite(latDegrees)
+                || latDegrees < -90.0 || latDegrees > 90.0) {
+            return null;
+        }
+        double lon = MapUtils.lonDegreesToRadians(lonDegrees);
+        double lat = Math.toRadians(latDegrees);
 
         JsonNode props       = featureNode.path("properties");
         String   name        = nullSafeText(props, "NAME", "name", "Name", "NAMEASCII", "nameascii");

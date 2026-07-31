@@ -277,6 +277,11 @@ public class MapContainer extends BaseContainer {
 	    }
 
 	    worldToLatLon(latLonPoint, wp);
+	    if (!Double.isFinite(latLonPoint.x)
+	            || !Double.isFinite(latLonPoint.y)) {
+	        _toolBar.updateStatusText("");
+	        return;
+	    }
 
 	    double latDeg = Math.toDegrees(latLonPoint.y);
 	    double lonDeg = Math.toDegrees(latLonPoint.x);

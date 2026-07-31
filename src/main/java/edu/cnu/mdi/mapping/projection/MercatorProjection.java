@@ -182,6 +182,10 @@ public class MercatorProjection implements IMapProjection {
      */
     @Override
     public void latLonFromXY(Point2D.Double latLon, Point2D.Double xy) {
+        if (!isPointOnMap(xy)) {
+            latLon.setLocation(Double.NaN, Double.NaN);
+            return;
+        }
         latLon.x = wrapLongitude(xy.x + lambda0);
         latLon.y = 2.0 * Math.atan(Math.exp(xy.y)) - Math.PI / 2.0;
     }
@@ -199,7 +203,10 @@ public class MercatorProjection implements IMapProjection {
      */
     @Override
     public boolean isPointVisible(Point2D.Double latLon) {
-        return latLon.y >= MIN_LAT && latLon.y <= MAX_LAT;
+        return Double.isFinite(latLon.x)
+            && Double.isFinite(latLon.y)
+            && latLon.y >= MIN_LAT
+            && latLon.y <= MAX_LAT;
     }
 
     /**
