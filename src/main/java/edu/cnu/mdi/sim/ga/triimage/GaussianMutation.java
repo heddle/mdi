@@ -56,11 +56,11 @@ public final class GaussianMutation implements MutationOperator<PolygonChromosom
 	 * @throws IllegalArgumentException if any argument is out of range
 	 */
 	public GaussianMutation(double mutationRate, double sigma, double resetProbability) {
-		if (mutationRate < 0 || mutationRate > 1)
+		if (!Double.isFinite(mutationRate) || mutationRate < 0 || mutationRate > 1)
 			throw new IllegalArgumentException("mutationRate must be in [0,1]");
-		if (sigma <= 0)
+		if (!Double.isFinite(sigma) || sigma <= 0)
 			throw new IllegalArgumentException("sigma must be > 0");
-		if (resetProbability < 0 || resetProbability > 1)
+		if (!Double.isFinite(resetProbability) || resetProbability < 0 || resetProbability > 1)
 			throw new IllegalArgumentException("resetProbability must be in [0,1]");
 
 		this.mutationRate = mutationRate;

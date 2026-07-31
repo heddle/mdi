@@ -9,6 +9,13 @@ import java.util.Random;
  * The GA will call this interface to perform crossover between selected parents.
  */
 public interface CrossoverOperator<T extends GASolution> {
-    // Produce one or two children; return list of length 1 or 2
+	/**
+	 * Combine two parents into one or more new children.
+	 *
+	 * @param parent1 first selected parent
+	 * @param parent2 second selected parent
+	 * @param rng source of randomness
+	 * @return non-null, non-empty list of non-null children
+	 */
     List<T> crossover(T parent1, T parent2, Random rng);
 }

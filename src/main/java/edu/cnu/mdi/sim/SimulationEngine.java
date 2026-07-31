@@ -1,6 +1,5 @@
 package edu.cnu.mdi.sim;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -79,7 +78,8 @@ public final class SimulationEngine {
 	 * on every step. The list is read far more often than it is written, making
 	 * the copy-on-write trade-off appropriate.</p>
 	 */
-	private final List<SimulationListener> listeners = new CopyOnWriteArrayList<>();
+	private final CopyOnWriteArrayList<SimulationListener> listeners =
+			new CopyOnWriteArrayList<>();
 
 	/**
 	 * Current engine state. Written exclusively on the simulation thread;
@@ -145,13 +145,14 @@ public final class SimulationEngine {
 	 * Add a simulation listener.
 	 *
 	 * <p>Safe to call from any thread. If {@code listener} is {@code null} it
-	 * is silently ignored.</p>
+	 * is silently ignored. Registering the same listener instance more than once
+	 * has no additional effect.</p>
 	 *
 	 * @param listener the listener to add
 	 */
 	public void addListener(SimulationListener listener) {
 		if (listener != null) {
-			listeners.add(listener);
+			listeners.addIfAbsent(listener);
 		}
 	}
 
@@ -193,7 +194,11 @@ public final class SimulationEngine {
 			return;
 		}
 		stopRequested  = false;
-		pauseRequested = false;
+		// Establish the initial READY behavior before publishing/starting the
+		// thread. A requestRun() made after start() returns can then clear this
+		// flag even while simulation.init() is still executing, and that request
+		// will not be overwritten when initialization completes.
+		pauseRequested = !config.autoRun;
 
 		simThread = new Thread(this::runLoop, "SimulationEngine");
 		simThread.setDaemon(true);
@@ -261,9 +266,10 @@ public final class SimulationEngine {
 	 * state-change callback (with {@code reason="cancelled"}).</p>
 	 */
 	public void requestCancel() {
-		context.requestCancel();
-		pauseRequested = false;
-		postEDT(l -> l.onCancelRequested(context));
+		if (context.requestCancel()) {
+			pauseRequested = false;
+			postEDT(l -> l.onCancelRequested(context));
+		}
 	}
 
 	/**
@@ -367,10 +373,9 @@ public final class SimulationEngine {
 			simulation.init(context);
 			transition(SimulationState.READY, "initialized");
 
-			if (!config.autoRun) {
-				// Hold in READY until the user explicitly requests Run.
-				pauseRequested = true;
-			} else {
+			if (config.autoRun
+					&& !stopRequested
+					&& !context.isCancelRequested()) {
 				transition(SimulationState.RUNNING, "auto-run");
 				postEDT(l -> l.onRun(context));
 			}
@@ -396,16 +401,20 @@ public final class SimulationEngine {
 					while (pauseRequested && !stopRequested && !context.isCancelRequested()) {
 						LockSupport.parkNanos(10_000_000L); // 10 ms
 					}
-					if (stopRequested || context.isCancelRequested()) {
+					if (stopRequested) {
 						break;
 					}
-					// Determine whether we are starting fresh (READY) or resuming.
-					if (state == SimulationState.READY) {
-						transition(SimulationState.RUNNING, "run requested");
-						postEDT(l -> l.onRun(context));
-					} else {
-						transition(SimulationState.RUNNING, "resume");
-						postEDT(l -> l.onResume(context));
+					// Let cancellation fall through to the cancellation block so
+					// the simulation hook runs and onDone remains suppressed.
+					if (!context.isCancelRequested()) {
+						// Determine whether we are starting fresh (READY) or resuming.
+						if (state == SimulationState.READY) {
+							transition(SimulationState.RUNNING, "run requested");
+							postEDT(l -> l.onRun(context));
+						} else {
+							transition(SimulationState.RUNNING, "resume");
+							postEDT(l -> l.onResume(context));
+						}
 					}
 				}
 
@@ -449,8 +458,10 @@ public final class SimulationEngine {
 
 			// Shutdown is always called, regardless of exit reason, so
 			// simulations can release resources unconditionally.
-			transition(SimulationState.TERMINATING,
-					cancelledCleanly ? "cancelled" : "stop/complete");
+			if (state != SimulationState.TERMINATING) {
+				transition(SimulationState.TERMINATING,
+						cancelledCleanly ? "cancelled" : "stop/complete");
+			}
 			try {
 				simulation.shutdown(context);
 			} catch (Exception ignored) { /* best-effort */ }
@@ -466,6 +477,12 @@ public final class SimulationEngine {
 			}
 
 		} catch (Exception ex) {
+			// Initialization may have acquired resources before failing, and a
+			// step failure must not bypass cleanup. The hook is best-effort here,
+			// just as it is on normal termination.
+			try {
+				simulation.shutdown(context);
+			} catch (Exception ignored) { /* preserve the original failure */ }
 			transition(SimulationState.FAILED, ex.toString());
 			postEDT(l -> l.onFail(context, ex));
 		}

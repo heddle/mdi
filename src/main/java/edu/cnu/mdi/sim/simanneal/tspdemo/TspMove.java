@@ -28,8 +28,13 @@ public class TspMove implements DeltaEnergyMove<TspSolution> {
     /** Whether this move has been prepared for the current step. */
     private boolean prepared;
 
+	/**
+	 * Create a reusable random 2-opt move.
+	 *
+	 * @param rng source of randomness
+	 */
     public TspMove(Random rng) {
-        this.rng = rng;
+		this.rng = java.util.Objects.requireNonNull(rng, "rng");
     }
 
     /**

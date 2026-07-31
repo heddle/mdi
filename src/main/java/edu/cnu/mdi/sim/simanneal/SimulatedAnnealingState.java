@@ -1,13 +1,20 @@
 package edu.cnu.mdi.sim.simanneal;
 
 /**
- * State snapshot of a simulated annealing process.
+ * Immutable state snapshot of a simulated annealing process.
+ *
+ * @param step number of completed annealing iterations
+ * @param temperature absolute temperature used for the next iteration
+ * @param currentEnergy energy of the current solution
+ * @param bestEnergy lowest energy observed during the run
+ * @param acceptedMoves total number of accepted moves
+ * @param uphillAcceptedMoves number of accepted moves that increased energy
  */
 public record SimulatedAnnealingState(
-        long step, // current step index
-        double temperature, // current temperature
-        double currentEnergy, // current energy
-        double bestEnergy, // best (lowest) energy found so far
-        long acceptedMoves, // total accepted moves
-        long uphillAcceptedMoves // total accepted uphill moves
+        long step,
+        double temperature,
+        double currentEnergy,
+        double bestEnergy,
+        long acceptedMoves,
+        long uphillAcceptedMoves
 ) {}

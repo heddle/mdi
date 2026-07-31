@@ -8,6 +8,13 @@ import java.util.Random;
  * The GA will call this interface to select parents based on their fitness.
  */
 public interface SelectionOperator<T extends GASolution> {
-    // Select one parent from the population (called twice per crossover)
+	/**
+	 * Select one parent from an aligned population and fitness array.
+	 *
+	 * @param population candidate individuals
+	 * @param fitnesses fitness at each corresponding population index
+	 * @param rng source of randomness
+	 * @return selected individual
+	 */
     T select(List<T> population, double[] fitnesses, Random rng);
 }

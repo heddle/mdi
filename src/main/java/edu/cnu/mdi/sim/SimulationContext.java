@@ -39,8 +39,13 @@ public final class SimulationContext {
 		stepCount++;
 	}
 
-	void requestCancel() {
-		cancelRequested.set(true);
+	/**
+	 * Records the first cancellation request.
+	 *
+	 * @return {@code true} only when this call changed the flag
+	 */
+	boolean requestCancel() {
+		return cancelRequested.compareAndSet(false, true);
 	}
 
 	/**
@@ -67,6 +72,9 @@ public final class SimulationContext {
 	 * @return elapsed seconds
 	 */
 	public double getElapsedSeconds() {
-		return (System.nanoTime() - startNanos) * 1e-9;
+		long started = startNanos;
+		return (started == 0L)
+				? 0.0
+				: (System.nanoTime() - started) * 1e-9;
 	}
 }

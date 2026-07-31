@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
-import java.util.stream.IntStream;
 
 import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.Simulation;
@@ -56,6 +55,15 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	public void init(SimulationContext ctx) {
 		rng = cfg.randomSeed() == 0 ? new Random() : new Random(cfg.randomSeed());
 		population = problem.initialPopulation(cfg.populationSize(), rng);
+		if (population == null || population.individuals() == null
+				|| population.size() != cfg.populationSize()
+				|| population.individuals().size() != cfg.populationSize()) {
+			throw new IllegalStateException(
+					"Initial population must contain exactly "
+					+ cfg.populationSize() + " individuals");
+		}
+		bestIndividual = null;
+		bestFitness = Double.NEGATIVE_INFINITY;
 		fitnesses = evaluateAll(population.individuals());
 		trackBest(population.individuals(), fitnesses);
 		generation = 0;
@@ -77,41 +85,46 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 
 	    // 1. Build offspring pool
 	    List<C> offspring = new ArrayList<>(popSize);
-	    while (offspring.size() < popSize - cfg.eliteCount()) {
+	    int offspringNeeded = popSize - cfg.eliteCount();
+	    while (offspring.size() < offspringNeeded) {
 	        C p1 = operators.selection().select(currentInds, currentFits, rng);
 	        C p2 = operators.selection().select(currentInds, currentFits, rng);
 	        List<C> children = rng.nextDouble() < cfg.crossoverRate()
 	                ? operators.crossover().crossover(p1, p2, rng)
 	                : List.of(p1.copy());
+	        if (children == null || children.isEmpty()) {
+	            throw new IllegalStateException(
+	                    "Crossover operator must produce at least one child");
+	        }
 	        for (C child : children) {
-	            offspring.add(operators.mutation().mutate(child, rng));
+	            if (offspring.size() >= offspringNeeded) break;
+	            C mutated = operators.mutation().mutate(
+	                    Objects.requireNonNull(child, "crossover child"), rng);
+	            offspring.add(Objects.requireNonNull(mutated, "mutated child"));
 	        }
 	    }
 
 	    // 2. Evaluate offspring
 	    double[] offFitness = evaluateAll(offspring);
 
-	    // 3. Replace + reconstruct fitnesses
+	    // 3. Replace and evaluate the resulting population. ReplacementOperator
+	    // deliberately permits arbitrary ordering and selection from either input,
+	    // so fitness values cannot safely be reconstructed by slot convention.
 	    List<C> nextGen = operators.replacement()
 	            .replace(currentInds, offspring, currentFits, offFitness, rng);
-	    double[] newFitnesses = new double[nextGen.size()];
-	    for (int i = 0; i < cfg.eliteCount(); i++) {
-	        C elite = nextGen.get(i);
-	        for (int j = 0; j < popSize; j++) {
-	            if (currentInds.get(j) == elite) {
-	                newFitnesses[i] = currentFits[j];
-	                break;
-	            }
-	        }
+	    if (nextGen == null || nextGen.size() != popSize
+	            || nextGen.stream().anyMatch(Objects::isNull)) {
+	        throw new IllegalStateException(
+	                "Replacement operator must return exactly "
+	                + popSize + " non-null individuals");
 	    }
-	    for (int i = cfg.eliteCount(); i < nextGen.size(); i++) {
-	        newFitnesses[i] = offFitness[i - cfg.eliteCount()];
-	    }
+	    double[] newFitnesses = evaluateAll(nextGen);
 
 	    population = wrap(nextGen);
 	    fitnesses  = newFitnesses;
 	    trackBest(population.individuals(), fitnesses);
 	    generation++;
+	    publishGenerationUpdates();
 
 	    return true;
 	}
@@ -125,8 +138,12 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	 * @return A GAState object representing the current state of the GA, which can be used for UI display or logging.
 	 */
 	public GAState getState() {
-		double mean = Arrays.stream(fitnesses).average().orElse(0.0);
-		double worst = Arrays.stream(fitnesses).min().orElse(0.0);
+		double[] currentFitnesses = fitnesses;
+		if (currentFitnesses == null) {
+			return new GAState(0, Double.NEGATIVE_INFINITY, 0.0, 0.0, 0.0);
+		}
+		double mean = Arrays.stream(currentFitnesses).average().orElse(0.0);
+		double worst = Arrays.stream(currentFitnesses).min().orElse(0.0);
 		return new GAState(generation, bestFitness, mean, worst, 0.0);
 	}
 	
@@ -166,22 +183,29 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	 */
 	public List<C> getPopulationSnapshot() {
 		GAPopulation<C> pop = population;
-		return pop == null ? List.of() : List.copyOf(pop.individuals());
+		if (pop == null) return List.of();
+		List<C> snapshot = new ArrayList<>(pop.size());
+		for (C individual : pop.individuals()) {
+			@SuppressWarnings("unchecked")
+			C copy = (C) individual.copy();
+			snapshot.add(copy);
+		}
+		return List.copyOf(snapshot);
 	}
 
 
 
 	// ── private helpers ──────────────────────────────────────────────────────
 
-	// evaluateAll helper to compute fitnesses for a list of individuals. This centralizes the evaluation logic 
-	// and allows us to reuse it for both the population and offspring without duplication. 
-	// The method uses parallel streams to evaluate fitnesses in parallel, which can speed up evaluation for 
-	// large populations or expensive fitness functions.
 	private double[] evaluateAll(List<C> individuals) {
 	    double[] f = new double[individuals.size()];
-	    IntStream.range(0, individuals.size())
-	             .parallel()
-	             .forEach(i -> f[i] = problem.fitness(individuals.get(i)));
+	    for (int i = 0; i < individuals.size(); i++) {
+			f[i] = problem.fitness(individuals.get(i));
+			if (!Double.isFinite(f[i])) {
+				throw new IllegalStateException(
+						"Fitness must be finite at population index " + i);
+			}
+	    }
 	    return f;
 	}
 	// trackBest helper to update the best individual and fitness found so far. 
@@ -219,5 +243,25 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 
 	private static String fmt(double x) {
 		return String.format("%.4g", x);
+	}
+
+	private void publishGenerationUpdates() {
+		SimulationEngine currentEngine = engine;
+		if (currentEngine == null) {
+			return;
+		}
+		if (cfg.progressEveryGens() > 0
+				&& generation % cfg.progressEveryGens() == 0) {
+			double fraction = cfg.maxGenerations() == 0
+					? 1.0
+					: (double) generation / cfg.maxGenerations();
+			currentEngine.postProgress(ProgressInfo.determinate(
+					fraction,
+					"Generation " + generation + ", best=" + fmt(bestFitness)));
+		}
+		if (cfg.refreshEveryGens() > 0
+				&& generation % cfg.refreshEveryGens() == 0) {
+			currentEngine.requestRefresh();
+		}
 	}
 }

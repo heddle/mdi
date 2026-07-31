@@ -89,7 +89,7 @@ public final class SimulationEngineConfig {
 	 * Reasonable defaults for interactive graphics.
 	 *
 	 * @return default config (refresh ~30 Hz, progress ~5 Hz, no yield, autoRun
-	 *         enabled)
+	 *         disabled)
 	 */
 	public static SimulationEngineConfig defaults() {
 		return new SimulationEngineConfig(DEFAULT_REFRESH_INTERVAL_MS,

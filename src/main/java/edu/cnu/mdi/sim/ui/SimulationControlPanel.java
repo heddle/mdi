@@ -240,7 +240,7 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 		// - Run is useful when READY (autoRun false) or PAUSED.
 		// - Pause only when RUNNING.
 		// - Resume only when PAUSED.
-		// - Stop/cancel when RUNNING/PAUSED/READY/INITIALIZING/SWITCHING.
+		// - Stop/cancel when RUNNING/PAUSED/READY/INITIALIZING.
 		startBtn.setEnabled(bound && state != SimulationState.TERMINATED && state != SimulationState.FAILED);
 
 		runBtn.setEnabled(bound && (state == SimulationState.READY || state == SimulationState.PAUSED));
@@ -250,8 +250,7 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 		resumeBtn.setEnabled(bound && state == SimulationState.PAUSED);
 
 		boolean canStopOrCancel = bound && (state == SimulationState.INITIALIZING || state == SimulationState.READY
-				|| state == SimulationState.RUNNING || state == SimulationState.PAUSED
-				|| state == SimulationState.SWITCHING);
+				|| state == SimulationState.RUNNING || state == SimulationState.PAUSED);
 
 		stopBtn.setEnabled(canStopOrCancel);
 		cancelBtn.setEnabled(canStopOrCancel);

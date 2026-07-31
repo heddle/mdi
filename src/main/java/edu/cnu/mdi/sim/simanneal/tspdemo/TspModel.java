@@ -2,6 +2,7 @@ package edu.cnu.mdi.sim.simanneal.tspdemo;
 
 import java.awt.geom.Point2D;
 import java.util.Random;
+import java.util.Objects;
 
 /**
  * Model for the Traveling Salesman Problem (TSP), optionally including
@@ -21,7 +22,22 @@ public class TspModel {
 
     public final Point2D.Double[] cities;
 
+	/**
+	 * Create a randomized TSP model.
+	 *
+	 * @param cityCount number of cities; must be at least four
+	 * @param includeRiver whether the model includes a vertical river
+	 * @param riverPenalty finite cost added to each river crossing
+	 * @param rng source of randomness
+	 */
     public TspModel(int cityCount, boolean includeRiver, double riverPenalty, Random rng) {
+		if (cityCount < 4) {
+			throw new IllegalArgumentException("cityCount must be >= 4");
+		}
+		if (!Double.isFinite(riverPenalty)) {
+			throw new IllegalArgumentException("riverPenalty must be finite");
+		}
+		Objects.requireNonNull(rng, "rng");
         this.cityCount = cityCount;
         this.includeRiver = includeRiver;
 
@@ -44,15 +60,24 @@ public class TspModel {
         this.riverEnabled = enabled;
     }
 
+	/** @return whether river-crossing costs are enabled */
     public boolean isRiverEnabled() {
         return riverEnabled;
     }
 
+	/** @return current river-crossing cost */
     public double getRiverPenalty() {
         return riverPenalty;
     }
 
+	/**
+	 * Set the river-crossing cost.
+	 * @param riverPenalty finite penalty or bonus
+	 */
     public void setRiverPenalty(double riverPenalty) {
+		if (!Double.isFinite(riverPenalty)) {
+			throw new IllegalArgumentException("riverPenalty must be finite");
+		}
         this.riverPenalty = riverPenalty;
     }
 
@@ -62,6 +87,7 @@ public class TspModel {
      * be negative!!!
      * @param cityA index of first city
      * @param cityB index of second city
+	 * @return Euclidean distance plus any applicable river cost
      */
     public double getDistance(int cityA, int cityB) {
         Point2D.Double a = cities[cityA];

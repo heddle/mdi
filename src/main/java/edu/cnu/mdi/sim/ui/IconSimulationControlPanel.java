@@ -273,8 +273,7 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 		resumeBtn.setEnabled(bound && state == SimulationState.PAUSED);
 
 		boolean canStopOrCancel = bound && (state == SimulationState.INITIALIZING || state == SimulationState.READY
-				|| state == SimulationState.RUNNING || state == SimulationState.PAUSED
-				|| state == SimulationState.SWITCHING);
+				|| state == SimulationState.RUNNING || state == SimulationState.PAUSED);
 
 		stopBtn.setEnabled(canStopOrCancel);
 		cancelBtn.setEnabled(canStopOrCancel);

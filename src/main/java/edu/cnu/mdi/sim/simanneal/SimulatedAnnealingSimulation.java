@@ -69,7 +69,6 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	/** Configuration parameters controlling step limits, cooling rate, and UI throttling. */
 	private final SimulatedAnnealingConfig cfg;
 	
-	// Better — self-documenting, compiler-checked
 	private enum NotifyType { ACCEPTED_MOVE, NEW_BEST }
 
 	/**
@@ -169,9 +168,8 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	 * Get a snapshot of the current annealing state.
 	 * <p>
 	 * The returned value is suitable for display or logging. The temperature reported here
-	 * is derived from {@link AnnealingSchedule#temperature(long, SimulatedAnnealingConfig)}.
-	 * Note that the actual temperature used internally for acceptance decisions comes from
-	 * {@link #temperatureAt(long)} which incorporates the estimated {@code T0}.
+	 * is the same absolute temperature used for acceptance decisions: the
+	 * schedule's relative value multiplied by the estimated {@code T0}.
 	 * </p>
 	 *
 	 * @return a state snapshot
@@ -179,7 +177,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	public SimulatedAnnealingState getState() {
 		return new SimulatedAnnealingState(
 				step,
-				schedule.temperature(step, cfg),
+				temperatureAt(step),
 				currentE,
 				bestE,
 				accepted,
@@ -217,6 +215,10 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 
 		// Estimate initial temperature from problem-specific heuristic
 		InitialTemperature it = tempHeuristic.estimate(problem, rng);
+		if (it == null || !Double.isFinite(it.T0()) || it.T0() <= 0.0) {
+			throw new IllegalStateException(
+					"Temperature heuristic must return a finite T0 > 0");
+		}
 		T0 = it.T0();
 
 		if (engine != null) {
@@ -232,9 +234,16 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 
 		// Initialize current/best solution
 		current = problem.randomSolution(rng);
+		if (current == null) {
+			throw new IllegalStateException("Problem returned a null initial solution");
+		}
 		best = current.copy();
+		if (best == null) {
+			throw new IllegalStateException("Solution copy must not be null");
+		}
 
 		currentE = problem.energy(current);
+		requireFiniteEnergy(currentE);
 		bestE = currentE;
 
 		// Reset counters
@@ -284,6 +293,10 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 
 		// Temperature floor check
 		double T = temperatureAt(step);
+		if (!Double.isFinite(T) || T < 0.0) {
+			throw new IllegalStateException(
+					"Annealing schedule produced an invalid temperature: " + T);
+		}
 		if (T <= cfg.minTemperature()) {
 			if (engine != null) {
 				engine.postMessage("Temperature reached minimum; stopping.");
@@ -292,7 +305,8 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 		}
 
 		// Propose a move from current state
-		AnnealingMove<S> move = problem.randomMove(rng, current);
+		AnnealingMove<S> move = Objects.requireNonNull(
+				problem.randomMove(rng, current), "problem random move");
 
 		double dE;
 
@@ -307,7 +321,11 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 		    double before = currentE;
 		    move.apply(current);
 		    double after = problem.energy(current);
+		    requireFiniteEnergy(after);
 		    dE = after - before;
+		}
+		if (!Double.isFinite(dE)) {
+			throw new IllegalStateException("Move energy difference must be finite");
 		}
 
 		// Metropolis acceptance criterion
@@ -342,6 +360,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
         // since problem.energy() is called at most once every 10,000 steps.
        if (step % 10_000 == 0) {
             currentE = problem.energy(current);
+			requireFiniteEnergy(currentE);
         }
 
 		// Optional UI signals (throttled)
@@ -376,25 +395,25 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	/**
 	 * Compute the temperature used for acceptance decisions at a given step.
 	 * <p>
-	 * This implementation uses a geometric cooling schedule:
+	 * The injected schedule supplies a relative temperature factor:
 	 * </p>
 	 *
 	 * <pre>
-	 *   T(step) = T0 * alpha^k
-	 *   k = step / stepsPerTemperature
+	 *   T(step) = T0 * schedule.temperature(step, config)
 	 * </pre>
 	 *
 	 * <p>
-	 * If {@link SimulatedAnnealingConfig#stepsPerTemperature()} is non-positive, this
-	 * method uses {@code k = step}.
-	 * </p>
-	 *
 	 * @param step step index (0-based)
 	 * @return temperature for this step
 	 */
 	private double temperatureAt(long step) {
-		long k = (cfg.stepsPerTemperature() <= 0) ? step : (step / cfg.stepsPerTemperature());
-		return T0 * Math.pow(cfg.alpha(), k);
+		return T0 * schedule.temperature(step, cfg);
+	}
+
+	private static void requireFiniteEnergy(double energy) {
+		if (!Double.isFinite(energy)) {
+			throw new IllegalStateException("Problem energy must be finite: " + energy);
+		}
 	}
 
 	/**

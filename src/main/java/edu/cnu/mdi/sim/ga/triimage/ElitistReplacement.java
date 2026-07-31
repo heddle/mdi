@@ -3,6 +3,7 @@ package edu.cnu.mdi.sim.ga.triimage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Objects;
 import java.util.stream.IntStream;
 
 import edu.cnu.mdi.sim.ga.GASolution;
@@ -22,13 +23,32 @@ public final class ElitistReplacement<C extends GASolution> implements Replaceme
 	 * @param eliteCount the number of best individuals to preserve from the current population
 	 */
 	public ElitistReplacement(int eliteCount) {
+		if (eliteCount < 0) {
+			throw new IllegalArgumentException("eliteCount must be >= 0");
+		}
 		this.eliteCount = eliteCount;
 	}
 
 	@Override
 	public List<C> replace(List<C> population, List<C> offspring, double[] popFitness, double[] offFitness,
 			Random rng) {
-// Find elite indices from current population
+		Objects.requireNonNull(population, "population");
+		Objects.requireNonNull(offspring, "offspring");
+		Objects.requireNonNull(popFitness, "popFitness");
+		if (popFitness.length != population.size()) {
+			throw new IllegalArgumentException(
+					"popFitness length must match population size");
+		}
+		if (eliteCount > population.size()) {
+			throw new IllegalArgumentException(
+					"eliteCount must not exceed population size");
+		}
+		if (offspring.size() < population.size() - eliteCount) {
+			throw new IllegalArgumentException(
+					"Not enough offspring to fill the next generation");
+		}
+
+		// Find elite indices from the current population.
 		Integer[] idx = IntStream.range(0, population.size()).boxed()
 				.sorted((a, b) -> Double.compare(popFitness[b], popFitness[a])).toArray(Integer[]::new);
 
@@ -37,7 +57,7 @@ public final class ElitistReplacement<C extends GASolution> implements Replaceme
 		for (int i = 0; i < eliteCount && i < population.size(); i++) {
 			next.add(population.get(idx[i])); // elite slots: no copy needed
 		}
-		next.addAll(offspring.subList(0, Math.min(offspring.size(), population.size() - eliteCount)));
+		next.addAll(offspring.subList(0, population.size() - eliteCount));
 		return next;
 	}
 }

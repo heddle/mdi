@@ -215,6 +215,10 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	 *                      values greater than 1.0 make them stiffer
 	 */
 	public void setPrinterKBoost(double printerKBoost) {
+		if (!Double.isFinite(printerKBoost) || printerKBoost < 0.0) {
+			throw new IllegalArgumentException(
+					"printerKBoost must be finite and >= 0");
+		}
 	    this.printerKBoost = printerKBoost;
 	}
 

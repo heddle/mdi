@@ -7,7 +7,23 @@ import java.util.Random;
  * The GA will use this interface to evaluate and evolve the population.
  */
 public interface GAProblem<T extends GASolution> {
-    double fitness(T individual);       // higher is better (invert for minimization)
+	/**
+	 * Evaluate an individual.
+	 * @param individual solution to evaluate
+	 * @return finite fitness value; higher is better
+	 */
+    double fitness(T individual);
+	/**
+	 * Create one random individual.
+	 * @param rng source of randomness
+	 * @return new individual
+	 */
     T randomIndividual(Random rng);
+	/**
+	 * Create the initial population.
+	 * @param size required population size
+	 * @param rng source of randomness
+	 * @return population containing exactly {@code size} individuals
+	 */
     GAPopulation<T> initialPopulation(int size, Random rng);
 }

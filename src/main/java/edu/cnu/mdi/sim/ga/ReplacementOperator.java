@@ -10,7 +10,18 @@ import java.util.Random;
  * based on their fitness.
  */
 public interface ReplacementOperator<T extends GASolution> {
-    // Given old population + offspring, return the next generation
+	/**
+	 * Form the next generation from the current population and its offspring.
+	 * Fitness arrays are aligned with their corresponding lists. The returned
+	 * ordering is unrestricted, but its size must equal the current population.
+	 *
+	 * @param population current population
+	 * @param offspring newly created offspring
+	 * @param popFitness current-population fitness values
+	 * @param offFitness offspring fitness values
+	 * @param rng source of randomness
+	 * @return complete next generation
+	 */
     List<T> replace(List<T> population, List<T> offspring,
                     double[] popFitness, double[] offFitness, Random rng);
 }

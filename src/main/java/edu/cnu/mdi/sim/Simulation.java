@@ -33,7 +33,9 @@ public interface Simulation {
 
 	/**
 	 * Shutdown hook called on the simulation thread when the engine is terminating
-	 * (normal completion or stop/cancel).
+	 * (normal completion, stop, cancel, or failure). Initialization may have
+	 * completed only partially when this method is called, so implementations
+	 * should tolerate partially initialized state.
 	 *
 	 * @param ctx simulation context
 	 * @throws Exception ignored by the engine (best-effort cleanup)
