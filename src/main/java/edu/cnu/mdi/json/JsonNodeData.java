@@ -1,5 +1,7 @@
 package edu.cnu.mdi.json;
 
+import java.util.Objects;
+
 /**
  * Immutable value object carried as the user-object of every
  * {@link javax.swing.tree.DefaultMutableTreeNode} in the JSON tree.
@@ -92,9 +94,9 @@ public final class JsonNodeData {
      * @param kind  token kind; must not be {@code null}
      */
     public JsonNodeData(String key, String value, Kind kind) {
-        this.key   = key;
-        this.value = value;
-        this.kind  = kind;
+		this.key   = Objects.requireNonNull(key, "key");
+		this.value = Objects.requireNonNull(value, "value");
+		this.kind  = Objects.requireNonNull(kind, "kind");
     }
 
     // -------------------------------------------------------------------------

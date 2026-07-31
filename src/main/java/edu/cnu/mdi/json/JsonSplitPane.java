@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -98,6 +99,9 @@ public class JsonSplitPane extends JPanel {
     //so that it can be added to
     private final JPanel header;
 
+	/** Monotonic request id used to discard stale background-load results. */
+	private final AtomicLong loadGeneration = new AtomicLong();
+
     // -------------------------------------------------------------------------
     // Construction
     // -------------------------------------------------------------------------
@@ -161,6 +165,7 @@ public class JsonSplitPane extends JPanel {
         if (file == null) {
             return;
         }
+		final long generation = loadGeneration.incrementAndGet();
 
         headerLabel.setText("Loading: " + file.getName() + " \u2026");
         searchBar.clearSearch();   // remove stale highlights before new content arrives
@@ -182,6 +187,9 @@ public class JsonSplitPane extends JPanel {
 
             @Override
             protected void done() {
+				if (generation != loadGeneration.get()) {
+					return;
+				}
                 try {
                     ParseResult result = get();
                     if (result.error != null) {
