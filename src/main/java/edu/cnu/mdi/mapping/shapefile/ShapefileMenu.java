@@ -169,19 +169,19 @@ public class ShapefileMenu extends JMenu {
                         .fillColor(new Color(107, 159, 212, 160))
                         .strokeColor(new Color(74, 127, 181, 200))
                         .strokeWidth(0.5f)
-                        .tooltipFields("name", "NAME");
+                        .tooltipFields("name", "NAME", "FULLNAME");
 
             case ShapefileGeometryReader.TYPE_POLYLINE ->
                 new ShapeFeatureStyle()
                         .strokeColor(new Color(107, 159, 212, 200))
                         .strokeWidth(0.8f)
-                        .tooltipFields("name", "NAME");
+                        .tooltipFields("name", "NAME", "FULLNAME");
 
             default -> // Point / MultiPoint
                 new ShapeFeatureStyle()
                         .pointColor(Color.RED)
                         .pointRadius(3.0)
-                        .tooltipFields("NAME", "name");
+                        .tooltipFields("NAME", "name", "FULLNAME");
         };
     }
 

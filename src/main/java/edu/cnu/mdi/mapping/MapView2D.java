@@ -1030,7 +1030,7 @@ public class MapView2D extends BaseView {
 	 * <li>Latitude and longitude in degrees (only when cursor is on map).</li>
 	 * <li>Picked country name and ISO code (only when cursor is on a country
 	 * polygon).</li>
-	 * <li>Tooltip text from any extra layers ({@link ShapeFeatureRenderer}) whose
+	 * <li>Styled feedback text from any extra layers ({@link ShapeFeatureRenderer}) whose
 	 * {@link IPickable#pick} returns a non-null result. Each layer contributes at
 	 * most one string; all hit layers are reported.</li>
 	 * <li>Picked city name and population (only when cursor is near a city

@@ -13,6 +13,8 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -62,12 +64,13 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  *       {@value #POINT_PICK_TOLERANCE_PX} pixels.</li>
  * </ul>
  *
- * <h2>Tooltip text</h2>
- * <p>On a hit, {@link #pick} assembles the tooltip from
+ * <h2>Feedback text</h2>
+ * <p>On a hit, {@link #pick} assembles feedback from
  * {@link ShapeFeatureStyle#getTooltipFields()}. If that list is empty it
  * falls back to {@link ShapeFeatureStyle#getLabelField()}. Multiple field
- * values are joined with two spaces. Fields absent from the feature are
- * silently omitted. Returns {@code null} if no tooltip configuration is
+ * values are rendered one per line as {@code FIELD: value}. The complete
+ * block uses the light-green feedback style. Fields absent from the feature
+ * are silently omitted. Returns {@code null} if no feedback configuration is
  * present.</p>
  *
  * <h2>Seam splitting</h2>
@@ -85,6 +88,9 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * <p>Not thread-safe; all calls must be made on the Event Dispatch Thread.</p>
  */
 public class ShapeFeatureRenderer implements IPickable {
+
+    /** FeedbackPane style prefix applied to shapefile hit details. */
+    private static final String FEEDBACK_STYLE_PREFIX = "$light green$";
 
     // -------------------------------------------------------------------------
     // Pick tolerance constants
@@ -160,6 +166,23 @@ public class ShapeFeatureRenderer implements IPickable {
 
     /** Returns the current style; never {@code null}. */
     public ShapeFeatureStyle getStyle() { return style; }
+
+    /**
+     * Returns all DBF property names present in this renderer's features.
+     *
+     * <p>Names retain their original spelling and DBF column order. A union is
+     * used so fields are still discovered when an unusual feature has a
+     * partial attribute map.</p>
+     *
+     * @return immutable ordered property-name list; never {@code null}
+     */
+    public List<String> getAvailablePropertyNames() {
+        LinkedHashSet<String> names = new LinkedHashSet<>();
+        for (ShapeFeature feature : features) {
+            names.addAll(feature.getProperties().keySet());
+        }
+        return Collections.unmodifiableList(new ArrayList<>(names));
+    }
 
     /**
      * Sets the font used for on-map feature labels.
@@ -252,9 +275,9 @@ public class ShapeFeatureRenderer implements IPickable {
      * {@inheritDoc}
      *
      * <p>Returns {@code null} if the pick cache is empty (no render has
-     * occurred yet) or no feature is within the hit threshold. The tooltip
+     * occurred yet) or no feature is within the hit threshold. The feedback
      * string is assembled from {@link ShapeFeatureStyle#getTooltipFields()},
-     * falling back to {@link ShapeFeatureStyle#getLabelField()} if no tooltip
+     * falling back to {@link ShapeFeatureStyle#getLabelField()} if no feedback
      * fields are configured.</p>
      */
     @Override
@@ -277,7 +300,7 @@ public class ShapeFeatureRenderer implements IPickable {
                 default -> false;
             };
 
-            if (hit) return buildTooltip(entry.feature);
+            if (hit) return buildFeedback(entry.feature);
         }
         return null;
     }
@@ -643,34 +666,43 @@ public class ShapeFeatureRenderer implements IPickable {
     }
 
     // -------------------------------------------------------------------------
-    // Tooltip assembly
+    // Feedback assembly
     // -------------------------------------------------------------------------
 
     /**
-     * Assembles the tooltip string for a hit feature.
+     * Assembles the styled feedback string for a hit feature.
      *
      * <p>Uses {@link ShapeFeatureStyle#getTooltipFields()} when set, falling
-     * back to {@link ShapeFeatureStyle#getLabelField()}. Multiple values are
-     * joined with two spaces. Returns {@code null} when no useful text can be
-     * produced.</p>
+     * back to {@link ShapeFeatureStyle#getLabelField()}. Each non-empty value
+     * is written on its own line as {@code FIELD: value}, in configured field
+     * order. One style prefix colors the entire multi-line block. Returns
+     * {@code null} when no useful text can be produced.</p>
+     *
+     * @param feature hit feature
+     * @return styled, possibly multi-line feedback, or {@code null}
      */
-    private String buildTooltip(ShapeFeature feature) {
+    String buildFeedback(ShapeFeature feature) {
         List<String> fields = style.getTooltipFields();
 
         if (fields.isEmpty()) {
-            // Fall back to labelField.
             String lf = style.getLabelField();
             if (lf == null) return null;
             String val = feature.getProperty(lf);
-            return (val != null && !val.isEmpty()) ? val : null;
+            return (val != null && !val.isEmpty())
+                    ? FEEDBACK_STYLE_PREFIX + lf + ": " + val
+                    : null;
         }
 
         StringBuilder sb = new StringBuilder();
         for (String fieldName : fields) {
             String val = feature.getProperty(fieldName);
             if (val == null || val.isEmpty()) continue;
-            if (sb.length() > 0) sb.append("  ");
-            sb.append(val);
+            if (sb.length() == 0) {
+                sb.append(FEEDBACK_STYLE_PREFIX);
+            } else {
+                sb.append('\n');
+            }
+            sb.append(fieldName).append(": ").append(val);
         }
         return sb.length() > 0 ? sb.toString() : null;
     }

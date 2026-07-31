@@ -111,6 +111,11 @@ public class ShapefileLayer extends Layer {
         MapLayerStyle initial =
                 new MapLayerStyle();
 
+        initial.setAvailableFeedbackFields(
+                renderer.getAvailablePropertyNames());
+        initial.setSelectedFeedbackFields(
+                current.getTooltipFields());
+
         long bits;
 
         switch (renderer.getShapeType()) {
@@ -172,6 +177,8 @@ public class ShapefileLayer extends Layer {
             return;
         }
 
+        bits |= MapLayerStyleBits.FEEDBACK_FIELDS;
+
         MapLayerStyle result =
                 MapLayerStyleDialog.showDialog(
                         parentComponent,
@@ -182,6 +189,9 @@ public class ShapefileLayer extends Layer {
         if (result == null) {
             return;
         }
+
+        working.tooltipFields(
+                result.getSelectedFeedbackFields().toArray(String[]::new));
 
         switch (renderer.getShapeType()) {
 

@@ -598,7 +598,7 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	 */
 	@Override
 	public void resetWorldSystem(Rectangle2D.Double worldSystem) {
-		_worldSystem = worldSystem;
+		_worldSystem = copy(worldSystem);
 		_defaultWorldSystem = copy(worldSystem);
 		_previousWorldSystem = copy(worldSystem);
 		setDirty(true);

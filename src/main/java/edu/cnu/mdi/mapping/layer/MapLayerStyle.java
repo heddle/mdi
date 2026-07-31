@@ -1,6 +1,9 @@
 package edu.cnu.mdi.mapping.layer;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Mutable style values used by {@link MapLayerStyleDialog}.
@@ -28,6 +31,9 @@ public class MapLayerStyle {
 
     private double latitudeStepDeg = 15.0;
     private double longitudeStepDeg = 15.0;
+
+    private List<String> availableFeedbackFields = Collections.emptyList();
+    private List<String> selectedFeedbackFields = Collections.emptyList();
     
     /**
      * Minimum population required for a feature to be displayed.
@@ -71,6 +77,33 @@ public class MapLayerStyle {
         longitudeStepDeg = source.longitudeStepDeg;
         
         minimumPopulation = source.minimumPopulation;
+
+        availableFeedbackFields = new ArrayList<>(source.availableFeedbackFields);
+        selectedFeedbackFields = new ArrayList<>(source.selectedFeedbackFields);
+    }
+
+    /** @return immutable DBF fields available for feedback selection */
+    public List<String> getAvailableFeedbackFields() {
+        return Collections.unmodifiableList(availableFeedbackFields);
+    }
+
+    /** @param fields DBF fields available for feedback selection */
+    public void setAvailableFeedbackFields(List<String> fields) {
+        availableFeedbackFields = fields == null
+                ? Collections.emptyList()
+                : new ArrayList<>(fields);
+    }
+
+    /** @return immutable DBF fields selected for hit-test feedback */
+    public List<String> getSelectedFeedbackFields() {
+        return Collections.unmodifiableList(selectedFeedbackFields);
+    }
+
+    /** @param fields DBF fields selected for hit-test feedback */
+    public void setSelectedFeedbackFields(List<String> fields) {
+        selectedFeedbackFields = fields == null
+                ? Collections.emptyList()
+                : new ArrayList<>(fields);
     }
     
     /**

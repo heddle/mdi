@@ -15,8 +15,11 @@ import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.text.NumberFormatter;
 
@@ -52,6 +55,8 @@ public class MapLayerStyleDialog extends JDialog {
     private JFormattedTextField longitudeStepField;
     
     private JFormattedTextField minimumPopulationField;
+
+    private JList<String> feedbackFieldsList;
 
     private boolean accepted;
 
@@ -381,6 +386,40 @@ public class MapLayerStyleDialog extends JDialog {
                     "Opacity:",
                     sliderPanel);
         }
+
+        if (Bits.check(
+                styleBits,
+                MapLayerStyleBits.FEEDBACK_FIELDS)) {
+
+            java.util.List<String> available =
+                    workingStyle.getAvailableFeedbackFields();
+
+            feedbackFieldsList = new JList<>(
+                    available.toArray(String[]::new));
+            feedbackFieldsList.setSelectionMode(
+                    ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            feedbackFieldsList.setVisibleRowCount(
+                    Math.min(6, Math.max(3, available.size())));
+
+            java.util.List<String> selected =
+                    workingStyle.getSelectedFeedbackFields();
+            int[] selectedIndices =
+                    java.util.stream.IntStream.range(0, available.size())
+                            .filter(i -> selected.contains(available.get(i)))
+                            .toArray();
+            feedbackFieldsList.setSelectedIndices(selectedIndices);
+
+            JScrollPane scrollPane = new JScrollPane(feedbackFieldsList);
+            scrollPane.setPreferredSize(new Dimension(230, 92));
+            scrollPane.setToolTipText(
+                    "Select the DBF fields displayed after a successful hit test");
+
+            addRow(
+                    editorPanel,
+                    row++,
+                    "Feedback fields:",
+                    scrollPane);
+        }
         
         if (adaptiveCheckBox != null) {
             adaptiveCheckBox.addActionListener(
@@ -638,6 +677,11 @@ public class MapLayerStyleDialog extends JDialog {
         if (opacitySlider != null) {
             result.setOpacity(
                     opacitySlider.getValue() / 100.0);
+        }
+
+        if (feedbackFieldsList != null) {
+            result.setSelectedFeedbackFields(
+                    feedbackFieldsList.getSelectedValuesList());
         }
 
         return result;

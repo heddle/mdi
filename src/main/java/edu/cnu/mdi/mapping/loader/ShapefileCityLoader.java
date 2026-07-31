@@ -46,7 +46,8 @@ import edu.cnu.mdi.mapping.theme.MapUtils;
  * location.</p>
  *
  * <h2>Coordinate assumptions</h2>
- * <p>Input coordinates must be WGS84 geographic degrees (longitude, latitude).
+ * <p>Input coordinates must be WGS84 or NAD83/GRS80 geographic degrees
+ * (longitude, latitude). NAD83 is treated as WGS84 without datum transformation.
  * A companion {@code .prj}, when present, is validated and incompatible or
  * unrecognized coordinate systems are rejected. If it is absent, WGS84 is
  * assumed. Coordinates are converted to radians and longitude is wrapped to

@@ -87,7 +87,7 @@ public class DrawingView extends BaseView {
 	 * <p>The dropped image is placed on the annotation layer so it is always
 	 * rendered above other items.  If the file cannot be decoded
 	 * ({@link ImageIO#read} returns {@code null} or throws), an error is
-	 * logged to {@code System.err} and the view is left unchanged.</p>
+	 * logged through the framework logger and the view is left unchanged.</p>
 	 *
 	 * <p>This method is called on the EDT by {@link edu.cnu.mdi.transfer.FileDropHandler}
 	 * after the filter set in the constructor ({@link edu.cnu.mdi.transfer.ImageFilters#isActualImage})

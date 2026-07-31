@@ -104,11 +104,11 @@ public final class ShapeFeatureStyle {
 
     /**
      * Ordered list of {@code .dbf} field names whose values are concatenated
-     * to form the tooltip shown in the feedback panel on mouse-over.
+     * to form the text shown in the feedback panel on mouse-over.
      *
-     * <p>If empty, the tooltip falls back to {@link #labelField} when set,
-     * or no tooltip is shown if both are absent. Multiple fields are joined
-     * with two spaces: {@code "Lake Superior  area: 82103"}.</p>
+     * <p>If empty, feedback falls back to {@link #labelField} when set,
+     * or no feature feedback is shown if both are absent. Multiple fields are
+     * displayed one per line as {@code FIELD: value}.</p>
      */
     private final List<String> tooltipFields = new ArrayList<>();
 
@@ -256,7 +256,7 @@ public final class ShapeFeatureStyle {
 
     /**
      * Sets the {@code .dbf} field names whose values appear in the
-     * mouse-over feedback tooltip, in the order given.
+     * mouse-over feedback, in the order given.
      *
      * <p>Replaces any previously configured tooltip fields. Pass no
      * arguments (or call with an empty array) to clear tooltip fields.
@@ -360,12 +360,12 @@ public final class ShapeFeatureStyle {
     public Color getLabelColor() { return labelColor; }
 
     /**
-     * Returns an unmodifiable view of the tooltip field names.
+     * Returns an unmodifiable view of the feedback field names.
      *
-     * <p>If empty, the tooltip falls back to {@link #getLabelField()} when
-     * set. If both are absent, no tooltip is produced.</p>
+     * <p>If empty, feedback falls back to {@link #getLabelField()} when
+     * set. If both are absent, no feature feedback is produced.</p>
      *
-     * @return unmodifiable ordered list of tooltip field names
+     * @return unmodifiable ordered list of feedback field names
      */
     public List<String> getTooltipFields() {
         return Collections.unmodifiableList(tooltipFields);

@@ -13,9 +13,12 @@ import java.util.Objects;
  *
  * <p>MDI intentionally does not provide general coordinate-reference-system
  * transformations. If a companion {@code .prj} file is present, this class
- * therefore accepts only a WGS84 geographic CRS with degree angular units.
- * Projected, non-WGS84, malformed, and unrecognized definitions are rejected
- * before coordinates can be mistaken for longitude and latitude.</p>
+ * therefore accepts WGS84 geographic coordinates and unprojected NAD83/GRS80
+ * geographic coordinates with degree angular units. NAD83 coordinates are
+ * treated as WGS84 without a datum transformation; their metre-scale
+ * difference is negligible for MDI's map-display use cases. Projected,
+ * malformed, older North American datums, and unrecognized definitions are
+ * rejected before coordinates can be mistaken for longitude and latitude.</p>
  *
  * <p>A missing {@code .prj} remains permitted for compatibility with existing
  * shapefile sets. In that case the caller is explicitly relying on MDI's
@@ -30,7 +33,8 @@ public final class ShapefileCrsValidator {
      *
      * @param shpPath path to the {@code .shp} file
      * @throws IOException if the projection file cannot be read or does not
-     *                     describe a supported WGS84 geographic CRS in degrees
+     *                     describe a supported WGS84 or NAD83 geographic CRS
+     *                     in degrees
      */
     public static void validate(Path shpPath) throws IOException {
         Objects.requireNonNull(shpPath, "shpPath");
@@ -69,8 +73,13 @@ public final class ShapefileCrsValidator {
         boolean wgs84 = identifiers.contains("WGS84")
                 || identifiers.contains("WGS1984")
                 || identifiers.contains("WORLDGEODETICSYSTEM1984");
-        if (!wgs84) {
-            throw unsupported(prjPath, "the datum is not recognized as WGS84");
+        boolean nad83 = (identifiers.contains("NAD83")
+                || identifiers.contains("NORTHAMERICAN1983")
+                || identifiers.contains("NORTHAMERICANDATUM1983"))
+                && identifiers.contains("GRS1980");
+        if (!wgs84 && !nad83) {
+            throw unsupported(prjPath,
+                    "the datum is not recognized as WGS84 or NAD83/GRS80");
         }
 
         String compact = upper.replaceAll("\\s+", "");
@@ -87,7 +96,7 @@ public final class ShapefileCrsValidator {
     private static IOException unsupported(Path prjPath, String reason) {
         return new IOException("Unsupported shapefile coordinate reference system in "
                 + prjPath + ": " + reason
-                + ". MDI requires WGS84 longitude/latitude coordinates in decimal degrees.");
+                + ". MDI requires WGS84 or NAD83/GRS80 longitude/latitude coordinates in decimal degrees.");
     }
 
     private static Path companionPath(Path path, String extension) {

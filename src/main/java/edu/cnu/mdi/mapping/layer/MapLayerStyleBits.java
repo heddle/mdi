@@ -57,6 +57,10 @@ public final class MapLayerStyleBits {
      */
     public static final long MIN_POPULATION =
             1L << 12;
+
+    /** Enables multiple selection of DBF fields used for hit-test feedback. */
+    public static final long FEEDBACK_FIELDS =
+            1L << 13;
     
     /**
      * Global layer opacity. This is distinct from alpha embedded in an

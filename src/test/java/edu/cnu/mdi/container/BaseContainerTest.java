@@ -6,6 +6,9 @@ import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+
+import javax.swing.SwingUtilities;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +19,19 @@ public class BaseContainerTest {
     private static final double EPS = 1.0e-9;
 
     private static BaseContainer newContainer() {
-        // World: x in [0,10], y in [0,5]
-        BaseContainer c = new BaseContainer(new Rectangle2D.Double(0, 0, 10, 5));
-        // Give it a real pixel size so transforms are non-null. :contentReference[oaicite:3]{index=3}
-        c.setBounds(0, 0, 200, 100);
-        // Forces setAffineTransforms() via setDirty(). :contentReference[oaicite:4]{index=4}
-        c.setDirty(true);
-        return c;
+        AtomicReference<BaseContainer> result = new AtomicReference<>();
+        try {
+            SwingUtilities.invokeAndWait(() -> {
+                // World: x in [0,10], y in [0,5].
+                BaseContainer c = new BaseContainer(new Rectangle2D.Double(0, 0, 10, 5));
+                c.setBounds(0, 0, 200, 100);
+                c.setDirty(true);
+                result.set(c);
+            });
+        } catch (Exception e) {
+            throw new AssertionError("Could not create container on the EDT", e);
+        }
+        return result.get();
     }
 
     @Test
@@ -34,14 +43,14 @@ public class BaseContainerTest {
         assertNotNull(c.getDefaultLayer());
 
         // Protected layers should NOT be discoverable by getLayerByName(), since it
-        // searches only user layers. :contentReference[oaicite:5]{index=5}
+        // searches only user layers.
         assertNull(c.getLayerByName("Connections"));
         assertNull(c.getLayerByName("Annotations"));
 
         // Default content layer should be a user layer and discoverable.
         assertSame(c.getDefaultLayer(), c.getLayerByName("Content"));
 
-        // Draw order should be: Connections, user layers..., Annotations. :contentReference[oaicite:6]{index=6}
+        // Draw order should be: Connections, user layers..., Annotations.
         List<Layer> all = c.getAllLayers();
         assertTrue(all.size() >= 3);
         assertSame(c.getConnectionLayer(), all.get(0));
@@ -53,18 +62,18 @@ public class BaseContainerTest {
     void addingUserLayersAffectsDrawOrderAndHitTestOrder() {
         BaseContainer c = newContainer();
 
-        Layer l1 = new Layer(c, "L1"); // Layer ctor auto-calls container.addLayer(layer). :contentReference[oaicite:7]{index=7}
+        Layer l1 = new Layer(c, "L1"); // Layer constructor auto-registers itself.
         Layer l2 = new Layer(c, "L2");
 
         // Draw order: Connections, Content, L1, L2, Annotations
         List<Layer> draw = c.getAllLayers();
         assertEquals(List.of(c.getConnectionLayer(), c.getDefaultLayer(), l1, l2, c.getAnnotationLayer()), draw);
 
-        // Hit test order: Annotations, L2, L1, Content, Connections :contentReference[oaicite:9]{index=9}
+        // Hit test order: Annotations, L2, L1, Content, Connections.
         List<Layer> hit = c.getAllLayersForHitTesting();
         assertEquals(List.of(c.getAnnotationLayer(), l2, l1, c.getDefaultLayer(), c.getConnectionLayer()), hit);
 
-        // getLayerByName only searches user layers. :contentReference[oaicite:10]{index=10}
+        // getLayerByName only searches user layers.
         assertSame(l1, c.getLayerByName("L1"));
         assertSame(l2, c.getLayerByName("L2"));
     }
@@ -105,7 +114,7 @@ public class BaseContainerTest {
     void panRecentersWorldAtExpectedLocalPoint() {
         BaseContainer c = newContainer();
 
-        // pan(dh,dv) recenters at (centerX - dh, centerY - dv) in local coords. :contentReference[oaicite:12]{index=12}
+        // pan(dh,dv) recenters at (centerX - dh, centerY - dv) in local coords.
         int dh = 10;
         int dv = 0;
 
@@ -122,5 +131,16 @@ public class BaseContainerTest {
         Rectangle2D.Double ws = c.getWorldSystem();
         assertEquals(expectedCenter.x, ws.getCenterX(), 1e-9);
         assertEquals(expectedCenter.y, ws.getCenterY(), 1e-9);
+    }
+
+    @Test
+    void resetWorldSystemDoesNotAliasCallerRectangle() {
+        BaseContainer c = newContainer();
+        Rectangle2D.Double supplied = new Rectangle2D.Double(1, 2, 20, 10);
+
+        c.resetWorldSystem(supplied);
+        supplied.setRect(100, 200, 1, 1);
+
+        assertEquals(new Rectangle2D.Double(1, 2, 20, 10), c.getWorldSystem());
     }
 }

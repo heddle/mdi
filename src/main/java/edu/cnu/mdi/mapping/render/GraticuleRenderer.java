@@ -537,10 +537,12 @@ public final class GraticuleRenderer {
      * Draws coordinate labels where each parallel/meridian enters the viewport.
      *
      * <p>For a parallel, longitude is walked across the visible band and each
-     * sample is forward-projected; the first sample landing inside the viewport
-     * marks the entry point, and a "39°N" label is placed immediately to its
-     * left. Meridians are handled symmetrically, with labels immediately below
-     * their lower entry points. Positions are clamped to the component margins
+     * sample is forward-projected; the leftmost visible sample marks the map
+     * boundary, and a "39°N" label is placed immediately to its left. Choosing
+     * the screen-space extreme is important for wrapped projections such as
+     * Mercator, where geographic iteration order may cross the center seam.
+     * Meridians are handled symmetrically using their lowest visible sample,
+     * with labels immediately below it. Positions are clamped to the component margins
      * when there is insufficient space outside the projected map. Because the
      * actual projected curve is sampled (not assumed straight), this follows
      * curved Mollweide and orthographic boundaries.</p>
@@ -633,8 +635,10 @@ public final class GraticuleRenderer {
 
     /**
      * Walks longitude across [lonMin, lonMax] at the given fixed latitude,
-     * forward-projecting each sample, and returns the first screen point that
-     * falls inside {@code view} — i.e. where this parallel enters the viewport.
+     * forward-projecting each sample, and returns the leftmost screen point that
+     * falls inside {@code view} — i.e. the visible left boundary of the parallel.
+     * Using the screen-space minimum rather than the first geographic sample
+     * handles antimeridian wrapping correctly.
      * Returns {@code null} if the parallel never crosses the viewport (e.g. it
      * is on the far side of an orthographic globe).
      */
@@ -643,6 +647,7 @@ public final class GraticuleRenderer {
         int samples = 96;
         Point2D.Double ll = new Point2D.Double();
         Point sp = new Point();
+        Point leftmost = null;
         for (int i = 0; i <= samples; i++) {
             double lon = lonMin + (lonMax - lonMin) * (i / (double) samples);
             ll.x = projection.wrapLongitude(lon);
@@ -650,10 +655,12 @@ public final class GraticuleRenderer {
             if (!projection.isPointVisible(ll)) continue;
             mc.latLonToLocal(sp, ll);
             if (view.contains(sp.x, sp.y)) {
-                return new Point(sp.x, sp.y);
+                if (leftmost == null || sp.x < leftmost.x) {
+                    leftmost = new Point(sp.x, sp.y);
+                }
             }
         }
-        return null;
+        return leftmost;
     }
     
     /**
@@ -692,14 +699,15 @@ public final class GraticuleRenderer {
 
     /**
      * Walks latitude across [latMin, latMax] at the given fixed longitude and
-     * returns the first screen point inside {@code view} — where this meridian
-     * enters the viewport. Returns {@code null} if it never crosses.
+     * returns the lowest screen point inside {@code view} — the visible lower
+     * boundary of the meridian. Returns {@code null} if it never crosses.
      */
     private Point lineEntryAlongLatitude(MapContainer mc, double lon,
                                          double latMin, double latMax, Rectangle view) {
         int samples = 96;
         Point2D.Double ll = new Point2D.Double();
         Point sp = new Point();
+        Point lowest = null;
         for (int i = 0; i <= samples; i++) {
             double lat = latMin + (latMax - latMin) * (i / (double) samples);
             ll.x = lon;
@@ -707,10 +715,12 @@ public final class GraticuleRenderer {
             if (!projection.isPointVisible(ll)) continue;
             mc.latLonToLocal(sp, ll);
             if (view.contains(sp.x, sp.y)) {
-                return new Point(sp.x, sp.y);
+                if (lowest == null || sp.y > lowest.y) {
+                    lowest = new Point(sp.x, sp.y);
+                }
             }
         }
-        return null;
+        return lowest;
     }
 
     private boolean tooClose(List<Integer> used, int v) {

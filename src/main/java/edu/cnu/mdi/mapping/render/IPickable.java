@@ -37,8 +37,8 @@ import edu.cnu.mdi.mapping.shapefile.ShapeFeatureRenderer;
  * <h2>Current implementors</h2>
  * <ul>
  *   <li>{@link ShapeFeatureRenderer} — picks polygon, polyline, and point
- *       features from arbitrary shapefile layers and returns the values of
- *       the configured tooltip fields.</li>
+ *       features from arbitrary shapefile layers and returns the names and
+ *       values of the configured feedback fields.</li>
  * </ul>
  */
 public interface IPickable {

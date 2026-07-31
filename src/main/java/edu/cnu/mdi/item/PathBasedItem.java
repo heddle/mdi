@@ -64,7 +64,9 @@ public class PathBasedItem extends AItem {
 
 		if (WorldGraphicsUtils.getPathPointCount(_path) == 1) {
 			Rectangle spr = singlePointBounds(container);
-			return container.getComponent().getBounds().intersects(spr);
+			Rectangle viewport = new Rectangle(0, 0,
+					container.getComponent().getWidth(), container.getComponent().getHeight());
+			return viewport.intersects(spr);
 		}
 
 		Rectangle2D.Double wr = getWorldBounds();

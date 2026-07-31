@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Locale;
 
 import javax.swing.text.SimpleAttributeSet;
 
@@ -212,7 +213,7 @@ public class FeedbackPane extends TextPaneScrollPane {
             if (closingDollar >= 0) {
                 int nameLen = closingDollar - 1; // characters between the two $
                 if (nameLen >= COLOR_NAME_MIN_LEN && nameLen <= COLOR_NAME_MAX_LEN) {
-                    String candidate = message.substring(1, closingDollar).toLowerCase();
+                    String candidate = message.substring(1, closingDollar).toLowerCase(Locale.ROOT);
 
                     style = styleCache.get(candidate);
                     if (style == null) {

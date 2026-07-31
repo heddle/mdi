@@ -46,6 +46,19 @@ public class ShapefileCrsValidatorTest {
     }
 
     @Test
+    public void testNad83Grs80GeographicCrsIsAccepted() throws IOException {
+        Path shp = tempDir.resolve("primaryroads.shp");
+        Files.writeString(tempDir.resolve("primaryroads.prj"),
+                "GEOGCS[\"GCS_North_American_1983\","
+              + "DATUM[\"D_North_American_1983\","
+              + "SPHEROID[\"GRS_1980\",6378137,298.257222101]],"
+              + "PRIMEM[\"Greenwich\",0],"
+              + "UNIT[\"Degree\",0.017453292519943295]]");
+
+        assertDoesNotThrow(() -> ShapefileCrsValidator.validate(shp));
+    }
+
+    @Test
     public void testProjectedCrsIsRejectedEvenWhenBasedOnWgs84() throws IOException {
         Path shp = tempDir.resolve("roads.shp");
         Files.writeString(tempDir.resolve("roads.prj"),
@@ -68,7 +81,7 @@ public class ShapefileCrsValidatorTest {
 
         IOException error = assertThrows(IOException.class,
                 () -> ShapefileCrsValidator.validate(shp));
-        assertTrue(error.getMessage().contains("not recognized as WGS84"));
+        assertTrue(error.getMessage().contains("not recognized as WGS84 or NAD83/GRS80"));
     }
 
     @Test
