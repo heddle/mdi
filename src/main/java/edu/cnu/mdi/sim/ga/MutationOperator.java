@@ -9,6 +9,17 @@ import java.util.Random;
  */
 public interface MutationOperator<T extends GASolution> {
 	/**
+	 * Notify the operator before offspring are created for a generation.
+	 * Stateful operators may use this to adapt their mutation strength.
+	 *
+	 * @param generation generation about to be produced, starting at zero
+	 * @param maxGenerations configured generation limit
+	 */
+	default void beginGeneration(long generation, long maxGenerations) {
+		// Most mutation operators are generation-independent.
+	}
+
+	/**
 	 * Mutate an individual, either in-place or by returning a replacement.
 	 *
 	 * @param individual individual to mutate

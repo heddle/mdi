@@ -47,9 +47,9 @@ import edu.cnu.mdi.sim.ga.SimpleGAPopulation;
  * array used during each {@code fitness()} call are allocated once per thread
  * and reused for every subsequent call on that thread. This eliminates
  * per-evaluation heap allocation and GC pressure. The buffers are stored in
- * {@link ThreadLocal} fields so the design is also safe for future parallel
- * evaluation (see {@code GAConfig.parallelEvaluation}). Typical speedup: 2–3×
- * over per-call allocation.</li>
+ * {@link ThreadLocal} fields, keeping this fitness implementation safe if a
+ * caller evaluates individuals concurrently. Typical speedup: 2–3× over
+ * per-call allocation.</li>
  * <li><b>Integer MSE accumulation.</b> The inner pixel loop accumulates squared
  * channel differences as {@code long} integers and divides by {@code 255²}
  * exactly once after the loop, avoiding per-pixel floating-point division.
@@ -147,6 +147,9 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 	 */
 	private final int numTriangles;
 
+	/** Average target color used as the chromosome background. */
+	private final int backgroundRgb;
+
 	// -------------------------------------------------------------------------
 	// Constructor
 	// -------------------------------------------------------------------------
@@ -190,6 +193,7 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 		g2.dispose();
 
 		this.targetPixels = scaled.getRGB(0, 0, FITNESS_W, FITNESS_H, null, 0, FITNESS_W);
+		this.backgroundRgb = averageRgb(targetPixels);
 	}
 
 	// -------------------------------------------------------------------------
@@ -258,7 +262,7 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 	 */
 	@Override
 	public PolygonChromosome randomIndividual(Random rng) {
-		PolygonChromosome c = new PolygonChromosome(numTriangles);
+		PolygonChromosome c = new PolygonChromosome(numTriangles, backgroundRgb);
 		for (int i = 0; i < c.genes.length; i++) {
 			c.genes[i] = rng.nextDouble();
 		}
@@ -286,6 +290,22 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 			pop.add(randomIndividual(rng));
 		}
 		return SimpleGAPopulation.of(pop);
+	}
+
+	private static int averageRgb(int[] pixels) {
+		long red = 0;
+		long green = 0;
+		long blue = 0;
+		for (int pixel : pixels) {
+			red += (pixel >>> 16) & 0xFF;
+			green += (pixel >>> 8) & 0xFF;
+			blue += pixel & 0xFF;
+		}
+		int count = pixels.length;
+		return 0xFF000000
+				| ((int) (red / count) << 16)
+				| ((int) (green / count) << 8)
+				| (int) (blue / count);
 	}
 
 	// -------------------------------------------------------------------------

@@ -16,8 +16,9 @@ import edu.cnu.mdi.sim.ga.GASolution;
  *
  * <h2>Encoding</h2>
  * <p>
- * Each triangle occupies {@value #DOUBLES_PER_TRIANGLE} consecutive doubles in
- * a flat {@code double[]} array:
+ * Each chromosome also carries a fixed opaque background color. Each triangle
+ * occupies {@value #DOUBLES_PER_TRIANGLE} consecutive doubles in a flat
+ * {@code double[]} array:
  * </p>
  * 
  * <pre>
@@ -67,6 +68,9 @@ public final class PolygonChromosome implements GASolution {
 	/** Number of triangles encoded by this chromosome. */
 	final int numTriangles;
 
+	/** Opaque RGB background painted before the translucent triangles. */
+	final int backgroundRgb;
+
 	/**
 	 * Construct a zero-initialized chromosome for the given number of triangles.
 	 * All gene values are {@code 0.0}; use
@@ -77,11 +81,22 @@ public final class PolygonChromosome implements GASolution {
 	 * @throws IllegalArgumentException if {@code numTriangles} is not positive
 	 */
 	public PolygonChromosome(int numTriangles) {
+		this(numTriangles, Color.BLACK.getRGB());
+	}
+
+	/**
+	 * Construct a chromosome with an explicit opaque background color.
+	 *
+	 * @param numTriangles number of triangles (must be positive)
+	 * @param backgroundRgb packed RGB background color
+	 */
+	PolygonChromosome(int numTriangles, int backgroundRgb) {
 		if (numTriangles <= 0) {
 			throw new IllegalArgumentException("numTriangles must be > 0");
 		}
 		this.numTriangles = numTriangles;
 		this.genes = new double[numTriangles * DOUBLES_PER_TRIANGLE];
+		this.backgroundRgb = backgroundRgb | 0xFF000000;
 	}
 
 	/**
@@ -90,9 +105,10 @@ public final class PolygonChromosome implements GASolution {
 	 * @param genes        gene array to copy (non-null)
 	 * @param numTriangles number of triangles
 	 */
-	private PolygonChromosome(double[] genes, int numTriangles) {
+	private PolygonChromosome(double[] genes, int numTriangles, int backgroundRgb) {
 		this.numTriangles = numTriangles;
 		this.genes = Arrays.copyOf(genes, genes.length);
+		this.backgroundRgb = backgroundRgb;
 	}
 
 	// -------------------------------------------------------------------------
@@ -109,7 +125,7 @@ public final class PolygonChromosome implements GASolution {
 	@SuppressWarnings("unchecked")
 	@Override
 	public PolygonChromosome copy() {
-		return new PolygonChromosome(genes, numTriangles);
+		return new PolygonChromosome(genes, numTriangles, backgroundRgb);
 	}
 
 	/**
@@ -167,7 +183,7 @@ public final class PolygonChromosome implements GASolution {
 		Graphics2D g2 = img.createGraphics();
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g2.setComposite(AlphaComposite.Src);
-		g2.setColor(Color.BLACK);
+		g2.setColor(new Color(backgroundRgb));
 		g2.fillRect(0, 0, w, h);
 		g2.setComposite(AlphaComposite.SrcOver);
 

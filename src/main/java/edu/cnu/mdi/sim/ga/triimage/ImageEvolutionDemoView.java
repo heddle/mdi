@@ -180,10 +180,11 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 		// which is -mse.
 		evolutionPanel.updateBest(bestImg, gen, state.bestFitness());
 
-		// Population grid — update every 5th refresh only (every 250 generations)
-		if (gen % 250 == 0) {
-			evolutionPanel.updatePopulation(buildThumbnails(s));
-		}
+		// The engine already throttles refresh delivery. Update the population on
+		// every delivered callback rather than testing the observed generation for
+		// an exact multiple: the GA can advance between requestRefresh() and this EDT
+		// callback, so an equality/modulo test can miss every intended update.
+		evolutionPanel.updatePopulation(buildThumbnails(s));
 		
 		// Update diagnostic plots with the new GA state. This will add a new point to the MSE vs. generation 
 		// plot and trigger a repaint. We do this every refresh so the plot updates smoothly, but it could 
@@ -299,17 +300,15 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 
 		GAConfig cfg = new GAConfig(populationSize, 
 				100_000, // maxGenerations — effectively unlimited for demo purposes
-				0.4, // crossoverRate
-				0.025, // mutationRate — now actually used
-				5, // eliteCount
-				50, // progressEveryGens — update progress every 50 generations
-				40, // refreshEveryGens — update display every 10 generations (every 300ms at 30Hz refresh)
+				0.70, // crossoverRate
+				0.035, // per-triangle mutation rate
+				2, // eliteCount
+				25, // progressEveryGens — update progress every 25 generations
+				10, // refreshEveryGens — update population every 10 generations
 				1234567L); // randomSeed — set to 0 for true randomness; non-zero for reproducibility
 
-		GAOperators<PolygonChromosome> operators = new GAOperators<>(new TournamentSelection<>(2), // was 5
-				new UniformBlendCrossover(), new GaussianMutation(cfg.mutationRate(), 0.08, 0.15), // rate from cfg,
-																									// sigma=0.08, 10%
-																									// resets
+		GAOperators<PolygonChromosome> operators = new GAOperators<>(new TournamentSelection<>(2),
+				new UniformBlendCrossover(), new GaussianMutation(cfg.mutationRate(), 0.06, 0.08),
 				new ElitistReplacement<>(cfg.eliteCount()));
 
 		GeneticAlgorithmSimulation<PolygonChromosome> sim = new GeneticAlgorithmSimulation<>(problem, cfg, operators);

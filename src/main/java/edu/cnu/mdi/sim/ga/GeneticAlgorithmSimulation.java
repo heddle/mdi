@@ -82,6 +82,7 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	    final List<C>  currentInds = population.individuals();
 	    final double[] currentFits = fitnesses;
 	    final int      popSize     = currentInds.size();
+	    operators.mutation().beginGeneration(generation, cfg.maxGenerations());
 
 	    // 1. Build offspring pool
 	    List<C> offspring = new ArrayList<>(popSize);

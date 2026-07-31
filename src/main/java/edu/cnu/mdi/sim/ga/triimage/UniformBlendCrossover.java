@@ -6,18 +6,32 @@ import java.util.Random;
 import edu.cnu.mdi.sim.ga.CrossoverOperator;
 
 /**
- * A simple uniform blend crossover operator for PolygonChromosome. For each gene, 
- * randomly select from one of the two parents.
- * This is a common and straightforward crossover method that can be effective for many problems.
+ * Uniform crossover that treats each encoded triangle as an indivisible building
+ * block. All ten genes for a child triangle come from the same parent, preserving
+ * useful combinations of geometry, color, and opacity. Two complementary
+ * children are returned: whenever the first receives a triangle from one parent,
+ * the second receives the corresponding triangle from the other. This retains
+ * more population diversity than discarding half of each mating's genetic material.
  */
 public final class UniformBlendCrossover implements CrossoverOperator<PolygonChromosome> {
 
 	@Override
 	public List<PolygonChromosome> crossover(PolygonChromosome p1, PolygonChromosome p2, Random rng) {
-		PolygonChromosome child = new PolygonChromosome(p1.numTriangles);
-		for (int i = 0; i < p1.genes.length; i++) {
-			child.genes[i] = rng.nextBoolean() ? p1.genes[i] : p2.genes[i];
+		if (p1.numTriangles != p2.numTriangles) {
+			throw new IllegalArgumentException("Parents must have equal triangle counts");
 		}
-		return List.of(child);
+		PolygonChromosome firstChild = new PolygonChromosome(p1.numTriangles, p1.backgroundRgb);
+		PolygonChromosome secondChild = new PolygonChromosome(p1.numTriangles, p1.backgroundRgb);
+		for (int triangle = 0; triangle < p1.numTriangles; triangle++) {
+			int base = triangle * PolygonChromosome.DOUBLES_PER_TRIANGLE;
+			boolean firstParentFirst = rng.nextBoolean();
+			double[] firstSource = firstParentFirst ? p1.genes : p2.genes;
+			double[] secondSource = firstParentFirst ? p2.genes : p1.genes;
+			System.arraycopy(firstSource, base, firstChild.genes, base,
+					PolygonChromosome.DOUBLES_PER_TRIANGLE);
+			System.arraycopy(secondSource, base, secondChild.genes, base,
+					PolygonChromosome.DOUBLES_PER_TRIANGLE);
+		}
+		return List.of(firstChild, secondChild);
 	}
 }
