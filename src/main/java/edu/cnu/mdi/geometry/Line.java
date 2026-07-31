@@ -33,14 +33,14 @@ public class Line {
 	 * @param po one point on the line
 	 * @param p1 another point on the line
 	 * @throws NullPointerException     if either point is {@code null}
-	 * @throws IllegalArgumentException if the two points are coincident or too close
-	 *                                  to define a stable direction
+	 * @throws IllegalArgumentException if the two points are coincident, non-finite,
+	 *                                  or too close to define a stable direction
 	 */
 	public Line(Point po, Point p1) {
 		_po = new Point(po);
 		_dp = new Vector(Point.difference(p1, po));
 		_dpLen = _dp.length();
-		if (_dpLen < GeoUtil.TINY) {
+		if (!Double.isFinite(_dpLen) || _dpLen < GeoUtil.TINY) {
 			throw new IllegalArgumentException("A line requires two distinct points.");
 		}
 	}

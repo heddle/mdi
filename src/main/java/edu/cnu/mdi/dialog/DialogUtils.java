@@ -17,6 +17,7 @@ import javax.swing.JPanel;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.swing.WindowPlacement;
 
+/** Utility methods and response constants used by MDI dialogs. */
 public class DialogUtils {
 
 	/**
@@ -34,8 +35,6 @@ public class DialogUtils {
 	/**
 	 * Current answer string
 	 */
-
-	protected String outputdata = null;
 
 	/**
 	 * Dialog "Reason" constant
@@ -105,7 +104,6 @@ public class DialogUtils {
 		} catch (Exception e) {
 			Log.getInstance().exception(e);
 			component.setLocation(200, 200);
-			e.printStackTrace();
 		}
 	}
 
@@ -134,7 +132,7 @@ public class DialogUtils {
 		oldgap = Math.abs(sw - fm.stringWidth(str));
 
 		while (true) {
-			String str2 = str += " ";
+			String str2 = str + " ";
 			newgap = Math.abs(sw - fm.stringWidth(str2));
 			if (newgap < oldgap) {
 				str = str2;
@@ -163,7 +161,7 @@ public class DialogUtils {
 			panel.add(Box.createHorizontalStrut(hpad), BorderLayout.WEST);
 			panel.add(Box.createHorizontalStrut(hpad), BorderLayout.EAST);
 		}
-		if (hpad > 0) {
+		if (vpad > 0) {
 			panel.add(Box.createVerticalStrut(vpad), BorderLayout.NORTH);
 			panel.add(Box.createVerticalStrut(vpad), BorderLayout.SOUTH);
 		}
@@ -175,9 +173,9 @@ public class DialogUtils {
 	/**
 	 * Create a dialog with a prompt and a set of options
 	 *
-	 * @param prompt
-	 * @param options
-	 * @return a result indicating yes or no.
+	 * @param prompt the message displayed to the user
+	 * @param options the available response labels
+	 * @return the selected option index, or {@code -1} if the dialog was closed
 	 */
 	public static int yesNoDialog(String prompt, String... options) {
 

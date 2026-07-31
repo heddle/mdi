@@ -192,7 +192,9 @@ public class ButtonPanel extends JPanel {
 	 */
 
 	public void setEnabled(int index, boolean state) {
-
+		if (buttons == null) {
+			return;
+		}
 		if (index < 0) {
 			for (JButton button : buttons) {
 				if (button != null) {
@@ -214,7 +216,7 @@ public class ButtonPanel extends JPanel {
 	 */
 
 	public void setToolTip(int index, String tip) {
-		if (buttons[index] != null) {
+		if (buttons != null && index >= 0 && index < buttons.length && buttons[index] != null) {
 			buttons[index].setToolTipText(tip);
 		}
 	}

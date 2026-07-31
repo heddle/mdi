@@ -1,20 +1,29 @@
 package edu.cnu.mdi.format;
 
 import java.text.DecimalFormat;
-import java.util.Hashtable;
+import java.util.HashMap;
+import java.util.Map;
 
-public class DoubleFormat {
+/** Thread-safe helpers for fixed-point and scientific decimal formatting. */
+public final class DoubleFormat {
+
+	private DoubleFormat() {
+		throw new AssertionError("No DoubleFormat instances");
+	}
 
 	/**
 	 * cache formats which are few and often repeated to avoid recreating
 	 */
-	private static Hashtable<String, DecimalFormat> formats = new Hashtable<>(143);
+	private static final ThreadLocal<Map<String, DecimalFormat>> FORMATS =
+			ThreadLocal.withInitial(HashMap::new);
 
 	/**
 	 * Format a double
 	 *
 	 * @param value  the value to format.
 	 * @param numdec the number of digits right of the decimal.
+	 * @return the formatted value
+	 * @throws IllegalArgumentException if {@code numdec} is outside 0 through 100
 	 */
 	public static String doubleFormat(double value, int numdec) {
 		return doubleFormat(value, numdec, false);
@@ -26,10 +35,15 @@ public class DoubleFormat {
 	 * @param value  the value to format.
 	 * @param numdec the number of digits right of the decimal.
 	 * @param scinot if <code>true</code>, use scientific notation.
+	 * @return the formatted value
+	 * @throws IllegalArgumentException if {@code numdec} is outside 0 through 100
 	 */
 	public static String doubleFormat(double value, int numdec, boolean scinot) {
+		if (numdec < 0 || numdec > 100) {
+			throw new IllegalArgumentException("numdec must be between 0 and 100: " + numdec);
+		}
 
-		StringBuffer pattern = new StringBuffer();
+		StringBuilder pattern = new StringBuilder();
 		if (numdec < 1) {
 			pattern.append("0");
 		} else {
@@ -45,13 +59,7 @@ public class DoubleFormat {
 		}
 
 		String patternStr = pattern.toString();
-		DecimalFormat df = null;
-		df = (formats.get(patternStr));
-
-		if (df == null) {
-			df = new DecimalFormat(patternStr);
-			formats.put(patternStr, df);
-		}
+		DecimalFormat df = FORMATS.get().computeIfAbsent(patternStr, DecimalFormat::new);
 
 		return df.format(value);
 
@@ -64,6 +72,8 @@ public class DoubleFormat {
 	 * @param value       the value to format.
 	 * @param numdec      the number of digits right of the decimal.
 	 * @param minExponent the minimum exponent for using scientific notation.
+	 * @return the formatted value
+	 * @throws IllegalArgumentException if {@code numdec} is outside 0 through 100
 	 */
 	public static String doubleFormat(double value, int numdec, int minExponent) {
 

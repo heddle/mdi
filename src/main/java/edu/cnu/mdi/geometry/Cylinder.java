@@ -24,11 +24,11 @@ public class Cylinder {
 	 * @param centerLine the cylinder center line
 	 * @param radius     the cylinder radius; must be non-negative
 	 * @throws NullPointerException     if {@code centerLine} is {@code null}
-	 * @throws IllegalArgumentException if {@code radius < 0}
+	 * @throws IllegalArgumentException if {@code radius} is negative or non-finite
 	 */
 	public Cylinder(Line centerLine, double radius) {
-		if (radius < 0) {
-			throw new IllegalArgumentException("Cylinder radius must be non-negative.");
+		if (!Double.isFinite(radius) || radius < 0) {
+			throw new IllegalArgumentException("Cylinder radius must be finite and non-negative.");
 		}
 		_centerLine = new Line(centerLine);
 		_radius = radius;
@@ -42,7 +42,8 @@ public class Cylinder {
 	 * @param radius the cylinder radius; must be non-negative
 	 * @throws NullPointerException      if either array is {@code null}
 	 * @throws IndexOutOfBoundsException if either array has fewer than three values
-	 * @throws IllegalArgumentException  if {@code radius < 0}, or if the two center
+	 * @throws IllegalArgumentException  if {@code radius} is negative or non-finite,
+	 *                                   or if the two center
 	 *                                   points do not define a stable line
 	 */
 	public Cylinder(double[] p1, double[] p2, double radius) {
