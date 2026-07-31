@@ -21,6 +21,16 @@ public class CountryFillLayer extends Layer {
     /** Supplies the current country renderer. */
     private final Supplier<CountryRenderer> rendererSupplier;
 
+    /**
+     * Creates a layer that draws country interiors with the renderer supplied
+     * at draw time.
+     *
+     * @param container        owning rendering container
+     * @param name             layer display name
+     * @param rendererSupplier supplier of the current country renderer
+     * @throws NullPointerException if {@code container} or
+     *                              {@code rendererSupplier} is {@code null}
+     */
     public CountryFillLayer(
             IContainer container,
             String name,
@@ -39,6 +49,7 @@ public class CountryFillLayer extends Layer {
                         "rendererSupplier");
     }
 
+    /** {@inheritDoc} */
     @Override
     public void beforeDraw(
             Graphics2D g2,
@@ -52,6 +63,7 @@ public class CountryFillLayer extends Layer {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void edit(Component parentComponent) {
         CountryRenderer renderer =

@@ -7,7 +7,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import edu.cnu.mdi.item.Layer;
@@ -15,12 +14,6 @@ import edu.cnu.mdi.item.Layer;
 public class BaseContainerTest {
 
     private static final double EPS = 1.0e-9;
-
-    @BeforeAll
-    static void headless() {
-        // Keeps CI and CLI runs consistent. Safe even if already set elsewhere.
-        System.setProperty("java.awt.headless", "true");
-    }
 
     private static BaseContainer newContainer() {
         // World: x in [0,10], y in [0,5]

@@ -16,6 +16,13 @@ import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.util.PropertyUtils;
 import edu.cnu.mdi.view.ContainerFactory;
 
+/**
+ * Demonstration map view that assembles the built-in terrain, country, city,
+ * and NATO-symbol components.
+ *
+ * <p>The constructor loads the bundled datasets and is intended as an
+ * executable example rather than a general-purpose application view.</p>
+ */
 @SuppressWarnings("serial")
 public class DemoMapView extends MapView2D {
 

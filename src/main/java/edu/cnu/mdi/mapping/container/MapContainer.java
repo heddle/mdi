@@ -99,7 +99,18 @@ public class MapContainer extends BaseContainer {
 		setDirty(true);
 		refresh();
 	}
-	
+
+	/**
+	 * Zooms to a geographic bounding box expressed in decimal degrees.
+	 *
+	 * <p>The corner coordinates are projected with the active map projection and
+	 * used to replace the container's world-coordinate bounds.</p>
+	 *
+	 * @param minLat minimum latitude in degrees
+	 * @param maxLat maximum latitude in degrees
+	 * @param minLon minimum longitude in degrees
+	 * @param maxLon maximum longitude in degrees
+	 */
 	public void zoomLatLon(double minLat, double maxLat, double minLon, double maxLon) {
 			
 		prepareToZoom();
@@ -125,7 +136,15 @@ public class MapContainer extends BaseContainer {
 		refresh();
 	}
 
-
+	/**
+	 * Recenters the active projection on the geographic location beneath a
+	 * screen-space point.
+	 *
+	 * <p>Clicks that cannot be converted to finite geographic coordinates, or
+	 * projections that do not support recentering, are ignored.</p>
+	 *
+	 * @param pp point in container coordinates; may be {@code null}
+	 */
 	@Override
 	public void recenter(Point pp) {
 	    if (pp == null) {
@@ -300,6 +319,7 @@ public class MapContainer extends BaseContainer {
 	    return String.format("%,d", meters);
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public void feedbackTrigger(MouseEvent mouseEvent, boolean dragging) {
 		Point2D.Double wp = getLocation(mouseEvent);
@@ -309,6 +329,7 @@ public class MapContainer extends BaseContainer {
 		}
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	protected BaseToolHandler createToolHandler() {
 		return new MapToolHandler(this);

@@ -50,8 +50,8 @@ import edu.cnu.mdi.mapping.MapView2D;
  * whether a layer came from user interaction or from code.</p>
  *
  * <h2>Visibility</h2>
- * <p>Toggling a checkbox calls {@link ShapeFeatureRenderer#setVisible(boolean)}
- * and triggers a repaint. The layer remains in the layer list; it simply
+ * <p>Toggling a checkbox changes the corresponding layer's visibility and
+ * triggers a repaint. The layer remains in the layer list; it simply
  * produces no output when hidden, so re-showing it is instantaneous.</p>
  *
  * <h2>Usage in MapView2D</h2>

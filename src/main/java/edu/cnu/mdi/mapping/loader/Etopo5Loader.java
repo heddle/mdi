@@ -218,8 +218,8 @@ public final class Etopo5Loader {
     /**
      * Returns the raw grid value at a row and column.
      *
-     * @param row row index, 0 <= row < 2160
-     * @param col column index, 0 <= col < 4320
+     * @param row row index in the range {@code 0 <= row < 2160}
+     * @param col column index in the range {@code 0 <= col < 4320}
      * @return elevation in meters
      */
     public int getElevationMetersAtGridPoint(int row, int col) {

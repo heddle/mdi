@@ -114,8 +114,13 @@ public class MapView2D extends BaseView {
 	// Feedback label prefixes (static because they never change)
 	// -------------------------------------------------------------------------
 
+	/** Feedback-pane prefix used for latitude values. */
 	protected static final String LAT_PREFIX = "$yellow$Lat (" + UnicodeUtils.SMALL_PHI + ")";
+
+	/** Feedback-pane prefix used for longitude values. */
 	protected static final String LON_PREFIX = "$yellow$Lon (" + UnicodeUtils.SMALL_LAMBDA + ")";
+
+	/** Unicode degree symbol used by geographic feedback text. */
 	protected static final String DEG = UnicodeUtils.DEGREE;
 
 	// -------------------------------------------------------------------------

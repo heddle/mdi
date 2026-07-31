@@ -39,26 +39,32 @@ public class MilSymbolDescriptor {
 		this.icon = icon;
 	}
 
+	/** @return unique internal symbol identifier */
 	public String getId() {
 		return id;
 	}
 
+	/** @return user-facing symbol name */
 	public String getDisplayName() {
 		return displayName;
 	}
 
+	/** @return palette category containing the symbol */
 	public String getCategory() {
 		return category;
 	}
 
+	/** @return classpath path from which the symbol icon was loaded */
 	public String getResourcePath() {
 		return resourcePath;
 	}
-	
+
+	/** @return cached symbol icon, which may be {@code null} */
 	public ImageIcon getIcon() {
 		return icon;
 	}
 
+	/** @return the user-facing symbol name */
 	@Override
 	public String toString() {
 		return displayName;

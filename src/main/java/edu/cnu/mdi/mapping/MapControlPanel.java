@@ -16,7 +16,6 @@ import edu.cnu.mdi.component.CommonBorder;
 import edu.cnu.mdi.component.EnumComboBox;
 import edu.cnu.mdi.mapping.projection.EProjection;
 import edu.cnu.mdi.mapping.projection.IMapProjection;
-import edu.cnu.mdi.mapping.render.CityPointRenderer;
 import edu.cnu.mdi.mapping.theme.MapTheme;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
@@ -35,16 +34,9 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * <p>This panel holds a direct reference to a {@link MapView2D} and calls
  * its public API in response to user interaction. The coupling is intentional
  * and kept minimal: the panel only calls well-defined accessors on the view
- * ({@link MapView2D#getCityRenderer()},
- * {@link MapView2D#getMapProjection()},
+ * ({@link MapView2D#getMapProjection()},
  * {@link MapView2D#setProjection(EProjection)},
  * {@link MapView2D#refresh()}).</p>
- *
- * <h2>Slider maximum</h2>
- * <p>The maximum value of the population slider is
- * {@link MapConstants#MAX_POP_SLIDER_VALUE}. Previously the same constant was
- * duplicated in both this class and {@link MapView2D}; it is now sourced from
- * a single location to prevent the two values from diverging.</p>
  */
 @SuppressWarnings("serial")
 public class MapControlPanel extends JPanel {
@@ -70,9 +62,6 @@ public class MapControlPanel extends JPanel {
     private JRadioButton darkThemeButton;
     private JRadioButton blueThemeButton;
 
-
-    /** Whether city name labels are visible. Tracks the checkbox state. */
-    private boolean showNames = true;
 
     // -------------------------------------------------------------------------
     // View reference
@@ -209,18 +198,6 @@ public class MapControlPanel extends JPanel {
         IMapProjection proj = mapView.getMapProjection();
         if (proj != null) {
             proj.setTheme(currentTheme);
-            mapView.refresh();
-        }
-    }
-
-    /**
-     * Applies the current label-visibility setting to the city renderer and
-     * triggers a repaint.
-     */
-    private void updateCityLabelVisibility() {
-        CityPointRenderer renderer = mapView.getCityRenderer();
-        if (renderer != null) {
-            renderer.setDrawLabels(showNames);
             mapView.refresh();
         }
     }

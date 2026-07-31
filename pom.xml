@@ -139,6 +139,7 @@
 				<configuration>
 					<useModulePath>false</useModulePath>
 					<failIfNoTests>true</failIfNoTests>
+					<argLine>-Djava.awt.headless=true</argLine>
 				</configuration>
 			</plugin>
 

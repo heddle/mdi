@@ -19,6 +19,16 @@ public class CountryBoundaryLayer extends Layer {
     /** Supplies the current country renderer. */
     private final Supplier<CountryRenderer> rendererSupplier;
 
+    /**
+     * Creates a layer that draws country boundaries with the renderer supplied
+     * at draw time.
+     *
+     * @param container        owning rendering container
+     * @param name             layer display name
+     * @param rendererSupplier supplier of the current country renderer
+     * @throws NullPointerException if {@code container} or
+     *                              {@code rendererSupplier} is {@code null}
+     */
     public CountryBoundaryLayer(
             IContainer container,
             String name,
@@ -37,6 +47,7 @@ public class CountryBoundaryLayer extends Layer {
                         "rendererSupplier");
     }
 
+    /** {@inheritDoc} */
     @Override
     public void beforeDraw(
             Graphics2D g2,
@@ -50,6 +61,7 @@ public class CountryBoundaryLayer extends Layer {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public void edit(Component parentComponent) {
         CountryRenderer renderer =

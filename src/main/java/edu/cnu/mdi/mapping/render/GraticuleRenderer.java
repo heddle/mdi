@@ -8,7 +8,6 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -687,8 +686,7 @@ public final class GraticuleRenderer {
     /**
      * Chooses how many fractional degree-digits a label needs given the step.
      * Steps ≥ 1° → whole degrees; ≥ 1′ → 2 decimals; finer → 4 decimals. (We
-     * format in decimal degrees rather than D°M′S″ for compactness; switch to
-     * {@link #formatDms} below if you prefer sexagesimal.)
+     * format in decimal degrees rather than D°M′S″ for compactness.)
      */
     private static int stepDecimals(double stepRad) {
         double deg = Math.toDegrees(stepRad);
@@ -714,26 +712,6 @@ public final class GraticuleRenderer {
             return Long.toString(Math.round(absDeg));
         }
         return String.format("%." + decimals + "f", absDeg);
-    }
-
-    /**
-     * Optional sexagesimal formatter (e.g. {@code 39°12'30"N}). Not used by
-     * default; call it in place of {@link #fmtDeg} if you prefer D°M′S″ over
-     * decimal degrees at fine zoom.
-     *
-     * @param absDeg absolute degrees (non-negative)
-     * @param hemi   hemisphere character (N/S/E/W)
-     * @return a D°M′S″ formatted string
-     */
-    @SuppressWarnings("unused")
-    private static String formatDms(double absDeg, char hemi) {
-        int d = (int) Math.floor(absDeg);
-        double remMin = (absDeg - d) * 60.0;
-        int m = (int) Math.floor(remMin);
-        int s = (int) Math.round((remMin - m) * 60.0);
-        if (s == 60) { s = 0; m++; }
-        if (m == 60) { m = 0; d++; }
-        return String.format("%d\u00B0%02d'%02d\"%c", d, m, s, hemi);
     }
 
     // -------------------------------------------------------------------------
