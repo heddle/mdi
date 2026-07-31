@@ -46,8 +46,6 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 		TWO_CLICK_LINE
 	}
 
-	private static boolean veryFirst = true;
-
 	protected Color fillColor = new Color(64, 64, 128, 64);
 	protected Color highlightColor1 = Color.black;
 	protected Color highlightColor2 = Color.lightGray;
@@ -95,7 +93,7 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 	/**
 	 * Begin rubberbanding with the given anchor point. For drag-based policies, this is typically called from mousePressed();
 	 * for toolbar-initiated gestures, this is called by the toolbar to start the gesture with a specific anchor point.
-	 * @param anchorPt the initial point of the gesture, which may be used as the start point and for initial drawing; may be null but is typically not.
+	 * @param anchorPt the initial point of the gesture; must not be {@code null}
 	 */
 	public final void begin(Point anchorPt) {
 		startRubberbanding(anchorPt);
@@ -244,7 +242,7 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 	 * @param newCurrentPoint
 	 */
 	protected final void setCurrent(Point newCurrentPoint) {
-
+		Objects.requireNonNull(newCurrentPoint, "newCurrentPoint");
 		currentPt.setLocation(newCurrentPoint);
 		if (image == null) {
 			return;
@@ -258,12 +256,13 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 		g2.dispose();
 
 		Graphics g = component.getGraphics();
-		if (veryFirst) {
-			veryFirst = false;
-		} else {
-			g.drawImage(image, 0, 0, component);
+		if (g != null) {
+			try {
+				g.drawImage(image, 0, 0, component);
+			} finally {
+				g.dispose();
+			}
 		}
-		g.dispose();
 	}
 
 	/**
@@ -290,17 +289,17 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 		if (cp == null) {
 			return;
 		}
-		Rectangle b = component.getBounds();
-		cp.x = Math.max(1, Math.min(b.x + b.width - 1, cp.x));
-		cp.y = Math.max(1, Math.min(b.y + b.height - 1, cp.y));
+		cp.x = Math.max(0, Math.min(Math.max(0, component.getWidth() - 1), cp.x));
+		cp.y = Math.max(0, Math.min(Math.max(0, component.getHeight() - 1), cp.y));
 	}
 
 	/**
 	 * Initialize rubberbanding state and capture the component image for drawing. Called at the start of the gesture,
 	 * either from mousePressed() for drag-based policies or from begin() for toolbar-initiated gestures.
-	 * @param anchorPt the initial point of the gesture, which may be used as the start point and for initial drawing; may be null but is typically not.
+	 * @param anchorPt the initial point of the gesture; must not be {@code null}
 	 */
 	protected void startRubberbanding(Point anchorPt) {
+		Objects.requireNonNull(anchorPt, "anchorPt");
 		if (started) {
 			return;
 		}

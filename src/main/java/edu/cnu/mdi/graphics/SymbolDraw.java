@@ -51,7 +51,11 @@ import edu.cnu.mdi.graphics.style.SymbolType;
  * the stroke; they rely on whatever stroke is current.
  * </p>
  */
-public class SymbolDraw {
+public final class SymbolDraw {
+
+    private SymbolDraw() {
+        throw new AssertionError("No SymbolDraw instances");
+    }
 
     // -----------------------------------------------------------------------
     // Top-level dispatch
@@ -133,16 +137,16 @@ public class SymbolDraw {
             SymbolType symbol, int symbolSize,
             Color lineColor, Color fillColor) {
 
-        if (symbol == SymbolType.NOSYMBOL) {
+        if (symbol == null || symbol == SymbolType.NOSYMBOL || symbolSize <= 0) {
             return;
         }
 
         Stroke oldStroke = g2.getStroke();
         g2.setStroke(GraphicsUtils.getStroke(1, LineStyle.SOLID));
 
-        int s2 = symbolSize / 2;
-
-        switch (symbol) {
+        try {
+            int s2 = symbolSize / 2;
+            switch (symbol) {
             case SQUARE:
                 drawRectangle(g2, x, y, s2, s2, lineColor, fillColor);
                 break;
@@ -172,9 +176,10 @@ public class SymbolDraw {
                 break;  // was missing — caused fall-through to NOSYMBOL
             case NOSYMBOL:
                 break;
+            }
+        } finally {
+            g2.setStroke(oldStroke);
         }
-
-        g2.setStroke(oldStroke);
     }
 
     // -----------------------------------------------------------------------

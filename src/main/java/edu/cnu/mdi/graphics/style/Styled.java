@@ -65,9 +65,9 @@ public class Styled implements IStyled {
 	 * @param index determines the style. Can be any integer
 	 */
 	public Styled(int index) {
-		_fillColor = _colors[index % _colors.length];
+		_fillColor = _colors[Math.floorMod(index, _colors.length)];
 		_borderColor = _fillColor.darker();
-		_symbolType = _symbols[index % _symbols.length];
+		_symbolType = _symbols[Math.floorMod(index, _symbols.length)];
 	}
 
 	public Styled(IStyled other) {
@@ -178,7 +178,7 @@ public class Styled implements IStyled {
 	 */
 	@Override
 	public void setLineWidth(float lineWidth) {
-		_lineWidth = Math.max(0, lineWidth);
+		_lineWidth = sanitizeWidth(lineWidth);
 	}
 
 	/**
@@ -207,7 +207,7 @@ public class Styled implements IStyled {
 	 */
 	@Override
 	public void setSymbolSize(int symbolSize) {
-		_symbolSize = symbolSize;
+		_symbolSize = Math.max(0, symbolSize);
 	}
 
 	@Override
@@ -227,7 +227,7 @@ public class Styled implements IStyled {
 
 	@Override
 	public void setAuxLineStyle(LineStyle lineStyle) {
-		_auxLineStyle = lineStyle;
+		_auxLineStyle = lineStyle != null ? lineStyle : LineStyle.SOLID;
 	}
 
 	@Override
@@ -237,7 +237,14 @@ public class Styled implements IStyled {
 
 	@Override
 	public void setAuxLineWidth(float lineWidth) {
-		_auxLineWidth = lineWidth;
+		_auxLineWidth = sanitizeWidth(lineWidth);
 
+	}
+
+	private static float sanitizeWidth(float width) {
+		if (!Float.isFinite(width)) {
+			throw new IllegalArgumentException("Line width must be finite: " + width);
+		}
+		return Math.max(0, width);
 	}
 }

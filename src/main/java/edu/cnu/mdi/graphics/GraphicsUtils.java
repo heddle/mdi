@@ -15,10 +15,10 @@ import java.awt.Stroke;
 import java.awt.Transparency;
 import java.awt.Window;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.util.Hashtable;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -68,7 +68,11 @@ import edu.cnu.mdi.graphics.style.LineStyle;
  * {@link #highlightColor1} (red) and {@link #highlightColor2} (yellow).
  * </p>
  */
-public class GraphicsUtils {
+public final class GraphicsUtils {
+
+    private GraphicsUtils() {
+        throw new AssertionError("No GraphicsUtils instances");
+    }
 
     // -----------------------------------------------------------------------
     // Highlight colors
@@ -185,8 +189,8 @@ public class GraphicsUtils {
      * eight distinct strokes in any application.
      * </p>
      */
-    protected static final Hashtable<String, BasicStroke> strokes =
-            new Hashtable<>();
+    private static final ConcurrentHashMap<String, BasicStroke> strokes =
+            new ConcurrentHashMap<>();
 
     // -----------------------------------------------------------------------
     // Component size / style helpers (Swing / macOS)
@@ -307,10 +311,18 @@ public class GraphicsUtils {
      * @return a {@link BasicStroke} matching the requested parameters
      */
     public static BasicStroke getStroke(float lineWidth, LineStyle lineStyle) {
-        String hashKey = "STROKE_LW_" + lineWidth + "_LT_" + lineStyle;
-        BasicStroke stroke = strokes.get(hashKey);
+        Objects.requireNonNull(lineStyle, "lineStyle");
+        if (!Float.isFinite(lineWidth) || lineWidth < 0) {
+            throw new IllegalArgumentException("lineWidth must be finite and non-negative: " + lineWidth);
+        }
+        float effectiveWidth = (lineWidth == 0) ? 1 : lineWidth;
+        String hashKey = "STROKE_LW_" + effectiveWidth + "_LT_" + lineStyle;
+        return strokes.computeIfAbsent(hashKey,
+                key -> createStroke(effectiveWidth, lineStyle));
+    }
 
-        if (stroke == null) {
+    private static BasicStroke createStroke(float lineWidth, LineStyle lineStyle) {
+            BasicStroke stroke;
             if (lineStyle.equals(LineStyle.SOLID)) {
                 stroke = new BasicStroke(lineWidth,
                         BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
@@ -341,9 +353,7 @@ public class GraphicsUtils {
             } else {
                 stroke = new BasicStroke(lineWidth);
             }
-            strokes.put(hashKey, stroke);
-        }
-        return stroke;
+            return stroke;
     }
 
     /**
@@ -412,8 +422,10 @@ public class GraphicsUtils {
         if (p1 == null && p2 == null) return null;
         if (p1 == null) return new Rectangle(p2.x, p2.y, 0, 0);
         if (p2 == null) return new Rectangle(p1.x, p1.y, 0, 0);
-        int w = Math.abs(p2.x - p1.x);
-        int h = Math.abs(p2.y - p1.y);
+        int w = (int) Math.min(Integer.MAX_VALUE,
+                Math.abs((long) p2.x - p1.x));
+        int h = (int) Math.min(Integer.MAX_VALUE,
+                Math.abs((long) p2.y - p1.y));
         int x = Math.min(p1.x, p2.x);
         int y = Math.min(p1.y, p2.y);
         return new Rectangle(x, y, w, h);
@@ -618,14 +630,16 @@ public class GraphicsUtils {
     public static void drawRotatedText(Graphics2D g2, String s, Font font,
             int xo, int yo, int delX, int delY, double angleDegrees) {
 
-        g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        Graphics2D copy = (Graphics2D) g2.create();
+        try {
+            copy.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-        if (Math.abs(angleDegrees) < 0.5) {
-            g2.setFont(font);
-            g2.drawString(s, xo + delX, yo + delY);
-            return;
-        }
+            if (Math.abs(angleDegrees) < 0.5) {
+                copy.setFont(font);
+                copy.drawString(s, xo + delX, yo + delY);
+                return;
+            }
 
         AffineTransform rotation = new AffineTransform();
         rotation.rotate(Math.toRadians(angleDegrees));
@@ -636,15 +650,12 @@ public class GraphicsUtils {
 
         AffineTransform translation = AffineTransform.getTranslateInstance(
                 xo + rotOffset.x, yo + rotOffset.y);
-        g2.transform(translation);
+            copy.transform(translation);
 
-        g2.setFont(font.deriveFont(rotation));
-        g2.drawString(s, 0, 0);
-
-        try {
-            g2.transform(translation.createInverse());
-        } catch (NoninvertibleTransformException e) {
-            e.printStackTrace();
+            copy.setFont(font.deriveFont(rotation));
+            copy.drawString(s, 0, 0);
+        } finally {
+            copy.dispose();
         }
     }
 
@@ -671,11 +682,14 @@ public class GraphicsUtils {
     public static void drawStyleLine(Graphics2D g2, Color lineColor,
             float lineWidth, LineStyle lineStyle,
             int x1, int y1, int x2, int y2) {
-        g2.setColor(lineColor);
         Stroke oldStroke = g2.getStroke();
-        g2.setStroke(GraphicsUtils.getStroke(lineWidth, lineStyle));
-        g2.drawLine(x1, y1, x2, y2);
-        g2.setStroke(oldStroke);
+        try {
+            g2.setColor(lineColor);
+            g2.setStroke(GraphicsUtils.getStroke(lineWidth, lineStyle));
+            g2.drawLine(x1, y1, x2, y2);
+        } finally {
+            g2.setStroke(oldStroke);
+        }
     }
 
 
@@ -1037,8 +1051,7 @@ public class GraphicsUtils {
             int b = Integer.parseInt(hex.substring(4, 6), 16);
             int a = Integer.parseInt(hex.substring(6, 8), 16);
             return new Color(r, g, b, a);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (RuntimeException e) {
             return Color.black;
         }
     }
