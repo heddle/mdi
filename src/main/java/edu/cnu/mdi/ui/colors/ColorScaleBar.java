@@ -6,6 +6,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.util.Objects;
 
 import javax.swing.JComponent;
 
@@ -17,7 +18,7 @@ public class ColorScaleBar extends JComponent {
     private String maxLabel = "Max";
 
     public ColorScaleBar(ScientificColorMap map) {
-        _map = map;
+		_map = Objects.requireNonNull(map, "map");
         setPreferredSize(new Dimension(200, 50));
     }
 
@@ -26,7 +27,7 @@ public class ColorScaleBar extends JComponent {
         this(ScientificColorMap.VIRIDIS); // default placeholder map
         // If someone uses this ctor, we’ll draw using the scale via interpolate:
         _map = null;
-        _fallbackScale = scale;
+		_fallbackScale = validatedScale(scale);
         setPreferredSize(new Dimension(200, 50));
     }
 
@@ -34,7 +35,7 @@ public class ColorScaleBar extends JComponent {
     private Color[] _fallbackScale;
 
     public void setColorMap(ScientificColorMap map) {
-        _map = map;
+		_map = Objects.requireNonNull(map, "map");
         _fallbackScale = null;
         repaint();
     }
@@ -42,13 +43,13 @@ public class ColorScaleBar extends JComponent {
     /** Backward-compatible setter if needed. */
     public void setScale(Color[] scale) {
         _map = null;
-        _fallbackScale = scale;
+		_fallbackScale = validatedScale(scale);
         repaint();
     }
 
     public void setLabels(String min, String max) {
-        this.minLabel = min;
-        this.maxLabel = max;
+		this.minLabel = Objects.requireNonNull(min, "min");
+		this.maxLabel = Objects.requireNonNull(max, "max");
         repaint();
     }
 
@@ -88,4 +89,15 @@ public class ColorScaleBar extends JComponent {
         int maxLabelWidth = fm.stringWidth(maxLabel);
         g2d.drawString(maxLabel, width - padding - maxLabelWidth, 15 + barHeight + fm.getAscent());
     }
+
+	private static Color[] validatedScale(Color[] scale) {
+		Objects.requireNonNull(scale, "scale");
+		if (scale.length == 0) {
+			throw new IllegalArgumentException("scale must contain at least one color");
+		}
+		for (Color color : scale) {
+			Objects.requireNonNull(color, "scale contains null color");
+		}
+		return scale.clone();
+	}
 }

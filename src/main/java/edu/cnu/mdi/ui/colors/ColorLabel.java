@@ -59,11 +59,12 @@ public class ColorLabel extends JComponent {
 	public ColorLabel(Color color, Font font, String prompt) {
 
 		_currentColor = color;
-		_font = font;
-		_prompt = prompt;
+		_font = font != null ? font : Fonts.plainFontDelta(0);
+		_prompt = prompt != null ? prompt : "";
+		setFont(_font);
 
 		FontMetrics fm = this.getFontMetrics(_font);
-		int sw = fm.stringWidth(prompt);
+		int sw = fm.stringWidth(_prompt);
 		_size = new Dimension(sw + _rectSize + 10, 18);
 	}
 
@@ -133,6 +134,7 @@ public class ColorLabel extends JComponent {
 
 	@Override
 	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
 		FontMetrics fm = getFontMetrics(getFont());
 		g.setFont(getFont());
 
@@ -187,7 +189,9 @@ public class ColorLabel extends JComponent {
 	 */
 	private void setNewColor(Color newColor) {
 		setColor(newColor);
-		_colorChangeListener.colorChanged(this, newColor);
+		if (_colorChangeListener != null) {
+			_colorChangeListener.colorChanged(this, newColor);
+		}
 		repaint();
 	}
 

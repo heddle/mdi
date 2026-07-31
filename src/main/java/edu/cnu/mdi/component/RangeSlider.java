@@ -83,6 +83,12 @@ public class RangeSlider extends JPanel {
 	public RangeSlider(int min, int max, int defaultVal, int majorTick, int minorTick, boolean showValue) {
 
 		super(new BorderLayout());
+		if (min > max || defaultVal < min || defaultVal > max) {
+			throw new IllegalArgumentException("Invalid slider range or default value");
+		}
+		if (majorTick < 0 || minorTick < 0) {
+			throw new IllegalArgumentException("Tick spacing must be non-negative");
+		}
 		this.showValue = showValue;
 
 		slider = new JSlider(SwingConstants.HORIZONTAL, min, max, defaultVal);

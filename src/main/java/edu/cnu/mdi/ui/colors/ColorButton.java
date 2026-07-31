@@ -16,6 +16,7 @@ import javax.swing.SwingUtilities;
 public class ColorButton extends JButton {
 
     private Color color;
+	private final String buttonLabel;
 
     private final String dialogTitle;
     private final boolean allowNoColor;
@@ -53,6 +54,7 @@ public class ColorButton extends JButton {
             boolean allowTransparency) {
 
         super(label);
+		buttonLabel = label;
 
         this.dialogTitle =
                 (dialogTitle == null)
@@ -88,6 +90,7 @@ public class ColorButton extends JButton {
         setIcon(
                 new ImageIcon(
                         makeSwatch(color, 28, 14)));
+		setText(buttonLabel);
     }
 
     private void chooseColor() {

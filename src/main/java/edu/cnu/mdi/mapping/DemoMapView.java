@@ -67,7 +67,7 @@ public class DemoMapView extends MapView2D {
 
 		return new Object[] {
 				PropertyUtils.TITLE, "Sample 2D Map View",
-				PropertyUtils.FRACTION, 0.6,
+				PropertyUtils.FRACTION, 0.7,
 				PropertyUtils.BOXZOOMRBPOLICY, ARubberband.Policy.RECTANGLE,
 				PropertyUtils.ASPECT, 1.2,
 				PropertyUtils.FEEDBACKFONTSIZE, 11,

@@ -1,12 +1,13 @@
 package edu.cnu.mdi.ui.menu;
 
-import java.awt.Color;
 import java.util.Hashtable;
+import java.util.Objects;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 
-public class MenuManager {
+/** Singleton registry for the application's menu bar and named menus. */
+public final class MenuManager {
 
 	// Singleton object
 	private static MenuManager instance;
@@ -17,10 +18,10 @@ public class MenuManager {
 	/**
 	 * The BaseMDIApplication being managed.
 	 */
-	private JMenuBar _menuBar;
+	private final JMenuBar _menuBar;
 
 	// keep track of the menus added
-	private Hashtable<String, JMenu> _menus = new Hashtable<>(41);
+	private final Hashtable<String, JMenu> _menus = new Hashtable<>(41);
 
 	/**
 	 * private constructor for singleton.
@@ -37,7 +38,8 @@ public class MenuManager {
 	 * @param menubar the main menu bar
 	 * @return the menu manager for the one and only BaseMDIApplication.
 	 */
-	public static MenuManager createMenuManager(JMenuBar menubar) {
+	public static synchronized MenuManager createMenuManager(JMenuBar menubar) {
+		Objects.requireNonNull(menubar, "menubar");
 		if (instance == null) {
 			instance = new MenuManager(menubar);
 		}
@@ -60,14 +62,14 @@ public class MenuManager {
 	 * @param menu the menu to add.
 	 */
 	public void addMenu(JMenu menu) {
+		Objects.requireNonNull(menu, "menu");
+		Objects.requireNonNull(menu.getText(), "menu text");
 		if (_menuBar != null) {
 			_menuBar.add(menu);
 		}
 		// put into the menu hash
 		_menus.put(menu.getText(), menu);
 
-		// seems to be necessary on some linus platforms
-		menu.setForeground(Color.black);
 	}
 
 	/**
@@ -98,7 +100,14 @@ public class MenuManager {
 	 * @param menu the menu to remove
 	 */
 	public void removeMenu(JMenu menu) {
+		if (menu == null) {
+			return;
+		}
 		_menuBar.remove(menu);
+		_menus.remove(menu.getText(), menu);
+		if (_fileMenu == menu) {
+			_fileMenu = null;
+		}
 	}
 
 	/**

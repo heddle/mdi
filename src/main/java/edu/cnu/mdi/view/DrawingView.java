@@ -63,7 +63,7 @@ public class DrawingView extends BaseView {
 	 */
 	private static Object[] defaults() {
 		return new Object[] {
-				PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT, 1.0,
+				PropertyUtils.FRACTION, 0.8, PropertyUtils.ASPECT, 1.0,
 				PropertyUtils.TOOLBARBITS, ToolBits.STATUS | ToolBits.DRAWINGTOOLS
 						| ToolBits.ZOOMTOOLS | ToolBits.PAN | ToolBits.INFO,
 				PropertyUtils.BACKGROUND,  Color.white,

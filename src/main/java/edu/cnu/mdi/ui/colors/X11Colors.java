@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Locale;
 
 /**
  * Look up colors by their standard web ("X11") name.
@@ -229,12 +230,12 @@ public final class X11Colors {
 
 	/** Canonical readable form: trimmed, lower-cased, internal whitespace collapsed to single spaces. */
 	private static String displayName(String name) {
-		return name.trim().toLowerCase().replaceAll("\\s+", " ");
+		return name.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
 	}
 
 	/** Lookup form: lower-cased with all whitespace removed, so spacing never matters. */
 	private static String lookupKey(String name) {
-		return name.toLowerCase().replaceAll("\\s+", "");
+		return name.toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
 	}
 
 	/**
