@@ -17,7 +17,7 @@ import edu.cnu.mdi.ui.fonts.Fonts;
 @SuppressWarnings("serial")
 public class EnergyVsStep extends PlotPanel {
 
-	private static final String TITLE = "Potential (pseudo)Energy vs. Step";
+	private static final String TITLE = "Potential (pseudo) Energy vs. Step";
 	private static final String XLABEL = "Simulation Step";
 	private static final String YLABEL = "pseudoEnergy";
 
