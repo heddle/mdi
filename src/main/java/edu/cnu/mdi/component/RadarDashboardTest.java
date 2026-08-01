@@ -47,7 +47,7 @@ public class RadarDashboardTest {
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            edu.cnu.mdi.log.Log.getInstance().exception(ex);
         }
     }
 }

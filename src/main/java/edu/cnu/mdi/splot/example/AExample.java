@@ -87,7 +87,7 @@ public abstract class AExample extends JFrame implements PlotChangeListener {
 			canvas = new PlotCanvas(createPlotData(), getPlotTitle(), getXAxisLabel(), getYAxisLabel());
 			canvas.addPlotChangeListener(this);
 		} catch (PlotDataException e) {
-			e.printStackTrace();
+			edu.cnu.mdi.log.Log.getInstance().exception(e);
 			return;
 		}
 

@@ -69,6 +69,9 @@ public class StripChartCurve extends ACurve {
 	/** Optional callback invoked after a drain pass (EDT). */
 	private volatile Runnable onSample;
 
+	/** Suppresses repeated logging if a per-sample callback keeps failing. */
+	private boolean callbackFailureLogged;
+
 	/** Series data columns. Mutated under {@link #lock} on the EDT. */
 	private final DataColumn xData;
 	private final DataColumn yData;
@@ -460,9 +463,12 @@ public class StripChartCurve extends ACurve {
 		if (callback != null) {
 			try {
 				callback.run();
+				callbackFailureLogged = false;
 			} catch (Throwable t) {
-				// Fail soft
-				t.printStackTrace();
+				if (!callbackFailureLogged) {
+					callbackFailureLogged = true;
+					edu.cnu.mdi.log.Log.getInstance().exception(t);
+				}
 			}
 		}
 	}

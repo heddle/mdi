@@ -144,7 +144,7 @@ public class SplotDemoView {
 			try {
 				view.switchToPlotPanel(BarPlot.demoBarPlot());
 			} catch (PlotDataException e1) {
-				e1.printStackTrace();
+				edu.cnu.mdi.log.Log.getInstance().exception(e1);
 			}
 		});
 

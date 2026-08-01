@@ -58,7 +58,7 @@ public class DemoMapView extends MapView2D {
 	        addWestPanel(new NatoIconPicker());
 
 	    } catch (IOException e) {
-	        e.printStackTrace();
+	        edu.cnu.mdi.log.Log.getInstance().exception(e);
 	    }
 	}
 

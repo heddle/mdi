@@ -181,7 +181,7 @@ public final class PropertyUtils {
 
 	        // --- Unknown key check ---
 	        if (!KNOWN_KEYS.containsKey(key)) {
-	            System.err.println("Warning: Unknown property key: " + key);
+	            edu.cnu.mdi.log.Log.getInstance().warning("Unknown property key: " + key);
 	            props.put(key, value);
 	            continue;
 	        }

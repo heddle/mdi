@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
+import edu.cnu.mdi.log.ILogListener;
+import edu.cnu.mdi.log.Log;
 
 public class PropertyUtilsTest {
 
@@ -91,18 +93,23 @@ public class PropertyUtilsTest {
 
 	@Test
 	public void testFromKeyValuesAllowsUnknownKey() {
-		java.io.PrintStream originalErr = System.err;
-		java.io.ByteArrayOutputStream errBytes = new java.io.ByteArrayOutputStream();
+		StringBuilder warning = new StringBuilder();
+		ILogListener listener = new ILogListener() {
+			@Override
+			public void warning(String message) {
+				warning.append(message);
+			}
+		};
+		Log log = Log.getInstance();
+		log.addLogListener(listener);
 
 		try {
-			System.setErr(new java.io.PrintStream(errBytes));
-
 			Properties props = PropertyUtils.fromKeyValues("CUSTOM_UNKNOWN_KEY", "custom value");
 
 			assertEquals("custom value", props.get("CUSTOM_UNKNOWN_KEY"));
-			assertTrue(errBytes.toString().contains("Warning: Unknown property key: CUSTOM_UNKNOWN_KEY"));
+			assertTrue(warning.toString().contains("Unknown property key: CUSTOM_UNKNOWN_KEY"));
 		} finally {
-			System.setErr(originalErr);
+			log.removeLogListener(listener);
 		}
 	}
 	

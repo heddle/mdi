@@ -109,7 +109,7 @@ public class MSEvsGenerationPlot extends PlotPanel {
                     new String[]{ BEST_CURVE, MEAN_CURVE }, null);
             return new PlotCanvas(pd, TITLE, XLABEL, YLABEL);
         } catch (PlotDataException e) {
-            e.printStackTrace();
+            edu.cnu.mdi.log.Log.getInstance().exception(e);
             return null;
         }
     }

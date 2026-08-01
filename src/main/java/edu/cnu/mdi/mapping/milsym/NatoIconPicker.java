@@ -430,7 +430,8 @@ public class NatoIconPicker extends JPanel {
                         .toList();
             }
         } catch (Exception e) {
-            System.err.println("NatoIconPicker: failed to enumerate icon folders: " + e.getMessage());
+            edu.cnu.mdi.log.Log.getInstance().warning(
+                    "NatoIconPicker: failed to enumerate icon folders: " + e.getMessage());
         }
 
         for (String folder : folders) {

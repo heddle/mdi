@@ -216,6 +216,7 @@ public class JsonSplitPane extends JPanel {
      * @param root     parsed Gson element tree for the right pane
      */
     private void showResult(String filename, String raw, JsonElement root) {
+        edu.cnu.mdi.log.Log.getInstance().info("Loaded JSON file: " + filename);
         headerLabel.setText(filename);
         rawPane.showJson(raw);
         treePane.setRoot(root, filename);
@@ -228,6 +229,8 @@ public class JsonSplitPane extends JPanel {
      * @param cause    the exception that caused the failure
      */
     private void showError(String filename, Exception cause) {
+        edu.cnu.mdi.log.Log.getInstance().warning(
+                "Could not load JSON file " + filename + ": " + cause.getMessage());
         headerLabel.setText("Error \u2014 " + filename);
         rawPane.showError(cause);
         treePane.clear();

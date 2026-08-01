@@ -477,6 +477,7 @@ public final class SimulationEngine {
 			}
 
 		} catch (Exception ex) {
+			edu.cnu.mdi.log.Log.getInstance().exception(ex);
 			// Initialization may have acquired resources before failing, and a
 			// step failure must not bypass cleanup. The hook is best-effort here,
 			// just as it is on normal termination.
@@ -556,6 +557,10 @@ public final class SimulationEngine {
 	private void transition(SimulationState newState, String reason) {
 		SimulationState old = state;
 		state = newState;
+		edu.cnu.mdi.log.Log.getInstance().config(
+				"Simulation " + simulation.getClass().getSimpleName()
+				+ ": " + old + " -> " + newState
+				+ ((reason == null || reason.isBlank()) ? "" : " (" + reason + ")"));
 
 		postEDT(l -> l.onStateChange(context, old, newState, reason));
 

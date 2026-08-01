@@ -543,9 +543,13 @@ public final class Environment {
 		Exception e = new Exception();
 		StackTraceElement[] stackTrace = e.getStackTrace();
 
-		System.err.println("\nStack trace filtered on \"" + startsWith + "\"");
-		Arrays.stream(stackTrace).filter(element -> element.getClassName().startsWith(startsWith))
-				.forEach(System.err::println);
+		String filtered = Arrays.stream(stackTrace)
+				.filter(element -> element.getClassName().startsWith(startsWith))
+				.map(StackTraceElement::toString)
+				.collect(java.util.stream.Collectors.joining(System.lineSeparator()));
+		edu.cnu.mdi.log.Log.getInstance().config(
+				"Stack trace filtered on \"" + startsWith + "\""
+				+ (filtered.isEmpty() ? "" : System.lineSeparator() + filtered));
 	}
 
 }
