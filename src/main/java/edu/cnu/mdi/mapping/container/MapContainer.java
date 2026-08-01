@@ -228,6 +228,70 @@ public class MapContainer extends BaseContainer {
 	}
 
 	/**
+	 * Pans the map by changing its geographic center rather than translating a
+	 * cached image.
+	 *
+	 * <p>The displacement is incremental: positive values mean the user dragged
+	 * the map right or down. The geographic point opposite that displacement
+	 * from the viewport center becomes the new projection center. If that point
+	 * lies outside a bounded projection, the displacement is shortened to the
+	 * furthest invertible point, so a drag never exposes empty space.</p>
+	 *
+	 * @param dx horizontal drag since the preceding event, in pixels
+	 * @param dy vertical drag since the preceding event, in pixels
+	 */
+	void panMapBy(int dx, int dy) {
+	    if ((dx == 0 && dy == 0) || _worldSystem == null) {
+	        return;
+	    }
+
+	    java.awt.Component component = getComponent();
+	    int width = component.getWidth();
+	    int height = component.getHeight();
+	    if (width <= 0 || height <= 0) {
+	        return;
+	    }
+
+	    Point center = new Point(width / 2, height / 2);
+	    Point requested = new Point(center.x - dx, center.y - dy);
+	    Point target = nearestInvertiblePoint(center, requested);
+	    if (target != null && !target.equals(center)) {
+	        recenter(target);
+	    }
+	}
+
+	/** Finds the furthest invertible point from {@code center} toward {@code end}. */
+	private Point nearestInvertiblePoint(Point center, Point end) {
+	    if (hasFiniteLatLon(end)) {
+	        return end;
+	    }
+
+	    double low = 0.0;
+	    double high = 1.0;
+	    Point best = center;
+	    for (int i = 0; i < 16; i++) {
+	        double fraction = (low + high) / 2.0;
+	        Point candidate = new Point(
+	                (int) Math.round(center.x + fraction * (end.x - center.x)),
+	                (int) Math.round(center.y + fraction * (end.y - center.y)));
+	        if (hasFiniteLatLon(candidate)) {
+	            best = candidate;
+	            low = fraction;
+	        } else {
+	            high = fraction;
+	        }
+	    }
+	    return best;
+	}
+
+	/** Returns whether a local point can be inverted by the active projection. */
+	private boolean hasFiniteLatLon(Point point) {
+	    Point2D.Double ll = new Point2D.Double();
+	    localToLatLon(point, ll);
+	    return Double.isFinite(ll.x) && Double.isFinite(ll.y);
+	}
+
+	/**
 	 * Converts a screen-space point to geographic lon/lat in radians.
 	 *
 	 * @param pp screen-space point

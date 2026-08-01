@@ -338,6 +338,29 @@ public class BaseToolBar extends AToolBar {
 			addStdToggle(ToolBits.PAN, pan);
 		}
 
+		// Projection-aware map pan. It uses the same hand artwork as ordinary pan,
+		// but is a distinct tool so map and drawing views can choose their own
+		// interaction semantics.
+		if (ToolBits.useMapPanButton(bits)) {
+			JToggleButton mapPan = new ADragButton(canvas, this) {
+				@Override
+				public void startDrag(GestureContext gc) {
+					handler.panStartDrag(gc);
+				}
+
+				@Override
+				public void updateDrag(GestureContext gc) {
+					handler.panUpdateDrag(gc);
+				}
+
+				@Override
+				public void doneDrag(GestureContext gc) {
+					handler.panDoneDrag(gc);
+				}
+			};
+			addStdToggle(ToolBits.MAPPAN, mapPan);
+		}
+
 		// Magnify tool (toggle + move tracking)
 		if (ToolBits.useMagnifyButton(bits)) {
 			JToggleButton magnify = new AMoveButton(canvas, this) {
