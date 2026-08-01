@@ -61,6 +61,10 @@ public final class MapLayerStyleBits {
     /** Enables multiple selection of DBF fields used for hit-test feedback. */
     public static final long FEEDBACK_FIELDS =
             1L << 13;
+
+    /** Enables editing of feature-label font size. */
+    public static final long LABEL_FONT_SIZE =
+            1L << 14;
     
     /**
      * Global layer opacity. This is distinct from alpha embedded in an

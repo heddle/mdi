@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -19,19 +20,37 @@ public class BaseContainerTest {
     private static final double EPS = 1.0e-9;
 
     private static BaseContainer newContainer() {
+        if (SwingUtilities.isEventDispatchThread()) {
+            return createContainer();
+        }
         AtomicReference<BaseContainer> result = new AtomicReference<>();
         try {
-            SwingUtilities.invokeAndWait(() -> {
-                // World: x in [0,10], y in [0,5].
-                BaseContainer c = new BaseContainer(new Rectangle2D.Double(0, 0, 10, 5));
-                c.setBounds(0, 0, 200, 100);
-                c.setDirty(true);
-                result.set(c);
-            });
+            SwingUtilities.invokeAndWait(() -> result.set(createContainer()));
         } catch (Exception e) {
             throw new AssertionError("Could not create container on the EDT", e);
         }
         return result.get();
+    }
+
+    private static BaseContainer createContainer() {
+        BaseContainer c = new BaseContainer(new Rectangle2D.Double(0, 0, 10, 5));
+        c.setBounds(0, 0, 200, 100);
+        c.setDirty(true);
+        return c;
+    }
+
+    private static void runOnEdt(Runnable testBody) {
+        try {
+            SwingUtilities.invokeAndWait(testBody);
+        } catch (InvocationTargetException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof RuntimeException runtimeException) throw runtimeException;
+            if (cause instanceof Error error) throw error;
+            throw new AssertionError(cause);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new AssertionError("Interrupted while running Swing test", e);
+        }
     }
 
     @Test
@@ -80,10 +99,11 @@ public class BaseContainerTest {
 
     @Test
     void localWorldTransformsHaveExpectedOrientationAndRoundTrip() {
+        runOnEdt(() -> {
         BaseContainer c = newContainer();
 
         // Per setAffineTransforms():
-        // local (0,0) -> world (minX, maxY) :contentReference[oaicite:11]{index=11}
+        // local (0,0) -> world (minX, maxY)
         Point2D.Double w = new Point2D.Double();
         c.localToWorld(new Point(0, 0), w);
         assertEquals(0.0, w.x, EPS);
@@ -108,10 +128,12 @@ public class BaseContainerTest {
         c.worldToLocal(back, w);
         assertEquals(local.x, back.x);
         assertEquals(local.y, back.y);
+        });
     }
 
     @Test
     void panRecentersWorldAtExpectedLocalPoint() {
+        runOnEdt(() -> {
         BaseContainer c = newContainer();
 
         // pan(dh,dv) recenters at (centerX - dh, centerY - dv) in local coords.
@@ -131,6 +153,7 @@ public class BaseContainerTest {
         Rectangle2D.Double ws = c.getWorldSystem();
         assertEquals(expectedCenter.x, ws.getCenterX(), 1e-9);
         assertEquals(expectedCenter.y, ws.getCenterY(), 1e-9);
+        });
     }
 
     @Test

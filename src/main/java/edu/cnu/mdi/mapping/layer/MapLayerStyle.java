@@ -22,6 +22,7 @@ public class MapLayerStyle {
     private Color labelColor;
 
     private float lineWidth = 1.0f;
+    private float labelFontSize = 10.0f;
     private double pointSize = 4.0;
     private double opacity = 1.0;
 
@@ -66,6 +67,7 @@ public class MapLayerStyle {
         labelColor = source.labelColor;
 
         lineWidth = source.lineWidth;
+        labelFontSize = source.labelFontSize;
         pointSize = source.pointSize;
         opacity = source.opacity;
         
@@ -173,6 +175,16 @@ public class MapLayerStyle {
     /** @param lineWidth line width in pixels; values below {@code 0.1} are clamped */
     public void setLineWidth(float lineWidth) {
         this.lineWidth = Math.max(0.1f, lineWidth);
+    }
+
+    /** @return feature-label font size in points */
+    public float getLabelFontSize() {
+        return labelFontSize;
+    }
+
+    /** @param labelFontSize font size in points; clamped to {@code [6, 36]} */
+    public void setLabelFontSize(float labelFontSize) {
+        this.labelFontSize = Math.max(6.0f, Math.min(36.0f, labelFontSize));
     }
 
     /** @return point-marker radius in pixels */

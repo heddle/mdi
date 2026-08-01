@@ -129,8 +129,8 @@ public class CityPointRenderer {
     /** Vertical offset in pixels from the marker center to the label baseline. */
     private int labelOffsetY = -2;
 
-    /** Font used for city name labels. */
-    private Font labelFont = Fonts.tinyFont;
+    /** Font used for city name labels; one point larger than the tiny UI font. */
+    private Font labelFont = defaultLabelFont();
 
     // -------------------------------------------------------------------------
     // Construction
@@ -220,10 +220,28 @@ public class CityPointRenderer {
     /**
      * Sets the font used for city name labels.
      *
-     * @param font label font; if {@code null} the default small font is used
+     * @param font label font; if {@code null} the default city-label font is used
      */
     public void setLabelFont(Font font) {
-        this.labelFont = (font != null) ? font : Fonts.smallFont;
+        this.labelFont = (font != null) ? font : defaultLabelFont();
+    }
+
+    /**
+     * Sets the city-label font size while preserving its family and style.
+     *
+     * @param size font size in points; clamped to {@code [6, 36]}
+     */
+    public void setLabelFontSize(float size) {
+        float clamped = Math.max(6.0f, Math.min(36.0f, size));
+        labelFont = labelFont.deriveFont(clamped);
+    }
+
+    /** Returns the standard city-label font, one point above {@link Fonts#tinyFont}. */
+    private static Font defaultLabelFont() {
+        Font base = (Fonts.tinyFont != null)
+                ? Fonts.tinyFont
+                : Fonts.plainFontDelta(-4);
+        return base.deriveFont(base.getSize2D() + 1.0f);
     }
 
     // -------------------------------------------------------------------------

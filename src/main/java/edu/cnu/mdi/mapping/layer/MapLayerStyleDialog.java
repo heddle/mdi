@@ -10,12 +10,14 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.ParseException;
 
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -42,6 +44,7 @@ public class MapLayerStyleDialog extends JDialog {
     private ColorButton labelColorButton;
 
     private JFormattedTextField lineWidthField;
+    private JFormattedTextField labelFontSizeField;
     private JFormattedTextField pointSizeField;
 
     private JSlider opacitySlider;
@@ -231,6 +234,23 @@ public class MapLayerStyleDialog extends JDialog {
                     row++,
                     "Label color:",
                     labelColorButton);
+        }
+
+        if (Bits.check(
+                styleBits,
+                MapLayerStyleBits.LABEL_FONT_SIZE)) {
+
+            labelFontSizeField =
+                    createDoubleField(
+                            workingStyle.getLabelFontSize(),
+                            6.0,
+                            36.0);
+
+            addRow(
+                    editorPanel,
+                    row++,
+                    "Label size:",
+                    labelFontSizeField);
         }
 
         if (Bits.check(
@@ -470,8 +490,10 @@ public class MapLayerStyleDialog extends JDialog {
                         event.getActionCommand();
 
                 if (ButtonPanel.OK_LABEL.equals(command)) {
-                    accepted = true;
-                    dispose();
+                    if (commitFormattedFields()) {
+                        accepted = true;
+                        dispose();
+                    }
                 }
                 else if (ButtonPanel.CANCEL_LABEL.equals(command)) {
                     accepted = false;
@@ -484,6 +506,43 @@ public class MapLayerStyleDialog extends JDialog {
                 ButtonPanel.USE_OKCANCEL,
                 listener,
                 6);
+    }
+
+    /**
+     * Commits every numeric editor before accepting the dialog.
+     *
+     * <p>The formatters allow temporarily invalid text while the user edits,
+     * so validation belongs at this transaction boundary. On failure the
+     * dialog remains open and the offending field is selected.</p>
+     */
+    private boolean commitFormattedFields() {
+        JFormattedTextField[] fields = {
+                lineWidthField,
+                labelFontSizeField,
+                pointSizeField,
+                latitudeStepField,
+                longitudeStepField,
+                minimumPopulationField
+        };
+
+        for (JFormattedTextField field : fields) {
+            if (field == null || !field.isEnabled()) {
+                continue;
+            }
+            try {
+                field.commitEdit();
+            } catch (ParseException ex) {
+                field.requestFocusInWindow();
+                field.selectAll();
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Enter a valid numeric value within the permitted range.",
+                        "Invalid value",
+                        JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        }
+        return true;
     }
 
     private static void addRow(
@@ -514,7 +573,7 @@ public class MapLayerStyleDialog extends JDialog {
         panel.add(editor, gbc);
     }
 
-    private static JFormattedTextField createDoubleField(
+    static JFormattedTextField createDoubleField(
             double value,
             double minimum,
             double maximum) {
@@ -526,7 +585,8 @@ public class MapLayerStyleDialog extends JDialog {
         formatter.setValueClass(Double.class);
         formatter.setMinimum(minimum);
         formatter.setMaximum(maximum);
-        formatter.setAllowsInvalid(false);
+        formatter.setAllowsInvalid(true);
+        formatter.setCommitsOnValidEdit(true);
 
         JFormattedTextField field =
                 new JFormattedTextField(formatter);
@@ -545,7 +605,7 @@ public class MapLayerStyleDialog extends JDialog {
      * @param maximum maximum permitted value
      * @return configured formatted text field
      */
-    private static JFormattedTextField createLongField(
+    static JFormattedTextField createLongField(
             long value,
             long minimum,
             long maximum) {
@@ -561,7 +621,7 @@ public class MapLayerStyleDialog extends JDialog {
         formatter.setValueClass(Long.class);
         formatter.setMinimum(minimum);
         formatter.setMaximum(maximum);
-        formatter.setAllowsInvalid(false);
+        formatter.setAllowsInvalid(true);
         formatter.setCommitsOnValidEdit(true);
 
         JFormattedTextField field =
@@ -625,6 +685,16 @@ public class MapLayerStyleDialog extends JDialog {
             if (value != null) {
                 result.setPointSize(
                         value.doubleValue());
+            }
+        }
+
+        if (labelFontSizeField != null) {
+            Number value =
+                    (Number) labelFontSizeField.getValue();
+
+            if (value != null) {
+                result.setLabelFontSize(
+                        value.floatValue());
             }
         }
         

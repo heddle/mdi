@@ -9,10 +9,13 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.event.ListSelectionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.WeakHashMap;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -60,6 +63,10 @@ import edu.cnu.mdi.item.Layer;
 @SuppressWarnings("serial")
 public class LayerInspectorDialog extends JDialog {
 
+	/** One modeless inspector per container. Entries are removed on disposal. */
+	private static final WeakHashMap<BaseContainer, LayerInspectorDialog> openDialogs =
+			new WeakHashMap<>();
+
 	private final BaseContainer container;
 	private final LayerTableModel model;
 	private final JTable table;
@@ -86,8 +93,33 @@ public class LayerInspectorDialog extends JDialog {
 	 * @param container target container (must be a {@link BaseContainer})
 	 */
 	public static void show(Component parent, BaseContainer container) {
+		if (container == null) {
+			throw new IllegalArgumentException("container cannot be null");
+		}
+		if (!SwingUtilities.isEventDispatchThread()) {
+			SwingUtilities.invokeLater(() -> show(parent, container));
+			return;
+		}
+
+		LayerInspectorDialog existing = openDialogs.get(container);
+		if (existing != null && existing.isDisplayable()) {
+			existing.model.refresh();
+			existing.updateButtonStates();
+			existing.setVisible(true);
+			existing.toFront();
+			existing.requestFocus();
+			return;
+		}
+
 		Window owner = parent == null ? null : SwingUtilities.getWindowAncestor(parent);
 		LayerInspectorDialog dlg = new LayerInspectorDialog(owner, container);
+		dlg.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent event) {
+				openDialogs.remove(container, dlg);
+			}
+		});
+		openDialogs.put(container, dlg);
 		dlg.setLocationRelativeTo(parent);
 		dlg.setVisible(true);
 	}

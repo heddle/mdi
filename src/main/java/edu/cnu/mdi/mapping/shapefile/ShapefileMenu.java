@@ -8,8 +8,10 @@ import java.util.List;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import edu.cnu.mdi.dialog.DialogUtils;
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.mapping.MapView2D;
 
@@ -92,6 +94,11 @@ public class ShapefileMenu extends JMenu {
         this.mapView = mapView;
 
         fileChooser = new JFileChooser();
+        
+        //try to open in details view, but don't fail if the L&F doesn't support it
+        SwingUtilities.invokeLater(
+                () -> DialogUtils.requestDetailsView(fileChooser));
+        
         fileChooser.setDialogTitle("Open Shapefile");
         fileChooser.setFileFilter(
                 new FileNameExtensionFilter("ESRI Shapefiles (*.shp)", "shp"));

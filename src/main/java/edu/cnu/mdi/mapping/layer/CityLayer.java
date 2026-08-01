@@ -83,6 +83,9 @@ public class CityLayer extends Layer {
         initial.setLabelColor(
                 renderer.getLabelColor());
 
+        initial.setLabelFontSize(
+                renderer.getLabelFont().getSize2D());
+
         initial.setPointSize(
                 renderer.getPointRadius());
 
@@ -95,6 +98,7 @@ public class CityLayer extends Layer {
         long bits =
                 MapLayerStyleBits.POINT_COLOR
                         | MapLayerStyleBits.LABEL_COLOR
+                        | MapLayerStyleBits.LABEL_FONT_SIZE
                         | MapLayerStyleBits.POINT_SIZE
                         | MapLayerStyleBits.DRAW_LABELS
                         | MapLayerStyleBits.MIN_POPULATION;
@@ -115,6 +119,9 @@ public class CityLayer extends Layer {
 
         renderer.setLabelColor(
                 result.getLabelColor());
+
+        renderer.setLabelFontSize(
+                result.getLabelFontSize());
 
         renderer.setPointRadius(
                 result.getPointSize());

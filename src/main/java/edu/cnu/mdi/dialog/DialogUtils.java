@@ -8,9 +8,12 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
 
+import javax.swing.Action;
 import javax.swing.Box;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
@@ -191,6 +194,25 @@ public class DialogUtils {
 			}
 		}
 		return -1;
+	}
+	
+	/**
+	 * Attempts to place a file chooser in details view.
+	 *
+	 * <p>
+	 * This relies on a look-and-feel action name and therefore is not guaranteed to
+	 * work with every Swing look and feel.
+	 * </p>
+	 *
+	 * @param chooser the file chooser
+	 */
+	public static void requestDetailsView(JFileChooser chooser) {
+
+		Action action = chooser.getActionMap().get("viewTypeDetails");
+
+		if (action != null) {
+			action.actionPerformed(new ActionEvent(chooser, ActionEvent.ACTION_PERFORMED, "viewTypeDetails"));
+		}
 	}
 
 }
