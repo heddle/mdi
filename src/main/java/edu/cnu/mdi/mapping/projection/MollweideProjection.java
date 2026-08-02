@@ -173,6 +173,12 @@ public class MollweideProjection implements IMapProjection {
         return Math.abs(d1 - d2) > Math.PI;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public boolean isLongitudePeriodic() {
+        return true;
+    }
+
     // -------------------------------------------------------------------------
     // IMapProjection — transforms
     // -------------------------------------------------------------------------

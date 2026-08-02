@@ -324,6 +324,22 @@ public interface IMapProjection {
     default boolean crossesSeam(double lon1, double lon2) {
         return false;
     }
+
+    /**
+     * Reports whether the projection's horizontal domain represents a complete,
+     * periodically wrapped 360-degree longitude range.
+     *
+     * <p>Adaptive graticule rendering uses this distinction when the entire
+     * projected width is visible. Sampling the two horizontal edges of such a
+     * projection produces the same seam longitude and can otherwise make half
+     * the world appear to be outside the visible longitude extent.</p>
+     *
+     * @return {@code true} for full-width periodic projections such as Mercator
+     *         and Mollweide; otherwise {@code false}
+     */
+    default boolean isLongitudePeriodic() {
+        return false;
+    }
     
     /**
      * Tests whether this projection can update its own centering parameters in

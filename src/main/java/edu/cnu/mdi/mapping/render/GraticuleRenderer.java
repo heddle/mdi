@@ -366,8 +366,19 @@ public final class GraticuleRenderer {
         // extent computation already widened the window across the seam, so we
         // iterate the raw [lonMin, lonMax] band and let drawLongitudeLine /
         // wrapLongitude resolve each meridian to its canonical position.
-        double lonLo = floorToStep(e.lonMin, lonStep) - lonStep;
-        double lonHi = e.lonMax + lonStep;
+        boolean completeLongitudeRange = projection.isLongitudePeriodic()
+                && lonSpan >= 2.0 * Math.PI - 1.0e-9;
+        double lonLo;
+        double lonHi;
+        if (completeLongitudeRange) {
+            // Iterate one revolution exactly. Padding a complete periodic range
+            // would wrap the first meridian onto itself and draw it twice.
+            lonLo = ceilToStep(e.lonMin, lonStep);
+            lonHi = lonLo + 2.0 * Math.PI - 1.0e-9;
+        } else {
+            lonLo = floorToStep(e.lonMin, lonStep) - lonStep;
+            lonHi = e.lonMax + lonStep;
+        }
         if (countLines(lonLo, lonHi, lonStep) <= MAX_LINES_PER_AXIS) {
             for (double lambda = lonLo; lambda <= lonHi + 1e-9; lambda += lonStep) {
                 projection.drawLongitudeLine(g2, container, projection.wrapLongitude(lambda));
@@ -424,6 +435,21 @@ public final class GraticuleRenderer {
         int yMax = sampleBounds.y + sampleBounds.height - 1
                 - (sampleBounds.height > 2 ? 1 : 0);
 
+        // A periodic projection has the same geographic longitude at its two
+        // horizontal seam edges. A sparse inverse sample therefore appears to
+        // cover only half the world when the complete projected width is on
+        // screen. Detect that geometric case in projection space before
+        // reducing the sampled longitudes to a min/max interval.
+        Point2D.Double leftWorld = new Point2D.Double();
+        Point2D.Double rightWorld = new Point2D.Double();
+        int yMid = (yMin + yMax) / 2;
+        mc.localToWorld(new Point(xMin, yMid), leftWorld);
+        mc.localToWorld(new Point(xMax, yMid), rightWorld);
+        double visibleProjectedWidth = Math.abs(rightWorld.x - leftWorld.x);
+        double projectionWidth = projection.getXYBounds().width;
+        boolean fullLongitudeCoverage = projection.isLongitudePeriodic()
+                && coversFullProjectedWidth(visibleProjectedWidth, projectionWidth);
+
         // A 3x3 grid of sample points (corners, edge mids, center). More than
         // four samples makes the extent robust when only part of the viewport
         // covers the projected domain (azimuthal projections).
@@ -470,7 +496,15 @@ public final class GraticuleRenderer {
         // If the window straddles the antimeridian seam, the naive min/max
         // spans nearly the whole globe. Re-express longitudes in [0, 2π) so the
         // band is contiguous, then keep the narrower of the two interpretations.
-        if (seamWrap && (lonMax - lonMin) > Math.PI) {
+        if (fullLongitudeCoverage) {
+            p.x = (xMin + xMax) / 2;
+            p.y = yMid;
+            mc.localToLatLon(p, ll);
+            if (Double.isFinite(ll.x)) {
+                lonMin = ll.x - Math.PI;
+                lonMax = ll.x + Math.PI;
+            }
+        } else if (seamWrap && (lonMax - lonMin) > Math.PI) {
             double lo = Double.POSITIVE_INFINITY, hi = Double.NEGATIVE_INFINITY;
             for (int[] f : frac) {
                 p.x = (int) Math.round(xMin + f[0] * ((xMax - xMin) / 2.0));
@@ -494,6 +528,18 @@ public final class GraticuleRenderer {
         if (lonMax - lonMin < minSpan) { lonMax += minSpan; lonMin -= minSpan; }
 
         return new GeoExtent(latMin, latMax, lonMin, lonMax);
+    }
+
+    /**
+     * Tests whether a visible projected X span effectively covers the complete
+     * projection domain. The small tolerance accounts for the one-pixel inset
+     * used when sampling clip boundaries.
+     */
+    static boolean coversFullProjectedWidth(double visibleWidth, double domainWidth) {
+        return Double.isFinite(visibleWidth)
+                && Double.isFinite(domainWidth)
+                && domainWidth > 0.0
+                && visibleWidth >= 0.98 * domainWidth;
     }
 
     // -------------------------------------------------------------------------
@@ -523,6 +569,10 @@ public final class GraticuleRenderer {
 
     private static double floorToStep(double value, double step) {
         return Math.floor(value / step) * step;
+    }
+
+    private static double ceilToStep(double value, double step) {
+        return Math.ceil(value / step) * step;
     }
 
     private static int countLines(double lo, double hi, double step) {

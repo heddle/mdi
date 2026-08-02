@@ -236,7 +236,7 @@ public final class ToolBits {
 	public static final long DRAWINGTOOLS = ANNOTATIONTOOLS | RADARC;
 	
 	public static final long MAPTOOLS = POINTER | TEXT | POLYGON | LINE
-			| POLYLINE | STYLEB | DELETE | CENTER | MAPPAN | MAGNIFY | INFO | STATUS;
+			| POLYLINE | STYLEB | DELETE | MAPPAN | MAGNIFY | INFO | STATUS;
 
 	/** A set of tools suitable for zooming and panning. */
 	public static final long ZOOMTOOLS = BOXZOOM | UNDOZOOM | ZOOMIN | ZOOMOUT

@@ -88,6 +88,16 @@ public class MapProjectionTest {
         assertEquals(center.x, mollweide.getCentralLongitude(), TOLERANCE);
     }
 
+    @Test
+    public void testOnlyFullWidthWrappedProjectionsAreLongitudePeriodic() {
+        assertTrue(new MercatorProjection(MapTheme.light()).isLongitudePeriodic());
+        assertTrue(new MollweideProjection(MapTheme.light()).isLongitudePeriodic());
+        assertFalse(new OrthographicProjection(0.0, 0.0, MapTheme.light())
+                .isLongitudePeriodic());
+        assertFalse(new LambertEqualAreaProjection(0.0, 0.0, MapTheme.light())
+                .isLongitudePeriodic());
+    }
+
     private static Point2D.Double point(double longitudeDeg, double latitudeDeg) {
         return new Point2D.Double(
                 Math.toRadians(longitudeDeg),
