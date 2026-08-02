@@ -3,19 +3,22 @@ package edu.cnu.mdi.mapping;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionListener;
+import java.util.Objects;
+import java.util.function.Function;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
 import edu.cnu.mdi.component.CommonBorder;
-import edu.cnu.mdi.component.EnumComboBox;
 import edu.cnu.mdi.mapping.projection.EProjection;
 import edu.cnu.mdi.mapping.projection.IMapProjection;
+import edu.cnu.mdi.mapping.projection.ProjectionFactory;
 import edu.cnu.mdi.mapping.theme.MapTheme;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
@@ -24,8 +27,9 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  *
  * <p>Provides interactive controls for:
  * <ul>
- *   <li><b>Projection</b> — an {@link EnumComboBox} that switches the active
- *       {@link EProjection}.</li>
+ *   <li><b>Projection</b> — a factory-backed selector containing MDI's
+ *       built-ins and projections registered through
+ *       {@link #addProjection(String, Function)}.</li>
  *   <li><b>Map theme</b> — radio buttons selecting between the built-in
  *       {@link MapTheme} presets (Light, Dark, Blue).</li>
  * </ul>
@@ -35,7 +39,7 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * its public API in response to user interaction. The coupling is intentional
  * and kept minimal: the panel only calls well-defined accessors on the view
  * ({@link MapView2D#getMapProjection()},
- * {@link MapView2D#setProjection(EProjection)},
+ * {@link MapView2D#setProjection(IMapProjection)},
  * {@link MapView2D#refresh()}).</p>
  */
 @SuppressWarnings("serial")
@@ -61,6 +65,9 @@ public class MapControlPanel extends JPanel {
     private JRadioButton lightThemeButton;
     private JRadioButton darkThemeButton;
     private JRadioButton blueThemeButton;
+
+    /** Factory-backed projection selector, including application additions. */
+    private JComboBox<ProjectionOption> projectionCombo;
 
 
     // -------------------------------------------------------------------------
@@ -110,17 +117,59 @@ public class MapControlPanel extends JPanel {
      * @param panel the panel to add the combo box to
      */
     private void createProjectionCombo(JPanel panel) {
-
-        EnumComboBox<EProjection> projCombo = EProjection.createComboBox();
-        projCombo.addActionListener(e -> {
-            EProjection selected = projCombo.getSelectedEnum();
-            mapView.setProjection(selected);
+        projectionCombo = new JComboBox<>();
+        for (EProjection type : EProjection.values()) {
+            addProjectionOption(type.getName(),
+                    theme -> ProjectionFactory.create(type, theme, null));
+        }
+        projectionCombo.addActionListener(e -> {
+            ProjectionOption selected =
+                    (ProjectionOption) projectionCombo.getSelectedItem();
+            if (selected != null) {
+                IMapProjection projection = Objects.requireNonNull(
+                        selected.factory().apply(currentTheme),
+                        "Projection factory returned null for " + selected.name());
+                mapView.setProjection(projection);
+            }
         });
-        projCombo.setFont(font);
-        leftAlign(projCombo);
+        projectionCombo.setFont(font);
+        leftAlign(projectionCombo);
 
-        panel.add(projCombo);
+        panel.add(projectionCombo);
         panel.add(Box.createVerticalStrut(6));
+    }
+
+    /**
+     * Adds an application-supplied projection to the standard selector.
+     *
+     * <p>The factory receives the currently selected theme whenever its entry
+     * is chosen. Applications can therefore expose custom projections without
+     * replacing the rest of the map control panel.</p>
+     *
+     * @param name display name; must not be blank or duplicate an existing name
+     * @param factory factory receiving the active theme; must return a non-null
+     *                projection
+     * @throws IllegalArgumentException if the name is blank or already present
+     */
+    public void addProjection(String name,
+            Function<MapTheme, ? extends IMapProjection> factory) {
+        String normalizedName = Objects.requireNonNull(name, "name").trim();
+        Objects.requireNonNull(factory, "factory");
+        if (normalizedName.isEmpty()) {
+            throw new IllegalArgumentException("Projection name must not be blank");
+        }
+        for (int i = 0; i < projectionCombo.getItemCount(); i++) {
+            if (projectionCombo.getItemAt(i).name().equals(normalizedName)) {
+                throw new IllegalArgumentException(
+                        "Projection already registered: " + normalizedName);
+            }
+        }
+        addProjectionOption(normalizedName, factory);
+    }
+
+    private void addProjectionOption(String name,
+            Function<MapTheme, ? extends IMapProjection> factory) {
+        projectionCombo.addItem(new ProjectionOption(name, factory));
     }
 
 
@@ -217,6 +266,15 @@ public class MapControlPanel extends JPanel {
      * @return the currently active theme; never {@code null}
      */
     public MapTheme getCurrentTheme() { return currentTheme; }
+
+    /** Factory-backed entry displayed by the projection selector. */
+    private record ProjectionOption(String name,
+            Function<MapTheme, ? extends IMapProjection> factory) {
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Layout helpers
