@@ -32,6 +32,9 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  *       {@link #addProjection(String, Function)}.</li>
  *   <li><b>Map theme</b> — radio buttons selecting between the built-in
  *       {@link MapTheme} presets (Light, Dark, Blue).</li>
+ *   <li><b>Application controls</b> — components registered through
+ *       {@link #addControl(JComponent)} and displayed below the standard
+ *       controls.</li>
  * </ul>
  *
  * <h2>Coupling</h2>
@@ -69,6 +72,9 @@ public class MapControlPanel extends JPanel {
     /** Factory-backed projection selector, including application additions. */
     private JComboBox<ProjectionOption> projectionCombo;
 
+    /** Dedicated vertical host for application-supplied controls. */
+    private JPanel applicationControlHost;
+
 
     // -------------------------------------------------------------------------
     // View reference
@@ -100,6 +106,7 @@ public class MapControlPanel extends JPanel {
 
         createProjectionCombo(this);
         createThemeSelector(this);
+        createApplicationControlHost(this);
     }
 
     // -------------------------------------------------------------------------
@@ -212,6 +219,44 @@ public class MapControlPanel extends JPanel {
         subPanel.add(Box.createVerticalStrut(6));
         subPanel.setBorder(new CommonBorder("Map Theme"));
         panel.add(subPanel);
+    }
+
+    /** Creates the initially empty extension area below the standard controls. */
+    private void createApplicationControlHost(JPanel panel) {
+        applicationControlHost = new JPanel();
+        applicationControlHost.setOpaque(false);
+        applicationControlHost.setAlignmentX(Component.LEFT_ALIGNMENT);
+        applicationControlHost.setLayout(
+                new BoxLayout(applicationControlHost, BoxLayout.Y_AXIS));
+        panel.add(applicationControlHost);
+    }
+
+    /**
+     * Adds an application-supplied component below the standard projection and
+     * theme controls.
+     *
+     * <p>Controls appear in registration order. This method supplies standard
+     * vertical spacing, left alignment, layout validation, and repainting so
+     * callers do not need to depend on this panel's Swing layout details. Adding
+     * the same component more than once is an idempotent no-op.</p>
+     *
+     * <p>As with other Swing component mutations, callers should invoke this
+     * method on the event-dispatch thread.</p>
+     *
+     * @param control component to add; must not be {@code null}
+     * @throws NullPointerException if {@code control} is {@code null}
+     */
+    public void addControl(JComponent control) {
+        Objects.requireNonNull(control, "control");
+        if (control.getParent() == applicationControlHost) {
+            return;
+        }
+
+        leftAlign(control);
+        applicationControlHost.add(Box.createVerticalStrut(6));
+        applicationControlHost.add(control);
+        applicationControlHost.revalidate();
+        applicationControlHost.repaint();
     }
 
     /**
