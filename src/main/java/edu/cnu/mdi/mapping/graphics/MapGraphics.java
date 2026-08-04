@@ -64,13 +64,13 @@ import edu.cnu.mdi.mapping.theme.MapTheme;
  * subpaths. The decision is delegated to
  * {@link IMapProjection#crossesSeam(double, double)}. When a seam crossing is
  * detected, the current subpath is terminated and a new subpath is started.
- * </p>
- *
- * <p>
- * This class does not attempt to compute the exact seam intersection point.
- * Instead it relies on sufficiently fine great-circle sampling to place the
- * break very near the seam. That strategy keeps the implementation projection-
- * independent and works well in practice for map drawing and annotation.
+	 * </p>
+	 *
+	 * <p>
+	 * For closed polygons, seam crossings are refined by bisection along the
+	 * great-circle edge. Each resulting fragment therefore reaches the appropriate
+	 * map boundary before it is closed. Open polylines are simply split at the
+	 * sampled crossing because they do not require a filled boundary.
  * </p>
  *
  * <h2>Typical use</h2>
@@ -477,6 +477,7 @@ public final class MapGraphics {
 		Point2D.Double prevSample = null;
 		boolean prevVisible = false;
 		Point prevPixel = null;
+		boolean sawSeamBreak = false;
 
 		for (int i = 0; i < segmentCount; i++) {
 
@@ -488,9 +489,14 @@ public final class MapGraphics {
 			for (int j = 0; j < samples.size(); j++) {
 				Point2D.Double ll = normalizeLatLon(projection, samples.get(j));
 
-				boolean seamBreak = false;
-				if (prevSample != null && projection.crossesSeam(prevSample.x, ll.x)) {
-					seamBreak = true;
+				boolean seamBreak = prevSample != null && projection.crossesSeam(prevSample.x, ll.x);
+				SeamCrossing seamCrossing = null;
+				if (seamBreak) {
+					sawSeamBreak = true;
+					if (closed && prevVisible && currentPath != null) {
+						seamCrossing = refineSeamCrossing(projection, prevSample, ll);
+						appendProjectedPoint(currentPath, container, projection, seamCrossing.before());
+					}
 				}
 
 				Point2D.Double xy = projectLatLon(projection, ll);
@@ -513,8 +519,20 @@ public final class MapGraphics {
 
 				if (!prevVisible || currentPath == null) {
 					currentPath = new Path2D.Double();
-					currentPath.moveTo(pixel.x, pixel.y);
 					paths.add(currentPath);
+
+					if (seamCrossing != null
+							&& moveToProjectedPoint(currentPath, container, projection, seamCrossing.after())) {
+						Point2D current = currentPath.getCurrentPoint();
+						prevPixel = new Point((int) Math.round(current.getX()), (int) Math.round(current.getY()));
+					} else {
+						currentPath.moveTo(pixel.x, pixel.y);
+						prevPixel = pixel;
+					}
+
+					if (!samePixel(prevPixel, pixel)) {
+						currentPath.lineTo(pixel.x, pixel.y);
+					}
 				} else if (!samePixel(prevPixel, pixel)) {
 					currentPath.lineTo(pixel.x, pixel.y);
 				}
@@ -535,6 +553,17 @@ public final class MapGraphics {
 //            currentPath = null;
 		}
 
+		if (closed && sawSeamBreak && paths.size() > 1) {
+			/*
+			 * Traversal starts at an arbitrary polygon vertex. When that vertex lies
+			 * between two seam crossings, the first and last paths are really the two
+			 * halves of one fragment and must be joined before either is closed.
+			 */
+			Path2D.Double last = paths.remove(paths.size() - 1);
+			last.append(paths.get(0).getPathIterator(null), true);
+			paths.set(0, last);
+		}
+
 		if (closed) {
 			for (Path2D.Double path : paths) {
 				path.closePath();
@@ -542,6 +571,58 @@ public final class MapGraphics {
 		}
 
 		return new ProjectedMapShape(paths, closed);
+	}
+
+	/** Number of bisection iterations used to locate a projection seam. */
+	private static final int SEAM_REFINEMENT_STEPS = 32;
+
+	/** Geographic points immediately before and after a seam crossing. */
+	static record SeamCrossing(Point2D.Double before, Point2D.Double after) { }
+
+	/**
+	 * Refines a known seam-crossing great-circle segment to points immediately on
+	 * opposite sides of the seam.
+	 */
+	static SeamCrossing refineSeamCrossing(IMapProjection projection,
+			Point2D.Double before, Point2D.Double after) {
+		Point2D.Double low = new Point2D.Double(before.x, before.y);
+		Point2D.Double high = new Point2D.Double(after.x, after.y);
+
+		for (int i = 0; i < SEAM_REFINEMENT_STEPS; i++) {
+			Point2D.Double midpoint = interpolateGreatCircle(low, high, 0.5);
+			if (projection.crossesSeam(low.x, midpoint.x)) {
+				high = midpoint;
+			} else {
+				low = midpoint;
+			}
+		}
+
+		return new SeamCrossing(low, high);
+	}
+
+	/** Appends a drawable geographic point to an existing device-space path. */
+	private static void appendProjectedPoint(Path2D.Double path, MapContainer container,
+			IMapProjection projection, Point2D.Double latLon) {
+		Point2D.Double xy = projectLatLon(projection, latLon);
+		if (isProjectedPointDrawable(projection, latLon, xy)) {
+			Point pixel = projectedToPixel(container, xy);
+			Point2D current = path.getCurrentPoint();
+			if (current == null || current.getX() != pixel.x || current.getY() != pixel.y) {
+				path.lineTo(pixel.x, pixel.y);
+			}
+		}
+	}
+
+	/** Moves a device-space path to a drawable projected geographic point. */
+	private static boolean moveToProjectedPoint(Path2D.Double path, MapContainer container,
+			IMapProjection projection, Point2D.Double latLon) {
+		Point2D.Double xy = projectLatLon(projection, latLon);
+		if (!isProjectedPointDrawable(projection, latLon, xy)) {
+			return false;
+		}
+		Point pixel = projectedToPixel(container, xy);
+		path.moveTo(pixel.x, pixel.y);
+		return true;
 	}
 
 	/**
@@ -688,27 +769,36 @@ public final class MapGraphics {
 
 		for (int i = 0; i <= nstep; i++) {
 			double t = (double) i / nstep;
-
-			double w0;
-			double w1;
-
-			if (Math.abs(sinOmega) < TINY) {
-				/*
-				 * Fallback for extremely small or nearly antipodal cases. A linear blend
-				 * followed by renormalization is less exact than slerp but numerically stable.
-				 */
-				w0 = 1.0 - t;
-				w1 = t;
-			} else {
-				w0 = Math.sin((1.0 - t) * omega) / sinOmega;
-				w1 = Math.sin(t * omega) / sinOmega;
-			}
-
-			Vec3 p = a.scale(w0).add(b.scale(w1)).normalize();
-			out.add(p.toLatLon());
+			out.add(interpolateGreatCircle(a, b, omega, sinOmega, t));
 		}
 
 		return out;
+	}
+
+	/** Returns one spherical-linear interpolation point on a great-circle arc. */
+	private static Point2D.Double interpolateGreatCircle(Point2D.Double ll0,
+			Point2D.Double ll1, double t) {
+		Vec3 a = Vec3.fromLatLon(ll0);
+		Vec3 b = Vec3.fromLatLon(ll1);
+		double omega = Math.acos(clamp(a.dot(b), -1.0, 1.0));
+		return interpolateGreatCircle(a, b, omega, Math.sin(omega), t);
+	}
+
+	/** Performs spherical-linear interpolation using precomputed arc values. */
+	private static Point2D.Double interpolateGreatCircle(Vec3 a, Vec3 b,
+			double omega, double sinOmega, double t) {
+		double w0;
+		double w1;
+
+		if (Math.abs(sinOmega) < TINY) {
+			w0 = 1.0 - t;
+			w1 = t;
+		} else {
+			w0 = Math.sin((1.0 - t) * omega) / sinOmega;
+			w1 = Math.sin(t * omega) / sinOmega;
+		}
+
+		return a.scale(w0).add(b.scale(w1)).normalize().toLatLon();
 	}
 
 	/**
