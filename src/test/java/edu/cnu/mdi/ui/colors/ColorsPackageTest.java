@@ -5,8 +5,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.image.BufferedImage;
 import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import javax.swing.UIManager;
 
 import org.junit.jupiter.api.Test;
 
@@ -62,5 +69,29 @@ class ColorsPackageTest {
 		assertEquals("Fill", button.getText());
 
 		assertDoesNotThrow(() -> new ColorLabel(Color.RED, null, null));
+	}
+
+	@Test
+	void colorPanelPreferredSizeAccommodatesThePlatformChooser() {
+		ColorPanel panel = new ColorPanel();
+		Dimension preferred = panel.getPreferredSize();
+		Dimension chooserPreferred = panel.colorChooser.getPreferredSize();
+		Insets insets = panel.getInsets();
+
+		assertEquals(Math.max(ColorPanel.minw, chooserPreferred.width + insets.left + insets.right),
+				preferred.width);
+		assertEquals(Math.max(ColorPanel.minh, chooserPreferred.height + insets.top + insets.bottom),
+				preferred.height);
+	}
+
+	@Test
+	void colorPanelOffersSwatchesAndPreciseRgbControls() {
+		ColorPanel panel = new ColorPanel();
+		Set<String> chooserNames = Stream.of(panel.colorChooser.getChooserPanels())
+				.map(chooserPanel -> chooserPanel.getDisplayName())
+				.collect(Collectors.toSet());
+
+		assertEquals(Set.of(UIManager.getString("ColorChooser.swatchesNameText"),
+				UIManager.getString("ColorChooser.rgbNameText")), chooserNames);
 	}
 }
