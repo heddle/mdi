@@ -32,6 +32,11 @@ import edu.cnu.mdi.view.BaseView;
  * implementations for all tools, which can be used as-is or overridden by
  * subclasses.
  *
+ * <p>Dragging an already-selected item translates every selected item that is
+ * draggable and belongs to an unlocked layer. Locked and non-draggable items
+ * remain in place. Resize and rotate gestures continue to affect only the item
+ * whose handle initiated the gesture.</p>
+ *
  * @author heddle
  */
 public class BaseToolHandler implements IToolHandler {
@@ -47,8 +52,9 @@ public class BaseToolHandler implements IToolHandler {
 	// Container that owns this tool handler
 	protected final BaseContainer container;
 
-	// for modifying items
+	// Primary item and all eligible items participating in the current gesture.
 	protected AItem modifyItem;
+	protected final List<AItem> modifyItems = new ArrayList<>();
 	protected boolean modifying;
 
 	// cached press point for the current drag gesture
@@ -147,6 +153,7 @@ public class BaseToolHandler implements IToolHandler {
 	public void beginDragObject(GestureContext gc) {
 
 		modifyItem = null;
+		modifyItems.clear();
 		modifying = false;
 
 		// Cache a defensive copy (Point is mutable)
@@ -177,37 +184,67 @@ public class BaseToolHandler implements IToolHandler {
 			Point press = (dragPressPoint != null) ? new Point(dragPressPoint)
 					: new Point(current.x - dx, current.y - dy);
 
-			ItemModification mod = new ItemModification(modifyItem, container, press, current, e.isShiftDown(),
-					e.isControlDown());
+			startItemModification(modifyItem, press, current, e, false);
+			modifyItems.add(modifyItem);
 
-			modifyItem.setModification(mod);
-			modifyItem.startModification();
+			ItemModification primaryModification = modifyItem.getItemModification();
+			if (modifyItem.isSelected() && modifyItem.isDraggable()
+					&& primaryModification != null
+					&& primaryModification.getType() == ItemModification.ModificationType.DRAG) {
+				for (AItem selectedItem : container.getSelectedItems()) {
+					if (selectedItem == modifyItem || !isEligibleGroupDragItem(selectedItem)) {
+						continue;
+					}
+					startItemModification(selectedItem, press, current, e, true);
+					modifyItems.add(selectedItem);
+				}
+			}
 		}
 
-		if (modifyItem != null) {
-			ItemModification mod = modifyItem.getItemModification();
+		for (AItem itemBeingModified : modifyItems) {
+			ItemModification mod = itemBeingModified.getItemModification();
 			if (mod != null) {
 				mod.setCurrentMousePoint(e.getPoint());
+				itemBeingModified.modify();
 			}
-			modifyItem.modify();
 		}
+	}
+
+	/** Starts one item modification for the current pointer gesture. */
+	private void startItemModification(AItem item, Point press, Point current,
+			MouseEvent event, boolean forceDrag) {
+		ItemModification modification = new ItemModification(item, container, press, current,
+				event.isShiftDown(), event.isControlDown());
+		item.setModification(modification);
+		item.startModification();
+		if (forceDrag) {
+			modification.setType(ItemModification.ModificationType.DRAG);
+		}
+	}
+
+	/** Returns whether a selected companion item may participate in a group drag. */
+	private static boolean isEligibleGroupDragItem(AItem item) {
+		return item != null && item.isDraggable() && item.isTrackable()
+				&& item.getLayer() != null && !item.getLayer().isLocked();
 	}
 
 	@Override
 	public void endDragObject(GestureContext gc) {
 
-	    if (modifyItem != null) {
-	        if (!modifyItem.acceptModification(gc)) {
-	            modifyItem.modificationRejected(gc);
+	    if (!modifyItems.isEmpty()) {
+	        for (AItem item : modifyItems) {
+	            if (!item.acceptModification(gc)) {
+	                item.modificationRejected(gc);
+	            }
+	            item.stopModification();
 	        }
-
-	        modifyItem.stopModification();
 
 	        container.setDirty(true);
 	        container.refresh();
 	    }
 
 	    modifyItem = null;
+	    modifyItems.clear();
 	    modifying = false;
 	    dragPressPoint = null;
 	}

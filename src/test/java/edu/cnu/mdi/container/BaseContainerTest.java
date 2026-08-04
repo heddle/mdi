@@ -3,6 +3,7 @@ package edu.cnu.mdi.container;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.Point;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.lang.reflect.InvocationTargetException;
@@ -14,6 +15,9 @@ import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.Test;
 
 import edu.cnu.mdi.item.Layer;
+import edu.cnu.mdi.item.RectangleItem;
+import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
+import edu.cnu.mdi.graphics.toolbar.GestureContext;
 
 public class BaseContainerTest {
 
@@ -166,4 +170,60 @@ public class BaseContainerTest {
 
         assertEquals(new Rectangle2D.Double(1, 2, 20, 10), c.getWorldSystem());
     }
+
+	@Test
+	void draggingSelectedItemMovesOnlyEligibleSelectedItems() {
+		runOnEdt(() -> {
+			BaseContainer container = newContainer();
+			Layer layer = container.getDefaultLayer();
+			RectangleItem primary = draggableRectangle(layer, 1.0);
+			RectangleItem companion = draggableRectangle(layer, 4.0);
+			RectangleItem locked = draggableRectangle(layer, 6.0);
+			RectangleItem notDraggable = draggableRectangle(layer, 8.0);
+			locked.setLocked(true);
+			notDraggable.setDraggable(false);
+
+			primary.setSelected(true);
+			companion.setSelected(true);
+			locked.setSelected(true);
+			notDraggable.setSelected(true);
+
+			double primaryStartX = primary.getFocus().x;
+			double companionStartX = companion.getFocus().x;
+			double lockedStartX = locked.getFocus().x;
+			double notDraggableStartX = notDraggable.getFocus().x;
+
+			BaseToolHandler handler = new BaseToolHandler(container);
+			BaseToolBar toolbar = new BaseToolBar(container.getComponent(), handler, 0L);
+			Point press = primary.getFocusPoint(container);
+			Point dragged = new Point(press.x + 20, press.y);
+			MouseEvent pressEvent = mouseEvent(container, MouseEvent.MOUSE_PRESSED, press);
+			MouseEvent dragEvent = mouseEvent(container, MouseEvent.MOUSE_DRAGGED, dragged);
+
+			handler.beginDragObject(new GestureContext(toolbar, container.getComponent(), primary,
+					press, pressEvent));
+			handler.dragObjectBy(new GestureContext(toolbar, container.getComponent(), primary,
+					dragged, dragEvent), 20, 0);
+			handler.endDragObject(new GestureContext(toolbar, container.getComponent(), primary,
+					dragged, dragEvent));
+
+			assertEquals(primaryStartX + 1.0, primary.getFocus().x, EPS);
+			assertEquals(companionStartX + 1.0, companion.getFocus().x, EPS);
+			assertEquals(lockedStartX, locked.getFocus().x, EPS);
+			assertEquals(notDraggableStartX, notDraggable.getFocus().x, EPS);
+		});
+	}
+
+	private static RectangleItem draggableRectangle(Layer layer, double x) {
+		RectangleItem item = new RectangleItem(layer, new Rectangle2D.Double(x, 1.0, 1.0, 1.0));
+		item.setLocked(false);
+		item.setDraggable(true);
+		item.setSelectable(true);
+		return item;
+	}
+
+	private static MouseEvent mouseEvent(BaseContainer container, int id, Point point) {
+		return new MouseEvent(container.getComponent(), id, System.currentTimeMillis(),
+				MouseEvent.BUTTON1_DOWN_MASK, point.x, point.y, 1, false, MouseEvent.BUTTON1);
+	}
 }
