@@ -114,7 +114,7 @@ public class ShapefileLayer extends Layer {
         initial.setAvailableFeedbackFields(
                 renderer.getAvailablePropertyNames());
         initial.setSelectedFeedbackFields(
-                current.getTooltipFields());
+                current.getFeedbackFields());
 
         long bits;
 
@@ -190,7 +190,7 @@ public class ShapefileLayer extends Layer {
             return;
         }
 
-        working.tooltipFields(
+        working.feedbackFields(
                 result.getSelectedFeedbackFields().toArray(String[]::new));
 
         switch (renderer.getShapeType()) {

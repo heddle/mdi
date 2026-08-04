@@ -66,7 +66,7 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  *
  * <h2>Feedback text</h2>
  * <p>On a hit, {@link #pick} assembles feedback from
- * {@link ShapeFeatureStyle#getTooltipFields()}. If that list is empty it
+ * {@link ShapeFeatureStyle#getFeedbackFields()}. If that list is empty it
  * falls back to {@link ShapeFeatureStyle#getLabelField()}. Multiple field
  * values are rendered one per line as {@code FIELD: value}. The complete
  * block uses the light-green feedback style. Fields absent from the feature
@@ -276,7 +276,7 @@ public class ShapeFeatureRenderer implements IPickable {
      *
      * <p>Returns {@code null} if the pick cache is empty (no render has
      * occurred yet) or no feature is within the hit threshold. The feedback
-     * string is assembled from {@link ShapeFeatureStyle#getTooltipFields()},
+     * string is assembled from {@link ShapeFeatureStyle#getFeedbackFields()},
      * falling back to {@link ShapeFeatureStyle#getLabelField()} if no feedback
      * fields are configured.</p>
      */
@@ -672,7 +672,7 @@ public class ShapeFeatureRenderer implements IPickable {
     /**
      * Assembles the styled feedback string for a hit feature.
      *
-     * <p>Uses {@link ShapeFeatureStyle#getTooltipFields()} when set, falling
+     * <p>Uses {@link ShapeFeatureStyle#getFeedbackFields()} when set, falling
      * back to {@link ShapeFeatureStyle#getLabelField()}. Each non-empty value
      * is written on its own line as {@code FIELD: value}, in configured field
      * order. One style prefix colors the entire multi-line block. Returns
@@ -682,7 +682,7 @@ public class ShapeFeatureRenderer implements IPickable {
      * @return styled, possibly multi-line feedback, or {@code null}
      */
     String buildFeedback(ShapeFeature feature) {
-        List<String> fields = style.getTooltipFields();
+        List<String> fields = style.getFeedbackFields();
 
         if (fields.isEmpty()) {
             String lf = style.getLabelField();

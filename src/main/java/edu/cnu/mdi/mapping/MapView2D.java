@@ -242,6 +242,9 @@ public class MapView2D extends BaseView {
 	/** Menu providing shapefile open and per-layer visibility controls. */
 	private ShapefileMenu shapefileMenu;
 
+	/** Whether delayed mouse-over feedback windows are enabled. Default false. */
+	private boolean hoveringEnabled;
+
 	// -------------------------------------------------------------------------
 	// Workspace — reused per feedback call to avoid allocation
 	// -------------------------------------------------------------------------
@@ -977,6 +980,25 @@ public class MapView2D extends BaseView {
 	}
 
 	/**
+	 * Appends country and shapefile hit-test feedback for a map location.
+	 * This is the common source used by both the feedback pane and hover popup.
+	 */
+	private void appendMapFeatureFeedback(Point point, IContainer sourceContainer,
+	        List<String> destination) {
+	    String countryName = getCountryAtPoint(point, sourceContainer);
+	    if (countryName != null) {
+	        destination.add(countryName);
+	    }
+
+	    for (ShapefileLayer layer : extraLayers) {
+	        String layerHit = layer.pick(point, sourceContainer);
+	        if (layerHit != null) {
+	            destination.add(layerHit);
+	        }
+	    }
+	}
+
+	/**
 	 * Returns whether the given screen-space point is on land (inside a country
 	 * polygon).
 	 *
@@ -1068,22 +1090,7 @@ public class MapView2D extends BaseView {
 		    }
 
 
-		    String countryName =
-		            getCountryAtPoint(pp, container);
-
-		    if (countryName != null) {
-		        feedbackStrings.add(countryName);
-		    }
-
-			// Extra shapefile layers (rivers, lakes, etc.)
-		    for (ShapefileLayer layer : extraLayers) {
-		        String layerHit =
-		                layer.pick(pp, container);
-
-		        if (layerHit != null) {
-		            feedbackStrings.add(layerHit);
-		        }
-		    }
+		    appendMapFeatureFeedback(pp, container, feedbackStrings);
 		    
 			if (cityRenderer != null
 			        && cityLayer != null
@@ -1511,13 +1518,17 @@ public class MapView2D extends BaseView {
 	 * {@inheritDoc}
 	 *
 	 * <p>
-	 * When the user hovers over the map, this method displays a small window with the
-	 * name and ISO code of the country under the cursor, if any. The tooltip is
-	 * shown in the {@link HoverInfoWindow} provided by the {@link MapContainer}.
+	 * When the user hovers over the map, this method displays a small window with
+	 * the country name and any configured shapefile feedback fields found under
+	 * the cursor. The information is shown in the {@link HoverInfoWindow}
+	 * provided by the {@link MapContainer}.
 	 * </p>
 	 */
 	@Override
 	public void hoverUpdate(HoverEvent he) {
+		if (!hoveringEnabled) {
+			return;
+		}
 
 		Point pp = he.getLocation();
 		HoverInfoWindow win = container.getHoverWindow();
@@ -1525,12 +1536,79 @@ public class MapView2D extends BaseView {
 		if ((win == null) || (pp == null)) {
 			return;
 		}
-		String countryName = getCountryAtPoint(pp, container);
-		if (countryName == null) {
+		String hoverText = getMapHoverText(pp, container);
+		if (hoverText == null) {
 			return;
 		}
 
-		win.showMessage(he, countryName);
+		win.showMessage(he, hoverText);
+	}
+
+	/**
+	 * Builds the unified country and shapefile text shown by the hover popup.
+	 * Registered shapefile feedback fields are included in layer order.
+	 *
+	 * @param point cursor location in container coordinates
+	 * @param sourceContainer container used for hit testing
+	 * @return plain, possibly multi-line hover text, or {@code null} for no hit
+	 */
+	protected String getMapHoverText(Point point, IContainer sourceContainer) {
+	    List<String> hits = new ArrayList<>();
+	    appendMapFeatureFeedback(point, sourceContainer, hits);
+	    if (hits.isEmpty()) {
+	        return null;
+	    }
+
+	    StringBuilder text = new StringBuilder();
+	    for (String hit : hits) {
+	        String plain = stripFeedbackStyle(hit);
+	        if (plain.isEmpty()) {
+	            continue;
+	        }
+	        if (text.length() > 0) {
+	            text.append('\n');
+	        }
+	        text.append(plain);
+	    }
+	    return text.length() == 0 ? null : text.toString();
+	}
+
+	/** Removes an optional {@code $color$} feedback-pane prefix. */
+	private static String stripFeedbackStyle(String value) {
+	    if (value != null && value.startsWith("$")) {
+	        int closing = value.indexOf('$', 1);
+	        if (closing > 1) {
+	            return value.substring(closing + 1);
+	        }
+	    }
+	    return value == null ? "" : value;
+	}
+
+	/**
+	 * Returns whether delayed mouse-over feedback windows are enabled.
+	 * Hover feedback is disabled by default.
+	 *
+	 * @return {@code true} when hover feedback is enabled
+	 */
+	public boolean isHoveringEnabled() {
+		return hoveringEnabled;
+	}
+
+	/**
+	 * Enables or disables delayed mouse-over feedback windows. The feature is
+	 * disabled by default. Disabling it immediately hides any popup that is
+	 * currently visible.
+	 *
+	 * @param enabled {@code true} to enable map hovering
+	 */
+	public void setHoveringEnabled(boolean enabled) {
+		hoveringEnabled = enabled;
+		if (!enabled && container != null) {
+			HoverInfoWindow win = container.getHoverWindow();
+			if (win != null) {
+				win.hideMessage();
+			}
+		}
 	}
 
 	/**

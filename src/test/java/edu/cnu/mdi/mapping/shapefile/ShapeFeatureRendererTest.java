@@ -16,6 +16,19 @@ import edu.cnu.mdi.mapping.theme.MapTheme;
 class ShapeFeatureRendererTest {
 
     @Test
+    @SuppressWarnings("deprecation")
+    void tooltipFieldAliasesDelegateToFeedbackFieldApi() {
+        ShapeFeatureStyle style = new ShapeFeatureStyle()
+                .tooltipFields("NAME", "TYPE");
+
+        assertEquals(List.of("NAME", "TYPE"), style.getFeedbackFields());
+        assertEquals(style.getFeedbackFields(), style.getTooltipFields());
+
+        style.feedbackFields("FULLNAME");
+        assertEquals(List.of("FULLNAME"), style.getTooltipFields());
+    }
+
+    @Test
     void availablePropertyNamesPreserveDbfOrderAndIncludeUnion() {
         Map<String, String> firstProperties = new LinkedHashMap<>();
         firstProperties.put("LINEARID", "1");
@@ -46,7 +59,7 @@ class ShapeFeatureRendererTest {
 
         ShapeFeature feature = feature(properties);
         ShapeFeatureStyle style = new ShapeFeatureStyle()
-                .tooltipFields("FULLNAME", "EMPTY", "RTTYP");
+                .feedbackFields("FULLNAME", "EMPTY", "RTTYP");
         ShapeFeatureRenderer renderer = new ShapeFeatureRenderer(
                 List.of(feature),
                 new MercatorProjection(MapTheme.light()),

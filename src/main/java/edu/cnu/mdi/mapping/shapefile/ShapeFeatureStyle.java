@@ -104,13 +104,14 @@ public final class ShapeFeatureStyle {
 
     /**
      * Ordered list of {@code .dbf} field names whose values are concatenated
-     * to form the text shown in the feedback panel on mouse-over.
+     * to form the text shown in the feedback pane and hover popup after a
+     * successful feature hit test.
      *
      * <p>If empty, feedback falls back to {@link #labelField} when set,
      * or no feature feedback is shown if both are absent. Multiple fields are
      * displayed one per line as {@code FIELD: value}.</p>
      */
-    private final List<String> tooltipFields = new ArrayList<>();
+    private final List<String> feedbackFields = new ArrayList<>();
 
     // -------------------------------------------------------------------------
     // Rendering quality
@@ -147,7 +148,7 @@ public final class ShapeFeatureStyle {
         labelField = source.labelField;
         labelColor = source.labelColor;
 
-        tooltipFields.addAll(source.tooltipFields);
+        feedbackFields.addAll(source.feedbackFields);
         antialias = source.antialias;
     }
 
@@ -256,28 +257,41 @@ public final class ShapeFeatureStyle {
 
     /**
      * Sets the {@code .dbf} field names whose values appear in the
-     * mouse-over feedback, in the order given.
+     * hit-test feedback, in the order given.
      *
-     * <p>Replaces any previously configured tooltip fields. Pass no
-     * arguments (or call with an empty array) to clear tooltip fields.
+     * <p>Replaces any previously configured feedback fields. Pass no
+     * arguments (or call with an empty array) to clear them.
      * Example:</p>
      * <pre>{@code
      * new ShapeFeatureStyle()
      *         .fillColor(new Color(0x6B9FD4))
-     *         .tooltipFields("name", "scalerank");
+     *         .feedbackFields("name", "scalerank");
      * }</pre>
      *
      * @param fields zero or more {@code .dbf} field names (case-sensitive)
      * @return this style, for chaining
      */
-    public ShapeFeatureStyle tooltipFields(String... fields) {
-        this.tooltipFields.clear();
+    public ShapeFeatureStyle feedbackFields(String... fields) {
+        this.feedbackFields.clear();
         if (fields != null) {
             for (String f : fields) {
-                if (f != null && !f.isEmpty()) this.tooltipFields.add(f);
+                if (f != null && !f.isEmpty()) this.feedbackFields.add(f);
             }
         }
         return this;
+    }
+
+    /**
+     * Legacy alias for {@link #feedbackFields(String...)}.
+     *
+     * @param fields zero or more DBF field names
+     * @return this style, for chaining
+     * @deprecated use {@link #feedbackFields(String...)}; these fields feed the
+     *             map feedback and hover displays, not a Swing tooltip
+     */
+    @Deprecated
+    public ShapeFeatureStyle tooltipFields(String... fields) {
+        return feedbackFields(fields);
     }
 
     // -------------------------------------------------------------------------
@@ -367,8 +381,19 @@ public final class ShapeFeatureStyle {
      *
      * @return unmodifiable ordered list of feedback field names
      */
+    public List<String> getFeedbackFields() {
+        return Collections.unmodifiableList(feedbackFields);
+    }
+
+    /**
+     * Legacy alias for {@link #getFeedbackFields()}.
+     *
+     * @return unmodifiable ordered list of feedback field names
+     * @deprecated use {@link #getFeedbackFields()}
+     */
+    @Deprecated
     public List<String> getTooltipFields() {
-        return Collections.unmodifiableList(tooltipFields);
+        return getFeedbackFields();
     }
 
     /**
