@@ -379,6 +379,7 @@ public final class SimulationEngine {
 		// Tracks whether the loop exited due to cancellation, so we can
 		// suppress onDone and take the cancellation-specific path.
 		boolean cancelledCleanly = false;
+		boolean completedNaturally = false;
 
 		try {
 			transition(SimulationState.INITIALIZING, "start");
@@ -444,6 +445,18 @@ public final class SimulationEngine {
 				boolean keepGoing = simulation.step(context);
 				context.incrementStep();
 
+				// A long-running step may observe cancellation internally and return
+				// before control reaches the next loop boundary. Classify that race as
+				// cancellation rather than natural completion.
+				if (context.isCancelRequested()) {
+					cancelledCleanly = true;
+					transition(SimulationState.TERMINATING, "cancel requested");
+					try {
+						simulation.cancel(context);
+					} catch (Throwable ignored) { /* best-effort */ }
+					break;
+				}
+
 				long now = System.nanoTime();
 
 				if (config.refreshIntervalMs > 0
@@ -459,6 +472,7 @@ public final class SimulationEngine {
 				}
 
 				if (!keepGoing) {
+					completedNaturally = true;
 					break;
 				}
 
@@ -487,6 +501,10 @@ public final class SimulationEngine {
 			if (!cancelledCleanly) {
 				postEDT(l -> l.onDone(context));
 			}
+			CompletionStatus completionStatus = cancelledCleanly
+					? CompletionStatus.CANCELLED
+					: (completedNaturally ? CompletionStatus.SUCCEEDED : CompletionStatus.STOPPED);
+			postEDT(l -> l.onCompleted(context, completionStatus, null));
 
 		} catch (Throwable failure) {
 			edu.cnu.mdi.log.Log.getInstance().exception(failure);
@@ -498,6 +516,7 @@ public final class SimulationEngine {
 			} catch (Throwable ignored) { /* preserve the original failure */ }
 			transition(SimulationState.FAILED, failure.toString());
 			postEDT(l -> l.onFail(context, failure));
+			postEDT(l -> l.onCompleted(context, CompletionStatus.FAILED, failure));
 		}
 	}
 
