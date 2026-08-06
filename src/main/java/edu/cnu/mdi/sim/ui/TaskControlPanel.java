@@ -1,6 +1,7 @@
 package edu.cnu.mdi.sim.ui;
 
 import java.awt.BorderLayout;
+
 import java.awt.FlowLayout;
 import java.util.Objects;
 
@@ -14,6 +15,7 @@ import edu.cnu.mdi.sim.CompletionStatus;
 import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.task.TaskHandle;
 import edu.cnu.mdi.sim.task.TaskListener;
+import edu.cnu.mdi.sim.SimulationState;
 
 /**
  * Compact Swing controls for a one-shot {@link TaskHandle}.
@@ -104,19 +106,117 @@ public class TaskControlPanel<R> extends JPanel implements TaskListener<R> {
 	 */
 	public final void bind(TaskHandle<R> newHandle) {
 		Objects.requireNonNull(newHandle, "newHandle");
+
 		if (handle == newHandle) {
 			return;
 		}
+
 		unbind();
+
 		handle = newHandle;
 		handle.addListener(this);
-		startButton.setEnabled(!handle.isCompleted());
-		cancelButton.setEnabled(!handle.isCompleted());
-		statusLabel.setText(handle.isCompleted()
-				? readableStatus(handle.getCompletionStatus()) : "Ready");
+
+		applyHandleState(handle.getState());
 		updateElapsed();
 	}
+	
+	/**
+	 * Initializes the controls from the current state of the bound task.
+	 *
+	 * @param state current state of the task's underlying simulation engine
+	 */
+	private void applyHandleState(SimulationState state) {
+		CompletionStatus completionStatus = handle.getCompletionStatus();
 
+		if (completionStatus != null) {
+			elapsedTimer.stop();
+			startButton.setEnabled(false);
+			cancelButton.setEnabled(false);
+			progressBar.setIndeterminate(false);
+
+			if (completionStatus == CompletionStatus.SUCCEEDED) {
+				progressBar.setValue(100);
+				progressBar.setString("Done");
+			} else {
+				progressBar.setString(readableStatus(completionStatus));
+			}
+
+			Throwable error = handle.getFailure();
+			statusLabel.setText(
+					completionStatus == CompletionStatus.FAILED
+							&& error != null
+									? "Failed: " + failureText(error)
+									: readableStatus(completionStatus));
+			return;
+		}
+
+		switch (state) {
+			case NEW -> {
+				elapsedTimer.stop();
+				startButton.setEnabled(true);
+				cancelButton.setEnabled(false);
+				progressBar.setIndeterminate(false);
+				progressBar.setValue(0);
+				progressBar.setString(" ");
+				statusLabel.setText("Ready");
+			}
+
+			case INITIALIZING, READY, RUNNING -> {
+				startButton.setEnabled(false);
+				cancelButton.setEnabled(true);
+				progressBar.setIndeterminate(true);
+				progressBar.setString("Working…");
+				statusLabel.setText(
+						state == SimulationState.INITIALIZING
+								? "Starting…"
+								: "Running");
+				elapsedTimer.start();
+			}
+
+			case TERMINATING -> {
+				startButton.setEnabled(false);
+				cancelButton.setEnabled(false);
+				progressBar.setIndeterminate(true);
+				progressBar.setString("Finishing…");
+				statusLabel.setText("Finishing…");
+				elapsedTimer.start();
+			}
+
+			case TERMINATED, FAILED -> {
+				/*
+				 * Ordinarily completionStatus has already been published by the
+				 * time one of these states is observed. This fallback covers the
+				 * brief interval before the bridge publishes the typed outcome.
+				 */
+				startButton.setEnabled(false);
+				cancelButton.setEnabled(false);
+				progressBar.setIndeterminate(false);
+				progressBar.setString(
+						state == SimulationState.FAILED
+								? "Failed"
+								: "Completed");
+				statusLabel.setText(
+						state == SimulationState.FAILED
+								? "Failed"
+								: "Completed");
+				elapsedTimer.stop();
+			}
+
+			case PAUSED -> {
+				/*
+				 * A one-shot task should never be paused through its public API,
+				 * but the underlying engine is exposed for advanced use.
+				 */
+				startButton.setEnabled(false);
+				cancelButton.setEnabled(true);
+				progressBar.setIndeterminate(true);
+				progressBar.setString("Paused");
+				statusLabel.setText("Paused");
+				elapsedTimer.stop();
+			}
+		}
+	}
+	
 	/**
 	 * Removes the current listener binding without stopping or cancelling work.
 	 */
