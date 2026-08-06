@@ -94,8 +94,21 @@ public final class GaussianMutation implements MutationOperator<PolygonChromosom
 
 	@Override
 	public PolygonChromosome mutate(PolygonChromosome individual, Random rng) {
+		return mutateAtRate(individual, rng, effectiveMutationRate);
+	}
+
+	@Override
+	public PolygonChromosome mutate(PolygonChromosome individual, Random rng,
+			double configuredRate) {
+		double coolingMultiplier = mutationRate == 0.0
+				? 1.0 : effectiveMutationRate / mutationRate;
+		return mutateAtRate(individual, rng, configuredRate * coolingMultiplier);
+	}
+
+	private PolygonChromosome mutateAtRate(PolygonChromosome individual, Random rng,
+			double rate) {
 		for (int t = 0; t < individual.numTriangles; t++) {
-			if (rng.nextDouble() >= effectiveMutationRate) {
+			if (rng.nextDouble() >= rate) {
 				continue;
 			}
 			int base = t * PolygonChromosome.DOUBLES_PER_TRIANGLE;

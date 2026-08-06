@@ -2,8 +2,13 @@ package edu.cnu.mdi.sim.simanneal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import javax.swing.SwingUtilities;
 
 import org.junit.jupiter.api.Test;
 
@@ -104,6 +109,67 @@ public class SimulatedAnnealingSimulationTest {
 		simulation.init(context());
 
 		assertThrows(IllegalStateException.class, () -> simulation.step(context()));
+	}
+
+	@Test
+	public void testAcceptedMoveListenersRunOnEdt() throws Exception {
+		SimulatedAnnealingSimulation<ValueSolution> simulation =
+				new SimulatedAnnealingSimulation<>(new DecreasingProblem(), config(),
+						new GeometricAnnealingSchedule(),
+						(problem, rng) -> new InitialTemperature(1, 0, 0, 1));
+		CountDownLatch notified = new CountDownLatch(1);
+		java.util.concurrent.atomic.AtomicBoolean onEdt =
+				new java.util.concurrent.atomic.AtomicBoolean();
+		simulation.addAcceptedMoveListener(new IAcceptedMoveListener() {
+			@Override public void acceptedMove(double temperature, double energy) {
+				onEdt.set(SwingUtilities.isEventDispatchThread());
+				notified.countDown();
+			}
+			@Override public void newBest(double temperature, double energy) {}
+		});
+		simulation.init(context());
+		simulation.step(context());
+
+		assertTrue(notified.await(3, TimeUnit.SECONDS));
+		assertTrue(onEdt.get());
+	}
+
+	@Test
+	public void testAcceptedMovesAreBatchedWithoutCollapsingToLatest() throws Exception {
+		SimulatedAnnealingConfig longerConfig =
+				new SimulatedAnnealingConfig(100, 1, 0.99, 0.0, 0, 0, 123L);
+		SimulatedAnnealingSimulation<ValueSolution> simulation =
+				new SimulatedAnnealingSimulation<>(new DecreasingProblem(), longerConfig,
+						new GeometricAnnealingSchedule(),
+						(problem, rng) -> new InitialTemperature(1, 0, 0, 1));
+		java.util.concurrent.atomic.AtomicInteger accepted =
+				new java.util.concurrent.atomic.AtomicInteger();
+		simulation.addAcceptedMoveListener(new IAcceptedMoveListener() {
+			@Override public void acceptedMove(double temperature, double energy) {
+				accepted.incrementAndGet();
+			}
+			@Override public void newBest(double temperature, double energy) {}
+		});
+
+		CountDownLatch edtBlocked = new CountDownLatch(1);
+		CountDownLatch releaseEdt = new CountDownLatch(1);
+		SwingUtilities.invokeLater(() -> {
+			edtBlocked.countDown();
+			try {
+				releaseEdt.await(3, TimeUnit.SECONDS);
+			} catch (InterruptedException ex) {
+				Thread.currentThread().interrupt();
+			}
+		});
+		assertTrue(edtBlocked.await(3, TimeUnit.SECONDS));
+		simulation.init(context());
+		for (int i = 0; i < 20; i++) {
+			simulation.step(context());
+		}
+		releaseEdt.countDown();
+		SwingUtilities.invokeAndWait(() -> {});
+
+		assertEquals(20, accepted.get());
 	}
 
     private static SimulatedAnnealingConfig config() {

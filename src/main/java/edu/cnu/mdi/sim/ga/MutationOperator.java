@@ -26,5 +26,19 @@ public interface MutationOperator<T extends GASolution> {
 	 * @param rng source of randomness
 	 * @return non-null mutated individual
 	 */
-    T mutate(T individual, Random rng);
+	T mutate(T individual, Random rng);
+
+	/**
+	 * Apply the configured mutation probability to one offspring.
+	 * Operators with gene-level mutation semantics may override this method and
+	 * interpret {@code mutationRate} at that finer granularity.
+	 *
+	 * @param individual offspring to consider for mutation
+	 * @param rng source of randomness
+	 * @param mutationRate configured rate in {@code [0,1]}
+	 * @return the original or mutated individual; never {@code null}
+	 */
+	default T mutate(T individual, Random rng, double mutationRate) {
+		return rng.nextDouble() < mutationRate ? mutate(individual, rng) : individual;
+	}
 }

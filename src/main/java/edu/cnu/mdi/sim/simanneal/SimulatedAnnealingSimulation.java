@@ -2,7 +2,11 @@ package edu.cnu.mdi.sim.simanneal;
 
 import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.swing.SwingUtilities;
 import javax.swing.event.EventListenerList;
 
 import edu.cnu.mdi.sim.ProgressInfo;
@@ -62,6 +66,13 @@ import edu.cnu.mdi.sim.SimulationEngine;
 public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> implements Simulation {
 
 	private EventListenerList _listenerList;
+	private static final int MAX_QUEUED_NOTIFICATIONS = 10_000;
+	private static final int MAX_NOTIFICATIONS_PER_DRAIN = 1_000;
+	private final ConcurrentLinkedQueue<MoveNotification> notifications =
+			new ConcurrentLinkedQueue<>();
+	private final AtomicInteger queuedNotificationCount = new AtomicInteger();
+	private final AtomicBoolean notificationPending = new AtomicBoolean();
+	private long acceptedNotificationCount;
 
 	/** The annealing problem (solution generator, energy function, and move generator). */
 	private final AnnealingProblem<S> problem;
@@ -70,6 +81,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	private final SimulatedAnnealingConfig cfg;
 	
 	private enum NotifyType { ACCEPTED_MOVE, NEW_BEST }
+	private record MoveNotification(double temperature, double energy, NotifyType type) {}
 
 	/**
 	 * High-level stopping/temperature schedule policy.
@@ -93,7 +105,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	private S current;
 
 	/** Best solution found so far (a copy of a previous accepted solution). */
-	private S best;
+	private volatile S best;
 
 	/** Energy of the current solution. Lower is better. */
 	private double currentE;
@@ -250,6 +262,9 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 		step = 0;
 		accepted = 0;
 		uphillAccepted = 0;
+		acceptedNotificationCount = 0;
+		notifications.clear();
+		queuedNotificationCount.set(0);
 	}
 
 	/**
@@ -358,10 +373,15 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
         // rounding error over millions of steps. Re-synchronizing against a full
         // energy recomputation keeps the error bounded without measurable overhead
         // since problem.energy() is called at most once every 10,000 steps.
-       if (step % 10_000 == 0) {
-            currentE = problem.energy(current);
+	       if (step % 10_000 == 0) {
+	            currentE = problem.energy(current);
 			requireFiniteEnergy(currentE);
-        }
+			if (currentE < bestE) {
+				bestE = currentE;
+				best = Objects.requireNonNull(current.copy(), "solution copy");
+				notifyListeners(T, bestE, NotifyType.NEW_BEST);
+			}
+	        }
 
 		// Optional UI signals (throttled)
 		if (engine != null) {
@@ -428,29 +448,58 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 
 	// notify listeners of message
 	private void notifyListeners(double temperature, double energy, NotifyType option) {
-
-		if (_listenerList == null) {
+		if (_listenerList == null || _listenerList.getListenerCount(IAcceptedMoveListener.class) == 0) {
 			return;
 		}
-
-		// Guaranteed to return a non-null array
-		Object[] listeners = _listenerList.getListenerList();
-
-		// This weird loop is the bullet proof way of notifying all listeners.
-		// for (int i = listeners.length - 2; i >= 0; i -= 2) {
-		// order is flipped so it goes in order as added
-		for (int i = 0; i < listeners.length; i += 2) {
-			if (listeners[i] == IAcceptedMoveListener.class) {
-
-				IAcceptedMoveListener listener = (IAcceptedMoveListener) listeners[i + 1];
-
-				if (option == NotifyType.NEW_BEST) {
-					listener.newBest(temperature, energy);
-				} else if (option == NotifyType.ACCEPTED_MOVE) {
-					listener.acceptedMove(temperature, energy);
-				}
-
+		if (option == NotifyType.ACCEPTED_MOVE) {
+			acceptedNotificationCount++;
+			long stride = acceptedNotificationCount > 25_000 ? 20
+					: acceptedNotificationCount > 12_000 ? 10
+					: acceptedNotificationCount > 3_000 ? 5 : 1;
+			if (acceptedNotificationCount % stride != 0) {
+				return;
 			}
+		}
+		if (queuedNotificationCount.incrementAndGet() > MAX_QUEUED_NOTIFICATIONS) {
+			queuedNotificationCount.decrementAndGet();
+			return;
+		}
+		notifications.add(new MoveNotification(temperature, energy, option));
+		queueNotificationDrain();
+	}
+
+	private void queueNotificationDrain() {
+		if (notificationPending.compareAndSet(false, true)) {
+			SwingUtilities.invokeLater(this::drainNotifications);
+		}
+	}
+
+	private void drainNotifications() {
+		notificationPending.set(false);
+		EventListenerList listenerList = _listenerList;
+		IAcceptedMoveListener[] listeners = listenerList == null
+				? new IAcceptedMoveListener[0]
+				: listenerList.getListeners(IAcceptedMoveListener.class);
+		int delivered = 0;
+		MoveNotification notification;
+		while (delivered < MAX_NOTIFICATIONS_PER_DRAIN
+				&& (notification = notifications.poll()) != null) {
+			queuedNotificationCount.decrementAndGet();
+			for (IAcceptedMoveListener listener : listeners) {
+				try {
+					if (notification.type() == NotifyType.ACCEPTED_MOVE) {
+						listener.acceptedMove(notification.temperature(), notification.energy());
+					} else {
+						listener.newBest(notification.temperature(), notification.energy());
+					}
+				} catch (Throwable failure) {
+					edu.cnu.mdi.log.Log.getInstance().exception(failure);
+				}
+			}
+			delivered++;
+		}
+		if (!notifications.isEmpty()) {
+			queueNotificationDrain();
 		}
 	}
 

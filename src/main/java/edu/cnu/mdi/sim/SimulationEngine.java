@@ -280,10 +280,13 @@ public final class SimulationEngine {
 	 * simulation thread runs faster than the UI.</p>
 	 */
 	public void requestRefresh() {
+		if (listeners.isEmpty()) {
+			return;
+		}
 		if (refreshPending.compareAndSet(false, true)) {
-			postEDT(l -> {
+			SwingUtilities.invokeLater(() -> {
 				refreshPending.set(false);
-				l.onRefresh(context);
+				dispatchEDT(l -> l.onRefresh(context));
 			});
 		}
 	}
@@ -296,15 +299,19 @@ public final class SimulationEngine {
 	 * than every intermediate one. This is appropriate for smooth progress bars
 	 * where skipping intermediate percentages is acceptable.</p>
 	 *
-	 * @param info the progress payload; {@code null} is technically accepted but
-	 *             meaningless — prefer {@link ProgressInfo#indeterminate}
+	 * @param info the non-null progress payload
+	 * @throws NullPointerException if {@code info} is null
 	 */
 	public void postProgress(ProgressInfo info) {
-		lastProgress = info;
+		lastProgress = Objects.requireNonNull(info, "info");
+		if (listeners.isEmpty()) {
+			return;
+		}
 		if (progressPending.compareAndSet(false, true)) {
-			postEDT(l -> {
+			SwingUtilities.invokeLater(() -> {
 				progressPending.set(false);
-				l.onProgress(context, lastProgress);
+				ProgressInfo progress = lastProgress;
+				dispatchEDT(l -> l.onProgress(context, progress));
 			});
 		}
 	}
@@ -316,14 +323,19 @@ public final class SimulationEngine {
 	 * queued one. This is appropriate for transient status text where only the
 	 * most recent value matters.</p>
 	 *
-	 * @param message the message text; {@code null} is forwarded as-is
+	 * @param message the non-null message text
+	 * @throws NullPointerException if {@code message} is null
 	 */
 	public void postMessage(String message) {
-		lastMessage = message;
+		lastMessage = Objects.requireNonNull(message, "message");
+		if (listeners.isEmpty()) {
+			return;
+		}
 		if (messagePending.compareAndSet(false, true)) {
-			postEDT(l -> {
+			SwingUtilities.invokeLater(() -> {
 				messagePending.set(false);
-				l.onMessage(context, lastMessage);
+				String currentMessage = lastMessage;
+				dispatchEDT(l -> l.onMessage(context, currentMessage));
 			});
 		}
 	}
@@ -424,7 +436,7 @@ public final class SimulationEngine {
 					transition(SimulationState.TERMINATING, "cancel requested");
 					try {
 						simulation.cancel(context);
-					} catch (Exception ignored) { /* best-effort */ }
+					} catch (Throwable ignored) { /* best-effort */ }
 					break;
 				}
 
@@ -464,7 +476,7 @@ public final class SimulationEngine {
 			}
 			try {
 				simulation.shutdown(context);
-			} catch (Exception ignored) { /* best-effort */ }
+			} catch (Throwable ignored) { /* best-effort */ }
 
 			transition(SimulationState.TERMINATED,
 					cancelledCleanly ? "cancelled" : "done");
@@ -476,16 +488,16 @@ public final class SimulationEngine {
 				postEDT(l -> l.onDone(context));
 			}
 
-		} catch (Exception ex) {
-			edu.cnu.mdi.log.Log.getInstance().exception(ex);
+		} catch (Throwable failure) {
+			edu.cnu.mdi.log.Log.getInstance().exception(failure);
 			// Initialization may have acquired resources before failing, and a
 			// step failure must not bypass cleanup. The hook is best-effort here,
 			// just as it is on normal termination.
 			try {
 				simulation.shutdown(context);
-			} catch (Exception ignored) { /* preserve the original failure */ }
-			transition(SimulationState.FAILED, ex.toString());
-			postEDT(l -> l.onFail(context, ex));
+			} catch (Throwable ignored) { /* preserve the original failure */ }
+			transition(SimulationState.FAILED, failure.toString());
+			postEDT(l -> l.onFail(context, failure));
 		}
 	}
 
@@ -518,6 +530,32 @@ public final class SimulationEngine {
 	 */
 	public SimulationContext getContext() {
 		return context;
+	}
+
+	/**
+	 * Wait for the engine thread to finish.
+	 *
+	 * @param timeoutMillis maximum time to wait; zero waits indefinitely
+	 * @return {@code true} if the thread has finished (or was never started)
+	 * @throws InterruptedException if the waiting thread is interrupted
+	 */
+	public boolean awaitTermination(long timeoutMillis) throws InterruptedException {
+		if (timeoutMillis < 0) {
+			throw new IllegalArgumentException("timeoutMillis must be >= 0");
+		}
+		Thread thread = simThread;
+		if (thread == null) {
+			return true;
+		}
+		if (Thread.currentThread() == thread) {
+			return !thread.isAlive();
+		}
+		if (timeoutMillis == 0) {
+			thread.join();
+		} else {
+			thread.join(timeoutMillis);
+		}
+		return !thread.isAlive();
 	}
 
 	// -------------------------------------------------------------------------
@@ -590,15 +628,17 @@ public final class SimulationEngine {
 		if (listeners.isEmpty()) {
 			return;
 		}
-		SwingUtilities.invokeLater(() -> {
-			for (SimulationListener l : listeners) {
-				try {
-					call.accept(l);
-				} catch (Exception ignored) {
-					// Listener failures are isolated so one bad listener
-					// cannot prevent delivery to the rest.
-				}
+		SwingUtilities.invokeLater(() -> dispatchEDT(call));
+	}
+
+	/** Dispatch one logical event to all listeners. Must run on the EDT. */
+	private void dispatchEDT(java.util.function.Consumer<SimulationListener> call) {
+		for (SimulationListener listener : listeners) {
+			try {
+				call.accept(listener);
+			} catch (Throwable failure) {
+				edu.cnu.mdi.log.Log.getInstance().exception(failure);
 			}
-		});
+		}
 	}
 }

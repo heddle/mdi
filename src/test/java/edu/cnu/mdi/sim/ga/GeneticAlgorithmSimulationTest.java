@@ -109,7 +109,7 @@ public class GeneticAlgorithmSimulationTest {
     }
 
 	@Test
-	public void testNonFiniteFitnessIsRejected() {
+    public void testNonFiniteFitnessIsRejected() {
 		ValueProblem problem = new ValueProblem(List.of(new ValueSolution(1))) {
 			@Override
 			public double fitness(ValueSolution individual) {
@@ -125,6 +125,34 @@ public class GeneticAlgorithmSimulationTest {
 				new GeneticAlgorithmSimulation<>(problem, config(1, 0), operators);
 
 		assertThrows(IllegalStateException.class, () -> simulation.init(context()));
+	}
+
+	@Test
+	public void testConfiguredMutationRateIsApplied() {
+		AtomicInteger mutations = new AtomicInteger();
+		ValueProblem problem = new ValueProblem(List.of(new ValueSolution(1)));
+		GAOperators<ValueSolution> operators = new GAOperators<>(
+				(population, fitnesses, rng) -> population.get(0),
+				(first, second, rng) -> List.of(first.copy()),
+				(individual, rng) -> {
+					mutations.incrementAndGet();
+					return individual;
+				},
+				(population, offspring, popFitness, offFitness, rng) -> offspring);
+
+		GeneticAlgorithmSimulation<ValueSolution> neverMutates =
+				new GeneticAlgorithmSimulation<>(problem,
+						new GAConfig(1, 1, 1.0, 0.0, 0, 0, 0, 123L), operators);
+		neverMutates.init(context());
+		neverMutates.step(context());
+		assertEquals(0, mutations.get());
+
+		GeneticAlgorithmSimulation<ValueSolution> alwaysMutates =
+				new GeneticAlgorithmSimulation<>(problem,
+						new GAConfig(1, 1, 1.0, 1.0, 0, 0, 0, 123L), operators);
+		alwaysMutates.init(context());
+		alwaysMutates.step(context());
+		assertEquals(1, mutations.get());
 	}
 
     private static GAConfig config(int populationSize, int eliteCount) {

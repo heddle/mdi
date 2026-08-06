@@ -500,7 +500,7 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 
 		SimulationState state = e.getState();
 
-		boolean safe = (state == SimulationState.NEW || state == SimulationState.READY
+		boolean safe = (state == SimulationState.NEW
 				|| state == SimulationState.TERMINATED || state == SimulationState.FAILED);
 
 		if (safe) {

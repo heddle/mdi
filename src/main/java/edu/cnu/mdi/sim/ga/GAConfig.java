@@ -8,8 +8,9 @@ package edu.cnu.mdi.sim.ga;
  * @param populationSize number of individuals; must be positive
  * @param maxGenerations generation limit; must be non-negative
  * @param crossoverRate probability of applying crossover, in {@code [0,1]}
- * @param mutationRate mutation rate supplied for problem/operator configuration,
- *        in {@code [0,1]}
+ * @param mutationRate probability of invoking the mutation operator for each
+ *        offspring, in {@code [0,1]}; gene-level operators may interpret it as
+ *        a per-gene rate
  * @param eliteCount number of current individuals retained by elitist operators
  * @param progressEveryGens progress interval, or zero to disable progress posts
  * @param refreshEveryGens refresh interval, or zero to disable refresh requests

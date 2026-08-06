@@ -30,6 +30,8 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	private volatile double bestFitness = Double.NEGATIVE_INFINITY;
 	private volatile double[] fitnesses;
 	private volatile long generation;
+	private volatile GAState stateSnapshot =
+			new GAState(0, Double.NEGATIVE_INFINITY, 0.0, 0.0, 0.0);
 	private Random rng;
 
 	/** Constructor for the GeneticAlgorithmSimulation.
@@ -67,6 +69,7 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 		fitnesses = evaluateAll(population.individuals());
 		trackBest(population.individuals(), fitnesses);
 		generation = 0;
+		stateSnapshot = createStateSnapshot(generation, bestFitness, fitnesses);
 		if (engine != null) {
 			engine.postMessage("Population initialized. Best=" + fmt(bestFitness));
 			engine.postProgress(ProgressInfo.indeterminate("Ready"));
@@ -100,7 +103,8 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	        for (C child : children) {
 	            if (offspring.size() >= offspringNeeded) break;
 	            C mutated = operators.mutation().mutate(
-	                    Objects.requireNonNull(child, "crossover child"), rng);
+	                    Objects.requireNonNull(child, "crossover child"), rng,
+	                    cfg.mutationRate());
 	            offspring.add(Objects.requireNonNull(mutated, "mutated child"));
 	        }
 	    }
@@ -121,10 +125,11 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	    }
 	    double[] newFitnesses = evaluateAll(nextGen);
 
-	    population = wrap(nextGen);
+	    population = SimpleGAPopulation.of(nextGen);
 	    fitnesses  = newFitnesses;
 	    trackBest(population.individuals(), fitnesses);
 	    generation++;
+	    stateSnapshot = createStateSnapshot(generation, bestFitness, fitnesses);
 	    publishGenerationUpdates();
 
 	    return true;
@@ -139,13 +144,7 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	 * @return A GAState object representing the current state of the GA, which can be used for UI display or logging.
 	 */
 	public GAState getState() {
-		double[] currentFitnesses = fitnesses;
-		if (currentFitnesses == null) {
-			return new GAState(0, Double.NEGATIVE_INFINITY, 0.0, 0.0, 0.0);
-		}
-		double mean = Arrays.stream(currentFitnesses).average().orElse(0.0);
-		double worst = Arrays.stream(currentFitnesses).min().orElse(0.0);
-		return new GAState(generation, bestFitness, mean, worst, 0.0);
+		return stateSnapshot;
 	}
 	
 	/**
@@ -221,25 +220,11 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 		}
 	}
 
-	// wrap helper to create a GAPopulation from a list of individuals. This allows us to maintain 
-	// the population as a GAPopulation interface while still using simple lists internally.
-	private GAPopulation<C> wrap(List<C> individuals) {
-		return new GAPopulation<C>() {
-			@Override
-			public List<C> individuals() {
-				return individuals;
-			}
-
-			@Override
-			public int size() {
-				return individuals.size();
-			}
-
-			@Override
-			public GAPopulation<C> copy() {
-				return wrap(new ArrayList<>(individuals));
-			}
-		};
+	private static GAState createStateSnapshot(long generation, double bestFitness,
+			double[] currentFitnesses) {
+		double mean = Arrays.stream(currentFitnesses).average().orElse(0.0);
+		double worst = Arrays.stream(currentFitnesses).min().orElse(0.0);
+		return new GAState(generation, bestFitness, mean, worst, 0.0);
 	}
 
 	private static String fmt(double x) {

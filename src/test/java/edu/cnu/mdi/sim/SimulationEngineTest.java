@@ -290,6 +290,86 @@ public class SimulationEngineTest {
         assertEquals(0L, engine.getContext().getStepCount());
     }
 
+    @Test
+    public void testPostingBeforeListenerDoesNotDisableCoalescedMessages() throws Exception {
+        SimulationEngine engine = new SimulationEngine(new Simulation() {
+            @Override public void init(SimulationContext ctx) {}
+            @Override public boolean step(SimulationContext ctx) { return false; }
+        }, config(false));
+        engine.postMessage("before listener");
+
+        CountDownLatch received = new CountDownLatch(1);
+        List<String> messages = new CopyOnWriteArrayList<>();
+        engine.addListener(new SimulationListener() {
+            @Override public void onMessage(SimulationContext ctx, String message) {
+                messages.add(message);
+                received.countDown();
+            }
+        });
+        engine.postMessage("after listener");
+
+        assertTrue(received.await(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS));
+        assertEquals(List.of("after listener"), messages);
+    }
+
+    @Test
+    public void testOneCoalescedPayloadIsConsistentAcrossListeners() throws Exception {
+        SimulationEngine engine = new SimulationEngine(new Simulation() {
+            @Override public void init(SimulationContext ctx) {}
+            @Override public boolean step(SimulationContext ctx) { return false; }
+        }, config(false));
+        CountDownLatch firstListenerEntered = new CountDownLatch(1);
+        CountDownLatch releaseFirstListener = new CountDownLatch(1);
+        List<String> firstMessages = new CopyOnWriteArrayList<>();
+        List<String> secondMessages = new CopyOnWriteArrayList<>();
+        engine.addListener(new SimulationListener() {
+            @Override public void onMessage(SimulationContext ctx, String message) {
+                firstMessages.add(message);
+                if (firstMessages.size() == 1) {
+                    firstListenerEntered.countDown();
+                    try {
+                        releaseFirstListener.await(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+            }
+        });
+        engine.addListener(new SimulationListener() {
+            @Override public void onMessage(SimulationContext ctx, String message) {
+                secondMessages.add(message);
+            }
+        });
+
+        engine.postMessage("first");
+        assertTrue(firstListenerEntered.await(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS));
+        engine.postMessage("second");
+        releaseFirstListener.countDown();
+        flushEdt();
+
+        assertEquals("first", firstMessages.get(0));
+        assertEquals("first", secondMessages.get(0));
+    }
+
+    @Test
+    public void testErrorTransitionsToFailedAndRunsShutdown() throws Exception {
+        AtomicInteger shutdownCalls = new AtomicInteger();
+        SimulationEngine engine = new SimulationEngine(new Simulation() {
+            @Override public void init(SimulationContext ctx) {}
+            @Override public boolean step(SimulationContext ctx) {
+                throw new AssertionError("broken invariant");
+            }
+            @Override public void shutdown(SimulationContext ctx) {
+                shutdownCalls.incrementAndGet();
+            }
+        }, config(true));
+
+        engine.start();
+        assertTrue(engine.awaitTermination(TIMEOUT.toMillis()));
+        assertEquals(SimulationState.FAILED, engine.getState());
+        assertEquals(1, shutdownCalls.get());
+    }
+
     private static SimulationEngineConfig config(boolean autoRun) {
         return new SimulationEngineConfig(0, 0, 0, autoRun);
     }

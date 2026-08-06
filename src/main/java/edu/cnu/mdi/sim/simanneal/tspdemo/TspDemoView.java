@@ -485,8 +485,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
     // -------------------------------------------------------------------------
 
     /**
-     * Called on the simulation thread each time any move is accepted
-     * (including uphill moves).
+	 * Called on the Swing EDT for the latest coalesced accepted move.
      * <p>
      * Forwards the (temperature, energy) point to the E vs T scatter plot as
      * a gray accepted-move point.
@@ -501,7 +500,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
     }
 
     /**
-     * Called on the simulation thread each time a new best solution is found.
+	 * Called on the Swing EDT for the latest coalesced new-best notification.
      *
      * <p>
      * Two things happen here:
