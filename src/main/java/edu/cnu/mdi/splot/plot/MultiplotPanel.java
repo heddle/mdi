@@ -92,13 +92,33 @@ public class MultiplotPanel extends JPanel {
     /** Current active plot entry (null means no active plot). */
     private PlotEntry active;
 
+    /** Whether Gallery remains visible when fewer than two plots are present. */
+    private final boolean showSinglePlotGallery;
+
     /**
      * Create a multi-plot panel.
      *
      * @param includeFileMenu if true, include a {@code File} menu with {@code Save}
      */
     public MultiplotPanel(boolean includeFileMenu) {
+        this(includeFileMenu, true);
+    }
+
+    /**
+     * Create a plot host with explicit single-plot Gallery behavior.
+     *
+     * <p>This overload is primarily useful to unified plot hosts such as
+     * {@link PlotDeck}. Existing callers retain the historical behavior through
+     * {@link #MultiplotPanel(boolean)}, which always displays Gallery.</p>
+     *
+     * @param includeFileMenu if true, include a {@code File} menu with {@code Save}
+     * @param showSinglePlotGallery if true, display Gallery even with zero or one
+     *                              registered plots; if false, display it only
+     *                              when at least two plots are available
+     */
+    protected MultiplotPanel(boolean includeFileMenu, boolean showSinglePlotGallery) {
         super(new BorderLayout(4, 4));
+        this.showSinglePlotGallery = showSinglePlotGallery;
 
         // Menus
         add(menuBar, BorderLayout.NORTH);
@@ -115,6 +135,7 @@ public class MultiplotPanel extends JPanel {
         // Start empty
         showEmpty();
         updateSaveEnabled();
+        updateGalleryVisibility();
     }
 
     // ------------------------------------------------------------------------
@@ -193,6 +214,24 @@ public class MultiplotPanel extends JPanel {
         return (a == null) ? null : a.plotPanel;
     }
 
+    /**
+     * Returns the menu bar owned by this plot host.
+     *
+     * <p>The returned component is live. It is exposed for embedding and
+     * inspection; callers should prefer the plot-host methods over directly
+     * removing MDI-managed menus.</p>
+     *
+     * @return menu bar containing File, Gallery, and active-plot edit menus
+     */
+    public JMenuBar getMenuBar() {
+        return menuBar;
+    }
+
+    /** @return number of plots currently registered with this host */
+    public int getPlotCount() {
+        return entries.size();
+    }
+
     // ------------------------------------------------------------------------
     // Internal implementation (EDT only)
     // ------------------------------------------------------------------------
@@ -213,6 +252,7 @@ public class MultiplotPanel extends JPanel {
 
         PlotEntry entry = new PlotEntry(title, key, pp, mi);
         entries.add(entry);
+        updateGalleryVisibility();
 
         mi.addActionListener(e -> setActiveEntry(entry));
 
@@ -252,6 +292,7 @@ public class MultiplotPanel extends JPanel {
         galleryGroup.remove(victim.menuItem);
         cardPanel.remove(victim.plotPanel);
         entries.remove(victim);
+        updateGalleryVisibility();
 
         // Choose a new active plot if needed
         if (wasActive) {
@@ -286,6 +327,7 @@ public class MultiplotPanel extends JPanel {
         }
         entries.clear();
         active = null;
+        updateGalleryVisibility();
 
         showEmpty();
         updateSaveEnabled();
@@ -419,6 +461,11 @@ public class MultiplotPanel extends JPanel {
         if (saveItem != null) {
             saveItem.setEnabled(active != null && active.plotPanel != null && active.plotPanel.getPlotCanvas() != null);
         }
+    }
+
+    private void updateGalleryVisibility() {
+        requireEDT();
+        galleryMenu.setVisible(showSinglePlotGallery || entries.size() > 1);
     }
 
     private File getInitialChooserDirectory() {

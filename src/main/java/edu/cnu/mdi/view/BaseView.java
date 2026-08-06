@@ -210,6 +210,20 @@ public class BaseView extends JInternalFrame
     }
 
     /**
+     * Construct a view from an immutable typed configuration.
+     *
+     * <p>The options are defensively copied before initialization. This
+     * overload is additive; existing key/value and {@link Properties}
+     * constructors retain their behavior.</p>
+     *
+     * @param options view initialization options; must not be {@code null}
+     * @throws NullPointerException if {@code options} is null
+     */
+    public BaseView(ViewOptions options) {
+        this(java.util.Objects.requireNonNull(options, "options").toProperties());
+    }
+
+    /**
      * Construct a {@code BaseView} from a pre-built {@link Properties} object.
      *
      * @param props configuration properties; must not be {@code null}
