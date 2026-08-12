@@ -1,6 +1,7 @@
 package edu.cnu.mdi.component.checkboxarray;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.ItemListener;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -32,6 +33,7 @@ public class CheckBoxArray extends JPanel {
 		for (int i = 0; i < numColumns; i++) {
 			JPanel column = new JPanel();
 			column.setLayout(new BoxLayout(column, BoxLayout.Y_AXIS));
+			column.setAlignmentY(Component.TOP_ALIGNMENT);
 			subPanels[i] = column;
 			box.add(column);
 			if (i < numColumns - 1) {
