@@ -1,14 +1,17 @@
 package edu.cnu.mdi.util;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringTokenizer;
 
 import javax.swing.SwingConstants;
 
@@ -16,6 +19,72 @@ import javax.swing.SwingConstants;
 public final class TextUtils {
 
 	private TextUtils() {
+	}
+
+	public static void drawGhostText(Graphics g, String text, int x, int y) {
+		drawGhostText(g, text, x, y, Color.WHITE, Color.BLACK);
+	}
+
+	public static void drawGhostText(Graphics g, String text, int x, int y, Color foreground, Color background) {
+		if (g == null || text == null || foreground == null || background == null) {
+			return;
+		}
+		g.setColor(foreground);
+		g.drawString(text, x, y + 1);
+		g.setColor(background);
+		g.drawString(text, x, y);
+	}
+
+	public static void drawHaloText(Graphics g, String text, int x, int y) {
+		drawHaloText(g, text, x, y, Color.BLACK, Color.WHITE);
+	}
+
+	public static void drawHaloText(Graphics g, String text, int x, int y, Color textColor, Color haloColor) {
+		if (g == null || text == null || textColor == null || haloColor == null) {
+			return;
+		}
+		g.setColor(haloColor);
+		g.drawString(text, x + 1, y);
+		g.drawString(text, x - 1, y);
+		g.drawString(text, x, y + 1);
+		g.drawString(text, x, y - 1);
+		g.setColor(textColor);
+		g.drawString(text, x, y);
+	}
+
+	public static Rectangle sizeText(Component component, Point basePoint, String text, Font font) {
+		FontMetrics metrics = component.getFontMetrics(font);
+		return new Rectangle(basePoint.x, basePoint.y - metrics.getAscent(), metrics.stringWidth(text),
+				metrics.getAscent() + metrics.getDescent());
+	}
+
+	public static Font nextSmallerFont(Font font, int stepDown) {
+		return (font == null) ? null : font.deriveFont((float) (font.getSize() - stepDown));
+	}
+
+	public static Font nextBiggerFont(Font font, int stepUp) {
+		return (font == null) ? null : font.deriveFont((float) (font.getSize() + stepUp));
+	}
+
+	public static String[] tokens(String text, String delimiters) {
+		StringTokenizer tokenizer = new StringTokenizer(text, delimiters);
+		String[] result = new String[tokenizer.countTokens()];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = tokenizer.nextToken();
+		}
+		return result;
+	}
+
+	public static String[] commaSeparatedToArray(String text) {
+		if (text == null) {
+			return null;
+		}
+		String compact = text.replaceAll("\\s", "");
+		return compact.isEmpty() ? null : tokens(compact, ",");
+	}
+
+	public static String arrayToCommaSeparated(String[] values) {
+		return (values == null) ? "" : String.join(", ", values);
 	}
 
 	/**
