@@ -581,11 +581,19 @@ public class BaseMDIApplication extends JFrame {
 	 * </p>
 	 */
 	protected void onVirtualDesktopReady() {
-	    // Frame is now showing — safe to reconfigure geometry and apply layout.
-	    if (managedVirtualView != null) {
-	        managedVirtualView.toFront();
-	    }
+		// Frame is now showing — safe to reconfigure geometry and apply layout.
+		if (managedVirtualView != null) {
+			managedVirtualView.toFront();
+		}
 		standardVirtualDesktopReady(managedVirtualView, this::defaultViewLayout, true);
+
+		// The ready callback runs after setVisible(true), and configuring internal
+		// frames can invalidate the already-realized hierarchy. Some window systems
+		// do not schedule another top-level paint until the frame is moved. Finish
+		// the one-shot layout explicitly so the first frame is never left blank.
+		getRootPane().revalidate();
+		validate();
+		repaint();
 	}
 
 	/**
