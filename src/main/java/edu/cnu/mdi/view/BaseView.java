@@ -1163,17 +1163,24 @@ public class BaseView extends JInternalFrame
                 height = 300;
                 double fraction = PropertyUtils.getFraction(props);
                 if (Double.isFinite(fraction) && fraction > 0.05 && fraction <= 1.0) {
-                	
+
                 	Dimension size = Environment.getInstance().getFrameSize();
-                    double aspect = PropertyUtils.getAspectRatio(props);
-                    height = (int) (fraction * size.height);
-                    if (aspect > 0.001) {
-                        // Width derived from requested height and aspect ratio.
-                        width = (int) (height * aspect);
-                    } else {
-                        // No aspect given: match the height fraction on width too.
-                        width = (int) (fraction * size.width);
-                    }
+                	// getFrameSize() is null until some BaseMDIApplication has been
+                	// constructed and called setFrameSize() (see BaseMDIApplication's
+                	// constructor). A view built standalone — e.g. a demo's own
+                	// main(), or a test — has no such frame yet. Keep the 400x300
+                	// safe fallback above instead of dereferencing a null size.
+                	if (size != null) {
+                	    double aspect = PropertyUtils.getAspectRatio(props);
+                	    height = (int) (fraction * size.height);
+                	    if (aspect > 0.001) {
+                	        // Width derived from requested height and aspect ratio.
+                	        width = (int) (height * aspect);
+                	    } else {
+                	        // No aspect given: match the height fraction on width too.
+                	        width = (int) (fraction * size.width);
+                	    }
+                	}
                }
             }
 
