@@ -1103,9 +1103,11 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 		double scaleX = _worldSystem.width / w;
 		double scaleY = _worldSystem.height / h;
 
-		// Map pixel (0,0) → world top-left; y-axis flipped because screen y
-		// increases downward while world y increases upward.
-		localToWorld = AffineTransform.getTranslateInstance(_worldSystem.getMinX(), _worldSystem.getMaxY());
+		// Preserve signed extents: negative width intentionally reverses x and
+		// negative height reverses y. Pixel (0,0) maps to the declared world
+		// origin plus its y extent.
+		localToWorld = AffineTransform.getTranslateInstance(
+				_worldSystem.x, _worldSystem.y + _worldSystem.height);
 		localToWorld.concatenate(AffineTransform.getScaleInstance(scaleX, -scaleY));
 
 		try {

@@ -136,6 +136,27 @@ public class BaseContainerTest {
     }
 
     @Test
+    void negativeWorldWidthReversesTheXAxis() {
+        runOnEdt(() -> {
+        BaseContainer c = new BaseContainer(new Rectangle2D.Double(20, -20, -40, 40));
+        c.setSize(400, 400);
+        c.setAffineTransforms();
+
+        Point left = new Point();
+        Point right = new Point();
+        c.worldToLocal(left, new Point2D.Double(20, 0));
+        c.worldToLocal(right, new Point2D.Double(-20, 0));
+        assertEquals(0, left.x);
+        assertEquals(400, right.x);
+
+        Point2D.Double world = new Point2D.Double();
+        c.localToWorld(new Point(100, 200), world);
+        assertEquals(10.0, world.x, EPS);
+        assertEquals(0.0, world.y, EPS);
+        });
+    }
+
+    @Test
     void panRecentersWorldAtExpectedLocalPoint() {
         runOnEdt(() -> {
         BaseContainer c = newContainer();
