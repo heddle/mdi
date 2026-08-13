@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.swing.UIManager;
+import javax.swing.BorderFactory;
 
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +70,25 @@ class ColorsPackageTest {
 		assertEquals("Fill", button.getText());
 
 		assertDoesNotThrow(() -> new ColorLabel(Color.RED, null, null));
+	}
+
+	@Test
+	void scaleBarHonorsBorderInsets() {
+		ColorScaleBar bar = new ColorScaleBar(ScientificColorMap.TURBO);
+		bar.setBorder(BorderFactory.createTitledBorder("Scale"));
+		bar.setSize(200, 54);
+		BufferedImage image = new BufferedImage(200, 54, BufferedImage.TYPE_INT_ARGB);
+		var graphics = image.createGraphics();
+		try {
+			bar.paint(graphics);
+		} finally {
+			graphics.dispose();
+		}
+		Insets insets = bar.getInsets();
+		int left = insets.left + 10;
+		int right = bar.getWidth() - insets.right - 10;
+		assertEquals(ScientificColorMap.TURBO.colorAt(1.0 / (right - left - 1)).getRGB(),
+				image.getRGB(left + 1, insets.top + 4));
 	}
 
 	@Test

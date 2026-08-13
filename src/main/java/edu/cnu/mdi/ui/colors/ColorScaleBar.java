@@ -6,6 +6,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.Insets;
 import java.util.Objects;
 
 import javax.swing.JComponent;
@@ -59,14 +60,22 @@ public class ColorScaleBar extends JComponent {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int width = getWidth();
-        int height = getHeight();
-        int barHeight = height / 2;
-        int padding = 10;
+        Insets insets = getInsets();
+        int left = insets.left + 10;
+        int right = getWidth() - insets.right - 10;
+        int top = insets.top + 3;
+        FontMetrics fm = g2d.getFontMetrics();
+        int labelY = getHeight() - insets.bottom - 2;
+        int barBottom = labelY - fm.getAscent() - 4;
+        int barHeight = Math.max(2, barBottom - top);
+
+		if (right <= left || barBottom <= top) {
+			return;
+		}
 
         // 1) Gradient bar
-        for (int x = padding; x < width - padding; x++) {
-            double value = (x - padding) / (width - 2.0 * padding);
+        for (int x = left; x < right; x++) {
+            double value = (x - left) / (double) Math.max(1, right - left - 1);
             Color c;
             if (_map != null) {
                 c = _map.colorAt(value);
@@ -74,20 +83,19 @@ public class ColorScaleBar extends JComponent {
                 c = ScientificColorMap.interpolate(_fallbackScale, value);
             }
             g2d.setColor(c);
-            g2d.drawLine(x, 5, x, 5 + barHeight);
+            g2d.drawLine(x, top, x, barBottom);
         }
 
         // 2) Outline
         g2d.setColor(Color.DARK_GRAY);
-        g2d.drawRect(padding, 5, width - 2 * padding, barHeight);
+        g2d.drawRect(left, top, right - left, barHeight);
 
         // 3) Labels
         g2d.setColor(getForeground());
-        FontMetrics fm = g2d.getFontMetrics();
-        g2d.drawString(minLabel, padding, 15 + barHeight + fm.getAscent());
+        g2d.drawString(minLabel, left, labelY);
 
         int maxLabelWidth = fm.stringWidth(maxLabel);
-        g2d.drawString(maxLabel, width - padding - maxLabelWidth, 15 + barHeight + fm.getAscent());
+        g2d.drawString(maxLabel, right - maxLabelWidth, labelY);
     }
 
 	private static Color[] validatedScale(Color[] scale) {
