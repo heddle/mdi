@@ -28,12 +28,38 @@ class LogPackageTest {
         };
         Log log = Log.getInstance();
         try {
+            log.clearHistoryForTesting();
             log.addLogListener(listener);
             log.addLogListener(listener);
             log.info("once");
             assertEquals(List.of("once"), messages);
         } finally {
             log.removeLogListener(listener);
+        }
+    }
+
+    @Test
+    void newListenerReceivesBoundedHistoryInOrderAndAtOriginalLevels() {
+        Log log = Log.getInstance();
+        log.clearHistoryForTesting();
+        for (int index = 0; index <= Log.HISTORY_CAPACITY; index++) {
+            log.info("info-" + index);
+        }
+        log.warning("warning");
+
+        List<String> messages = new ArrayList<>();
+        ILogListener listener = new ILogListener() {
+            @Override public void info(String message) { messages.add("I:" + message); }
+            @Override public void warning(String message) { messages.add("W:" + message); }
+        };
+        try {
+            log.addLogListener(listener);
+            assertEquals(Log.HISTORY_CAPACITY, messages.size());
+            assertEquals("I:info-2", messages.get(0));
+            assertEquals("W:warning", messages.get(messages.size() - 1));
+        } finally {
+            log.removeLogListener(listener);
+            log.clearHistoryForTesting();
         }
     }
 
