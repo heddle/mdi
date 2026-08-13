@@ -26,6 +26,8 @@ import javax.swing.BorderFactory;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import javax.swing.JRootPane;
 
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
@@ -588,12 +590,35 @@ public class BaseMDIApplication extends JFrame {
 		standardVirtualDesktopReady(managedVirtualView, this::defaultViewLayout, true);
 
 		// The ready callback runs after setVisible(true), and configuring internal
-		// frames can invalidate the already-realized hierarchy. Some window systems
-		// do not schedule another top-level paint until the frame is moved. Finish
-		// the one-shot layout explicitly so the first frame is never left blank.
-		getRootPane().revalidate();
+		// frames can invalidate the already-realized hierarchy. Finish the one-shot
+		// layout and paint synchronously: repaint() merely queues work and can lose a
+		// race with heavyweight application initialization on macOS.
+		JRootPane root = getRootPane();
+		root.revalidate();
 		validate();
-		repaint();
+		root.paintImmediately(0, 0, root.getWidth(), root.getHeight());
+		Toolkit.getDefaultToolkit().sync();
+		schedulePostShowRepaints();
+	}
+
+	/**
+	 * Repaint the realized top-level window a few times after its internal-frame
+	 * hierarchy has been configured. On macOS the native peer can present the
+	 * frame's pre-layout backing buffer even though Swing has already painted the
+	 * reconfigured root pane. A finite set of whole-frame repaint requests bridges
+	 * that peer/layout race without continuous repainting.
+	 */
+	private void schedulePostShowRepaints() {
+		int[] delays = { 50, 250, 750 };
+		for (int delay : delays) {
+			Timer repaintTimer = new Timer(delay, event -> {
+				revalidate();
+				repaint();
+				Toolkit.getDefaultToolkit().sync();
+			});
+			repaintTimer.setRepeats(false);
+			repaintTimer.start();
+		}
 	}
 
 	/**
