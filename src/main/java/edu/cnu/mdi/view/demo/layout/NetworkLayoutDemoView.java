@@ -20,6 +20,7 @@ import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.view.BaseView;
 import edu.cnu.mdi.view.ViewConfiguration;
+import edu.cnu.mdi.view.ViewOptions;
 import edu.cnu.mdi.view.ViewPropertiesBuilder;
 import edu.cnu.mdi.view.VirtualView;
 
@@ -45,20 +46,7 @@ public class NetworkLayoutDemoView extends BaseView {
 	 * Construct the demo view using its canonical default properties.
 	 */
 	public NetworkLayoutDemoView() {
-		this(createDefaultProperties());
-	}
-
-	/**
-	 * Construct a Network Layout Demo View with the given properties.
-	 * <p>
-	 * This is a demo, not a serious application. It demonstrates placing network
-	 * devices on a canvas, with feedback and some custom toolbar buttons.
-	 * </p>
-	 *
-	 * @param props the properties used to configure the view
-	 */
-	public NetworkLayoutDemoView(Properties props) {
-		super(props);
+		super(createDefaultOptions());
 		deviceLayer = new Layer(getIContainer(), "Devices");
 		addToToolBar();
 
@@ -71,24 +59,26 @@ public class NetworkLayoutDemoView extends BaseView {
 	}
 
 	/**
-	 * Create the default properties for this view.
+	 * Create the default options for this view.
 	 *
-	 * @return the default view properties
+	 * @return the default view options
 	 */
-	private static Properties createDefaultProperties() {
-		long toolBits = ToolBits.NAVIGATIONTOOLS | ToolBits.DELETE | ToolBits.CONNECTOR;
+	private static ViewOptions createDefaultOptions() {
+	    long toolBits =
+	            ToolBits.NAVIGATIONTOOLS |
+	            ToolBits.DELETE |
+	            ToolBits.CONNECTOR;
 
-		return new ViewPropertiesBuilder()
-				.fraction(0.7)
-				.aspect(1.2)
-				.toolbarBits(toolBits)
-				.visible(true)
-				.wheelZoom(true)
-				.background(X11Colors.getX11Color("alice blue"))
-				.title(TITLE)
-				.build();
+	    return new ViewPropertiesBuilder()
+	            .fraction(0.7)
+	            .aspect(1.2)
+	            .toolbarBits(toolBits)
+	            .visible(true)
+	            .wheelZoom(true)
+	            .background(X11Colors.getX11Color("alice blue"))
+	            .title(TITLE)
+	            .buildOptions();
 	}
-
 	/**
 	 * Get the view configuration for lazy creation.
 	 *
