@@ -3,6 +3,7 @@ package edu.cnu.mdi.view;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dialog;
+import java.awt.GraphicsEnvironment;
 import java.awt.Window;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -58,6 +59,18 @@ public class InfoDialogHelper {
      */
     private static final WeakHashMap<Window, JDialog> openDialogs =
             new WeakHashMap<>();
+
+    /** Fixed dialog width; HTML content wraps to this, so only height varies. */
+    private static final int DIALOG_WIDTH = 500;
+
+    /** Never shrink below this height, even for very short content. */
+    private static final int MIN_DIALOG_HEIGHT = 300;
+
+    /** Approximate height of the bottom button bar, added to content height. */
+    private static final int BUTTON_BAR_HEIGHT = 50;
+
+    /** Kept clear of the screen edges so the dialog never runs off-screen. */
+    private static final int SCREEN_MARGIN = 120;
 
     /** Utility class: no instances. */
     private InfoDialogHelper() {
@@ -128,7 +141,7 @@ public class InfoDialogHelper {
         buttonPanel.add(closeButton);
         dialog.add(buttonPanel, BorderLayout.SOUTH);
 
-        dialog.setSize(500, 400);
+        sizeToContent(dialog, infoPane);
         dialog.setLocationRelativeTo(parent);
 
         // Remove the entry when the dialog is closed so that a subsequent
@@ -167,10 +180,44 @@ public class InfoDialogHelper {
                 if (view instanceof JEditorPane pane) {
                     pane.setText(info.getAsHTML());
                     pane.setCaretPosition(0);
+                    // Different views have very different amounts of info text; resize
+                    // so short content doesn't leave a mostly-empty dialog and long
+                    // content doesn't get silently clipped behind an overlay scrollbar.
+                    sizeToContent(dialog, pane);
                     return;
                 }
             }
         }
+    }
+
+    /**
+     * Sizes {@code dialog} to fit {@code infoPane}'s rendered HTML content,
+     * within sane bounds.
+     *
+     * <p>{@link JEditorPane#getPreferredSize()} only reports a correct
+     * wrapped height once the pane has been given a width to wrap against, so
+     * this first assigns the dialog's fixed content width via {@link
+     * JEditorPane#setSize} before measuring. The resulting height is clamped
+     * between {@link #MIN_DIALOG_HEIGHT} and the available screen height
+     * (minus {@link #SCREEN_MARGIN}), so very short content doesn't leave an
+     * awkwardly empty dialog and very long content stays on-screen and
+     * scrollable rather than silently clipped.</p>
+     *
+     * @param dialog   the dialog to resize
+     * @param infoPane the editor pane whose content determines the height
+     */
+    private static void sizeToContent(JDialog dialog, JEditorPane infoPane) {
+        infoPane.setSize(DIALOG_WIDTH, Short.MAX_VALUE);
+        int preferredContentHeight = infoPane.getPreferredSize().height;
+
+        int maxHeight = Math.max(MIN_DIALOG_HEIGHT,
+                GraphicsEnvironment.getLocalGraphicsEnvironment()
+                        .getMaximumWindowBounds().height - SCREEN_MARGIN);
+
+        int dialogHeight = Math.min(maxHeight,
+                Math.max(MIN_DIALOG_HEIGHT, preferredContentHeight + BUTTON_BAR_HEIGHT));
+
+        dialog.setSize(DIALOG_WIDTH, dialogHeight);
     }
 
     /**
