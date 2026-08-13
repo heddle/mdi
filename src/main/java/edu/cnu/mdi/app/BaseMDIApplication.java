@@ -609,11 +609,20 @@ public class BaseMDIApplication extends JFrame {
 	 * that peer/layout race without continuous repainting.
 	 */
 	private void schedulePostShowRepaints() {
-		int[] delays = { 50, 250, 750 };
+		// Keep a few pulses beyond the first second. Applications commonly defer
+		// service startup until after their first paint; on macOS that handoff can
+		// coincide with native peer presentation and leave the old white backing
+		// buffer visible until the window is moved.
+		int[] delays = { 50, 250, 750, 1250, 2000, 3500 };
 		for (int delay : delays) {
 			Timer repaintTimer = new Timer(delay, event -> {
 				revalidate();
-				repaint();
+				JRootPane root = getRootPane();
+				if (root != null && root.isShowing() && root.getWidth() > 0 && root.getHeight() > 0) {
+					root.paintImmediately(0, 0, root.getWidth(), root.getHeight());
+				} else {
+					repaint();
+				}
 				Toolkit.getDefaultToolkit().sync();
 			});
 			repaintTimer.setRepeats(false);
