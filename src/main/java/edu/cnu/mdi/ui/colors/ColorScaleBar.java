@@ -10,13 +10,19 @@ import java.awt.Insets;
 import java.util.Objects;
 
 import javax.swing.JComponent;
+import javax.swing.UIManager;
 
 @SuppressWarnings("serial")
 public class ColorScaleBar extends JComponent {
 
+    private static final int DEFAULT_BAR_HEIGHT = 18;
+    private static final int HORIZONTAL_INSET = 10;
+    private static final int VERTICAL_GAP = 4;
+
     private ScientificColorMap _map;
     private String minLabel = "Min";
     private String maxLabel = "Max";
+    private int barHeight = DEFAULT_BAR_HEIGHT;
 
     public ColorScaleBar(ScientificColorMap map) {
 		_map = Objects.requireNonNull(map, "map");
@@ -54,6 +60,51 @@ public class ColorScaleBar extends JComponent {
         repaint();
     }
 
+    /**
+     * Set the painted gradient height. The component's preferred and minimum
+     * heights are updated so layout managers cannot collapse the gradient.
+     *
+     * @param height gradient height in pixels; values below 2 are clamped
+     */
+    public void setBarHeight(int height) {
+        barHeight = Math.max(2, height);
+        updateComponentHeights();
+        revalidate();
+        repaint();
+    }
+
+    /** @return the requested gradient height in pixels */
+    public int getBarHeight() {
+        return barHeight;
+    }
+
+    private void updateComponentHeights() {
+        java.awt.Font font = getFont();
+        if (font == null) {
+            font = UIManager.getFont("Label.font");
+        }
+        if (font == null) {
+            font = new java.awt.Font(java.awt.Font.SANS_SERIF,
+                    java.awt.Font.PLAIN, 11);
+        }
+        int labelHeight = getFontMetrics(font).getHeight();
+        Insets insets = getInsets();
+        int height = insets.top + 3 + barHeight + VERTICAL_GAP
+                + labelHeight + 2 + insets.bottom;
+        int width = Math.max(200, getPreferredSize().width);
+        Dimension size = new Dimension(width, height);
+        setPreferredSize(size);
+        setMinimumSize(new Dimension(1, height));
+    }
+
+    @Override
+    public void setBorder(javax.swing.border.Border border) {
+        super.setBorder(border);
+        if (barHeight > 0) {
+            updateComponentHeights();
+        }
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -61,13 +112,16 @@ public class ColorScaleBar extends JComponent {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         Insets insets = getInsets();
-        int left = insets.left + 10;
-        int right = getWidth() - insets.right - 10;
+        int left = insets.left + HORIZONTAL_INSET;
+        int right = getWidth() - insets.right - HORIZONTAL_INSET;
         int top = insets.top + 3;
         FontMetrics fm = g2d.getFontMetrics();
-        int labelY = getHeight() - insets.bottom - 2;
-        int barBottom = labelY - fm.getAscent() - 4;
-        int barHeight = Math.max(2, barBottom - top);
+        int availableBottom = getHeight() - insets.bottom - fm.getHeight()
+                - VERTICAL_GAP - 2;
+        int paintedBarHeight = Math.min(barHeight,
+                Math.max(2, availableBottom - top));
+        int barBottom = top + paintedBarHeight;
+        int labelY = barBottom + VERTICAL_GAP + fm.getAscent();
 
 		if (right <= left || barBottom <= top) {
 			return;
@@ -88,7 +142,7 @@ public class ColorScaleBar extends JComponent {
 
         // 2) Outline
         g2d.setColor(Color.DARK_GRAY);
-        g2d.drawRect(left, top, right - left, barHeight);
+        g2d.drawRect(left, top, right - left, paintedBarHeight);
 
         // 3) Labels
         g2d.setColor(getForeground());

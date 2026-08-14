@@ -111,26 +111,10 @@ public class VirtualView extends BaseView
     public static final int BOTTOMCENTER = 5;
     /** Constrain placement to center of the target cell (special-cases). */
     public static final int CENTER = 6;
-    /** Constrain placement to center-left of the target cell. */
+    /** Fit the view into the left half of the target cell. */
     public static final int CENTERLEFT = 7;
-    /** Constrain placement to center-right of the target cell. */
+    /** Fit the view into the right half of the target cell. */
     public static final int CENTERRIGHT = 8;
-
-    /**
-     * Vertical correction (pixels) applied when placing a view with the
-     * {@link #CENTERRIGHT} constraint.
-     *
-     * <p>Geometrically, centering a view vertically within a column places its
-     * title bar near the mid-point of the desktop area, where it is easily
-     * obscured by views docked in the upper half. This constant nudges the
-     * view upward from the geometric centre so the title bar is fully visible
-     * without manual repositioning.</p>
-     *
-     * <p>The value was chosen empirically on a 1080p display with default view
-     * decoration height. It may need adjustment on high-DPI screens or when
-     * custom decorations change the title-bar height significantly.</p>
-     */
-    private static final int CENTERRIGHT_VERTICAL_NUDGE_PX = -20;
 
     // ------------------------------------------------------------------------
     // Singleton access (convenience, application-wide)
@@ -956,8 +940,9 @@ public class VirtualView extends BaseView
      *
      * <p>The constraint constants ({@link #UPPERLEFT}, {@link #UPPERRIGHT},
      * {@link #BOTTOMLEFT}, {@link #BOTTOMRIGHT}, {@link #TOPCENTER},
-     * {@link #BOTTOMCENTER}, {@link #CENTERLEFT}, {@link #CENTERRIGHT}) place
-     * the view at the corresponding position within the target cell. The
+     * {@link #BOTTOMCENTER}) place the view at the corresponding position
+     * within the target cell. {@link #CENTERLEFT} and {@link #CENTERRIGHT}
+     * instead tile a view into the corresponding half of the usable cell. The
      * special value {@link #CENTER} delegates to {@link #moveTo(BaseView, int)}
      * for centred placement.</p>
      *
@@ -1027,15 +1012,30 @@ public class VirtualView extends BaseView
             int yf = (int) (bottom - bounds.height - 7 * _SLOP);
             dh = xf - x0;
             dv = yf - y0;
-        } else if (constraint == CENTERLEFT) {
-            int xf = (int) (left);
-            dh = xf - x0;
-        } else if (constraint == CENTERRIGHT) {
-            int xf = (int) (right - bounds.width - _SLOP);
-            dh = xf - x0;
-            // Nudge upward so the title bar clears views in the upper half of
-            // the column. See CENTERRIGHT_VERTICAL_NUDGE_PX for rationale.
-            dv = CENTERRIGHT_VERTICAL_NUDGE_PX;
+        } else if (constraint == CENTERLEFT || constraint == CENTERRIGHT) {
+            int cellWidth = Math.max(1, (int) Math.round(dx));
+            int halfWidth = Math.max(1, (cellWidth - 3 * _SLOP) / 2);
+            // The virtual-desktop navigator occupies the top of every cell.
+            // Reserve its actual frame bounds instead of allowing tiled views
+            // to slide underneath it.  A symmetric gutter at the bottom keeps
+            // the tiled pair visually separated from the desktop edge.
+            int navigatorBottom = getY() + getHeight();
+            int yf = Math.max((int) Math.round(top) + _SLOP,
+                    navigatorBottom + _SLOP);
+            // Use the actual desktop pane rather than the virtual world's
+            // nominal height. Frame decorations and display scaling make the
+            // two differ, which otherwise consumes the requested gutter.
+            int desktopBottom = (getDesktopPane() == null)
+                    ? (int) Math.round(bottom)
+                    : getDesktopPane().getHeight();
+            int usableBottom = desktopBottom - 2 * _SLOP;
+            int height = Math.max(1, usableBottom - yf);
+            int xf = (int) Math.round(left) + _SLOP;
+            if (constraint == CENTERRIGHT) {
+                xf += halfWidth + _SLOP;
+            }
+            view.setBounds(xf + delh, yf + delv, halfWidth, height);
+            return;
         }
 
         view.offset(dh + delh, dv + delv);
