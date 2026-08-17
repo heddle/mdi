@@ -584,10 +584,13 @@ public class BaseMDIApplication extends JFrame {
 	 */
 	protected void onVirtualDesktopReady() {
 		// Frame is now showing — safe to reconfigure geometry and apply layout.
-		if (managedVirtualView != null) {
-			managedVirtualView.toFront();
-		}
 		standardVirtualDesktopReady(managedVirtualView, this::defaultViewLayout, true);
+		// The navigator is an overview, not a palette. Keep ordinary application
+		// views above it when their bounds overlap, matching normal desktop window
+		// stacking and avoiding a creation-order dependency.
+		if (managedVirtualView != null) {
+			managedVirtualView.toBack();
+		}
 
 		// The ready callback runs after setVisible(true), and configuring internal
 		// frames can invalidate the already-realized hierarchy. Finish the one-shot
