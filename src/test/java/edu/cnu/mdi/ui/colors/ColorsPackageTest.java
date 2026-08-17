@@ -38,6 +38,9 @@ class ColorsPackageTest {
 		ColorScaleBar bar = new ColorScaleBar(scale);
 		scale[0] = Color.RED;
 		assertThrows(NullPointerException.class, () -> bar.setLabels(null, "max"));
+		assertThrows(IllegalArgumentException.class, () -> bar.setTickLabels("only"));
+		assertThrows(NullPointerException.class, () -> bar.setTickLabels("min", null, "max"));
+		bar.setTickLabels("0", "0.5", "1");
 		bar.setSize(100, 50);
 		BufferedImage image = new BufferedImage(100, 50, BufferedImage.TYPE_INT_ARGB);
 		var graphics = image.createGraphics();

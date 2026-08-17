@@ -20,8 +20,7 @@ public class ColorScaleBar extends JComponent {
     private static final int VERTICAL_GAP = 4;
 
     private ScientificColorMap _map;
-    private String minLabel = "Min";
-    private String maxLabel = "Max";
+    private String[] labels = {"Min", "Max"};
     private int barHeight = DEFAULT_BAR_HEIGHT;
 
     public ColorScaleBar(ScientificColorMap map) {
@@ -55,8 +54,19 @@ public class ColorScaleBar extends JComponent {
     }
 
     public void setLabels(String min, String max) {
-		this.minLabel = Objects.requireNonNull(min, "min");
-		this.maxLabel = Objects.requireNonNull(max, "max");
+		setTickLabels(min, max);
+    }
+
+    /** Set labels at evenly spaced positions along the color bar. */
+    public void setTickLabels(String... tickLabels) {
+		Objects.requireNonNull(tickLabels, "tickLabels");
+		if (tickLabels.length < 2) {
+			throw new IllegalArgumentException("at least two tick labels are required");
+		}
+		labels = tickLabels.clone();
+		for (String label : labels) {
+			Objects.requireNonNull(label, "tickLabels contains null");
+		}
         repaint();
     }
 
@@ -146,10 +156,19 @@ public class ColorScaleBar extends JComponent {
 
         // 3) Labels
         g2d.setColor(getForeground());
-        g2d.drawString(minLabel, left, labelY);
-
-        int maxLabelWidth = fm.stringWidth(maxLabel);
-        g2d.drawString(maxLabel, right - maxLabelWidth, labelY);
+        int intervals = labels.length - 1;
+        for (int i = 0; i < labels.length; i++) {
+            String label = labels[i];
+            int center = left + (int) Math.round(i * (right - left) / (double) intervals);
+            int labelWidth = fm.stringWidth(label);
+            int labelX = center - labelWidth / 2;
+            if (i == 0) {
+                labelX = left;
+            } else if (i == intervals) {
+                labelX = right - labelWidth;
+            }
+            g2d.drawString(label, labelX, labelY);
+        }
     }
 
 	private static Color[] validatedScale(Color[] scale) {
