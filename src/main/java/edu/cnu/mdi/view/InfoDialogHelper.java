@@ -115,6 +115,7 @@ public class InfoDialogHelper {
         JDialog existing = openDialogs.get(owner);
         if (existing != null && existing.isDisplayable()) {
             updateContent(existing, info);
+			existing.setVisible(true);
             existing.toFront();
             return existing;
         }
@@ -122,6 +123,7 @@ public class InfoDialogHelper {
         // Build a new dialog.
         JDialog dialog = new JDialog(owner, "Information",
                 Dialog.ModalityType.MODELESS);
+		dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
         dialog.setAlwaysOnTop(false);
         dialog.setAutoRequestFocus(false);

@@ -7,7 +7,7 @@ import java.util.Random;
  *
  * @param <S> solution type handled by the problem
  */
-public interface TemperatureHeuristic<S extends AnnealingSolution> {
+public interface TemperatureHeuristic<S extends AnnealingSolution<S>> {
 	/**
 	 * Estimate an initial temperature and associated diagnostics.
 	 *

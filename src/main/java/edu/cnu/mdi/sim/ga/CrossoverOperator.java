@@ -8,7 +8,7 @@ import java.util.Random;
  * A crossover operator defines how two parents are combined to produce one or more children.
  * The GA will call this interface to perform crossover between selected parents.
  */
-public interface CrossoverOperator<T extends GASolution> {
+public interface CrossoverOperator<T extends GASolution<T>> {
 	/**
 	 * Combine two parents into one or more new children.
 	 *

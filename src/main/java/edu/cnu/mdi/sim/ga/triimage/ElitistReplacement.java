@@ -14,7 +14,7 @@ import edu.cnu.mdi.sim.ga.ReplacementOperator;
  * The elite individuals are selected based on their fitness, ensuring that the best solutions are retained across
  *  generations.
  */
-public final class ElitistReplacement<C extends GASolution> implements ReplacementOperator<C> {
+public final class ElitistReplacement<C extends GASolution<C>> implements ReplacementOperator<C> {
 
 	private final int eliteCount;
 
@@ -27,6 +27,15 @@ public final class ElitistReplacement<C extends GASolution> implements Replaceme
 			throw new IllegalArgumentException("eliteCount must be >= 0");
 		}
 		this.eliteCount = eliteCount;
+	}
+
+	@Override
+	public int offspringCount(int populationSize) {
+		if (eliteCount > populationSize) {
+			throw new IllegalArgumentException(
+					"eliteCount must not exceed population size");
+		}
+		return populationSize - eliteCount;
 	}
 
 	@Override

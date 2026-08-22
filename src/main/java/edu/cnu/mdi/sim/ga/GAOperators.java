@@ -13,7 +13,7 @@ import java.util.Objects;
  * @param mutation offspring mutation strategy
  * @param replacement next-generation strategy
  */
-public record GAOperators<C extends GASolution>(
+public record GAOperators<C extends GASolution<C>>(
 	    SelectionOperator<C>   selection,
 	    CrossoverOperator<C>   crossover,
 	    MutationOperator<C>    mutation,

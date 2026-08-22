@@ -53,7 +53,7 @@ public class GeneticAlgorithmSimulationTest {
                     offspringSeen.set(offspring.size());
                     List<ValueSolution> next = new ArrayList<>();
                     next.add(population.get(3));
-                    next.addAll(offspring);
+                    next.addAll(offspring.subList(0, 3));
                     return next;
                 });
         GeneticAlgorithmSimulation<ValueSolution> simulation =
@@ -63,7 +63,7 @@ public class GeneticAlgorithmSimulationTest {
         simulation.init(context);
         simulation.step(context);
 
-        assertEquals(3, offspringSeen.get());
+        assertEquals(4, offspringSeen.get());
         assertEquals(4, simulation.getPopulationSnapshot().size());
     }
 
@@ -101,11 +101,11 @@ public class GeneticAlgorithmSimulationTest {
     @Test
     public void testConfigurationRejectsInvalidPopulationAndRates() {
         assertThrows(IllegalArgumentException.class,
-                () -> new GAConfig(0, 1, 0.5, 0.1, 0, 1, 1, 1));
+                () -> new GAConfig(0, 1, 0.5, 0.1, 1, 1, 1));
         assertThrows(IllegalArgumentException.class,
-                () -> new GAConfig(2, 1, Double.NaN, 0.1, 0, 1, 1, 1));
+                () -> new GAConfig(2, 1, Double.NaN, 0.1, 1, 1, 1));
         assertThrows(IllegalArgumentException.class,
-                () -> new GAConfig(2, 1, 0.5, 0.1, 3, 1, 1, 1));
+				() -> new GAConfig(2, 1, 0.5, 0.1, -1, 1, 1));
     }
 
 	@Test
@@ -142,14 +142,14 @@ public class GeneticAlgorithmSimulationTest {
 
 		GeneticAlgorithmSimulation<ValueSolution> neverMutates =
 				new GeneticAlgorithmSimulation<>(problem,
-						new GAConfig(1, 1, 1.0, 0.0, 0, 0, 0, 123L), operators);
+						new GAConfig(1, 1, 1.0, 0.0, 0, 0, 123L), operators);
 		neverMutates.init(context());
 		neverMutates.step(context());
 		assertEquals(0, mutations.get());
 
 		GeneticAlgorithmSimulation<ValueSolution> alwaysMutates =
 				new GeneticAlgorithmSimulation<>(problem,
-						new GAConfig(1, 1, 1.0, 1.0, 0, 0, 0, 123L), operators);
+						new GAConfig(1, 1, 1.0, 1.0, 0, 0, 123L), operators);
 		alwaysMutates.init(context());
 		alwaysMutates.step(context());
 		assertEquals(1, mutations.get());
@@ -174,7 +174,7 @@ public class GeneticAlgorithmSimulationTest {
 
     private static GAConfig config(int populationSize, int eliteCount) {
         return new GAConfig(populationSize, 10, 1.0, 0.0,
-                eliteCount, 0, 0, 123L);
+                0, 0, 123L);
     }
 
     private static SimulationContext context() {
@@ -184,7 +184,7 @@ public class GeneticAlgorithmSimulationTest {
         }, new SimulationEngineConfig(0, 0, 0, false)).getContext();
     }
 
-    private static final class ValueSolution implements GASolution {
+    private static final class ValueSolution implements GASolution<ValueSolution> {
         private int value;
 
         ValueSolution(int value) {
@@ -192,9 +192,8 @@ public class GeneticAlgorithmSimulationTest {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
-        public <S extends GASolution> S copy() {
-            return (S) new ValueSolution(value);
+        public ValueSolution copy() {
+            return new ValueSolution(value);
         }
 
         @Override

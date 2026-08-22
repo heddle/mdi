@@ -7,7 +7,7 @@ import java.util.Random;
  * how an individual solution is randomly modified.
  * The GA will call this interface to perform mutation on individuals in the population.
  */
-public interface MutationOperator<T extends GASolution> {
+public interface MutationOperator<T extends GASolution<T>> {
 	/**
 	 * Notify the operator before offspring are created for a generation.
 	 * Stateful operators may use this to adapt their mutation strength.

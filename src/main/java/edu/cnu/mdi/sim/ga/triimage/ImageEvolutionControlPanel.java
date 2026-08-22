@@ -8,6 +8,7 @@ import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
@@ -67,6 +68,7 @@ public class ImageEvolutionControlPanel extends JPanel
     private final JSlider triangleSlider;
     private final JSlider populationSlider;
     private final JButton resetButton;
+    private final JComboBox<ImageFitnessMode> fitnessMode;
 
     // -------------------------------------------------------------------------
     // State
@@ -113,6 +115,12 @@ public class ImageEvolutionControlPanel extends JPanel
         sliders.setBorder(BorderFactory.createEmptyBorder(4, 0, 4, 0));
         sliders.add(triPanel);
         sliders.add(popPanel);
+		JPanel fitnessPanel = new JPanel();
+		fitnessPanel.setBorder(new CommonBorder("Fitness"));
+		fitnessMode = new JComboBox<>(ImageFitnessMode.values());
+		fitnessMode.setSelectedItem(ImageFitnessMode.LINE_AWARE);
+		fitnessPanel.add(fitnessMode);
+		sliders.add(fitnessPanel);
         add(sliders, BorderLayout.CENTER);
 
         // ── Right: reset button ───────────────────────────────────────────────
@@ -187,6 +195,7 @@ public class ImageEvolutionControlPanel extends JPanel
 
         triangleSlider.setEnabled(editable);
         populationSlider.setEnabled(editable);
+		fitnessMode.setEnabled(editable);
         resetButton.setEnabled(editable && host != null);
     }
 
@@ -200,10 +209,12 @@ public class ImageEvolutionControlPanel extends JPanel
             int population = populationSlider.getValue();
 
             if (SwingUtilities.isEventDispatchThread()) {
-                resettable.requestReset(triangles, population);
+				ImageFitnessMode mode = (ImageFitnessMode) fitnessMode.getSelectedItem();
+				resettable.requestReset(triangles, population, mode);
             } else {
                 SwingUtilities.invokeLater(
-                        () -> resettable.requestReset(triangles, population));
+						() -> resettable.requestReset(triangles, population,
+								(ImageFitnessMode) fitnessMode.getSelectedItem()));
             }
         }
     }

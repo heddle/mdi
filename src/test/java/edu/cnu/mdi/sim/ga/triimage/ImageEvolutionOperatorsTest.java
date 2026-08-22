@@ -2,6 +2,7 @@ package edu.cnu.mdi.sim.ga.triimage;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,7 +12,19 @@ import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
+import edu.cnu.mdi.sim.SimulationState;
+
 class ImageEvolutionOperatorsTest {
+
+	@Test
+	void targetImageCanOnlyChangeInEditableStates() {
+		assertTrue(ImageEvolutionDemoView.isImageChangeAllowed(SimulationState.READY));
+		assertTrue(ImageEvolutionDemoView.isImageChangeAllowed(SimulationState.PAUSED));
+		assertTrue(ImageEvolutionDemoView.isImageChangeAllowed(SimulationState.TERMINATED));
+		assertTrue(ImageEvolutionDemoView.isImageChangeAllowed(SimulationState.FAILED));
+		assertFalse(ImageEvolutionDemoView.isImageChangeAllowed(SimulationState.RUNNING));
+		assertFalse(ImageEvolutionDemoView.isImageChangeAllowed(SimulationState.INITIALIZING));
+	}
 
 	@Test
 	void crossoverCopiesWholeTriangles() {
@@ -62,6 +75,25 @@ class ImageEvolutionOperatorsTest {
 		assertNotEquals(Color.BLACK.getRGB(), chromosome.backgroundRgb);
 		assertArrayEquals(chromosome.getGenesCopy(), chromosome.copy().getGenesCopy());
 		assertEquals(chromosome.backgroundRgb, chromosome.copy().backgroundRgb);
+	}
+
+	@Test
+	void lineAwareFitnessAddsAnEdgeErrorSignal() {
+		BufferedImage target = new BufferedImage(50, 50, BufferedImage.TYPE_INT_RGB);
+		for (int y = 0; y < 50; y++) {
+			for (int x = 0; x < 50; x++) {
+				target.setRGB(x, y, x < 25 ? Color.BLACK.getRGB() : Color.WHITE.getRGB());
+			}
+		}
+		ImageApproximationProblem colorProblem = new ImageApproximationProblem(
+				target, 1, ImageFitnessMode.COLOR_MSE);
+		ImageApproximationProblem lineProblem = new ImageApproximationProblem(
+				target, 1, ImageFitnessMode.LINE_AWARE);
+		PolygonChromosome chromosome = chromosomeFilledWith(1, 0.5);
+
+		assertEquals(ImageFitnessMode.LINE_AWARE, lineProblem.getFitnessMode());
+		assertNotEquals(colorProblem.fitness(chromosome),
+				lineProblem.fitness(chromosome));
 	}
 
 	private static PolygonChromosome chromosomeFilledWith(int triangles, double value) {

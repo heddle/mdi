@@ -9,7 +9,6 @@ import java.util.Random;
 import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.Simulation;
 import edu.cnu.mdi.sim.SimulationContext;
-import edu.cnu.mdi.sim.SimulationEngine;
 
 /**
  * A generic genetic algorithm simulation. This class is responsible for managing the population, 
@@ -18,12 +17,12 @@ import edu.cnu.mdi.sim.SimulationEngine;
  *
  * @param <C> The type of solutions in the population, which must extend GASolution.
  */
-public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulation {
+public class GeneticAlgorithmSimulation<C extends GASolution<C>> implements Simulation {
 
 	private final GAProblem<C> problem;
 	private final GAConfig cfg;
 	private final GAOperators<C> operators;
-	private transient SimulationEngine engine;
+	private volatile GAFeedback feedback = GAFeedback.none();
 
 	private volatile GAPopulation<C> population;
 	private volatile C bestIndividual;
@@ -46,11 +45,11 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	}
 
 	/**
-	 * Sets the simulation engine for this GA simulation. The engine is used to post messages and progress updates to the UI.
-	 * @param engine The simulation engine to use for UI interactions. This can be null if the simulation is run without a UI.
+	 * Set the optional output channel for messages, progress, and refresh hints.
+	 * @param feedback output channel, or {@code null} to discard output
 	 */
-	public void setEngine(SimulationEngine engine) {
-		this.engine = engine;
+	public void setFeedback(GAFeedback feedback) {
+		this.feedback = feedback == null ? GAFeedback.none() : feedback;
 	}
 
 	@Override
@@ -70,11 +69,9 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 		trackBest(population.individuals(), fitnesses);
 		generation = 0;
 		stateSnapshot = createStateSnapshot(generation, bestFitness, fitnesses);
-		if (engine != null) {
-			engine.postMessage("Population initialized. Best=" + fmt(bestFitness));
-			engine.postProgress(ProgressInfo.indeterminate("Ready"));
-			engine.requestRefresh();
-		}
+		feedback.message("Population initialized. Best=" + fmt(bestFitness));
+		feedback.progress(ProgressInfo.indeterminate("Ready"));
+		feedback.refresh();
 	}
 
 	@Override
@@ -89,7 +86,11 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 
 	    // 1. Build offspring pool
 	    List<C> offspring = new ArrayList<>(popSize);
-	    int offspringNeeded = popSize - cfg.eliteCount();
+	    int offspringNeeded = operators.replacement().offspringCount(popSize);
+	    if (offspringNeeded < 0 || offspringNeeded > popSize) {
+	        throw new IllegalStateException(
+	                "Replacement offspring count must be in [0," + popSize + "]");
+	    }
 	    while (offspring.size() < offspringNeeded) {
 	        C p1 = Objects.requireNonNull(
 	                operators.selection().select(currentInds, currentFits, rng),
@@ -220,9 +221,8 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private static <C extends GASolution> C copyOf(C individual, String description) {
-		return (C) Objects.requireNonNull(individual.copy(),
+	private static <C extends GASolution<C>> C copyOf(C individual, String description) {
+		return Objects.requireNonNull(individual.copy(),
 				description + " copy must not be null");
 	}
 
@@ -238,22 +238,19 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	}
 
 	private void publishGenerationUpdates() {
-		SimulationEngine currentEngine = engine;
-		if (currentEngine == null) {
-			return;
-		}
+		GAFeedback currentFeedback = feedback;
 		if (cfg.progressEveryGens() > 0
 				&& generation % cfg.progressEveryGens() == 0) {
 			double fraction = cfg.maxGenerations() == 0
 					? 1.0
 					: (double) generation / cfg.maxGenerations();
-			currentEngine.postProgress(ProgressInfo.determinate(
+			currentFeedback.progress(ProgressInfo.determinate(
 					fraction,
 					"Generation " + generation + ", best=" + fmt(bestFitness)));
 		}
 		if (cfg.refreshEveryGens() > 0
 				&& generation % cfg.refreshEveryGens() == 0) {
-			currentEngine.requestRefresh();
+			currentFeedback.refresh();
 		}
 	}
 }

@@ -8,7 +8,7 @@ import java.util.Objects;
  * A simple list-backed implementation of GAPopulation.
  * This is the standard concrete population used by most GA problems.
  */
-public final class SimpleGAPopulation<C extends GASolution> implements GAPopulation<C> {
+public final class SimpleGAPopulation<C extends GASolution<C>> implements GAPopulation<C> {
 
     private final List<C> individuals;
 
@@ -24,7 +24,7 @@ public final class SimpleGAPopulation<C extends GASolution> implements GAPopulat
 	 * @param individuals non-null individuals
 	 * @return new population
 	 */
-    public static <C extends GASolution> SimpleGAPopulation<C> of(List<C> individuals) {
+    public static <C extends GASolution<C>> SimpleGAPopulation<C> of(List<C> individuals) {
 		Objects.requireNonNull(individuals, "individuals");
 		if (individuals.stream().anyMatch(Objects::isNull)) {
 			throw new IllegalArgumentException("individuals must not contain null");
@@ -46,8 +46,7 @@ public final class SimpleGAPopulation<C extends GASolution> implements GAPopulat
     public GAPopulation<C> copy() {
         List<C> copied = new ArrayList<>(individuals.size());
         for (C individual : individuals) {
-            @SuppressWarnings("unchecked")
-            C c = (C) Objects.requireNonNull(individual.copy(),
+            C c = Objects.requireNonNull(individual.copy(),
                     "individual copy must not be null");
             copied.add(c);
         }

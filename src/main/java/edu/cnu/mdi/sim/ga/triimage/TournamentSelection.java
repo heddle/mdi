@@ -13,7 +13,7 @@ import edu.cnu.mdi.sim.ga.SelectionOperator;
  * The tournament size is a parameter that controls the selection pressure: larger tournaments
  * favor fitter individuals more strongly.
  */
-public final class TournamentSelection<C extends GASolution>
+public final class TournamentSelection<C extends GASolution<C>>
         implements SelectionOperator<C> {
 
 	// The number of individuals to compete in each tournament

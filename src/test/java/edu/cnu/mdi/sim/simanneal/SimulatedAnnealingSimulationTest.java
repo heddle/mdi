@@ -55,7 +55,7 @@ public class SimulatedAnnealingSimulationTest {
             @Override
             public AnnealingMove<ValueSolution> randomMove(
                     Random rng, ValueSolution current) {
-                return new AnnealingMove<>() {
+                return new ReversibleAnnealingMove<>() {
                     @Override
                     public void apply(ValueSolution solution) {
 						solution.value = 1000.0;
@@ -172,6 +172,39 @@ public class SimulatedAnnealingSimulationTest {
 		assertEquals(20, accepted.get());
 	}
 
+	@Test
+	public void testCandidateMoveDoesNotRequireUndo() {
+		AnnealingProblem<ValueSolution> problem = new AnnealingProblem<>() {
+			@Override public double energy(ValueSolution solution) { return solution.value; }
+			@Override public ValueSolution randomSolution(Random rng) {
+				return new ValueSolution(10);
+			}
+			@Override public AnnealingMove<ValueSolution> randomMove(
+					Random rng, ValueSolution current) {
+				return (CandidateAnnealingMove<ValueSolution>) solution ->
+						new ValueSolution(solution.value - 1);
+			}
+		};
+		SimulatedAnnealingSimulation<ValueSolution> simulation =
+				new SimulatedAnnealingSimulation<>(problem, config(),
+						new GeometricAnnealingSchedule(),
+						(p, rng) -> new InitialTemperature(1, 0, 0, 1));
+		simulation.init(context());
+
+		simulation.step(context());
+
+		assertEquals(9.0, simulation.getState().currentEnergy());
+		assertEquals(9.0, simulation.getBestSolutionCopy().value);
+	}
+
+	@Test
+	public void testNotificationPolicyRejectsInvalidLimits() {
+		assertThrows(IllegalArgumentException.class,
+				() -> new AnnealingNotificationPolicy(0, 10, 1));
+		assertThrows(IllegalArgumentException.class,
+				() -> new AnnealingNotificationPolicy(10, 10, 0));
+	}
+
     private static SimulatedAnnealingConfig config() {
         return new SimulatedAnnealingConfig(10, 1, 0.9, 0.0, 0, 0, 123L);
     }
@@ -183,7 +216,7 @@ public class SimulatedAnnealingSimulationTest {
         }, new SimulationEngineConfig(0, 0, 0, false)).getContext();
     }
 
-    private static final class ValueSolution implements AnnealingSolution {
+    private static final class ValueSolution implements AnnealingSolution<ValueSolution> {
         private double value;
 
         ValueSolution(double value) {
@@ -191,9 +224,8 @@ public class SimulatedAnnealingSimulationTest {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
-        public <S extends AnnealingSolution> S copy() {
-            return (S) new ValueSolution(value);
+        public ValueSolution copy() {
+            return new ValueSolution(value);
         }
     }
 
@@ -210,7 +242,7 @@ public class SimulatedAnnealingSimulationTest {
 
         @Override
         public AnnealingMove<ValueSolution> randomMove(Random rng, ValueSolution current) {
-            return new AnnealingMove<>() {
+            return new ReversibleAnnealingMove<>() {
                 @Override
                 public void apply(ValueSolution solution) {
                     solution.value--;

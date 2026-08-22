@@ -49,7 +49,7 @@ import edu.cnu.mdi.sim.simanneal.TemperatureHeuristic;
  *
  * @param <S> the concrete solution type for the annealing problem
  */
-public class EnergyDistributionHeuristic<S extends AnnealingSolution>
+public class EnergyDistributionHeuristic<S extends AnnealingSolution<S>>
         implements TemperatureHeuristic<S> {
 
     /** Number of random solutions to sample (must be ≥ 10). */

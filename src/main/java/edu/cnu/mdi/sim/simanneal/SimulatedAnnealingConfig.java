@@ -11,6 +11,7 @@ package edu.cnu.mdi.sim.simanneal;
  * @param progressEverySteps progress interval, or zero to disable progress posts
  * @param refreshEverySteps refresh interval, or zero to disable refresh requests
  * @param randomSeed deterministic seed, or zero to choose a nondeterministic seed
+ * @param notificationPolicy accepted-move listener delivery limits
  */
 public record SimulatedAnnealingConfig(
         long maxSteps,
@@ -19,7 +20,8 @@ public record SimulatedAnnealingConfig(
 		double minTemperature,
 		long progressEverySteps,
 		long refreshEverySteps,
-        long randomSeed
+        long randomSeed,
+		AnnealingNotificationPolicy notificationPolicy
 ) {
     public SimulatedAnnealingConfig {
         if (maxSteps <= 0) {
@@ -38,7 +40,19 @@ public record SimulatedAnnealingConfig(
         if (progressEverySteps < 0 || refreshEverySteps < 0) {
             throw new IllegalArgumentException("step intervals must be >= 0");
         }
+		java.util.Objects.requireNonNull(notificationPolicy, "notificationPolicy");
     }
+
+	/**
+	 * Convenience constructor using the default listener-delivery policy.
+	 */
+	public SimulatedAnnealingConfig(long maxSteps, long stepsPerTemperature,
+			double alpha, double minTemperature, long progressEverySteps,
+			long refreshEverySteps, long randomSeed) {
+		this(maxSteps, stepsPerTemperature, alpha, minTemperature,
+				progressEverySteps, refreshEverySteps, randomSeed,
+				AnnealingNotificationPolicy.defaults());
+	}
 
 	/**
 	 * Return a practical general-purpose configuration.
@@ -53,7 +67,8 @@ public record SimulatedAnnealingConfig(
                 1e-9,
                 500L,
                 50L,
-                0L
+				0L,
+				AnnealingNotificationPolicy.defaults()
         );
     }
 
@@ -71,7 +86,8 @@ public record SimulatedAnnealingConfig(
             this.minTemperature(),
             steps,
             this.refreshEverySteps(),
-            this.randomSeed()
+			this.randomSeed(),
+			this.notificationPolicy()
         );
     }
 

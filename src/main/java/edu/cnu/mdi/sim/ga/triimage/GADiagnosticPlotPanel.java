@@ -5,7 +5,7 @@ import edu.cnu.mdi.splot.plot.MultiplotPanel;
 
 /**
  * Diagnostics panel for the image evolution GA demo.
- * Currently hosts the MSE vs generation plot; extend with
+ * Currently hosts the fitness-error vs generation plot; extend with
  * additional plots as needed.
  */
 @SuppressWarnings("serial")
@@ -15,7 +15,7 @@ public class GADiagnosticPlotPanel extends MultiplotPanel {
 
     public GADiagnosticPlotPanel() {
         super(true);
-        addPlot("MSE vs Generation", msePlot);
+        addPlot("Error vs Generation", msePlot);
     }
 
     /**

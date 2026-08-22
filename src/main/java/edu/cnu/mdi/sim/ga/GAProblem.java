@@ -6,7 +6,7 @@ import java.util.Random;
  * Interface for GA problems. A GA problem defines the fitness function and how to generate random individuals.
  * The GA will use this interface to evaluate and evolve the population.
  */
-public interface GAProblem<T extends GASolution> {
+public interface GAProblem<T extends GASolution<T>> {
 	/**
 	 * Evaluate an individual.
 	 * @param individual solution to evaluate

@@ -90,8 +90,8 @@ public class ImageEvolutionPanel extends JPanel {
      */
     private List<BufferedImage> populationThumbs;
 
-    /** The target image, set once at construction and never changed. */
-    private final BufferedImage targetImage;
+    /** The current target image. Updated on the EDT when a new file is opened. */
+    private BufferedImage targetImage;
 
     // -------------------------------------------------------------------------
     // Constructor
@@ -145,6 +145,20 @@ public class ImageEvolutionPanel extends JPanel {
     public void updatePopulation(List<BufferedImage> thumbs) {
         this.populationThumbs = thumbs;
         repaint();
+    }
+
+    /**
+     * Replace the target and clear renders belonging to the previous run.
+     *
+     * @param targetImage new non-null target image
+     */
+    public void resetForTarget(BufferedImage targetImage) {
+		this.targetImage = java.util.Objects.requireNonNull(targetImage, "targetImage");
+		bestImage = null;
+		populationThumbs = null;
+		generation = 0;
+		bestFitness = Double.NaN;
+		repaint();
     }
 
     // -------------------------------------------------------------------------
@@ -295,15 +309,13 @@ public class ImageEvolutionPanel extends JPanel {
 
     /**
      * Build the label string shown under the best-individual panel.
-     * Includes the current generation and best fitness (converted back to MSE).
-     * MSE stands for mean squared error, which is the original metric being minimized.
+     * Includes the current generation and best fitness converted back to the
+     * configured non-negative error.
      */
     private String buildBestLabel() {
         if (Double.isNaN(bestFitness)) {
             return "Best individual";
         }
-        // bestFitness = -MSE, so MSE = -bestFitness
-        // Multiply by 255^2 to get back to familiar 0-65025 scale, or just show directly
-         return String.format("Best  gen %d  MSE=%.4f", generation, -bestFitness);
+         return String.format("Best  gen %d  error=%.4f", generation, -bestFitness);
     }
 }

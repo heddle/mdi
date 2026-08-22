@@ -9,7 +9,18 @@ import java.util.Random;
  * The GA will call this interface to determine which individuals survive to the next generation 
  * based on their fitness.
  */
-public interface ReplacementOperator<T extends GASolution> {
+public interface ReplacementOperator<T extends GASolution<T>> {
+	/**
+	 * Return the number of offspring required to form a population of the given
+	 * size. Replacement policies that retain current individuals may request
+	 * fewer offspring.
+	 *
+	 * @param populationSize current population size
+	 * @return required offspring count in {@code [0, populationSize]}
+	 */
+	default int offspringCount(int populationSize) {
+		return populationSize;
+	}
 	/**
 	 * Form the next generation from the current population and its offspring.
 	 * Fitness arrays are aligned with their corresponding lists. The returned

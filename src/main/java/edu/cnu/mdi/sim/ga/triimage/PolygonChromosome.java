@@ -50,7 +50,7 @@ import edu.cnu.mdi.sim.ga.GASolution;
  * independent deep copy.
  * </p>
  */
-public final class PolygonChromosome implements GASolution {
+public final class PolygonChromosome implements GASolution<PolygonChromosome> {
 
 	/**
 	 * Number of {@code double} values encoding a single triangle: three (x, y)
@@ -122,7 +122,6 @@ public final class PolygonChromosome implements GASolution {
 	 * with the original and is safe to mutate independently.
 	 * </p>
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public PolygonChromosome copy() {
 		return new PolygonChromosome(genes, numTriangles, backgroundRgb);
