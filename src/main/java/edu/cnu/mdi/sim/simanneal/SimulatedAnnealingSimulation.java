@@ -3,11 +3,11 @@ package edu.cnu.mdi.sim.simanneal;
 import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.swing.SwingUtilities;
-import javax.swing.event.EventListenerList;
 
 import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.Simulation;
@@ -65,7 +65,8 @@ import edu.cnu.mdi.sim.SimulationEngine;
  */
 public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> implements Simulation {
 
-	private EventListenerList _listenerList;
+	private final CopyOnWriteArrayList<IAcceptedMoveListener> acceptedMoveListeners =
+			new CopyOnWriteArrayList<>();
 	private static final int MAX_QUEUED_NOTIFICATIONS = 10_000;
 	private static final int MAX_NOTIFICATIONS_PER_DRAIN = 1_000;
 	private final ConcurrentLinkedQueue<MoveNotification> notifications =
@@ -202,7 +203,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	 * @return a copy of the best solution, or {@code null} if initialization has not occurred
 	 */
 	public S getBestSolutionCopy() {
-		return (best == null) ? null : best.copy();
+		return (best == null) ? null : copySolution(best);
 	}
 
 	/**
@@ -249,10 +250,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 		if (current == null) {
 			throw new IllegalStateException("Problem returned a null initial solution");
 		}
-		best = current.copy();
-		if (best == null) {
-			throw new IllegalStateException("Solution copy must not be null");
-		}
+		best = copySolution(current);
 
 		currentE = problem.energy(current);
 		requireFiniteEnergy(currentE);
@@ -358,7 +356,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 			// Track best-so-far
 			if (currentE < bestE) {
 				bestE = currentE;
-				best = current.copy();
+				best = copySolution(current);
 				notifyListeners(T, bestE, NotifyType.NEW_BEST); // new best
 			}
 		} else {
@@ -378,7 +376,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 			requireFiniteEnergy(currentE);
 			if (currentE < bestE) {
 				bestE = currentE;
-				best = Objects.requireNonNull(current.copy(), "solution copy");
+				best = copySolution(current);
 				notifyListeners(T, bestE, NotifyType.NEW_BEST);
 			}
 	        }
@@ -436,6 +434,12 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	private S copySolution(S solution) {
+		return (S) Objects.requireNonNull(solution.copy(),
+				"Solution copy must not be null");
+	}
+
 	/**
 	 * Format a floating point value for UI/status messages.
 	 *
@@ -448,7 +452,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 
 	// notify listeners of message
 	private void notifyListeners(double temperature, double energy, NotifyType option) {
-		if (_listenerList == null || _listenerList.getListenerCount(IAcceptedMoveListener.class) == 0) {
+		if (acceptedMoveListeners.isEmpty()) {
 			return;
 		}
 		if (option == NotifyType.ACCEPTED_MOVE) {
@@ -476,16 +480,12 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 
 	private void drainNotifications() {
 		notificationPending.set(false);
-		EventListenerList listenerList = _listenerList;
-		IAcceptedMoveListener[] listeners = listenerList == null
-				? new IAcceptedMoveListener[0]
-				: listenerList.getListeners(IAcceptedMoveListener.class);
 		int delivered = 0;
 		MoveNotification notification;
 		while (delivered < MAX_NOTIFICATIONS_PER_DRAIN
 				&& (notification = notifications.poll()) != null) {
 			queuedNotificationCount.decrementAndGet();
-			for (IAcceptedMoveListener listener : listeners) {
+			for (IAcceptedMoveListener listener : acceptedMoveListeners) {
 				try {
 					if (notification.type() == NotifyType.ACCEPTED_MOVE) {
 						listener.acceptedMove(notification.temperature(), notification.energy());
@@ -505,33 +505,28 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 
 	/**
 	 * Add an AcceptedMoveListener.
+	 * Duplicate registrations are ignored. This method is safe to call while the
+	 * simulation and EDT notification drain are active.
 	 *
 	 * @param listener the AcceptedMoveListener to add.
 	 */
 	public void addAcceptedMoveListener(IAcceptedMoveListener listener) {
-
-		if (_listenerList == null) {
-			_listenerList = new EventListenerList();
+		if (listener != null) {
+			acceptedMoveListeners.addIfAbsent(listener);
 		}
-
-		// avoid adding duplicates
-		_listenerList.remove(IAcceptedMoveListener.class, listener);
-		_listenerList.add(IAcceptedMoveListener.class, listener);
 	}
 
 	/**
 	 * Remove an AcceptedMoveListener.
+	 * This method is safe to call from any thread and has no effect when the
+	 * listener is not registered.
 	 *
 	 * @param listener the AcceptedMoveListener to remove.
 	 */
 
 	public void removeAcceptedMoveListener(IAcceptedMoveListener listener) {
 
-		if ((listener == null) || (_listenerList == null)) {
-			return;
-		}
-
-		_listenerList.remove(IAcceptedMoveListener.class, listener);
+		acceptedMoveListeners.remove(listener);
 	}
 
 }

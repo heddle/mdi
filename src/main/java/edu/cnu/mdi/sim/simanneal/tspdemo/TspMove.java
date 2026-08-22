@@ -41,9 +41,18 @@ public class TspMove implements DeltaEnergyMove<TspSolution> {
      * Choose a non-degenerate 2-opt segment for the next move.
      *
      * @param sol current solution (non-null)
+	 * @throws IllegalArgumentException if the solution or tour is null, or the
+	 *                                  tour contains fewer than four cities
      */
     @Override
     public void prepare(TspSolution sol) {
+		if (sol == null || sol.tour == null) {
+			throw new IllegalArgumentException("solution and tour must not be null");
+		}
+		if (sol.tour.length < 4) {
+			throw new IllegalArgumentException(
+					"2-opt requires a tour with at least four cities");
+		}
         pickSegment(sol.tour.length);
         prepared = true;
     }

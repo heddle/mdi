@@ -3,6 +3,7 @@ package edu.cnu.mdi.sim.simanneal.tspdemo;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.awt.geom.Point2D;
 import java.util.Random;
@@ -10,6 +11,19 @@ import java.util.Random;
 import org.junit.jupiter.api.Test;
 
 class TspMoveTest {
+
+	@Test
+	void prepareRejectsTourTooShortForTwoOpt() {
+		TspModel model = new TspModel(4, false, 0.0, new Random(1L));
+		TspSolution solution = new TspSolution(model);
+		solution.tour = new int[] {0, 1, 2};
+
+		IllegalArgumentException failure = assertThrows(
+				IllegalArgumentException.class,
+				() -> new TspMove(new Random(2L)).prepare(solution));
+		assertEquals("2-opt requires a tour with at least four cities",
+				failure.getMessage());
+	}
 
 	@Test
 	void deltaEnergyMatchesFullRecomputationAndUndoRestoresTour() {

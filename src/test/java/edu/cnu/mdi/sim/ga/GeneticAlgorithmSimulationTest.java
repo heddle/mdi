@@ -155,6 +155,23 @@ public class GeneticAlgorithmSimulationTest {
 		assertEquals(1, mutations.get());
 	}
 
+	@Test
+	public void testNullSelectedParentIsRejectedClearly() {
+		ValueProblem problem = new ValueProblem(List.of(new ValueSolution(1)));
+		GAOperators<ValueSolution> operators = new GAOperators<>(
+				(population, fitnesses, rng) -> null,
+				(first, second, rng) -> List.of(first.copy()),
+				(individual, rng) -> individual,
+				(population, offspring, popFitness, offFitness, rng) -> offspring);
+		GeneticAlgorithmSimulation<ValueSolution> simulation =
+				new GeneticAlgorithmSimulation<>(problem, config(1, 0), operators);
+		simulation.init(context());
+
+		NullPointerException failure = assertThrows(NullPointerException.class,
+				() -> simulation.step(context()));
+		assertEquals("selection operator returned null", failure.getMessage());
+	}
+
     private static GAConfig config(int populationSize, int eliteCount) {
         return new GAConfig(populationSize, 10, 1.0, 0.0,
                 eliteCount, 0, 0, 123L);

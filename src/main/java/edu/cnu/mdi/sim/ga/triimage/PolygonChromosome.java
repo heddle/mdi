@@ -144,11 +144,6 @@ public final class PolygonChromosome implements GASolution {
 	// Rendering
 	// -------------------------------------------------------------------------
 
-	// In ImageApproximationProblem — pass current bestMSE to renderInto
-	// Or simpler: make maxSpanFraction a field on PolygonChromosome set by the
-	// problem
-
-	// In renderInto(), add a maxSpanFraction parameter (0.0 to 1.0):
 	/**
 	 * Render this chromosome into an existing {@link BufferedImage}.
 	 *

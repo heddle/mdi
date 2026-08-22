@@ -91,11 +91,15 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	    List<C> offspring = new ArrayList<>(popSize);
 	    int offspringNeeded = popSize - cfg.eliteCount();
 	    while (offspring.size() < offspringNeeded) {
-	        C p1 = operators.selection().select(currentInds, currentFits, rng);
-	        C p2 = operators.selection().select(currentInds, currentFits, rng);
+	        C p1 = Objects.requireNonNull(
+	                operators.selection().select(currentInds, currentFits, rng),
+	                "selection operator returned null");
+	        C p2 = Objects.requireNonNull(
+	                operators.selection().select(currentInds, currentFits, rng),
+	                "selection operator returned null");
 	        List<C> children = rng.nextDouble() < cfg.crossoverRate()
 	                ? operators.crossover().crossover(p1, p2, rng)
-	                : List.of(p1.copy());
+	                : List.of(copyOf(p1, "selected parent"));
 	        if (children == null || children.isEmpty()) {
 	            throw new IllegalStateException(
 	                    "Crossover operator must produce at least one child");
@@ -161,9 +165,8 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	 * If no individuals have been evaluated yet, this method returns null.
 	 * @return A copy of the best individual found so far, or null if no individuals have been evaluated.
 	 */
-	@SuppressWarnings("unchecked")
 	public C getBestIndividualCopy() {
-		return bestIndividual == null ? null : (C) bestIndividual.copy();
+		return bestIndividual == null ? null : copyOf(bestIndividual, "best individual");
 	}
 
 	/**
@@ -186,9 +189,7 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 		if (pop == null) return List.of();
 		List<C> snapshot = new ArrayList<>(pop.size());
 		for (C individual : pop.individuals()) {
-			@SuppressWarnings("unchecked")
-			C copy = (C) individual.copy();
-			snapshot.add(copy);
+			snapshot.add(copyOf(individual, "population individual"));
 		}
 		return List.copyOf(snapshot);
 	}
@@ -210,14 +211,19 @@ public class GeneticAlgorithmSimulation<C extends GASolution> implements Simulat
 	}
 	// trackBest helper to update the best individual and fitness found so far. 
 	// This method iterates through the given individuals and their fitnesses,
-	@SuppressWarnings("unchecked")
 	private void trackBest(List<C> individuals, double[] f) {
 		for (int i = 0; i < f.length; i++) {
 			if (f[i] > bestFitness) {
 				bestFitness = f[i];
-				bestIndividual = (C) individuals.get(i).copy();
+				bestIndividual = copyOf(individuals.get(i), "best individual");
 			}
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <C extends GASolution> C copyOf(C individual, String description) {
+		return (C) Objects.requireNonNull(individual.copy(),
+				description + " copy must not be null");
 	}
 
 	private static GAState createStateSnapshot(long generation, double bestFitness,

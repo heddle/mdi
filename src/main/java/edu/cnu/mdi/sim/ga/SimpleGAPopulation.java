@@ -47,7 +47,8 @@ public final class SimpleGAPopulation<C extends GASolution> implements GAPopulat
         List<C> copied = new ArrayList<>(individuals.size());
         for (C individual : individuals) {
             @SuppressWarnings("unchecked")
-            C c = (C) individual.copy();
+            C c = (C) Objects.requireNonNull(individual.copy(),
+                    "individual copy must not be null");
             copied.add(c);
         }
         return new SimpleGAPopulation<>(copied);
