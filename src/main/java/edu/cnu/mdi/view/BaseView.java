@@ -1385,11 +1385,22 @@ public class BaseView extends JInternalFrame
 				getContentPane().add(panel, BorderLayout.WEST);
 				int extra = panel.getPreferredSize().width;
 				java.awt.Rectangle r = getBounds();
-				setBounds(r.x, r.y, r.width + extra, r.height);
+				int requestedWidth = r.width + extra;
+				int availableWidth = availableDesktopWidth(r.x);
+				setBounds(r.x, r.y, Math.min(requestedWidth, availableWidth), r.height);
 				revalidate();
 				repaint();
 			})
 		);
+	}
+
+	/** Return the usable desktop width to the right of {@code viewX}. */
+	private int availableDesktopWidth(int viewX) {
+		javax.swing.JDesktopPane desktopPane = getDesktopPane();
+		if (desktopPane == null || desktopPane.getWidth() <= 0) {
+			return Integer.MAX_VALUE;
+		}
+		return Math.max(1, desktopPane.getWidth() - Math.max(0, viewX));
 	}
     // -----------------------------------------------------------------------
     // ViewContentBuilder — compose Swing content for container-backed views

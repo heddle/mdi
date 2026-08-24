@@ -15,6 +15,14 @@ import org.junit.jupiter.api.Test;
 class MapControlPanelTest {
 
     @Test
+    void sidePanelWidthGrowsWithScaledControls() {
+        assertEquals(310, MapView2D.preferredSidePanelWidth(230,
+                new java.awt.Dimension(310, 80)));
+        assertEquals(230, MapView2D.preferredSidePanelWidth(230,
+                new java.awt.Dimension(180, 80)));
+    }
+
+    @Test
     void addControlUsesDedicatedOrderedExtensionArea() {
         // No view interaction occurs while controls are registered.
         MapControlPanel panel = new MapControlPanel(null);

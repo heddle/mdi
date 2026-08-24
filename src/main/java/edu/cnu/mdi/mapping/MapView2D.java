@@ -1155,10 +1155,12 @@ public class MapView2D extends BaseView {
 	    customSidePanelHost = new JPanel();
 	    customSidePanelHost.setLayout(new javax.swing.BoxLayout(customSidePanelHost, javax.swing.BoxLayout.Y_AXIS));
 
-	    fbp.setPreferredSize(new Dimension(getSidePanelWidth(), fbp.getPreferredSize().height));
+	    int sidePanelWidth = preferredSidePanelWidth(
+	            getSidePanelWidth(), controlPanel == null ? null : controlPanel.getPreferredSize());
+	    fbp.setPreferredSize(new Dimension(sidePanelWidth, fbp.getPreferredSize().height));
 
 	    if (controlPanel != null) {
-	        controlPanel.setMaximumSize(new Dimension(getSidePanelWidth(), Integer.MAX_VALUE));
+	        controlPanel.setMaximumSize(new Dimension(sidePanelWidth, Integer.MAX_VALUE));
 	        sideTopStack.add(controlPanel);
 	    }
 
@@ -1166,9 +1168,18 @@ public class MapView2D extends BaseView {
 
 	    sidePanel.add(sideTopStack, BorderLayout.NORTH);
 	    sidePanel.add(fbp, BorderLayout.CENTER);
-	    sidePanel.setPreferredSize(new Dimension(getSidePanelWidth(), getHeight()));
+	    sidePanel.setPreferredSize(new Dimension(sidePanelWidth, getHeight()));
 
 	    add(sidePanel, BorderLayout.EAST);
+	}
+
+	/**
+	 * Choose a sidebar width that honors both the API baseline and the controls'
+	 * preferred size under the active font/UI scale.
+	 */
+	static int preferredSidePanelWidth(int baseline, Dimension controlsPreferredSize) {
+	    int controlsWidth = (controlsPreferredSize == null) ? 0 : controlsPreferredSize.width;
+	    return Math.max(1, Math.max(baseline, controlsWidth));
 	}
 
 	/**
