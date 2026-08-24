@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
+import edu.cnu.mdi.desktop.Desktop;
 import edu.cnu.mdi.mapping.DemoMapView;
 import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.sim.demo.network.NetworkDeclutterDemoView;
@@ -150,6 +151,20 @@ public class DemoApp extends BaseMDIApplication {
 	 */
 	@Override
 	protected void defaultViewLayout() {
+		if (usesCompactVirtualLayout(Desktop.getInstance().getWidth())) {
+			// On smaller logical desktops, one primary demo per column avoids the
+			// large map and drawing views obscuring each other.
+			virtualViewMove(mapView,                  0, VirtualView.CENTER);
+			virtualViewMove(drawingView,              1, VirtualView.CENTER);
+			virtualViewMove(plotView,                 2, VirtualView.CENTER);
+			virtualViewMove(networkDeclutterDemoView, 3, VirtualView.CENTER);
+			virtualViewMove(tspDemoView,              4, VirtualView.CENTER);
+			virtualViewMove(imageEvolutionDemoView,   5, VirtualView.CENTER);
+			virtualViewMove(geometrySliceDemoView,    6, VirtualView.CENTER);
+			virtualViewMove(logView,                  7, VirtualView.UPPERLEFT);
+			virtualViewMove(jsonView,                 7, VirtualView.BOTTOMRIGHT);
+			return;
+		}
 		virtualViewMove(mapView,                  0, VirtualView.BOTTOMLEFT);
 		virtualViewMove(drawingView,              0, VirtualView.UPPERRIGHT);
 		virtualViewMove(plotView,                 1, VirtualView.CENTER);
@@ -159,6 +174,10 @@ public class DemoApp extends BaseMDIApplication {
 		virtualViewMove(geometrySliceDemoView,    6, VirtualView.CENTER);
 		virtualViewMove(logView,                  7, VirtualView.UPPERLEFT);
 		virtualViewMove(jsonView,                 7, VirtualView.BOTTOMRIGHT);	
+	}
+
+	static boolean usesCompactVirtualLayout(int desktopWidth) {
+		return desktopWidth > 0 && desktopWidth < 1280;
 	}
 
 	

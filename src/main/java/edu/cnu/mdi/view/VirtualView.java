@@ -32,7 +32,6 @@ import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.ui.fonts.Fonts;
-import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.util.PropertyUtils;
 
 /**
@@ -252,28 +251,23 @@ public class VirtualView extends BaseView
 
         Rectangle2D.Double world = getWorld();
 
-        // Small "overview" internal frame size: N tiny columns.
-        int cell_width  = 40;
-        int cell_height = 1 + ((9 * cell_width) / 16);
-        int width       = _numcol * cell_width;
-        int height      = cell_height;
-
-        // OS-dependent decoration quirks (legacy behavior).
-        if (Environment.getInstance().isLinux())   { height += 23; }
-        if (Environment.getInstance().isWindows()) { height += 23; }
+        // Small overview canvas: N logical-pixel columns. Frame decorations are
+        // measured from the installed Swing UI below; do not guess them by OS.
+        int cellWidth  = 40;
+        int cellHeight = 1 + ((9 * cellWidth) / 16);
+        int width      = _numcol * cellWidth;
 
         VirtualView view = new VirtualView(
                 PropertyUtils.WORLDSYSTEM,             world,
                 PropertyUtils.WIDTH,                   width,
-                PropertyUtils.HEIGHT,                  height,
+                PropertyUtils.HEIGHT,                  cellHeight,
                 PropertyUtils.VISIBLE,                 true,
                 PropertyUtils.BACKGROUND,              Color.white,
                 PropertyUtils.TITLE,                   VVTITLE);
 
         view._offsets = new Point[_numcol];
 
-        Insets insets = view.getInsets();
-        view.setSize(width, height + insets.top);
+        view.sizeNavigatorFrame(width, cellHeight);
         view.setLocation(0, 0);
 
         // Publish the singleton reference only after construction is complete,
@@ -282,6 +276,35 @@ public class VirtualView extends BaseView
 
         return view;
     }
+
+	/** Size the frame from its installed UI metrics with a non-zero canvas. */
+	private void sizeNavigatorFrame(int canvasWidth, int canvasHeight) {
+		Insets insets = getInsets();
+		int titleHeight = 0;
+		if (getUI() instanceof javax.swing.plaf.basic.BasicInternalFrameUI ui
+				&& ui.getNorthPane() != null) {
+			titleHeight = ui.getNorthPane().getPreferredSize().height;
+		}
+		setSize(navigatorFrameSize(canvasWidth, canvasHeight, titleHeight, insets));
+	}
+
+	/**
+	 * Calculate the navigator's decorated size from Swing UI metrics.
+	 *
+	 * @param canvasWidth desired overview-canvas width
+	 * @param canvasHeight desired overview-canvas height
+	 * @param titleHeight installed internal-frame title-pane height
+	 * @param insets installed internal-frame border insets
+	 * @return the complete internal-frame size
+	 */
+	static Dimension navigatorFrameSize(int canvasWidth, int canvasHeight,
+			int titleHeight, Insets insets) {
+		Insets safeInsets = (insets == null) ? new Insets(0, 0, 0, 0) : insets;
+		return new Dimension(
+				Math.max(1, canvasWidth) + safeInsets.left + safeInsets.right,
+				Math.max(1, canvasHeight) + Math.max(0, titleHeight)
+						+ safeInsets.top + safeInsets.bottom);
+	}
 
     /**
      * Public access to the singleton virtual view.
@@ -697,6 +720,11 @@ public class VirtualView extends BaseView
 
         viewComponentListeners.put(view, cl);
         view.addComponentListener(cl);
+
+		// A view can already be visible before this listener is installed. Do not
+		// rely exclusively on a future internalFrameOpened/componentShown event.
+		vitem.setLocation();
+		vitem.setVisible(view.isVisible() && !view.isClosed() && !view.isIcon());
     }
 
     // ------------------------------------------------------------------------
@@ -1045,22 +1073,21 @@ public class VirtualView extends BaseView
      * Activate the virtual column containing the given view so that it
      * becomes visible.
      *
-     * <p>This uses the view's {@link VirtualWindowItem} bounds inside the
-     * virtual desktop.</p>
+     * <p>The actual view bounds are authoritative. Navigation therefore still
+     * works if its thumbnail has not yet been painted or is temporarily
+     * hidden.</p>
      *
      * @param view the view
      */
     public void activateViewCell(BaseView view) {
 
-        if (view == null || view.getVirtualItem() == null) {
+        if (view == null) {
             return;
         }
 
-        Rectangle b = view.getVirtualItem().getBounds(getIContainer());
-        Point pp = new Point(b.x + b.width / 2, b.y + b.height / 2);
-        Point rc = getRowCol(pp);
-
-        int col = Math.max(0, Math.min(_numcol - 1, rc.x));
+		// Navigation must not depend on a thumbnail being visible or on a valid
+		// thumbnail paint transform. View bounds are the authoritative geometry.
+		int col = getViewColumn(view);
         if (col == _currentCol) {
             return;
         }
@@ -1073,6 +1100,7 @@ public class VirtualView extends BaseView
         }
 
         _currentCol = col;
+		getIContainer().refresh();
     }
 
     /**

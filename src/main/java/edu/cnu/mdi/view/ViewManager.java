@@ -621,10 +621,18 @@ public class ViewManager implements Iterable<BaseView> {
                 }
             }
             view.setVisible(true);
-            view.toFront();
 
             if (!(view instanceof VirtualView)) {
                 makeViewVisibleInVirtualWorld(view);
+            }
+
+            // Bring the frame forward after changing virtual columns. Some
+            // desktop managers otherwise retain the old stacking order.
+            view.moveToFront();
+            try {
+                view.setSelected(true);
+            } catch (PropertyVetoException ignored) {
+                // A view may legitimately veto selection; it is still visible.
             }
         };
     }

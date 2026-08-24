@@ -582,7 +582,7 @@ public class BaseToolBar extends AToolBar {
 			}
 		}
 
-		button.setPreferredSize(DEFAULT_BUTTON_SIZE);
+		sizeButtonForIcon(button);
 	}
 
 	/**
@@ -610,9 +610,31 @@ public class BaseToolBar extends AToolBar {
 			}
 		}
 
-		button.setPreferredSize(DEFAULT_BUTTON_SIZE);
-		button.setMinimumSize(DEFAULT_BUTTON_SIZE);
-		button.setMaximumSize(DEFAULT_BUTTON_SIZE);
+		sizeButtonForIcon(button);
+	}
+
+	/** Keep BoxLayout from compressing a button beneath its rendered icon. */
+	private static void sizeButtonForIcon(AbstractButton button) {
+		Dimension size = buttonSizeForIcon(button.getIcon());
+		button.setPreferredSize(size);
+		button.setMinimumSize(size);
+		button.setMaximumSize(size);
+	}
+
+	/**
+	 * Return a button size that contains the icon at the active UI scale.
+	 *
+	 * @param icon rendered icon, or {@code null}
+	 * @return minimum safe toolbar-button size
+	 */
+	static Dimension buttonSizeForIcon(Icon icon) {
+		int width = DEFAULT_BUTTON_SIZE.width;
+		int height = DEFAULT_BUTTON_SIZE.height;
+		if (icon != null) {
+			width = Math.max(width, icon.getIconWidth() + 6);
+			height = Math.max(height, icon.getIconHeight() + 6);
+		}
+		return new Dimension(width, height);
 	}
 
 	// ------------------------------------------------------------------------
