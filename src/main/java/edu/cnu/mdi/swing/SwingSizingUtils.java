@@ -9,6 +9,7 @@ import java.awt.Insets;
 import javax.swing.Icon;
 import javax.swing.JDesktopPane;
 import javax.swing.JInternalFrame;
+import javax.swing.JToolBar;
 
 /** Scale-aware helpers for deriving Swing sizes from rendered content. */
 public final class SwingSizingUtils {
@@ -78,6 +79,29 @@ public final class SwingSizingUtils {
                 Math.max(1, Math.max(safeMinimum.height,
                         iconHeight + safeMargins.top + safeMargins.bottom)));
     }
+
+	/**
+	 * Return the minimum height that can contain every visible component in a
+	 * horizontal toolbar, including the toolbar's border insets.
+	 *
+	 * @param toolbar toolbar to measure, or {@code null}
+	 * @return minimum safe height, at least one pixel
+	 */
+	public static int requiredHorizontalToolbarHeight(JToolBar toolbar) {
+		if (toolbar == null) {
+			return 1;
+		}
+		int contentHeight = 0;
+		for (Component component : toolbar.getComponents()) {
+			if (component.isVisible()) {
+				contentHeight = Math.max(contentHeight,
+						Math.max(component.getMinimumSize().height,
+								component.getPreferredSize().height));
+			}
+		}
+		Insets insets = toolbar.getInsets();
+		return Math.max(1, contentHeight + insets.top + insets.bottom);
+	}
 
     /**
      * Return usable width to the right of an internal frame within its virtual

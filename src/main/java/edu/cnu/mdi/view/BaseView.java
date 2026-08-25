@@ -1466,11 +1466,12 @@ public class BaseView extends JInternalFrame
 
                 // When the INFO button is the only toolbar content, the standard
                 // toolbar height wastes a visible strip of space beneath a single
-                // small icon. Pin the preferred, minimum, and maximum height to
-                // the icon size plus 2 px of padding on each side so the toolbar
-                // hugs the button rather than filling the full row height.
+                // small icon. Pin the height to the actual button plus toolbar
+                // insets so the row remains compact without clipping under a
+                // platform LookAndFeel with larger button metrics.
                 if (cfg.toolBits == ToolBits.INFO) {
-                    int slimH = BaseToolBar.DEFAULT_ICON_SIZE + 4;
+                    int slimH = SwingSizingUtils.requiredHorizontalToolbarHeight(
+                            view.toolBar);
                     Dimension slim = new Dimension(
                             view.toolBar.getPreferredSize().width, slimH);
                     view.toolBar.setPreferredSize(slim);

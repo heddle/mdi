@@ -18,8 +18,9 @@ import javax.swing.SwingUtilities;
  * <p>
  * Components are arranged left-to-right in a {@link FlowLayout}: the combo box
  * appears first, followed immediately by the scale bar preview. The scale bar
- * defaults to 100&times;20 pixels but can be resized via
- * {@link #setScaleBarSize(Dimension)}.
+ * defaults to 100 pixels wide; its height is derived from the current font so
+ * that both the gradient and its endpoint labels remain visible. Its preferred
+ * size can be adjusted via {@link #setScaleBarSize(Dimension)}.
  * </p>
  *
  * <h2>Selection</h2>
@@ -116,7 +117,8 @@ public class ColorMapSelectorPanel extends JPanel {
         add(_combo);
 
         _scaleBar = new ColorScaleBar(initialMap);
-        _scaleBar.setPreferredSize(new Dimension(100, 20));
+        Dimension scaleSize = _scaleBar.getPreferredSize();
+        _scaleBar.setPreferredSize(new Dimension(100, scaleSize.height));
         add(_scaleBar);
 
         // ActionListener is always fired on the EDT, so no marshalling needed here.
@@ -184,10 +186,9 @@ public class ColorMapSelectorPanel extends JPanel {
     // ----------------------------------------------------------------
 
     /**
-     * Sets the preferred size of the color scale bar preview.
-     *
-     * <p>Call {@link #revalidate()} and {@link #repaint()} on the panel after
-     * this method if it is already displayed.</p>
+     * Sets the preferred size of the color scale bar preview. If the requested
+     * height is too small for the gradient and labels, the scale bar's
+     * font-derived minimum height is used instead.
      *
      * @param size the new preferred size; must not be {@code null}
      */
@@ -195,7 +196,10 @@ public class ColorMapSelectorPanel extends JPanel {
         if (size == null) {
             throw new IllegalArgumentException("size must not be null");
         }
-        _scaleBar.setPreferredSize(size);
+        int height = Math.max(size.height, _scaleBar.getMinimumSize().height);
+        _scaleBar.setPreferredSize(new Dimension(size.width, height));
+        revalidate();
+        repaint();
     }
 
     // ----------------------------------------------------------------

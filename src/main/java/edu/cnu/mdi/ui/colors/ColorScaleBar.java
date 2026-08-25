@@ -26,6 +26,7 @@ public class ColorScaleBar extends JComponent {
     public ColorScaleBar(ScientificColorMap map) {
 		_map = Objects.requireNonNull(map, "map");
         setPreferredSize(new Dimension(200, 50));
+        updateComponentHeights();
     }
 
     /** Backward-compatible constructor if needed elsewhere. */
@@ -34,7 +35,6 @@ public class ColorScaleBar extends JComponent {
         // If someone uses this ctor, we’ll draw using the scale via interpolate:
         _map = null;
 		_fallbackScale = validatedScale(scale);
-        setPreferredSize(new Dimension(200, 50));
     }
 
     // Only used by the fallback ctor

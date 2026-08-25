@@ -95,6 +95,17 @@ class ColorsPackageTest {
 	}
 
 	@Test
+	void colorMapSelectorDoesNotClipScaleBarLabels() {
+		ColorMapSelectorPanel panel = new ColorMapSelectorPanel(ScientificColorMap.VIRIDIS);
+		ColorScaleBar bar = (ColorScaleBar) panel.getComponent(1);
+		int requiredHeight = bar.getMinimumSize().height;
+
+		assertEquals(requiredHeight, bar.getPreferredSize().height);
+		panel.setScaleBarSize(new Dimension(120, 1));
+		assertEquals(new Dimension(120, requiredHeight), bar.getPreferredSize());
+	}
+
+	@Test
 	void colorPanelPreferredSizeAccommodatesThePlatformChooser() {
 		ColorPanel panel = new ColorPanel();
 		Dimension preferred = panel.getPreferredSize();

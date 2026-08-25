@@ -7,8 +7,13 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 
 import javax.swing.Icon;
+import javax.swing.JButton;
+import javax.swing.JToolBar;
+import javax.swing.border.EmptyBorder;
 
 import org.junit.jupiter.api.Test;
+
+import edu.cnu.mdi.swing.SwingSizingUtils;
 
 class BaseToolBarSizingTest {
 
@@ -24,6 +29,18 @@ class BaseToolBarSizingTest {
         assertEquals(new Dimension(42, 36),
                 BaseToolBar.buttonSizeForIcon(scaledIcon));
     }
+
+	@Test
+	void compactToolbarHeightContainsButtonAndBorderInsets() {
+		JToolBar toolbar = new JToolBar();
+		toolbar.setBorder(new EmptyBorder(2, 0, 3, 0));
+		JButton button = new JButton();
+		button.setPreferredSize(new Dimension(24, 24));
+		button.setMinimumSize(new Dimension(24, 24));
+		toolbar.add(button);
+
+		assertEquals(29, SwingSizingUtils.requiredHorizontalToolbarHeight(toolbar));
+	}
 
     private record FixedIcon(int width, int height) implements Icon {
         @Override
