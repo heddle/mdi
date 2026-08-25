@@ -39,6 +39,17 @@ class SwingSizingUtilsTest {
     }
 
     @Test
+    void textMeasurementsGrowWithRenderedContent() {
+        JLabel label = new JLabel();
+        int rendered = label.getFontMetrics(label.getFont()).stringWidth("no matches");
+
+        assertEquals(rendered + 8,
+                SwingSizingUtils.textWidth(label, "no matches", 8));
+        assertEquals(500,
+                SwingSizingUtils.textColumnWidth(label, 1, 500, 20));
+    }
+
+    @Test
     void availableWidthUsesThePositionInsideAVirtualColumn() {
         JDesktopPane desktop = new JDesktopPane();
         desktop.setSize(1000, 700);

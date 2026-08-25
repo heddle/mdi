@@ -18,6 +18,8 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import edu.cnu.mdi.swing.SwingSizingUtils;
+
 /**
  * Utility for displaying {@link AbstractViewInfo} content in a lightweight,
  * non-modal, non-stealing info dialog.
@@ -60,14 +62,14 @@ public class InfoDialogHelper {
     private static final WeakHashMap<Window, JDialog> openDialogs =
             new WeakHashMap<>();
 
-    /** Fixed dialog width; HTML content wraps to this, so only height varies. */
+    /** Minimum dialog width; scaled fonts may request a wider text column. */
     private static final int DIALOG_WIDTH = 500;
+
+    /** Approximate readable line length for the HTML information text. */
+    private static final int TEXT_COLUMNS = 42;
 
     /** Never shrink below this height, even for very short content. */
     private static final int MIN_DIALOG_HEIGHT = 300;
-
-    /** Approximate height of the bottom button bar, added to content height. */
-    private static final int BUTTON_BAR_HEIGHT = 50;
 
     /** Kept clear of the screen edges so the dialog never runs off-screen. */
     private static final int SCREEN_MARGIN = 120;
@@ -198,8 +200,9 @@ public class InfoDialogHelper {
      *
      * <p>{@link JEditorPane#getPreferredSize()} only reports a correct
      * wrapped height once the pane has been given a width to wrap against, so
-     * this first assigns the dialog's fixed content width via {@link
-     * JEditorPane#setSize} before measuring. The resulting height is clamped
+     * this first assigns a readable, font-derived content width via {@link
+     * JEditorPane#setSize} before measuring. The resulting width is bounded by
+     * the available screen and the height is clamped
      * between {@link #MIN_DIALOG_HEIGHT} and the available screen height
      * (minus {@link #SCREEN_MARGIN}), so very short content doesn't leave an
      * awkwardly empty dialog and very long content stays on-screen and
@@ -209,17 +212,32 @@ public class InfoDialogHelper {
      * @param infoPane the editor pane whose content determines the height
      */
     private static void sizeToContent(JDialog dialog, JEditorPane infoPane) {
-        infoPane.setSize(DIALOG_WIDTH, Short.MAX_VALUE);
+        int maxWidth = Math.max(DIALOG_WIDTH,
+                GraphicsEnvironment.getLocalGraphicsEnvironment()
+                        .getMaximumWindowBounds().width - SCREEN_MARGIN);
+        int dialogWidth = Math.min(maxWidth, SwingSizingUtils.textColumnWidth(
+                infoPane, TEXT_COLUMNS, DIALOG_WIDTH, 24));
+
+        infoPane.setSize(dialogWidth, Short.MAX_VALUE);
         int preferredContentHeight = infoPane.getPreferredSize().height;
+
+        int buttonBarHeight = 0;
+        for (Component component : dialog.getContentPane().getComponents()) {
+            if (component instanceof JPanel) {
+                buttonBarHeight = Math.max(buttonBarHeight,
+                        component.getPreferredSize().height);
+            }
+        }
+        buttonBarHeight += dialog.getInsets().top + dialog.getInsets().bottom;
 
         int maxHeight = Math.max(MIN_DIALOG_HEIGHT,
                 GraphicsEnvironment.getLocalGraphicsEnvironment()
                         .getMaximumWindowBounds().height - SCREEN_MARGIN);
 
         int dialogHeight = Math.min(maxHeight,
-                Math.max(MIN_DIALOG_HEIGHT, preferredContentHeight + BUTTON_BAR_HEIGHT));
+                Math.max(MIN_DIALOG_HEIGHT, preferredContentHeight + buttonBarHeight));
 
-        dialog.setSize(DIALOG_WIDTH, dialogHeight);
+        dialog.setSize(dialogWidth, dialogHeight);
     }
 
     /**

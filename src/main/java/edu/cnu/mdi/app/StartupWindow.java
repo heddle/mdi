@@ -14,6 +14,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.log.LogPane;
+import edu.cnu.mdi.swing.SwingSizingUtils;
 
 /** Optional lightweight startup window with application metadata and live logging. */
 public final class StartupWindow implements AutoCloseable {
@@ -28,8 +29,12 @@ public final class StartupWindow implements AutoCloseable {
 		window.getRootPane().setBorder(BorderFactory.createCompoundBorder(
 				BorderFactory.createLineBorder(java.awt.Color.GRAY), BorderFactory.createEmptyBorder(14, 16, 12, 16)));
 		window.setLayout(new BorderLayout(8, 10));
-		window.add(header(info), BorderLayout.NORTH);
-		logPane.setPreferredSize(new Dimension(620, 230));
+		JPanel header = header(info);
+		window.add(header, BorderLayout.NORTH);
+		int logWidth = SwingSizingUtils.preferredWidth(620, header, status);
+		int logHeight = Math.max(230,
+				SwingSizingUtils.fontHeight(logPane, logPane.getFont(), 0) * 14);
+		logPane.setPreferredSize(new Dimension(logWidth, logHeight));
 		window.add(logPane, BorderLayout.CENTER);
 		status.setBorder(BorderFactory.createEmptyBorder(2, 2, 0, 2));
 		window.add(status, BorderLayout.SOUTH);

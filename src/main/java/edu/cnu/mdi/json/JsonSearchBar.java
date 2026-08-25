@@ -18,6 +18,8 @@ import javax.swing.KeyStroke;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import edu.cnu.mdi.swing.SwingSizingUtils;
+
 /**
  * A compact search bar that drives text highlighting in the raw pane and
  * match navigation in the tree pane.
@@ -120,7 +122,9 @@ public class JsonSearchBar extends JPanel {
         searchField.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(80, 80, 80)),
                 BorderFactory.createEmptyBorder(2, 4, 2, 4)));
-        searchField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        int fieldHeight = SwingSizingUtils.preferredSizeAtLeast(
+                searchField, 1, 28).height;
+        searchField.setMaximumSize(new Dimension(Integer.MAX_VALUE, fieldHeight));
         add(searchField);
 
         add(Box.createHorizontalStrut(4));
@@ -139,7 +143,10 @@ public class JsonSearchBar extends JPanel {
         countLabel = new JLabel("  ");
         countLabel.setForeground(LABEL_FG);
         countLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
-        countLabel.setPreferredSize(new Dimension(80, 20));
+        countLabel.setPreferredSize(new Dimension(
+                Math.max(80, SwingSizingUtils.textWidth(
+                        countLabel, "0000 of 0000", 8)),
+                Math.max(20, SwingSizingUtils.fontHeight(countLabel, null, 4))));
         add(countLabel);
 
         add(Box.createHorizontalStrut(4));
@@ -248,7 +255,10 @@ public class JsonSearchBar extends JPanel {
         btn.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(70, 70, 70)),
                 BorderFactory.createEmptyBorder(2, 6, 2, 6)));
-        btn.setMaximumSize(new Dimension(36, 26));
+        Dimension size = SwingSizingUtils.preferredSizeAtLeast(btn, 36, 26);
+        btn.setPreferredSize(size);
+        btn.setMinimumSize(size);
+        btn.setMaximumSize(size);
         return btn;
     }
 }

@@ -48,6 +48,24 @@ public final class SwingSizingUtils {
         return Math.max(1, metrics.getHeight() + Math.max(0, verticalPadding));
     }
 
+    /** Return the rendered width of text plus total horizontal padding. */
+    public static int textWidth(Component component, String text, int horizontalPadding) {
+        if (component == null) {
+            return Math.max(1, horizontalPadding);
+        }
+        String safeText = (text == null) ? "" : text;
+        return Math.max(1, component.getFontMetrics(component.getFont()).stringWidth(safeText)
+                + Math.max(0, horizontalPadding));
+    }
+
+    /** Return a conservative rendered width for a number of text columns. */
+    public static int textColumnWidth(Component component, int columns,
+            int minimumWidth, int horizontalPadding) {
+        String sample = "M".repeat(Math.max(1, columns));
+        return Math.max(Math.max(1, minimumWidth),
+                textWidth(component, sample, horizontalPadding));
+    }
+
     /** Return an icon-safe size including margins and a minimum baseline. */
     public static Dimension iconButtonSize(Icon icon, Insets margins, Dimension minimum) {
         Insets safeMargins = (margins == null) ? new Insets(0, 0, 0, 0) : margins;

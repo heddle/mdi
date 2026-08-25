@@ -26,6 +26,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.text.NumberFormatter;
 
 import edu.cnu.mdi.dialog.ButtonPanel;
+import edu.cnu.mdi.swing.SwingSizingUtils;
 import edu.cnu.mdi.ui.colors.ColorButton;
 import edu.cnu.mdi.util.Bits;
 
@@ -430,7 +431,8 @@ public class MapLayerStyleDialog extends JDialog {
             feedbackFieldsList.setSelectedIndices(selectedIndices);
 
             JScrollPane scrollPane = new JScrollPane(feedbackFieldsList);
-            scrollPane.setPreferredSize(new Dimension(230, 92));
+            scrollPane.setPreferredSize(SwingSizingUtils.preferredSizeAtLeast(
+                    scrollPane, 230, 92));
             scrollPane.setToolTipText(
                     "Select the DBF fields displayed after a successful hit test");
 
@@ -462,8 +464,8 @@ public class MapLayerStyleDialog extends JDialog {
                 createButtonPanel(),
                 BorderLayout.SOUTH);
 
-        setMinimumSize(
-                new Dimension(360, getPreferredSize().height));
+        setMinimumSize(SwingSizingUtils.preferredSizeAtLeast(
+                content, 360, getPreferredSize().height));
     }
     
     private void updateSpacingControls() {
