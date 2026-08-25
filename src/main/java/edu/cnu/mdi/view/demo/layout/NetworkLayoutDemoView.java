@@ -17,6 +17,7 @@ import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
+import edu.cnu.mdi.swing.SwingSizingUtils;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.view.BaseView;
 import edu.cnu.mdi.view.ViewConfiguration;
@@ -97,14 +98,15 @@ public class NetworkLayoutDemoView extends BaseView {
 
 		// container panel holding control panel (NORTH) and feedback (CENTER)
 		JPanel sidePanel = new JPanel(new BorderLayout());
+		int sidePanelWidth = SwingSizingUtils.preferredWidth(SIDE_PANEL_WIDTH, cp, fbp);
 
 		// ensure a consistent preferred width for the whole side strip
 		Dimension feedbackPref = fbp.getPreferredSize();
-		fbp.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, feedbackPref.height));
+		fbp.setPreferredSize(new Dimension(sidePanelWidth, feedbackPref.height));
 
 		sidePanel.add(cp, BorderLayout.NORTH);
 		sidePanel.add(fbp, BorderLayout.CENTER);
-		sidePanel.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, getHeight()));
+		sidePanel.setPreferredSize(new Dimension(sidePanelWidth, getHeight()));
 		add(sidePanel, BorderLayout.EAST);
 	}
 

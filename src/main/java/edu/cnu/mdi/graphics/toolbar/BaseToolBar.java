@@ -19,6 +19,7 @@ import javax.swing.JToggleButton;
 
 import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.graphics.rubberband.ARubberband;
+import edu.cnu.mdi.swing.SwingSizingUtils;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
@@ -628,13 +629,8 @@ public class BaseToolBar extends AToolBar {
 	 * @return minimum safe toolbar-button size
 	 */
 	static Dimension buttonSizeForIcon(Icon icon) {
-		int width = DEFAULT_BUTTON_SIZE.width;
-		int height = DEFAULT_BUTTON_SIZE.height;
-		if (icon != null) {
-			width = Math.max(width, icon.getIconWidth() + 6);
-			height = Math.max(height, icon.getIconHeight() + 6);
-		}
-		return new Dimension(width, height);
+		return SwingSizingUtils.iconButtonSize(icon,
+				new java.awt.Insets(3, 3, 3, 3), DEFAULT_BUTTON_SIZE);
 	}
 
 	// ------------------------------------------------------------------------

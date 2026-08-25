@@ -61,6 +61,7 @@ import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.hover.HoverEvent;
 import edu.cnu.mdi.item.Layer;
+import edu.cnu.mdi.swing.SwingSizingUtils;
 import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.transfer.IFileDropHandler;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
@@ -1386,7 +1387,7 @@ public class BaseView extends JInternalFrame
 				int extra = panel.getPreferredSize().width;
 				java.awt.Rectangle r = getBounds();
 				int requestedWidth = r.width + extra;
-				int availableWidth = availableDesktopWidth(r.x);
+				int availableWidth = SwingSizingUtils.availableDesktopWidth(this);
 				setBounds(r.x, r.y, Math.min(requestedWidth, availableWidth), r.height);
 				revalidate();
 				repaint();
@@ -1394,14 +1395,6 @@ public class BaseView extends JInternalFrame
 		);
 	}
 
-	/** Return the usable desktop width to the right of {@code viewX}. */
-	private int availableDesktopWidth(int viewX) {
-		javax.swing.JDesktopPane desktopPane = getDesktopPane();
-		if (desktopPane == null || desktopPane.getWidth() <= 0) {
-			return Integer.MAX_VALUE;
-		}
-		return Math.max(1, desktopPane.getWidth() - Math.max(0, viewX));
-	}
     // -----------------------------------------------------------------------
     // ViewContentBuilder — compose Swing content for container-backed views
     // -----------------------------------------------------------------------

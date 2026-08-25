@@ -55,6 +55,7 @@ import edu.cnu.mdi.mapping.shapefile.ShapefileMenu;
 import edu.cnu.mdi.mapping.theme.MapTheme;
 import edu.cnu.mdi.mapping.util.GeoUtils;
 import edu.cnu.mdi.mapping.util.UTMCoordinate;
+import edu.cnu.mdi.swing.SwingSizingUtils;
 import edu.cnu.mdi.util.PropertyUtils;
 import edu.cnu.mdi.util.UnicodeUtils;
 import edu.cnu.mdi.view.AbstractViewInfo;
@@ -1155,8 +1156,7 @@ public class MapView2D extends BaseView {
 	    customSidePanelHost = new JPanel();
 	    customSidePanelHost.setLayout(new javax.swing.BoxLayout(customSidePanelHost, javax.swing.BoxLayout.Y_AXIS));
 
-	    int sidePanelWidth = preferredSidePanelWidth(
-	            getSidePanelWidth(), controlPanel == null ? null : controlPanel.getPreferredSize());
+	    int sidePanelWidth = SwingSizingUtils.preferredWidth(getSidePanelWidth(), controlPanel);
 	    fbp.setPreferredSize(new Dimension(sidePanelWidth, fbp.getPreferredSize().height));
 
 	    if (controlPanel != null) {
@@ -1173,14 +1173,6 @@ public class MapView2D extends BaseView {
 	    add(sidePanel, BorderLayout.EAST);
 	}
 
-	/**
-	 * Choose a sidebar width that honors both the API baseline and the controls'
-	 * preferred size under the active font/UI scale.
-	 */
-	static int preferredSidePanelWidth(int baseline, Dimension controlsPreferredSize) {
-	    int controlsWidth = (controlsPreferredSize == null) ? 0 : controlsPreferredSize.width;
-	    return Math.max(1, Math.max(baseline, controlsWidth));
-	}
 
 	/**
 	 * Registers the view-level map background renderer.

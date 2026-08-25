@@ -2,7 +2,6 @@ package edu.cnu.mdi.view.demo.geoslice;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -29,6 +28,7 @@ import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.item.PointItem;
 import edu.cnu.mdi.item.PolygonItem;
+import edu.cnu.mdi.swing.SwingSizingUtils;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.PropertyUtils;
@@ -191,8 +191,8 @@ public class GeometrySliceDemoView extends BaseView {
                 X11Colors.getX11Color("dark red"),
                 10);
 
-        Dimension feedbackPref = fbp.getPreferredSize();
-        fbp.setPreferredSize(new Dimension(SIDE_PANEL_WIDTH, feedbackPref.height));
+        fbp.setPreferredSize(SwingSizingUtils.preferredSizeAtLeast(
+                fbp, SIDE_PANEL_WIDTH, 1));
 
         add(fbp, BorderLayout.EAST);
     }
@@ -204,7 +204,6 @@ public class GeometrySliceDemoView extends BaseView {
      */
     private JPanel createControlPanel() {
         JPanel panel = new JPanel(new BorderLayout(4, 4));
-        panel.setPreferredSize(new Dimension(150, 200));
 
         phiLabel = new JLabel(labelText(), SwingConstants.CENTER);
 
@@ -236,6 +235,8 @@ public class GeometrySliceDemoView extends BaseView {
         panel.add(phiLabel, BorderLayout.NORTH);
         panel.add(slider, BorderLayout.CENTER);
         panel.add(createHelpText(), BorderLayout.SOUTH);
+
+        panel.setPreferredSize(SwingSizingUtils.preferredSizeAtLeast(panel, 150, 200));
 
         return panel;
     }

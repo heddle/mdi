@@ -12,6 +12,8 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
+import edu.cnu.mdi.swing.SwingSizingUtils;
+
 /**
  * Custom drawing panel for the image evolution GA demo.
  *
@@ -54,8 +56,8 @@ public class ImageEvolutionPanel extends JPanel {
     /** Pixel gap between thumbnails in the population grid. */
     private static final int THUMB_GAP = 2;
 
-    /** Height of the label strip below each main region. */
-    private static final int LABEL_HEIGHT = 18;
+    /** Minimum height of the label strip below each main region. */
+    private static final int MIN_LABEL_HEIGHT = 18;
 
     /** Background color for the entire panel. */
     private static final Color BG_COLOR = new Color(30, 30, 30);
@@ -184,7 +186,9 @@ public class ImageEvolutionPanel extends JPanel {
 
         // Divide width equally into three regions
         int regionW = (w - 4 * REGION_GAP) / 3;
-        int imageH  = h - LABEL_HEIGHT - 2 * REGION_GAP;
+        int labelHeight = Math.max(MIN_LABEL_HEIGHT,
+                SwingSizingUtils.fontHeight(this, LABEL_FONT, 4));
+        int imageH  = h - labelHeight - 2 * REGION_GAP;
 
         int xBest   = REGION_GAP;
         int xGrid   = xBest  + regionW + REGION_GAP;

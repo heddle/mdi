@@ -2,7 +2,6 @@ package edu.cnu.mdi.sim.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.lang.reflect.Constructor;
 import java.util.Objects;
@@ -20,6 +19,7 @@ import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.SimulationContext;
 import edu.cnu.mdi.sim.SimulationListener;
 import edu.cnu.mdi.sim.SimulationState;
+import edu.cnu.mdi.swing.SwingSizingUtils;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
@@ -147,9 +147,7 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 		applyState(SimulationState.NEW, "unbound");
 		setIndeterminate(false, " ");
 
-		Dimension size = getPreferredSize();
-		size.width = 300;
-		setPreferredSize(size);
+		setPreferredSize(SwingSizingUtils.preferredSizeAtLeast(this, 300, 1));
 	}
 
 	@Override
