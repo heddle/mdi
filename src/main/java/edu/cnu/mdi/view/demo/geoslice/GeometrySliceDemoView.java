@@ -85,6 +85,12 @@ public class GeometrySliceDemoView extends BaseView {
     /** Initial slider phi angle, in degrees. */
     private static final int PHI_INITIAL = 0;
 
+    /** Readable wrap width for the west-panel explanation. */
+    private static final int HELP_TEXT_COLUMNS = 24;
+
+    /** Approximate number of wrapped help lines reserved below the slider. */
+    private static final int HELP_TEXT_ROWS = 8;
+
     /** Current slice angle, in degrees. */
     private double phiDeg = PHI_INITIAL;
 
@@ -248,12 +254,9 @@ public class GeometrySliceDemoView extends BaseView {
      */
     private JTextArea createHelpText() {
         JTextArea text = new JTextArea(
-                "Slider changes the \u03c6 slice\n"
-              + "angle. The 2D view shows\n"
-              + "z horizontally and radial\n"
-              + "distance vertically.\n\n"
-              + "White shells are 3D region\n"
-              + "slices. Blue dots are wires.\n"
+                "Slider changes the \u03c6 slice angle. The 2D view shows "
+              + "z horizontally and radial distance vertically.\n\n"
+              + "White shells are 3D region slices. Blue dots are wires. "
               + "Red dots are fake hits.");
 
         text.setBackground(Color.white);
@@ -263,6 +266,12 @@ public class GeometrySliceDemoView extends BaseView {
         text.setLineWrap(true);
         text.setWrapStyleWord(true);
         text.setFont(Fonts.smallFont);
+
+        // Columns are measured using the installed font. Unlike embedded line
+        // breaks or a fixed pixel width, this gives the parent panel a useful
+        // scale-aware preferred width before BorderLayout performs wrapping.
+        text.setColumns(HELP_TEXT_COLUMNS);
+        text.setRows(HELP_TEXT_ROWS);
 
         text.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createEtchedBorder(),
