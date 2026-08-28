@@ -84,6 +84,14 @@ public class DemoApp extends BaseMDIApplication {
 		return 8;
 	} // opts in; 0 = disabled
 
+	// This is a single-window demo tool, not an app embedding MDI inside
+	// something larger, so the native close button should behave the same
+	// as the File > Quit menu item: both should actually end the process.
+	@Override
+	protected boolean exitOnClose() {
+		return true;
+	}
+
 	/**
 	 * Public access to the singleton.
 	 *
