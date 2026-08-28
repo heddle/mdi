@@ -39,7 +39,7 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 
 	private ISimulationHost host;
 
-	private final JLabel statusLabel = new JLabel("State: NEW");
+	private final JLabel statusLabel = new JLabel("NEW");
 	private final JLabel messageLabel = new JLabel(" ");
 
 	private final JProgressBar progressBar = new JProgressBar(0, 100);
@@ -230,7 +230,7 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 	// ------------------------------------------------------------------------
 
 	private void applyState(SimulationState state, String reason) {
-		statusLabel.setText("State: " + state + (reason == null || reason.isBlank() ? "" : ("  (" + reason + ")")));
+		statusLabel.setText(state + (reason == null || reason.isBlank() ? "" : ("  (" + reason + ")")));
 
 		boolean bound = (host != null);
 

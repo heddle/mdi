@@ -21,7 +21,7 @@ import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.swing.WindowPlacement;
 
 /** Utility methods and response constants used by MDI dialogs. */
-public class DialogUtils {
+public final class DialogUtils {
 
 	/**
 	 * Dialog "Reason" constant
@@ -62,6 +62,11 @@ public class DialogUtils {
 	 */
 
 	public static final int NO_RESPONSE = 1;
+	/**
+	 * Private constructor to prevent instantiation.
+	 */
+	private DialogUtils() {
+	}
 
 	/**
 	 * Center a dialog
@@ -117,7 +122,7 @@ public class DialogUtils {
 	 * @param tstr The test string-- try to return a string the same length
 	 */
 
-	public String padString(Component c, String inp, String tstr) {
+	public static String padString(Component c, String inp, String tstr) {
 
 		String str;
 		int oldgap;
