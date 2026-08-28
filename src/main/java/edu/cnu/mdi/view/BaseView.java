@@ -953,6 +953,38 @@ public class BaseView extends JInternalFrame
         return null;
     }
 
+    /**
+     * The component that best represents this view as a static image, for
+     * screenshot/clipboard capture (see {@link edu.cnu.mdi.util.TakePicture}).
+     *
+     * <p>
+     * The default returns the container's drawable component, which is
+     * correct for ordinary item-based 2D views: for those, the container
+     * component already shows everything the view has to offer. Views whose
+     * visible content is not fully contained in that one component should
+     * override this. {@code PlotView} is the prototypical example: its
+     * title, legend, and axis labels live on the surrounding
+     * {@code PlotPanel}, not on the inner {@code PlotCanvas} the container
+     * exposes, so capturing the container component alone would silently
+     * drop them.
+     * </p>
+     *
+     * <p>
+     * This exists so callers that want "an image of this view" — a
+     * toolbar's camera button, a menu action, a future export feature — have
+     * one consistent, view-owned question to ask, instead of each caller
+     * re-deriving its own answer (or a shared utility like
+     * {@code TakePicture} having to special-case specific view/panel types
+     * itself).
+     * </p>
+     *
+     * @return the component to capture as this view's image; the container's
+     *         component if one is present, otherwise this view itself
+     */
+    public Component getImageComponent() {
+        return (container != null) ? container.getComponent() : this;
+    }
+
     // -----------------------------------------------------------------------
     // Persistence — public API
     // -----------------------------------------------------------------------

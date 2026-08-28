@@ -22,7 +22,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import edu.cnu.mdi.dialog.DialogUtils;
 import edu.cnu.mdi.graphics.GraphicsUtils;
-import edu.cnu.mdi.splot.plot.PlotPanel;
 
 /**
  * Utility for capturing a Swing {@link Component} as an image and either saving it as a
@@ -30,6 +29,13 @@ import edu.cnu.mdi.splot.plot.PlotPanel;
  *
  * <h2>Design notes</h2>
  * <ul>
+ *   <li>This class is deliberately agnostic about what kind of component it is given — it
+ *       used to special-case {@code PlotPanel} internally, which silently broke plot capture
+ *       (it dropped the title, legend, and axis labels down to just the inner canvas, undoing
+ *       work the caller had already done correctly). That knowledge now lives where it
+ *       belongs: on the view itself, via {@link edu.cnu.mdi.view.BaseView#getImageComponent()}.
+ *       Callers should pass {@code view.getImageComponent()} rather than an arbitrary
+ *       component plucked from the view's internals.</li>
  *   <li>{@link #takePicture(Component)} is the single entry point every existing caller
  *       already uses (the standard MDI toolbar's camera button, plot/histogram panels, and
  *       any custom "Save Image" action). It first asks the user to choose Save to File,
@@ -84,8 +90,7 @@ public final class TakePicture {
 	 * @param canvas the component to capture; if {@code null}, nothing is done
 	 */
 	public static void takePicture(Component canvas) {
-		Component target = resolveCaptureTarget(canvas);
-		if (target == null) {
+		if (canvas == null) {
 			return;
 		}
 
@@ -98,7 +103,7 @@ public final class TakePicture {
 		}
 
 		if (choice == 1) {
-			copyToClipboard(target);
+			copyToClipboard(canvas);
 			return;
 		}
 
@@ -108,12 +113,12 @@ public final class TakePicture {
 				return;
 			}
 
-			File file = getSavePngFile(target);
+			File file = getSavePngFile(canvas);
 			if (file == null) {
 				return; // user cancelled
 			}
 
-			BufferedImage bi = GraphicsUtils.getComponentImage(target);
+			BufferedImage bi = GraphicsUtils.getComponentImage(canvas);
 
 			var writer = Environment.getInstance().getPngWriter();
 			synchronized (writer) {
@@ -152,31 +157,18 @@ public final class TakePicture {
 	 * @param canvas the component to capture; if {@code null}, nothing is done
 	 */
 	public static void copyToClipboard(Component canvas) {
-		Component target = resolveCaptureTarget(canvas);
-		if (target == null) {
+		if (canvas == null) {
 			return;
 		}
 
 		try {
-			BufferedImage bi = GraphicsUtils.getComponentImage(target);
+			BufferedImage bi = GraphicsUtils.getComponentImage(canvas);
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 			clipboard.setContents(new TransferableImage(bi), null);
 		}
 		catch (Exception e) {
 			LOGGER.log(Level.WARNING, "Unable to copy component image to clipboard.", e);
 		}
-	}
-
-	// Applies the same PlotPanel special-case both capture methods need: a PlotPanel
-	// is not itself the drawable surface, so capture its actual plot canvas instead.
-	private static Component resolveCaptureTarget(Component canvas) {
-		if (canvas == null) {
-			return null;
-		}
-		if (canvas instanceof PlotPanel) {
-			return ((PlotPanel) canvas).getPlotCanvas();
-		}
-		return canvas;
 	}
 
 	/**
