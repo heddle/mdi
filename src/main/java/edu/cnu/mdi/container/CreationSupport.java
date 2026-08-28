@@ -218,8 +218,12 @@ public class CreationSupport {
 	}
 
 
-	// Apply default configuration to the given item.
-	private static void defaultConfigureItem(AItem item) {
+	/**
+	 * Configure the given item with default properties.
+	 *
+	 * @param item the item to configure
+	 */
+	public static void defaultConfigureItem(AItem item) {
 		item.setRightClickable(true);
 		item.setDraggable(true);
 		item.setSelectable(true);
