@@ -11,7 +11,9 @@ for 1.2.2 has been reconstructed from the commit history between the `v1.2.1`
 tag and release. For versions 1.2.1 and earlier, see the corresponding `vX.Y.Z`
 git tags.
 
-## [Unreleased] — targeting 1.2.2
+## [Unreleased]
+
+## [1.2.2] - 2026-08-31
 
 ### Added
 
@@ -97,4 +99,5 @@ git tags.
 - Chapters 1–9 of the MDI reference book were independently verified against
   the current source and corrected where they had drifted.
 
-[Unreleased]: https://github.com/heddle/mdi/compare/v1.2.1...develop
+[Unreleased]: https://github.com/heddle/mdi/compare/v1.2.2...develop
+[1.2.2]: https://github.com/heddle/mdi/compare/v1.2.1...v1.2.2
