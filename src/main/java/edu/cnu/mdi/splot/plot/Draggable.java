@@ -17,7 +17,11 @@ public interface Draggable {
 	/** @param primed whether a possible drag is primed */
 	public void setDraggingPrimed(boolean primed);
 
-	/** @param dragging whether a drag is active */
+	/**
+	 * @param dragging whether a drag is active; setting this to {@code true}
+	 *                 marks the overlay as having been moved (see
+	 *                 implementation notes on "been moved" tracking)
+	 */
 	public void setDragging(boolean dragging);
 
 	/** @param p current screen point, or {@code null} */

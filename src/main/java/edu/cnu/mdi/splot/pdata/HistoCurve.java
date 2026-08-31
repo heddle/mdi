@@ -26,6 +26,9 @@ import edu.cnu.mdi.splot.fit.IFitter;
  * EDT, they apply immediately and notify once.</li>
  * <li>If called off the EDT, values are enqueued and a coalesced EDT drain is
  * scheduled. The drain applies many samples in bulk and notifies once.</li>
+ * <li>{@link #clearData()} follows the same pattern: on the EDT it clears
+ * immediately, off the EDT it discards any pending samples and defers the
+ * clear to the EDT.</li>
  * </ul>
  *
  * @author heddle
@@ -316,15 +319,27 @@ public class HistoCurve extends ACurve {
 	/**
 	 * Clear histogram contents and statistics.
 	 * <p>
-	 * EDT-only by default, preserving the existing behavior. If you decide you want
-	 * this to be thread-safe later, it can follow the same enqueue/schedule
-	 * pattern.
+	 * Safe from any thread, honoring the {@link ACurve#clearData()} contract. If
+	 * called off the EDT, any not-yet-applied pending samples are discarded and
+	 * the clear is deferred to (and coalesced with other scheduled drains on)
+	 * the EDT. The {@link ACurve} notification contract is preserved:
+	 * {@link #markDataChanged()} is invoked on the EDT only.
 	 * </p>
 	 */
 	@Override
 	public void clearData() {
-		requireEdt("HistoCurve.clearData");
-		histoData.clear();
+		if (!SwingUtilities.isEventDispatchThread()) {
+			// Make the histogram truly empty: discard not-yet-applied samples.
+			pending.clear();
+
+			// Coalesce with any scheduled drains; run the clear on the EDT.
+			scheduleDrainOnce(() -> clearData());
+			return;
+		}
+
+		synchronized (lock) {
+			histoData.clear();
+		}
 		markDataChanged();
 	}
 

@@ -508,7 +508,19 @@ public class StripChartCurve extends ACurve {
 	}
 
 	/**
-	 * Strip charts do not perform fitting; this method is a no-op.
+	 * Perform a curve computation (fit or spline) on the strip chart's
+	 * current data, depending on the configured {@link CurveDrawingMethod}.
+	 * <p>
+	 * Same dispatch as {@link Curve#doFit(boolean)}: {@code CUBICSPLINE}
+	 * builds a {@link CubicSpline}, the parametric methods
+	 * ({@code POLYNOMIAL}, {@code ERF}, {@code ERFC}, {@code GAUSSIAN},
+	 * {@code GAUSSIANS}, {@code EXPONENTIAL_DECAY}, {@code POWER_LAW},
+	 * {@code LORENTZIAN}) run the corresponding {@link IFitter}, and
+	 * {@code NONE}/{@code CONNECT}/{@code STAIRS} require no computed
+	 * artifact. Must be called on the EDT.
+	 * </p>
+	 *
+	 * @param force {@code true} to force recomputation even if not dirty
 	 */
 	@Override
 	public void doFit(boolean force) {

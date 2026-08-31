@@ -2,6 +2,22 @@ package edu.cnu.mdi.splot.plot;
 
 import edu.cnu.mdi.component.EnumComboBox;
 
+/**
+ * How {@link PlotCanvas} determines an axis's displayed {@code [min, max]}
+ * range. Set independently per axis via {@link PlotParameters}.
+ *
+ * <ul>
+ * <li>{@link #MANUALLIMITS} — use the explicit bounds set via
+ * {@link PlotParameters#setXRange} / {@link PlotParameters#setYRange}.</li>
+ * <li>{@link #ALGORITHMICLIMITS} (the default) — for a linear axis, round the
+ * data bounds out to "nice" tick-aligned values via {@link NiceScale}; for a
+ * log axis, use the positive data's exact min/max instead (a "nice" rounding
+ * doesn't apply the same way on a log scale).</li>
+ * <li>{@link #USEDATALIMITS} — use the data's exact bounds unrounded, on a
+ * linear axis; on a log axis this behaves the same as
+ * {@code ALGORITHMICLIMITS} (both use the positive data's exact min/max).</li>
+ * </ul>
+ */
 public enum LimitsMethod {
 
 	MANUALLIMITS("Manually enter limits"), ALGORITHMICLIMITS("Algorithmic limits"), USEDATALIMITS("Use data limits");

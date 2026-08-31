@@ -159,9 +159,11 @@ public class FitVectors {
 	 * @param jitterPercent percentage jitter to apply to y values. The jitter is
 	 *                      computed as a random percentage [0, jitterPercentage] of
 	 *                      the y value.
-	 * @param sigmaYPercent percentage of y value to use as sigmaY. The sigmaY is
-	 *                      computed as a random percentage [0, jitterPercentage] of
-	 *                      the y value.
+	 * @param sigmaYPercent percentage of the signal scale to use as sigmaY. The
+	 *                      sigmaY is computed as a random percentage
+	 *                      [0, sigmaYPercent] of {@code |yTrue|} (falling back
+	 *                      to a scale of 1.0 when {@code yTrue} is zero or
+	 *                      non-finite, to avoid a degenerate sigma of 0).
 	 * @param nPoints       number of points evenly spaced between xStart and xEnd
 	 * @return the fit vectors, with weights derived from sigmaY by w = 1/(sigmaY^2)
 	 */

@@ -177,10 +177,11 @@ public class CurveDataModel extends DefaultTableModel {
 	}
 
 	/**
-	 * Get the curve (DataColumn) in the model at the given row.
+	 * Get the curve ({@link ACurve}) in the model at the given row.
 	 *
 	 * @param row the zero based row
-	 * @return the curve corresponding to the row.
+	 * @return the curve corresponding to the row, or {@code null} if
+	 *         {@code row} is out of range
 	 */
 	public ACurve getCurveAtRow(int row) {
 		if ((_data == null) || (row < 0) || (row >= _data.size())) {

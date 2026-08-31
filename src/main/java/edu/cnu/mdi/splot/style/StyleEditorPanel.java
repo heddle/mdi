@@ -19,6 +19,20 @@ import edu.cnu.mdi.splot.plot.TextFieldSlider;
 import edu.cnu.mdi.ui.colors.ColorLabel;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
+/**
+ * Editor panel for an {@link IStyled}'s appearance: symbol type/size/color,
+ * line style/width/color, and (for applicable {@link PlotDataType}s) a
+ * separate fit-line color and style.
+ * <p>
+ * The panel does not own a style reference; {@link #setStyle(IStyled)}
+ * pushes an existing style's values into the panel's widgets (each widget is
+ * only touched if it exists for the constructed {@code PlotDataType} — some
+ * widgets, like the fit-line controls, only apply to curve types that
+ * support fitting). Callers read the edited values back out via the
+ * individual widget getters ({@link #getSymbolSelector()},
+ * {@link #getSymbolSizeSelector()}, {@link #getLineWidthSelector()}, etc.).
+ * </p>
+ */
 @SuppressWarnings("serial")
 public class StyleEditorPanel extends JPanel {
 

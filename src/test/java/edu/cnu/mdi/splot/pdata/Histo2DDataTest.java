@@ -35,6 +35,57 @@ class Histo2DDataTest {
 		assertEquals(1, histogram.getXOverYOverCount());
 	}
 
+	private static Histo2DData grid3x3() {
+		Histo2DData h = new Histo2DData("heat", 0, 3, 3, 0, 3, 3);
+		h.fill(0.5, 0.5, 1);
+		h.fill(1.5, 0.5, 2);
+		h.fill(2.5, 0.5, 3);
+		h.fill(0.5, 1.5, 4);
+		h.fill(1.5, 1.5, 5);
+		h.fill(2.5, 1.5, 6);
+		h.fill(0.5, 2.5, 7);
+		h.fill(1.5, 2.5, 8);
+		h.fill(2.5, 2.5, 9);
+		return h;
+	}
+
+	@Test
+	void localMean3x3AveragesTheFullNeighborhoodAtTheCenterBin() {
+		Histo2DData h = grid3x3();
+		// Center bin's 3x3 neighborhood is the entire grid: mean of 1..9.
+		assertEquals(5.0, h.localMean3x3(1.5, 1.5), 1.0e-12);
+	}
+
+	@Test
+	void localMean3x3ClipsTheNeighborhoodAtACornerBin() {
+		Histo2DData h = grid3x3();
+		// Corner bin (0,0): only the 2x2 block of in-range neighbors counts.
+		assertEquals((1.0 + 4.0 + 2.0 + 5.0) / 4.0, h.localMean3x3(0.5, 0.5), 1.0e-12);
+	}
+
+	@Test
+	void localMean3x3IsZeroOutsideTheGrid() {
+		Histo2DData h = grid3x3();
+		assertEquals(0.0, h.localMean3x3(-10.0, -10.0), 1.0e-12);
+	}
+
+	@Test
+	void percentileRanksBinsAgainstAllOccupiedBins() {
+		Histo2DData h = grid3x3();
+		assertEquals(100.0 * 9 / 9, h.percentile(2.5, 2.5), 1.0e-9); // bin value 9 (max)
+		assertEquals(100.0 * 1 / 9, h.percentile(0.5, 0.5), 1.0e-9); // bin value 1 (min)
+		assertEquals(100.0 * 5 / 9, h.percentile(1.5, 1.5), 1.0e-9); // bin value 5 (median)
+	}
+
+	@Test
+	void percentileIsZeroForAnEmptyBinOrOutOfRangePoint() {
+		Histo2DData h = new Histo2DData("heat", 0, 3, 3, 0, 3, 3);
+		h.fill(1.5, 1.5, 5); // only the center bin is occupied
+
+		assertEquals(0.0, h.percentile(0.5, 0.5), 1.0e-12, "an empty (zero-value) bin ranks at 0");
+		assertEquals(0.0, h.percentile(-10.0, -10.0), 1.0e-12, "an out-of-range point ranks at 0");
+	}
+
 	@Test
 	void snapshotsAreDefensiveAndCachesFollowMutationAndClear() {
 		Histo2DData histogram = new Histo2DData("heat", 0, 2, 2, 0, 2, 2);

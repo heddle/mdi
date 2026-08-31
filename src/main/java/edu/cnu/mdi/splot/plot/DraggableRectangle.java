@@ -36,7 +36,16 @@ public class DraggableRectangle extends Rectangle implements Draggable {
 	@Override
 	public void setDragging(boolean dragging) {
 		_dragging = dragging;
-		_beenMoved = true;
+
+		// Only a transition into the dragging state means the overlay has
+		// actually begun moving. Clearing dragging (e.g. on every mouse
+		// release, even a plain click that never primed a drag) must not
+		// mark it as moved, or ExtraText's "keep at default location until
+		// dragged" logic breaks after the very first click anywhere on the
+		// canvas.
+		if (dragging) {
+			_beenMoved = true;
+		}
 	}
 
 	@Override
