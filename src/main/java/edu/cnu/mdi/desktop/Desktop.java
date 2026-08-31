@@ -269,7 +269,7 @@ public final class Desktop extends JDesktopPane {
     public Properties getSavedProperties() {
         return _properties;
     }
-    /*
+    /**
      * Apply the loaded configuration properties to all registered views.
      * <p>
      * Each {@link JInternalFrame} on the desktop that is a {@link BaseView}

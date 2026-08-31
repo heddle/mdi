@@ -100,7 +100,7 @@ public class FeedbackPane extends TextPaneScrollPane {
 
     /**
      * Constructs a {@code FeedbackPane} with a dark background suitable for
-     * overlay-style feedback. Uses cyan foreground and 9 pt font size.
+     * overlay-style feedback. Uses cyan foreground and 11 pt font size.
      */
     public FeedbackPane() {
         this(Color.cyan, Color.black, 11);

@@ -148,10 +148,24 @@ public final class PropertyUtils {
 	public static final Rectangle2D.Double defaultWorldRect = new Rectangle2D.Double(0, 0, 1, 1);
 
 	/**
-	 * Create a set of properties from the key values
+	 * Create a set of properties from the key values.
+	 * <p>
+	 * {@code null} or an empty array yields an empty, valid {@link Properties}.
+	 * Otherwise the arguments must be an even-length sequence of alternating
+	 * keys and values. Keys for known property names (see the constants in
+	 * this class) are additionally checked against their expected value type;
+	 * an unrecognized key is accepted with a logged warning rather than
+	 * rejected, so custom keys remain usable.
+	 * </p>
 	 *
 	 * @param keyValues the set of key values
 	 * @return a set of properties
+	 * @throws IllegalArgumentException if {@code keyValues} has an odd
+	 *                                  length, if any key is not a
+	 *                                  {@code String}, if any value is
+	 *                                  {@code null}, or if a known key's
+	 *                                  value is not an instance of its
+	 *                                  expected type
 	 */
 	public static Properties fromKeyValues(Object... keyValues) {
 
@@ -430,7 +444,7 @@ public final class PropertyUtils {
 	 * Get the item rotatable boolean flag. For views.
 	 *
 	 * @param props the properties
-	 * @return the rotatable flag. On error, return true.
+	 * @return the rotatable flag. On error, return false.
 	 */
 	public static boolean getRotatable(Properties props) {
 		return getBoolean(props, ROTATABLE, false);
@@ -567,7 +581,7 @@ public final class PropertyUtils {
 	 * Get the text color from the properties
 	 *
 	 * @param props the properties
-	 * @return the text color. On error return _defaultTextColor.
+	 * @return the text color. On error return {@link #defaultTextColor}.
 	 */
 	public static Color getTextColor(Properties props) {
 		return getColor(props, TEXTCOLOR, defaultTextColor);
@@ -577,7 +591,7 @@ public final class PropertyUtils {
 	 * Get the fill color from the properties
 	 *
 	 * @param props the properties
-	 * @return the fill color. On error return _defaultFillColor.
+	 * @return the fill color. On error return {@link #defaultFillColor}.
 	 */
 	public static Color getFillColor(Properties props) {
 		return getColor(props, FILLCOLOR, defaultFillColor);
@@ -587,7 +601,7 @@ public final class PropertyUtils {
 	 * Get the line color from the properties
 	 *
 	 * @param props the properties
-	 * @return the line color. On error return _defaultLineColor.
+	 * @return the line color. On error return {@link #defaultLineColor}.
 	 */
 	public static Color getLineColor(Properties props) {
 		return getColor(props, LINECOLOR, defaultLineColor);

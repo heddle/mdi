@@ -23,6 +23,13 @@ public final class StartupWindow implements AutoCloseable {
 	private final JLabel status = new JLabel("Starting…", SwingConstants.LEFT);
 	private final LogPane logPane = new LogPane();
 
+	/**
+	 * Build and show a startup window with the given application metadata.
+	 * Must be called on the Swing EDT.
+	 *
+	 * @param info the application metadata to display
+	 * @throws IllegalStateException if not called on the Swing EDT
+	 */
 	public StartupWindow(StartupInfo info) {
 		if (!SwingUtilities.isEventDispatchThread()) throw new IllegalStateException("Create StartupWindow on the EDT");
 		window = new JWindow((Window) null);

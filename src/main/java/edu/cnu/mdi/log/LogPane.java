@@ -170,9 +170,12 @@ public class LogPane extends TextPaneScrollPane {
     /**
 	 * Append {@code message} at {@code level} on the Swing EDT.
 	 * <p>
-	 * If the calling thread is already the EDT the append happens synchronously via
-	 * a direct {@code invokeLater} queue entry; either way Swing's single-threaded
-	 * rule is respected.
+	 * Always defers via {@link SwingUtilities#invokeLater}, even when the
+	 * calling thread is already the EDT — the append happens asynchronously,
+	 * after the current event finishes, not synchronously in-line. This keeps
+	 * Swing's single-threaded rule respected regardless of the caller's
+	 * thread, at the cost of the append not being visible until the next EDT
+	 * cycle.
 	 * </p>
 	 *
 	 * @param level   the log level whose style should be applied
@@ -200,10 +203,11 @@ public class LogPane extends TextPaneScrollPane {
      * formatted the string.
      * </p>
      * <p>
-     * For {@link Log.Level#ERROR} and {@link Log.Level#EXCEPTION} messages a
-     * timestamp prefix is also prepended by the underlying
-     * {@link TextPaneScrollPane#append(String, SimpleAttributeSet, boolean)}
-     * call.
+     * A timestamp prefix is also shown, but not by this method: for every
+     * level, {@link #appendOnEdt} unconditionally calls
+     * {@link #appendTimeStamp()} immediately before calling this method, via
+     * a separate, unstyled {@code append(...)} call — it is not level-specific
+     * and is not part of what this method itself does.
      * </p>
      *
      * @param level   the log level

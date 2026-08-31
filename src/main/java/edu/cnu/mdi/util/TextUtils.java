@@ -169,12 +169,19 @@ public final class TextUtils {
 	 *
 	 * @param text        the text content which can contain multiple lines
 	 * @param fm          the FontMetrics object for measuring text
-	 * @param leftMargin  the left margin in pixels
-	 * @param rightMargin the right margin in pixels
-	 * @param topMargin   the top margin in pixels
-	 * @param bottomMargin the bottom margin in pixels
-	 * @param lineSpacing the line spacing factor (1.0 = normal, >1.0 = more space)
+	 * @param leftMargin  the left margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param rightMargin the right margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param topMargin   the top margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param bottomMargin the bottom margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param lineSpacing the line spacing factor (1.0 = normal, >1.0 = more
+	 *                    space); silently clamped to {@code [0.5, 3.0]}
 	 * @return the bounding Rectangle for the text block
+	 * @throws IllegalArgumentException if {@code lineSpacing} is not finite
+	 *                                  (NaN or infinite)
 	 */
 	public static Rectangle textBounds(String text, FontMetrics fm,
             int leftMargin, int rightMargin,
@@ -190,12 +197,19 @@ public final class TextUtils {
 	 *
 	 * @param lines       the array of text lines
 	 * @param fm          the FontMetrics object for measuring text
-	 * @param leftMargin  the left margin in pixels
-	 * @param rightMargin the right margin in pixels
-	 * @param topMargin   the top margin in pixels
-	 * @param bottomMargin the bottom margin in pixels
-	 * @param lineSpacing the line spacing factor (1.0 = normal, >1.0 = more space)
+	 * @param leftMargin  the left margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param rightMargin the right margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param topMargin   the top margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param bottomMargin the bottom margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param lineSpacing the line spacing factor (1.0 = normal, >1.0 = more
+	 *                    space); silently clamped to {@code [0.5, 3.0]}
 	 * @return the bounding Rectangle for the text block
+	 * @throws IllegalArgumentException if {@code lineSpacing} is not finite
+	 *                                  (NaN or infinite)
 	 */
 	public static Rectangle textBounds(String[] lines, FontMetrics fm,
 	                            int leftMargin, int rightMargin,

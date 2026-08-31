@@ -66,12 +66,21 @@ public final class DoubleFormat {
 	}
 
 	/**
-	 * Format a double, using scientific notation if the exponent is less than
-	 * the specified minimum.
+	 * Format a double, using scientific notation once its magnitude's
+	 * order-of-magnitude exponent reaches the specified minimum.
+	 *
+	 * <p>The exponent is computed from {@code log10(|value|)}. Values with
+	 * magnitude less than 1 are treated symmetrically: an exponent of, e.g.,
+	 * {@code -3} (for a value like {@code 0.001}) is remapped to {@code 4}
+	 * before comparison, so very small values trigger scientific notation
+	 * the same way very large ones do. Non-scientific (fixed-point) notation
+	 * is used while the (remapped) exponent stays below {@code minExponent}.
+	 * </p>
 	 *
 	 * @param value       the value to format.
 	 * @param numdec      the number of digits right of the decimal.
-	 * @param minExponent the minimum exponent for using scientific notation.
+	 * @param minExponent the exponent at (and above) which scientific
+	 *                    notation is used.
 	 * @return the formatted value
 	 * @throws IllegalArgumentException if {@code numdec} is outside 0 through 100
 	 */

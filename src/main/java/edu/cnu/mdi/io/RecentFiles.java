@@ -19,7 +19,15 @@ public final class RecentFiles {
 	private final int maximumSize;
 	private final String keyPrefix;
 
-	/** Create a list using the default preference key prefix. */
+	/**
+	 * Create a list using the default preference key prefix.
+	 *
+	 * @param preferences the preference node backing this list; must not be
+	 *                    {@code null}
+	 * @param maximumSize maximum number of entries retained; must be &gt;= 1
+	 * @throws NullPointerException     if {@code preferences} is {@code null}
+	 * @throws IllegalArgumentException if {@code maximumSize < 1}
+	 */
 	public RecentFiles(Preferences preferences, int maximumSize) {
 		this(preferences, maximumSize, DEFAULT_KEY);
 	}
@@ -27,6 +35,15 @@ public final class RecentFiles {
 	/**
 	 * Create a list with an explicit key prefix, useful when one preference node
 	 * owns more than one independent recent-file list.
+	 *
+	 * @param preferences the preference node backing this list; must not be
+	 *                    {@code null}
+	 * @param maximumSize maximum number of entries retained; must be &gt;= 1
+	 * @param keyPrefix   preference key prefix distinguishing this list from
+	 *                    others sharing the same node; must not be blank
+	 * @throws NullPointerException     if {@code preferences} is {@code null}
+	 * @throws IllegalArgumentException if {@code maximumSize < 1} or
+	 *                                  {@code keyPrefix} is blank
 	 */
 	public RecentFiles(Preferences preferences, int maximumSize, String keyPrefix) {
 		this.preferences = Objects.requireNonNull(preferences, "preferences");
@@ -39,11 +56,25 @@ public final class RecentFiles {
 		normalize();
 	}
 
+	/** @return the maximum number of entries this list retains */
 	public int getMaximumSize() {
 		return maximumSize;
 	}
 
-	/** Add an existing regular file to the front of the list. */
+	/**
+	 * Add an existing regular file to the front of the list, moving it there
+	 * if already present.
+	 * <p>
+	 * The file is canonicalized (via {@link File#getCanonicalFile()}, falling
+	 * back to {@link File#getAbsoluteFile()} on {@link IOException}) before
+	 * being compared/stored, so equivalent paths (e.g. differing only by
+	 * {@code .} or symlink segments) are recognized as the same entry. A
+	 * {@code null} file, or one that is not an existing regular file, is
+	 * silently ignored.
+	 * </p>
+	 *
+	 * @param file the file to add; may be {@code null}
+	 */
 	public void add(File file) {
 		File normalized = normalizeFile(file);
 		if (normalized == null || !normalized.isFile()) return;
@@ -53,6 +84,13 @@ public final class RecentFiles {
 		writeRaw(paths);
 	}
 
+	/**
+	 * Remove a file from the list, if present. Uses the same canonicalization
+	 * as {@link #add(File)} for comparison. A no-op if {@code file} is
+	 * {@code null} or not currently in the list.
+	 *
+	 * @param file the file to remove; may be {@code null}
+	 */
 	public void remove(File file) {
 		File normalized = normalizeFile(file);
 		if (normalized == null) return;
@@ -60,6 +98,7 @@ public final class RecentFiles {
 		if (paths.remove(normalized.getAbsolutePath())) writeRaw(paths);
 	}
 
+	/** Remove all entries from the list. */
 	public void clear() {
 		writeRaw(Collections.emptyList());
 	}
@@ -79,6 +118,10 @@ public final class RecentFiles {
 		return List.copyOf(files);
 	}
 
+	/**
+	 * @return the same entries as {@link #getRecentFiles()}, as absolute path
+	 *         strings, in the same MRU order
+	 */
 	public List<String> getRecentPaths() {
 		return getRecentFiles().stream().map(File::getAbsolutePath).toList();
 	}

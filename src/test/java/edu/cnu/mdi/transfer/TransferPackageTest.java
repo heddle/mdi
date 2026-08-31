@@ -60,6 +60,26 @@ class TransferPackageTest {
         assertFalse(ImageFilters.isActualImage.test(fake));
     }
 
+    @Test
+    void scaleToDragImageProducesASquareImageOfTheRequestedSize() {
+        BufferedImage source = new BufferedImage(40, 10, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage scaled = PaletteDragSupport.scaleToDragImage(source, 24);
+
+        assertEquals(24, scaled.getWidth());
+        assertEquals(24, scaled.getHeight());
+    }
+
+    @Test
+    void scaleToDragImageRejectsInvalidArguments() {
+        BufferedImage source = new BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB);
+        assertThrows(IllegalArgumentException.class,
+                () -> PaletteDragSupport.scaleToDragImage(null, 24));
+        assertThrows(IllegalArgumentException.class,
+                () -> PaletteDragSupport.scaleToDragImage(source, 0));
+        assertThrows(IllegalArgumentException.class,
+                () -> PaletteDragSupport.scaleToDragImage(source, -1));
+    }
+
     private static TransferHandler.TransferSupport support(List<File> files) {
         Transferable transferable = new Transferable() {
             @Override public DataFlavor[] getTransferDataFlavors() {

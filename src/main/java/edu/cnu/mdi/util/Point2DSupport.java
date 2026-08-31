@@ -147,10 +147,19 @@ public final class Point2DSupport {
 	 * Computes the azimuth from this world point to another. The azimuth is the
 	 * angle, in degrees, measured clockwise from north (the positive y axis) to
 	 * the line connecting the two points.
+	 * <p>
+	 * Unlike a normalized compass bearing, the result is <strong>not</strong>
+	 * restricted to {@code [0, 360)} — it is derived directly from
+	 * {@link Math#atan2} and can be negative (e.g. a westward vector returns
+	 * {@code -90}, not {@code 270}). Callers that need a normalized
+	 * {@code [0, 360)} sweep should use
+	 * {@link edu.cnu.mdi.util.AngleSupport#ccwSweepDeg} or equivalent instead.
+	 * </p>
 	 *
 	 * @param wp0 the starting world point.
 	 * @param wp1 the ending world point.
-	 * @return the azimuth from wp0 to wp1, in degrees.
+	 * @return the azimuth from wp0 to wp1, in degrees; not normalized to
+	 *         {@code [0, 360)}
 	 */
 	public static double azimuth(Point2D.Double wp0, Point2D.Double wp1) {
 		double delx = wp1.x - wp0.x;
