@@ -40,8 +40,10 @@ public final class MapConstants {
     public static final EProjection DEFAULT_PROJECTION = EProjection.MERCATOR;
 
     /**
-     * The mean radius of the Earth in kilometers, used for distance calculations
-     * in the Haversine formula when computing distances between geographic coordinates.
+     * The mean radius of the Earth in kilometers, used to scale the
+     * dimensionless great-circle arc length returned by
+     * {@link edu.cnu.mdi.mapping.graphics.MapGraphics#greatCircleLength}
+     * (computed via the spherical law of cosines) into a real-world distance.
      */
     public static final double RADIUS_EARTH_KM = 6371.0;
 

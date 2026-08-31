@@ -98,6 +98,31 @@ public class MapProjectionTest {
                 .isLongitudePeriodic());
     }
 
+    @Test
+    public void testLambertProjectionOfTheAntipodeIsNaNNotABoundaryPoint() {
+        LambertEqualAreaProjection projection =
+                new LambertEqualAreaProjection(0.0, 0.0, MapTheme.light());
+
+        // The antipode of the projection center (0,0) is (180 deg, 0 deg).
+        Point2D.Double xy = new Point2D.Double();
+        projection.latLonToXY(point(180.0, 0.0), xy);
+
+        assertTrue(Double.isNaN(xy.x), "x must be NaN at the antipode singularity");
+        assertTrue(Double.isNaN(xy.y), "y must be NaN at the antipode singularity");
+    }
+
+    @Test
+    public void testLambertProjectionNearButNotAtTheAntipodeIsFinite() {
+        LambertEqualAreaProjection projection =
+                new LambertEqualAreaProjection(0.0, 0.0, MapTheme.light());
+
+        Point2D.Double xy = new Point2D.Double();
+        projection.latLonToXY(point(179.0, 0.0), xy);
+
+        assertTrue(Double.isFinite(xy.x));
+        assertTrue(Double.isFinite(xy.y));
+    }
+
     private static Point2D.Double point(double longitudeDeg, double latitudeDeg) {
         return new Point2D.Double(
                 Math.toRadians(longitudeDeg),

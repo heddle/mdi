@@ -182,9 +182,15 @@ public final class ShapefileCountryLoader implements ICountryLoader {
                 // Retrieve the corresponding attribute row.
                 // Advance once for every geometry record, including null-shape
                 // placeholders, so DBF attributes remain positionally aligned.
-                Map<String, String> attrs = (attrIndex < attributes.size())
-                        ? attributes.get(attrIndex)
-                        : Collections.emptyMap();
+                if (attrIndex >= attributes.size()) {
+                    throw new IOException(
+                            "Shapefile record count mismatch: " + shpPath
+                                    + " has more geometry records than " + dbfPath
+                                    + " has attribute rows (no attribute row at index "
+                                    + attrIndex + "). The companion .shp/.dbf pair may be "
+                                    + "mismatched or truncated.");
+                }
+                Map<String, String> attrs = attributes.get(attrIndex);
                 attrIndex++;
 
                 // We only handle Polygon geometry for countries.

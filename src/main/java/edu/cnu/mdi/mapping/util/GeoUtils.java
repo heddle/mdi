@@ -79,9 +79,12 @@ public class GeoUtils {
      *
      * @param latLonRad the position to convert; {@code .x} = longitude in radians,
      *                  {@code .y} = latitude in radians
-     * @return the corresponding UTM coordinate on the WGS84 ellipsoid
-     * @throws IllegalArgumentException if the latitude is outside the UTM-defined
-     *                                  range of {@code -80°} to {@code +84°}
+     * @return the corresponding UTM coordinate on the WGS84 ellipsoid, or (per
+     *         {@link #fromDecimalDegrees}) an out-of-range sentinel coordinate
+     *         (see {@link UTMCoordinate#UTMCoordinate(boolean)}) if the
+     *         latitude falls outside the UTM-defined range of {@code -80°} to
+     *         {@code +84°} — this method never throws for an out-of-range
+     *         latitude
      */
     public static UTMCoordinate fromRadians(Point2D.Double latLonRad) {
         double latDeg = Math.toDegrees(latLonRad.y);

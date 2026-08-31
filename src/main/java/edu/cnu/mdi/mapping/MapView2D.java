@@ -612,8 +612,9 @@ public class MapView2D extends BaseView {
 	}
 
 	/**
-	 * Switches the active projection, rebuilding all dependent renderers and
-	 * resetting the container's world coordinate system.
+	 * Switches the active projection to one of MDI's built-in projection
+	 * types, rebuilding all dependent renderers and resetting the container's
+	 * world coordinate system.
 	 *
 	 * <p>
 	 * The new projection is created by {@link ProjectionFactory} using the theme
@@ -626,11 +627,6 @@ public class MapView2D extends BaseView {
 	 * {@link #setCities}) before calling this method; if either list is
 	 * {@code null} the corresponding renderer is skipped.
 	 * </p>
-	 *
-	 * @param projectionType the new projection type; must not be {@code null}
-	 */
-	/**
-	 * Switches the active projection to one of MDI's built-in projection types.
 	 *
 	 * <p>
 	 * This method preserves the existing MDI enum-based projection API. For
