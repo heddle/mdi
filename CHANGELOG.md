@@ -13,6 +13,22 @@ git tags.
 
 ## [Unreleased]
 
+### Added
+
+- **"Recent Shapefiles" menu**: a persistent, most-recently-used list of
+  loaded `.shp` files under the Shapefiles menu's "Open Shapefile...",
+  populated by both the menu and drag-and-drop, matching sPlot's existing
+  "Recent Plots". A file that fails to load, or is later found missing, is
+  pruned rather than left as a dead entry.
+
+### Fixed
+
+- Shapefile drag-and-drop on the map view (`MapView2D`, and therefore
+  `RadarView`) never worked — dropping a `.shp` file onto the map silently
+  did nothing. File-drop was never wired up in the first place, and once it
+  was, a pre-existing raw AWT drop target for NATO military symbols on the
+  same component unconditionally shadowed it. Both are fixed.
+
 ## [1.2.2] - 2026-08-31
 
 ### Added
