@@ -48,7 +48,7 @@ public class FileDropHandler extends TransferHandler {
 			return false;
 		} catch (Exception e) {
 			edu.cnu.mdi.log.Log.getInstance().warning(
-					"File drop could not be completed: " + e.getMessage());
+					"File drop could not be completed (" + e.getClass().getSimpleName() + "): " + e.getMessage());
 			return false;
 		}
 	}

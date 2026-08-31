@@ -6,12 +6,14 @@ import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetAdapter;
+import java.awt.dnd.DropTargetDragEvent;
 import java.awt.dnd.DropTargetDropEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.ImageIcon;
+import javax.swing.TransferHandler;
 
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.BaseToolHandler;
@@ -54,9 +56,27 @@ public class MapContainer extends BaseContainer {
 	 * Installs an AWT drop target that accepts military symbol payloads from the
 	 * NATO palette and places a map symbol at the drop location.
 	 * <p>
+	 * This container <em>is</em> its own canvas ({@link #getComponent()} returns
+	 * {@code this}), which is also the surface {@link MapView2D#enableFileDrop}
+	 * installs its Swing {@link TransferHandler} on (e.g. for shapefile
+	 * drag-and-drop). A raw AWT {@link DropTarget} on a component takes over
+	 * that component's drop handling entirely, so a drop that isn't a military
+	 * symbol is delegated to whatever {@code TransferHandler} is installed here
+	 * — otherwise it would shadow the file-drop handler completely rather than
+	 * merely not handling milsym payloads.
+	 * </p>
+	 * <p>
 	 * A no-op in a headless environment: {@link DropTarget}'s constructor throws
 	 * {@link java.awt.HeadlessException} there, and a headless JVM (e.g. a unit
 	 * test) has no display to drop onto anyway.
+	 * </p>
+	 * <p>
+	 * {@code dragEnter}/{@code dragOver} are overridden (not left as
+	 * {@link DropTargetAdapter}'s no-op defaults) to explicitly {@code acceptDrag}
+	 * whenever the drop would ultimately be handled — either as a milsym payload
+	 * or by delegation below. A {@link java.awt.dnd.DropTargetListener} that never
+	 * accepts during the drag shows a reject cursor for the whole gesture and, on
+	 * at least some platforms, may never receive {@code drop} at all.
 	 * </p>
 	 */
 	private void installMilSymbolDropTarget() {
@@ -64,26 +84,102 @@ public class MapContainer extends BaseContainer {
 			return;
 		}
 		new DropTarget(getComponent(), DnDConstants.ACTION_COPY, new DropTargetAdapter() {
+
+			@Override
+			public void dragEnter(DropTargetDragEvent event) {
+				acceptOrRejectDrag(event);
+			}
+
+			@Override
+			public void dragOver(DropTargetDragEvent event) {
+				acceptOrRejectDrag(event);
+			}
+
+			private void acceptOrRejectDrag(DropTargetDragEvent event) {
+				boolean handleable = event.isDataFlavorSupported(MilSymbolTransferable.FLAVOR)
+						|| canDelegateHandle(event.getTransferable());
+				if (handleable) {
+					event.acceptDrag(DnDConstants.ACTION_COPY);
+				} else {
+					event.rejectDrag();
+				}
+			}
+
 			@Override
 			public void drop(DropTargetDropEvent event) {
 
-				if (!event.isDataFlavorSupported(MilSymbolTransferable.FLAVOR)) {
-					event.rejectDrop();
+				if (event.isDataFlavorSupported(MilSymbolTransferable.FLAVOR)) {
+					event.acceptDrop(DnDConstants.ACTION_COPY);
+					try {
+						Transferable t = event.getTransferable();
+						MilSymbolDescriptor descriptor = (MilSymbolDescriptor) t
+								.getTransferData(MilSymbolTransferable.FLAVOR);
+						placeSymbol(descriptor, event.getLocation());
+						event.dropComplete(true);
+					} catch (Exception ex) {
+						event.dropComplete(false);
+					}
 					return;
 				}
 
-				event.acceptDrop(DnDConstants.ACTION_COPY);
-				try {
-					Transferable t = event.getTransferable();
-					MilSymbolDescriptor descriptor = (MilSymbolDescriptor) t
-							.getTransferData(MilSymbolTransferable.FLAVOR);
-					placeSymbol(descriptor, event.getLocation());
-					event.dropComplete(true);
-				} catch (Exception ex) {
-					event.dropComplete(false);
+				// canDelegateHandle only checks flavor support (safe pre-accept); the
+				// actual transfer data must not be read via delegateToInstalledTransferHandler
+				// until AFTER acceptDrop() - reading it earlier fails with "No drop
+				// current" once the real native Transferable is in play, not the
+				// synthetic one this class's own tests use.
+				if (canDelegateHandle(event.getTransferable())) {
+					event.acceptDrop(DnDConstants.ACTION_COPY);
+					boolean imported = delegateToInstalledTransferHandler(event.getTransferable());
+					event.dropComplete(imported);
+				} else {
+					event.rejectDrop();
 				}
 			}
 		}, true);
+	}
+
+	/**
+	 * Whether whatever Swing {@link TransferHandler} is installed on this
+	 * component would accept the given transferable — used during
+	 * {@code dragEnter}/{@code dragOver} to decide the accept/reject cursor, and
+	 * by {@link #delegateToInstalledTransferHandler} at actual drop time.
+	 *
+	 * @param transferable the (possibly still in-flight, during a drag) dragged data
+	 * @return {@code true} if a {@code TransferHandler} is installed and its
+	 *         {@code canImport} accepts this transferable
+	 */
+	boolean canDelegateHandle(Transferable transferable) {
+		TransferHandler handler = getTransferHandler();
+		return handler != null && handler.canImport(new TransferHandler.TransferSupport(this, transferable));
+	}
+
+	/**
+	 * Hands a drop this container's raw milsym {@link DropTarget} doesn't
+	 * recognize off to whatever Swing {@link TransferHandler} is installed on
+	 * this same component, using the public {@link TransferHandler.TransferSupport}
+	 * constructor built for exactly this "bridge a non-Swing drop source into a
+	 * TransferHandler" case.
+	 * <p>
+	 * <strong>Must only be called after {@link DropTargetDropEvent#acceptDrop}</strong>
+	 * (see {@link #drop}). {@code importData} reads the transferable's actual data
+	 * ({@code getTransferData}), and the real, native drop {@code Transferable} AWT
+	 * hands to {@code drop()} throws {@code "No drop current"} if that's attempted
+	 * before the drop has been accepted — {@link #canDelegateHandle} (flavor-only,
+	 * safe to call anytime) is what {@code dragEnter}/{@code dragOver}/the pre-accept
+	 * check in {@code drop()} should use instead.
+	 * </p>
+	 *
+	 * @param transferable the dropped data
+	 * @return {@code true} if a {@code TransferHandler} was installed, accepted,
+	 *         and successfully imported the data
+	 */
+	boolean delegateToInstalledTransferHandler(Transferable transferable) {
+		TransferHandler handler = getTransferHandler();
+		if (handler == null) {
+			return false;
+		}
+		TransferHandler.TransferSupport support = new TransferHandler.TransferSupport(this, transferable);
+		return handler.canImport(support) && handler.importData(support);
 	}
 
 	/**
