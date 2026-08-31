@@ -219,7 +219,10 @@ public class CreationSupport {
 
 
 	/**
-	 * Configure the given item with default properties.
+	 * Configure the given item with the default interaction properties used
+	 * by every {@code createXxxItem} factory in this class: right-clickable,
+	 * draggable, selectable, resizable, rotatable, deletable, style-editable,
+	 * and unlocked.
 	 *
 	 * @param item the item to configure
 	 */

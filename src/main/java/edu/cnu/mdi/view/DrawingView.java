@@ -41,14 +41,13 @@ public class DrawingView extends BaseView {
 	}
 
 	/**
-	 * Convenience method for creating a Drawing View with a square canvas.
+	 * Convenience factory for creating a {@code DrawingView} with the default
+	 * key-value configuration (see {@link #defaults()}).
 	 * <p>
-	 * The BaseView constructor calls pack() and desktop.add(), both of which
-	 * affect frame sizing. setVisible(true) is deferred via invokeLater.
-	 * We defer our chrome measurement and setSize() to a second invokeLater,
-	 * which runs after setVisible has completed, giving us the true realized
-	 * component sizes.
+	 * Equivalent to {@code new DrawingView((Object[]) null)}.
 	 * </p>
+	 *
+	 * @return a new {@code DrawingView} configured with the default properties
 	 */
 	public static DrawingView createDrawingView() {
 		return new DrawingView((Object[])null);

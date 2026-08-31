@@ -6,24 +6,34 @@ import java.awt.geom.Point2D;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 
+/**
+ * An open, stroked-only polyline defined in world coordinates.
+ * <p>
+ * Unlike {@link PolygonItem}, the path is not closed back to its first
+ * point, and the fill color is forced to {@code null} so only the connecting
+ * segments are drawn. The geometry is stored as a world-coordinate
+ * {@link java.awt.geom.Path2D}; selection/reshape modifies vertices of that
+ * path.
+ * </p>
+ */
 public class PolylineItem extends PathBasedItem {
 
 	/**
 	 * Create a world polyline item
 	 *
 	 * @param layer the z layer  this item is on.
-	 * @param points   the points of the polygon
+	 * @param points   the points of the polyline
 	 */
 	public PolylineItem(Layer layer, Point2D.Double points[]) {
 		this(layer, points, (Object[]) null);
 	}
-	
+
 	/**
 	 * Create a world polyline item
 	 *
 	 * @param layer the z layer  this item is on.
-	 * @param points   the points of the polygon
-	 * @param keyVals  optional key value pairs for styling the item. 
+	 * @param points   the points of the polyline
+	 * @param keyVals  optional key value pairs for styling the item.
 	 * See {@link AItem#AItem(Layer, Object...)} for more details.
 	 */
 	public PolylineItem(Layer layer, Point2D.Double points[], Object... keyVals) {

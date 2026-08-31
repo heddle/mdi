@@ -127,6 +127,72 @@ class LayerTest {
     }
 
     @Test
+    void zOrderingMovesItemsWithinTheLayersDrawOrder() {
+        BaseContainer container = newContainer();
+        Layer layer = new Layer(container, "items");
+        PointItem a = new PointItem(layer, new Point2D.Double(1, 1));
+        PointItem b = new PointItem(layer, new Point2D.Double(2, 2));
+        PointItem c = new PointItem(layer, new Point2D.Double(3, 3));
+        // Draw order is back-to-front: [a, b, c].
+        assertEquals(java.util.List.of(a, b, c), layer.getAllItems());
+
+        layer.sendToFront(a);
+        assertEquals(java.util.List.of(b, c, a), layer.getAllItems());
+
+        layer.sendToBack(c);
+        assertEquals(java.util.List.of(c, b, a), layer.getAllItems());
+
+        layer.sendForward(c);
+        assertEquals(java.util.List.of(b, c, a), layer.getAllItems());
+
+        layer.sendBackward(a);
+        assertEquals(java.util.List.of(b, a, c), layer.getAllItems());
+
+        // No-ops at the boundaries.
+        layer.sendForward(c);
+        assertEquals(java.util.List.of(b, a, c), layer.getAllItems());
+        layer.sendBackward(b);
+        assertEquals(java.util.List.of(b, a, c), layer.getAllItems());
+    }
+
+    @Test
+    void lockedLayerRejectsNewSelectionButStillReportsAlreadySelectedItems() {
+        BaseContainer container = newContainer();
+        Layer layer = new Layer(container, "items");
+        PointItem alreadySelected = new PointItem(layer, new Point2D.Double(1, 1));
+        PointItem other = new PointItem(layer, new Point2D.Double(2, 2));
+        // Items are locked by default; unlock them so layer-level locking is
+        // the only thing under test.
+        alreadySelected.setLocked(false);
+        other.setLocked(false);
+
+        // Select while unlocked, then lock the layer.
+        layer.selectItem(alreadySelected, true);
+        assertTrue(alreadySelected.isSelected());
+        layer.setLocked(true);
+
+        // New selection attempts on a locked layer are no-ops.
+        layer.selectItem(other, true);
+        assertFalse(other.isSelected());
+        layer.selectAllItems(true);
+        assertFalse(other.isSelected());
+        layer.selectItem(alreadySelected, false);
+        assertTrue(alreadySelected.isSelected(), "deselection is also a no-op while locked");
+
+        // But an item selected before the lock is still reported as selected.
+        assertEquals(java.util.List.of(alreadySelected), layer.getSelectedItems());
+    }
+
+    @Test
+    void pointItemStartModificationIsANoOpWithoutAnActiveModification() {
+        BaseContainer container = newContainer();
+        PointItem item = new PointItem(container.getDefaultLayer(), new Point2D.Double(2, 3));
+
+        // No modification attached; must not throw (matches the AItem contract).
+        item.startModification();
+    }
+
+    @Test
     void lineCullingUsesComponentLocalCoordinates() {
         BaseContainer container = newContainer();
         container.setBounds(500, 400, 100, 100);

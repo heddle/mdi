@@ -194,9 +194,17 @@ public class PointItem extends AItem {
 
 	/**
 	 * A modification (can only be a drag for a point item) has occurred.
+	 * <p>
+	 * Preserves {@link AItem#startModification()}'s no-op-if-null contract,
+	 * even though this override doesn't need the rotate/resize handle
+	 * classification it performs.
+	 * </p>
 	 */
 	@Override
 	public void startModification() {
+		if (_modification == null) {
+			return;
+		}
 		_modification.setStartFocus(getFocus());
 		_modification.setStartFocusPoint(getFocusPoint(_modification.getContainer()));
 	}

@@ -235,6 +235,39 @@ public class BaseContainerTest {
 		});
 	}
 
+	@Test
+	void degenerateComponentSizeLeavesConversionsAsSafeNoOps() {
+		runOnEdt(() -> {
+			BaseContainer c = createContainer();
+			c.setBounds(0, 0, 0, 0); // 0x0 component
+			c.setAffineTransforms();
+
+			Point2D.Double w = new Point2D.Double(-1, -1);
+			c.localToWorld(new Point(5, 5), w);
+			assertEquals(-1, w.x, EPS, "localToWorld must leave the output untouched, not throw");
+			assertEquals(-1, w.y, EPS);
+
+			Point p = new Point(-1, -1);
+			c.worldToLocal(p, new Point2D.Double(3, 4));
+			assertEquals(-1, p.x, "worldToLocal must leave the output untouched, not throw");
+			assertEquals(-1, p.y);
+		});
+	}
+
+	@Test
+	void degenerateWorldSystemLeavesConversionsAsSafeNoOps() {
+		runOnEdt(() -> {
+			BaseContainer c = createContainer(); // valid 200x100 bounds
+			c.setWorldSystem(new Rectangle2D.Double(0, 0, 0, 5)); // zero width
+			c.setAffineTransforms();
+
+			Point2D.Double w = new Point2D.Double(-1, -1);
+			c.localToWorld(new Point(5, 5), w);
+			assertEquals(-1, w.x, EPS, "a zero-extent world system must leave transforms null (no-op)");
+			assertEquals(-1, w.y, EPS);
+		});
+	}
+
 	private static RectangleItem draggableRectangle(Layer layer, double x) {
 		RectangleItem item = new RectangleItem(layer, new Rectangle2D.Double(x, 1.0, 1.0, 1.0));
 		item.setLocked(false);

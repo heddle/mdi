@@ -1650,6 +1650,15 @@ public class BaseView extends JInternalFrame
 		// no-op by default; subclasses can override to respond to hover events.
 	}
 
+	/**
+	 * Handle the closing (dismissal) of a hover popup/tooltip.
+	 *
+	 * <p>Subclasses can override this method to respond when a hover
+	 * previously reported via {@link #hoverUpdate} has ended. The default
+	 * implementation is a no-op.</p>
+	 *
+	 * @param he the hover event
+	 */
 	public void hoverClosed(HoverEvent he) {
 		// no-op by default; subclasses can override to respond to hover close events.
 	}

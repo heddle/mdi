@@ -65,9 +65,6 @@ public class ItemModification {
 	// used by some objects
 	private Line2D.Double startLine;
 
-	// used by some objects
-	private Path2D.Double secondaryPath;
-
 	// was shift pressed when mod began?
 	private boolean shift;
 
@@ -265,13 +262,6 @@ public class ItemModification {
 	 */
 	public Path2D.Double getStartPath() {
 		return startPath;
-	}
-
-	/**
-	 * @return the original secondary path
-	 */
-	public Path2D.Double getSecondaryPath() {
-		return secondaryPath;
 	}
 
 	/**

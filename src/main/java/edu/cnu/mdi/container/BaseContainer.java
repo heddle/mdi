@@ -781,8 +781,10 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	/**
 	 * {@inheritDoc}
 	 * <p>
-	 * Includes protected layers. Uses {@link Layer#getSelectedItems()} which may
-	 * itself honor layer locking depending on your Layer implementation.
+	 * Includes protected layers, and does not consider layer locking: even a
+	 * locked layer's currently-selected, visible items are returned (locking
+	 * only prevents new selection/hit-testing, not reporting of items that
+	 * are already selected). Delegates to {@link Layer#getSelectedItems()}.
 	 */
 	@Override
 	public List<AItem> getSelectedItems() {

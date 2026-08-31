@@ -342,18 +342,36 @@ public class TextItem extends RectangleItem implements ITextEditable {
 		this.alignment = align;
 	}
 
+	/** @return the current font */
 	public Font getFont() {
 		return _font;
 	}
 
+	/**
+	 * @param font the new font, or {@code null} to fall back to the default
+	 *             font
+	 */
 	public void setFont(Font font) {
 		_font = (font != null) ? font : _defaultFont;
 	}
 
+	/** @return the current text, with lines joined by {@code '\n'} */
 	public String getText() {
 		return String.join("\n", _lines);
 	}
 
+	/**
+	 * Sets the displayed text, replacing any prior content.
+	 * <p>
+	 * LaTeX-like escapes are first rewritten to their Unicode equivalents via
+	 * {@link UnicodeUtils#specialCharReplace(String)}, then the result is
+	 * split into display lines on line terminators (via
+	 * {@link String#lines()}).
+	 * </p>
+	 *
+	 * @param text the new text; must not be {@code null}
+	 * @throws NullPointerException if {@code text} is {@code null}
+	 */
 	public void setText(String text) {
 		text = UnicodeUtils.specialCharReplace(text);
 		_lines = text.lines().toArray(String[]::new);
