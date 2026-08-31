@@ -1132,8 +1132,10 @@ public class MapView2D extends BaseView {
 	 * Loads each dropped {@code .shp} file as a new layer, exactly as though it
 	 * had been chosen via the Shapefiles menu's "Open Shapefile..." action: the
 	 * display name is the filename without its extension ({@link
-	 * ShapefileMenu#baseName(Path)}), and the style is chosen from the first
-	 * feature's geometry type ({@link ShapefileMenu#defaultStyle(int)}).
+	 * ShapefileMenu#baseName(Path)}), the style is chosen from the first
+	 * feature's geometry type ({@link ShapefileMenu#defaultStyle(int)}), and a
+	 * successful load is recorded in the same "Recent Shapefiles" list the menu
+	 * uses ({@link ShapefileMenu#recordRecentlyOpened(File)}).
 	 * <p>
 	 * Only invoked when {@link #enableFileDrop(Predicate)} was called in the
 	 * constructor, which it is unless the subclass opted out of shapefile
@@ -1157,6 +1159,9 @@ public class MapView2D extends BaseView {
 				ShapeFeatureStyle style = ShapefileMenu.defaultStyle(features.get(0).getShapeType());
 				ShapeFeatureRenderer renderer = new ShapeFeatureRenderer(features, getProjection(), style);
 				addShapefile(renderer, name);
+				if (shapefileMenu != null) {
+					shapefileMenu.recordRecentlyOpened(file);
+				}
 				Log.getInstance().info("Shapefile loaded via drag-and-drop: " + shpPath);
 			} catch (IOException e) {
 				Log.getInstance().error("Failed to load dropped shapefile: " + shpPath + " — " + e.getMessage());
