@@ -10,7 +10,21 @@ import edu.cnu.mdi.graphics.GraphicsUtils;
 public class RubberLine extends ALineClickRubberband {
 
 	public RubberLine(Component component, IRubberbanded rubberbanded) {
-		super(component, rubberbanded, Policy.LINE);
+		this(component, rubberbanded, Policy.LINE);
+	}
+
+	/**
+	 * Constructor for subclasses (e.g. {@link RubberTwoClickLine}) that share
+	 * this class's line-gesture behavior but must be registered under a
+	 * distinct {@link Policy} so {@code isClickBased()}/{@code policy}-aware
+	 * callers see the correct policy for the instance.
+	 *
+	 * @param component    the component this rubberband operates on
+	 * @param rubberbanded the completion callback
+	 * @param policy       the policy this instance reports
+	 */
+	protected RubberLine(Component component, IRubberbanded rubberbanded, Policy policy) {
+		super(component, rubberbanded, policy);
 	}
 
 	@Override

@@ -79,6 +79,27 @@ public class RangeSlider extends JPanel {
 
 	/**
 	 * Full constructor with complete customization.
+	 * <p>
+	 * Tick spacing is applied conditionally and independently:
+	 * </p>
+	 * <ul>
+	 * <li>Major ticks are set only if {@code 0 < majorTick < max}; otherwise
+	 * major ticks are silently omitted (not clamped to a valid value).</li>
+	 * <li>Minor ticks are set only if {@code 0 < minorTick < majorTick},
+	 * comparing against the <em>parameter</em> {@code majorTick} — not
+	 * against whether major ticks actually ended up enabled. So it is
+	 * possible to get minor ticks without major ticks, e.g. if
+	 * {@code majorTick >= max} (major ticks omitted) but
+	 * {@code 0 < minorTick < majorTick} still holds.</li>
+	 * </ul>
+	 *
+	 * @param majorTick major tick spacing; {@code 0} (or {@code >= max}) for none
+	 * @param minorTick minor tick spacing; {@code 0} (or {@code >= majorTick})
+	 *                  for none
+	 * @throws IllegalArgumentException if {@code min > max}, if
+	 *                                  {@code defaultVal} is outside
+	 *                                  {@code [min, max]}, or if either tick
+	 *                                  spacing is negative
 	 */
 	public RangeSlider(int min, int max, int defaultVal, int majorTick, int minorTick, boolean showValue) {
 

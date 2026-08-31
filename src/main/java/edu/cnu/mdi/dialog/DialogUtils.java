@@ -117,9 +117,20 @@ public final class DialogUtils {
 
 	/**
 	 * Convenience routine for padding a string using the default font.
+	 * <p>
+	 * Pads {@code inp} with trailing spaces so that, when rendered in
+	 * {@code c}'s font, its pixel width approximates {@code tstr}'s pixel
+	 * width as closely as possible (adding one space at a time until the
+	 * width gap stops shrinking).
+	 * </p>
 	 *
-	 * @param inp  The string to be padded.
-	 * @param tstr The test string-- try to return a string the same length
+	 * @param c    the component supplying the font metrics used to measure
+	 *             pixel widths
+	 * @param inp  the string to be padded; {@code null} is treated as empty
+	 * @param tstr the target string-- try to return a string that renders at
+	 *             about the same pixel width
+	 * @return {@code inp} (or the empty string) with zero or more trailing
+	 *         spaces appended
 	 */
 
 	public static String padString(Component c, String inp, String tstr) {

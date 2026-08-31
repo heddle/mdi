@@ -6,7 +6,7 @@ import java.awt.Point;
 public class RubberTwoClickLine extends RubberLine {
 
 	public RubberTwoClickLine(Component component, IRubberbanded rubberbanded) {
-		super(component, rubberbanded);
+		super(component, rubberbanded, Policy.TWO_CLICK_LINE);
 	}
 
 	@Override

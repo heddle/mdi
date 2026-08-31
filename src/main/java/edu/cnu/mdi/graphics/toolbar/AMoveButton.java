@@ -20,6 +20,10 @@ import javax.swing.JToggleButton;
  *   <li>On the first {@code mouseMoved} while idle, a new {@link GestureContext} is created.</li>
  *   <li>Each subsequent move updates the context and calls {@link #updateMove(GestureContext)}.</li>
  *   <li>On {@code mouseExited}, {@link #doneMove(GestureContext)} is called and the gesture ends.</li>
+ *   <li>A {@code mousePressed} while a gesture is active also ends it via
+ *   {@link #doneMove(GestureContext)} — a click reverts the toolbar to its
+ *   default tool ({@link AToolBar#resetDefaultToggleButton()}) rather than
+ *   starting a drag, since this tool has no press-based behavior.</li>
  * </ul>
  */
 @SuppressWarnings("serial")

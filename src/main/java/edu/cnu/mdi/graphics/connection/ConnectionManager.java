@@ -63,6 +63,8 @@ public class ConnectionManager implements ItemChangeListener {
 	 * <ul>
 	 * <li>neither item is null</li>
 	 * <li>items are not the same instance</li>
+	 * <li>both items belong to the same container (cross-container connections
+	 * are always rejected)</li>
 	 * <li>both items are connectable</li>
 	 * <li>no existing connector already connects them (either direction)</li>
 	 * </ul>
@@ -253,9 +255,12 @@ public class ConnectionManager implements ItemChangeListener {
 	}
 
 	/**
-	 * These accessors assume you add public endpoint getters to ConnectorItem. If
-	 * you haven't yet, add: public AItem getStartItem() { return startItem; }
-	 * public AItem getEndItem() { return endItem; }
+	 * Null-safe wrappers around {@link ConnectorItem#getStartItem()} and
+	 * {@link ConnectorItem#getEndItem()}, swallowing any
+	 * {@link RuntimeException} they might throw (e.g. if called on a
+	 * partially-initialized or otherwise inconsistent connector) so that
+	 * {@link #connects} degrades to "not connected" rather than propagating
+	 * the exception.
 	 */
 	private static AItem safeStart(ConnectorItem c) {
 		try {

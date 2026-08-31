@@ -228,8 +228,7 @@ public class ButtonPanel extends JPanel {
 	}
 
 	/**
-	 * Makes a button panel with combinations of OK, Save, Save As, Cancel, Apply,
-	 * and Delete
+	 * Makes a button panel with combinations of OK, Cancel, Apply, and Delete.
 	 *
 	 * @param opt            Bitwise combination of USE_OK, USE_CANCEL, USE_APPLY,
 	 *                       USE_DELETE

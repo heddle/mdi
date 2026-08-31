@@ -50,6 +50,12 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 	protected Color highlightColor1 = Color.black;
 	protected Color highlightColor2 = Color.lightGray;
 
+	/**
+	 * The policy this instance was constructed under. Purely descriptive
+	 * metadata for the instance's identity/factory dispatch (e.g. by
+	 * {@link RubberbandFactory}); actual behavior is determined by the
+	 * concrete subclass's method overrides, not by branching on this field.
+	 */
 	protected final Policy policy;
 
 	protected final Point startPt = new Point();
@@ -75,7 +81,8 @@ public abstract class ARubberband implements MouseListener, MouseMotionListener 
 	 * Constructor does not activate; caller must call setActive(true) to enable listening.
 	 * @param component target component for mouse events and drawing
 	 * @param rubberbanded callback for completion notification
-	 * @param policy rubberband policy (behavior/drawing rules)
+	 * @param policy rubberband policy; stored as descriptive metadata (see
+	 *               {@link #policy}), not consulted internally
 	 */
 	protected ARubberband(Component component, IRubberbanded rubberbanded, Policy policy) {
 		Objects.requireNonNull(component, "component");

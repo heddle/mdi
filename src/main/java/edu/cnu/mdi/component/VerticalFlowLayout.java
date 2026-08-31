@@ -197,6 +197,11 @@ public class VerticalFlowLayout implements LayoutManager2, Serializable {
 	/**
 	 * Gets the minimum dimensions needed to lay out the component contained in the
 	 * specified target container.
+	 * <p>
+	 * Computed the same way as {@link #preferredLayoutSize}, but using each
+	 * component's {@link Component#getMinimumSize() minimum size} instead of
+	 * its preferred size.
+	 * </p>
 	 *
 	 * @param parent the Container on which to do the layout
 	 * @see Container
@@ -205,7 +210,37 @@ public class VerticalFlowLayout implements LayoutManager2, Serializable {
 	 */
 	@Override
 	public Dimension minimumLayoutSize(Container parent) {
-		return parent.getSize();
+		Insets insets = parent.getInsets();
+		int xx = 0;
+		int yy = 0;
+		if (insets != null) {
+			xx = insets.left + insets.right;
+			yy = insets.bottom + insets.top;
+		}
+
+		int widestWidth = 0;
+		int height = 0;
+
+		Enumeration<AlignedComponent> enumer = components.elements();
+		while (enumer.hasMoreElements()) {
+			AlignedComponent alcomp = enumer.nextElement();
+			Dimension compSize = alcomp.getComponent().getMinimumSize();
+
+			if (compSize.width > widestWidth) {
+				widestWidth = compSize.width;
+			}
+
+			height += compSize.height + (m_internalPadY * 2) + m_vGap;
+		}
+
+		Dimension minSize = new Dimension(
+				widestWidth + m_externalPadLeft + m_externalPadRight + (m_internalPadX * 2),
+				height + m_externalPadTop + m_externalPadBottom);
+
+		minSize.width += xx;
+		minSize.height += yy;
+
+		return minSize;
 	}
 
 	/**

@@ -42,8 +42,14 @@ public final class MenuManager {
 
 	/**
 	 * Public access for the singleton.
+	 * <p>
+	 * Only the first call actually creates the instance. Once the singleton
+	 * exists, subsequent calls silently ignore the passed-in {@code menubar}
+	 * and return the original instance, still bound to whichever menu bar was
+	 * passed the first time.
+	 * </p>
 	 *
-	 * @param menubar the main menu bar
+	 * @param menubar the main menu bar; only used on the first call
 	 * @return the menu manager for the one and only BaseMDIApplication.
 	 */
 	public static synchronized MenuManager createMenuManager(JMenuBar menubar) {

@@ -28,6 +28,12 @@ public final class SliderFactory {
 	 * @param majorTick The major tick spacing for the slider.
 	 * @param minorTick The minor tick spacing for the slider, or 0 for none.
 	 * @param font The font to use for the slider and label.
+	 * @throws NullPointerException     if {@code parent} is {@code null}
+	 * @throws IllegalArgumentException if {@code min >= max}, if
+	 *                                  {@code initial} is outside
+	 *                                  {@code [min, max]}, if
+	 *                                  {@code majorTick <= 0}, or if
+	 *                                  {@code minorTick < 0}
 	 */
 	public static JSlider createLabeledSlider(Container parent, int min, int max,
 			int initial, int majorTick, int minorTick, Font font,
@@ -79,6 +85,20 @@ public final class SliderFactory {
 	 * @param minorTick The minor tick spacing for the slider, or 0 for none.
 	 * @param font The font to use for the slider and label.
 	 * @param numDec The number of decimal places to display.
+	 * @throws NullPointerException     if {@code parent} is {@code null}
+	 * @throws IllegalArgumentException if any of {@code min}, {@code max},
+	 *                                  {@code initial}, {@code majorTick}, or
+	 *                                  {@code minorTick} is not finite; if
+	 *                                  {@code min >= max}, {@code initial} is
+	 *                                  outside {@code [min, max]},
+	 *                                  {@code majorTick <= 0}, or
+	 *                                  {@code minorTick < 0}; if
+	 *                                  {@code numDec} is outside
+	 *                                  {@code [0, 6]}; or if {@code numDec} is
+	 *                                  high enough relative to the range that
+	 *                                  scaling to an integer-backed
+	 *                                  {@code JSlider} would collapse the
+	 *                                  range or tick spacing to zero
 	 */
 	  public static JSlider createLabeledSlider(Container parent, float min, float max,
 	            float initial, float majorTick, float minorTick, Font font,

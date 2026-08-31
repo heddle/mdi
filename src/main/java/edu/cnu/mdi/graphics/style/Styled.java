@@ -172,9 +172,11 @@ public class Styled implements IStyled {
 	}
 
 	/**
-	 * Set the line width
+	 * Set the line width. Negative values are clamped to zero.
 	 *
 	 * @param lineWidth the new line width
+	 * @throws IllegalArgumentException if {@code lineWidth} is not finite
+	 *                                  (NaN or infinite)
 	 */
 	@Override
 	public void setLineWidth(float lineWidth) {
@@ -182,8 +184,16 @@ public class Styled implements IStyled {
 	}
 
 	/**
-	 * Set the symbol type
+	 * Set the symbol type.
+	 * <p>
+	 * A {@code null} argument falls back to {@link SymbolType#NOSYMBOL}, not
+	 * this object's own default ({@link SymbolType#SQUARE}, used only for a
+	 * freshly-constructed {@code Styled}) — so passing {@code null} here is
+	 * not equivalent to never having set a symbol type.
+	 * </p>
 	 *
+	 * @param symbolType the new symbol type, or {@code null} to select
+	 *                   {@link SymbolType#NOSYMBOL}
      */
 	@Override
 	public void setSymbolType(SymbolType symbolType) {
@@ -235,6 +245,13 @@ public class Styled implements IStyled {
 		return _auxLineWidth;
 	}
 
+	/**
+	 * Set the auxiliary line width. Negative values are clamped to zero.
+	 *
+	 * @param lineWidth the new auxiliary line width
+	 * @throws IllegalArgumentException if {@code lineWidth} is not finite
+	 *                                  (NaN or infinite)
+	 */
 	@Override
 	public void setAuxLineWidth(float lineWidth) {
 		_auxLineWidth = sanitizeWidth(lineWidth);

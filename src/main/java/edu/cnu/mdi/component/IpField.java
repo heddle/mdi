@@ -60,11 +60,6 @@ public class IpField extends JFormattedTextField implements DocumentListener {
 		return EVERYADDRESS.equals(getText());
 	}
 
-	@Override
-	public void setText(String text) {
-		super.setText(IpAddressSupport.validateSimpleWildcard(text) ? text : "127.0.0.1");
-	}
-
 	public boolean validText() {
 		return goodDocument;
 	}

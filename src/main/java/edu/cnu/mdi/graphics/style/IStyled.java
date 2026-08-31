@@ -50,9 +50,11 @@ public interface IStyled {
     Color getTextColor();
 
 	/**
-	 * Get the color used for fits.
+	 * Get the color used for the primary line (e.g. an item's outline, a
+	 * curve's fit line, or a connector's stroke, depending on the
+	 * implementer).
 	 *
-	 * @return the fit line color.
+	 * @return the line color.
 	 */
 
     Color getLineColor();
@@ -66,11 +68,11 @@ public interface IStyled {
     Color getAuxLineColor();
 
 	/**
-	 * Set the color used for the fit drawing.
+	 * Set the color used for the primary line (see {@link #getLineColor}).
 	 *
-	 * @param fitColor the fit color.
+	 * @param lineColor the line color.
 	 */
-    void setLineColor(Color fitColor);
+    void setLineColor(Color lineColor);
 
 	/**
 	 * Set the color used for auxiliary lines.
@@ -80,23 +82,25 @@ public interface IStyled {
     void setAuxLineColor(Color auxColor);
 
 	/**
-	 * Get the style used for drawing fits.
+	 * Get the style used for drawing the primary line (see
+	 * {@link #getLineColor}).
 	 *
-	 * @return the line style for fits.
+	 * @return the primary line style.
 	 */
     LineStyle getLineStyle();
 
 	/**
-	 * Get the style used for drawing fits.
+	 * Get the style used for drawing auxiliary lines.
 	 *
-	 * @return the line style for fits.
+	 * @return the auxiliary line style.
 	 */
     LineStyle getAuxLineStyle();
 
 	/**
-	 * Set the style used for drawing fits.
+	 * Set the style used for drawing the primary line (see
+	 * {@link #setLineColor}).
 	 *
-	 * @param lineStyle the fit line style.
+	 * @param lineStyle the primary line style.
 	 */
     void setLineStyle(LineStyle lineStyle);
 
@@ -122,9 +126,9 @@ public interface IStyled {
     void setSymbolType(SymbolType symbolType);
 
 	/**
-	 * Get the line width for drawing fits.
+	 * Get the line width for drawing the primary line.
 	 *
-	 * @return the fit line width in pixels.
+	 * @return the primary line width in pixels.
 	 */
     float getLineWidth();
 
@@ -136,7 +140,7 @@ public interface IStyled {
     float getAuxLineWidth();
 
 	/**
-	 * Set the line width for drawing fit lines.
+	 * Set the line width for drawing the primary line.
 	 *
 	 * @param lineWidth the line width in pixels.
 	 */
@@ -164,9 +168,9 @@ public interface IStyled {
     void setSymbolSize(int symbolSize);
 
 	/**
-	 * Get the stroke used for drawing fits.
+	 * Get the stroke derived from the primary line width and style.
 	 *
-	 * @return the stroke used for drawing fits.
+	 * @return the stroke used for drawing the primary line.
 	 */
 	default BasicStroke getStroke() {
 		return GraphicsUtils.getStroke(getLineWidth(), getLineStyle());

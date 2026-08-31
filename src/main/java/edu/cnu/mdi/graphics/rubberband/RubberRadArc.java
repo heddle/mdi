@@ -9,6 +9,34 @@ import java.awt.event.MouseEvent;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
 
+/**
+ * Click-based, three-click radial-arc (pie-wedge) gesture.
+ *
+ * <h2>Interaction</h2>
+ * <ol>
+ * <li>First click: the arc's center.</li>
+ * <li>Second click: the endpoint of the first leg, which fixes the radius
+ * (see {@link #scaleToFirstRadius}).</li>
+ * <li>Third click (or drag preview before it): the endpoint of the second
+ * leg, whose distance from center is rescaled to match the first leg's
+ * radius, and whose angle relative to the first leg determines the swept
+ * arc.</li>
+ * </ol>
+ *
+ * <h2>Sweep tracking</h2>
+ * <p>
+ * The signed sweep angle between the two legs, in degrees, is recomputed on
+ * every mouse move via {@link #updateSweepForCurrentPoint}. Because
+ * {@link Math#atan2} only returns a value in {@code (-180, 180]}, dragging
+ * the second leg all the way around the center would otherwise cause the
+ * reported sweep to jump discontinuously at the ±180° boundary. This class
+ * instead unwraps the sweep across that boundary, so {@link #sweepDeg} can
+ * exceed ±180° for a drag that goes more than halfway around, and callers
+ * (via {@link #getRubberbandAngleDeg}) see a continuous value rather than a
+ * wrapped one. This unwrapped angle cannot be reconstructed from the
+ * gesture's vertices alone, hence {@link IRubberbandAngleProvider}.
+ * </p>
+ */
 public class RubberRadArc extends AClickRubberband implements IRubberbandAngleProvider {
 
     // Unwrapped signed sweep (deg). Positive = CCW in math coords (y up).
