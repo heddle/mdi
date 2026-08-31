@@ -7,13 +7,16 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
@@ -296,6 +299,12 @@ public class MapView2D extends BaseView {
 		initSidePanel();
 		setViewBeforeDraw();
 		initShapefileMenu();
+
+		// Same opt-out as the Shapefiles menu: a subclass that doesn't want
+		// shapefile functionality shouldn't have it appear via drag-and-drop either.
+		if (includeShapeFileMenu()) {
+			enableFileDrop(f -> f.getName().toLowerCase(Locale.ROOT).endsWith(".shp"));
+		}
 	}
 
 	/**
@@ -1117,6 +1126,42 @@ public class MapView2D extends BaseView {
 	    if (container instanceof MapContainer mapContainer) {
 	        mapContainer.prepareForExit();
 	    }
+	}
+
+	/**
+	 * Loads each dropped {@code .shp} file as a new layer, exactly as though it
+	 * had been chosen via the Shapefiles menu's "Open Shapefile..." action: the
+	 * display name is the filename without its extension ({@link
+	 * ShapefileMenu#baseName(Path)}), and the style is chosen from the first
+	 * feature's geometry type ({@link ShapefileMenu#defaultStyle(int)}).
+	 * <p>
+	 * Only invoked when {@link #enableFileDrop(Predicate)} was called in the
+	 * constructor, which it is unless the subclass opted out of shapefile
+	 * functionality via {@link #includeShapeFileMenu()}. A failure to load one
+	 * dropped file is logged and does not prevent the rest of the batch from
+	 * loading.
+	 *
+	 * @param files the accepted dropped files; never {@code null}, never empty
+	 */
+	@Override
+	public void filesDropped(List<File> files) {
+		for (File file : files) {
+			Path shpPath = file.toPath();
+			String name = ShapefileMenu.baseName(shpPath);
+			try {
+				List<ShapeFeature> features = new ShapefileFeatureLoader().load(shpPath);
+				if (features.isEmpty()) {
+					Log.getInstance().warning("Dropped shapefile is empty: " + shpPath);
+					continue;
+				}
+				ShapeFeatureStyle style = ShapefileMenu.defaultStyle(features.get(0).getShapeType());
+				ShapeFeatureRenderer renderer = new ShapeFeatureRenderer(features, getProjection(), style);
+				addShapefile(renderer, name);
+				Log.getInstance().info("Shapefile loaded via drag-and-drop: " + shpPath);
+			} catch (IOException e) {
+				Log.getInstance().error("Failed to load dropped shapefile: " + shpPath + " — " + e.getMessage());
+			}
+		}
 	}
 
 	// -------------------------------------------------------------------------

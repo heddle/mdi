@@ -156,7 +156,9 @@ public class ShapefileMenu extends JMenu {
     }
 
     // -------------------------------------------------------------------------
-    // Private helpers
+    // Helpers — also reused by MapView2D's drag-and-drop shapefile loading, so
+    // both entry points (the "Open Shapefile..." menu item and dropping a
+    // .shp file on the map) style and name a newly loaded layer identically.
     // -------------------------------------------------------------------------
 
     /**
@@ -168,7 +170,7 @@ public class ShapefileMenu extends JMenu {
      *                  {@link ShapefileGeometryReader}
      * @return a pre-configured style
      */
-    private static ShapeFeatureStyle defaultStyle(int shapeType) {
+    public static ShapeFeatureStyle defaultStyle(int shapeType) {
         return switch (shapeType) {
 
             case ShapefileGeometryReader.TYPE_POLYGON ->
@@ -199,7 +201,7 @@ public class ShapefileMenu extends JMenu {
      * @param path path to the {@code .shp} file
      * @return base filename without extension
      */
-    private static String baseName(Path path) {
+    public static String baseName(Path path) {
         String filename = path.getFileName().toString();
         int dot = filename.lastIndexOf('.');
         return (dot >= 0) ? filename.substring(0, dot) : filename;
