@@ -1,5 +1,6 @@
 package edu.cnu.mdi.mapping.container;
 
+import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.datatransfer.Transferable;
 import java.awt.dnd.DnDConstants;
@@ -52,8 +53,16 @@ public class MapContainer extends BaseContainer {
 	/**
 	 * Installs an AWT drop target that accepts military symbol payloads from the
 	 * NATO palette and places a map symbol at the drop location.
+	 * <p>
+	 * A no-op in a headless environment: {@link DropTarget}'s constructor throws
+	 * {@link java.awt.HeadlessException} there, and a headless JVM (e.g. a unit
+	 * test) has no display to drop onto anyway.
+	 * </p>
 	 */
 	private void installMilSymbolDropTarget() {
+		if (GraphicsEnvironment.isHeadless()) {
+			return;
+		}
 		new DropTarget(getComponent(), DnDConstants.ACTION_COPY, new DropTargetAdapter() {
 			@Override
 			public void drop(DropTargetDropEvent event) {
