@@ -7,8 +7,15 @@ import java.awt.FlowLayout;
 import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import javax.swing.event.ListSelectionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.WeakHashMap;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -51,17 +58,33 @@ import edu.cnu.mdi.item.Layer;
  *
  * <h2>Delete semantics</h2> When deleting a user layer, the user can choose to
  * move items into the container's default layer (typically "Content") or
- * discard them. Item moves use {@code Layer.removeSilently(AItem)} /
- * {@code Layer.addSilently(AItem)} so the layer-level ADDED/DELETED
- * notifications are not fired.
+ * discard them.
  */
 @SuppressWarnings("serial")
 public class LayerInspectorDialog extends JDialog {
+
+	/** One modeless inspector per container. Entries are removed on disposal. */
+	private static final WeakHashMap<BaseContainer, LayerInspectorDialog> openDialogs =
+			new WeakHashMap<>();
 
 	private final BaseContainer container;
 	private final LayerTableModel model;
 	private final JTable table;
 
+	/** Enabled when the selected layer provides a layer-specific editor. */
+	private JButton editButton;
+
+	/** Enabled when the selected layer may be renamed. */
+	private JButton renameButton;
+
+	/** Enabled when the selected layer may be deleted. */
+	private JButton deleteButton;
+
+	/** Moves the selected user layer upward in draw order. */
+	private JButton upButton;
+
+	/** Moves the selected user layer downward in draw order. */
+	private JButton downButton;
 	/**
 	 * Convenience to show a modeless dialog positioned relative to a parent
 	 * component.
@@ -70,8 +93,33 @@ public class LayerInspectorDialog extends JDialog {
 	 * @param container target container (must be a {@link BaseContainer})
 	 */
 	public static void show(Component parent, BaseContainer container) {
+		if (container == null) {
+			throw new IllegalArgumentException("container cannot be null");
+		}
+		if (!SwingUtilities.isEventDispatchThread()) {
+			SwingUtilities.invokeLater(() -> show(parent, container));
+			return;
+		}
+
+		LayerInspectorDialog existing = openDialogs.get(container);
+		if (existing != null && existing.isDisplayable()) {
+			existing.model.refresh();
+			existing.updateButtonStates();
+			existing.setVisible(true);
+			existing.toFront();
+			existing.requestFocus();
+			return;
+		}
+
 		Window owner = parent == null ? null : SwingUtilities.getWindowAncestor(parent);
 		LayerInspectorDialog dlg = new LayerInspectorDialog(owner, container);
+		dlg.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent event) {
+				openDialogs.remove(container, dlg);
+			}
+		});
+		openDialogs.put(container, dlg);
 		dlg.setLocationRelativeTo(parent);
 		dlg.setVisible(true);
 	}
@@ -109,11 +157,38 @@ public class LayerInspectorDialog extends JDialog {
 		table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		table.setFillsViewportHeight(true);
 		table.setRowHeight(22);
+		
+		/*
+		 * Keep command availability synchronized with the selected layer.
+		 */
+		table.getSelectionModel().addListSelectionListener(
+		        this::selectionChanged);
+
+		/*
+		 * Double-clicking an editable layer invokes the same action as Edit...
+		 */
+		table.addMouseListener(new MouseAdapter() {
+		    @Override
+		    public void mouseClicked(MouseEvent e) {
+		        if (e.getClickCount() != 2
+		                || !SwingUtilities.isLeftMouseButton(e)) {
+		            return;
+		        }
+
+		        int row = table.rowAtPoint(e.getPoint());
+		        if (row < 0) {
+		            return;
+		        }
+
+		        table.getSelectionModel().setSelectionInterval(row, row);
+		        editSelectedLayer();
+		    }
+		});
 
 		// Drag reorder rows (user layers only; protected rows reject drop)
 		table.setDragEnabled(true);
 		table.setDropMode(javax.swing.DropMode.INSERT_ROWS);
-		table.setTransferHandler(new LayerRowTransferHandler(container, model));
+		table.setTransferHandler(new LayerRowTransferHandler(container, model, table));
 
 		JScrollPane sp = new JScrollPane(table);
 		sp.setPreferredSize(new Dimension(640, 300));
@@ -121,132 +196,304 @@ public class LayerInspectorDialog extends JDialog {
 
 		add(buildButtons(), BorderLayout.SOUTH);
 
+		updateButtonStates();
 		pack();
 	}
 
 	private JPanel buildButtons() {
-		JPanel south = new JPanel(new BorderLayout());
+	    JPanel south = new JPanel(new BorderLayout());
 
-		JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT));
-		JButton add = new JButton(new AbstractAction("Add…") {
-			@Override
-			public void actionPerformed(java.awt.event.ActionEvent e) {
-				String name = promptForName("New layer name:", "Layer");
-				if (name == null) {
-					return;
-				}
-				Layer layer = new Layer(container, name); // auto-registers to container
-				// Ensure it lands in user list (BaseContainer.addLayer already does this)
-				model.refresh();
-				selectLayer(layer);
-				container.setDirty(true);
-				container.refresh();
-			}
-		});
+	    JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-		JButton rename = new JButton(new AbstractAction("Rename…") {
-			@Override
-			public void actionPerformed(java.awt.event.ActionEvent e) {
-				Layer layer = selectedLayer();
-				if (layer == null) {
-					return;
-				}
-				if (container.isProtectedLayer(layer)) {
-					info("Protected layers cannot be renamed.");
-					return;
-				}
-				String name = promptForName("Layer name:", layer.getName());
-				if (name == null) {
-					return;
-				}
-				layer.setName(name);
-				model.refresh();
-				selectLayer(layer);
-				container.setDirty(true);
-				container.refresh();
-			}
-		});
+	    JButton addButton = new JButton(
+	            new AbstractAction("Add…") {
+	        @Override
+	        public void actionPerformed(
+	                java.awt.event.ActionEvent e) {
 
-		JButton delete = new JButton(new AbstractAction("Delete…") {
-			@Override
-			public void actionPerformed(java.awt.event.ActionEvent e) {
-				Layer layer = selectedLayer();
-				if (layer == null) {
-					return;
-				}
-				if (container.isProtectedLayer(layer)) {
-					info("Protected layers cannot be deleted.");
-					return;
-				}
-				if (layer == container.getDefaultLayer()) {
-					info("The default Content layer cannot be deleted.");
-					return;
-				}
+	            String name =
+	                    promptForName(
+	                            "New layer name:",
+	                            "Layer");
 
-				int choice = JOptionPane.showOptionDialog(LayerInspectorDialog.this,
-						"Delete layer \"" + layer.getName() + "\"?\n\n"
-								+ "Choose whether to move its items to the default layer (\""
-								+ container.getDefaultLayer().getName() + "\") or discard them.",
-						"Delete Layer", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null,
-						new Object[] { "Move Items", "Discard Items", "Cancel" }, "Move Items");
+	            if (name == null) {
+	                return;
+	            }
 
-				if (choice == 2 || choice == JOptionPane.CLOSED_OPTION) {
-					return;
-				}
+	            Layer layer =
+	                    new Layer(container, name);
 
-				boolean moveItems = (choice == 0);
-				deleteUserLayer(layer, moveItems);
+	            model.refresh();
+	            selectLayer(layer);
 
-				model.refresh();
-				container.setDirty(true);
-				container.refresh();
-			}
-		});
+	            container.setDirty(true);
+	            container.refresh();
+	            updateButtonStates();
+	        }
+	    });
 
-		left.add(add);
-		left.add(rename);
-		left.add(delete);
+	    renameButton = new JButton(
+	            new AbstractAction("Rename…") {
+	        @Override
+	        public void actionPerformed(
+	                java.awt.event.ActionEvent e) {
 
-		JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		JButton up = new JButton(new AbstractAction("Up") {
-			@Override
-			public void actionPerformed(java.awt.event.ActionEvent e) {
-				Layer layer = selectedLayer();
-				if (layer == null || container.isProtectedLayer(layer)
-						|| layer == container.getDefaultLayer() && container._layers.size() == 1) {
-					return;
-				}
-				moveUserLayer(layer, -1);
-			}
-		});
+	            renameSelectedLayer();
+	        }
+	    });
 
-		JButton down = new JButton(new AbstractAction("Down") {
-			@Override
-			public void actionPerformed(java.awt.event.ActionEvent e) {
-				Layer layer = selectedLayer();
-				if (layer == null || container.isProtectedLayer(layer)
-						|| layer == container.getDefaultLayer() && container._layers.size() == 1) {
-					return;
-				}
-				moveUserLayer(layer, +1);
-			}
-		});
+	    editButton = new JButton(
+	            new AbstractAction("Edit…") {
+	        @Override
+	        public void actionPerformed(
+	                java.awt.event.ActionEvent e) {
 
-		JButton close = new JButton(new AbstractAction("Close") {
-			@Override
-			public void actionPerformed(java.awt.event.ActionEvent e) {
-				dispose();
-			}
-		});
+	            editSelectedLayer();
+	        }
+	    });
 
-		right.add(up);
-		right.add(down);
-		right.add(close);
+	    deleteButton = new JButton(
+	            new AbstractAction("Delete…") {
+	        @Override
+	        public void actionPerformed(
+	                java.awt.event.ActionEvent e) {
 
-		south.add(left, BorderLayout.WEST);
-		south.add(right, BorderLayout.EAST);
+	            deleteSelectedLayer();
+	        }
+	    });
 
-		return south;
+	    left.add(addButton);
+	    left.add(renameButton);
+	    left.add(editButton);
+	    left.add(deleteButton);
+
+	    JPanel right =
+	            new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
+	    upButton = new JButton(
+	            new AbstractAction("Up") {
+	        @Override
+	        public void actionPerformed(
+	                java.awt.event.ActionEvent e) {
+
+	            Layer layer = selectedLayer();
+	            if (!canReorder(layer)) {
+	                return;
+	            }
+
+	            moveUserLayer(layer, +1);
+	            updateButtonStates();
+	        }
+	    });
+
+	    downButton = new JButton(
+	            new AbstractAction("Down") {
+	        @Override
+	        public void actionPerformed(
+	                java.awt.event.ActionEvent e) {
+
+	            Layer layer = selectedLayer();
+	            if (!canReorder(layer)) {
+	                return;
+	            }
+
+	            moveUserLayer(layer, -1);
+	            updateButtonStates();
+	        }
+	    });
+
+	    JButton closeButton = new JButton(
+	            new AbstractAction("Close") {
+	        @Override
+	        public void actionPerformed(
+	                java.awt.event.ActionEvent e) {
+
+	            dispose();
+	        }
+	    });
+
+	    right.add(upButton);
+	    right.add(downButton);
+	    right.add(closeButton);
+
+	    south.add(left, BorderLayout.WEST);
+	    south.add(right, BorderLayout.EAST);
+
+	    return south;
+	}
+	
+	/**
+	 * Opens the layer-specific editor for the selected layer.
+	 *
+	 * <p>
+	 * The inspector does not need to know the concrete layer type. Editable
+	 * layers implement their behavior through {@link Layer#edit(Component)}.
+	 * </p>
+	 */
+	private void editSelectedLayer() {
+	    Layer layer = selectedLayer();
+
+	    if (layer == null || !layer.isEditable()) {
+	        return;
+	    }
+
+	    layer.edit(this);
+
+	    /*
+	     * An editor may have changed the layer name, visibility, locking, or
+	     * rendering parameters.
+	     */
+	    model.refresh();
+	    selectLayer(layer);
+
+	    container.setDirty(true);
+	    container.refresh();
+	    updateButtonStates();
+	}
+	
+	/**
+	 * Renames the currently selected user layer.
+	 */
+	private void renameSelectedLayer() {
+	    Layer layer = selectedLayer();
+
+	    if (layer == null) {
+	        return;
+	    }
+
+	    if (container.isProtectedLayer(layer)) {
+	        info("Protected layers cannot be renamed.");
+	        return;
+	    }
+
+	    String name =
+	            promptForName(
+	                    "Layer name:",
+	                    layer.getName());
+
+	    if (name == null) {
+	        return;
+	    }
+
+	    layer.setName(name);
+
+	    model.refresh();
+	    selectLayer(layer);
+
+	    container.setDirty(true);
+	    container.refresh();
+	    updateButtonStates();
+	}
+	
+	/**
+	 * Deletes the currently selected user layer after asking what should happen
+	 * to any items it contains.
+	 */
+	private void deleteSelectedLayer() {
+	    Layer layer = selectedLayer();
+
+	    if (layer == null) {
+	        return;
+	    }
+
+	    if (container.isProtectedLayer(layer)) {
+	        info("Protected layers cannot be deleted.");
+	        return;
+	    }
+
+	    if (layer == container.getDefaultLayer()) {
+	        info("The default Content layer cannot be deleted.");
+	        return;
+	    }
+
+	    int choice = JOptionPane.showOptionDialog(
+	            this,
+	            "Delete layer \"" + layer.getName() + "\"?\n\n"
+	                    + "Choose whether to move its items to the default layer (\""
+	                    + container.getDefaultLayer().getName()
+	                    + "\") or discard them.",
+	            "Delete Layer",
+	            JOptionPane.DEFAULT_OPTION,
+	            JOptionPane.WARNING_MESSAGE,
+	            null,
+	            new Object[] {
+	                    "Move Items",
+	                    "Discard Items",
+	                    "Cancel"
+	            },
+	            "Move Items");
+
+	    if (choice == 2
+	            || choice == JOptionPane.CLOSED_OPTION) {
+	        return;
+	    }
+
+	    boolean moveItems = choice == 0;
+	    deleteUserLayer(layer, moveItems);
+
+	    model.refresh();
+
+	    container.setDirty(true);
+	    container.refresh();
+	    updateButtonStates();
+	}
+	
+	/**
+	 * Updates command availability when the table selection changes.
+	 */
+	private void selectionChanged(ListSelectionEvent event) {
+	    if (!event.getValueIsAdjusting()) {
+	        updateButtonStates();
+	    }
+	}
+
+	/**
+	 * Enables or disables commands according to the selected layer.
+	 */
+	private void updateButtonStates() {
+	    Layer layer = selectedLayer();
+
+	    boolean selected = layer != null;
+	    boolean protectedLayer =
+	            selected && container.isProtectedLayer(layer);
+
+	    boolean defaultLayer =
+	            selected && layer == container.getDefaultLayer();
+
+	    renameButton.setEnabled(
+	            selected && !protectedLayer);
+
+	    editButton.setEnabled(
+	            selected && layer.isEditable());
+
+	    deleteButton.setEnabled(
+	            selected
+	                    && !protectedLayer
+	                    && !defaultLayer);
+
+	    if (!canReorder(layer)) {
+	        upButton.setEnabled(false);
+	        downButton.setEnabled(false);
+	        return;
+	    }
+
+	    int index = container._layers.indexOf(layer);
+
+	    upButton.setEnabled(
+	            index >= 0
+	                    && index < container._layers.size() - 1);
+
+	    downButton.setEnabled(index > 0);
+	}
+
+	/**
+	 * Returns whether the layer participates in the reorderable user-layer list.
+	 */
+	private boolean canReorder(Layer layer) {
+	    return layer != null
+	            && !container.isProtectedLayer(layer)
+	            && container._layers.contains(layer)
+	            && container._layers.size() > 1;
 	}
 
 	private void deleteUserLayer(Layer layer, boolean moveItemsToDefault) {
@@ -448,11 +695,13 @@ public class LayerInspectorDialog extends JDialog {
 
 		private final BaseContainer container;
 		private final LayerTableModel model;
+		private final JTable table;
 		private int sourceRow = -1;
 
-		LayerRowTransferHandler(BaseContainer container, LayerTableModel model) {
+		LayerRowTransferHandler(BaseContainer container, LayerTableModel model, JTable table) {
 			this.container = container;
 			this.model = model;
+			this.table = table;
 		}
 
 		@Override
@@ -549,6 +798,11 @@ public class LayerInspectorDialog extends JDialog {
 			container._layers.add(dstUser, dragged);
 
 			model.refresh();
+			int row = model.indexOf(dragged);
+			if (row >= 0) {
+			    table.getSelectionModel()
+			            .setSelectionInterval(row, row);
+			}
 			container.setDirty(true);
 			container.refresh();
 			return true;

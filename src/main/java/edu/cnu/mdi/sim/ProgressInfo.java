@@ -47,7 +47,9 @@ public final class ProgressInfo {
 	 * @return a determinate progress object
 	 */
 	public static ProgressInfo determinate(double fraction, String message) {
-		double f = Math.max(0.0, Math.min(1.0, fraction));
+		double f = Double.isNaN(fraction)
+				? 0.0
+				: Math.max(0.0, Math.min(1.0, fraction));
 		return new ProgressInfo(false, f, message);
 	}
 

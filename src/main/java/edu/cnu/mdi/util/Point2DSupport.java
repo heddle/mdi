@@ -2,10 +2,14 @@ package edu.cnu.mdi.util;
 
 import java.awt.geom.Point2D;
 
-public class Point2DSupport {
+/** Static operations on two-dimensional points interpreted as vectors. */
+public final class Point2DSupport {
 
 	// tiny number check
 	private static final double TINY = 1.0e-40;
+
+	private Point2DSupport() {
+	}
 
 	/**
 	 * This is creation by subtraction. Be very careful of the order. This return
@@ -26,7 +30,7 @@ public class Point2DSupport {
 	 * @return the usual vector magnitude
 	 */
 	public static double length(Point2D.Double wp) {
-		return Math.sqrt(wp.x * wp.x + wp.y * wp.y);
+		return Math.hypot(wp.x, wp.y);
 	}
 
 	/**
@@ -94,7 +98,8 @@ public class Point2DSupport {
 			return 0.0;
 		}
 
-		double ang = Math.acos(dot(v1, v2) / (len1 * len2));
+		double cosine = dot(v1, v2) / (len1 * len2);
+		double ang = Math.acos(Math.max(-1.0, Math.min(1.0, cosine)));
 		return Math.toDegrees(ang);
 	}
 
@@ -115,9 +120,10 @@ public class Point2DSupport {
 		return new Point2D.Double(dot * aunit.x, dot * aunit.y);
 	}
 
-	/*
+	/**
 	 * Get the polar coordinate angle.
 	 *
+	 * @param wp vector to inspect
 	 * @return the angle, in degrees, measured ccw from the x axis.
 	 */
 	public static double angle(Point2D.Double wp) {
@@ -134,17 +140,26 @@ public class Point2DSupport {
 	public static double distance(Point2D.Double wp0, Point2D.Double wp1) {
 		double delx = wp1.x - wp0.x;
 		double dely = wp1.y - wp0.y;
-		return Math.sqrt(delx * delx + dely * dely);
+		return Math.hypot(delx, dely);
 	}
 
 	/**
 	 * Computes the azimuth from this world point to another. The azimuth is the
 	 * angle, in degrees, measured clockwise from north (the positive y axis) to
 	 * the line connecting the two points.
+	 * <p>
+	 * Unlike a normalized compass bearing, the result is <strong>not</strong>
+	 * restricted to {@code [0, 360)} — it is derived directly from
+	 * {@link Math#atan2} and can be negative (e.g. a westward vector returns
+	 * {@code -90}, not {@code 270}). Callers that need a normalized
+	 * {@code [0, 360)} sweep should use
+	 * {@link edu.cnu.mdi.util.AngleSupport#ccwSweepDeg} or equivalent instead.
+	 * </p>
 	 *
 	 * @param wp0 the starting world point.
 	 * @param wp1 the ending world point.
-	 * @return the azimuth from wp0 to wp1, in degrees.
+	 * @return the azimuth from wp0 to wp1, in degrees; not normalized to
+	 *         {@code [0, 360)}
 	 */
 	public static double azimuth(Point2D.Double wp0, Point2D.Double wp1) {
 		double delx = wp1.x - wp0.x;
@@ -152,9 +167,10 @@ public class Point2DSupport {
 		return 90.0 - Math.toDegrees(Math.atan2(dely, delx));
 	}
 
-	/*
+	/**
 	 * Get a string representation.
 	 *
+	 * @param wp point to format
 	 * @return a string representation.
 	 */
 	public static String toString(Point2D.Double wp) {

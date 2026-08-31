@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import edu.cnu.mdi.mapping.shapefile.ShapefileCrsValidator;
 import edu.cnu.mdi.mapping.shapefile.ShapefileDbfReader;
 import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader;
 import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader.ShapeRecord;
@@ -45,10 +46,12 @@ import edu.cnu.mdi.mapping.theme.MapUtils;
  * location.</p>
  *
  * <h2>Coordinate assumptions</h2>
- * <p>Input coordinates are assumed to be WGS84 geographic degrees (longitude,
- * latitude). They are converted to radians and the longitude is wrapped to
- * (-π, π] before being stored in the returned features. If the shapefile has
- * a {@code .prj} companion declaring a different CRS, it is ignored.</p>
+ * <p>Input coordinates must be WGS84 or NAD83/GRS80 geographic degrees
+ * (longitude, latitude). NAD83 is treated as WGS84 without datum transformation.
+ * A companion {@code .prj}, when present, is validated and incompatible or
+ * unrecognized coordinate systems are rejected. If it is absent, WGS84 is
+ * assumed. Coordinates are converted to radians and longitude is wrapped to
+ * (-π, π] before being stored in the returned features.</p>
  *
  * <h2>File layout contract</h2>
  * <p>The {@code .dbf} file is derived from the {@code .shp} path by replacing
@@ -101,6 +104,7 @@ public final class ShapefileCityLoader implements ICityLoader {
     @Override
     public List<GeoJsonCityLoader.CityFeature> load(Path path) throws IOException {
         Objects.requireNonNull(path, "path");
+        ShapefileCrsValidator.validate(path);
         Path dbfPath = replaceExtension(path, ".dbf");
         return loadFromPaths(path, dbfPath);
     }

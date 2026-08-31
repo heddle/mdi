@@ -129,6 +129,9 @@ public class PlotCanvas extends JComponent implements DataChangeListener {
 	/** Transforms raw-world → screen (null when component has no valid size). */
 	protected AffineTransform _rawWorldToScreen;
 
+	/** Suppresses repeated warnings while the transform remains non-invertible. */
+	private boolean noninvertibleTransformLogged;
+
 	/** The data backing this canvas. */
 	protected PlotData _plotData;
 
@@ -1115,8 +1118,13 @@ public class PlotCanvas extends JComponent implements DataChangeListener {
 
 		try {
 			_rawWorldToScreen = _screenToRawWorld.createInverse();
+			noninvertibleTransformLogged = false;
 		} catch (NoninvertibleTransformException e) {
-			e.printStackTrace();
+			if (!noninvertibleTransformLogged) {
+				noninvertibleTransformLogged = true;
+				edu.cnu.mdi.log.Log.getInstance().warning(
+						"Plot transform is non-invertible: " + e.getMessage());
+			}
 			_rawWorldToScreen = null;
 		}
 	}

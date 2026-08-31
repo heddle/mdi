@@ -49,6 +49,31 @@ public class MapToolHandler extends BaseToolHandler {
     }
 
     /**
+     * Saves the current map extent for undo before a projection-aware pan.
+     * Unlike ordinary canvas panning, no screenshot is captured or translated.
+     */
+    @Override
+    public void panStartDrag(GestureContext gc) {
+        mapContainer.prepareToZoom();
+    }
+
+    /**
+     * Recenters the map from the latest incremental pointer displacement.
+     * Reprojection keeps the map domain fixed and prevents empty backfill.
+     */
+    @Override
+    public void panUpdateDrag(GestureContext gc) {
+        mapContainer.panMapBy(gc.deltaX(), gc.deltaY());
+    }
+
+    /** Completes a projection-aware pan with a definitive repaint. */
+    @Override
+    public void panDoneDrag(GestureContext gc) {
+        mapContainer.setDirty(true);
+        mapContainer.refresh();
+    }
+
+    /**
      * Creates a great-circle map line between the two screen-space endpoints.
      *
      * @param gc    the gesture context

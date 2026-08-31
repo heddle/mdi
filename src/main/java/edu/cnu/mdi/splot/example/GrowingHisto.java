@@ -14,11 +14,14 @@ import edu.cnu.mdi.splot.plot.PlotCanvas;
 import edu.cnu.mdi.splot.plot.PlotChangeType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
+/** Demonstrates a histogram that is filled incrementally by a data source. */
 @SuppressWarnings("serial")
 public class GrowingHisto extends AExample {
 
-	private static Thread sourceThread;
+	/** Worker that supplies samples to this example instance. */
+	private Thread sourceThread;
 
+	/** @param headless whether to construct the example without displaying a window */
 	public GrowingHisto(boolean headless) {
 		super(headless);
 		double mu = 50.0;
@@ -67,7 +70,7 @@ public class GrowingHisto extends AExample {
 		params.setNumDecimalY(0);
 	}
 
-	private static void addData(final PlotCanvas canvas, final long maxCount, final int increment,
+	private void addData(final PlotCanvas canvas, final long maxCount, final int increment,
 			NormalDistribution normDev) {
 		final HistoCurve hc = (HistoCurve) canvas.getPlotData().getCurve(0);
 
@@ -77,7 +80,7 @@ public class GrowingHisto extends AExample {
 			@Override
 			public void run() {
 				int count = 0;
-				while (count < maxCount) {
+				while (count < maxCount && !Thread.currentThread().isInterrupted()) {
 					count += increment;
 					for (int i = 0; i < increment; i++) {
 						x[i] = normDev.sample();
@@ -86,13 +89,15 @@ public class GrowingHisto extends AExample {
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						// Switching gallery plots shuts this worker down by interruption.
+						Thread.currentThread().interrupt();
+						return;
 					}
 				}
 			}
 		};
 
-		sourceThread = new Thread(runner);
+		sourceThread = new Thread(runner, "splot-growing-histogram");
 		sourceThread.start();
 
 	}
@@ -104,6 +109,7 @@ public class GrowingHisto extends AExample {
 			if (sourceThread != null && sourceThread.isAlive()) {
 				sourceThread.interrupt();
 			}
+			sourceThread = null;
 			break;
 		case STOODUP:
 			// no op

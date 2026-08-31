@@ -69,6 +69,9 @@ public class StripChartCurve extends ACurve {
 	/** Optional callback invoked after a drain pass (EDT). */
 	private volatile Runnable onSample;
 
+	/** Suppresses repeated logging if a per-sample callback keeps failing. */
+	private boolean callbackFailureLogged;
+
 	/** Series data columns. Mutated under {@link #lock} on the EDT. */
 	private final DataColumn xData;
 	private final DataColumn yData;
@@ -190,9 +193,10 @@ public class StripChartCurve extends ACurve {
 
 	/** Scale internal ms values into the current display unit. */
 	private double scaleTime(double tms) {
-		// milliseconds per 1 unit (e.g., SECONDS -> 1000)
-		final double denom = timeUnit.toMillis(1);
-		return tms / denom;
+		// Convert through nanoseconds so sub-millisecond units do not truncate to
+		// zero as they do with TimeUnit.toMillis(1).
+		final double nanosPerUnit = timeUnit.toNanos(1);
+		return tms * 1_000_000.0 / nanosPerUnit;
 	}
 
 	/** A short label you can use in axis titles ("Time (s)", etc.). */
@@ -459,9 +463,12 @@ public class StripChartCurve extends ACurve {
 		if (callback != null) {
 			try {
 				callback.run();
+				callbackFailureLogged = false;
 			} catch (Throwable t) {
-				// Fail soft
-				t.printStackTrace();
+				if (!callbackFailureLogged) {
+					callbackFailureLogged = true;
+					edu.cnu.mdi.log.Log.getInstance().exception(t);
+				}
 			}
 		}
 	}
@@ -501,7 +508,19 @@ public class StripChartCurve extends ACurve {
 	}
 
 	/**
-	 * Strip charts do not perform fitting; this method is a no-op.
+	 * Perform a curve computation (fit or spline) on the strip chart's
+	 * current data, depending on the configured {@link CurveDrawingMethod}.
+	 * <p>
+	 * Same dispatch as {@link Curve#doFit(boolean)}: {@code CUBICSPLINE}
+	 * builds a {@link CubicSpline}, the parametric methods
+	 * ({@code POLYNOMIAL}, {@code ERF}, {@code ERFC}, {@code GAUSSIAN},
+	 * {@code GAUSSIANS}, {@code EXPONENTIAL_DECAY}, {@code POWER_LAW},
+	 * {@code LORENTZIAN}) run the corresponding {@link IFitter}, and
+	 * {@code NONE}/{@code CONNECT}/{@code STAIRS} require no computed
+	 * artifact. Must be called on the EDT.
+	 * </p>
+	 *
+	 * @param force {@code true} to force recomputation even if not dirty
 	 */
 	@Override
 	public void doFit(boolean force) {

@@ -83,14 +83,14 @@ public class NatoIconPicker extends JPanel {
     /** Drag image size in pixels (square). */
     private static final int DRAG_IMAGE_SIZE = 28;
 
-    /** Preferred width of the category-name column. */
+    /** Minimum width of the category-name column. */
     private static final int COL_LABEL_W = 75;
 
-    /** Preferred width of each affiliation-icon column. */
+    /** Minimum width of each affiliation-icon column. */
     private static final int COL_ICON_W = 36;
 
-    /** Preferred total panel width derived from column widths. */
-    private static final int PANEL_WIDTH = COL_LABEL_W + 4 * COL_ICON_W + 12;
+    /** Horizontal breathing room around rendered table content. */
+    private static final int CELL_PADDING = 12;
 
     /** Background color shared by all sub-components. */
     private static final Color PANEL_BG = new Color(235, 235, 235);
@@ -122,13 +122,13 @@ public class NatoIconPicker extends JPanel {
 
         setBorder(new CommonBorder("Drag and Drop MilSymbols"));
 
-        Dimension preferred = new Dimension(PANEL_WIDTH, preferredPanelHeight());
+        Dimension preferred = new Dimension(preferredPanelWidth(), preferredPanelHeight());
         setPreferredSize(preferred);
 
         // Important when this picker is placed in a BoxLayout.Y_AXIS parent:
         // without a maximum height, BoxLayout may stretch the scroll pane and
         // produce a large blank area below the table rows.
-        setMaximumSize(preferred);
+        setMaximumSize(new Dimension(Integer.MAX_VALUE, preferred.height));
 
         // Delegate all Swing DnD ceremony to PaletteDragSupport.
         // We supply:
@@ -272,6 +272,7 @@ public class NatoIconPicker extends JPanel {
         table.setFont(Fonts.tinyFont);
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(1, 1));
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         // Label column renderer.
         DefaultTableCellRenderer labelRenderer = new DefaultTableCellRenderer();
@@ -294,23 +295,12 @@ public class NatoIconPicker extends JPanel {
             table.getColumnModel().getColumn(c).setCellRenderer(iconRenderer);
         }
 
-        // Fix column widths so the panel does not reflow on selection changes.
-        TableColumn labelCol = table.getColumnModel().getColumn(0);
-        labelCol.setPreferredWidth(COL_LABEL_W);
-        labelCol.setMinWidth(COL_LABEL_W);
-        labelCol.setMaxWidth(COL_LABEL_W);
-
-        for (int c = 1; c <= 4; c++) {
-            TableColumn tc = table.getColumnModel().getColumn(c);
-            tc.setPreferredWidth(COL_ICON_W);
-            tc.setMinWidth(COL_ICON_W);
-            tc.setMaxWidth(COL_ICON_W);
-        }
-
         table.getTableHeader().setBackground(PANEL_BG);
         table.getTableHeader().setFont(Fonts.tinyFont);
         table.getTableHeader().setReorderingAllowed(false);
         table.getTableHeader().setResizingAllowed(false);
+
+        configureColumnWidths();
 
         // Keep the status label in sync with the cell selection.
         table.getSelectionModel().addListSelectionListener(e -> updateStatus());
@@ -322,6 +312,46 @@ public class NatoIconPicker extends JPanel {
         scroll.setBorder(BorderFactory.createEmptyBorder());
 
         add(scroll, BorderLayout.CENTER);
+    }
+
+    /** Size columns from their rendered text, headers, and icons. */
+    private void configureColumnWidths() {
+        for (int column = 0; column < table.getColumnCount(); column++) {
+            int minimum = (column == 0) ? COL_LABEL_W : COL_ICON_W;
+            int contentWidth = table.getTableHeader().getFontMetrics(
+                    table.getTableHeader().getFont())
+                    .stringWidth(table.getColumnName(column));
+
+            for (int row = 0; row < table.getRowCount(); row++) {
+                Object value = table.getValueAt(row, column);
+                if (value instanceof Icon icon) {
+                    contentWidth = Math.max(contentWidth, icon.getIconWidth());
+                } else if (value != null) {
+                    contentWidth = Math.max(contentWidth,
+                            table.getFontMetrics(table.getFont()).stringWidth(value.toString()));
+                }
+            }
+
+            int width = measuredColumnWidth(contentWidth, minimum);
+            TableColumn tableColumn = table.getColumnModel().getColumn(column);
+            tableColumn.setMinWidth(width);
+            tableColumn.setPreferredWidth(width);
+        }
+    }
+
+    /** Return a padded column width without falling below its compact baseline. */
+    static int measuredColumnWidth(int contentWidth, int minimumWidth) {
+        return Math.max(minimumWidth, Math.max(0, contentWidth) + CELL_PADDING);
+    }
+
+    /** Return the width needed to show every table column without clipping. */
+    private int preferredPanelWidth() {
+        int width = 0;
+        for (int column = 0; column < table.getColumnCount(); column++) {
+            width += table.getColumnModel().getColumn(column).getPreferredWidth();
+        }
+        Insets insets = getInsets();
+        return width + insets.left + insets.right + 4;
     }
 
     /**
@@ -430,7 +460,8 @@ public class NatoIconPicker extends JPanel {
                         .toList();
             }
         } catch (Exception e) {
-            System.err.println("NatoIconPicker: failed to enumerate icon folders: " + e.getMessage());
+            edu.cnu.mdi.log.Log.getInstance().warning(
+                    "NatoIconPicker: failed to enumerate icon folders: " + e.getMessage());
         }
 
         for (String folder : folders) {

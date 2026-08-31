@@ -9,8 +9,12 @@ import javax.swing.JButton;
 /**
  * A non-toggle toolbar button that performs an immediate action (one-shot).
  * <p>
-
- * Unlike ToolToggleButton, this class does not change the active tool.
+ * Unlike the {@code JToggleButton}-based tool buttons in this package (e.g.
+ * {@link APointerButton}, {@link AMoveButton}, {@link ADragButton},
+ * {@link ASingleClickButton}, {@link ARubberbandButton}), this class does not
+ * become the active tool or participate in the toolbar's mutual-exclusion
+ * group — it just fires an action and leaves whichever tool was active
+ * selected.
  * </p>
  *
  * @author heddle

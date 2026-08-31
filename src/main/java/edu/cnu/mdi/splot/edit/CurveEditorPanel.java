@@ -162,7 +162,7 @@ public class CurveEditorPanel extends JPanel implements ActionListener, Property
 			try {
 				_curveTable.getSelectionModel().setSelectionInterval(0, 0);
 			} catch (Exception e) {
-				e.printStackTrace();
+				edu.cnu.mdi.log.Log.getInstance().exception(e);
 			}
 		}
 	}

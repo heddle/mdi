@@ -8,16 +8,20 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
 
+import javax.swing.Action;
 import javax.swing.Box;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.swing.WindowPlacement;
 
-public class DialogUtils {
+/** Utility methods and response constants used by MDI dialogs. */
+public final class DialogUtils {
 
 	/**
 	 * Dialog "Reason" constant
@@ -34,8 +38,6 @@ public class DialogUtils {
 	/**
 	 * Current answer string
 	 */
-
-	protected String outputdata = null;
 
 	/**
 	 * Dialog "Reason" constant
@@ -60,6 +62,11 @@ public class DialogUtils {
 	 */
 
 	public static final int NO_RESPONSE = 1;
+	/**
+	 * Private constructor to prevent instantiation.
+	 */
+	private DialogUtils() {
+	}
 
 	/**
 	 * Center a dialog
@@ -105,18 +112,28 @@ public class DialogUtils {
 		} catch (Exception e) {
 			Log.getInstance().exception(e);
 			component.setLocation(200, 200);
-			e.printStackTrace();
 		}
 	}
 
 	/**
 	 * Convenience routine for padding a string using the default font.
+	 * <p>
+	 * Pads {@code inp} with trailing spaces so that, when rendered in
+	 * {@code c}'s font, its pixel width approximates {@code tstr}'s pixel
+	 * width as closely as possible (adding one space at a time until the
+	 * width gap stops shrinking).
+	 * </p>
 	 *
-	 * @param inp  The string to be padded.
-	 * @param tstr The test string-- try to return a string the same length
+	 * @param c    the component supplying the font metrics used to measure
+	 *             pixel widths
+	 * @param inp  the string to be padded; {@code null} is treated as empty
+	 * @param tstr the target string-- try to return a string that renders at
+	 *             about the same pixel width
+	 * @return {@code inp} (or the empty string) with zero or more trailing
+	 *         spaces appended
 	 */
 
-	public String padString(Component c, String inp, String tstr) {
+	public static String padString(Component c, String inp, String tstr) {
 
 		String str;
 		int oldgap;
@@ -134,7 +151,7 @@ public class DialogUtils {
 		oldgap = Math.abs(sw - fm.stringWidth(str));
 
 		while (true) {
-			String str2 = str += " ";
+			String str2 = str + " ";
 			newgap = Math.abs(sw - fm.stringWidth(str2));
 			if (newgap < oldgap) {
 				str = str2;
@@ -163,7 +180,7 @@ public class DialogUtils {
 			panel.add(Box.createHorizontalStrut(hpad), BorderLayout.WEST);
 			panel.add(Box.createHorizontalStrut(hpad), BorderLayout.EAST);
 		}
-		if (hpad > 0) {
+		if (vpad > 0) {
 			panel.add(Box.createVerticalStrut(vpad), BorderLayout.NORTH);
 			panel.add(Box.createVerticalStrut(vpad), BorderLayout.SOUTH);
 		}
@@ -175,9 +192,9 @@ public class DialogUtils {
 	/**
 	 * Create a dialog with a prompt and a set of options
 	 *
-	 * @param prompt
-	 * @param options
-	 * @return a result indicating yes or no.
+	 * @param prompt the message displayed to the user
+	 * @param options the available response labels
+	 * @return the selected option index, or {@code -1} if the dialog was closed
 	 */
 	public static int yesNoDialog(String prompt, String... options) {
 
@@ -193,6 +210,25 @@ public class DialogUtils {
 			}
 		}
 		return -1;
+	}
+	
+	/**
+	 * Attempts to place a file chooser in details view.
+	 *
+	 * <p>
+	 * This relies on a look-and-feel action name and therefore is not guaranteed to
+	 * work with every Swing look and feel.
+	 * </p>
+	 *
+	 * @param chooser the file chooser
+	 */
+	public static void requestDetailsView(JFileChooser chooser) {
+
+		Action action = chooser.getActionMap().get("viewTypeDetails");
+
+		if (action != null) {
+			action.actionPerformed(new ActionEvent(chooser, ActionEvent.ACTION_PERFORMED, "viewTypeDetails"));
+		}
 	}
 
 }

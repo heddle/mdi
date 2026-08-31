@@ -24,11 +24,16 @@ public class Sphere {
 	 * @param center the center of the sphere
 	 * @param radius the radius of the sphere; must be non-negative
 	 * @throws NullPointerException     if {@code center} is {@code null}
-	 * @throws IllegalArgumentException if {@code radius < 0}
+	 * @throws IllegalArgumentException if {@code radius} is negative or non-finite,
+	 *                                  or a center coordinate is non-finite
 	 */
 	public Sphere(Point center, double radius) {
-		if (radius < 0) {
-			throw new IllegalArgumentException("Sphere radius must be non-negative.");
+		if (!Double.isFinite(radius) || radius < 0) {
+			throw new IllegalArgumentException("Sphere radius must be finite and non-negative.");
+		}
+		if (!Double.isFinite(center.x) || !Double.isFinite(center.y)
+				|| !Double.isFinite(center.z)) {
+			throw new IllegalArgumentException("Sphere center coordinates must be finite.");
 		}
 		_center = new Point(center);
 		_radius = radius;
@@ -42,7 +47,8 @@ public class Sphere {
 	 * @param radius the radius of the sphere; must be non-negative
 	 * @throws NullPointerException      if {@code center} is {@code null}
 	 * @throws IndexOutOfBoundsException if {@code center.length < 3}
-	 * @throws IllegalArgumentException  if {@code radius < 0}
+	 * @throws IllegalArgumentException  if {@code radius} is negative or non-finite,
+	 *                                   or a center coordinate is non-finite
 	 */
 	public Sphere(double[] center, double radius) {
 		this(new Point(center), radius);
@@ -52,7 +58,7 @@ public class Sphere {
 	 * Creates a sphere centered at the origin.
 	 *
 	 * @param radius the radius of the sphere; must be non-negative
-	 * @throws IllegalArgumentException if {@code radius < 0}
+	 * @throws IllegalArgumentException if {@code radius} is negative or non-finite
 	 */
 	public Sphere(double radius) {
 		this(new Point(0, 0, 0), radius);

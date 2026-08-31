@@ -84,8 +84,7 @@ public class Histo2DPanel extends JPanel implements PropertyChangeListener {
 		};
 	}
 	
-	// TODO: add a toolbar with buttons for captureImage and print,
-	// and any other relevant actions
+	/** Add the capture and print toolbar. */
 	private void addToolbar() {
 		long bits = ToolBits.CAMERA | ToolBits.PRINTER;
 		toolbar = new BaseToolBar(hist, toolHandler, bits);

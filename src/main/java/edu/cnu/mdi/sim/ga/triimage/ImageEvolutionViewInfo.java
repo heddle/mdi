@@ -32,15 +32,18 @@ public class ImageEvolutionViewInfo extends AbstractViewInfo {
                 "The target image (top-right) is the image being approximated.",
                 "Fitness and diversity plots (bottom-right) show convergence over generations.",
                 "Press Pause at any time to inspect the current best individual.",
+				"Pause or stop the simulation, then drag an image onto the view or use "
+						+ "Image > Open Image…. Recently opened images are kept in the Image menu.",
                 "Use the control panel sliders to change triangle count or population size, "
-                        + "then press Reset to start a new run."
+						+ "choose Color MSE or Line-aware fitness, then press Reset to start a new run."
         );
     }
 
     @Override
     public String getTechnicalNotes() {
-        return "Fitness is the negated mean squared error (MSE) between the rendered chromosome "
-                + "and the target image, evaluated at a reduced resolution ("
+		return "Color MSE fitness uses negated channel-wise mean squared error. Line-aware fitness "
+				+ "combines 70% color error with 30% Sobel luminance-edge error, encouraging strong "
+				+ "target contours to emerge earlier. Both are evaluated at a reduced resolution ("
                 + ImageApproximationProblem.FITNESS_W + "×"
                 + ImageApproximationProblem.FITNESS_H + " px) for performance. "
                 + "Full-resolution rendering is used for display only. "

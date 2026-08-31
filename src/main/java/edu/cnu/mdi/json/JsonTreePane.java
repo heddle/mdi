@@ -8,6 +8,8 @@ import java.awt.datatransfer.StringSelection;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -177,6 +179,8 @@ public class JsonTreePane extends JPanel {
      * @param filename display label for the root node
      */
     public void setRoot(JsonElement root, String filename) {
+		Objects.requireNonNull(root, "root");
+		Objects.requireNonNull(filename, "filename");
         fullRoot = new DefaultMutableTreeNode(
                 new JsonNodeData(filename, "", JsonNodeData.Kind.ROOT));
         buildTree(fullRoot, root);
@@ -220,7 +224,7 @@ public class JsonTreePane extends JPanel {
 
         // Build a filtered copy of the tree containing only matching paths.
         DefaultMutableTreeNode filteredRoot =
-                filterNode(fullRoot, query.toLowerCase());
+				filterNode(fullRoot, query.toLowerCase(Locale.ROOT));
         if (filteredRoot == null) {
             // No matches — show a placeholder root with no children.
             filteredRoot = new DefaultMutableTreeNode(
@@ -432,7 +436,7 @@ public class JsonTreePane extends JPanel {
             DefaultMutableTreeNode node, String lowerQuery) {
 
         JsonNodeData data = (node.getUserObject() instanceof JsonNodeData d) ? d : null;
-        String label = (data != null) ? data.toString().toLowerCase() : "";
+		String label = (data != null) ? data.toString().toLowerCase(Locale.ROOT) : "";
         boolean selfMatches = label.contains(lowerQuery);
 
         // Recursively filter children.

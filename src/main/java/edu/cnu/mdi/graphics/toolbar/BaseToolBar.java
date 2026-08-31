@@ -19,6 +19,7 @@ import javax.swing.JToggleButton;
 
 import edu.cnu.mdi.graphics.ImageManager;
 import edu.cnu.mdi.graphics.rubberband.ARubberband;
+import edu.cnu.mdi.swing.SwingSizingUtils;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
@@ -338,6 +339,29 @@ public class BaseToolBar extends AToolBar {
 			addStdToggle(ToolBits.PAN, pan);
 		}
 
+		// Projection-aware map pan. It uses the same hand artwork as ordinary pan,
+		// but is a distinct tool so map and drawing views can choose their own
+		// interaction semantics.
+		if (ToolBits.useMapPanButton(bits)) {
+			JToggleButton mapPan = new ADragButton(canvas, this) {
+				@Override
+				public void startDrag(GestureContext gc) {
+					handler.panStartDrag(gc);
+				}
+
+				@Override
+				public void updateDrag(GestureContext gc) {
+					handler.panUpdateDrag(gc);
+				}
+
+				@Override
+				public void doneDrag(GestureContext gc) {
+					handler.panDoneDrag(gc);
+				}
+			};
+			addStdToggle(ToolBits.MAPPAN, mapPan);
+		}
+
 		// Magnify tool (toggle + move tracking)
 		if (ToolBits.useMagnifyButton(bits)) {
 			JToggleButton magnify = new AMoveButton(canvas, this) {
@@ -559,7 +583,7 @@ public class BaseToolBar extends AToolBar {
 			}
 		}
 
-		button.setPreferredSize(DEFAULT_BUTTON_SIZE);
+		sizeButtonForIcon(button);
 	}
 
 	/**
@@ -587,9 +611,26 @@ public class BaseToolBar extends AToolBar {
 			}
 		}
 
-		button.setPreferredSize(DEFAULT_BUTTON_SIZE);
-		button.setMinimumSize(DEFAULT_BUTTON_SIZE);
-		button.setMaximumSize(DEFAULT_BUTTON_SIZE);
+		sizeButtonForIcon(button);
+	}
+
+	/** Keep BoxLayout from compressing a button beneath its rendered icon. */
+	private static void sizeButtonForIcon(AbstractButton button) {
+		Dimension size = buttonSizeForIcon(button.getIcon());
+		button.setPreferredSize(size);
+		button.setMinimumSize(size);
+		button.setMaximumSize(size);
+	}
+
+	/**
+	 * Return a button size that contains the icon at the active UI scale.
+	 *
+	 * @param icon rendered icon, or {@code null}
+	 * @return minimum safe toolbar-button size
+	 */
+	static Dimension buttonSizeForIcon(Icon icon) {
+		return SwingSizingUtils.iconButtonSize(icon,
+				new java.awt.Insets(3, 3, 3, 3), DEFAULT_BUTTON_SIZE);
 	}
 
 	// ------------------------------------------------------------------------

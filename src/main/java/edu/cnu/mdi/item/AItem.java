@@ -425,18 +425,20 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 
 		if (shouldDraw(g2, container)) {
 			Shape oldClip = g2.getClip();
-			BaseView bview = container.getView();
-			if (bview != null) {
-				Shape clip = bview.getSpecialClip();
-				if (clip != null)
-					g2.setClip(clip);
-			}
-
 			Stroke oldStroke = g2.getStroke();
-			drawItem(g2, container);
-			setDirty(false);
-			g2.setStroke(oldStroke);
-			g2.setClip(oldClip);
+			BaseView bview = container.getView();
+			try {
+				if (bview != null) {
+					Shape clip = bview.getSpecialClip();
+					if (clip != null)
+						g2.setClip(clip);
+				}
+				drawItem(g2, container);
+				setDirty(false);
+			} finally {
+				g2.setStroke(oldStroke);
+				g2.setClip(oldClip);
+			}
 		}
 
 		drawSelections(g2, container);

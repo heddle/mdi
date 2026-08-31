@@ -1,23 +1,19 @@
-package edu.cnu.mdi.mapping;
+package edu.cnu.mdi.mapping.shapefile;
 
 import java.awt.Color;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.JSeparator;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import edu.cnu.mdi.dialog.DialogUtils;
 import edu.cnu.mdi.log.Log;
-import edu.cnu.mdi.mapping.shapefile.ShapeFeature;
-import edu.cnu.mdi.mapping.shapefile.ShapeFeatureRenderer;
-import edu.cnu.mdi.mapping.shapefile.ShapeFeatureStyle;
-import edu.cnu.mdi.mapping.shapefile.ShapefileFeatureLoader;
-import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader;
+import edu.cnu.mdi.mapping.MapView2D;
 
 /**
  * A {@link JMenu} that provides interactive shapefile loading and per-layer
@@ -51,13 +47,13 @@ import edu.cnu.mdi.mapping.shapefile.ShapefileGeometryReader;
  *
  * <h2>Programmatic layers</h2>
  * <p>Layers added at startup via
- * {@link MapView2D#addShapefileLayer(ShapeFeatureRenderer, String)} are automatically
+ * {@link MapView2D#addShapefile(ShapeFeatureRenderer, String)} are automatically
  * reflected in the menu with a checkbox. The menu does not need to know
  * whether a layer came from user interaction or from code.</p>
  *
  * <h2>Visibility</h2>
- * <p>Toggling a checkbox calls {@link ShapeFeatureRenderer#setVisible(boolean)}
- * and triggers a repaint. The layer remains in the layer list; it simply
+ * <p>Toggling a checkbox changes the corresponding layer's visibility and
+ * triggers a repaint. The layer remains in the layer list; it simply
  * produces no output when hidden, so re-showing it is instantaneous.</p>
  *
  * <h2>Usage in MapView2D</h2>
@@ -83,11 +79,6 @@ public class ShapefileMenu extends JMenu {
     /** The "Open Shapefile..." menu item. */
     private final JMenuItem openItem;
 
-    /** Separator between the Open item and the layer checkboxes. */
-    private final JSeparator separator;
-
-    /** Whether the separator has been added yet (deferred until first layer). */
-    private boolean separatorAdded = false;
 
     // -------------------------------------------------------------------------
     // Construction
@@ -103,12 +94,15 @@ public class ShapefileMenu extends JMenu {
         this.mapView = mapView;
 
         fileChooser = new JFileChooser();
+        
+        //try to open in details view, but don't fail if the L&F doesn't support it
+        SwingUtilities.invokeLater(
+                () -> DialogUtils.requestDetailsView(fileChooser));
+        
         fileChooser.setDialogTitle("Open Shapefile");
         fileChooser.setFileFilter(
                 new FileNameExtensionFilter("ESRI Shapefiles (*.shp)", "shp"));
         fileChooser.setAcceptAllFileFilterUsed(false);
-
-        separator = new JSeparator();
 
         openItem = new JMenuItem("Open Shapefile\u2026");
         openItem.addActionListener(e -> openShapefile());
@@ -119,29 +113,6 @@ public class ShapefileMenu extends JMenu {
     // Public API — called by MapView2D when a layer is added
     // -------------------------------------------------------------------------
 
-    /**
-     * Registers a newly added layer in the menu by appending a
-     * {@link JCheckBoxMenuItem} for it. Called automatically by
-     * {@link MapView2D#addShapefileLayer(ShapeFeatureRenderer, String)} so that both
-     * programmatic and interactive layers appear in the menu.
-     *
-     * @param renderer the layer renderer; must not be {@code null}
-     * @param name     the display name shown in the menu item
-     */
-    public void registerLayer(ShapeFeatureRenderer renderer, String name) {
-        // Add the separator before the first checkbox item.
-        if (!separatorAdded) {
-            add(separator);
-            separatorAdded = true;
-        }
-
-        JCheckBoxMenuItem item = new JCheckBoxMenuItem(name, renderer.isVisible());
-        item.addActionListener(e -> {
-            renderer.setVisible(item.isSelected());
-            mapView.refresh();
-        });
-        add(item);
-    }
 
     // -------------------------------------------------------------------------
     // Private — interactive file open
@@ -176,7 +147,7 @@ public class ShapefileMenu extends JMenu {
                     new ShapeFeatureRenderer(features, mapView.getProjection(), style);
 
             // addLayer notifies the menu via registerLayer automatically.
-            mapView.addShapefileLayer(renderer, name);
+            mapView.addShapefile(renderer, name);
 
         } catch (IOException ex) {
             Log.getInstance().error("Failed to load shapefile: " + shpPath
@@ -205,19 +176,19 @@ public class ShapefileMenu extends JMenu {
                         .fillColor(new Color(107, 159, 212, 160))
                         .strokeColor(new Color(74, 127, 181, 200))
                         .strokeWidth(0.5f)
-                        .tooltipFields("name", "NAME");
+                        .feedbackFields("name", "NAME", "FULLNAME");
 
             case ShapefileGeometryReader.TYPE_POLYLINE ->
                 new ShapeFeatureStyle()
                         .strokeColor(new Color(107, 159, 212, 200))
                         .strokeWidth(0.8f)
-                        .tooltipFields("name", "NAME");
+                        .feedbackFields("name", "NAME", "FULLNAME");
 
             default -> // Point / MultiPoint
                 new ShapeFeatureStyle()
                         .pointColor(Color.RED)
                         .pointRadius(3.0)
-                        .tooltipFields("NAME", "name");
+                        .feedbackFields("NAME", "name", "FULLNAME");
         };
     }
 

@@ -62,35 +62,15 @@ public final class Bits {
 	public static long clear(long bits, long mask) {
 		return bits & ~mask;
 	}
-	
-	/**
-	 * Counts and returns the number of set bits in the given value.
-	 *
-	 * @param bits the value to count bits in
-	 * @return number of set bits (range {@code 0}–{@code 64})
-	 */
-	public static int countBits(long bits) {
-		int count = 0;
-		while (bits != 0) {
-			count += (bits & 1);
-			bits >>>= 1; // unsigned right shift
-		}
-		return count;
-	}
-	
+		
 	/**
 	 * Counts and returns the number of set bits in the given value.
 	 *
 	 * @param bits the value to count bits in
 	 * @return number of set bits (range {@code 0}–{@code 32})
 	 */
-	public static int countBits(int bits) {
-		int count = 0;
-		while (bits != 0) {
-			count += (bits & 1);
-			bits >>>= 1; // unsigned right shift
-		}
-		return count;
+	public static int count(int bits) {
+		return Integer.bitCount(bits);
 	}
 
 	/**
@@ -114,6 +94,7 @@ public final class Bits {
 	 * @throws IllegalArgumentException if {@code index} is outside {@code 0..63}
 	 */
 	public static long setAt(long bits, int index) {
+		requireValidIndex(index);
 		return bits | (1L << index);
 	}
 
@@ -125,6 +106,7 @@ public final class Bits {
 	 * @return the value with the selected bit cleared
 	 */
 	public static long clearAt(long bits, int index) {
+		requireValidIndex(index);
 		return bits & ~(1L << index);
 	}
 
@@ -136,6 +118,7 @@ public final class Bits {
 	 * @return the value with the selected bit toggled
 	 */
 	public static long toggleAt(long bits, int index) {
+		requireValidIndex(index);
 		return bits ^ (1L << index);
 	}
 
@@ -147,6 +130,7 @@ public final class Bits {
 	 * @return {@code true} if the bit is set, {@code false} otherwise
 	 */
 	public static boolean checkAt(long bits, int index) {
+		requireValidIndex(index);
 		long mask = 1L << index;
 		return (bits & mask) == mask;
 	}
@@ -252,5 +236,11 @@ public final class Bits {
 		}
 		long m = (1L << width) - 1;
 		return bits & m;
+	}
+
+	private static void requireValidIndex(int index) {
+		if (index < 0 || index >= Long.SIZE) {
+			throw new IllegalArgumentException("bit index must be in [0, 63]: " + index);
+		}
 	}
 }

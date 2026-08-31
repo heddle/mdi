@@ -127,6 +127,9 @@ public class FileLogger implements ILogListener, Closeable {
     /** {@code true} once {@link #close()} has been called. */
     private boolean closed = false;
 
+	/** Shutdown hook retained so an explicitly closed logger can unregister it. */
+	private Thread shutdownHook;
+
     // -----------------------------------------------------------------------
     // Construction
     // -----------------------------------------------------------------------
@@ -249,6 +252,7 @@ public class FileLogger implements ILogListener, Closeable {
         }
         closed = true;
         closeWriter();
+		removeShutdownHook();
     }
 
     // -----------------------------------------------------------------------
@@ -484,14 +488,27 @@ public class FileLogger implements ILogListener, Closeable {
      * </p>
      */
     private void registerShutdownHook() {
-        Thread hook = new Thread(() -> {
+		shutdownHook = new Thread(() -> {
             synchronized (FileLogger.this) {
                 if (!closed) {
                     closeWriter();
                 }
             }
         }, "FileLogger-shutdown-hook");
-        hook.setDaemon(true);
-        Runtime.getRuntime().addShutdownHook(hook);
+		shutdownHook.setDaemon(true);
+		Runtime.getRuntime().addShutdownHook(shutdownHook);
     }
+
+	/** Remove the hook after an orderly close to avoid retaining this logger. */
+	private void removeShutdownHook() {
+		Thread hook = shutdownHook;
+		shutdownHook = null;
+		if (hook != null) {
+			try {
+				Runtime.getRuntime().removeShutdownHook(hook);
+			} catch (IllegalStateException ignored) {
+				// The JVM is already shutting down; the hook is running or imminent.
+			}
+		}
+	}
 }

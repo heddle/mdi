@@ -102,7 +102,7 @@ public class PlotDialogExample extends JDialog {
 				dialog.setVisible(true);
 			}
 			catch (PlotDataException e) {
-				e.printStackTrace();
+				edu.cnu.mdi.log.Log.getInstance().exception(e);
 
 				JOptionPane.showMessageDialog(
 						null,

@@ -2,6 +2,8 @@ package edu.cnu.mdi.log;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import javax.swing.event.EventListenerList;
 
@@ -11,8 +13,9 @@ import javax.swing.event.EventListenerList;
  * <h2>Design</h2>
  * <p>
  * {@code Log} is a singleton that distributes log messages to zero or more
- * registered {@link ILogListener} implementations. It deliberately has no
- * built-in output of its own: all output is handled by listeners. The
+ * registered {@link ILogListener} implementations. It retains a small bounded
+ * history and replays it to each newly registered listener, while all actual
+ * output remains the responsibility of listeners. The
  * framework ships with three ready-made listeners:
  * </p>
  * <ul>
@@ -54,6 +57,11 @@ import javax.swing.event.EventListenerList;
  * </p>
  */
 public class Log {
+
+    /** Maximum number of recent messages retained for newly registered listeners. */
+    public static final int HISTORY_CAPACITY = 500;
+
+    private record Entry(Level level, String message) {}
 
     // -----------------------------------------------------------------------
     // Log levels
@@ -166,12 +174,15 @@ public class Log {
      */
     private final EventListenerList listenerList = new EventListenerList();
 
+    /** Bounded, oldest-first history used to populate listeners created later. */
+    private final Deque<Entry> history = new ArrayDeque<>(HISTORY_CAPACITY);
+
     /**
      * Register a log listener.
      * <p>
-     * If {@code listener} is already registered it is removed and re-added,
-     * preventing duplicates. The listener will receive all subsequent log
-     * messages.
+     * A new listener first receives the retained history in chronological
+     * order, followed by subsequent messages. Registering the same listener
+     * instance again is a no-op, preventing duplicate output and replay.
      * </p>
      *
      * @param listener the listener to add; ignored if {@code null}
@@ -180,9 +191,17 @@ public class Log {
         if (listener == null) {
             return;
         }
-        // Remove first to prevent duplicates.
-        listenerList.remove(ILogListener.class, listener);
+
+        for (ILogListener registered : listenerList.getListeners(ILogListener.class)) {
+            if (registered == listener) {
+                return;
+            }
+        }
+
         listenerList.add(ILogListener.class, listener);
+        for (Entry entry : history) {
+            dispatch(listener, entry.level(), entry.message());
+        }
     }
 
     /**
@@ -295,22 +314,34 @@ public class Log {
             return;
         }
 
-        // getListenerList() returns an atomic snapshot — safe to iterate
-        // without holding a lock.
-        Object[] listeners = listenerList.getListenerList();
+        Object[] listeners;
+        synchronized (this) {
+            if (history.size() == HISTORY_CAPACITY) {
+                history.removeFirst();
+            }
+            history.addLast(new Entry(level, message));
+            listeners = listenerList.getListenerList();
+        }
 
         for (int i = 0; i < listeners.length; i += 2) {
             if (listeners[i] == ILogListener.class) {
-                try {
-                    level.dispatch((ILogListener) listeners[i + 1], message);
-                } catch (Exception ex) {
-                    // Guard against misbehaving listeners. Use System.err
-                    // directly to avoid recursive logging.
-                    System.err.println("Log: listener threw exception: "
-                            + ex.getMessage());
-                }
+                dispatch((ILogListener) listeners[i + 1], level, message);
             }
         }
+    }
+
+    private static void dispatch(ILogListener listener, Level level, String message) {
+        try {
+            level.dispatch(listener, message);
+        } catch (Exception ex) {
+            // Use System.err directly to avoid recursive logging.
+            System.err.println("Log: listener threw exception: " + ex.getMessage());
+        }
+    }
+
+    /** Clears retained messages for isolated package-level tests. */
+    synchronized void clearHistoryForTesting() {
+        history.clear();
     }
 
     /**

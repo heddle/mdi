@@ -11,6 +11,8 @@ import java.awt.Stroke;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import edu.cnu.mdi.graphics.GraphicsUtils;
 import edu.cnu.mdi.graphics.SymbolDraw;
@@ -34,6 +36,9 @@ public class CurveDrawer {
 
 	// a transparent gray for default bar borders
 	private static final Color _transGray = new Color(80, 80, 80, 16);
+
+	/** Render-path warnings already emitted, preventing repaint-driven log storms. */
+	private static final Set<String> loggedWarnings = ConcurrentHashMap.newKeySet();
 
 	// lock for synchronizing access to curve data when drawing
 	protected final Object lock = new Object();
@@ -65,7 +70,8 @@ public class CurveDrawer {
 		} else if (curve instanceof HistoCurve) {
 			drawHistoCurve(g2, plotCanvas, (HistoCurve) curve);
 		} else {
-			System.err.println("Unsupported curve type in drawCurve " + curve.name());
+			warningOnce("unsupported:" + curve.getClass().getName(),
+					"Unsupported curve type in CurveDrawer: " + curve.getClass().getName());
 			return;
 		}
 
@@ -363,7 +369,8 @@ public class CurveDrawer {
 		case CUBICSPLINE:
 			Evaluator ivg = curve.getCubicSpline();
 			if (ivg == null) {
-				System.err.println("Cubic spline fit is null for curve " + curve.name());
+				warningOnce("spline:" + curve.name(),
+						"Cubic spline fit is unavailable for curve " + curve.name());
 				return;
 			}
 			drawEvaluator(g2, canvas, ivg);
@@ -373,18 +380,17 @@ public class CurveDrawer {
 		default:
 			FitResult fr = curve.fitResult();
 			if (fr == null) {
-				if (curve.isDirty()) {
-					System.err.println("Curve is dirty in drawFitOrLines for curve " + curve.name());
-				}
-				// no fit result
-				System.err.println("No fit result for curve " + curve.name());
+				warningOnce("fit-result:" + curve.name(),
+						"No fit result is available for curve " + curve.name()
+						+ (curve.isDirty() ? " (curve is dirty)" : ""));
 				return;
 			}
 
 			// this is the evaluator for the fit
 			ivg = curve.getFitValueGetter();
 			if (ivg == null) {
-				System.err.println("Fit evaluator is null in CurveDrawer");
+				warningOnce("fit-evaluator:" + curve.name(),
+						"Fit evaluator is unavailable for curve " + curve.name());
 				return;
 			}
 			drawEvaluator(g2, canvas, ivg);
@@ -392,6 +398,13 @@ public class CurveDrawer {
 		}
 
 		g2.setStroke(oldStroke);
+	}
+
+	/** Emits a warning only once for a stable render-path condition. */
+	private static void warningOnce(String key, String message) {
+		if (loggedWarnings.add(key)) {
+			edu.cnu.mdi.log.Log.getInstance().warning(message);
+		}
 	}
 
 	// draw a value getter

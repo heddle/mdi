@@ -37,10 +37,15 @@ public class Plane {
 	 * @param anorm the plane normal vector
 	 * @param p0    a point on the plane
 	 * @throws NullPointerException     if either argument is {@code null}
-	 * @throws IllegalArgumentException if the normal vector is zero or too close to
-	 *                                  zero to normalize
+	 * @throws IllegalArgumentException if either argument contains non-finite values,
+	 *                                  or the normal is too close to zero to normalize
 	 */
 	public Plane(Vector anorm, Point p0) {
+		if (!Double.isFinite(anorm.x) || !Double.isFinite(anorm.y)
+				|| !Double.isFinite(anorm.z) || !Double.isFinite(p0.x)
+				|| !Double.isFinite(p0.y) || !Double.isFinite(p0.z)) {
+			throw new IllegalArgumentException("Plane normal and point coordinates must be finite.");
+		}
 		Vector norm = anorm.unitVector();
 		if (norm == null) {
 			throw new IllegalArgumentException("A plane normal must be nonzero.");
@@ -59,11 +64,15 @@ public class Plane {
 	 * @param b the y coefficient
 	 * @param c the z coefficient
 	 * @param d the right-hand side coefficient
-	 * @throws IllegalArgumentException if {@code a}, {@code b}, and {@code c} are
-	 *                                  all zero or too close to zero to define a
-	 *                                  plane
+	 * @throws IllegalArgumentException if a coefficient is non-finite, or if
+	 *                                  {@code a}, {@code b}, and {@code c} are all
+	 *                                  too close to zero to define a plane
 	 */
 	public Plane(double a, double b, double c, double d) {
+		if (!Double.isFinite(a) || !Double.isFinite(b) || !Double.isFinite(c)
+				|| !Double.isFinite(d)) {
+			throw new IllegalArgumentException("Plane coefficients must be finite.");
+		}
 		if (GeoUtil.tiny(a) && GeoUtil.tiny(b) && GeoUtil.tiny(c)) {
 			throw new IllegalArgumentException("At least one plane normal coefficient must be nonzero.");
 		}

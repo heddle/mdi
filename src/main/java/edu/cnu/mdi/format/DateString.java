@@ -1,46 +1,39 @@
 package edu.cnu.mdi.format;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
-public class DateString {
+/** Thread-safe date and time formatting helpers. */
+public final class DateString {
+
+	private DateString() {
+		throw new AssertionError("No DateString instances");
+	}
 
 	/**
 	 * A formatter to get the time in down to minutes.
 	 */
-	private static SimpleDateFormat formattermm;
+	private static final DateTimeFormatter FORMATTER_MM =
+			DateTimeFormatter.ofPattern("EEE MMM d  h:mm a");
 
 	/**
 	 * A formatter to get the time in down to seconds.
 	 */
-	private static SimpleDateFormat formatterss;
+	private static final DateTimeFormatter FORMATTER_SS =
+			DateTimeFormatter.ofPattern("EEE MMM d  h:mm:ss a");
 
 	/**
 	 * A formatter to get the time in down to seconds (no day info).
 	 */
-	private static SimpleDateFormat formattershort;
+	private static final DateTimeFormatter FORMATTER_SHORT =
+			DateTimeFormatter.ofPattern("h:mm:ss");
 
 	/**
 	 * A formatter to get the time in down to seconds (no day info).
 	 */
-	private static SimpleDateFormat formatterlong;
-
-	static {
-		TimeZone tz = TimeZone.getDefault();
-		formattermm = new SimpleDateFormat("EEE MMM d  h:mm a");
-		formattermm.setTimeZone(tz);
-
-		formatterss = new SimpleDateFormat("EEE MMM d  h:mm:ss a");
-		formatterss.setTimeZone(tz);
-
-		formattershort = new SimpleDateFormat("h:mm:ss");
-		formattershort.setTimeZone(tz);
-
-		formatterlong = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-		formatterlong.setTimeZone(tz);
-
-	}
+	private static final DateTimeFormatter FORMATTER_LONG =
+			DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
 
 	/**
 	 * Returns the current time.
@@ -67,7 +60,7 @@ public class DateString {
 	 * @return a string representation of the current time, down to minutes.
 	 */
 	public static String dateStringMM(long longtime) {
-		return formattermm.format(new Date(longtime));
+		return format(FORMATTER_MM, longtime);
 	}
 
 	/**
@@ -76,7 +69,7 @@ public class DateString {
 	 * @return a string representation of the current time, down to seconds.
 	 */
 	public static String dateStringLong() {
-		return formatterlong.format(new Date(System.currentTimeMillis()));
+		return format(FORMATTER_LONG, System.currentTimeMillis());
 	}
 
 	/**
@@ -86,7 +79,7 @@ public class DateString {
 	 * @return a string representation of the current time, down to seconds.
 	 */
 	public static String dateStringSS(long longtime) {
-		return formatterss.format(new Date(longtime));
+		return format(FORMATTER_SS, longtime);
 	}
 
 	/**
@@ -95,7 +88,7 @@ public class DateString {
 	 * @return a string representation of the current time, down to seconds.
 	 */
 	public static String dateStringSS() {
-		return dateStringShort(System.currentTimeMillis());
+		return dateStringSS(System.currentTimeMillis());
 	}
 
 	/**
@@ -106,7 +99,7 @@ public class DateString {
 	 *         without day information.
 	 */
 	public static String dateStringShort(long ltime) {
-		return formattershort.format(new Date(ltime));
+		return format(FORMATTER_SHORT, ltime);
 	}
 
 	/**
@@ -117,6 +110,10 @@ public class DateString {
 	 */
 	public static String dateStringShort() {
 		return dateStringShort(System.currentTimeMillis());
+	}
+
+	private static String format(DateTimeFormatter formatter, long epochMillis) {
+		return formatter.withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(epochMillis));
 	}
 
 }

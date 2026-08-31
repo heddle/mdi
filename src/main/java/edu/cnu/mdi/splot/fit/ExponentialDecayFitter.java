@@ -12,7 +12,6 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Pair;
 
-import edu.cnu.mdi.splot.pdata.FitVectors;
 
 /**
  * Nonlinear least-squares fitter for exponential decay with a constant offset:
@@ -316,29 +315,4 @@ public final class ExponentialDecayFitter extends ALeastSquaresFitter {
 		}
 	}
 
-	// -----------------------------------------------------------------------
-	// Stand-alone test
-	// -----------------------------------------------------------------------
-
-	/**
-	 * Quick smoke test: fits synthetic decay data and prints the result.
-	 *
-	 * @param args ignored
-	 */
-	public static void main(String[] args) {
-		final double A   = 5.0;
-		final double tau = 2.0;
-		final double C   = 0.8;
-		final int    n   = 60;
-
-		FitVectors data = FitVectors.testData(
-				x -> A * Math.exp(-x / tau) + C,
-				0.0, 10.0, n, 3.0, 5.0);
-
-		ExponentialDecayFitter fitter = new ExponentialDecayFitter();
-		FitResult result = fitter.fit(data.x, data.y, data.w);
-
-		System.out.println("True: A=" + A + "  τ=" + tau + "  C=" + C);
-		System.out.println(result);
-	}
 }

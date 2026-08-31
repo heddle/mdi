@@ -24,6 +24,8 @@ public interface IImageEvolutionResettable {
     *
     * @param numTriangles   number of triangles per chromosome (must be &gt; 0)
     * @param populationSize number of individuals in the population (must be &gt; 0)
+	* @param fitnessMode fitness metric for the new run
     */
-   void requestReset(int numTriangles, int populationSize);
+   void requestReset(int numTriangles, int populationSize,
+		   ImageFitnessMode fitnessMode);
 }

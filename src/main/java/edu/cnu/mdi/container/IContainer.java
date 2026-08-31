@@ -366,9 +366,18 @@ public interface IContainer {
 	public void setBeforeDraw(IDrawable beforeDraw);
 
 	/**
-	 * Get the current world system
+	 * Get the current world system.
+	 * <p>
+	 * <strong>Note:</strong> implementations may return the live, mutable
+	 * rectangle backing the container's viewport, not a defensive copy (unlike
+	 * {@link #setWorldSystem} and {@code resetWorldSystem}, which both copy).
+	 * Mutating the returned rectangle directly can silently change the
+	 * container's viewport without going through {@code setDirty}/{@code
+	 * refresh}. Callers that need to keep a stable snapshot should copy it
+	 * themselves.
+	 * </p>
 	 *
-	 * @return the world system
+	 * @return the world system; may be the container's live instance
 	 */
 	public Rectangle2D.Double getWorldSystem();
 

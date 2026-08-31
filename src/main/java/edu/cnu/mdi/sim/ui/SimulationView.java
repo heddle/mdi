@@ -385,40 +385,59 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	// Overridable hooks (all called on EDT)
 	// ------------------------------------------------------------------------
 
+	/**
+	 * Called on the EDT after any engine state transition.
+	 *
+	 * @param ctx simulation context
+	 * @param from previous state
+	 * @param to new state
+	 * @param reason human-readable transition reason
+	 */
 	protected void onSimulationStateChange(SimulationContext ctx, SimulationState from, SimulationState to,
 			String reason) {
 	}
 
+	/** Called on the EDT after simulation initialization begins. */
 	protected void onSimulationInit(SimulationContext ctx) {
 	}
 
+	/** Called on the EDT when the initialized simulation becomes ready. */
 	protected void onSimulationReady(SimulationContext ctx) {
 	}
 
+	/** Called on the EDT when the simulation first starts running. */
 	protected void onSimulationRun(SimulationContext ctx) {
 	}
 
+	/** Called on the EDT when a paused simulation resumes. */
 	protected void onSimulationResume(SimulationContext ctx) {
 	}
 
+	/** Called on the EDT when the simulation pauses. */
 	protected void onSimulationPause(SimulationContext ctx) {
 	}
 
+	/** Called on the EDT after normal termination. */
 	protected void onSimulationDone(SimulationContext ctx) {
 	}
 
+	/** Called on the EDT after simulation failure. */
 	protected void onSimulationFail(SimulationContext ctx, Throwable error) {
 	}
 
+	/** Called on the EDT after the first cancellation request. */
 	protected void onSimulationCancelRequested(SimulationContext ctx) {
 	}
 
+	/** Called on the EDT when the simulation posts a status message. */
 	protected void onSimulationMessage(SimulationContext ctx, String message) {
 	}
 
+	/** Called on the EDT when the simulation posts progress. */
 	protected void onSimulationProgress(SimulationContext ctx, ProgressInfo progress) {
 	}
 
+	/** Called on the EDT before the view repaints in response to a refresh. */
 	protected void onSimulationRefresh(SimulationContext ctx) {
 	}
 
@@ -426,6 +445,11 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	// Engine replacement / reset (unchanged)
 	// ------------------------------------------------------------------------
 
+	/**
+	 * Replace the hosted engine and rebind the control panel on the EDT.
+	 *
+	 * @param newEngine replacement engine
+	 */
 	protected final void replaceEngine(SimulationEngine newEngine) {
 		Objects.requireNonNull(newEngine, "newEngine");
 
@@ -454,6 +478,15 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 		}
 	}
 
+	/**
+	 * Replace the engine immediately when safe, or stop the current run and
+	 * replace it after termination.
+	 *
+	 * @param simSupplier creates the replacement simulation
+	 * @param afterSwap optional engine-configuration callback
+	 * @param autoStart whether to start the replacement engine
+	 * @param refresh whether to request an initial refresh
+	 */
 	protected final void requestEngineReset(java.util.function.Supplier<edu.cnu.mdi.sim.Simulation> simSupplier,
 			java.util.function.Consumer<edu.cnu.mdi.sim.SimulationEngine> afterSwap, boolean autoStart,
 			boolean refresh) {
@@ -467,7 +500,7 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 
 		SimulationState state = e.getState();
 
-		boolean safe = (state == SimulationState.NEW || state == SimulationState.READY
+		boolean safe = (state == SimulationState.NEW
 				|| state == SimulationState.TERMINATED || state == SimulationState.FAILED);
 
 		if (safe) {
@@ -522,6 +555,7 @@ public class SimulationView extends BaseView implements ISimulationHost, Simulat
 	// Convenience
 	// ------------------------------------------------------------------------
 
+	/** Start the engine and immediately request that it run, on the EDT. */
 	public final void startAndRun() {
 		if (SwingUtilities.isEventDispatchThread()) {
 			startSimulation();

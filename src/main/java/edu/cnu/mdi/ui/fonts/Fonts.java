@@ -138,6 +138,37 @@ public final class Fonts {
 	}
 
 	/**
+	 * Derive a font from the active LookAndFeel family at an absolute point size.
+	 *
+	 * @param style AWT font style bitmask
+	 * @param size  requested point size
+	 * @return the derived font, clamped to the minimum supported size
+	 */
+	public static Font commonFont(int style, int size) {
+		final Font base = (BASE_UI_FONT != null) ? BASE_UI_FONT : uiDefaultFont();
+		final int clampedSize = Math.max(MIN_FONT_SIZE, size);
+		String key = "UIABS$" + style + "$" + clampedSize;
+		return FONT_CACHE.computeIfAbsent(key, k -> base.deriveFont(style, clampedSize));
+	}
+
+	/**
+	 * Scale an existing font by a multiplicative factor.
+	 *
+	 * @param font        font to scale
+	 * @param scaleFactor positive scale factor
+	 * @return the scaled font
+	 */
+	public static Font scaleFont(Font font, float scaleFactor) {
+		if (font == null) {
+			throw new IllegalArgumentException("A font is required");
+		}
+		if (!(scaleFactor > 0.0f) || !Float.isFinite(scaleFactor)) {
+			throw new IllegalArgumentException("The font scale factor must be finite and positive");
+		}
+		return font.deriveFont(Math.max((float) MIN_FONT_SIZE, scaleFactor * font.getSize2D()));
+	}
+
+	/**
 	 * Resolve the current base UI font from UI defaults. Prefers FlatLaf's
 	 * {@code "defaultFont"}, falls back to {@code "Label.font"}, and finally to a
 	 * plain {@value #FALLBACK_FONT_SIZE}pt sans-serif font.

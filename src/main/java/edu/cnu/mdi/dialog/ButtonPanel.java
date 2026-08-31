@@ -192,7 +192,9 @@ public class ButtonPanel extends JPanel {
 	 */
 
 	public void setEnabled(int index, boolean state) {
-
+		if (buttons == null) {
+			return;
+		}
 		if (index < 0) {
 			for (JButton button : buttons) {
 				if (button != null) {
@@ -214,7 +216,7 @@ public class ButtonPanel extends JPanel {
 	 */
 
 	public void setToolTip(int index, String tip) {
-		if (buttons[index] != null) {
+		if (buttons != null && index >= 0 && index < buttons.length && buttons[index] != null) {
 			buttons[index].setToolTipText(tip);
 		}
 	}
@@ -226,8 +228,7 @@ public class ButtonPanel extends JPanel {
 	}
 
 	/**
-	 * Makes a button panel with combinations of OK, Save, Save As, Cancel, Apply,
-	 * and Delete
+	 * Makes a button panel with combinations of OK, Cancel, Apply, and Delete.
 	 *
 	 * @param opt            Bitwise combination of USE_OK, USE_CANCEL, USE_APPLY,
 	 *                       USE_DELETE

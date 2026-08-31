@@ -2,16 +2,21 @@ package edu.cnu.mdi.transfer;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
-public class ImageFilters {
+/** Common predicates for filtering dropped image files. */
+public final class ImageFilters {
+	private ImageFilters() {
+		throw new AssertionError("No ImageFilters instances");
+	}
     // Get all supported extensions (e.g., jpg, png, gif) and store them in a Set for O(1) lookup
     private static final Set<String> SUPPORTED_EXTENSIONS = Arrays.stream(ImageIO.getReaderFileSuffixes())
-            .map(String::toLowerCase)
+			.map(suffix -> suffix.toLowerCase(Locale.ROOT))
             .collect(Collectors.toSet());
 
     /** Predicate to test if a File is a readable image file based on its extension. */
@@ -26,7 +31,7 @@ public class ImageFilters {
 			return false;
 		}
 
-        String ext = name.substring(lastDot + 1).toLowerCase();
+		String ext = name.substring(lastDot + 1).toLowerCase(Locale.ROOT);
         return SUPPORTED_EXTENSIONS.contains(ext);
     };
 

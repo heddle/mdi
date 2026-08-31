@@ -35,6 +35,15 @@ public final class CurveSpec {
     /** The histogram specification for this curve, if it represents a histogram. For XY(E) curves, this may be null. For H1D curves, this may contain information about the binning and other histogram properties. */
     public HistoSpec histo;
 
-    /** The 2D histogram specification for this curve, if it represents a 2D histogram. For XY(E) and H1D curves, this may be null. For H2D curves, this may contain information about the binning and other properties of the 2D histogram. */
+    /**
+     * Legacy location for a 2D histogram specification.
+     * <p>
+     * Current saves always place H2D data on {@link PlotSpec#histo2d}
+     * instead; {@link PlotIO} only reads this field as a backward-compatible
+     * fallback when loading an older file that stored the heatmap here
+     * (on {@code curves[0]}) rather than at the top level. New code should
+     * not populate this field.
+     * </p>
+     */
     public Histo2DSpec histo2d;
 }

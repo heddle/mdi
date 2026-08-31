@@ -14,7 +14,6 @@ import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.special.Erf;
 import org.apache.commons.math3.util.Pair;
 
-import edu.cnu.mdi.splot.pdata.FitVectors;
 
 /**
  * Nonlinear least-squares fitter for scaled/shifted erf:
@@ -334,45 +333,6 @@ public final class ErfFitter extends ALeastSquaresFitter {
 	@Override
 	public IFitStringGetter getStringGetter() {
 		return this;
-	}
-
-	// ------------------ test methods -----------------------
-
-	// Test the Erf fitter
-	private static void testErf() {
-		double A = 2.0;
-		double x0 = 1.0;
-		double sigma = 0.5;
-		double B = 0.1;
-		int n = 100;
-
-		Evaluator erfEval = (double x) -> {
-			double z = (x - x0) / sigma;
-			return A * Erf.erf(z) + B;
-		};
-
-		FitVectors testData = FitVectors.testData(erfEval, -4.0, 4.0, n, 3.0, 3.0);
-		ErfFitter fitter = new ErfFitter();
-		FitResult result = fitter.fit(testData.x, testData.y, testData.w);
-		System.out.println("\n===== Erf Fit Test  =====");
-		System.out.println("True parameters: ");
-		System.out.print(" A = " + A);
-		System.out.print(" x0 = " + x0);
-		System.out.print(" sigma = " + sigma);
-		System.out.println(" B = " + B);
-		System.out.println(result);
-
-		// print data and fit values
-		for (int i = 0; i < (n - 1); i += 10) {
-			double xv = testData.x[i];
-			double yv = result.evaluator.value(xv);
-			System.out.printf("x=%.3f fit y=%.3f data y=%.3f%n", xv, yv, testData.y[i]);
-		}
-	}
-
-	// ------------------ test main -----------------------
-	public static void main(String[] args) {
-		testErf();
 	}
 
 }

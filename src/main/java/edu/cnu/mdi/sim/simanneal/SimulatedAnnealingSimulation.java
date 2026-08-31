@@ -2,13 +2,16 @@ package edu.cnu.mdi.sim.simanneal;
 
 import java.util.Objects;
 import java.util.Random;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.swing.event.EventListenerList;
+import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.Simulation;
 import edu.cnu.mdi.sim.SimulationContext;
-import edu.cnu.mdi.sim.SimulationEngine;
 
 /**
  * A {@link Simulation} implementation that performs Simulated Annealing (SA) to minimize
@@ -20,8 +23,8 @@ import edu.cnu.mdi.sim.SimulationEngine;
  * <ul>
  *   <li>The algorithm itself is UI-agnostic and runs under {@link edu.cnu.mdi.sim.SimulationEngine}.</li>
  *   <li>{@link SimulationContext} is intentionally minimal (cancellation + timing + step count).</li>
- *   <li>Optional UI feedback (messages, progress, refresh requests) is posted via an injected
- *       {@link SimulationEngine} using {@link #setEngine(SimulationEngine)}.</li>
+ *   <li>Optional UI feedback is posted through an injected
+ *       {@link AnnealingFeedback} channel.</li>
  * </ul>
  *
  * <h2>Core algorithm</h2>
@@ -38,7 +41,7 @@ import edu.cnu.mdi.sim.SimulationEngine;
  *
  * <p>
  * The temperature {@code T} decreases over time according to a schedule; this implementation
- * uses a geometric decay based on the configured {@code alpha} and {@code stepsPerTemperature}.
+ * delegates cooling to the configured {@link AnnealingSchedule}.
  * An initial temperature {@code T0} is estimated by a {@link TemperatureHeuristic}.
  * </p>
  *
@@ -50,18 +53,27 @@ import edu.cnu.mdi.sim.SimulationEngine;
  * EDT marshalling and listener notification.
  * </p>
  *
- * <h2>Move undo requirement</h2>
+ * <h2>Move models</h2>
  * <p>
- * Rejected moves are reverted by calling {@link AnnealingMove#undo(AnnealingSolution)}.
- * Therefore, moves should support undo for correctness. If your problem's move type does not
- * support undo, redesign the move API (e.g., "copy neighbor") or maintain a pre-move copy.
+ * A problem explicitly returns either a {@link ReversibleAnnealingMove}, which
+ * mutates in place and is undone on rejection, or a
+ * {@link CandidateAnnealingMove}, which leaves the current solution unchanged
+ * and returns a separate proposal.
  * </p>
  *
  * @param <S> concrete solution type for the annealing problem
  */
-public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> implements Simulation {
+public final class SimulatedAnnealingSimulation<S extends AnnealingSolution<S>> implements Simulation {
 
-	private EventListenerList _listenerList;
+	private final CopyOnWriteArrayList<IAcceptedMoveListener> acceptedMoveListeners =
+			new CopyOnWriteArrayList<>();
+	private final ConcurrentLinkedQueue<MoveNotification> notifications =
+			new ConcurrentLinkedQueue<>();
+	private final AtomicInteger queuedNotificationCount = new AtomicInteger();
+	private final AtomicBoolean notificationPending = new AtomicBoolean();
+	private long acceptedNotificationCount;
+	private volatile SimulatedAnnealingState stateSnapshot =
+			new SimulatedAnnealingState(0, 0, 0, 0, 0, 0);
 
 	/** The annealing problem (solution generator, energy function, and move generator). */
 	private final AnnealingProblem<S> problem;
@@ -69,8 +81,8 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	/** Configuration parameters controlling step limits, cooling rate, and UI throttling. */
 	private final SimulatedAnnealingConfig cfg;
 	
-	// Better — self-documenting, compiler-checked
 	private enum NotifyType { ACCEPTED_MOVE, NEW_BEST }
+	private record MoveNotification(double temperature, double energy, NotifyType type) {}
 
 	/**
 	 * High-level stopping/temperature schedule policy.
@@ -94,7 +106,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	private S current;
 
 	/** Best solution found so far (a copy of a previous accepted solution). */
-	private S best;
+	private volatile S best;
 
 	/** Energy of the current solution. Lower is better. */
 	private double currentE;
@@ -115,13 +127,12 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	private double T0;
 
 	/**
-	 * Optional engine reference used to post messages/progress/refresh.
+	 * Optional output channel used to post messages, progress, and refresh hints.
 	 * <p>
-	 * Marked {@code transient} because simulations may be serialized as part of view state;
-	 * the engine is runtime infrastructure and must be re-injected after deserialization.
+	 * The default channel discards output, keeping headless use free of UI setup.
 	 * </p>
 	 */
-	private transient SimulationEngine engine;
+	private volatile AnnealingFeedback feedback = AnnealingFeedback.none();
 
 	/**
 	 * Construct a simulated annealing simulation with explicit configuration and policies.
@@ -144,10 +155,10 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	}
 
 	/**
-	 * Inject the owning {@link SimulationEngine} so this simulation can emit UI signals.
+	 * Set the optional output channel used by this simulation.
 	 * <p>
 	 * The MDI {@link SimulationContext} is intentionally minimal and does not provide
-	 * message/progress/refresh APIs. In MDI, those notifications are posted via the engine.
+	 * message, progress, or refresh APIs; the feedback channel supplies them.
 	 * </p>
 	 * <p>
 	 * Typical usage from the hosting view:
@@ -156,34 +167,27 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	 * <pre>{@code
 	 * SimulatedAnnealingSimulation<?> sim =
 	 *     (SimulatedAnnealingSimulation<?>) getSimulationEngine().getSimulation();
-	 * sim.setEngine(getSimulationEngine());
+	 * sim.setFeedback(AnnealingFeedback.forEngine(getSimulationEngine()));
 	 * }</pre>
 	 *
-	 * @param engine the engine hosting this simulation (may be null to disable UI posting)
+	 * @param feedback output channel, or {@code null} to discard output
 	 */
-	public void setEngine(SimulationEngine engine) {
-		this.engine = engine;
+	public void setFeedback(AnnealingFeedback feedback) {
+		this.feedback = feedback == null ? AnnealingFeedback.none() : feedback;
 	}
 
 	/**
 	 * Get a snapshot of the current annealing state.
 	 * <p>
 	 * The returned value is suitable for display or logging. The temperature reported here
-	 * is derived from {@link AnnealingSchedule#temperature(long, SimulatedAnnealingConfig)}.
-	 * Note that the actual temperature used internally for acceptance decisions comes from
-	 * {@link #temperatureAt(long)} which incorporates the estimated {@code T0}.
+	 * is the same absolute temperature used for acceptance decisions: the
+	 * schedule's relative value multiplied by the estimated {@code T0}.
 	 * </p>
 	 *
 	 * @return a state snapshot
 	 */
 	public SimulatedAnnealingState getState() {
-		return new SimulatedAnnealingState(
-				step,
-				schedule.temperature(step, cfg),
-				currentE,
-				bestE,
-				accepted,
-				uphillAccepted);
+		return stateSnapshot;
 	}
 
 	/**
@@ -192,7 +196,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	 * @return a copy of the best solution, or {@code null} if initialization has not occurred
 	 */
 	public S getBestSolutionCopy() {
-		return (best == null) ? null : best.copy();
+		return (best == null) ? null : copySolution(best);
 	}
 
 	/**
@@ -205,7 +209,7 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	 *   <li>Estimates the initial temperature {@code T0} using {@link TemperatureHeuristic}.</li>
 	 *   <li>Generates a starting solution using {@link AnnealingProblem#randomSolution(Random)}.</li>
 	 *   <li>Computes initial energy and resets counters.</li>
-	 *   <li>Optionally posts a message/progress/refresh via the injected engine.</li>
+	 *   <li>Posts initialization output through the configured feedback channel.</li>
 	 * </ol>
 	 *
 	 * @param ctx simulation context (cancellation/timing bookkeeping)
@@ -217,30 +221,40 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 
 		// Estimate initial temperature from problem-specific heuristic
 		InitialTemperature it = tempHeuristic.estimate(problem, rng);
+		if (it == null || !Double.isFinite(it.T0()) || it.T0() <= 0.0) {
+			throw new IllegalStateException(
+					"Temperature heuristic must return a finite T0 > 0");
+		}
 		T0 = it.T0();
 
-		if (engine != null) {
-			engine.postMessage(
+		feedback.message(
 				"Initial temperature estimated: T0=" + fmt(T0) +
 				" (medianE=" + fmt(it.energyMedian()) +
 				", MAD=" + fmt(it.energyMad()) +
 				", n=" + it.samples() + ")"
 			);
-			engine.postProgress(ProgressInfo.indeterminate("Ready"));
-			engine.requestRefresh();
-		}
+		feedback.progress(ProgressInfo.indeterminate("Ready"));
+		feedback.refresh();
 
 		// Initialize current/best solution
 		current = problem.randomSolution(rng);
-		best = current.copy();
+		if (current == null) {
+			throw new IllegalStateException("Problem returned a null initial solution");
+		}
+		best = copySolution(current);
 
 		currentE = problem.energy(current);
+		requireFiniteEnergy(currentE);
 		bestE = currentE;
 
 		// Reset counters
 		step = 0;
 		accepted = 0;
 		uphillAccepted = 0;
+		acceptedNotificationCount = 0;
+		notifications.clear();
+		queuedNotificationCount.set(0);
+		publishStateSnapshot();
 	}
 
 	/**
@@ -263,17 +277,15 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	 *
 	 * @param ctx simulation context (cancellation/timing bookkeeping)
 	 * @return {@code true} to continue running, {@code false} to stop
-	 * @throws RuntimeException if a move is rejected and {@link AnnealingMove#undo(AnnealingSolution)}
-	 *                          is not supported (caller should ensure moves support undo)
+	 * @throws IllegalStateException if the problem returns an unsupported move
+	 *                               implementation or a non-finite energy
 	 */
 	@Override
 	public boolean step(SimulationContext ctx) {
 
 		// Cancellation check (external request via engine)
 		if (ctx.isCancelRequested()) {
-			if (engine != null) {
-				engine.postMessage("Cancel requested.");
-			}
+			feedback.message("Cancel requested.");
 			return false;
 		}
 
@@ -284,17 +296,22 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 
 		// Temperature floor check
 		double T = temperatureAt(step);
+		if (!Double.isFinite(T) || T < 0.0) {
+			throw new IllegalStateException(
+					"Annealing schedule produced an invalid temperature: " + T);
+		}
 		if (T <= cfg.minTemperature()) {
-			if (engine != null) {
-				engine.postMessage("Temperature reached minimum; stopping.");
-			}
+			feedback.message("Temperature reached minimum; stopping.");
 			return false;
 		}
 
 		// Propose a move from current state
-		AnnealingMove<S> move = problem.randomMove(rng, current);
+		AnnealingMove<S> move = Objects.requireNonNull(
+				problem.randomMove(rng, current), "problem random move");
 
 		double dE;
+		S candidate = current;
+		ReversibleAnnealingMove<S> reversible = null;
 
 		if (move instanceof DeltaEnergyMove<?> dem) {
 		    @SuppressWarnings("unchecked")
@@ -302,18 +319,38 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 
 		    dm.prepare(current);          // <-- critical
 		    dE = dm.deltaE(current);      // uses prepared parameters
-		    move.apply(current);          // applies the SAME prepared move
-		} else {
+		    dm.apply(current);             // applies the SAME prepared move
+		    reversible = dm;
+		} else if (move instanceof ReversibleAnnealingMove<?> rm) {
+			@SuppressWarnings("unchecked")
+			ReversibleAnnealingMove<S> typed = (ReversibleAnnealingMove<S>) rm;
 		    double before = currentE;
-		    move.apply(current);
+		    typed.apply(current);
 		    double after = problem.energy(current);
+		    requireFiniteEnergy(after);
 		    dE = after - before;
+			reversible = typed;
+		} else if (move instanceof CandidateAnnealingMove<?> cm) {
+			@SuppressWarnings("unchecked")
+			CandidateAnnealingMove<S> typed = (CandidateAnnealingMove<S>) cm;
+			candidate = Objects.requireNonNull(typed.candidate(current),
+					"candidate move returned null");
+			double after = problem.energy(candidate);
+			requireFiniteEnergy(after);
+			dE = after - currentE;
+		} else {
+			throw new IllegalStateException("Unsupported annealing move type: "
+					+ move.getClass().getName());
+		}
+		if (!Double.isFinite(dE)) {
+			throw new IllegalStateException("Move energy difference must be finite");
 		}
 
 		// Metropolis acceptance criterion
 		boolean accept = (dE <= 0) || (rng.nextDouble() < Math.exp(-dE / T));
 
 		if (accept) {
+			current = candidate;
 			currentE += dE;
 			accepted++;
 
@@ -325,12 +362,13 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 			// Track best-so-far
 			if (currentE < bestE) {
 				bestE = currentE;
-				best = current.copy();
+				best = copySolution(current);
 				notifyListeners(T, bestE, NotifyType.NEW_BEST); // new best
 			}
 		} else {
-			// Revert rejected move (moves must support undo for correctness)
-			move.undo(current);
+			if (reversible != null) {
+				reversible.undo(current);
+			}
 		}
 
 		step++;
@@ -340,16 +378,20 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
         // rounding error over millions of steps. Re-synchronizing against a full
         // energy recomputation keeps the error bounded without measurable overhead
         // since problem.energy() is called at most once every 10,000 steps.
-       if (step % 10_000 == 0) {
-            currentE = problem.energy(current);
-        }
+	       if (step % 10_000 == 0) {
+	            currentE = problem.energy(current);
+			requireFiniteEnergy(currentE);
+			if (currentE < bestE) {
+				bestE = currentE;
+				best = copySolution(current);
+				notifyListeners(T, bestE, NotifyType.NEW_BEST);
+			}
+	        }
 
 		// Optional UI signals (throttled)
-		if (engine != null) {
-
-			if (cfg.progressEverySteps() > 0 && (step % cfg.progressEverySteps() == 0)) {
+		if (cfg.progressEverySteps() > 0 && (step % cfg.progressEverySteps() == 0)) {
 				double frac = Math.min(1.0, (double) step / (double) cfg.maxSteps());
-				engine.postProgress(
+				feedback.progress(
 					ProgressInfo.determinate(frac,
 						"T=" + fmt(T) +
 						"  E=" + fmt(currentE) +
@@ -358,11 +400,11 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 				);
 			}
 
-			if (cfg.refreshEverySteps() > 0 && (step % cfg.refreshEverySteps() == 0)) {
-				engine.requestRefresh();
-			}
+		if (cfg.refreshEverySteps() > 0 && (step % cfg.refreshEverySteps() == 0)) {
+			feedback.refresh();
 		}
 
+		publishStateSnapshot();
 		return true;
 	}
 
@@ -376,25 +418,35 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 	/**
 	 * Compute the temperature used for acceptance decisions at a given step.
 	 * <p>
-	 * This implementation uses a geometric cooling schedule:
+	 * The injected schedule supplies a relative temperature factor:
 	 * </p>
 	 *
 	 * <pre>
-	 *   T(step) = T0 * alpha^k
-	 *   k = step / stepsPerTemperature
+	 *   T(step) = T0 * schedule.temperature(step, config)
 	 * </pre>
 	 *
 	 * <p>
-	 * If {@link SimulatedAnnealingConfig#stepsPerTemperature()} is non-positive, this
-	 * method uses {@code k = step}.
-	 * </p>
-	 *
 	 * @param step step index (0-based)
 	 * @return temperature for this step
 	 */
 	private double temperatureAt(long step) {
-		long k = (cfg.stepsPerTemperature() <= 0) ? step : (step / cfg.stepsPerTemperature());
-		return T0 * Math.pow(cfg.alpha(), k);
+		return T0 * schedule.temperature(step, cfg);
+	}
+
+	private static void requireFiniteEnergy(double energy) {
+		if (!Double.isFinite(energy)) {
+			throw new IllegalStateException("Problem energy must be finite: " + energy);
+		}
+	}
+
+	private S copySolution(S solution) {
+		return Objects.requireNonNull(solution.copy(),
+				"Solution copy must not be null");
+	}
+
+	private void publishStateSnapshot() {
+		stateSnapshot = new SimulatedAnnealingState(step, temperatureAt(step),
+				currentE, bestE, accepted, uphillAccepted);
 	}
 
 	/**
@@ -409,61 +461,80 @@ public final class SimulatedAnnealingSimulation<S extends AnnealingSolution> imp
 
 	// notify listeners of message
 	private void notifyListeners(double temperature, double energy, NotifyType option) {
-
-		if (_listenerList == null) {
+		if (acceptedMoveListeners.isEmpty()) {
 			return;
 		}
-
-		// Guaranteed to return a non-null array
-		Object[] listeners = _listenerList.getListenerList();
-
-		// This weird loop is the bullet proof way of notifying all listeners.
-		// for (int i = listeners.length - 2; i >= 0; i -= 2) {
-		// order is flipped so it goes in order as added
-		for (int i = 0; i < listeners.length; i += 2) {
-			if (listeners[i] == IAcceptedMoveListener.class) {
-
-				IAcceptedMoveListener listener = (IAcceptedMoveListener) listeners[i + 1];
-
-				if (option == NotifyType.NEW_BEST) {
-					listener.newBest(temperature, energy);
-				} else if (option == NotifyType.ACCEPTED_MOVE) {
-					listener.acceptedMove(temperature, energy);
-				}
-
+		if (option == NotifyType.ACCEPTED_MOVE) {
+			acceptedNotificationCount++;
+			long stride = cfg.notificationPolicy().acceptedMoveStride();
+			if (acceptedNotificationCount % stride != 0) {
+				return;
 			}
+		}
+		if (queuedNotificationCount.incrementAndGet()
+				> cfg.notificationPolicy().maximumQueued()) {
+			queuedNotificationCount.decrementAndGet();
+			return;
+		}
+		notifications.add(new MoveNotification(temperature, energy, option));
+		queueNotificationDrain();
+	}
+
+	private void queueNotificationDrain() {
+		if (notificationPending.compareAndSet(false, true)) {
+			SwingUtilities.invokeLater(this::drainNotifications);
+		}
+	}
+
+	private void drainNotifications() {
+		notificationPending.set(false);
+		int delivered = 0;
+		MoveNotification notification;
+		while (delivered < cfg.notificationPolicy().maximumPerDrain()
+				&& (notification = notifications.poll()) != null) {
+			queuedNotificationCount.decrementAndGet();
+			for (IAcceptedMoveListener listener : acceptedMoveListeners) {
+				try {
+					if (notification.type() == NotifyType.ACCEPTED_MOVE) {
+						listener.acceptedMove(notification.temperature(), notification.energy());
+					} else {
+						listener.newBest(notification.temperature(), notification.energy());
+					}
+				} catch (Throwable failure) {
+					edu.cnu.mdi.log.Log.getInstance().exception(failure);
+				}
+			}
+			delivered++;
+		}
+		if (!notifications.isEmpty()) {
+			queueNotificationDrain();
 		}
 	}
 
 	/**
 	 * Add an AcceptedMoveListener.
+	 * Duplicate registrations are ignored. This method is safe to call while the
+	 * simulation and EDT notification drain are active.
 	 *
 	 * @param listener the AcceptedMoveListener to add.
 	 */
 	public void addAcceptedMoveListener(IAcceptedMoveListener listener) {
-
-		if (_listenerList == null) {
-			_listenerList = new EventListenerList();
+		if (listener != null) {
+			acceptedMoveListeners.addIfAbsent(listener);
 		}
-
-		// avoid adding duplicates
-		_listenerList.remove(IAcceptedMoveListener.class, listener);
-		_listenerList.add(IAcceptedMoveListener.class, listener);
 	}
 
 	/**
 	 * Remove an AcceptedMoveListener.
+	 * This method is safe to call from any thread and has no effect when the
+	 * listener is not registered.
 	 *
 	 * @param listener the AcceptedMoveListener to remove.
 	 */
 
 	public void removeAcceptedMoveListener(IAcceptedMoveListener listener) {
 
-		if ((listener == null) || (_listenerList == null)) {
-			return;
-		}
-
-		_listenerList.remove(IAcceptedMoveListener.class, listener);
+		acceptedMoveListeners.remove(listener);
 	}
 
 }

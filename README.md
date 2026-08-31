@@ -80,6 +80,54 @@ Ideal for:
 - Network simulations  
 - Educational tools  
 
+#### One-shot background tasks
+
+Calculations that produce one result do not need to be expressed as an
+artificial one-step simulation. Create a typed `TaskHandle`, register listeners
+while it is still unstarted, and then start it:
+
+```java
+TaskHandle<Result> handle = BackgroundTasks.create(context -> {
+    context.reportIndeterminateProgress("Building matrix…");
+    Matrix matrix = buildMatrix();
+
+    context.throwIfCancellationRequested();
+    context.reportProgress(0.5, "Solving…");
+    return solve(matrix);
+});
+
+handle.addListener(new TaskListener<>() {
+    @Override
+    public void onSucceeded(TaskHandle<Result> source, Result result) {
+        // Runs on the Swing EDT; it is safe to update a view here.
+        showResult(result);
+    }
+
+    @Override
+    public void onFailed(TaskHandle<Result> source, Throwable error) {
+        showFailure(error);
+    }
+});
+
+handle.start();
+```
+
+The task body runs on MDI's daemon simulation thread. Progress, messages, and
+listener callbacks use the simulation engine's EDT-safe, coalesced delivery.
+Cancellation is cooperative: call `handle.cancel()` from the UI and check
+`context.isCancellationRequested()` or
+`context.throwIfCancellationRequested()` inside lengthy loops.
+
+For a standard UI, embed `new TaskControlPanel<>(handle)`. It supplies Start
+and Cancel buttons, progress and status displays, and elapsed time. For concise
+fire-and-observe work, `BackgroundTasks.submit(task)` creates and starts a
+handle immediately; use `create` when listeners must see every lifecycle event.
+
+Existing step-oriented simulations can use the additive
+`SimulationListener.onCompleted(...)` callback when they need one terminal hook
+covering success, explicit stop, cancellation, and failure. Existing
+`onDone`, `onFail`, and `onCancelRequested` behavior is unchanged.
+
 ---
 
 ### Layered Drawing System
@@ -194,4 +242,3 @@ mvn exec:java -Dexec.mainClass="edu.cnu.mdi.app.DemoApp"
 ```
 Here is one of the views running inside the DemoApp:
 <img src="docs/images/tsp.png" width="900">
-

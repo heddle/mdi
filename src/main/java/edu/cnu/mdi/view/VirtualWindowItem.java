@@ -14,7 +14,19 @@ import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 import edu.cnu.mdi.item.ItemModification.ModificationType;
 import edu.cnu.mdi.item.RectangleItem;
 
-//getAnnotationLayer()
+/**
+ * A rectangle item, drawn on a {@link VirtualView}'s annotation layer, that
+ * represents one {@link BaseView}'s thumbnail location within the virtual
+ * desktop.
+ *
+ * <p>The constructor links the two objects both ways:
+ * {@code baseView.setVirtualItem(this)} lets the real view drive this item's
+ * position, while this item's own drag handling ({@link #modify()}) is
+ * translation-only (not resizable or rotatable) and, on drag completion,
+ * moves the represented {@code BaseView} to match. Selection is a no-op;
+ * these items are not independently selectable/deselectable the way a normal
+ * drawn item is.</p>
+ */
 public class VirtualWindowItem extends RectangleItem {
 
 	// lives on the virtual view

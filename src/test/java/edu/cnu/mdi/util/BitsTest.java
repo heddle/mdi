@@ -48,4 +48,12 @@ class BitsTest {
         assertEquals(bits, Bits.mask(bits, 100));
         assertEquals(0L, Bits.unsetAll());
     }
+
+	@Test
+	void indexedOperationsRejectIndicesThatJavaWouldOtherwiseWrap() {
+		assertThrows(IllegalArgumentException.class, () -> Bits.setAt(0, -1));
+		assertThrows(IllegalArgumentException.class, () -> Bits.clearAt(0, 64));
+		assertThrows(IllegalArgumentException.class, () -> Bits.toggleAt(0, 65));
+		assertThrows(IllegalArgumentException.class, () -> Bits.checkAt(0, -2));
+	}
 }

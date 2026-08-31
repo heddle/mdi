@@ -92,39 +92,15 @@ public class MapPolygonItem extends AMapMultiPointItem {
     /**
      * Draws the closed spherical polygon.
      *
-     * <p>Fill (if any) is painted first using the projected boundary paths, then
-     * the outline is drawn as a closed polyline of great-circle arcs so that the
-     * closing edge is a genuine arc rather than a straight chord.</p>
+     * <p>Fill (if any) is painted first using a true projected polygon shape
+     * (correct interior semantics even across seam splits), then the outline
+     * is drawn as a closed polyline of great-circle arcs so that the closing
+     * edge is a genuine arc rather than a straight chord. A separate outline
+     * shape is cached in {@code _projectedShape} for bounds/edge hit-testing.</p>
      *
      * @param g2        the graphics context
      * @param container the rendering container; must be a {@link MapContainer}
      */
-    //@Override
-    public void XdrawItem(Graphics2D g2, IContainer container) {
-        if (!(container instanceof MapContainer mc)) return;
-
-        // Build a closed-polyline shape (no Path2D.closePath) for both
-        // caching and fill.  The shape is an open polyline of N+1 points
-        // where vertex[0] is duplicated at the end so the closing arc is
-        // sampled as a great-circle segment.
-        _projectedShape = buildShape(mc);
-        _lastDrawnPolygon = null;
-
-        // Fill the interior using the projected paths (even with seam splits
-        // the fill covers the correct screen region for Mercator/Mollweide;
-        // unfilled polygons skip this entirely).
-        java.awt.Color fillColor = getStyleSafe().getFillColor();
-        if (fillColor != null) {
-            g2.setColor(fillColor);
-            for (java.awt.geom.Path2D.Double path : _projectedShape.getPaths()) {
-                g2.fill(path);
-            }
-        }
-
-        // Draw the outline as a closed great-circle polyline.
-        MapGraphics.drawMapPolyline(g2, mc, closedVertices(), getStyleSafe());
-    }
-    
     @Override
     public void drawItem(Graphics2D g2, IContainer container) {
         if (!(container instanceof MapContainer mc)) return;

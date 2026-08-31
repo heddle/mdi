@@ -11,6 +11,15 @@ import java.util.Objects;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 
+/**
+ * A {@link RectangleItem} that displays a {@link BufferedImage} scaled to its
+ * bounds, with no fill or outline drawn for the rectangle itself.
+ *
+ * <p>All standard interactions are enabled by default (draggable, selectable,
+ * resizable, rotatable, deletable, right-clickable, unlocked). If no explicit
+ * bounds are given, the item is sized and positioned to the image's natural
+ * dimensions, centered in the container.</p>
+ */
 public class ImageItem extends RectangleItem {
 
 	private BufferedImage image;

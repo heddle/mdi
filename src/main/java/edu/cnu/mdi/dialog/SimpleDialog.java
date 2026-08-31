@@ -166,7 +166,7 @@ public class SimpleDialog extends JDialog implements ActionListener {
 	 */
 	protected Component createSouthComponent() {
 
-		if ((_closeout != null) || (_closeout.length < 1)) {
+		if ((_closeout != null) && (_closeout.length > 0)) {
 			buttonPanel = new JPanel();
 			buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
 			buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));

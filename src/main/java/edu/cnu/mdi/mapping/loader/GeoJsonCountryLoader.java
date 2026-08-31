@@ -297,8 +297,10 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
      * Parses a GeoJSON {@code Polygon} coordinate array (an array of linear
      * rings) and appends each ring to {@code out}.
      *
-     * <p>Each ring coordinate pair is converted from degrees to radians, and
-     * the longitude is wrapped to (-π, π] via {@link #MapUtils.wrapLongitude(double)}.</p>
+     * <p>Each valid ring coordinate pair is converted from degrees to radians,
+     * and longitude is wrapped to (-π, π] via
+     * {@link MapUtils#wrapLongitude(double)}. Malformed coordinates and
+     * degenerate rings with fewer than three valid points are skipped.</p>
      *
      * @param polygonNode JSON node for a single polygon (array of rings)
      * @param out         destination list; rings are appended in order
@@ -307,13 +309,20 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
         for (JsonNode ringNode : polygonNode) {
             List<Point2D.Double> ring = new ArrayList<>();
             for (JsonNode coordNode : ringNode) {
-                if (coordNode.isArray() && coordNode.size() >= 2) {
-                    double lon = MapUtils.lonDegreesToRadians(coordNode.get(0).asDouble());
-                    double lat = Math.toRadians(coordNode.get(1).asDouble());
-                    ring.add(new Point2D.Double(lon, lat));
-                }
+                if (!coordNode.isArray() || coordNode.size() < 2
+                        || !coordNode.get(0).isNumber()
+                        || !coordNode.get(1).isNumber()) continue;
+
+                double lonDegrees = coordNode.get(0).asDouble();
+                double latDegrees = coordNode.get(1).asDouble();
+                if (!Double.isFinite(lonDegrees) || !Double.isFinite(latDegrees)
+                        || latDegrees < -90.0 || latDegrees > 90.0) continue;
+
+                double lon = MapUtils.lonDegreesToRadians(lonDegrees);
+                double lat = Math.toRadians(latDegrees);
+                ring.add(new Point2D.Double(lon, lat));
             }
-            if (!ring.isEmpty()) {
+            if (ring.size() >= 3) {
                 out.add(ring);
             }
         }

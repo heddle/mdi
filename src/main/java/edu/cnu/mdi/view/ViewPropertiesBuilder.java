@@ -295,4 +295,18 @@ public class ViewPropertiesBuilder {
         copy.putAll(props);
         return copy;
     }
+
+    /**
+     * Build an immutable, explicitly typed view configuration.
+     *
+     * <p>This is the preferred terminal operation for new view classes. Pass
+     * the result directly to {@link BaseView#BaseView(ViewOptions)}. The
+     * existing {@link #build()} method remains available for APIs that require
+     * a {@link Properties} object.</p>
+     *
+     * @return immutable snapshot of the configured properties
+     */
+    public ViewOptions buildOptions() {
+        return ViewOptions.from(build());
+    }
 }

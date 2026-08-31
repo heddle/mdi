@@ -214,6 +214,21 @@ public class GeometryPackageTest {
 	}
 
 	@Test
+	public void testShapesRejectNonfiniteDefiningValues() {
+		assertThrows(IllegalArgumentException.class, () -> new Sphere(Double.NaN));
+		assertThrows(IllegalArgumentException.class,
+				() -> new Sphere(new Point(Double.POSITIVE_INFINITY, 0, 0), 1));
+		assertThrows(IllegalArgumentException.class,
+				() -> new Cylinder(new Line(new Point(), new Point(0, 0, 1)), Double.NaN));
+		assertThrows(IllegalArgumentException.class,
+				() -> new Line(new Point(), new Point(Double.POSITIVE_INFINITY, 0, 0)));
+		assertThrows(IllegalArgumentException.class,
+				() -> new Plane(Double.NaN, 0, 1, 0));
+		assertThrows(IllegalArgumentException.class,
+				() -> new Plane(new Vector(Double.POSITIVE_INFINITY, 0, 0), new Point()));
+	}
+
+	@Test
 	public void testGeoUtilTinyAndArrayUtilities() {
 		assertTrue(GeoUtil.tiny(0.5 * GeoUtil.TINY));
 		assertFalse(GeoUtil.tiny(GeoUtil.TINY));

@@ -14,9 +14,11 @@ import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.HorizontalLine;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
+/** Demonstrates fitting an error function to occupancy data. */
 @SuppressWarnings("serial")
 public class ErfTest extends AExample {
 
+	/** @param headless whether to construct the example without displaying a window */
 	public ErfTest(boolean headless) {
 		super(headless);
 	}

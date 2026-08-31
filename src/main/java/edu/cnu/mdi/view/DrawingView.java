@@ -41,14 +41,13 @@ public class DrawingView extends BaseView {
 	}
 
 	/**
-	 * Convenience method for creating a Drawing View with a square canvas.
+	 * Convenience factory for creating a {@code DrawingView} with the default
+	 * key-value configuration (see {@link #defaults()}).
 	 * <p>
-	 * The BaseView constructor calls pack() and desktop.add(), both of which
-	 * affect frame sizing. setVisible(true) is deferred via invokeLater.
-	 * We defer our chrome measurement and setSize() to a second invokeLater,
-	 * which runs after setVisible has completed, giving us the true realized
-	 * component sizes.
+	 * Equivalent to {@code new DrawingView((Object[]) null)}.
 	 * </p>
+	 *
+	 * @return a new {@code DrawingView} configured with the default properties
 	 */
 	public static DrawingView createDrawingView() {
 		return new DrawingView((Object[])null);
@@ -63,7 +62,7 @@ public class DrawingView extends BaseView {
 	 */
 	private static Object[] defaults() {
 		return new Object[] {
-				PropertyUtils.FRACTION, 0.7, PropertyUtils.ASPECT, 1.0,
+				PropertyUtils.FRACTION, 0.8, PropertyUtils.ASPECT, 1.0,
 				PropertyUtils.TOOLBARBITS, ToolBits.STATUS | ToolBits.DRAWINGTOOLS
 						| ToolBits.ZOOMTOOLS | ToolBits.PAN | ToolBits.INFO,
 				PropertyUtils.BACKGROUND,  Color.white,
@@ -87,7 +86,7 @@ public class DrawingView extends BaseView {
 	 * <p>The dropped image is placed on the annotation layer so it is always
 	 * rendered above other items.  If the file cannot be decoded
 	 * ({@link ImageIO#read} returns {@code null} or throws), an error is
-	 * logged to {@code System.err} and the view is left unchanged.</p>
+	 * logged through the framework logger and the view is left unchanged.</p>
 	 *
 	 * <p>This method is called on the EDT by {@link edu.cnu.mdi.transfer.FileDropHandler}
 	 * after the filter set in the constructor ({@link edu.cnu.mdi.transfer.ImageFilters#isActualImage})

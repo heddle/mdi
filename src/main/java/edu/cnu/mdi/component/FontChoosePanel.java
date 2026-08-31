@@ -33,8 +33,6 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	/**
 	 * The last selected family, used for default in null constructor.
 	 */
-//	private static Font lastFont = Fonts.plainFontDelta(2);
-
 	// italics checkbox
 	JCheckBox italicCb;
 
@@ -47,7 +45,7 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	/**
 	 * The font family name list
 	 */
-	private JList fontFamilyList;
+	private JList<String> fontFamilyList;
 
 	/**
 	 * The return font.
@@ -71,8 +69,6 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	/**
 	 * The result string.
 	 */
-	private String resultString = null;
-
 	/**
 	 * Construct a FontChooser -- Sets title and gets array of fonts on the system.
 	 * Builds a GUI to let the user choose one font at one size.
@@ -125,8 +121,8 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	private JPanel createCheckBoxPanel() {
 		JPanel checkBoxPanel = new JPanel();
 
-		boldCb = new JCheckBox("Bold", false);
-		italicCb = new JCheckBox("Italic", false);
+		boldCb = new JCheckBox("Bold", inputFont.isBold());
+		italicCb = new JCheckBox("Italic", inputFont.isItalic());
 		boldCb.addItemListener(this);
 		italicCb.addItemListener(this);
 
@@ -157,9 +153,9 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 	 *
 	 * @return the font family selection list.
 	 */
-	private JList<?> createFontList() {
+	private JList<String> createFontList() {
 		String[] fontList = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-		JList<?> list = new JList(fontList);
+		JList<String> list = new JList<>(fontList);
 		list.setVisibleRowCount(8);
 		return list;
 	}
@@ -186,18 +182,13 @@ public class FontChoosePanel extends JPanel implements ListSelectionListener, It
 		previewArea.setFont(returnFont);
 	}
 
-	/** Retrieve the selected font */
+	/**
+	 * Returns the font represented by the current family, size, and style controls.
+	 *
+	 * @return the selected font
+	 */
 	public Font getSelectedFont() {
 		return returnFont;
-	}
-
-	/**
-	 * Gets the result string, which will be null if cancelled.
-	 *
-	 * @return the result string.
-	 */
-	public String getText() {
-		return resultString;
 	}
 
 	/**

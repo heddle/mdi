@@ -16,7 +16,14 @@ import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.view.ContainerFactory;
 
-public class PropertyUtils {
+/**
+ * Defines the standard MDI property keys and provides type-checked construction
+ * and retrieval helpers.
+ */
+public final class PropertyUtils {
+
+	private PropertyUtils() {
+	}
 
 	public static final String ASPECT = "ASPECT";
 	public static final String BACKGROUND = "BACKGROUND";
@@ -30,6 +37,7 @@ public class PropertyUtils {
 	public static final String DELETABLE = "DELETABLE";
 	public static final String DOUBLECLICKABLE = "DOUBLECLICKABLE";
 	public static final String DRAGGABLE = "DRAGGABLE";
+	public static final String FEEDBACKFONTSIZE = "FEEDBACKFONTSIZE";
 	public static final String FILLCOLOR = "FILLCOLOR";
 	public static final String FRACTION = "FRACTION";
 	public static final String HEIGHT = "HEIGHT";
@@ -90,6 +98,7 @@ public class PropertyUtils {
 	    KNOWN_KEYS.put(DIST_Z, Float.class);
 	    KNOWN_KEYS.put(DOUBLECLICKABLE, Boolean.class);
 	    KNOWN_KEYS.put(DRAGGABLE, Boolean.class);
+	    KNOWN_KEYS.put(FEEDBACKFONTSIZE, Integer.class);
 	    KNOWN_KEYS.put(FILLCOLOR, Color.class);
 	    KNOWN_KEYS.put(FRACTION, Double.class);
 	    KNOWN_KEYS.put(HEIGHT, Integer.class);
@@ -139,10 +148,24 @@ public class PropertyUtils {
 	public static final Rectangle2D.Double defaultWorldRect = new Rectangle2D.Double(0, 0, 1, 1);
 
 	/**
-	 * Create a set of properties from the key values
+	 * Create a set of properties from the key values.
+	 * <p>
+	 * {@code null} or an empty array yields an empty, valid {@link Properties}.
+	 * Otherwise the arguments must be an even-length sequence of alternating
+	 * keys and values. Keys for known property names (see the constants in
+	 * this class) are additionally checked against their expected value type;
+	 * an unrecognized key is accepted with a logged warning rather than
+	 * rejected, so custom keys remain usable.
+	 * </p>
 	 *
 	 * @param keyValues the set of key values
 	 * @return a set of properties
+	 * @throws IllegalArgumentException if {@code keyValues} has an odd
+	 *                                  length, if any key is not a
+	 *                                  {@code String}, if any value is
+	 *                                  {@code null}, or if a known key's
+	 *                                  value is not an instance of its
+	 *                                  expected type
 	 */
 	public static Properties fromKeyValues(Object... keyValues) {
 
@@ -166,17 +189,20 @@ public class PropertyUtils {
 	            throw new IllegalArgumentException(
 	                "Property key must be a String at index " + i);
 	        }
+			if (value == null) {
+				throw new IllegalArgumentException("Property '" + key + "' cannot have a null value");
+			}
 
 	        // --- Unknown key check ---
 	        if (!KNOWN_KEYS.containsKey(key)) {
-	            System.err.println("Warning: Unknown property key: " + key);
+	            edu.cnu.mdi.log.Log.getInstance().warning("Unknown property key: " + key);
 	            props.put(key, value);
 	            continue;
 	        }
 
 	        // --- Type safety check ---
 	        Class<?> expectedType = KNOWN_KEYS.get(key);
-	        if (value != null && !expectedType.isInstance(value)) {
+	        if (!expectedType.isInstance(value)) {
 	            throw new IllegalArgumentException(
 	                "Property '" + key + "' expects type " +
 	                expectedType.getSimpleName() +
@@ -195,8 +221,7 @@ public class PropertyUtils {
 	 *
 	 * @param key          the property key to register
 	 * @param expectedType the expected type of the value associated with this key
-	 * @throws NullPointerException if key or expectedType is null
-	 * @throws IllegalArgumentException if key is blank
+	 * @throws IllegalArgumentException if the key is null/blank or expected type is null
 	 * @throws IllegalStateException if the key is already registered with a different expected type
 	 */
 	public static void registerKey(String key, Class<?> expectedType) {
@@ -222,7 +247,7 @@ public class PropertyUtils {
 	 * Register a new key with an expected type of Object. This is a more permissive registration that allows any type of value for the key.
 	 *
 	 * @param key the property key to register
-	 * @throws NullPointerException if key is null
+	 * @throws IllegalArgumentException if key is null or blank
 	 */
 	public static void registerKey(String key) {
 	    registerKey(key, Object.class); // means “known, any type”
@@ -233,8 +258,7 @@ public class PropertyUtils {
 	 *
 	 * @param key          the property key to register
 	 * @param expectedType the expected type of the value associated with this key
-	 * @throws NullPointerException if key or expectedType is null
-	 * @throws IllegalArgumentException if key is blank
+	 * @throws IllegalArgumentException if the key is null/blank or expected type is null
 	 */
 	public static void registerKeyOverwrite(String key, Class<?> expectedType) {
 	    if (key == null || key.isBlank()) {
@@ -264,6 +288,16 @@ public class PropertyUtils {
 	 */
 	public static boolean getConsoleLog(Properties props) {
 		return getBoolean(props, CONSOLELOG, false);
+	}
+	
+	/**
+	 * Get the feedback font size
+	 * @param props the properties
+	 * @return the (clamped) feedback font size
+	 */
+	public static int getFeedbackFontSize(Properties props) {
+		int size =  getInt(props, FEEDBACKFONTSIZE, 9);
+		return Math.max(8, Math.min(48, size));
 	}
 
 	/**
@@ -410,7 +444,7 @@ public class PropertyUtils {
 	 * Get the item rotatable boolean flag. For views.
 	 *
 	 * @param props the properties
-	 * @return the rotatable flag. On error, return true.
+	 * @return the rotatable flag. On error, return false.
 	 */
 	public static boolean getRotatable(Properties props) {
 		return getBoolean(props, ROTATABLE, false);
@@ -454,6 +488,9 @@ public class PropertyUtils {
 	 * @return an IContainer, on error return null
 	 */
 	public static IContainer getContainer(Properties props) {
+		if (props == null) {
+			return null;
+		}
 		Object val = props.get(CONTAINER);
 		if ((val == null) || !(val instanceof IContainer)) {
 			return null;
@@ -499,6 +536,9 @@ public class PropertyUtils {
 	 * @return a SymbolType, on error return SymbolType.SQUARE
 	 */
 	public static SymbolType getSymbol(Properties props) {
+		if (props == null) {
+			return SymbolType.SQUARE;
+		}
 		Object val = props.get(SYMBOL);
 		if ((val == null) || !(val instanceof SymbolType)) {
 			return SymbolType.SQUARE;
@@ -524,7 +564,7 @@ public class PropertyUtils {
 	 * @return the user data (might be <code>null</code>).
 	 */
 	public static Object getUserData(Properties props) {
-		return props.get(USERDATA);
+		return (props == null) ? null : props.get(USERDATA);
 	}
 
 	/**
@@ -541,7 +581,7 @@ public class PropertyUtils {
 	 * Get the text color from the properties
 	 *
 	 * @param props the properties
-	 * @return the text color. On error return _defaultTextColor.
+	 * @return the text color. On error return {@link #defaultTextColor}.
 	 */
 	public static Color getTextColor(Properties props) {
 		return getColor(props, TEXTCOLOR, defaultTextColor);
@@ -551,7 +591,7 @@ public class PropertyUtils {
 	 * Get the fill color from the properties
 	 *
 	 * @param props the properties
-	 * @return the fill color. On error return _defaultFillColor.
+	 * @return the fill color. On error return {@link #defaultFillColor}.
 	 */
 	public static Color getFillColor(Properties props) {
 		return getColor(props, FILLCOLOR, defaultFillColor);
@@ -561,7 +601,7 @@ public class PropertyUtils {
 	 * Get the line color from the properties
 	 *
 	 * @param props the properties
-	 * @return the line color. On error return _defaultLineColor.
+	 * @return the line color. On error return {@link #defaultLineColor}.
 	 */
 	public static Color getLineColor(Properties props) {
 		return getColor(props, LINECOLOR, defaultLineColor);
@@ -575,6 +615,9 @@ public class PropertyUtils {
 	 */
 	public static LineStyle getLineStyle(Properties props) {
 		LineStyle lineStyle = LineStyle.SOLID;
+		if (props == null) {
+			return lineStyle;
+		}
 		Object val = props.get(LINESTYLE);
 
 		if ((val != null) && (val instanceof LineStyle)) {
@@ -632,6 +675,9 @@ public class PropertyUtils {
 	 * @return the world rectangle, or defaultValue upon failure.
 	 */
 	public static Rectangle2D.Double getWorldRectangle(Properties props, String key, Rectangle2D.Double defaultValue) {
+		if (props == null) {
+			return defaultValue;
+		}
 		Object val = props.get(key);
 		if (val == null) {
 			return defaultValue;
@@ -640,7 +686,7 @@ public class PropertyUtils {
 		if (val instanceof Rectangle2D.Double) {
 			return (Rectangle2D.Double) val;
 		}
-		return null;
+		return defaultValue;
 	}
 
 	/**
@@ -653,13 +699,17 @@ public class PropertyUtils {
 	 * @return the color, or defaultValue upon failure.
 	 */
 	public static Color getColor(Properties props, String key, Color defaultValue) {
+		if (props == null) {
+			return defaultValue;
+		}
 		Object val = props.get(key);
 		if (val == null) {
 			return defaultValue;
 		}
 
 		if (val instanceof String) {
-			return X11Colors.getX11Color((String) val);
+			Color color = X11Colors.getX11Color((String) val);
+			return (color == null) ? defaultValue : color;
 		}
 
 		if (val instanceof Color) {
@@ -676,6 +726,9 @@ public class PropertyUtils {
 	 * @return the JComponent value, or on error <code>null</code>.
 	 */
 	public static JComponent getJComponent(Properties props, String key) {
+		if (props == null) {
+			return null;
+		}
 		Object val = props.get(key);
 		if ((val != null) && (val instanceof JComponent)) {
 			return (JComponent) val;
@@ -690,6 +743,9 @@ public class PropertyUtils {
 	 * @return the rubberband policy. On error return null.
 	 */
 	public static ARubberband.Policy getBoxZoomRubberbandPolicy(Properties props) {
+		if (props == null) {
+			return ARubberband.Policy.RECTANGLE_PRESERVE_ASPECT;
+		}
 		Object val = props.get(BOXZOOMRBPOLICY);
 		if ((val != null) && (val instanceof ARubberband.Policy)) {
 			return (ARubberband.Policy) val;
@@ -706,6 +762,9 @@ public class PropertyUtils {
 	 * @return the String value, or on error the default value.
 	 */
 	public static String getString(Properties props, String key, String defaultValue) {
+		if (props == null) {
+			return defaultValue;
+		}
 		Object val = props.get(key);
 		if (val == null) {
 			return defaultValue;
@@ -727,6 +786,9 @@ public class PropertyUtils {
 	 * @return the integer value, or on error the default value.
 	 */
 	public static int getInt(Properties props, String key, int defaultValue) {
+		if (props == null) {
+			return defaultValue;
+		}
 		Object val = props.get(key);
 		if (val == null) {
 			return defaultValue;
@@ -758,6 +820,9 @@ public class PropertyUtils {
 	 * @return the integer value, or on error the default value.
 	 */
 	public static long getLong(Properties props, String key, long defaultValue) {
+		if (props == null) {
+			return defaultValue;
+		}
 		Object val = props.get(key);
 		if (val == null) {
 			return defaultValue;
@@ -765,7 +830,7 @@ public class PropertyUtils {
 
 		if (val instanceof String) {
 			try {
-				return Integer.parseInt((String) val);
+				return Long.parseLong((String) val);
 			} catch (Exception e) {
 				return defaultValue;
 			}
@@ -773,6 +838,9 @@ public class PropertyUtils {
 
 		if (val instanceof Long) {
 			return (Long) val;
+		}
+		if (val instanceof Integer) {
+			return ((Integer) val).longValue();
 		}
 		return defaultValue;
 
@@ -800,6 +868,9 @@ public class PropertyUtils {
 	 * @return the double value, or on error return defaultValue
 	 */
 	public static double getDouble(Properties props, String key, double defaultValue) {
+		if (props == null) {
+			return defaultValue;
+		}
 		Object val = props.get(key);
 		if (val == null) {
 			return defaultValue;
@@ -851,6 +922,9 @@ public class PropertyUtils {
 	 * @return the double value, or on error return defaultValue
 	 */
 	public static float getFloat(Properties props, String key, float defaultValue) {
+		if (props == null) {
+			return defaultValue;
+		}
 		Object val = props.get(key);
 		if (val == null) {
 			return defaultValue;
@@ -887,17 +961,23 @@ public class PropertyUtils {
 	 * @return the boolean value, or on error the default
 	 */
 	public static boolean getBoolean(Properties props, String key, boolean defaultVal) {
+		if (props == null) {
+			return defaultVal;
+		}
 		Object val = props.get(key);
 		if (val == null) {
 			return defaultVal;
 		}
 
 		if (val instanceof String) {
-			try {
-				return Boolean.parseBoolean((String) val);
-			} catch (Exception e) {
-				return defaultVal;
+			String text = ((String) val).trim();
+			if ("true".equalsIgnoreCase(text)) {
+				return true;
 			}
+			if ("false".equalsIgnoreCase(text)) {
+				return false;
+			}
+			return defaultVal;
 
 		}
 

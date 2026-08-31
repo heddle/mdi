@@ -31,7 +31,7 @@ public class BarPlot {
 	 * @param categories the bar categories
 	 * @param xLabel     the x axis label
 	 * @param yLabel     the y axis label
-	 * @return the plot data
+	 * @return the created {@link PlotPanel}
 	 * @throws PlotDataException if there is a problem creating the plot data
 	 */
 	public static PlotPanel createBarPlot(String title,

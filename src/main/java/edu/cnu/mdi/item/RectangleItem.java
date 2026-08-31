@@ -7,13 +7,24 @@ import java.awt.geom.Rectangle2D;
 import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 import edu.cnu.mdi.util.Point2DSupport;
 
+/**
+ * A closed, four-vertex {@link PolygonItem} initialized from a world-coordinate
+ * rectangle.
+ *
+ * <p>Unlike a general polygon, resizing (without shift/control) preserves the
+ * rectangle shape: {@link #reshape()} moves only the dragged corner and its
+ * two adjacent vertices, keeping opposite sides axis-aligned with each other
+ * rather than allowing an arbitrary quadrilateral.</p>
+ */
 public class RectangleItem extends PolygonItem {
 
 	/**
 	 * Create a world rectangle object.
 	 *
-	 * @param layer the z layer this item is on.
-	 * @param wr       the initial bounds of the item.
+	 * @param layer   the z layer this item is on.
+	 * @param wr      the initial bounds of the item.
+	 * @param keyVals optional key value pairs to set properties of the item. See
+	 *                {@link AItem#AItem(Layer, Object...)} for details.
 	 */
 	public RectangleItem(Layer layer, Rectangle2D.Double wr, Object... keyVals) {
 		super(layer, WorldGraphicsUtils.getPoints(wr), keyVals);

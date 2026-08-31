@@ -56,6 +56,9 @@ public class JsonView extends BaseView {
     /** Default view height in pixels. */
     private static final int DEFAULT_HEIGHT = 600;
 
+    /** Default visibility promised by the no-argument constructor. */
+    static final boolean DEFAULT_VISIBLE = false;
+
     // -------------------------------------------------------------------------
     // Instance state
     // -------------------------------------------------------------------------
@@ -71,7 +74,7 @@ public class JsonView extends BaseView {
      * Create a {@code JsonView} with default dimensions, initially hidden.
      */
     public JsonView() {
-        this(DEFAULT_WIDTH, DEFAULT_HEIGHT, true);
+        this(DEFAULT_WIDTH, DEFAULT_HEIGHT, DEFAULT_VISIBLE);
     }
 
     /**

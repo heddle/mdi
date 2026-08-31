@@ -3,6 +3,7 @@ package edu.cnu.mdi.splot.plot;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.io.File;
 import java.util.List;
 import java.util.Objects;
@@ -251,6 +252,23 @@ public class PlotView extends BaseView {
 	    // CardLayout doesn't have a simple getVisibleCard() method,
 	    // so we check the internal state or the component visibility.
 	    return _histoPanel.isVisible();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * PlotView's title, legend, and axis labels live on {@link #_plotPanel},
+	 * not on the inner {@link PlotCanvas} the container exposes, so the
+	 * default (container-based) implementation would silently drop them.
+	 * Returns whichever card is currently showing, so a capture taken while
+	 * the 2-D histogram card is visible captures that instead of the
+	 * (hidden) plot.
+	 * </p>
+	 */
+	@Override
+	public Component getImageComponent() {
+		return isHistoCardVisible() ? _histoPanel : _plotPanel;
 	}
 
 	private JPanel createHistoPlaceholder() {

@@ -39,7 +39,7 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 
 	private ISimulationHost host;
 
-	private final JLabel statusLabel = new JLabel("State: NEW");
+	private final JLabel statusLabel = new JLabel("NEW");
 	private final JLabel messageLabel = new JLabel(" ");
 
 	private final JProgressBar progressBar = new JProgressBar(0, 100);
@@ -126,6 +126,12 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 	 * <li>registers this panel as a {@link SimulationListener}</li>
 	 * <li>updates UI to reflect the host's current state</li>
 	 * </ul>
+	 * <p>
+	 * <strong>Note:</strong> unlike {@code TaskControlPanel.bind}, this method
+	 * does not implicitly unbind first. Calling it again with a different host
+	 * while already bound leaves this panel registered as a stale listener on
+	 * the previous host's engine; call {@link #unbind()} first if rebinding.
+	 * </p>
 	 *
 	 * @param host the simulation host (non-null)
 	 */
@@ -230,7 +236,7 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 	// ------------------------------------------------------------------------
 
 	private void applyState(SimulationState state, String reason) {
-		statusLabel.setText("State: " + state + (reason == null || reason.isBlank() ? "" : ("  (" + reason + ")")));
+		statusLabel.setText(state + (reason == null || reason.isBlank() ? "" : ("  (" + reason + ")")));
 
 		boolean bound = (host != null);
 
@@ -240,7 +246,7 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 		// - Run is useful when READY (autoRun false) or PAUSED.
 		// - Pause only when RUNNING.
 		// - Resume only when PAUSED.
-		// - Stop/cancel when RUNNING/PAUSED/READY/INITIALIZING/SWITCHING.
+		// - Stop/cancel when RUNNING/PAUSED/READY/INITIALIZING.
 		startBtn.setEnabled(bound && state != SimulationState.TERMINATED && state != SimulationState.FAILED);
 
 		runBtn.setEnabled(bound && (state == SimulationState.READY || state == SimulationState.PAUSED));
@@ -250,8 +256,7 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 		resumeBtn.setEnabled(bound && state == SimulationState.PAUSED);
 
 		boolean canStopOrCancel = bound && (state == SimulationState.INITIALIZING || state == SimulationState.READY
-				|| state == SimulationState.RUNNING || state == SimulationState.PAUSED
-				|| state == SimulationState.SWITCHING);
+				|| state == SimulationState.RUNNING || state == SimulationState.PAUSED);
 
 		stopBtn.setEnabled(canStopOrCancel);
 		cancelBtn.setEnabled(canStopOrCancel);

@@ -12,7 +12,6 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Pair;
 
-import edu.cnu.mdi.splot.pdata.FitVectors;
 
 /**
  * Nonlinear least-squares fitter for a power law with a constant offset:
@@ -302,28 +301,4 @@ public final class PowerLawFitter extends ALeastSquaresFitter {
 		}
 	}
 
-	// -----------------------------------------------------------------------
-	// Stand-alone test
-	// -----------------------------------------------------------------------
-
-	/**
-	 * Quick smoke test: fits synthetic power-law data and prints the result.
-	 *
-	 * @param args ignored
-	 */
-	public static void main(String[] args) {
-		final double A = 3.0;
-		final double n = 2.5;
-		final double C = 1.0;
-
-		FitVectors data = FitVectors.testData(
-				x -> A * Math.pow(x, n) + C,
-				0.5, 5.0, 50, 3.0, 5.0);
-
-		PowerLawFitter fitter = new PowerLawFitter();
-		FitResult result = fitter.fit(data.x, data.y, data.w);
-
-		System.out.println("True: A=" + A + "  n=" + n + "  C=" + C);
-		System.out.println(result);
-	}
 }

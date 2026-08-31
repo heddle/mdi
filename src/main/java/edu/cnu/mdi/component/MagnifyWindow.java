@@ -148,10 +148,8 @@ public class MagnifyWindow extends JWindow {
 	 * the supplied mouse event.
 	 * <p>
 	 * The magnifier window is positioned near the mouse pointer and configured to
-	 * display a zoomed-in view of the region under the cursor. If the source
-	 * container provides a custom magnification draw hook, that will be used;
-	 * otherwise the source container's model is shared and the magnifier behaves
-	 * like a zoomed copy.
+	 * display a zoomed-in view of the region under the cursor. The source container's
+	 * model is shared and the magnifier behaves like a zoomed copy.
 	 * </p>
 	 *
 	 * @param sourceContainer the {@link BaseContainer} to magnify (must not be

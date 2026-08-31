@@ -102,7 +102,9 @@ public class LineItem extends AItem {
 	@Override
 	public boolean shouldDraw(Graphics2D g2, IContainer container) {
 		Rectangle r = WorldGraphicsUtils.getBounds(container, _line.x1, _line.y1, _line.x2, _line.y2);
-		return container.getComponent().getBounds().intersects(r);
+		Rectangle viewport = new Rectangle(0, 0,
+				container.getComponent().getWidth(), container.getComponent().getHeight());
+		return viewport.intersects(r);
 	}
 
 	/**

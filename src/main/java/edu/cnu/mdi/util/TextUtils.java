@@ -1,17 +1,91 @@
 package edu.cnu.mdi.util;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.util.List;
+import java.util.Objects;
+import java.util.StringTokenizer;
 
 import javax.swing.SwingConstants;
 
-public class TextUtils {
+/** Text measurement, comparison, and rotated drawing helpers. */
+public final class TextUtils {
+
+	private TextUtils() {
+	}
+
+	public static void drawGhostText(Graphics g, String text, int x, int y) {
+		drawGhostText(g, text, x, y, Color.WHITE, Color.BLACK);
+	}
+
+	public static void drawGhostText(Graphics g, String text, int x, int y, Color foreground, Color background) {
+		if (g == null || text == null || foreground == null || background == null) {
+			return;
+		}
+		g.setColor(foreground);
+		g.drawString(text, x, y + 1);
+		g.setColor(background);
+		g.drawString(text, x, y);
+	}
+
+	public static void drawHaloText(Graphics g, String text, int x, int y) {
+		drawHaloText(g, text, x, y, Color.BLACK, Color.WHITE);
+	}
+
+	public static void drawHaloText(Graphics g, String text, int x, int y, Color textColor, Color haloColor) {
+		if (g == null || text == null || textColor == null || haloColor == null) {
+			return;
+		}
+		g.setColor(haloColor);
+		g.drawString(text, x + 1, y);
+		g.drawString(text, x - 1, y);
+		g.drawString(text, x, y + 1);
+		g.drawString(text, x, y - 1);
+		g.setColor(textColor);
+		g.drawString(text, x, y);
+	}
+
+	public static Rectangle sizeText(Component component, Point basePoint, String text, Font font) {
+		FontMetrics metrics = component.getFontMetrics(font);
+		return new Rectangle(basePoint.x, basePoint.y - metrics.getAscent(), metrics.stringWidth(text),
+				metrics.getAscent() + metrics.getDescent());
+	}
+
+	public static Font nextSmallerFont(Font font, int stepDown) {
+		return (font == null) ? null : font.deriveFont((float) (font.getSize() - stepDown));
+	}
+
+	public static Font nextBiggerFont(Font font, int stepUp) {
+		return (font == null) ? null : font.deriveFont((float) (font.getSize() + stepUp));
+	}
+
+	public static String[] tokens(String text, String delimiters) {
+		StringTokenizer tokenizer = new StringTokenizer(text, delimiters);
+		String[] result = new String[tokenizer.countTokens()];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = tokenizer.nextToken();
+		}
+		return result;
+	}
+
+	public static String[] commaSeparatedToArray(String text) {
+		if (text == null) {
+			return null;
+		}
+		String compact = text.replaceAll("\\s", "");
+		return compact.isEmpty() ? null : tokens(compact, ",");
+	}
+
+	public static String arrayToCommaSeparated(String[] values) {
+		return (values == null) ? "" : String.join(", ", values);
+	}
 
 	/**
 	 * Draws rotated multi-line text with specified alignment.
@@ -31,6 +105,11 @@ public class TextUtils {
 	 */
 	public static void drawRotatedText(Graphics2D g2, Point cp, String s,
 	        Font font, Color tcolor, double theta, int align) {
+		Objects.requireNonNull(g2, "g2");
+		Objects.requireNonNull(cp, "cp");
+		Objects.requireNonNull(s, "text");
+		Objects.requireNonNull(font, "font");
+		Objects.requireNonNull(tcolor, "text color");
 
 		// Work on a copy so that translate/rotate/dispose never touch the caller's g2.
 		// This is the critical fix: the original code called g2.dispose() on the shared
@@ -42,7 +121,7 @@ public class TextUtils {
 		    g.setColor(tcolor);
 		    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		    String[] lines = s.split("\\R");
+		    String[] lines = textLines(s);
 		    FontMetrics fm = g.getFontMetrics();
 		    int lineHeight = fm.getHeight();
 		    int totalHeight = lineHeight * lines.length;
@@ -69,7 +148,7 @@ public class TextUtils {
 		                x = -maxWidth / 2.0f;
 		                break;
 		            case SwingConstants.RIGHT:
-		                x = -lineWidth;
+		                x = maxWidth / 2.0f - lineWidth;
 		                break;
 		            case SwingConstants.CENTER:
 		            default:
@@ -90,18 +169,26 @@ public class TextUtils {
 	 *
 	 * @param text        the text content which can contain multiple lines
 	 * @param fm          the FontMetrics object for measuring text
-	 * @param leftMargin  the left margin in pixels
-	 * @param rightMargin the right margin in pixels
-	 * @param topMargin   the top margin in pixels
-	 * @param bottomMargin the bottom margin in pixels
-	 * @param lineSpacing the line spacing factor (1.0 = normal, >1.0 = more space)
+	 * @param leftMargin  the left margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param rightMargin the right margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param topMargin   the top margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param bottomMargin the bottom margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param lineSpacing the line spacing factor (1.0 = normal, >1.0 = more
+	 *                    space); silently clamped to {@code [0.5, 3.0]}
 	 * @return the bounding Rectangle for the text block
+	 * @throws IllegalArgumentException if {@code lineSpacing} is not finite
+	 *                                  (NaN or infinite)
 	 */
 	public static Rectangle textBounds(String text, FontMetrics fm,
             int leftMargin, int rightMargin,
             int topMargin, int bottomMargin,
             float lineSpacing) {
-		String lines[] = text.lines().toArray(String[]::new);
+		Objects.requireNonNull(text, "text");
+		String lines[] = textLines(text);
 		return textBounds(lines, fm, leftMargin, rightMargin, topMargin, bottomMargin, lineSpacing);
 	}
 
@@ -110,22 +197,33 @@ public class TextUtils {
 	 *
 	 * @param lines       the array of text lines
 	 * @param fm          the FontMetrics object for measuring text
-	 * @param leftMargin  the left margin in pixels
-	 * @param rightMargin the right margin in pixels
-	 * @param topMargin   the top margin in pixels
-	 * @param bottomMargin the bottom margin in pixels
-	 * @param lineSpacing the line spacing factor (1.0 = normal, >1.0 = more space)
+	 * @param leftMargin  the left margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param rightMargin the right margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param topMargin   the top margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param bottomMargin the bottom margin in pixels; silently clamped to
+	 *                    {@code [0, 500]}
+	 * @param lineSpacing the line spacing factor (1.0 = normal, >1.0 = more
+	 *                    space); silently clamped to {@code [0.5, 3.0]}
 	 * @return the bounding Rectangle for the text block
+	 * @throws IllegalArgumentException if {@code lineSpacing} is not finite
+	 *                                  (NaN or infinite)
 	 */
 	public static Rectangle textBounds(String[] lines, FontMetrics fm,
 	                            int leftMargin, int rightMargin,
 	                            int topMargin, int bottomMargin,
 	                            float lineSpacing) {
 
+		Objects.requireNonNull(fm, "font metrics");
 	    leftMargin   = Math.max(0, Math.min(leftMargin,   500));
 	    rightMargin  = Math.max(0, Math.min(rightMargin,  500));
 	    topMargin    = Math.max(0, Math.min(topMargin,    500));
 	    bottomMargin = Math.max(0, Math.min(bottomMargin, 500));
+		if (!Float.isFinite(lineSpacing)) {
+			throw new IllegalArgumentException("lineSpacing must be finite");
+		}
 	    lineSpacing  = Math.max(0.5f, Math.min(lineSpacing, 3.0f));
 
 	    if (lines == null || lines.length == 0) {
@@ -179,5 +277,9 @@ public class TextUtils {
 			}
 		}
 		return true;
+	}
+
+	private static String[] textLines(String text) {
+		return text.split("\\R", -1);
 	}
 }

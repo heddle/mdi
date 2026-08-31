@@ -4,9 +4,11 @@ import edu.cnu.mdi.splot.pdata.Histo2DData;
 import edu.cnu.mdi.splot.pdata.PlotData;
 import edu.cnu.mdi.splot.pdata.PlotDataException;
 
+/** Demonstrates rendering randomly generated two-dimensional histogram data. */
 @SuppressWarnings("serial")
 public class Heatmap extends AExample {
 
+	/** @param headless whether to construct the example without displaying a window */
 	public Heatmap(boolean headless) {
 		super(headless);
 	}

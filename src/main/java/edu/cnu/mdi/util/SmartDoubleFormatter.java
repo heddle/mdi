@@ -4,9 +4,24 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 
-public class SmartDoubleFormatter {
+/** Formats floating-point values with a requested number of significant digits. */
+public final class SmartDoubleFormatter {
 
+	private SmartDoubleFormatter() {
+	}
+
+	/**
+	 * Format a value with the requested significant-digit precision.
+	 *
+	 * @param value value to format
+	 * @param sigDigits positive number of significant digits
+	 * @return plain or scientific representation, whichever is more compact
+	 * @throws IllegalArgumentException if {@code sigDigits <= 0}
+	 */
 	public static String doubleFormat(double value, int sigDigits) {
+		if (sigDigits <= 0) {
+			throw new IllegalArgumentException("sigDigits must be positive");
+		}
 
 		if (Double.isNaN(value) || Double.isInfinite(value)) {
 			return String.valueOf(value);

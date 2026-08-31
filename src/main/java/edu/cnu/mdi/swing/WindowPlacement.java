@@ -71,12 +71,12 @@ public final class WindowPlacement {
 		}
 
 		GraphicsDevice bigScreen = null;
-		int maxArea = -1;
+		long maxArea = -1;
 		if (allScreens != null) {
 			for (GraphicsDevice screen : allScreens) {
 				GraphicsConfiguration gc = screen.getDefaultConfiguration();
 				Rectangle b = gc.getBounds();
-				int area = b.width * b.height;
+				long area = (long) b.width * b.height;
 				if (area > maxArea) {
 					maxArea = area;
 					bigScreen = screen;

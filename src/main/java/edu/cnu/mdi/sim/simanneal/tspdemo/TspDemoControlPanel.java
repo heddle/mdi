@@ -54,10 +54,12 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  *
  * <h2>State gating</h2>
  * <p>
- * The sliders and Reset button are only enabled when the engine is in
- * {@link SimulationState#READY} or {@link SimulationState#TERMINATED}. This
- * prevents the user from changing parameters while the simulation thread is
- * actively mutating the model.
+ * The sliders are enabled in {@link SimulationState#READY},
+ * {@link SimulationState#PAUSED}, and {@link SimulationState#TERMINATED}. The
+ * Reset button is enabled in those same three states plus
+ * {@link SimulationState#FAILED}, so the user can always recover from a
+ * failed run. This prevents the user from changing parameters while the
+ * simulation thread is actively mutating the model.
  * </p>
  *
  * <h2>Reset behavior</h2>
@@ -346,10 +348,12 @@ public class TspDemoControlPanel extends JPanel implements ISimulationControlPan
     /**
      * Enable or disable controls based on the current simulation state.
      * <p>
-     * Sliders and Reset are enabled in READY, PAUSED, TERMINATED, and FAILED.
-     * Changes to slider values only take effect on the next Reset — parameters
-     * are built into the model at construction and cannot be modified mid-run.
-     * The simulation must be paused or stopped before parameters can be changed.
+     * Sliders are enabled in READY, PAUSED, and TERMINATED (see
+     * {@link #updateResetEnabled()} for Reset's slightly broader gating, which
+     * also includes FAILED). Changes to slider values only take effect on the
+     * next Reset — parameters are built into the model at construction and
+     * cannot be modified mid-run. The simulation must be paused or stopped
+     * before parameters can be changed.
      * </p>
      */
 	private void applyState(SimulationState state) {

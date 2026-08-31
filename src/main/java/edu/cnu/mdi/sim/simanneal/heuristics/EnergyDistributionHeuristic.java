@@ -49,7 +49,7 @@ import edu.cnu.mdi.sim.simanneal.TemperatureHeuristic;
  *
  * @param <S> the concrete solution type for the annealing problem
  */
-public class EnergyDistributionHeuristic<S extends AnnealingSolution>
+public class EnergyDistributionHeuristic<S extends AnnealingSolution<S>>
         implements TemperatureHeuristic<S> {
 
     /** Number of random solutions to sample (must be ≥ 10). */
@@ -89,12 +89,16 @@ public class EnergyDistributionHeuristic<S extends AnnealingSolution>
         if (samples < 10) {
             throw new IllegalArgumentException("samples must be >= 10");
         }
-        if (!(targetAcceptance > 0 && targetAcceptance < 1)) {
+		if (!Double.isFinite(targetAcceptance)
+				|| !(targetAcceptance > 0 && targetAcceptance < 1)) {
             throw new IllegalArgumentException("targetAcceptance must be (0,1)");
         }
+		if (!Double.isFinite(minT0) || minT0 < 0) {
+			throw new IllegalArgumentException("minT0 must be finite and >= 0");
+		}
         this.samples = samples;
         this.targetAcceptance = targetAcceptance;
-        this.minT0 = Math.max(0.0, minT0);
+		this.minT0 = minT0;
     }
 
     /**
@@ -115,6 +119,10 @@ public class EnergyDistributionHeuristic<S extends AnnealingSolution>
         for (int i = 0; i < samples; i++) {
             S s = problem.randomSolution(rng);
             E[i] = problem.energy(s);
+			if (!Double.isFinite(E[i])) {
+				throw new IllegalStateException(
+						"Sampled energies must be finite");
+			}
         }
         Arrays.sort(E);
 

@@ -19,6 +19,22 @@ import edu.cnu.mdi.splot.pdata.HistoData;
 import edu.cnu.mdi.splot.plot.TextFieldSlider;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
+/**
+ * Editor panel for a curve's fit/drawing-method settings: the fit-method
+ * selector, the method-specific widgets it reveals (polynomial order,
+ * Gaussian count), and histogram-only options (RMS-vs-sigma in the legend,
+ * showing statistical errors).
+ * <p>
+ * The panel does not own a curve reference; callers drive it explicitly:
+ * {@link #reconfigure(ACurve)} shows/hides the method- and
+ * histogram-specific widgets appropriate for a curve's current drawing
+ * method, and {@link #setFit(ACurve)} additionally pushes the curve's actual
+ * setting values (fit method, polynomial order, Gaussian count) into those
+ * widgets. {@link #fitSpecific(CurveDrawingMethod)} enables/disables the
+ * polynomial-order and Gaussian-count sliders to match a given drawing
+ * method, independent of {@link #reconfigure}'s show/hide logic.
+ * </p>
+ */
 @SuppressWarnings("serial")
 public class FitEditorPanel extends JPanel {
 

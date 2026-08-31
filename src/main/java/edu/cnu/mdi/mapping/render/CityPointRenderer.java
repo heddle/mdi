@@ -78,6 +78,24 @@ public class CityPointRenderer {
     // Rendering options
     private boolean drawLabels   = true;
     private boolean useAntialias = true;
+    
+    /**
+     * Optional city-marker color override.
+     *
+     * <p>
+     * When {@code null}, the active map theme supplies the marker color.
+     * </p>
+     */
+    private Color customPointColor;
+
+    /**
+     * Optional city-label color override.
+     *
+     * <p>
+     * When {@code null}, the active map theme supplies the label color.
+     * </p>
+     */
+    private Color customLabelColor;
 
     /**
      * Minimum population for a city to be drawn.
@@ -111,8 +129,8 @@ public class CityPointRenderer {
     /** Vertical offset in pixels from the marker center to the label baseline. */
     private int labelOffsetY = -2;
 
-    /** Font used for city name labels. */
-    private Font labelFont = Fonts.tinyFont;
+    /** Font used for city name labels; one point larger than the tiny UI font. */
+    private Font labelFont = defaultLabelFont();
 
     // -------------------------------------------------------------------------
     // Construction
@@ -153,18 +171,15 @@ public class CityPointRenderer {
      */
     public void setUseAntialias(boolean useAntialias) { this.useAntialias = useAntialias; }
 
-    /**
-     * Sets the minimum population a city must have to be drawn.
+     /**
+     * Sets the minimum population required for a city to be drawn.
      *
-     * <p>Cities with {@code population >= 0 && population < minPopulation}
-     * are hidden. Cities whose population is unknown ({@code population == -1})
-     * are always shown regardless of this setting. Set to &le; 0 to disable
-     * population filtering entirely.</p>
-     *
-     * @param minPopulation minimum population (inclusive), or &le; 0 to disable
+     * @param minPopulation minimum population, or zero to disable filtering
      */
-    public void setMinPopulation(long minPopulation) { this.minPopulation = minPopulation; }
-
+    public void setMinPopulation(long minPopulation) {
+        this.minPopulation =
+                Math.max(0L, minPopulation);
+    }
     /**
      * Sets the maximum scalerank for a city to be drawn.
      *
@@ -205,10 +220,28 @@ public class CityPointRenderer {
     /**
      * Sets the font used for city name labels.
      *
-     * @param font label font; if {@code null} the default small font is used
+     * @param font label font; if {@code null} the default city-label font is used
      */
     public void setLabelFont(Font font) {
-        this.labelFont = (font != null) ? font : Fonts.smallFont;
+        this.labelFont = (font != null) ? font : defaultLabelFont();
+    }
+
+    /**
+     * Sets the city-label font size while preserving its family and style.
+     *
+     * @param size font size in points; clamped to {@code [6, 36]}
+     */
+    public void setLabelFontSize(float size) {
+        float clamped = Math.max(6.0f, Math.min(36.0f, size));
+        labelFont = labelFont.deriveFont(clamped);
+    }
+
+    /** Returns the standard city-label font, one point above {@link Fonts#tinyFont}. */
+    private static Font defaultLabelFont() {
+        Font base = (Fonts.tinyFont != null)
+                ? Fonts.tinyFont
+                : Fonts.plainFontDelta(-4);
+        return base.deriveFont(base.getSize2D() + 1.0f);
     }
 
     // -------------------------------------------------------------------------
@@ -259,10 +292,9 @@ public class CityPointRenderer {
         Font  oldFont  = g2.getFont();
 
         g2.setFont(labelFont);
-        MapTheme theme      = projection.getTheme();
-        Color    pointColor = theme.getCityColor()  != null ? theme.getCityColor()  : theme.getLabelColor();
-        Color    labelColor = theme.getLabelColor() != null ? theme.getLabelColor() : pointColor;
-
+        Color pointColor = getPointColor();
+        Color labelColor = getLabelColor();
+        
         FontMetrics    fm     = g2.getFontMetrics();
         double         r      = pointRadius;
         Ellipse2D.Double marker = new Ellipse2D.Double();
@@ -305,6 +337,36 @@ public class CityPointRenderer {
         g2.setColor(oldColor);
         g2.setFont(oldFont);
         resetAntialias(g2, oldAA);
+    }
+    
+    /**
+     * Copies user-configurable rendering settings from another city renderer.
+     *
+     * <p>
+     * City data and projection state are deliberately not copied.
+     * </p>
+     *
+     * @param source renderer whose settings should be copied
+     */
+    public void copyStyleFrom(CityPointRenderer source) {
+        if (source == null) {
+            return;
+        }
+
+        drawLabels = source.drawLabels;
+        useAntialias = source.useAntialias;
+
+        minPopulation = source.minPopulation;
+        maxScalerank = source.maxScalerank;
+        maxLabelScalerank = source.maxLabelScalerank;
+
+        pointRadius = source.pointRadius;
+        labelOffsetX = source.labelOffsetX;
+        labelOffsetY = source.labelOffsetY;
+        labelFont = source.labelFont;
+
+        customPointColor = source.customPointColor;
+        customLabelColor = source.customLabelColor;
     }
 
     // -------------------------------------------------------------------------
@@ -363,6 +425,131 @@ public class CityPointRenderer {
             }
         }
         return best;
+    }
+    
+    /**
+     * Returns whether city labels are enabled.
+     *
+     * @return {@code true} when city labels are drawn
+     */
+    public boolean isDrawLabels() {
+        return drawLabels;
+    }
+
+    /**
+     * Returns whether antialiasing is enabled.
+     *
+     * @return {@code true} when antialiasing is enabled
+     */
+    public boolean isUseAntialias() {
+        return useAntialias;
+    }
+
+    /**
+     * Returns the minimum population threshold.
+     *
+     * @return minimum population, or a nonpositive value when disabled
+     */
+    public long getMinPopulation() {
+        return minPopulation;
+    }
+
+    /**
+     * Returns the maximum city scalerank.
+     *
+     * @return maximum scalerank, or a negative value when disabled
+     */
+    public int getMaxScalerank() {
+        return maxScalerank;
+    }
+
+    /**
+     * Returns the maximum scalerank for city labels.
+     *
+     * @return maximum label scalerank, or a negative value when disabled
+     */
+    public int getMaxLabelScalerank() {
+        return maxLabelScalerank;
+    }
+
+    /**
+     * Returns the city-marker radius.
+     *
+     * @return marker radius in pixels
+     */
+    public double getPointRadius() {
+        return pointRadius;
+    }
+
+    /**
+     * Returns the city-label font.
+     *
+     * @return label font
+     */
+    public Font getLabelFont() {
+        return labelFont;
+    }
+
+    /**
+     * Returns the effective city-marker color.
+     *
+     * @return custom marker color when set; otherwise the theme marker color
+     */
+    public Color getPointColor() {
+        if (customPointColor != null) {
+            return customPointColor;
+        }
+
+        MapTheme theme = projection.getTheme();
+
+        Color color = theme.getCityColor();
+        return (color != null)
+                ? color
+                : theme.getLabelColor();
+    }
+
+    /**
+     * Sets a custom city-marker color.
+     *
+     * @param color custom color, or {@code null} to use the map theme
+     */
+    public void setPointColor(Color color) {
+        customPointColor = color;
+    }
+
+    /**
+     * Returns the effective city-label color.
+     *
+     * @return custom label color when set; otherwise the theme label color
+     */
+    public Color getLabelColor() {
+        if (customLabelColor != null) {
+            return customLabelColor;
+        }
+
+        MapTheme theme = projection.getTheme();
+
+        Color color = theme.getLabelColor();
+        return (color != null)
+                ? color
+                : getPointColor();
+    }
+
+    /**
+     * Sets a custom city-label color.
+     *
+     * @param color custom color, or {@code null} to use the map theme
+     */
+    public void setLabelColor(Color color) {
+        customLabelColor = color;
+    }
+
+    /**
+     * Restores theme-controlled city colors.
+     */
+    public void useThemeColors() {
+        customPointColor = null;
+        customLabelColor = null;
     }
 
     // -------------------------------------------------------------------------

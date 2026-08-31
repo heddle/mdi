@@ -39,15 +39,6 @@ public enum SimulationState {
 	PAUSED,
 
 	/**
-	 * The engine is switching an internal phase, mode, or sub-state.
-	 * <p>
-	 * This is optional but useful for multi-stage simulations (e.g., loading →
-	 * solving → post-processing).
-	 * </p>
-	 */
-	SWITCHING,
-
-	/**
 	 * The engine is terminating due to stop/cancel/completion.
 	 */
 	TERMINATING,

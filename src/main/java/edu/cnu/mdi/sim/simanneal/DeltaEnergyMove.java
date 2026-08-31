@@ -19,7 +19,8 @@ package edu.cnu.mdi.sim.simanneal;
  *
  * @param <S> solution type
  */
-public interface DeltaEnergyMove<S extends AnnealingSolution> extends AnnealingMove<S> {
+public interface DeltaEnergyMove<S extends AnnealingSolution<S>>
+		extends ReversibleAnnealingMove<S> {
 
     /**
      * Prepare the move for evaluation and application.

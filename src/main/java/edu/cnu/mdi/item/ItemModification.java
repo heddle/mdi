@@ -4,14 +4,28 @@ import java.awt.Point;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.util.Objects;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 
+/**
+ * Mutable state for one interactive item operation.
+ *
+ * <p>The object captures the item's original geometry and initial mouse
+ * position, then tracks the current mouse position in both local and world
+ * coordinates while a drag, resize, or rotation is in progress.</p>
+ */
 public class ItemModification {
 
+	/** The kind of interactive operation being performed. */
 	public enum ModificationType {
-		DRAG, RESIZE, ROTATE
+		/** Translate the item. */
+		DRAG,
+		/** Change the item's size. */
+		RESIZE,
+		/** Change the item's azimuth. */
+		ROTATE
 	}
 
 	// the type of modification. This must be set by the item.
@@ -51,9 +65,6 @@ public class ItemModification {
 	// used by some objects
 	private Line2D.Double startLine;
 
-	// used by some objects
-	private Path2D.Double secondaryPath;
-
 	// was shift pressed when mod began?
 	private boolean shift;
 
@@ -79,37 +90,39 @@ public class ItemModification {
 	 * @param currentMousePoint the current mouse point.
 	 * @param shift             was shift pressed when modification began
 	 * @param control           was control pressed when modification began
+	 * @throws NullPointerException if {@code item} or {@code container} is
+	 *                              {@code null}
 	 */
 	public ItemModification(AItem item, IContainer container, Point startMousePoint, Point currentMousePoint,
 			boolean shift, boolean control) {
 		super();
-		this.item = item;
-		this.container = container;
+		this.item = Objects.requireNonNull(item, "item");
+		this.container = Objects.requireNonNull(container, "container");
 		this.startMousePoint = (startMousePoint == null) ? new Point() : new Point(startMousePoint);
 		this.currentMousePoint = (currentMousePoint == null) ? new Point(this.startMousePoint)
 				: new Point(currentMousePoint);
 
 		this.shift = shift;
 		this.control = control;
-		Path2D.Double p = item.getPath();
+		Path2D.Double p = this.item.getPath();
 		this.startPath = (p == null) ? null : (Path2D.Double) p.clone();
 
-		Line2D.Double l = item.getLine();
+		Line2D.Double l = this.item.getLine();
 		this.startLine = (l == null) ? null : (Line2D.Double) l.clone();
 
 		startWorldPoint = new Point2D.Double();
 		currentWorldPoint = new Point2D.Double();
-		container.localToWorld(startMousePoint, startWorldPoint);
-		container.localToWorld(currentMousePoint, currentWorldPoint);
+		this.container.localToWorld(this.startMousePoint, startWorldPoint);
+		this.container.localToWorld(this.currentMousePoint, currentWorldPoint);
 
-		Point2D.Double focus = item.getFocus();
+		Point2D.Double focus = this.item.getFocus();
 		if (focus != null) {
 			setStartFocus(new Point2D.Double(focus.x, focus.y));
 		}
 
-		setStartFocusPoint(item.getFocusPoint(container));
+		setStartFocusPoint(this.item.getFocusPoint(this.container));
 
-		startAzimuth = item.getAzimuth();
+		startAzimuth = this.item.getAzimuth();
 	}
 
 	/**
@@ -249,13 +262,6 @@ public class ItemModification {
 	 */
 	public Path2D.Double getStartPath() {
 		return startPath;
-	}
-
-	/**
-	 * @return the original secondary path
-	 */
-	public Path2D.Double getSecondaryPath() {
-		return secondaryPath;
 	}
 
 	/**

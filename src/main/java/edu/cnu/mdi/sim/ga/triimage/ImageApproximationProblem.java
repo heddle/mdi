@@ -17,8 +17,8 @@ import edu.cnu.mdi.sim.ga.SimpleGAPopulation;
  *
  * <h2>Fitness</h2>
  * <p>
- * Fitness is the negated mean squared error (MSE) between the rendered
- * chromosome and the target image, computed channel-wise over the RGB channels:
+ * Color fitness is the negated mean squared error (MSE) between the rendered
+ * chromosome and target RGB channels:
  * </p>
  * 
  * <pre>
@@ -31,6 +31,9 @@ import edu.cnu.mdi.sim.ga.SimpleGAPopulation;
  * alpha channel is excluded from the error metric — it affects appearance
  * through blending but is not directly penalized.
  * </p>
+ * <p>{@link ImageFitnessMode#LINE_AWARE} blends 70% of this color error with
+ * 30% normalized Sobel luminance-edge error. This rewards candidates whose
+ * major contours align with the target even before their colors are exact.</p>
  *
  * <h2>Performance</h2>
  * <p>
@@ -47,9 +50,9 @@ import edu.cnu.mdi.sim.ga.SimpleGAPopulation;
  * array used during each {@code fitness()} call are allocated once per thread
  * and reused for every subsequent call on that thread. This eliminates
  * per-evaluation heap allocation and GC pressure. The buffers are stored in
- * {@link ThreadLocal} fields so the design is also safe for future parallel
- * evaluation (see {@code GAConfig.parallelEvaluation}). Typical speedup: 2–3×
- * over per-call allocation.</li>
+ * {@link ThreadLocal} fields, keeping this fitness implementation safe if a
+ * caller evaluates individuals concurrently. Typical speedup: 2–3× over
+ * per-call allocation.</li>
  * <li><b>Integer MSE accumulation.</b> The inner pixel loop accumulates squared
  * channel differences as {@code long} integers and divides by {@code 255²}
  * exactly once after the loop, avoiding per-pixel floating-point division.
@@ -120,6 +123,8 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 	 */
 	private static final ThreadLocal<int[]> PIXEL_BUFFER = ThreadLocal
 			.withInitial(() -> new int[FITNESS_W * FITNESS_H]);
+	private static final ThreadLocal<int[]> LUMA_BUFFER = ThreadLocal
+			.withInitial(() -> new int[FITNESS_W * FITNESS_H]);
 
 	// -------------------------------------------------------------------------
 	// Fields
@@ -130,6 +135,8 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 	 * Packed ARGB format, row-major. Computed once at construction.
 	 */
 	private final int[] targetPixels;
+	private final int[] targetLuminance;
+	private final ImageFitnessMode fitnessMode;
 
 	/**
 	 * Original target image width, used by the view for display rendering.
@@ -146,6 +153,9 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 	 * produced by this problem have this chromosome length.
 	 */
 	private final int numTriangles;
+
+	/** Average target color used as the chromosome background. */
+	private final int backgroundRgb;
 
 	// -------------------------------------------------------------------------
 	// Constructor
@@ -169,6 +179,18 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 	 * @throws IllegalArgumentException if {@code numTriangles} is not positive
 	 */
 	public ImageApproximationProblem(BufferedImage target, int numTriangles) {
+		this(target, numTriangles, ImageFitnessMode.COLOR_MSE);
+	}
+
+	/**
+	 * Construct a problem with an explicit fitness metric.
+	 *
+	 * @param target target image
+	 * @param numTriangles number of triangles per chromosome
+	 * @param fitnessMode error metric to minimize
+	 */
+	public ImageApproximationProblem(BufferedImage target, int numTriangles,
+			ImageFitnessMode fitnessMode) {
 		if (target == null) {
 			throw new NullPointerException("target must not be null");
 		}
@@ -179,6 +201,7 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 		this.displayWidth = target.getWidth();
 		this.displayHeight = target.getHeight();
 		this.numTriangles = numTriangles;
+		this.fitnessMode = java.util.Objects.requireNonNull(fitnessMode, "fitnessMode");
 
 		// Scale the target down to fitness resolution once.
 		// All subsequent fitness evaluations compare against this scaled version.
@@ -190,6 +213,8 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 		g2.dispose();
 
 		this.targetPixels = scaled.getRGB(0, 0, FITNESS_W, FITNESS_H, null, 0, FITNESS_W);
+		this.targetLuminance = luminance(targetPixels, new int[targetPixels.length]);
+		this.backgroundRgb = averageRgb(targetPixels);
 	}
 
 	// -------------------------------------------------------------------------
@@ -197,8 +222,8 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 	// -------------------------------------------------------------------------
 
 	/**
-	 * Compute the fitness of a chromosome as the negated mean squared error between
-	 * its rendered image and the target.
+	 * Compute fitness as the negated configured error between the rendered image
+	 * and target.
 	 *
 	 * <p>
 	 * The chromosome is rendered into a thread-local {@link BufferedImage} at
@@ -218,7 +243,12 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 	 *
 	 * <p>
 	 * This method is safe to call from multiple threads simultaneously because it
-	 * uses only {@link ThreadLocal} buffers and reads immutable fields.
+	 * uses only {@link ThreadLocal} buffers, and its one shared mutable field
+	 * ({@code maxSpanFraction}) is {@code volatile} for safe cross-thread
+	 * visibility. In the current implementation nothing ever writes
+	 * {@code maxSpanFraction} after construction (it stays at its initial
+	 * unconstrained value of {@code 1.0}), so it behaves as an effectively
+	 * immutable configuration value today.
 	 * </p>
 	 *
 	 * @param c the chromosome to evaluate (non-null)
@@ -245,8 +275,57 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 		}
 
 		// Normalize: max possible mseInt = 3 * 255^2 * pixelCount
-		double mse = mseInt / (targetPixels.length * 3.0 * 255.0 * 255.0);
-		return -mse;
+		double colorMse = mseInt / (targetPixels.length * 3.0 * 255.0 * 255.0);
+		if (fitnessMode == ImageFitnessMode.COLOR_MSE) {
+			return -colorMse;
+		}
+		int[] renderedLuminance = luminance(pixels, LUMA_BUFFER.get());
+		double edgeMse = edgeMse(targetLuminance, renderedLuminance);
+		return -(0.70 * colorMse + 0.30 * edgeMse);
+	}
+
+	private static int[] luminance(int[] pixels, int[] result) {
+		for (int index = 0; index < pixels.length; index++) {
+			int pixel = pixels[index];
+			int red = (pixel >>> 16) & 0xFF;
+			int green = (pixel >>> 8) & 0xFF;
+			int blue = pixel & 0xFF;
+			result[index] = (77 * red + 150 * green + 29 * blue) >>> 8;
+		}
+		return result;
+	}
+
+	private static double edgeMse(int[] target, int[] rendered) {
+		long squaredError = 0;
+		int samples = 0;
+		for (int y = 1; y < FITNESS_H - 1; y++) {
+			for (int x = 1; x < FITNESS_W - 1; x++) {
+				int targetEdge = sobelMagnitude(target, x, y);
+				int renderedEdge = sobelMagnitude(rendered, x, y);
+				int difference = targetEdge - renderedEdge;
+				squaredError += (long) difference * difference;
+				samples++;
+			}
+		}
+		return squaredError / (samples * 1020.0 * 1020.0);
+	}
+
+	private static int sobelMagnitude(int[] luminance, int x, int y) {
+		int rowAbove = (y - 1) * FITNESS_W;
+		int row = y * FITNESS_W;
+		int rowBelow = (y + 1) * FITNESS_W;
+		int gx = -luminance[rowAbove + x - 1] + luminance[rowAbove + x + 1]
+				- 2 * luminance[row + x - 1] + 2 * luminance[row + x + 1]
+				- luminance[rowBelow + x - 1] + luminance[rowBelow + x + 1];
+		int gy = -luminance[rowAbove + x - 1] - 2 * luminance[rowAbove + x]
+				- luminance[rowAbove + x + 1] + luminance[rowBelow + x - 1]
+				+ 2 * luminance[rowBelow + x] + luminance[rowBelow + x + 1];
+		return Math.min(1020, Math.abs(gx) + Math.abs(gy));
+	}
+
+	/** @return configured fitness metric */
+	public ImageFitnessMode getFitnessMode() {
+		return fitnessMode;
 	}
 
 	/**
@@ -258,7 +337,7 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 	 */
 	@Override
 	public PolygonChromosome randomIndividual(Random rng) {
-		PolygonChromosome c = new PolygonChromosome(numTriangles);
+		PolygonChromosome c = new PolygonChromosome(numTriangles, backgroundRgb);
 		for (int i = 0; i < c.genes.length; i++) {
 			c.genes[i] = rng.nextDouble();
 		}
@@ -286,6 +365,22 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 			pop.add(randomIndividual(rng));
 		}
 		return SimpleGAPopulation.of(pop);
+	}
+
+	private static int averageRgb(int[] pixels) {
+		long red = 0;
+		long green = 0;
+		long blue = 0;
+		for (int pixel : pixels) {
+			red += (pixel >>> 16) & 0xFF;
+			green += (pixel >>> 8) & 0xFF;
+			blue += pixel & 0xFF;
+		}
+		int count = pixels.length;
+		return 0xFF000000
+				| ((int) (red / count) << 16)
+				| ((int) (green / count) << 8)
+				| (int) (blue / count);
 	}
 
 	// -------------------------------------------------------------------------

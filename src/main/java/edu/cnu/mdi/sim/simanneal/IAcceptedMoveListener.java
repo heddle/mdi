@@ -2,6 +2,11 @@ package edu.cnu.mdi.sim.simanneal;
 
 import java.util.EventListener;
 
+/**
+ * Receives sampled, batched annealing diagnostics on the Swing EDT. Accepted
+ * moves are adaptively sampled during long runs to bound UI work; new-best
+ * notifications are retained unless the bounded delivery queue is saturated.
+ */
 public interface IAcceptedMoveListener extends EventListener {
 
 	/**

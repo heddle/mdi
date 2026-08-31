@@ -1,7 +1,9 @@
 package edu.cnu.mdi.ui.colors;
 
 import java.awt.Color;
+import java.util.Objects;
 
+/** Perceptually useful color scales with interpolation support. */
 public enum ScientificColorMap {
 
     // --- VIRIDIS: The Standard ---
@@ -86,6 +88,16 @@ public enum ScientificColorMap {
 
     /** Utility interpolation (shared by UI components). */
     public static Color interpolate(Color[] scale, double value01) {
+		Objects.requireNonNull(scale, "scale");
+		if (scale.length == 0) {
+			throw new IllegalArgumentException("scale must contain at least one color");
+		}
+		if (!Double.isFinite(value01)) {
+			throw new IllegalArgumentException("value01 must be finite: " + value01);
+		}
+		for (Color color : scale) {
+			Objects.requireNonNull(color, "scale contains null color");
+		}
         double v = Math.max(0.0, Math.min(1.0, value01));
         double pos = v * (scale.length - 1);
         int index = (int) pos;

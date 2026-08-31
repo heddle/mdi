@@ -218,8 +218,15 @@ public class CreationSupport {
 	}
 
 
-	// Apply default configuration to the given item.
-	private static void defaultConfigureItem(AItem item) {
+	/**
+	 * Configure the given item with the default interaction properties used
+	 * by every {@code createXxxItem} factory in this class: right-clickable,
+	 * draggable, selectable, resizable, rotatable, deletable, style-editable,
+	 * and unlocked.
+	 *
+	 * @param item the item to configure
+	 */
+	public static void defaultConfigureItem(AItem item) {
 		item.setRightClickable(true);
 		item.setDraggable(true);
 		item.setSelectable(true);

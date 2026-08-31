@@ -71,21 +71,16 @@ public final class ProjectionFactory {
      *       (latitude, radians).</li>
      *   <li>If {@code center} is {@code null} a projection-specific default
      *       is used (see individual cases below).</li>
-     *   <li>Projections that do not have a configurable center (currently
-     *       none, but Mercator and Mollweide only use the longitude component)
-     *       ignore the latitude component.</li>
+     *   <li>Mercator and Mollweide use only the longitude component of
+     *       {@code center}; the latitude component is ignored.</li>
      * </ul>
      *
      * <p>Default centers</p>
      * <ul>
-     *   <li><b>MERCATOR</b> — central longitude fixed at -70° by the
-     *       {@link MercatorProjection} constructor; the {@code center}
-     *       argument is ignored because recenter support is handled via
-     *       {@link MercatorProjection#setCentralLongitude(double)}.</li>
+     *   <li><b>MERCATOR</b> — defaults to a central longitude of -70°.</li>
      *   <li><b>ORTHOGRAPHIC</b> — defaults to (λ = 0°, φ = 50°), a
      *       balanced mid-latitude northern hemisphere view.</li>
-     *   <li><b>MOLLWEIDE</b> — central longitude fixed at -70° by the
-     *       constructor; the {@code center} argument is ignored.</li>
+     *   <li><b>MOLLWEIDE</b> — defaults to a central longitude of -70°.</li>
      *   <li><b>LAMBERT_EQUAL_AREA</b> — defaults to (λ = 0°, φ = 0°),
      *       i.e., centered on the intersection of the equator and prime
      *       meridian.</li>
@@ -106,7 +101,13 @@ public final class ProjectionFactory {
 
         return switch (type) {
 
-            case MERCATOR -> new MercatorProjection(theme);
+            case MERCATOR -> {
+                MercatorProjection projection = new MercatorProjection(theme);
+                if (center != null) {
+                    projection.setCentralLongitude(center.x);
+                }
+                yield projection;
+            }
 
             case ORTHOGRAPHIC -> {
                 // Default: mid-latitude northern-hemisphere view.
@@ -117,7 +118,13 @@ public final class ProjectionFactory {
                 yield new OrthographicProjection(lambda0, phi0, theme);
             }
 
-            case MOLLWEIDE -> new MollweideProjection(theme);
+            case MOLLWEIDE -> {
+                MollweideProjection projection = new MollweideProjection(theme);
+                if (center != null) {
+                    projection.setCentralLongitude(center.x);
+                }
+                yield projection;
+            }
 
             case LAMBERT_EQUAL_AREA -> {
                 double lambda0 = (center != null) ? center.x : 0.0;

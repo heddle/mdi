@@ -2,6 +2,8 @@ package edu.cnu.mdi.json;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.geom.Rectangle2D;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -295,8 +297,8 @@ public class JsonRawPane extends TextPaneScrollPane {
             return;
         }
 
-        String lowerDoc   = docText.toLowerCase();
-        String lowerQuery = query.toLowerCase();
+		String lowerDoc   = docText.toLowerCase(Locale.ROOT);
+		String lowerQuery = query.toLowerCase(Locale.ROOT);
         queryLength = query.length();
 
         Highlighter highlighter = textPane.getHighlighter();
@@ -394,8 +396,10 @@ public class JsonRawPane extends TextPaneScrollPane {
 
             // Scroll to make the match visible.
             textPane.setCaretPosition(off);
-            textPane.scrollRectToVisible(
-                    textPane.modelToView2D(off).getBounds());
+			Rectangle2D view = textPane.modelToView2D(off);
+			if (view != null) {
+				textPane.scrollRectToVisible(view.getBounds());
+			}
         } catch (BadLocationException ex) {
             // ignore
         }

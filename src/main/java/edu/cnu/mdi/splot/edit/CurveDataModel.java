@@ -1,11 +1,17 @@
 package edu.cnu.mdi.splot.edit;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.table.DefaultTableModel;
 
 import edu.cnu.mdi.splot.pdata.ACurve;
 
+/**
+ * Table model used by the curve editor to expose curve visibility and names.
+ * The model owns its row list but edits the referenced curves directly.
+ */
 @SuppressWarnings("serial")
 public class CurveDataModel extends DefaultTableModel {
 
@@ -32,7 +38,8 @@ public class CurveDataModel extends DefaultTableModel {
 	 * Constructor
 	 */
 	public CurveDataModel() {
-		super(colNames, 2);
+		super(colNames, 0);
+		_data = new ArrayList<>();
 	}
 
 	/**
@@ -88,7 +95,7 @@ public class CurveDataModel extends DefaultTableModel {
 			curve.setName((String) value);
 			break;
 		}
-
+		fireTableCellUpdated(row, col);
 	}
 
 	/**
@@ -124,7 +131,9 @@ public class CurveDataModel extends DefaultTableModel {
 	 */
 	public synchronized void add(ACurve curve) {
 		if (curve != null) {
+			int row = _data.size();
 			_data.add(curve);
+			fireTableRowsInserted(row, row);
 		}
 	}
 
@@ -140,7 +149,11 @@ public class CurveDataModel extends DefaultTableModel {
 	 */
 	public synchronized void remove(ACurve curve) {
 		if (curve != null) {
-			_data.remove(curve);
+			int row = _data.indexOf(curve);
+			if (row >= 0) {
+				_data.remove(row);
+				fireTableRowsDeleted(row, row);
+			}
 		}
 	}
 
@@ -148,8 +161,10 @@ public class CurveDataModel extends DefaultTableModel {
 	 * Clear all the data
 	 */
 	public synchronized void clear() {
-		if (_data != null) {
+		if (!_data.isEmpty()) {
+			int lastRow = _data.size() - 1;
 			_data.clear();
+			fireTableRowsDeleted(0, lastRow);
 		}
 	}
 
@@ -157,14 +172,16 @@ public class CurveDataModel extends DefaultTableModel {
 	 * @param data the data to set
 	 */
 	public synchronized void setData(List<ACurve> data) {
-		_data = data;
+		_data = new ArrayList<>(data == null ? Collections.emptyList() : data);
+		fireTableDataChanged();
 	}
 
 	/**
-	 * Get the curve (DataColumn) in the model at the given row.
+	 * Get the curve ({@link ACurve}) in the model at the given row.
 	 *
 	 * @param row the zero based row
-	 * @return the curve corresponding to the row.
+	 * @return the curve corresponding to the row, or {@code null} if
+	 *         {@code row} is out of range
 	 */
 	public ACurve getCurveAtRow(int row) {
 		if ((_data == null) || (row < 0) || (row >= _data.size())) {

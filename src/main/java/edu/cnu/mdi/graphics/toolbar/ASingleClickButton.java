@@ -14,6 +14,12 @@ import javax.swing.JToggleButton;
  * class implements MouseListener to handle mouse events on the canvas, and
  * provides a framework for subclasses to define specific actions when the button
  * is clicked.
+ * <p>
+ * The action fires from {@link #mousePressed}, not from AWT's
+ * {@code mouseClicked} (which this class leaves as a no-op) — so it responds
+ * immediately on press rather than waiting for a matching release inside the
+ * component's bounds.
+ * </p>
  *
  * @author heddle
  *

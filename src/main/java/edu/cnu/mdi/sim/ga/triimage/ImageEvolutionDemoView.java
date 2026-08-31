@@ -1,23 +1,39 @@
 package edu.cnu.mdi.sim.ga.triimage;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.prefs.Preferences;
 
 import javax.imageio.ImageIO;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.Box;
+import javax.swing.JLabel;
 
 import edu.cnu.mdi.sim.SimulationContext;
 import edu.cnu.mdi.sim.SimulationEngine;
 import edu.cnu.mdi.sim.SimulationEngineConfig;
+import edu.cnu.mdi.sim.SimulationState;
+import edu.cnu.mdi.dialog.FileDialogs;
+import edu.cnu.mdi.dialog.FileType;
 import edu.cnu.mdi.sim.ga.GAConfig;
+import edu.cnu.mdi.sim.ga.GAFeedback;
 import edu.cnu.mdi.sim.ga.GAOperators;
 import edu.cnu.mdi.sim.ga.GAState;
 import edu.cnu.mdi.sim.ga.GeneticAlgorithmSimulation;
 import edu.cnu.mdi.sim.ui.SimulationView;
+import edu.cnu.mdi.io.RecentFiles;
+import edu.cnu.mdi.io.RecentFilesMenu;
+import edu.cnu.mdi.transfer.ImageFilters;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.view.AbstractViewInfo;
+import edu.cnu.mdi.view.BaseView;
 
 /**
  * MDI {@link SimulationView} that evolves a population of semi-transparent
@@ -81,13 +97,15 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 	 * Larger than fitness resolution but not full-screen, to stay fast.
 	 */
 	private static final int DISPLAY_SIZE = 200;
+	private static final FileType IMAGE_FILE_TYPE = FileType.of(
+			"Images", ImageIO.getReaderFileSuffixes());
 
 	// -------------------------------------------------------------------------
 	// Fields
 	// -------------------------------------------------------------------------
 
 	/** The target image loaded at construction. Never null after construction. */
-	private final BufferedImage targetImage;
+	private BufferedImage targetImage;
 
 	/** The custom drawing panel (CENTER component). */
 	private final ImageEvolutionPanel evolutionPanel;
@@ -97,6 +115,13 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 	
 	/** Typed reference to the diagnostics panel for pushing GA state updates. */
 	private GADiagnosticPlotPanel diagnosticPlots;
+	private int requestedTriangles = DEFAULT_NUM_TRIANGLES;
+	private int requestedPopulation = DEFAULT_POPULATION_SIZE;
+	private ImageFitnessMode requestedFitnessMode = ImageFitnessMode.LINE_AWARE;
+	private RecentFiles recentImages;
+	private RecentFilesMenu recentImagesHelper;
+	private JMenu recentImagesMenu;
+	private JMenuItem openImageItem;
 	// -------------------------------------------------------------------------
 	// Constructor
 	// -------------------------------------------------------------------------
@@ -129,6 +154,16 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 		// panel so we have full control over the three-region layout.
 		evolutionPanel = new ImageEvolutionPanel(targetImage);
 		installCenterPanel(evolutionPanel);
+		enableFileDrop(ImageFilters.isActualImage);
+		// The custom panel fills the left side of the diagnostics split pane. Give
+		// it the same framework handler so drops are accepted over the images, not
+		// just over split-pane chrome.
+		if (diagnosticsSplitPane != null) {
+			evolutionPanel.setTransferHandler(diagnosticsSplitPane.getTransferHandler());
+		}
+		installImageMenu();
+		installDropHint();
+		updateImageActions(getSimulationState());
 
 		pack();
 		startSimulation();
@@ -180,16 +215,30 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 		// which is -mse.
 		evolutionPanel.updateBest(bestImg, gen, state.bestFitness());
 
-		// Population grid — update every 5th refresh only (every 250 generations)
-		if (gen % 250 == 0) {
-			evolutionPanel.updatePopulation(buildThumbnails(s));
-		}
+		// The engine already throttles refresh delivery. Update the population on
+		// every delivered callback rather than testing the observed generation for
+		// an exact multiple: the GA can advance between requestRefresh() and this EDT
+		// callback, so an equality/modulo test can miss every intended update.
+		evolutionPanel.updatePopulation(buildThumbnails(s));
 		
 		// Update diagnostic plots with the new GA state. This will add a new point to the MSE vs. generation 
 		// plot and trigger a repaint. We do this every refresh so the plot updates smoothly, but it could 
 		// be throttled if performance is an issue.
 		if (diagnosticPlots != null) {
 		    diagnosticPlots.update(state);
+		}
+	}
+
+	@Override
+	protected void onSimulationStateChange(SimulationContext ctx,
+			SimulationState from, SimulationState to, String reason) {
+		updateImageActions(to);
+	}
+
+	@Override
+	public void filesDropped(List<File> files) {
+		if (files != null && !files.isEmpty()) {
+			openImageFile(files.get(0));
 		}
 	}
 		
@@ -206,18 +255,26 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 	 * {@inheritDoc}
 	 * <p>
 	 * Stops the current engine, builds a new simulation with the supplied
-	 * parameters, swaps the engine, and restarts. The target image is reloaded from
-	 * the default resource; a future version should accept a user-chosen image.
+	 * parameters, swaps the engine, and restarts against the current target image.
 	 * </p>
 	 */
 	@Override
-	public void requestReset(int numTriangles, int populationSize) {
+	public void requestReset(int numTriangles, int populationSize,
+			ImageFitnessMode fitnessMode) {
+		requestedTriangles = numTriangles;
+		requestedPopulation = populationSize;
+		requestedFitnessMode = java.util.Objects.requireNonNull(fitnessMode, "fitnessMode");
+		resetSimulation(targetImage, numTriangles, populationSize, fitnessMode);
+	}
+
+	private void resetSimulation(BufferedImage target, int numTriangles,
+			int populationSize, ImageFitnessMode fitnessMode) {
 	    requestEngineReset(
-	        () -> createSimulation(loadDefaultTarget(), numTriangles, populationSize),
+	        () -> createSimulation(target, numTriangles, populationSize, fitnessMode),
 
 	        (SimulationEngine newEngine) -> {
 	            this.sim = castSim(newEngine);
-	            this.sim.setEngine(newEngine);
+	            this.sim.setFeedback(GAFeedback.forEngine(newEngine));
 	            // Clear plots here — after the swap, on the EDT,
 	            // when the old engine is fully stopped
 	            if (diagnosticPlots != null) {
@@ -228,7 +285,88 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 	        true,
 	        true
 	    );
-	    // Remove the clearAllPlots() call that was here
+	}
+
+	private void installDropHint() {
+		if (getToolBar() == null) {
+			return;
+		}
+		getToolBar().add(Box.createHorizontalGlue());
+		JLabel hint = new JLabel("Drop an image here while paused or stopped  ");
+		hint.setToolTipText("You can also use Image > Open Image…");
+		getToolBar().add(hint);
+	}
+
+	private void installImageMenu() {
+		JMenuBar menuBar = getJMenuBar();
+		if (menuBar == null) {
+			menuBar = new JMenuBar();
+			setJMenuBar(menuBar);
+		}
+		Preferences preferences = Preferences.userNodeForPackage(getClass())
+				.node("imageEvolution");
+		recentImages = new RecentFiles(preferences, 10, "recentTargetImage");
+		recentImagesHelper = new RecentFilesMenu(recentImages,
+				this::openImageFile, "images");
+
+		JMenu imageMenu = new JMenu("Image");
+		openImageItem = new JMenuItem("Open Image…");
+		openImageItem.addActionListener(event -> chooseImage());
+		imageMenu.add(openImageItem);
+		recentImagesMenu = new JMenu("Recent Images");
+		recentImagesHelper.rebuild(recentImagesMenu);
+		imageMenu.add(recentImagesMenu);
+		BaseView.applyFocusFix(imageMenu, this);
+		menuBar.add(imageMenu);
+	}
+
+	private void chooseImage() {
+		FileDialogs.openFile(this, "image-evolution-target", "Open Target Image",
+				IMAGE_FILE_TYPE).ifPresent(path -> openImageFile(path.toFile()));
+	}
+
+	private void openImageFile(File file) {
+		if (!isImageChangeAllowed(getSimulationState())) {
+			JOptionPane.showMessageDialog(this,
+					"Pause or stop the simulation before changing the target image.",
+					"Image Evolution", JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+		try {
+			BufferedImage image = ImageIO.read(file);
+			if (image == null) {
+				throw new IOException("The selected file is not a supported image.");
+			}
+			targetImage = image;
+			evolutionPanel.resetForTarget(image);
+			recentImages.add(file);
+			recentImagesHelper.rebuild(recentImagesMenu);
+			resetSimulation(image, requestedTriangles, requestedPopulation,
+					requestedFitnessMode);
+		} catch (IOException exception) {
+			recentImages.remove(file);
+			recentImagesHelper.rebuild(recentImagesMenu);
+			JOptionPane.showMessageDialog(this,
+					"Could not open image:\n" + exception.getMessage(),
+					"Open Image Failed", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	private void updateImageActions(SimulationState state) {
+		boolean allowed = isImageChangeAllowed(state);
+		if (openImageItem != null) {
+			openImageItem.setEnabled(allowed);
+		}
+		if (recentImagesMenu != null) {
+			recentImagesMenu.setEnabled(allowed);
+		}
+	}
+
+	static boolean isImageChangeAllowed(SimulationState state) {
+		return state == SimulationState.READY
+				|| state == SimulationState.PAUSED
+				|| state == SimulationState.TERMINATED
+				|| state == SimulationState.FAILED;
 	}
 	// -------------------------------------------------------------------------
 	// Private helpers
@@ -294,41 +432,45 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 	 */
 	private static GeneticAlgorithmSimulation<PolygonChromosome> createSimulation(BufferedImage target,
 			int numTriangles, int populationSize) {
+		return createSimulation(target, numTriangles, populationSize,
+				ImageFitnessMode.LINE_AWARE);
+	}
 
-		ImageApproximationProblem problem = new ImageApproximationProblem(target, numTriangles);
+	private static GeneticAlgorithmSimulation<PolygonChromosome> createSimulation(BufferedImage target,
+			int numTriangles, int populationSize, ImageFitnessMode fitnessMode) {
+
+		ImageApproximationProblem problem = new ImageApproximationProblem(
+				target, numTriangles, fitnessMode);
 
 		GAConfig cfg = new GAConfig(populationSize, 
 				100_000, // maxGenerations — effectively unlimited for demo purposes
-				0.4, // crossoverRate
-				0.025, // mutationRate — now actually used
-				5, // eliteCount
-				50, // progressEveryGens — update progress every 50 generations
-				40, // refreshEveryGens — update display every 10 generations (every 300ms at 30Hz refresh)
+				0.70, // crossoverRate
+				0.035, // per-triangle mutation rate
+				25, // progressEveryGens — update progress every 25 generations
+				10, // refreshEveryGens — update population every 10 generations
 				1234567L); // randomSeed — set to 0 for true randomness; non-zero for reproducibility
 
-		GAOperators<PolygonChromosome> operators = new GAOperators<>(new TournamentSelection<>(2), // was 5
-				new UniformBlendCrossover(), new GaussianMutation(cfg.mutationRate(), 0.08, 0.15), // rate from cfg,
-																									// sigma=0.08, 10%
-																									// resets
-				new ElitistReplacement<>(cfg.eliteCount()));
+		GAOperators<PolygonChromosome> operators = new GAOperators<>(new TournamentSelection<>(2),
+				new UniformBlendCrossover(), new GaussianMutation(cfg.mutationRate(), 0.06, 0.08),
+				new ElitistReplacement<>(2));
 
 		GeneticAlgorithmSimulation<PolygonChromosome> sim = new GeneticAlgorithmSimulation<>(problem, cfg, operators);
 
 		// Engine reference is injected after construction in the view constructor.
 		// The simulation runs fine without it; it just won't post UI hints until
-		// setEngine() is called.
+		// a feedback adapter is attached.
 		return sim;
 	}
 
 	/**
-	 * Cast the simulation held by {@code engine} to the concrete type. Also injects
-	 * the engine back into the simulation so it can post progress/refresh hints.
+	 * Cast the simulation held by {@code engine} to the concrete type and attach a
+	 * feedback adapter for progress and refresh hints.
 	 */
 	@SuppressWarnings("unchecked")
 	private GeneticAlgorithmSimulation<PolygonChromosome> castSim(SimulationEngine engine) {
 		GeneticAlgorithmSimulation<PolygonChromosome> s = (GeneticAlgorithmSimulation<PolygonChromosome>) engine
 				.getSimulation();
-		s.setEngine(engine);
+		s.setFeedback(GAFeedback.forEngine(engine));
 		return s;
 	}
 

@@ -13,11 +13,14 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.mapping.projection.IMapProjection;
+import edu.cnu.mdi.mapping.projection.MercatorProjection;
 import edu.cnu.mdi.mapping.render.IPickable;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
@@ -61,18 +64,21 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  *       {@value #POINT_PICK_TOLERANCE_PX} pixels.</li>
  * </ul>
  *
- * <h2>Tooltip text</h2>
- * <p>On a hit, {@link #pick} assembles the tooltip from
- * {@link ShapeFeatureStyle#getTooltipFields()}. If that list is empty it
+ * <h2>Feedback text</h2>
+ * <p>On a hit, {@link #pick} assembles feedback from
+ * {@link ShapeFeatureStyle#getFeedbackFields()}. If that list is empty it
  * falls back to {@link ShapeFeatureStyle#getLabelField()}. Multiple field
- * values are joined with two spaces. Fields absent from the feature are
- * silently omitted. Returns {@code null} if no tooltip configuration is
+ * values are rendered one per line as {@code FIELD: value}. The complete
+ * block uses the light-green feedback style. Fields absent from the feature
+ * are silently omitted. Returns {@code null} if no feedback configuration is
  * present.</p>
  *
  * <h2>Seam splitting</h2>
- * <p>Features that cross the antimeridian seam of cylindrical projections
- * are split into two path halves. Both halves are cached and tested during
- * picking.</p>
+ * <p>Mercator polygon rings are unwrapped and clipped to the visible
+ * longitude/latitude domain before projection. This inserts exact vertices at
+ * both the longitude seam and the polar latitude limits, preventing path
+ * closure from drawing map-wide chords. Other seam-bearing geometries are
+ * split into path halves. All resulting paths participate in picking.</p>
  *
  * <h2>Graphics state</h2>
  * <p>Color, stroke, font, and antialiasing hint are saved before rendering
@@ -82,6 +88,9 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  * <p>Not thread-safe; all calls must be made on the Event Dispatch Thread.</p>
  */
 public class ShapeFeatureRenderer implements IPickable {
+
+    /** FeedbackPane style prefix applied to shapefile hit details. */
+    private static final String FEEDBACK_STYLE_PREFIX = "$light green$";
 
     // -------------------------------------------------------------------------
     // Pick tolerance constants
@@ -121,12 +130,6 @@ public class ShapeFeatureRenderer implements IPickable {
      */
     private final List<PickCache> pickCache = new ArrayList<>();
 
-    /**
-     * Whether this layer is currently visible. When {@code false},
-     * {@link #render} is a no-op and {@link #pick} returns {@code null}.
-     * Controlled by the {@link ShapefileMenu} checkbox for this layer.
-     */
-    private boolean visible = true;
 
     // -------------------------------------------------------------------------
     // Construction
@@ -165,6 +168,23 @@ public class ShapeFeatureRenderer implements IPickable {
     public ShapeFeatureStyle getStyle() { return style; }
 
     /**
+     * Returns all DBF property names present in this renderer's features.
+     *
+     * <p>Names retain their original spelling and DBF column order. A union is
+     * used so fields are still discovered when an unusual feature has a
+     * partial attribute map.</p>
+     *
+     * @return immutable ordered property-name list; never {@code null}
+     */
+    public List<String> getAvailablePropertyNames() {
+        LinkedHashSet<String> names = new LinkedHashSet<>();
+        for (ShapeFeature feature : features) {
+            names.addAll(feature.getProperties().keySet());
+        }
+        return Collections.unmodifiableList(new ArrayList<>(names));
+    }
+
+    /**
      * Sets the font used for on-map feature labels.
      *
      * @param font label font; if {@code null} the default small font is used
@@ -173,27 +193,6 @@ public class ShapeFeatureRenderer implements IPickable {
         this.labelFont = (font != null) ? font : Fonts.smallFont;
     }
 
-    /**
-     * Sets whether this layer is rendered and participates in picking.
-     *
-     * <p>Hidden layers ({@code visible = false}) skip all rendering and
-     * return {@code null} from {@link #pick}. The layer remains in the
-     * MapView2D extra-layer list so it can be re-shown instantly
-     * without reloading the data.</p>
-     *
-     * @param visible {@code true} to show this layer; {@code false} to hide it
-     */
-    public void setVisible(boolean visible) {
-        this.visible = visible;
-        if (!visible) pickCache.clear(); // stale cache not needed while hidden
-    }
-
-    /**
-     * Returns whether this layer is currently visible.
-     *
-     * @return {@code true} if the layer will be rendered and picked
-     */
-    public boolean isVisible() { return visible; }
 
     /**
      * Updates the projection used for coordinate transforms and visibility
@@ -228,8 +227,6 @@ public class ShapeFeatureRenderer implements IPickable {
     public void render(Graphics2D g2, IContainer container) {
         Objects.requireNonNull(g2,        "g2");
         Objects.requireNonNull(container, "container");
-
-        if (!visible) return; // layer is hidden
 
         Component comp = container.getComponent();
         if (comp.getWidth() <= 0 || comp.getHeight() <= 0) return;
@@ -278,17 +275,15 @@ public class ShapeFeatureRenderer implements IPickable {
      * {@inheritDoc}
      *
      * <p>Returns {@code null} if the pick cache is empty (no render has
-     * occurred yet) or no feature is within the hit threshold. The tooltip
-     * string is assembled from {@link ShapeFeatureStyle#getTooltipFields()},
-     * falling back to {@link ShapeFeatureStyle#getLabelField()} if no tooltip
+     * occurred yet) or no feature is within the hit threshold. The feedback
+     * string is assembled from {@link ShapeFeatureStyle#getFeedbackFields()},
+     * falling back to {@link ShapeFeatureStyle#getLabelField()} if no feedback
      * fields are configured.</p>
      */
     @Override
     public String pick(Point mouseLocal, IContainer container) {
         Objects.requireNonNull(mouseLocal, "mouseLocal");
         Objects.requireNonNull(container,  "container");
-
-        if (!visible) return null; // layer is hidden
 
         double mx = mouseLocal.x;
         double my = mouseLocal.y;
@@ -305,9 +300,26 @@ public class ShapeFeatureRenderer implements IPickable {
                 default -> false;
             };
 
-            if (hit) return buildTooltip(entry.feature);
+            if (hit) return buildFeedback(entry.feature);
         }
         return null;
+    }
+    
+    /**
+     * Returns the geometry type represented by this renderer.
+     *
+     * <p>
+     * A shapefile normally contains one geometry type, so the first feature
+     * determines which style controls are relevant.
+     * </p>
+     *
+     * @return one of the shapefile {@code TYPE_*} constants, or
+     *         {@link ShapefileGeometryReader#TYPE_NULL} when empty
+     */
+    public int getShapeType() {
+        return features.isEmpty()
+                ? ShapefileGeometryReader.TYPE_NULL
+                : features.get(0).getShapeType();
     }
 
     // -------------------------------------------------------------------------
@@ -317,11 +329,9 @@ public class ShapeFeatureRenderer implements IPickable {
     /**
      * Renders one polygon feature and caches its projected closed paths.
      *
-     * <p>Each ring produces up to two {@link GeneralPath} halves (near and
-     * far of the antimeridian seam). Non-empty halves are closed, drawn, and
-     * added to the pick cache. Empty halves (rings entirely outside the
-     * visible area) are skipped — calling {@code closePath()} on an empty
-     * path would throw {@link java.awt.geom.IllegalPathStateException}.</p>
+     * <p>Mercator rings are geographically clipped before projection so seam
+     * and latitude-boundary intersections are part of the closed path. Other
+     * projections retain the projection-defined seam splitting behavior.</p>
      */
     private void renderPolygon(Graphics2D g2, IContainer container,
                                ShapeFeature feature) {
@@ -333,6 +343,11 @@ public class ShapeFeatureRenderer implements IPickable {
         List<GeneralPath> paths = new ArrayList<>();
 
         for (List<Point2D.Double> ring : feature.getRings()) {
+            if (projection instanceof MercatorProjection mercator) {
+                paths.addAll(projectClippedMercatorRing(container, ring, mercator));
+                continue;
+            }
+
             GeneralPath near = new GeneralPath(GeneralPath.WIND_NON_ZERO);
             GeneralPath far  = new GeneralPath(GeneralPath.WIND_NON_ZERO);
             GeneralPath cur  = near;
@@ -359,24 +374,118 @@ public class ShapeFeatureRenderer implements IPickable {
                 else                               cur.lineTo(screen.x, screen.y);
             }
 
-            for (GeneralPath path : new GeneralPath[]{ near, far }) {
-                if (path.getCurrentPoint() == null) continue; // empty — skip
-                path.closePath();
-                paths.add(path);
-                if (fill != null) {
-                    g2.setColor(fill);
-                    g2.fill(path);
-                }
-                if (stroke != null) {
-                    g2.setColor(stroke);
-                    g2.setStroke(strokeObj);
-                    g2.draw(path);
-                }
+            closeAndAdd(paths, near);
+            closeAndAdd(paths, far);
+        }
+
+        for (GeneralPath path : paths) {
+            if (fill != null) {
+                g2.setColor(fill);
+                g2.fill(path);
+            }
+            if (stroke != null) {
+                g2.setColor(stroke);
+                g2.setStroke(strokeObj);
+                g2.draw(path);
             }
         }
 
         if (!paths.isEmpty()) {
             pickCache.add(new PickCache(feature, paths, null));
+        }
+    }
+
+    /**
+     * Clips and projects a Mercator polygon ring into closed screen paths.
+     */
+    private List<GeneralPath> projectClippedMercatorRing(
+            IContainer container,
+            List<Point2D.Double> ring,
+            MercatorProjection mercator) {
+        if (!needsMercatorClipping(ring, mercator)) {
+            GeneralPath path = projectRing(container, ring, mercator);
+            List<GeneralPath> result = new ArrayList<>(1);
+            closeAndAdd(result, path);
+            return result;
+        }
+
+        var xyBounds = mercator.getXYBounds();
+        Point2D.Double lower = new Point2D.Double();
+        Point2D.Double upper = new Point2D.Double();
+        mercator.latLonFromXY(lower,
+                new Point2D.Double(0.0, xyBounds.getMinY()));
+        mercator.latLonFromXY(upper,
+                new Point2D.Double(0.0, xyBounds.getMaxY()));
+
+        double center = mercator.getCentralLongitude();
+        double minLon = center - Math.PI;
+        double maxLon = center + Math.PI;
+        List<List<Point2D.Double>> clipped =
+                GeographicPolygonClipper.clipPeriodicRing(
+                        ring, minLon, maxLon, lower.y, upper.y);
+        List<GeneralPath> result = new ArrayList<>(clipped.size());
+
+        for (List<Point2D.Double> piece : clipped) {
+            GeneralPath path = new GeneralPath(GeneralPath.WIND_NON_ZERO);
+            for (Point2D.Double lonLat : piece) {
+                Point2D.Double xy = new Point2D.Double();
+                mercator.latLonToXY(lonLat, xy);
+
+                // Both geographic seam longitudes normalize to +π in the
+                // projection helper. Preserve which clipped edge they came
+                // from so the western half lands on the left map boundary.
+                if (Math.abs(lonLat.x - minLon) < 1.0e-10) {
+                    xy.x = xyBounds.getMinX();
+                } else if (Math.abs(lonLat.x - maxLon) < 1.0e-10) {
+                    xy.x = xyBounds.getMaxX();
+                }
+
+                Point screen = new Point();
+                container.worldToLocal(screen, xy);
+                if (path.getCurrentPoint() == null) path.moveTo(screen.x, screen.y);
+                else                                path.lineTo(screen.x, screen.y);
+            }
+            closeAndAdd(result, path);
+        }
+        return result;
+    }
+
+    /** Returns whether a ring crosses a seam or Mercator latitude boundary. */
+    private static boolean needsMercatorClipping(
+            List<Point2D.Double> ring, MercatorProjection mercator) {
+        if (ring.isEmpty()) return false;
+        Point2D.Double previous = ring.get(ring.size() - 1);
+        for (Point2D.Double point : ring) {
+            if (!mercator.isPointVisible(point)
+                    || mercator.crossesSeam(previous.x, point.x)) {
+                return true;
+            }
+            previous = point;
+        }
+        return false;
+    }
+
+    /** Projects a ring known to be wholly inside one Mercator map branch. */
+    private static GeneralPath projectRing(
+            IContainer container,
+            List<Point2D.Double> ring,
+            MercatorProjection mercator) {
+        GeneralPath path = new GeneralPath(GeneralPath.WIND_NON_ZERO);
+        for (Point2D.Double lonLat : ring) {
+            Point2D.Double xy = new Point2D.Double();
+            mercator.latLonToXY(lonLat, xy);
+            Point screen = new Point();
+            container.worldToLocal(screen, xy);
+            if (path.getCurrentPoint() == null) path.moveTo(screen.x, screen.y);
+            else                                path.lineTo(screen.x, screen.y);
+        }
+        return path;
+    }
+
+    private static void closeAndAdd(List<GeneralPath> paths, GeneralPath path) {
+        if (path.getCurrentPoint() != null) {
+            path.closePath();
+            paths.add(path);
         }
     }
 
@@ -557,34 +666,43 @@ public class ShapeFeatureRenderer implements IPickable {
     }
 
     // -------------------------------------------------------------------------
-    // Tooltip assembly
+    // Feedback assembly
     // -------------------------------------------------------------------------
 
     /**
-     * Assembles the tooltip string for a hit feature.
+     * Assembles the styled feedback string for a hit feature.
      *
-     * <p>Uses {@link ShapeFeatureStyle#getTooltipFields()} when set, falling
-     * back to {@link ShapeFeatureStyle#getLabelField()}. Multiple values are
-     * joined with two spaces. Returns {@code null} when no useful text can be
-     * produced.</p>
+     * <p>Uses {@link ShapeFeatureStyle#getFeedbackFields()} when set, falling
+     * back to {@link ShapeFeatureStyle#getLabelField()}. Each non-empty value
+     * is written on its own line as {@code FIELD: value}, in configured field
+     * order. One style prefix colors the entire multi-line block. Returns
+     * {@code null} when no useful text can be produced.</p>
+     *
+     * @param feature hit feature
+     * @return styled, possibly multi-line feedback, or {@code null}
      */
-    private String buildTooltip(ShapeFeature feature) {
-        List<String> fields = style.getTooltipFields();
+    String buildFeedback(ShapeFeature feature) {
+        List<String> fields = style.getFeedbackFields();
 
         if (fields.isEmpty()) {
-            // Fall back to labelField.
             String lf = style.getLabelField();
             if (lf == null) return null;
             String val = feature.getProperty(lf);
-            return (val != null && !val.isEmpty()) ? val : null;
+            return (val != null && !val.isEmpty())
+                    ? FEEDBACK_STYLE_PREFIX + lf + ": " + val
+                    : null;
         }
 
         StringBuilder sb = new StringBuilder();
         for (String fieldName : fields) {
             String val = feature.getProperty(fieldName);
             if (val == null || val.isEmpty()) continue;
-            if (sb.length() > 0) sb.append("  ");
-            sb.append(val);
+            if (sb.length() == 0) {
+                sb.append(FEEDBACK_STYLE_PREFIX);
+            } else {
+                sb.append('\n');
+            }
+            sb.append(fieldName).append(": ").append(val);
         }
         return sb.length() > 0 ? sb.toString() : null;
     }

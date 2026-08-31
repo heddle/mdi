@@ -62,6 +62,8 @@ public final class ToolBits {
 	public static final long PRINTER   = 04000000L;
 	public static final long STATUS    = 010000000L;
 	public static final long INFO      = 020000000L;
+	/** Projection-aware map pan; intentionally shares the {@link #PAN} icon. */
+	public static final long MAPPAN    = 040000000L;
 
 	/**
 	 * Return a stable string id for a predefined toolbar bit.
@@ -146,6 +148,9 @@ public final class ToolBits {
 		if (buttonBit == INFO) {
 			return "info";
 		}
+		if (buttonBit == MAPPAN) {
+			return "mapPan";
+		}
 		return "bit_" + buttonBit;
 	}
 
@@ -173,6 +178,7 @@ public final class ToolBits {
 		m.put(POLYLINE,   "images/svg/polyline.svg");
 		m.put(BOXZOOM,    "images/svg/box_zoom.svg");
 		m.put(PAN,        "images/svg/pan.svg");
+		m.put(MAPPAN,     "images/svg/pan.svg");
 		m.put(CONNECTOR,  "images/svg/connect.svg");
 		m.put(ZOOMIN,     "images/svg/zoom_in.svg");
 		m.put(ZOOMOUT,    "images/svg/zoom_out.svg");
@@ -205,6 +211,7 @@ public final class ToolBits {
 		m.put(POLYLINE,   "Create a polyline item");
 		m.put(BOXZOOM,    "Rubber-band zoom to area");
 		m.put(PAN,        "Pan the view by dragging");
+		m.put(MAPPAN,     "Pan the map by dragging");
 		m.put(CONNECTOR,  "Connect two item with a connector line");
 		m.put(ZOOMIN,     "Zoom in by a fixed amount");
 		m.put(ZOOMOUT,    "Zoom out by a fixed amount");
@@ -229,7 +236,7 @@ public final class ToolBits {
 	public static final long DRAWINGTOOLS = ANNOTATIONTOOLS | RADARC;
 	
 	public static final long MAPTOOLS = POINTER | TEXT | POLYGON | LINE
-			| POLYLINE | STYLEB | DELETE | CENTER | MAGNIFY | INFO | STATUS;
+			| POLYLINE | STYLEB | DELETE | MAPPAN | MAGNIFY | INFO | STATUS;
 
 	/** A set of tools suitable for zooming and panning. */
 	public static final long ZOOMTOOLS = BOXZOOM | UNDOZOOM | ZOOMIN | ZOOMOUT
@@ -294,6 +301,7 @@ public final class ToolBits {
 
 	protected static boolean usePointerButton(long toolbarBits)   { return hasBit(POINTER, toolbarBits); }
 	protected static boolean usePanButton(long toolbarBits)       { return hasBit(PAN, toolbarBits); }
+	protected static boolean useMapPanButton(long toolbarBits)    { return hasBit(MAPPAN, toolbarBits); }
 	protected static boolean useResetZoomButton(long toolbarBits) { return hasBit(RESETZOOM, toolbarBits); }
 	protected static boolean useUndoZoomButton(long toolbarBits)  { return hasBit(UNDOZOOM, toolbarBits); }
 	protected static boolean useCenterButton(long toolbarBits)    { return hasBit(CENTER, toolbarBits); }

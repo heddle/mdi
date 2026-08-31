@@ -1,10 +1,10 @@
 package edu.cnu.mdi.item;
 
+import java.awt.Component;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import javax.swing.event.EventListenerList;
@@ -78,6 +78,12 @@ public class Layer {
 
     /** Whether this layer is drawn and hit-tested. */
     private boolean visible = true;
+    
+    /**
+	 * Whether this layer is editable, i.e., can layer-level
+	 * parameters be changed.
+	 */
+    private boolean editable = false;
 
     /**
      * Layer-level lock.  When {@code true} all items on this layer behave as
@@ -115,16 +121,21 @@ public class Layer {
     /**
      * Add an item to the top of this layer and notify listeners.
      *
-     * <p><b>Note:</b> items normally add themselves to their layer inside
-     * {@link AItem#AItem(Layer, Object...)}. Calling this method directly is
-     * only needed for unusual container-level moves; prefer the two-step
-     * {@link #addRaw} + {@link #notifyItemChangeListeners} pair in those cases
-     * to control whether an event is fired.</p>
+     * <p>Items normally add themselves to their layer inside
+     * {@link AItem#AItem(Layer, Object...)}. Re-adding an item already present
+     * on this layer is a no-op.</p>
      *
-     * @param item the item to add; should not be {@code null}
+     * @param item the item to add; must belong to this layer
+     * @throws IllegalArgumentException if {@code item} is {@code null} or belongs
+     *                                  to a different layer
      */
     public void add(AItem item) {
+        if (item == null) throw new IllegalArgumentException("item cannot be null");
+        if (item.getLayer() != this) {
+            throw new IllegalArgumentException("item belongs to a different layer");
+        }
         synchronized (this) {
+            if (items.contains(item)) return;
             items.add(item);
         }
         notifyItemChangeListeners(item, ItemChangeType.ADDED);
@@ -133,9 +144,10 @@ public class Layer {
     /**
      * Remove an item from this layer.
      * <p>
-     * {@link AItem#prepareForRemoval()} is called on the item before it is
-     * removed from the backing list, and a {@link ItemChangeType#DELETED} event
-     * is fired after successful removal.
+     * If the item is present, it is removed first, then
+     * {@link AItem#prepareForRemoval()} is called and a
+     * {@link ItemChangeType#DELETED} event is fired. An item not owned by this
+     * layer is left untouched.
      * </p>
      *
      * @param item the item to remove; if {@code null} or not on this layer the
@@ -146,10 +158,10 @@ public class Layer {
         if (item == null) return false;
         boolean removed;
         synchronized (this) {
-            item.prepareForRemoval();
             removed = items.remove(item);
         }
         if (removed) {
+            item.prepareForRemoval();
             notifyItemChangeListeners(item, ItemChangeType.DELETED);
         }
         return removed;
@@ -162,17 +174,15 @@ public class Layer {
      * If this layer is locked the call is a no-op.
      * </p>
      *
-     * @param container the owning container; if {@code null} falls back to
-     *                  this layer's own container reference
+     * @param container retained for source compatibility; item cleanup uses
+     *                  this layer's owning container
      */
     public void clearAllItems(IContainer container) {
         if (locked) return;
-        synchronized (this) {
-            List<AItem> snapshot = new ArrayList<>(items);
-            for (AItem item : snapshot) {
-                if (item.isDeletable()) {
-                    deleteInternal(item, container);
-                }
+        List<AItem> snapshot = getAllItems();
+        for (AItem item : snapshot) {
+            if (item.isDeletable()) {
+                deleteInternal(item);
             }
         }
     }
@@ -183,16 +193,15 @@ public class Layer {
      * If this layer is locked or not visible the call is a no-op.
      * </p>
      *
-     * @param container the owning container
+     * @param container retained for source compatibility; item cleanup uses
+     *                  this layer's owning container
      */
     public void deleteSelectedItems(IContainer container) {
         if (!visible || locked) return;
-        synchronized (this) {
-            List<AItem> snapshot = new ArrayList<>(items);
-            for (AItem item : snapshot) {
-                if (item.isSelected() && item.isDeletable()) {
-                    deleteInternal(item, container);
-                }
+        List<AItem> snapshot = getAllItems();
+        for (AItem item : snapshot) {
+            if (item.isSelected() && item.isDeletable()) {
+                deleteInternal(item);
             }
         }
     }
@@ -209,21 +218,15 @@ public class Layer {
      */
     public void deleteItem(AItem item) {
         if (locked || item == null) return;
-        synchronized (this) {
-            deleteInternal(item, item.getContainer());
-        }
+        deleteInternal(item);
     }
 
     /**
-     * Internal deletion: detaches the item from the container's feedback
-     * control, then delegates to {@link #remove(AItem)}.
+     * Internal deletion delegates to {@link #remove(AItem)}, which performs all
+     * service cleanup through {@link AItem#prepareForRemoval()}.
      */
-    private void deleteInternal(AItem item, IContainer c) {
-        IContainer effective = (c != null) ? c : this.container;
-        if (effective != null && effective.getFeedbackControl() != null) {
-            effective.getFeedbackControl().removeFeedbackProvider(item);
-        }
-        remove(item);   // fires DELETED + calls prepareForRemoval
+    private void deleteInternal(AItem item) {
+        remove(item);
     }
 
     // -------------------------------------------------------------------------
@@ -283,17 +286,87 @@ public class Layer {
      * If this layer is not visible the method returns immediately.
      * </p>
      *
-     * @param g2        the graphics context
+     * @param g        the graphics context
      * @param container the container being rendered
      */
-    public void draw(Graphics2D g2, IContainer container) {
-        if (!visible) return;
-        synchronized (this) {
-            for (AItem item : items) {
-                item.draw(g2, container);
+    public void draw(Graphics2D g, IContainer container) {
+        if (!visible) {
+            return;
+        }
+
+        Graphics2D g2 = (Graphics2D) g.create();
+
+        try {
+            synchronized (this) {
+                beforeDraw(g2, container);
+
+                for (AItem item : items) {
+                    item.draw(g2, container);
+                }
+
+                afterDraw(g2, container);
             }
+        } finally {
+            g2.dispose();
         }
     }
+    
+	/**
+	 * Hook for subclasses to perform custom drawing before the items are drawn.
+	 * <p>
+	 * The default implementation is a no-op.
+	 * </p>
+	 *
+	 * @param g2        the graphics context
+	 * @param container the container being rendered
+	 */
+	public void beforeDraw(Graphics2D g2, IContainer container) {
+		// no-op
+	}
+
+	/**
+	 * Hook for subclasses to perform custom drawing after the items are drawn.
+	 * <p>
+	 * The default implementation is a no-op.
+	 * </p>
+	 *
+	 * @param g2        the graphics context
+	 * @param container the container being rendered
+	 */
+	public void afterDraw(Graphics2D g2, IContainer container) {
+		// no-op
+	}
+	
+	/**
+	 * Return {@code true} if this layer is editable.
+	 *
+	 * @return the editable flag
+	 */
+	public boolean isEditable() {
+	    return editable;
+	}
+	
+	/**
+	 * Set the editable state of this layer.
+	 *
+	 * @param editable {@code true} to make the layer editable
+	 */
+	public void setEditable(boolean editable) {
+	    this.editable = editable;
+	}
+
+	/**
+	 * Edit the layer-level parameters of this layer.
+	 * <p>
+	 * The default implementation is a no-op. Subclasses may override to provide
+	 * a custom editing dialog or panel.
+	 * </p>
+	 *
+	 * @param parent the parent component for any dialogs; may be {@code null}
+	 */
+	public void edit(Component parent) {
+	    // Default: no-op.
+	}
 
     // -------------------------------------------------------------------------
     // Hit testing
@@ -707,37 +780,4 @@ public class Layer {
         return "Layer[" + name + ", " + size() + " items]";
     }
 
-    // -------------------------------------------------------------------------
-    // Package-private helpers for container-level layer moves
-    // -------------------------------------------------------------------------
-
-    /**
-     * Add an item directly to the backing list <em>without</em> firing a change
-     * notification or calling {@link AItem#prepareForRemoval()}.
-     * <p>
-     * <b>For use only by container-level code</b> that moves items between
-     * layers atomically (e.g. changing layer assignment) and fires its own
-     * events. Do not use in application code.
-     * </p>
-     *
-     * @param item the item to add silently
-     */
-    void addRaw(AItem item) {
-        synchronized (this) { items.add(item); }
-    }
-
-    /**
-     * Remove an item directly from the backing list <em>without</em> firing a
-     * change notification or calling {@link AItem#prepareForRemoval()}.
-     * <p>
-     * <b>For use only by container-level code</b> that moves items between
-     * layers atomically. Do not use in application code.
-     * </p>
-     *
-     * @param item the item to remove silently
-     * @return {@code true} if the item was present and removed
-     */
-    boolean removeRaw(AItem item) {
-        synchronized (this) { return items.remove(item); }
-    }
 }

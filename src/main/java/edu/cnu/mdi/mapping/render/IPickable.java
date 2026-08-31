@@ -37,8 +37,8 @@ import edu.cnu.mdi.mapping.shapefile.ShapeFeatureRenderer;
  * <h2>Current implementors</h2>
  * <ul>
  *   <li>{@link ShapeFeatureRenderer} — picks polygon, polyline, and point
- *       features from arbitrary shapefile layers and returns the values of
- *       the configured tooltip fields.</li>
+ *       features from arbitrary shapefile layers and returns the names and
+ *       values of the configured feedback fields.</li>
  * </ul>
  */
 public interface IPickable {
@@ -47,8 +47,8 @@ public interface IPickable {
      * Returns a human-readable description of the feature under the given
      * mouse position, or {@code null} if no feature is hit.
      *
-     * <p>The description is typically one line suitable for the feedback
-     * panel (e.g. {@code "Lake Superior"} or
+     * <p>The description is suitable for both the feedback pane and hover
+     * popup (e.g. {@code "Lake Superior"} or
      * {@code "Amazon River  length: 6400 km"}).</p>
      *
      * @param mouseLocal the cursor position in the container's local

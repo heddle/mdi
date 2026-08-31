@@ -162,9 +162,9 @@ public final class ShapefileDbfReader implements Closeable {
     /**
      * Returns the number of data records declared in the file header.
      *
-     * <p>This includes records marked as deleted. The count returned by
-     * {@link #readAllRecords()} may be smaller if deleted records are
-     * skipped.</p>
+     * <p>This includes records marked as deleted. {@link #readAllRecords()}
+     * preserves this positional record count by representing deleted records
+     * as empty maps.</p>
      *
      * @return declared record count (&ge; 0)
      */
@@ -189,7 +189,7 @@ public final class ShapefileDbfReader implements Closeable {
     }
 
     /**
-     * Reads and returns all non-deleted records as an ordered list of
+     * Reads and returns all records as an ordered list of
      * {@code String}-valued maps.
      *
      * <p>Each map key is the field name (trimmed, upper-cased as stored in the
@@ -198,7 +198,10 @@ public final class ShapefileDbfReader implements Closeable {
      *
      * <p>This is a sequential full-scan; the channel is rewound to the first
      * data record before reading begins. Deleted records (deletion flag
-     * {@code 0x2A}) are silently skipped.</p>
+     * {@code 0x2A}) are represented by empty maps so that DBF record indexes
+     * remain aligned with the corresponding shapefile geometry records.
+     * Any other flag besides the valid-record marker {@code 0x20} causes an
+     * {@link IOException}.</p>
      *
      * @return unmodifiable list of records, each a field-name → value map
      * @throws IOException if a read error occurs
@@ -207,18 +210,19 @@ public final class ShapefileDbfReader implements Closeable {
         // Seek to first data record (immediately after the header).
         channel.position(headerSize);
 
-        ByteBuffer recordBuf = ByteBuffer.allocate(recordSize);
         List<Map<String, String>> result = new ArrayList<>(recordCount);
 
         for (int i = 0; i < recordCount; i++) {
-            recordBuf.clear();
-            int bytesRead = channel.read(recordBuf);
-            if (bytesRead < recordSize) break; // truncated file
-
-            recordBuf.flip();
+            ByteBuffer recordBuf = readBytes(recordSize);
             byte deletionFlag = recordBuf.get(); // consume the deletion-flag byte
 
-            if (deletionFlag == FLAG_DELETED) continue; // skip deleted records
+            if (deletionFlag == FLAG_DELETED) {
+                result.add(Collections.emptyMap());
+                continue;
+            }
+            if (deletionFlag != FLAG_VALID) {
+                throw invalidRecordFlag(i, deletionFlag);
+            }
 
             Map<String, String> record = new LinkedHashMap<>(fields.size() * 2);
             for (FieldDescriptor field : fields) {
@@ -257,6 +261,9 @@ public final class ShapefileDbfReader implements Closeable {
         ByteBuffer buf = readBytes(recordSize);
         byte deletionFlag = buf.get();
         if (deletionFlag == FLAG_DELETED) return null;
+        if (deletionFlag != FLAG_VALID) {
+            throw invalidRecordFlag(index, deletionFlag);
+        }
 
         Map<String, String> record = new LinkedHashMap<>(fields.size() * 2);
         for (FieldDescriptor field : fields) {
@@ -276,6 +283,11 @@ public final class ShapefileDbfReader implements Closeable {
     // -------------------------------------------------------------------------
     // Private helpers
     // -------------------------------------------------------------------------
+
+    private static IOException invalidRecordFlag(int index, byte flag) {
+        return new IOException("Invalid DBF record flag at index " + index
+                + ": 0x" + String.format("%02X", flag & 0xFF));
+    }
 
     /**
      * Reads exactly {@code n} bytes from the current channel position into a

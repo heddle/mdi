@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import edu.cnu.mdi.graphics.style.LineStyle;
 import edu.cnu.mdi.graphics.style.SymbolType;
+import edu.cnu.mdi.log.ILogListener;
+import edu.cnu.mdi.log.Log;
 
 public class PropertyUtilsTest {
 
@@ -82,19 +84,32 @@ public class PropertyUtilsTest {
 	}
 
 	@Test
+	public void testFromKeyValuesRejectsNullValuesClearly() {
+		assertThrows(IllegalArgumentException.class,
+				() -> PropertyUtils.fromKeyValues(PropertyUtils.TITLE, null));
+		assertThrows(IllegalArgumentException.class,
+				() -> PropertyUtils.fromKeyValues("UNKNOWN_NULL", null));
+	}
+
+	@Test
 	public void testFromKeyValuesAllowsUnknownKey() {
-		java.io.PrintStream originalErr = System.err;
-		java.io.ByteArrayOutputStream errBytes = new java.io.ByteArrayOutputStream();
+		StringBuilder warning = new StringBuilder();
+		ILogListener listener = new ILogListener() {
+			@Override
+			public void warning(String message) {
+				warning.append(message);
+			}
+		};
+		Log log = Log.getInstance();
+		log.addLogListener(listener);
 
 		try {
-			System.setErr(new java.io.PrintStream(errBytes));
-
 			Properties props = PropertyUtils.fromKeyValues("CUSTOM_UNKNOWN_KEY", "custom value");
 
 			assertEquals("custom value", props.get("CUSTOM_UNKNOWN_KEY"));
-			assertTrue(errBytes.toString().contains("Warning: Unknown property key: CUSTOM_UNKNOWN_KEY"));
+			assertTrue(warning.toString().contains("Unknown property key: CUSTOM_UNKNOWN_KEY"));
 		} finally {
-			System.setErr(originalErr);
+			log.removeLogListener(listener);
 		}
 	}
 	
@@ -208,10 +223,14 @@ public class PropertyUtilsTest {
 
 		props.put("LONG_STRING", "123");
 		props.put("LONG_VALUE", 456L);
+		props.put("LONG_INT", 789);
+		props.put("LONG_LARGE", "9223372036854775807");
 		props.put("BAD_LONG", "not a long");
 
 		assertEquals(123L, PropertyUtils.getLong(props, "LONG_STRING", -1L));
 		assertEquals(456L, PropertyUtils.getLong(props, "LONG_VALUE", -1L));
+		assertEquals(789L, PropertyUtils.getLong(props, "LONG_INT", -1L));
+		assertEquals(Long.MAX_VALUE, PropertyUtils.getLong(props, "LONG_LARGE", -1L));
 		assertEquals(-1L, PropertyUtils.getLong(props, "BAD_LONG", -1L));
 		assertEquals(-1L, PropertyUtils.getLong(props, "MISSING_LONG", -1L));
 
@@ -243,12 +262,25 @@ public class PropertyUtilsTest {
 		props.put("BOOLEAN_STRING_FALSE", "false");
 		props.put("BOOLEAN_VALUE", true);
 		props.put("BAD_BOOLEAN", 123);
+		props.put("BAD_BOOLEAN_STRING", "yes");
 
 		assertTrue(PropertyUtils.getBoolean(props, "BOOLEAN_STRING_TRUE", false));
 		assertFalse(PropertyUtils.getBoolean(props, "BOOLEAN_STRING_FALSE", true));
 		assertTrue(PropertyUtils.getBoolean(props, "BOOLEAN_VALUE", false));
 		assertTrue(PropertyUtils.getBoolean(props, "BAD_BOOLEAN", true));
+		assertTrue(PropertyUtils.getBoolean(props, "BAD_BOOLEAN_STRING", true));
 		assertFalse(PropertyUtils.getBoolean(props, "MISSING_BOOLEAN", false));
+	}
+
+	@Test
+	public void testMalformedWorldRectangleAndNullPropertiesUseDefaults() {
+		Properties props = new Properties();
+		props.put("WORLD", "not a rectangle");
+		Rectangle2D.Double fallback = new Rectangle2D.Double(1, 2, 3, 4);
+		assertSame(fallback, PropertyUtils.getWorldRectangle(props, "WORLD", fallback));
+		assertSame(fallback, PropertyUtils.getWorldRectangle(null, "WORLD", fallback));
+		assertEquals(17, PropertyUtils.getInt(null, "INT", 17));
+		assertTrue(PropertyUtils.getBoolean(null, "BOOL", true));
 	}
 
 	@Test
@@ -270,10 +302,12 @@ public class PropertyUtilsTest {
 		props.put("COLOR_VALUE", Color.RED);
 		props.put("COLOR_NAME", "red");
 		props.put("BAD_COLOR", 123);
+		props.put("UNKNOWN_COLOR", "not an X11 color");
 
 		assertEquals(Color.RED, PropertyUtils.getColor(props, "COLOR_VALUE", Color.BLACK));
 		assertEquals(Color.RED, PropertyUtils.getColor(props, "COLOR_NAME", Color.BLACK));
 		assertEquals(Color.BLACK, PropertyUtils.getColor(props, "BAD_COLOR", Color.BLACK));
+		assertEquals(Color.BLACK, PropertyUtils.getColor(props, "UNKNOWN_COLOR", Color.BLACK));
 		assertEquals(Color.BLACK, PropertyUtils.getColor(props, "MISSING_COLOR", Color.BLACK));
 	}
 
@@ -287,7 +321,7 @@ public class PropertyUtilsTest {
 		props.put("BAD_RECT", "not a rectangle");
 
 		assertSame(rect, PropertyUtils.getWorldRectangle(props, "RECT", defaultRect));
-		assertNull(PropertyUtils.getWorldRectangle(props, "BAD_RECT", defaultRect));
+		assertSame(defaultRect, PropertyUtils.getWorldRectangle(props, "BAD_RECT", defaultRect));
 		assertSame(defaultRect, PropertyUtils.getWorldRectangle(props, "MISSING_RECT", defaultRect));
 	}
 }

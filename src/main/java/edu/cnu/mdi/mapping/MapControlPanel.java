@@ -3,23 +3,22 @@ package edu.cnu.mdi.mapping;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionListener;
+import java.util.Objects;
+import java.util.function.Function;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
-import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.SwingConstants;
 
 import edu.cnu.mdi.component.CommonBorder;
-import edu.cnu.mdi.component.EnumComboBox;
-import edu.cnu.mdi.component.RangeSlider;
 import edu.cnu.mdi.mapping.projection.EProjection;
 import edu.cnu.mdi.mapping.projection.IMapProjection;
-import edu.cnu.mdi.mapping.render.CityPointRenderer;
+import edu.cnu.mdi.mapping.projection.ProjectionFactory;
 import edu.cnu.mdi.mapping.theme.MapTheme;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
@@ -28,31 +27,23 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  *
  * <p>Provides interactive controls for:
  * <ul>
- *   <li><b>Projection</b> — an {@link EnumComboBox} that switches the active
- *       {@link EProjection}.</li>
- *   <li><b>City label visibility</b> — a checkbox that toggles city name
- *       labels via {@link CityPointRenderer#setDrawLabels(boolean)}.</li>
- *   <li><b>Minimum population</b> — a {@link RangeSlider} that filters cities
- *       below a given population threshold via
- *       {@link CityPointRenderer#setMinPopulation(long)}.</li>
+ *   <li><b>Projection</b> — a factory-backed selector containing MDI's
+ *       built-ins and projections registered through
+ *       {@link #addProjection(String, Function)}.</li>
  *   <li><b>Map theme</b> — radio buttons selecting between the built-in
  *       {@link MapTheme} presets (Light, Dark, Blue).</li>
+ *   <li><b>Application controls</b> — components registered through
+ *       {@link #addControl(JComponent)} and displayed below the standard
+ *       controls.</li>
  * </ul>
  *
  * <h2>Coupling</h2>
  * <p>This panel holds a direct reference to a {@link MapView2D} and calls
  * its public API in response to user interaction. The coupling is intentional
  * and kept minimal: the panel only calls well-defined accessors on the view
- * ({@link MapView2D#getCityRenderer()},
- * {@link MapView2D#getMapProjection()},
- * {@link MapView2D#setProjection(EProjection)},
+ * ({@link MapView2D#getMapProjection()},
+ * {@link MapView2D#setProjection(IMapProjection)},
  * {@link MapView2D#refresh()}).</p>
- *
- * <h2>Slider maximum</h2>
- * <p>The maximum value of the population slider is
- * {@link MapConstants#MAX_POP_SLIDER_VALUE}. Previously the same constant was
- * duplicated in both this class and {@link MapView2D}; it is now sourced from
- * a single location to prevent the two values from diverging.</p>
  */
 @SuppressWarnings("serial")
 public class MapControlPanel extends JPanel {
@@ -64,7 +55,7 @@ public class MapControlPanel extends JPanel {
     private final MapTheme darkTheme  = MapTheme.dark();
     private final MapTheme lightTheme = MapTheme.light();
     private final MapTheme blueTheme  = MapTheme.blue();
-    
+
     private final Font font = Fonts.plainFontDelta(-2);
 
     /** The theme currently selected by the radio buttons. */
@@ -77,12 +68,13 @@ public class MapControlPanel extends JPanel {
     private JRadioButton lightThemeButton;
     private JRadioButton darkThemeButton;
     private JRadioButton blueThemeButton;
-    
-    //holds display checkboxes for city names and other future options
-    private JPanel checkboxPanel;
 
-    /** Whether city name labels are visible. Tracks the checkbox state. */
-    private boolean showNames = true;
+    /** Factory-backed projection selector, including application additions. */
+    private JComboBox<ProjectionOption> projectionCombo;
+
+    /** Dedicated vertical host for application-supplied controls. */
+    private JPanel applicationControlHost;
+
 
     // -------------------------------------------------------------------------
     // View reference
@@ -113,16 +105,9 @@ public class MapControlPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
         createProjectionCombo(this);
-        createCheckboxes(this);
-        createMinPopRangeSlider(this);
         createThemeSelector(this);
+        createApplicationControlHost(this);
     }
-    
-    private void createCheckboxPanel() {
-		checkboxPanel = new JPanel();
-		checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
-		checkboxPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-	}
 
     // -------------------------------------------------------------------------
     // Widget builders
@@ -139,107 +124,61 @@ public class MapControlPanel extends JPanel {
      * @param panel the panel to add the combo box to
      */
     private void createProjectionCombo(JPanel panel) {
-
-        EnumComboBox<EProjection> projCombo = EProjection.createComboBox();
-        projCombo.addActionListener(e -> {
-            EProjection selected = projCombo.getSelectedEnum();
-            mapView.setProjection(selected);
-        });
-        projCombo.setFont(font);
-        leftAlign(projCombo);
-
-        panel.add(projCombo);
-        panel.add(Box.createVerticalStrut(6));
-    }
-
-    /**
-     * Adds the "Show city names" checkbox to {@code panel}.
-     *
-     * <p>Toggling the checkbox calls
-     * {@link CityPointRenderer#setDrawLabels(boolean)} and triggers a
-     * repaint.</p>
-     *
-     * @param panel the panel to add the checkbox to
-     */
-    private void createCheckboxes(JPanel panel) {
-    	createCheckboxPanel();
-        JCheckBox showCityNamesCheckBox = new JCheckBox("Show city names", true);
-        showCityNamesCheckBox.setFont(font);
-        showCityNamesCheckBox.setHorizontalAlignment(SwingConstants.LEFT);
-        showCityNamesCheckBox.addActionListener(e -> {
-            showNames = showCityNamesCheckBox.isSelected();
-            updateCityLabelVisibility();
-        });
-        leftAlign(showCityNamesCheckBox);
-        checkboxPanel.add(showCityNamesCheckBox);
-
-        // Graticule controls. These reuse the same checkbox panel, font, and
-        // alignment as "Show city names". Both default to selected, matching
-        // the renderer's defaults (adaptive spacing + edge labels on).
-        addCheckbox("Adaptive grid spacing", true,
-                e -> mapView.setGraticuleAdaptive(
-                        ((JCheckBox) e.getSource()).isSelected()));
-        addCheckbox("Grid coordinate labels", true,
-                e -> mapView.setGraticuleLabels(
-                        ((JCheckBox) e.getSource()).isSelected()));
-
-        panel.add(checkboxPanel);
-        panel.add(Box.createVerticalStrut(6));
-    }
-    
-    /**
-     * Adds a checkbox to the checkbox panel with the given label, initial state,
-     * and optional action listener.
-     *
-     * <p>The returned checkbox may be retained by the caller if later programmatic
-     * changes are needed.</p>
-     *
-     * @param label        the text label for the checkbox
-     * @param initialState the initial selected state of the checkbox
-     * @param listener     listener notified when the checkbox is toggled; may be {@code null}
-     * @return the constructed checkbox
-     */
-    public JCheckBox addCheckbox(String label, boolean initialState, ActionListener listener) {
-        if (checkboxPanel == null) {
-            createCheckboxPanel();
+        projectionCombo = new JComboBox<>();
+        for (EProjection type : EProjection.values()) {
+            addProjectionOption(type.getName(),
+                    theme -> ProjectionFactory.create(type, theme, null));
         }
+        projectionCombo.addActionListener(e -> {
+            ProjectionOption selected =
+                    (ProjectionOption) projectionCombo.getSelectedItem();
+            if (selected != null) {
+                IMapProjection projection = Objects.requireNonNull(
+                        selected.factory().apply(currentTheme),
+                        "Projection factory returned null for " + selected.name());
+                mapView.setProjection(projection);
+            }
+        });
+        projectionCombo.setFont(font);
+        leftAlign(projectionCombo);
 
-        JCheckBox checkbox = new JCheckBox(label, initialState);
-        checkbox.setFont(font);
-        checkbox.setHorizontalAlignment(SwingConstants.LEFT);
-        leftAlign(checkbox);
-
-        if (listener != null) {
-            checkbox.addActionListener(listener);
-        }
-
-        checkboxPanel.add(checkbox);
-        checkboxPanel.revalidate();
-        checkboxPanel.repaint();
-
-        return checkbox;
-    }
-    
-    /**
-     * Adds the minimum-population range slider to {@code panel}.
-     *
-     * <p>The slider range is [0, {@link MapConstants#MAX_POP_SLIDER_VALUE}]
-     * and the initial value is half that maximum. Changing the slider value
-     * calls {@link CityPointRenderer#setMinPopulation(long)} and triggers a
-     * repaint.</p>
-     *
-     * @param panel the panel to add the slider to
-     */
-    private void createMinPopRangeSlider(JPanel panel) {
-        int max = MapConstants.MAX_POP_SLIDER_VALUE;  // single source of truth
-        RangeSlider minPopSlider = new RangeSlider(0, max, max / 2, true);
-        minPopSlider.setOnChange(this::updateMinPopulationFilter);
-        minPopSlider.setBorder(new CommonBorder("Minimum Population"));
-        leftAlign(minPopSlider);
-        panel.add(minPopSlider);
+        panel.add(projectionCombo);
         panel.add(Box.createVerticalStrut(6));
-       
     }
+
+    /**
+     * Adds an application-supplied projection to the standard selector.
+     *
+     * <p>The factory receives the currently selected theme whenever its entry
+     * is chosen. Applications can therefore expose custom projections without
+     * replacing the rest of the map control panel.</p>
+     *
+     * @param name display name; must not be blank or duplicate an existing name
+     * @param factory factory receiving the active theme; must return a non-null
+     *                projection
+     * @throws IllegalArgumentException if the name is blank or already present
+     */
+    public void addProjection(String name,
+            Function<MapTheme, ? extends IMapProjection> factory) {
+        String normalizedName = Objects.requireNonNull(name, "name").trim();
+        Objects.requireNonNull(factory, "factory");
+        if (normalizedName.isEmpty()) {
+            throw new IllegalArgumentException("Projection name must not be blank");
+        }
+        for (int i = 0; i < projectionCombo.getItemCount(); i++) {
+            if (projectionCombo.getItemAt(i).name().equals(normalizedName)) {
+                throw new IllegalArgumentException(
+                        "Projection already registered: " + normalizedName);
+            }
+        }
+        addProjectionOption(normalizedName, factory);
+    }
+
+    private void addProjectionOption(String name,
+            Function<MapTheme, ? extends IMapProjection> factory) {
+        projectionCombo.addItem(new ProjectionOption(name, factory));
+    }
+
 
     /**
      * Adds the theme selector (Light / Dark / Blue radio buttons) to
@@ -254,9 +193,13 @@ public class MapControlPanel extends JPanel {
         ButtonGroup themeGroup = new ButtonGroup();
 
         ActionListener themeListener = e -> {
-            if      (lightThemeButton.isSelected()) currentTheme = lightTheme;
-            else if (darkThemeButton.isSelected())  currentTheme = darkTheme;
-            else if (blueThemeButton.isSelected())  currentTheme = blueTheme;
+            if      (lightThemeButton.isSelected()) {
+				currentTheme = lightTheme;
+			} else if (darkThemeButton.isSelected()) {
+				currentTheme = darkTheme;
+			} else if (blueThemeButton.isSelected()) {
+				currentTheme = blueTheme;
+			}
             updateTheme();
         };
 
@@ -276,6 +219,44 @@ public class MapControlPanel extends JPanel {
         subPanel.add(Box.createVerticalStrut(6));
         subPanel.setBorder(new CommonBorder("Map Theme"));
         panel.add(subPanel);
+    }
+
+    /** Creates the initially empty extension area below the standard controls. */
+    private void createApplicationControlHost(JPanel panel) {
+        applicationControlHost = new JPanel();
+        applicationControlHost.setOpaque(false);
+        applicationControlHost.setAlignmentX(Component.LEFT_ALIGNMENT);
+        applicationControlHost.setLayout(
+                new BoxLayout(applicationControlHost, BoxLayout.Y_AXIS));
+        panel.add(applicationControlHost);
+    }
+
+    /**
+     * Adds an application-supplied component below the standard projection and
+     * theme controls.
+     *
+     * <p>Controls appear in registration order. This method supplies standard
+     * vertical spacing, left alignment, layout validation, and repainting so
+     * callers do not need to depend on this panel's Swing layout details. Adding
+     * the same component more than once is an idempotent no-op.</p>
+     *
+     * <p>As with other Swing component mutations, callers should invoke this
+     * method on the event-dispatch thread.</p>
+     *
+     * @param control component to add; must not be {@code null}
+     * @throws NullPointerException if {@code control} is {@code null}
+     */
+    public void addControl(JComponent control) {
+        Objects.requireNonNull(control, "control");
+        if (control.getParent() == applicationControlHost) {
+            return;
+        }
+
+        leftAlign(control);
+        applicationControlHost.add(Box.createVerticalStrut(6));
+        applicationControlHost.add(control);
+        applicationControlHost.revalidate();
+        applicationControlHost.repaint();
     }
 
     /**
@@ -301,19 +282,7 @@ public class MapControlPanel extends JPanel {
     // Private update helpers
     // -------------------------------------------------------------------------
 
-    /**
-     * Applies a new minimum population filter to the city renderer and
-     * triggers a repaint.
-     *
-     * @param pop the new minimum population value from the slider
-     */
-    private void updateMinPopulationFilter(int pop) {
-        CityPointRenderer renderer = mapView.getCityRenderer();
-        if (renderer != null) {
-            renderer.setMinPopulation(pop);
-            mapView.refresh();
-        }
-    }
+ 
 
     /**
      * Applies the currently selected theme to the active projection and
@@ -323,18 +292,6 @@ public class MapControlPanel extends JPanel {
         IMapProjection proj = mapView.getMapProjection();
         if (proj != null) {
             proj.setTheme(currentTheme);
-            mapView.refresh();
-        }
-    }
-
-    /**
-     * Applies the current label-visibility setting to the city renderer and
-     * triggers a repaint.
-     */
-    private void updateCityLabelVisibility() {
-        CityPointRenderer renderer = mapView.getCityRenderer();
-        if (renderer != null) {
-            renderer.setDrawLabels(showNames);
             mapView.refresh();
         }
     }
@@ -354,6 +311,15 @@ public class MapControlPanel extends JPanel {
      * @return the currently active theme; never {@code null}
      */
     public MapTheme getCurrentTheme() { return currentTheme; }
+
+    /** Factory-backed entry displayed by the projection selector. */
+    private record ProjectionOption(String name,
+            Function<MapTheme, ? extends IMapProjection> factory) {
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Layout helpers

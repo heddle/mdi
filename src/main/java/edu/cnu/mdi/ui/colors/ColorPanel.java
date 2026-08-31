@@ -12,6 +12,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 import javax.swing.colorchooser.AbstractColorChooserPanel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -19,8 +20,9 @@ import javax.swing.event.ChangeListener;
 /**
  * Panel used by {@link ColorDialog} to present color-selection controls.
  * <p>
- * This panel embeds a simplified {@link JColorChooser}, retaining only the RGB
- * chooser panel, along with an MDI-specific preview area that shows:
+ * This panel embeds a simplified {@link JColorChooser}, retaining its standard
+ * swatch and RGB chooser panels, along with an MDI-specific preview area that
+ * shows:
  * </p>
  * <ul>
  * <li>an optional "No Color" checkbox,</li>
@@ -72,9 +74,10 @@ public class ColorPanel extends JPanel implements ItemListener, ChangeListener {
 	/**
 	 * Creates a new color panel.
 	 * <p>
-	 * The chooser is simplified so that only the RGB panel is retained. The
-	 * preview area is custom and includes the old/new color samples and the
-	 * optional "No Color" control.
+	 * The chooser is simplified to the standard swatch and RGB panels. Swatches
+	 * provide convenient one-click access to common colors, while RGB provides
+	 * precise component and alpha entry. The preview area is custom and includes
+	 * the old/new color samples and the optional "No Color" control.
 	 * </p>
 	 */
 	public ColorPanel() {
@@ -82,10 +85,13 @@ public class ColorPanel extends JPanel implements ItemListener, ChangeListener {
 
 		colorChooser = new JColorChooser();
 
-		// Keep only the RGB chooser panel.
+		// Keep the convenient standard swatches and the precise RGB controls.
+		String swatchesName = UIManager.getString("ColorChooser.swatchesNameText");
+		String rgbName = UIManager.getString("ColorChooser.rgbNameText");
 		AbstractColorChooserPanel[] panels = colorChooser.getChooserPanels();
 		for (AbstractColorChooserPanel panel : panels) {
-			if (!"RGB".equals(panel.getDisplayName())) {
+			String name = panel.getDisplayName();
+			if (!swatchesName.equals(name) && !rgbName.equals(name)) {
 				colorChooser.removeChooserPanel(panel);
 			}
 		}
@@ -183,7 +189,8 @@ public class ColorPanel extends JPanel implements ItemListener, ChangeListener {
 	 */
 	@Override
 	public Dimension getPreferredSize() {
-		return getMinimumSize();
+		Dimension preferred = super.getPreferredSize();
+		return new Dimension(Math.max(minw, preferred.width), Math.max(minh, preferred.height));
 	}
 
 	/**

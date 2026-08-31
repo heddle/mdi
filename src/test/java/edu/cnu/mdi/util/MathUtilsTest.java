@@ -1,6 +1,7 @@
 package edu.cnu.mdi.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.awt.geom.Point2D;
 
@@ -25,4 +26,11 @@ class MathUtilsTest {
         double tAfter = MathUtils.perpendicularIntersection(0, 0, 10, 0, new Point2D.Double(14, -2), intersect);
         assertEquals(1.4, tAfter, EPS);
     }
+
+	@Test
+	void perpendicularIntersectionRejectsDegenerateLines() {
+		assertThrows(IllegalArgumentException.class,
+				() -> MathUtils.perpendicularIntersection(1, 2, 1, 2,
+						new Point2D.Double(3, 4), new Point2D.Double()));
+	}
 }

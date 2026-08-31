@@ -1,8 +1,8 @@
 package edu.cnu.mdi.graphics.connection;
 
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
 
@@ -63,6 +63,8 @@ public class ConnectionManager implements ItemChangeListener {
 	 * <ul>
 	 * <li>neither item is null</li>
 	 * <li>items are not the same instance</li>
+	 * <li>both items belong to the same container (cross-container connections
+	 * are always rejected)</li>
 	 * <li>both items are connectable</li>
 	 * <li>no existing connector already connects them (either direction)</li>
 	 * </ul>
@@ -182,20 +184,25 @@ public class ConnectionManager implements ItemChangeListener {
 			return;
 		}
 
-		for (Iterator<ConnectorItem> it = connectors.iterator(); it.hasNext();) {
-			ConnectorItem c = it.next();
+		// Collect first: Layer.remove() fires a synchronous DELETED callback that
+		// also updates this set, so removing from layers inside the iterator would
+		// risk ConcurrentModificationException.
+		ArrayList<ConnectorItem> removals = new ArrayList<>();
+		for (ConnectorItem c : connectors) {
 
 			AItem a = safeStart(c);
 			AItem b = safeEnd(c);
 
 			if (a == endpoint || b == endpoint) {
-				it.remove();
+				removals.add(c);
+			}
+		}
 
-				// Remove the connector item from its layer, if it still has one.
-				Layer layer = c.getLayer();
-				if (layer != null) {
-					layer.remove(c);
-				}
+		connectors.removeAll(removals);
+		for (ConnectorItem connector : removals) {
+			Layer layer = connector.getLayer();
+			if (layer != null) {
+				layer.remove(connector);
 			}
 		}
 	}
@@ -248,9 +255,12 @@ public class ConnectionManager implements ItemChangeListener {
 	}
 
 	/**
-	 * These accessors assume you add public endpoint getters to ConnectorItem. If
-	 * you haven't yet, add: public AItem getStartItem() { return startItem; }
-	 * public AItem getEndItem() { return endItem; }
+	 * Null-safe wrappers around {@link ConnectorItem#getStartItem()} and
+	 * {@link ConnectorItem#getEndItem()}, swallowing any
+	 * {@link RuntimeException} they might throw (e.g. if called on a
+	 * partially-initialized or otherwise inconsistent connector) so that
+	 * {@link #connects} degrades to "not connected" rather than propagating
+	 * the exception.
 	 */
 	private static AItem safeStart(ConnectorItem c) {
 		try {

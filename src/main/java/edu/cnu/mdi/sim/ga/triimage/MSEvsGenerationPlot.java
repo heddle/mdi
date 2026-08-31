@@ -16,7 +16,7 @@ import edu.cnu.mdi.ui.colors.X11Colors;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
- * Plot of MSE vs generation (log x-axis) for the image evolution GA demo.
+ * Plot of fitness error vs generation (log x-axis) for the image evolution GA demo.
  * <p>
  * Two curves are shown:
  * </p>
@@ -34,12 +34,12 @@ import edu.cnu.mdi.ui.fonts.Fonts;
 @SuppressWarnings("serial")
 public class MSEvsGenerationPlot extends PlotPanel {
 
-    private static final String TITLE  = "MSE vs Generation";
+    private static final String TITLE  = "Error vs Generation";
     private static final String XLABEL = "Generation";
-    private static final String YLABEL = "MSE";
+    private static final String YLABEL = "Error";
 
-    private static final String BEST_CURVE = "Best MSE";
-    private static final String MEAN_CURVE = "Mean MSE";
+    private static final String BEST_CURVE = "Best error";
+    private static final String MEAN_CURVE = "Mean error";
 
     private final Curve bestCurve;
     private final Curve meanCurve;
@@ -109,7 +109,7 @@ public class MSEvsGenerationPlot extends PlotPanel {
                     new String[]{ BEST_CURVE, MEAN_CURVE }, null);
             return new PlotCanvas(pd, TITLE, XLABEL, YLABEL);
         } catch (PlotDataException e) {
-            e.printStackTrace();
+            edu.cnu.mdi.log.Log.getInstance().exception(e);
             return null;
         }
     }

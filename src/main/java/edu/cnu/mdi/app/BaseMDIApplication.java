@@ -26,6 +26,8 @@ import javax.swing.BorderFactory;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
+import javax.swing.JRootPane;
 
 import com.formdev.flatlaf.FlatIntelliJLaf;
 
@@ -69,11 +71,24 @@ import edu.cnu.mdi.view.VirtualView;
  *
  * <h2>Shutdown Policy</h2>
  * <p>
- * This framework class does <em>not</em> call {@code System.exit(...)}. Closing
- * the main frame triggers {@link #prepareForShutdown()}, then disposes the
- * frame. If the embedding application wants to force JVM termination (for
- * example, after all windows are closed), that policy belongs in the embedding
- * application's {@code main()} or launch layer, not in reusable framework code.
+ * This framework class does <em>not</em> call {@code System.exit(...)} by
+ * default. Closing the main frame — by any means, including the platform's
+ * native close button — triggers {@link #prepareForShutdown()}, disposes
+ * every open {@link Window}, then disposes the frame itself. Whether the JVM
+ * should then actually terminate is a separate question this class leaves to
+ * {@link #exitOnClose()} (default {@code false}), because it is genuinely
+ * application-specific: some embedders host MDI inside a larger application
+ * and must not have it call {@code System.exit}; some want the process to
+ * keep running with no windows open, the conventional behavior for many
+ * native macOS applications (reactivated via the Dock).
+ * </p>
+ * <p>
+ * With the default policy, disposing every window does <em>not</em> by
+ * itself guarantee the JVM exits — AWT's own internal event-dispatch and
+ * shutdown-management threads are not daemon threads, and are not required
+ * to notice that no windows remain. A single-window "tool" style application
+ * that wants the native close button and a "Quit" menu item to behave
+ * identically should override {@link #exitOnClose()} to return {@code true}.
  * </p>
  *
  * <h2>Virtual Desktop Support</h2>
@@ -162,9 +177,9 @@ public class BaseMDIApplication extends JFrame {
 			// Window close policy
 			// --------------------------------------------------------------------
 			// Closing the main frame should shut down MDI cleanly (notify views, stop
-			// timers, flush state) and then dispose the frame. The framework does not
-			// forcibly terminate the JVM via System.exit(...); that policy belongs to
-			// the embedding application (e.g., in main()).
+			// timers, flush state) and then dispose the frame. Whether that also
+			// terminates the JVM is controlled by exitOnClose() -- see the class
+			// javadoc's "Shutdown Policy" section.
 			setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 			addWindowListener(new WindowAdapter() {
 				@Override
@@ -178,12 +193,19 @@ public class BaseMDIApplication extends JFrame {
 							}
 						}
 
-						// Dispose the frame; if this is the last displayable window and
-						// no non-daemon threads remain, the JVM will exit naturally.
+						// Dispose the frame. With the default policy this is where things
+						// stop: disposing every window does not by itself guarantee the
+						// JVM exits (AWT's own event-dispatch/shutdown threads are not
+						// daemon threads), so an embedder that wants the process to
+						// actually end here must opt in via exitOnClose().
 						dispose();
+
+						if (exitOnClose()) {
+							System.exit(0);
+						}
 					}
 				}
-				
+
 			});
 			
 			//console logging of log events for debugging?
@@ -290,13 +312,39 @@ public class BaseMDIApplication extends JFrame {
 	 *
 	 * <p>
 	 * <strong>No JVM termination:</strong> This framework method intentionally does
-	 * not call {@code System.exit(...)}. If an embedding application wants to force
-	 * termination after shutdown, it should do so from application code (typically
-	 * in {@code main}).
+	 * not call {@code System.exit(...)}. See {@link #exitOnClose()} for the
+	 * supported way to opt into JVM termination after shutdown.
 	 * </p>
 	 */
 	protected void prepareForShutdown() {
 		Desktop.getInstance().prepareForExit();
+	}
+
+	/**
+	 * Whether the JVM should terminate once the main frame has actually been
+	 * disposed — that is, after {@link #prepareForShutdown()} has run and
+	 * every open {@link Window} (including this one) has been disposed —
+	 * regardless of whether that happened via the platform's native close
+	 * button, a "Quit" menu item, or any other window-closing gesture.
+	 *
+	 * <p>
+	 * The default is {@code false}: disposing every window does not by
+	 * itself call {@code System.exit(...)}, matching this class's documented
+	 * "Shutdown Policy." That default is correct for an MDI frame embedded
+	 * inside a larger application, or for an application that intends to
+	 * keep running with no windows open. A single-window "tool" style
+	 * application — where the native close button and any "Quit" action
+	 * should behave identically — should override this to return
+	 * {@code true}.
+	 * </p>
+	 *
+	 * @return {@code true} to call {@link System#exit(int)} once the frame is
+	 *         disposed; {@code false} (the default) to leave JVM termination
+	 *         to something else (a "Quit" menu item, a shutdown hook, or
+	 *         simply letting the process keep running)
+	 */
+	protected boolean exitOnClose() {
+		return false;
 	}
 
 	/**
@@ -581,11 +629,54 @@ public class BaseMDIApplication extends JFrame {
 	 * </p>
 	 */
 	protected void onVirtualDesktopReady() {
-	    // Frame is now showing — safe to reconfigure geometry and apply layout.
-	    if (managedVirtualView != null) {
-	        managedVirtualView.toFront();
-	    }
+		// Frame is now showing — safe to reconfigure geometry and apply layout.
 		standardVirtualDesktopReady(managedVirtualView, this::defaultViewLayout, true);
+		// The navigator is an overview, not a palette. Keep ordinary application
+		// views above it when their bounds overlap, matching normal desktop window
+		// stacking and avoiding a creation-order dependency.
+		if (managedVirtualView != null) {
+			managedVirtualView.toBack();
+		}
+
+		// The ready callback runs after setVisible(true), and configuring internal
+		// frames can invalidate the already-realized hierarchy. Finish the one-shot
+		// layout and paint synchronously: repaint() merely queues work and can lose a
+		// race with heavyweight application initialization on macOS.
+		JRootPane root = getRootPane();
+		root.revalidate();
+		validate();
+		root.paintImmediately(0, 0, root.getWidth(), root.getHeight());
+		Toolkit.getDefaultToolkit().sync();
+		schedulePostShowRepaints();
+	}
+
+	/**
+	 * Repaint the realized top-level window a few times after its internal-frame
+	 * hierarchy has been configured. On macOS the native peer can present the
+	 * frame's pre-layout backing buffer even though Swing has already painted the
+	 * reconfigured root pane. A finite set of whole-frame repaint requests bridges
+	 * that peer/layout race without continuous repainting.
+	 */
+	private void schedulePostShowRepaints() {
+		// Keep a few pulses beyond the first second. Applications commonly defer
+		// service startup until after their first paint; on macOS that handoff can
+		// coincide with native peer presentation and leave the old white backing
+		// buffer visible until the window is moved.
+		int[] delays = { 50, 250, 750, 1250, 2000, 3500 };
+		for (int delay : delays) {
+			Timer repaintTimer = new Timer(delay, event -> {
+				revalidate();
+				JRootPane root = getRootPane();
+				if (root != null && root.isShowing() && root.getWidth() > 0 && root.getHeight() > 0) {
+					root.paintImmediately(0, 0, root.getWidth(), root.getHeight());
+				} else {
+					repaint();
+				}
+				Toolkit.getDefaultToolkit().sync();
+			});
+			repaintTimer.setRepeats(false);
+			repaintTimer.start();
+		}
 	}
 
 	/**

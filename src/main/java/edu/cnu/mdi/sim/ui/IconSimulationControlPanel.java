@@ -2,7 +2,6 @@ package edu.cnu.mdi.sim.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.lang.reflect.Constructor;
 import java.util.Objects;
@@ -20,6 +19,7 @@ import edu.cnu.mdi.sim.ProgressInfo;
 import edu.cnu.mdi.sim.SimulationContext;
 import edu.cnu.mdi.sim.SimulationListener;
 import edu.cnu.mdi.sim.SimulationState;
+import edu.cnu.mdi.swing.SwingSizingUtils;
 import edu.cnu.mdi.ui.fonts.Fonts;
 
 /**
@@ -44,7 +44,7 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 	// the host is typically a subclass of SimulationView
 	private ISimulationHost host;
 
-	private final JLabel statusLabel = new JLabel("State: NEW");
+	private final JLabel statusLabel = new JLabel("NEW");
 	private final JLabel messageLabel = new JLabel(" ");
 
 	private final JProgressBar progressBar = new JProgressBar(0, 100);
@@ -147,11 +147,22 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 		applyState(SimulationState.NEW, "unbound");
 		setIndeterminate(false, " ");
 
-		Dimension size = getPreferredSize();
-		size.width = 300;
-		setPreferredSize(size);
+		setPreferredSize(SwingSizingUtils.preferredSizeAtLeast(this, 300, 1));
 	}
 
+	/**
+	 * Bind this panel to a host: stores the host reference, registers this
+	 * panel as a {@link edu.cnu.mdi.sim.SimulationListener}, and updates the
+	 * UI to reflect the host's current state.
+	 * <p>
+	 * <strong>Note:</strong> this method does not implicitly unbind first.
+	 * Calling it again with a different host while already bound leaves this
+	 * panel registered as a stale listener on the previous host's engine;
+	 * call {@link #unbind()} first if rebinding.
+	 * </p>
+	 *
+	 * @param host the simulation host (non-null)
+	 */
 	@Override
 	public void bind(ISimulationHost host) {
 		this.host = Objects.requireNonNull(host, "host");
@@ -261,7 +272,7 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 	}
 
 	private void applyState(SimulationState state, String reason) {
-		statusLabel.setText("State: " + state + (reason == null || reason.isBlank() ? "" : ("  (" + reason + ")")));
+		statusLabel.setText(state + (reason == null || reason.isBlank() ? "" : ("  (" + reason + ")")));
 
 		boolean bound = (host != null);
 
@@ -273,8 +284,7 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 		resumeBtn.setEnabled(bound && state == SimulationState.PAUSED);
 
 		boolean canStopOrCancel = bound && (state == SimulationState.INITIALIZING || state == SimulationState.READY
-				|| state == SimulationState.RUNNING || state == SimulationState.PAUSED
-				|| state == SimulationState.SWITCHING);
+				|| state == SimulationState.RUNNING || state == SimulationState.PAUSED);
 
 		stopBtn.setEnabled(canStopOrCancel);
 		cancelBtn.setEnabled(canStopOrCancel);

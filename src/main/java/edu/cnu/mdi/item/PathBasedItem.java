@@ -11,6 +11,34 @@ import java.awt.geom.Rectangle2D;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
 
+/**
+ * Base class for items whose geometry is a {@link Path2D.Double} in world
+ * coordinates, stored in {@link AItem#_path}.
+ *
+ * <p>Implements {@link AItem#modify()} for all three
+ * {@link ItemModification.ModificationType} kinds:</p>
+ * <ul>
+ * <li>{@code DRAG} &mdash; translates the path (and the item's focus, if any)
+ * by the world-coordinate delta between the modification's start and current
+ * mouse points.</li>
+ * <li>{@code ROTATE} &mdash; rotates the path about the modification's anchor
+ * point by the signed angle between the start and current mouse points (see
+ * {@link #threePointAngle}), and updates the item's azimuth.</li>
+ * <li>{@code RESIZE} &mdash; delegates to {@link #scale()} when
+ * {@code shift}/{@code control} is held or the item's {@code ResizePolicy} is
+ * {@code SCALEONLY}; otherwise delegates to {@link #reshape()}, which
+ * subclasses may override to keep a type-specific shape (e.g. a rectangle
+ * item resizing without shearing into a general quadrilateral). The default
+ * {@link #reshape()} just calls {@link #scale()}.</li>
+ * </ul>
+ *
+ * <p>Concrete subclasses are expected to build {@code _path} in their own
+ * constructors/setters and typically only need to override
+ * {@link #reshape()} (and occasionally {@link #getBounds}) to specialize
+ * resize behavior; {@link #drawItem}, {@link #contains}, {@link #modify()},
+ * and {@link #rotate(double)} are already implemented generically in terms
+ * of {@code _path}.</p>
+ */
 public class PathBasedItem extends AItem {
 
 	// workspace
@@ -64,7 +92,9 @@ public class PathBasedItem extends AItem {
 
 		if (WorldGraphicsUtils.getPathPointCount(_path) == 1) {
 			Rectangle spr = singlePointBounds(container);
-			return container.getComponent().getBounds().intersects(spr);
+			Rectangle viewport = new Rectangle(0, 0,
+					container.getComponent().getWidth(), container.getComponent().getHeight());
+			return viewport.intersects(spr);
 		}
 
 		Rectangle2D.Double wr = getWorldBounds();

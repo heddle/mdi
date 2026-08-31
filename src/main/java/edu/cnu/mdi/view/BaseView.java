@@ -61,6 +61,7 @@ import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
 import edu.cnu.mdi.graphics.toolbar.ToolBits;
 import edu.cnu.mdi.hover.HoverEvent;
 import edu.cnu.mdi.item.Layer;
+import edu.cnu.mdi.swing.SwingSizingUtils;
 import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.transfer.IFileDropHandler;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
@@ -207,6 +208,20 @@ public class BaseView extends JInternalFrame
      */
     public BaseView(Object... keyVals) {
         this(PropertyUtils.fromKeyValues(keyVals));
+    }
+
+    /**
+     * Construct a view from an immutable typed configuration.
+     *
+     * <p>The options are defensively copied before initialization. This
+     * overload is additive; existing key/value and {@link Properties}
+     * constructors retain their behavior.</p>
+     *
+     * @param options view initialization options; must not be {@code null}
+     * @throws NullPointerException if {@code options} is null
+     */
+    public BaseView(ViewOptions options) {
+        this(java.util.Objects.requireNonNull(options, "options").toProperties());
     }
 
     /**
@@ -938,6 +953,38 @@ public class BaseView extends JInternalFrame
         return null;
     }
 
+    /**
+     * The component that best represents this view as a static image, for
+     * screenshot/clipboard capture (see {@link edu.cnu.mdi.util.TakePicture}).
+     *
+     * <p>
+     * The default returns the container's drawable component, which is
+     * correct for ordinary item-based 2D views: for those, the container
+     * component already shows everything the view has to offer. Views whose
+     * visible content is not fully contained in that one component should
+     * override this. {@code PlotView} is the prototypical example: its
+     * title, legend, and axis labels live on the surrounding
+     * {@code PlotPanel}, not on the inner {@code PlotCanvas} the container
+     * exposes, so capturing the container component alone would silently
+     * drop them.
+     * </p>
+     *
+     * <p>
+     * This exists so callers that want "an image of this view" — a
+     * toolbar's camera button, a menu action, a future export feature — have
+     * one consistent, view-owned question to ask, instead of each caller
+     * re-deriving its own answer (or a shared utility like
+     * {@code TakePicture} having to special-case specific view/panel types
+     * itself).
+     * </p>
+     *
+     * @return the component to capture as this view's image; the container's
+     *         component if one is present, otherwise this view itself
+     */
+    public Component getImageComponent() {
+        return (container != null) ? container.getComponent() : this;
+    }
+
     // -----------------------------------------------------------------------
     // Persistence — public API
     // -----------------------------------------------------------------------
@@ -1149,17 +1196,24 @@ public class BaseView extends JInternalFrame
                 height = 300;
                 double fraction = PropertyUtils.getFraction(props);
                 if (Double.isFinite(fraction) && fraction > 0.05 && fraction <= 1.0) {
-                	
+
                 	Dimension size = Environment.getInstance().getFrameSize();
-                    double aspect = PropertyUtils.getAspectRatio(props);
-                    height = (int) (fraction * size.height);
-                    if (aspect > 0.001) {
-                        // Width derived from requested height and aspect ratio.
-                        width = (int) (height * aspect);
-                    } else {
-                        // No aspect given: match the height fraction on width too.
-                        width = (int) (fraction * size.width);
-                    }
+                	// getFrameSize() is null until some BaseMDIApplication has been
+                	// constructed and called setFrameSize() (see BaseMDIApplication's
+                	// constructor). A view built standalone — e.g. a demo's own
+                	// main(), or a test — has no such frame yet. Keep the 400x300
+                	// safe fallback above instead of dereferencing a null size.
+                	if (size != null) {
+                	    double aspect = PropertyUtils.getAspectRatio(props);
+                	    height = (int) (fraction * size.height);
+                	    if (aspect > 0.001) {
+                	        // Width derived from requested height and aspect ratio.
+                	        width = (int) (height * aspect);
+                	    } else {
+                	        // No aspect given: match the height fraction on width too.
+                	        width = (int) (fraction * size.width);
+                	    }
+                	}
                }
             }
 
@@ -1364,12 +1418,15 @@ public class BaseView extends JInternalFrame
 				getContentPane().add(panel, BorderLayout.WEST);
 				int extra = panel.getPreferredSize().width;
 				java.awt.Rectangle r = getBounds();
-				setBounds(r.x, r.y, r.width + extra, r.height);
+				int requestedWidth = r.width + extra;
+				int availableWidth = SwingSizingUtils.availableDesktopWidth(this);
+				setBounds(r.x, r.y, Math.min(requestedWidth, availableWidth), r.height);
 				revalidate();
 				repaint();
 			})
 		);
 	}
+
     // -----------------------------------------------------------------------
     // ViewContentBuilder — compose Swing content for container-backed views
     // -----------------------------------------------------------------------
@@ -1441,11 +1498,12 @@ public class BaseView extends JInternalFrame
 
                 // When the INFO button is the only toolbar content, the standard
                 // toolbar height wastes a visible strip of space beneath a single
-                // small icon. Pin the preferred, minimum, and maximum height to
-                // the icon size plus 2 px of padding on each side so the toolbar
-                // hugs the button rather than filling the full row height.
+                // small icon. Pin the height to the actual button plus toolbar
+                // insets so the row remains compact without clipping under a
+                // platform LookAndFeel with larger button metrics.
                 if (cfg.toolBits == ToolBits.INFO) {
-                    int slimH = BaseToolBar.DEFAULT_ICON_SIZE + 4;
+                    int slimH = SwingSizingUtils.requiredHorizontalToolbarHeight(
+                            view.toolBar);
                     Dimension slim = new Dimension(
                             view.toolBar.getPreferredSize().width, slimH);
                     view.toolBar.setPreferredSize(slim);
@@ -1592,6 +1650,15 @@ public class BaseView extends JInternalFrame
 		// no-op by default; subclasses can override to respond to hover events.
 	}
 
+	/**
+	 * Handle the closing (dismissal) of a hover popup/tooltip.
+	 *
+	 * <p>Subclasses can override this method to respond when a hover
+	 * previously reported via {@link #hoverUpdate} has ended. The default
+	 * implementation is a no-op.</p>
+	 *
+	 * @param he the hover event
+	 */
 	public void hoverClosed(HoverEvent he) {
 		// no-op by default; subclasses can override to respond to hover close events.
 	}

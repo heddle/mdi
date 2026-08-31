@@ -91,6 +91,31 @@ public interface SimulationListener {
 	}
 
 	/**
+	 * Called exactly once when the engine reaches a terminal outcome.
+	 *
+	 * <p>This unified callback is useful to code that must perform the same
+	 * bookkeeping for success, stop, cancellation, and failure. It is delivered
+	 * on the EDT after the corresponding legacy callback: after
+	 * {@link #onDone(SimulationContext)} for success or stop, after
+	 * {@link #onFail(SimulationContext, Throwable)} for failure, and after the
+	 * terminal state transition for cancellation. The earlier
+	 * {@link #onCancelRequested(SimulationContext)} callback still reports the
+	 * request itself and may precede actual termination by an arbitrary amount
+	 * of time.</p>
+	 *
+	 * <p>The {@code error} argument is non-null only when {@code status} is
+	 * {@link CompletionStatus#FAILED}. This default method preserves source and
+	 * binary compatibility for existing listener implementations.</p>
+	 *
+	 * @param ctx simulation context
+	 * @param status terminal outcome; never {@code null}
+	 * @param error failure that caused the outcome, or {@code null} for a
+	 *              non-failure outcome
+	 */
+	default void onCompleted(SimulationContext ctx, CompletionStatus status, Throwable error) {
+	}
+
+	/**
 	 * Called when cancellation is requested via
 	 * {@link SimulationEngine#requestCancel()}.
 	 * <p>

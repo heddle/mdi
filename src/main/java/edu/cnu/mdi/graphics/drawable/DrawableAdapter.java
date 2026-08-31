@@ -19,7 +19,7 @@ import edu.cnu.mdi.container.IContainer;
  * <pre>
  * class GridOverlay extends DrawableAdapter {
  *     {@literal @}Override
- *     public void draw(Graphics2D g, Container2D container) {
+ *     public void draw(Graphics2D g, IContainer container) {
  *         // custom drawing code here
  *     }
  * }

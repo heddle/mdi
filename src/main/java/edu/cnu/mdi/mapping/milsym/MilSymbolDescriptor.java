@@ -30,6 +30,7 @@ public class MilSymbolDescriptor {
 	 * @param displayName  label shown in the palette and tooltips
 	 * @param category     category label such as "Ground", "Air", or "Support"
 	 * @param resourcePath classpath resource path to the icon image
+	 * @param icon         the cached icon, or {@code null} if not yet loaded
 	 */
 	public MilSymbolDescriptor(String id, String displayName, String category, String resourcePath, ImageIcon icon) {
 		this.id = id;
@@ -39,26 +40,32 @@ public class MilSymbolDescriptor {
 		this.icon = icon;
 	}
 
+	/** @return unique internal symbol identifier */
 	public String getId() {
 		return id;
 	}
 
+	/** @return user-facing symbol name */
 	public String getDisplayName() {
 		return displayName;
 	}
 
+	/** @return palette category containing the symbol */
 	public String getCategory() {
 		return category;
 	}
 
+	/** @return classpath path from which the symbol icon was loaded */
 	public String getResourcePath() {
 		return resourcePath;
 	}
-	
+
+	/** @return cached symbol icon, which may be {@code null} */
 	public ImageIcon getIcon() {
 		return icon;
 	}
 
+	/** @return the user-facing symbol name */
 	@Override
 	public String toString() {
 		return displayName;
@@ -73,6 +80,8 @@ public class MilSymbolDescriptor {
 	 * </p>
 	 *
 	 * @param resourcePath the classpath resource path to the icon image
+	 * @param icon         the icon to associate with the descriptor, or
+	 *                     {@code null} if not yet loaded
 	 * @return a symbol descriptor for the given resource path
 	 */
 	public static MilSymbolDescriptor fromResourcePath(String resourcePath, ImageIcon icon) {

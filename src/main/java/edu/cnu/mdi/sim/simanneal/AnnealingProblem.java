@@ -8,7 +8,7 @@ import java.util.Random;
  *
  * @param <S> the type of annealing solution
  */
-public interface AnnealingProblem<S extends AnnealingSolution> {
+public interface AnnealingProblem<S extends AnnealingSolution<S>> {
     /**
      * Compute the energy of a solution.
      * @param sol the solution to evaluate

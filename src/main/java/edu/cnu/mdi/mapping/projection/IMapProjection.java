@@ -270,13 +270,22 @@ public interface IMapProjection {
      * <p>This is the standard normalization used throughout the mapping
      * subsystem. Note the range is half-open: -π maps to π.</p>
      *
-     * @param lon longitude in radians (any value)
-     * @return equivalent longitude in (-π, π]
+     * @param lon longitude in radians
+     * @return equivalent longitude in (-π, π], or {@link Double#NaN} when
+     *         {@code lon} is not finite
      */
     default double wrapLongitude(double lon) {
-        while (lon <= -Math.PI) lon += 2 * Math.PI;
-        while (lon >   Math.PI) lon -= 2 * Math.PI;
-        return lon;
+        if (!Double.isFinite(lon)) {
+            return Double.NaN;
+        }
+
+        double wrapped = lon % (2.0 * Math.PI);
+        if (wrapped <= -Math.PI) {
+            wrapped += 2.0 * Math.PI;
+        } else if (wrapped > Math.PI) {
+            wrapped -= 2.0 * Math.PI;
+        }
+        return wrapped;
     }
 
     /**
@@ -313,6 +322,22 @@ public interface IMapProjection {
      *         otherwise
      */
     default boolean crossesSeam(double lon1, double lon2) {
+        return false;
+    }
+
+    /**
+     * Reports whether the projection's horizontal domain represents a complete,
+     * periodically wrapped 360-degree longitude range.
+     *
+     * <p>Adaptive graticule rendering uses this distinction when the entire
+     * projected width is visible. Sampling the two horizontal edges of such a
+     * projection produces the same seam longitude and can otherwise make half
+     * the world appear to be outside the visible longitude extent.</p>
+     *
+     * @return {@code true} for full-width periodic projections such as Mercator
+     *         and Mollweide; otherwise {@code false}
+     */
+    default boolean isLongitudePeriodic() {
         return false;
     }
     

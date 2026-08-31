@@ -15,6 +15,38 @@ import edu.cnu.mdi.graphics.rubberband.ARubberband;
 import edu.cnu.mdi.graphics.rubberband.IRubberbanded;
 import edu.cnu.mdi.graphics.rubberband.RubberbandFactory;
 
+/**
+ * Toggle button that drives the "pointer" (selection/move/rubberband) tool
+ * for a canvas, disambiguating a mouse press into an object drag or a
+ * rubberband gesture based on where the press landed and how far the mouse
+ * moves before the drag threshold is crossed.
+ *
+ * <h2>State machine</h2>
+ * <p>
+ * An internal {@code Mode} tracks the gesture in progress:
+ * </p>
+ * <ul>
+ * <li>{@code IDLE} — no gesture in progress.</li>
+ * <li>{@code PRESS_ON_OBJECT} / {@code PRESS_ON_EMPTY} — the mouse was
+ * pressed on a hit-tested object (see {@link #hitTest}) or on empty space;
+ * the gesture is not yet classified as a drag or a click.</li>
+ * <li>{@code MOVING} — the press was on an object and the mouse has moved
+ * past {@link #dragThresholdPx}, promoting the gesture into an object drag
+ * (see {@link #beginDragObject}/{@link #dragObjectBy}/{@link #endDragObject}).</li>
+ * <li>{@code RUBBERBANDING} — the press was on empty space and the mouse has
+ * moved past the threshold, promoting the gesture into a rubberband
+ * selection (see {@link #rubberbanding}).</li>
+ * </ul>
+ *
+ * <h2>Extension points</h2>
+ * <p>
+ * Subclasses configure hit-testing and drag behavior by overriding
+ * {@link #hitTest}, {@link #doNotDrag}, {@link #clickObject},
+ * {@link #doubleClickObject}, {@link #beginDragObject},
+ * {@link #dragObjectBy}, {@link #endDragObject}, and must implement
+ * {@link #rubberbanding} to react to a completed rubberband gesture.
+ * </p>
+ */
 @SuppressWarnings("serial")
 public abstract class APointerButton extends JToggleButton
         implements MouseMotionListener, MouseListener, IRubberbanded {
@@ -259,7 +291,7 @@ public abstract class APointerButton extends JToggleButton
 			return;
 		}
 		rubberband.setActive(true);
-		if (rubberband.isGestureValid(minSizePx)) {
+		if (rubberband.isClickBased()) {
 			// IMPORTANT: forward the very first click that created the rubberband
 			rubberband.mousePressed(e);
 		} else {

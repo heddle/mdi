@@ -10,7 +10,6 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Pair;
 
-import edu.cnu.mdi.splot.pdata.FitVectors;
 
 /**
  * Polynomial least-squares fitter using Apache Commons Math 3.x least-squares
@@ -272,6 +271,9 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
 
 		/** Create unbounded bounds for nParams parameters. */
 		public static ParameterBounds unbounded(int nParams) {
+			if (nParams <= 0) {
+				throw new IllegalArgumentException("nParams must be > 0");
+			}
 			double[] lo = new double[nParams];
 			double[] hi = new double[nParams];
 			for (int i = 0; i < nParams; i++) {
@@ -283,6 +285,9 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
 
 		/** Builder for coefficient bounds for a given degree. */
 		public static Builder builder(int degree) {
+			if (degree < 0) {
+				throw new IllegalArgumentException("degree must be >= 0");
+			}
 			return new Builder(degree);
 		}
 
@@ -312,6 +317,10 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
 			public Builder coeff(int k, double lower, double upper) {
 				if (k < 0 || k >= lo.length) {
 					throw new IllegalArgumentException("coefficient index out of range: " + k);
+				}
+				if (Double.isNaN(lower) || Double.isNaN(upper) || lower > upper) {
+					throw new IllegalArgumentException(
+							"coefficient lower bound must not exceed upper bound");
 				}
 				lo[k] = lower;
 				hi[k] = upper;
@@ -371,72 +380,6 @@ public final class PolynomialFitter extends ALeastSquaresFitter implements IFitt
 	@Override
 	public IFitStringGetter getStringGetter() {
 		return this;
-	}
-
-	// Linear test
-	private static void testLinear() {
-
-		final double m = 3.3; // slope
-		final double b = -0.4; // intercept
-		int n = 100;
-
-		Evaluator evaluator = new Evaluator() {
-			@Override
-			public double value(double x) {
-				return m * x + b;
-			}
-		};
-
-		// test data
-		FitVectors testData = FitVectors.testData(evaluator, 0.0, 10.0, n, 5, 10);
-
-		PolynomialFitter fitter = new PolynomialFitter(1); // Linear fit
-		FitResult result = fitter.fit(testData.x, testData.y, testData.w);
-		System.out.println("\n===== Linear Fit Test  =====");
-		System.out.println("Truth: m = " + m + " b = " + b);
-		System.out.println(result);
-		for (int i = 0; i < (n - 1); i += 10) {
-			double xv = testData.x[i];
-			double yv = result.evaluator.value(xv);
-			System.out.printf("x=%.3f fit y=%.3f data y=%.3f%n", xv, yv, testData.y[i]);
-		}
-
-	}
-
-	// Cubic test
-	private static void testCubic() {
-		final double c0 = 1.0;
-		final double c1 = -2.0;
-		final double c2 = 0.5;
-		final double c3 = 0.1;
-		int n = 200;
-
-		Evaluator evaluator = new Evaluator() {
-			@Override
-			public double value(double x) {
-				return c0 + c1 * x + c2 * x * x + c3 * x * x * x;
-			}
-		};
-
-		// test data
-		FitVectors testData = FitVectors.testData(evaluator, -10.0, 10.0, n, 20, 50);
-		PolynomialFitter fitter = new PolynomialFitter(3); // Cubic fit
-		FitResult result = fitter.fit(testData.x, testData.y, testData.w);
-		System.out.println("\n===== Cubic Fit Test  =====");
-		System.out.println("Truth: c0 = " + c0 + " c1 = " + c1 + " c2 = " + c2 + " c3 = " + c3);
-		System.out.println(result);
-		for (int i = 0; i < (n - 1); i += 20) {
-			double xv = testData.x[i];
-			double yv = result.evaluator.value(xv);
-			System.out.printf("x=%.3f fit y=%.3f data y=%.3f%n", xv, yv, testData.y[i]);
-		}
-
-	}
-
-	// Example main for testing
-	public static void main(String[] args) {
-		testLinear();
-		testCubic();
 	}
 
 }

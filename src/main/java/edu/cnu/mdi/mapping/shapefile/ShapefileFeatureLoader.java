@@ -42,10 +42,12 @@ import edu.cnu.mdi.mapping.theme.MapUtils;
  * No field names are required or assumed.</p>
  *
  * <h2>Coordinate handling</h2>
- * <p>Input coordinates are assumed to be WGS84 geographic degrees (longitude,
- * latitude order), as used by all Natural Earth shapefiles. They are converted
- * to radians and longitude is wrapped to (-π, π] before being stored in the
- * returned features.</p>
+ * <p>Input coordinates must be WGS84 or NAD83/GRS80 geographic degrees
+ * (longitude, latitude order). NAD83 is treated as WGS84 without datum
+ * transformation, which is appropriate for map display. If a companion {@code .prj}
+ * exists, it is validated and incompatible or unrecognized coordinate systems
+ * are rejected. If it is absent, WGS84 is assumed. Coordinates are converted
+ * to radians and longitude is wrapped to (-π, π] before being stored.</p>
  *
  * <h2>File layout contract</h2>
  * <p>The {@code .dbf} companion file is derived from the {@code .shp} path
@@ -108,6 +110,7 @@ public final class ShapefileFeatureLoader {
      */
     public List<ShapeFeature> load(Path shpPath) throws IOException {
         Objects.requireNonNull(shpPath, "shpPath");
+        ShapefileCrsValidator.validate(shpPath);
         Path dbfPath = replaceExtension(shpPath, ".dbf");
         return loadFromPaths(shpPath, dbfPath);
     }

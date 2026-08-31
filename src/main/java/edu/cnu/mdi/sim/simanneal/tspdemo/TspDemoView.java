@@ -16,6 +16,7 @@ import edu.cnu.mdi.sim.simanneal.EvsTPlotPanel;
 import edu.cnu.mdi.sim.simanneal.GeometricAnnealingSchedule;
 import edu.cnu.mdi.sim.simanneal.IAcceptedMoveListener;
 import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingConfig;
+import edu.cnu.mdi.sim.simanneal.AnnealingFeedback;
 import edu.cnu.mdi.sim.simanneal.SimulatedAnnealingSimulation;
 import edu.cnu.mdi.sim.simanneal.TemperatureHeuristic;
 import edu.cnu.mdi.sim.simanneal.heuristics.EnergyDistributionHeuristic;
@@ -207,7 +208,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
 				.getSimulation();
 		this.sim = s;
 		this.sim.addAcceptedMoveListener(this);
-		this.sim.setEngine(getSimulationEngine());
+		this.sim.setFeedback(AnnealingFeedback.forEngine(getSimulationEngine()));
 
 		setBeforeDraw();
 		setAfterDraw();
@@ -304,7 +305,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
      *       the new one.</li>
      *   <li>Updates {@link #model}, {@link #sim}, and
      *       {@link #bestTourSnapshot}.</li>
-     *   <li>Injects the new engine into the new simulation.</li>
+     *   <li>Attaches an engine-backed feedback channel to the new simulation.</li>
      * </ol>
      */
     @Override
@@ -332,7 +333,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
                 this.model            = b.model;
                 this.sim              = newSim;
                 this.bestTourSnapshot = null;
-                this.sim.setEngine(newEngine);
+				this.sim.setFeedback(AnnealingFeedback.forEngine(newEngine));
             },
 
             true,   // autoStart
@@ -485,8 +486,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
     // -------------------------------------------------------------------------
 
     /**
-     * Called on the simulation thread each time any move is accepted
-     * (including uphill moves).
+	 * Called on the Swing EDT for the latest coalesced accepted move.
      * <p>
      * Forwards the (temperature, energy) point to the E vs T scatter plot as
      * a gray accepted-move point.
@@ -501,7 +501,7 @@ public class TspDemoView extends SimulationView implements ITspDemoResettable, I
     }
 
     /**
-     * Called on the simulation thread each time a new best solution is found.
+	 * Called on the Swing EDT for the latest coalesced new-best notification.
      *
      * <p>
      * Two things happen here:

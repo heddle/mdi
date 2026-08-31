@@ -367,7 +367,6 @@ public class TextPaneScrollPane extends JScrollPane {
 			document.insertString(document.getLength(), "  ", BLACK_SS_12_P);
 		} catch (BadLocationException e) {
 			Log.getInstance().exception(e);
-			e.printStackTrace();
 		}
 	}
 }

@@ -11,7 +11,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.container.IContainer;
-import edu.cnu.mdi.mapping.container.MapContainer;
 import edu.cnu.mdi.mapping.graphics.MapGraphics;
 import edu.cnu.mdi.mapping.render.CountryRenderer;
 import edu.cnu.mdi.mapping.theme.MapTheme;
@@ -157,6 +156,12 @@ public class MercatorProjection implements IMapProjection {
         return Math.abs(d1 - d2) > Math.PI;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public boolean isLongitudePeriodic() {
+        return true;
+    }
+
     // -------------------------------------------------------------------------
     // IMapProjection — transforms
     // -------------------------------------------------------------------------
@@ -183,6 +188,10 @@ public class MercatorProjection implements IMapProjection {
      */
     @Override
     public void latLonFromXY(Point2D.Double latLon, Point2D.Double xy) {
+        if (!isPointOnMap(xy)) {
+            latLon.setLocation(Double.NaN, Double.NaN);
+            return;
+        }
         latLon.x = wrapLongitude(xy.x + lambda0);
         latLon.y = 2.0 * Math.atan(Math.exp(xy.y)) - Math.PI / 2.0;
     }
@@ -200,7 +209,10 @@ public class MercatorProjection implements IMapProjection {
      */
     @Override
     public boolean isPointVisible(Point2D.Double latLon) {
-        return latLon.y >= MIN_LAT && latLon.y <= MAX_LAT;
+        return Double.isFinite(latLon.x)
+            && Double.isFinite(latLon.y)
+            && latLon.y >= MIN_LAT
+            && latLon.y <= MAX_LAT;
     }
 
     /**
@@ -265,8 +277,13 @@ public class MercatorProjection implements IMapProjection {
     	if (latitude < MIN_LAT || latitude > MAX_LAT) {
 			return; // Latitude is out of bounds, so skip drawing
 		}
-    	MapGraphics.drawHorizontalLatitudeLine(g2, (MapContainer)container, latitude,
-    			getCentralLongitude(), theme);
+    	MapGraphics.drawHorizontalLatitudeLine(
+    	        g2,
+    	        container,
+    	        this,
+    	        latitude,
+    	        getCentralLongitude(),
+    	        theme);    
     }
 
     /**
@@ -280,8 +297,13 @@ public class MercatorProjection implements IMapProjection {
     @Override
     public void drawLongitudeLine(Graphics2D g2, IContainer container, double longitude) {
         double lon = wrapLongitude(longitude);
-    	MapGraphics.drawVerticalLongitudeLine(g2, (MapContainer)container, lon, theme);
-   }
+        MapGraphics.drawVerticalLongitudeLine(
+                g2,
+                container,
+                this,
+                lon,
+                theme);
+    }
 
     // -------------------------------------------------------------------------
     // IMapProjection — metadata

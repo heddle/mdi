@@ -213,5 +213,6 @@ public class Ping implements AutoCloseable {
 	@Override
 	public void close() {
 		stop();
+		listeners = new EventListenerList();
 	}
 }

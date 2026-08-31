@@ -26,7 +26,7 @@ public class TextEditDialog extends JDialog {
 
     private TextEditPanel textEditPanel;
 
-    private boolean cancelled;
+    private boolean cancelled = true;
 
  	/**
 	 * Create a dialog for editing text with default title, empty initial text,
@@ -121,7 +121,6 @@ public class TextEditDialog extends JDialog {
 			public void actionPerformed(ActionEvent e) {
 				cancelled = false;
 				dispose();
-				setVisible(false);
 			}
 		});
 
@@ -133,7 +132,6 @@ public class TextEditDialog extends JDialog {
 			public void actionPerformed(ActionEvent e) {
 				cancelled = true;
 				dispose();
-				setVisible(false);
 			}
 		});
 

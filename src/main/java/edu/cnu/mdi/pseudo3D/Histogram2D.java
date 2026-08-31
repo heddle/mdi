@@ -45,8 +45,9 @@ import edu.cnu.mdi.ui.fonts.Fonts;
  *
  * <p>Drop-in behavior</p> This is intended as a drop-in replacement for the
  * prototype {@code BackedHistogram2D} you shared: same package/class name, same
- * constructor signature, same mouse gestures, and it still directly reads
- * {@code data._bins}.
+ * constructor signature and same mouse gestures. Each frame uses
+ * {@link Histo2DData#snapshotBins()} so concurrent fills cannot produce a
+ * partially updated rendering.
  */
 @SuppressWarnings("serial")
 public class Histogram2D extends JComponent {
@@ -86,9 +87,9 @@ public class Histogram2D extends JComponent {
 
 	// ---- Performance caches ----
 	/** Flattened indices for bins, sorted far-to-near. */
-	private final int[] indices;
+	private int[] indices;
 	/** Depth value per flattened bin index (same length as {@link #indices}). */
-	private final double[] depth;
+	private double[] depth;
 
 	// Cached view parameters (used to decide when to recompute depth/sort)
 	private int lastW = -1;
@@ -120,14 +121,9 @@ public class Histogram2D extends JComponent {
 
 		this.nx = data.nx();
 		this.ny = data.ny();
-		this.bins = data._bins;
+		this.bins = data.snapshotBins();
 
-		int n = nx * ny;
-		this.indices = new int[n];
-		this.depth = new double[n];
-		for (int i = 0; i < n; i++) {
-			indices[i] = i;
-		}
+		initializeSortBuffers();
 
 		refreshDataScale();
 		mouseListening();
@@ -144,7 +140,8 @@ public class Histogram2D extends JComponent {
 		this.data = Objects.requireNonNull(data, "data");
 		this.nx = data.nx();
 		this.ny = data.ny();
-		this.bins = data._bins;
+		this.bins = data.snapshotBins();
+		initializeSortBuffers();
 		refreshDataScale();
 		invalidateViewCache();
 		repaint();
@@ -237,6 +234,7 @@ public class Histogram2D extends JComponent {
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
 				zoomMultiplier *= (e.getPreciseWheelRotation() > 0) ? 0.9 : 1.1;
+				zoomMultiplier = Math.max(0.05, Math.min(20.0, zoomMultiplier));
 				repaint();
 			}
 		};
@@ -245,10 +243,21 @@ public class Histogram2D extends JComponent {
 		addMouseWheelListener(ma);
 	}
 
+	/** Rebuild buffers whose size depends on the current histogram dimensions. */
+	private void initializeSortBuffers() {
+		int n = Math.multiplyExact(nx, ny);
+		indices = new int[n];
+		depth = new double[n];
+		for (int i = 0; i < n; i++) {
+			indices[i] = i;
+		}
+	}
+
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
+		bins = data.snapshotBins();
 
 		updateViewCacheIfNeeded();
 

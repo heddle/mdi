@@ -1,6 +1,7 @@
 package edu.cnu.mdi.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,4 +27,10 @@ class SmartDoubleFormatterTest {
         assertEquals("1.235E+20", large);
         assertEquals("1.235E-20", small);
     }
+
+	@Test
+	void rejectsNonPositivePrecision() {
+		assertThrows(IllegalArgumentException.class,
+				() -> SmartDoubleFormatter.doubleFormat(1.0, 0));
+	}
 }

@@ -46,7 +46,10 @@ public final class Histo2DData {
     private final double _dy;
 
     // ---- storage ----
-    public final double[][] _bins;
+    // Not public: direct unsynchronized access would defeat the internal
+    // lock and the "safe to fill from a worker thread while the EDT paints"
+    // guarantee documented on this class. Use snapshotBins() instead.
+    private final double[][] _bins;
 
     // ---- counts (HistoData-like) ----
     /** In-range fill count (good points). */
@@ -99,6 +102,10 @@ public final class Histo2DData {
         if (nx < 1 || ny < 1) {
             throw new IllegalArgumentException("Histo2DData: nx and ny must be >= 1");
         }
+		if (!Double.isFinite(xmin) || !Double.isFinite(xmax)
+				|| !Double.isFinite(ymin) || !Double.isFinite(ymax)) {
+			throw new IllegalArgumentException("Histo2DData: limits must be finite");
+		}
         if (!(xmax > xmin)) {
             throw new IllegalArgumentException("Histo2DData: xmax must be > xmin");
         }

@@ -165,8 +165,9 @@ public class LambertEqualAreaProjection implements IMapProjection {
 	 * <p>
 	 * Latitude is clamped to [{@code MIN_LAT}, {@code MAX_LAT}] before projection.
 	 * When the input point is the antipode of the center (the denominator
-	 * {@code 1 + cos γ ≈ 0}), the output is set to the boundary point
-	 * {@code (RHO_MAX, 0)} rather than NaN.
+	 * {@code 1 + cos γ ≈ 0}, tested as {@code denom <= 1e-15}), both output
+	 * coordinates are set to {@link Double#NaN} rather than a boundary point,
+	 * since the true projected location is undefined at that singularity.
 	 * </p>
 	 */
 	@Override
@@ -234,7 +235,10 @@ public class LambertEqualAreaProjection implements IMapProjection {
 	 */
 	@Override
 	public boolean isPointVisible(Point2D.Double latLon) {
-		return latLon.y >= MIN_LAT && latLon.y <= MAX_LAT;
+		return Double.isFinite(latLon.x)
+				&& Double.isFinite(latLon.y)
+				&& latLon.y >= MIN_LAT
+				&& latLon.y <= MAX_LAT;
 	}
 
 	/**

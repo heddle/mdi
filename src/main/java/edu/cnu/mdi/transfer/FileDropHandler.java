@@ -4,6 +4,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -15,7 +16,7 @@ public class FileDropHandler extends TransferHandler {
 	private final IFileDropHandler dropHandler;
 	public FileDropHandler(IFileDropHandler dropHandler) {
 		super();
-		this.dropHandler = dropHandler;
+		this.dropHandler = Objects.requireNonNull(dropHandler, "dropHandler");
 	}
 
 	@Override
@@ -35,7 +36,7 @@ public class FileDropHandler extends TransferHandler {
 			@SuppressWarnings("unchecked")
 			List<File> allFiles = (List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
 
-			Predicate<File> fileFilter = dropHandler != null ? dropHandler.getFileFilter() : null;
+			Predicate<File> fileFilter = dropHandler.getFileFilter();
 			// Apply the filter if it exists
             List<File> acceptedFiles = (fileFilter == null) ? allFiles :
                 allFiles.stream().filter(fileFilter).collect(Collectors.toList());
@@ -44,8 +45,10 @@ public class FileDropHandler extends TransferHandler {
             	dropHandler.filesDropped(acceptedFiles);
                 return true;
             }
-			return true;
+			return false;
 		} catch (Exception e) {
+			edu.cnu.mdi.log.Log.getInstance().warning(
+					"File drop could not be completed: " + e.getMessage());
 			return false;
 		}
 	}

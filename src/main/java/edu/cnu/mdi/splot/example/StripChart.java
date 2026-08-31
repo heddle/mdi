@@ -15,11 +15,13 @@ import edu.cnu.mdi.splot.plot.LimitsMethod;
 import edu.cnu.mdi.splot.plot.PlotChangeType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 
+/** Demonstrates a live strip chart driven by a periodic value evaluator. */
 @SuppressWarnings("serial")
 public class StripChart extends AExample implements Evaluator {
 
 	private Random random = new Random();
 
+	/** @param headless whether to construct the example without displaying a window */
 	public StripChart(boolean headless) {
 		super(headless);
 		PlotData ds = canvas.getPlotData();

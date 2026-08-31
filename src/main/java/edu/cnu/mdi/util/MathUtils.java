@@ -2,8 +2,11 @@ package edu.cnu.mdi.util;
 
 import java.awt.geom.Point2D;
 
-public class MathUtils {
+/** General mathematical helpers used by drawable geometry. */
+public final class MathUtils {
 
+	private MathUtils() {
+	}
 
 	/**
 	 * Given two points p0 and p1, imagine a line from p0 to p1. Take the line to be
@@ -30,6 +33,9 @@ public class MathUtils {
 
 		double numerator = delx * (wp.x - x1) + dely * (wp.y - y1);
 		double denominator = delx * delx + dely * dely;
+		if (denominator == 0.0 || !Double.isFinite(denominator)) {
+			throw new IllegalArgumentException("line endpoints must be distinct and finite");
+		}
 		double t = numerator / denominator;
 		pintersect.x = x1 + t * delx;
 		pintersect.y = y1 + t * dely;

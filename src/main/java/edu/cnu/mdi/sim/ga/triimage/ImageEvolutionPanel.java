@@ -12,6 +12,8 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
+import edu.cnu.mdi.swing.SwingSizingUtils;
+
 /**
  * Custom drawing panel for the image evolution GA demo.
  *
@@ -54,8 +56,8 @@ public class ImageEvolutionPanel extends JPanel {
     /** Pixel gap between thumbnails in the population grid. */
     private static final int THUMB_GAP = 2;
 
-    /** Height of the label strip below each main region. */
-    private static final int LABEL_HEIGHT = 18;
+    /** Minimum height of the label strip below each main region. */
+    private static final int MIN_LABEL_HEIGHT = 18;
 
     /** Background color for the entire panel. */
     private static final Color BG_COLOR = new Color(30, 30, 30);
@@ -90,8 +92,8 @@ public class ImageEvolutionPanel extends JPanel {
      */
     private List<BufferedImage> populationThumbs;
 
-    /** The target image, set once at construction and never changed. */
-    private final BufferedImage targetImage;
+    /** The current target image. Updated on the EDT when a new file is opened. */
+    private BufferedImage targetImage;
 
     // -------------------------------------------------------------------------
     // Constructor
@@ -147,6 +149,20 @@ public class ImageEvolutionPanel extends JPanel {
         repaint();
     }
 
+    /**
+     * Replace the target and clear renders belonging to the previous run.
+     *
+     * @param targetImage new non-null target image
+     */
+    public void resetForTarget(BufferedImage targetImage) {
+		this.targetImage = java.util.Objects.requireNonNull(targetImage, "targetImage");
+		bestImage = null;
+		populationThumbs = null;
+		generation = 0;
+		bestFitness = Double.NaN;
+		repaint();
+    }
+
     // -------------------------------------------------------------------------
     // Painting
     // -------------------------------------------------------------------------
@@ -170,7 +186,9 @@ public class ImageEvolutionPanel extends JPanel {
 
         // Divide width equally into three regions
         int regionW = (w - 4 * REGION_GAP) / 3;
-        int imageH  = h - LABEL_HEIGHT - 2 * REGION_GAP;
+        int labelHeight = Math.max(MIN_LABEL_HEIGHT,
+                SwingSizingUtils.fontHeight(this, LABEL_FONT, 4));
+        int imageH  = h - labelHeight - 2 * REGION_GAP;
 
         int xBest   = REGION_GAP;
         int xGrid   = xBest  + regionW + REGION_GAP;
@@ -295,15 +313,13 @@ public class ImageEvolutionPanel extends JPanel {
 
     /**
      * Build the label string shown under the best-individual panel.
-     * Includes the current generation and best fitness (converted back to MSE).
-     * MSE stands for mean squared error, which is the original metric being minimized.
+     * Includes the current generation and best fitness converted back to the
+     * configured non-negative error.
      */
     private String buildBestLabel() {
         if (Double.isNaN(bestFitness)) {
             return "Best individual";
         }
-        // bestFitness = -MSE, so MSE = -bestFitness
-        // Multiply by 255^2 to get back to familiar 0-65025 scale, or just show directly
-         return String.format("Best  gen %d  MSE=%.4f", generation, -bestFitness);
+         return String.format("Best  gen %d  error=%.4f", generation, -bestFitness);
     }
 }

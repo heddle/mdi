@@ -35,6 +35,13 @@ public class Point2DSupportTest {
 	}
 
 	@Test
+	public void testLengthAndDistanceAvoidIntermediateOverflow() {
+		assertTrue(Double.isFinite(Point2DSupport.length(new Point2D.Double(1.0e200, 1.0e200))));
+		assertTrue(Double.isFinite(Point2DSupport.distance(
+				new Point2D.Double(0, 0), new Point2D.Double(1.0e200, 1.0e200))));
+	}
+
+	@Test
 	public void testUnitVector() {
 		Point2D.Double p = new Point2D.Double(3, 4);
 

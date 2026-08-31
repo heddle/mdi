@@ -11,7 +11,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import edu.cnu.mdi.container.IContainer;
-import edu.cnu.mdi.mapping.container.MapContainer;
 import edu.cnu.mdi.mapping.graphics.MapGraphics;
 import edu.cnu.mdi.mapping.theme.MapTheme;
 
@@ -174,6 +173,12 @@ public class MollweideProjection implements IMapProjection {
         return Math.abs(d1 - d2) > Math.PI;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public boolean isLongitudePeriodic() {
+        return true;
+    }
+
     // -------------------------------------------------------------------------
     // IMapProjection — transforms
     // -------------------------------------------------------------------------
@@ -198,6 +203,10 @@ public class MollweideProjection implements IMapProjection {
     /** {@inheritDoc} */
     @Override
     public void latLonFromXY(Point2D.Double latLon, Point2D.Double xy) {
+        if (!isPointOnMap(xy)) {
+            latLon.setLocation(Double.NaN, Double.NaN);
+            return;
+        }
         double x     = xy.x / R;
         double y     = xy.y / R;
         double theta = Math.asin(y / SQRT2);
@@ -227,7 +236,10 @@ public class MollweideProjection implements IMapProjection {
      */
     @Override
     public boolean isPointVisible(Point2D.Double latLon) {
-        return latLon.y >= MIN_LAT && latLon.y <= MAX_LAT;
+        return Double.isFinite(latLon.x)
+            && Double.isFinite(latLon.y)
+            && latLon.y >= MIN_LAT
+            && latLon.y <= MAX_LAT;
     }
 
     /**
@@ -288,8 +300,13 @@ public class MollweideProjection implements IMapProjection {
     	if (latitude < MIN_LAT || latitude > MAX_LAT) {
 			return; // Latitude is out of bounds, so skip drawing
 		}
-    	MapGraphics.drawHorizontalLatitudeLine(g2, (MapContainer)container, latitude,
-    			getCentralLongitude(), theme);
+    	MapGraphics.drawHorizontalLatitudeLine(
+    	        g2,
+    	        container,
+    	        this,
+    	        latitude,
+    	        getCentralLongitude(),
+    	        theme);
     }
 
     /**

@@ -10,9 +10,11 @@ import edu.cnu.mdi.splot.pdata.PlotDataType;
 import edu.cnu.mdi.splot.plot.PlotParameters;
 import edu.cnu.mdi.ui.colors.X11Colors;
 
+/** Demonstrates fitting a Gaussian to measured values with uncertainties. */
 @SuppressWarnings("serial")
 public class AnotherGaussian extends AExample {
 
+	/** @param headless whether to construct the example without displaying a window */
 	public AnotherGaussian(boolean headless) {
 		super(headless);
 	}

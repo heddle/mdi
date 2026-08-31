@@ -35,7 +35,7 @@ import edu.cnu.mdi.sim.simanneal.AnnealingSolution;
  * the view, which reads them on the EDT.
  * </p>
  */
-public class TspSolution implements AnnealingSolution {
+public class TspSolution implements AnnealingSolution<TspSolution> {
 
     /**
      * The immutable TSP model shared by all solutions in a run.

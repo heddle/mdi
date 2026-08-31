@@ -2,12 +2,12 @@ package edu.cnu.mdi.properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.Properties;
 
 import org.junit.jupiter.api.Test;
 
+import edu.cnu.mdi.log.ILogListener;
+import edu.cnu.mdi.log.Log;
 import edu.cnu.mdi.util.PropertyUtils;
 
 class PropertyUtilsTest {
@@ -55,20 +55,24 @@ class PropertyUtilsTest {
     }
 
     @Test
-    void fromKeyValuesAllowsUnknownKeyAndWarnsToStderr() {
-        PrintStream oldErr = System.err;
-        ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
-        System.setErr(new PrintStream(errBytes));
+    void fromKeyValuesAllowsUnknownKeyAndLogsWarning() {
+        StringBuilder warning = new StringBuilder();
+        ILogListener listener = new ILogListener() {
+            @Override
+            public void warning(String message) {
+                warning.append(message);
+            }
+        };
+        Log log = Log.getInstance();
+        log.addLogListener(listener);
         try {
             String key = "MY_CUSTOM_KEY";
             Properties props = PropertyUtils.fromKeyValues(key, 42);
 
             assertEquals(42, props.get(key));
-
-            String err = errBytes.toString();
-            assertTrue(err.contains("Warning: Unknown property key: " + key));
+            assertTrue(warning.toString().contains("Unknown property key: " + key));
         } finally {
-            System.setErr(oldErr);
+            log.removeLogListener(listener);
         }
     }
 

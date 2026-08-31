@@ -21,8 +21,21 @@ public abstract class AClickRubberband extends ARubberband {
 	}
 
 	/**
-	 * Ensure started + tempPoly exists and contains the start point.
-	 * Returns false if start was rejected/cancelled.
+	 * Ensure the gesture has started and {@code tempPoly} exists, seeded with
+	 * the start point.
+	 * <p>
+	 * A no-op (returning {@code true} immediately) if {@code tempPoly} is
+	 * already non-null. Otherwise delegates to
+	 * {@link ARubberband#startRubberbanding(Point)}, which always sets
+	 * {@code started = true} for a non-null point (it has no rejection path),
+	 * so this method currently always returns {@code true}. The
+	 * {@code boolean} return is kept as a defensive contract in case a future
+	 * {@code startRubberbanding} override introduces a genuine rejection path.
+	 * </p>
+	 *
+	 * @param p the point to seed the gesture with; must not be {@code null}
+	 * @return {@code true} once the gesture has started and {@code tempPoly}
+	 *         is non-null
 	 */
 	protected final boolean ensureStarted(Point p) {
 		if (tempPoly != null) {

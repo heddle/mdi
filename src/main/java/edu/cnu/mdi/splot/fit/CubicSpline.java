@@ -77,8 +77,15 @@ public class CubicSpline implements Evaluator {
 		_x = Arrays.copyOf(x, x.length);
 		_y = Arrays.copyOf(y, y.length);
 
-		// Validate strict monotonicity
+		// Validate finite coordinates and strict monotonicity.
+		if (!Double.isFinite(_x[0]) || !Double.isFinite(_y[0])) {
+			throw new IllegalArgumentException("x and y values must be finite");
+		}
 		for (int i = 1; i < _x.length; i++) {
+			if (!Double.isFinite(_x[i]) || !Double.isFinite(_y[i])) {
+				throw new IllegalArgumentException(
+						"x and y values must be finite at index " + i);
+			}
 			if (!(_x[i] > _x[i - 1])) {
 				throw new IllegalArgumentException("x must be strictly increasing (no duplicates). Problem at i=" + i);
 			}

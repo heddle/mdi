@@ -90,7 +90,7 @@ public class MinPairwiseSeparation extends PlotPanel {
 			plotData = new PlotData(PlotDataType.XYEXYE, CURVE_NAMES, null);
 			return new PlotCanvas(plotData, TITLE, XLABEL, YLABEL);
 		} catch (PlotDataException e) {
-			e.printStackTrace();
+			edu.cnu.mdi.log.Log.getInstance().exception(e);
 		}
 		return null;
 	}

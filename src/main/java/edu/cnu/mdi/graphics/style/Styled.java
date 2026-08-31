@@ -65,9 +65,9 @@ public class Styled implements IStyled {
 	 * @param index determines the style. Can be any integer
 	 */
 	public Styled(int index) {
-		_fillColor = _colors[index % _colors.length];
+		_fillColor = _colors[Math.floorMod(index, _colors.length)];
 		_borderColor = _fillColor.darker();
-		_symbolType = _symbols[index % _symbols.length];
+		_symbolType = _symbols[Math.floorMod(index, _symbols.length)];
 	}
 
 	public Styled(IStyled other) {
@@ -172,18 +172,28 @@ public class Styled implements IStyled {
 	}
 
 	/**
-	 * Set the line width
+	 * Set the line width. Negative values are clamped to zero.
 	 *
 	 * @param lineWidth the new line width
+	 * @throws IllegalArgumentException if {@code lineWidth} is not finite
+	 *                                  (NaN or infinite)
 	 */
 	@Override
 	public void setLineWidth(float lineWidth) {
-		_lineWidth = Math.max(0, lineWidth);
+		_lineWidth = sanitizeWidth(lineWidth);
 	}
 
 	/**
-	 * Set the symbol type
+	 * Set the symbol type.
+	 * <p>
+	 * A {@code null} argument falls back to {@link SymbolType#NOSYMBOL}, not
+	 * this object's own default ({@link SymbolType#SQUARE}, used only for a
+	 * freshly-constructed {@code Styled}) — so passing {@code null} here is
+	 * not equivalent to never having set a symbol type.
+	 * </p>
 	 *
+	 * @param symbolType the new symbol type, or {@code null} to select
+	 *                   {@link SymbolType#NOSYMBOL}
      */
 	@Override
 	public void setSymbolType(SymbolType symbolType) {
@@ -207,7 +217,7 @@ public class Styled implements IStyled {
 	 */
 	@Override
 	public void setSymbolSize(int symbolSize) {
-		_symbolSize = symbolSize;
+		_symbolSize = Math.max(0, symbolSize);
 	}
 
 	@Override
@@ -227,7 +237,7 @@ public class Styled implements IStyled {
 
 	@Override
 	public void setAuxLineStyle(LineStyle lineStyle) {
-		_auxLineStyle = lineStyle;
+		_auxLineStyle = lineStyle != null ? lineStyle : LineStyle.SOLID;
 	}
 
 	@Override
@@ -235,9 +245,23 @@ public class Styled implements IStyled {
 		return _auxLineWidth;
 	}
 
+	/**
+	 * Set the auxiliary line width. Negative values are clamped to zero.
+	 *
+	 * @param lineWidth the new auxiliary line width
+	 * @throws IllegalArgumentException if {@code lineWidth} is not finite
+	 *                                  (NaN or infinite)
+	 */
 	@Override
 	public void setAuxLineWidth(float lineWidth) {
-		_auxLineWidth = lineWidth;
+		_auxLineWidth = sanitizeWidth(lineWidth);
 
+	}
+
+	private static float sanitizeWidth(float width) {
+		if (!Float.isFinite(width)) {
+			throw new IllegalArgumentException("Line width must be finite: " + width);
+		}
+		return Math.max(0, width);
 	}
 }

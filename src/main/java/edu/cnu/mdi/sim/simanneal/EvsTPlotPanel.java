@@ -106,6 +106,7 @@ public class EvsTPlotPanel extends AReadyPlotPanel {
 			((Curve)curve).clearData();
 		}
 		acceptedCount = 0;
+		acceptedStride = 1;
 		canvas.repaint();
 	}
 

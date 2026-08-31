@@ -21,17 +21,6 @@ public final class MapConstants {
     // -------------------------------------------------------------------------
 
     /**
-     * Maximum value (inclusive) of the minimum-population slider used by
-     * {@link MapControlPanel} and the initial population threshold applied in
-     * {@link MapView2D#setProjection(EProjection)}.
-     *
-     * <p>Cities whose recorded population is below the slider's current value
-     * are hidden. At the slider maximum every city is hidden; at zero every
-     * city with a known population is shown.</p>
-     */
-    public static final int MAX_POP_SLIDER_VALUE = 2_000_000;
-    
-    /**
 	 * Default value of the minimum-population slider used by
 	 * {@link MapControlPanel} and the initial population threshold applied in
 	 * {@link MapView2D#setProjection(EProjection)}.
@@ -49,12 +38,14 @@ public final class MapConstants {
      * always agree on which projection is initially active.</p>
      */
     public static final EProjection DEFAULT_PROJECTION = EProjection.MERCATOR;
-    
+
     /**
-     * The mean radius of the Earth in kilometers, used for distance calculations
-     * in the Haversine formula when computing distances between geographic coordinates.
+     * The mean radius of the Earth in kilometers, used to scale the
+     * dimensionless great-circle arc length returned by
+     * {@link edu.cnu.mdi.mapping.graphics.MapGraphics#greatCircleLength}
+     * (computed via the spherical law of cosines) into a real-world distance.
      */
-    public static final double RADIUS_EARTH_KM = 6371.0; 
+    public static final double RADIUS_EARTH_KM = 6371.0;
 
     // -------------------------------------------------------------------------
     // Construction guard

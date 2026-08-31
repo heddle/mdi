@@ -1,6 +1,5 @@
 package edu.cnu.mdi.sim;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -79,7 +78,8 @@ public final class SimulationEngine {
 	 * on every step. The list is read far more often than it is written, making
 	 * the copy-on-write trade-off appropriate.</p>
 	 */
-	private final List<SimulationListener> listeners = new CopyOnWriteArrayList<>();
+	private final CopyOnWriteArrayList<SimulationListener> listeners =
+			new CopyOnWriteArrayList<>();
 
 	/**
 	 * Current engine state. Written exclusively on the simulation thread;
@@ -145,13 +145,14 @@ public final class SimulationEngine {
 	 * Add a simulation listener.
 	 *
 	 * <p>Safe to call from any thread. If {@code listener} is {@code null} it
-	 * is silently ignored.</p>
+	 * is silently ignored. Registering the same listener instance more than once
+	 * has no additional effect.</p>
 	 *
 	 * @param listener the listener to add
 	 */
 	public void addListener(SimulationListener listener) {
 		if (listener != null) {
-			listeners.add(listener);
+			listeners.addIfAbsent(listener);
 		}
 	}
 
@@ -193,7 +194,11 @@ public final class SimulationEngine {
 			return;
 		}
 		stopRequested  = false;
-		pauseRequested = false;
+		// Establish the initial READY behavior before publishing/starting the
+		// thread. A requestRun() made after start() returns can then clear this
+		// flag even while simulation.init() is still executing, and that request
+		// will not be overwritten when initialization completes.
+		pauseRequested = !config.autoRun;
 
 		simThread = new Thread(this::runLoop, "SimulationEngine");
 		simThread.setDaemon(true);
@@ -261,9 +266,10 @@ public final class SimulationEngine {
 	 * state-change callback (with {@code reason="cancelled"}).</p>
 	 */
 	public void requestCancel() {
-		context.requestCancel();
-		pauseRequested = false;
-		postEDT(l -> l.onCancelRequested(context));
+		if (context.requestCancel()) {
+			pauseRequested = false;
+			postEDT(l -> l.onCancelRequested(context));
+		}
 	}
 
 	/**
@@ -274,10 +280,13 @@ public final class SimulationEngine {
 	 * simulation thread runs faster than the UI.</p>
 	 */
 	public void requestRefresh() {
+		if (listeners.isEmpty()) {
+			return;
+		}
 		if (refreshPending.compareAndSet(false, true)) {
-			postEDT(l -> {
+			SwingUtilities.invokeLater(() -> {
 				refreshPending.set(false);
-				l.onRefresh(context);
+				dispatchEDT(l -> l.onRefresh(context));
 			});
 		}
 	}
@@ -290,15 +299,19 @@ public final class SimulationEngine {
 	 * than every intermediate one. This is appropriate for smooth progress bars
 	 * where skipping intermediate percentages is acceptable.</p>
 	 *
-	 * @param info the progress payload; {@code null} is technically accepted but
-	 *             meaningless — prefer {@link ProgressInfo#indeterminate}
+	 * @param info the non-null progress payload
+	 * @throws NullPointerException if {@code info} is null
 	 */
 	public void postProgress(ProgressInfo info) {
-		lastProgress = info;
+		lastProgress = Objects.requireNonNull(info, "info");
+		if (listeners.isEmpty()) {
+			return;
+		}
 		if (progressPending.compareAndSet(false, true)) {
-			postEDT(l -> {
+			SwingUtilities.invokeLater(() -> {
 				progressPending.set(false);
-				l.onProgress(context, lastProgress);
+				ProgressInfo progress = lastProgress;
+				dispatchEDT(l -> l.onProgress(context, progress));
 			});
 		}
 	}
@@ -310,14 +323,19 @@ public final class SimulationEngine {
 	 * queued one. This is appropriate for transient status text where only the
 	 * most recent value matters.</p>
 	 *
-	 * @param message the message text; {@code null} is forwarded as-is
+	 * @param message the non-null message text
+	 * @throws NullPointerException if {@code message} is null
 	 */
 	public void postMessage(String message) {
-		lastMessage = message;
+		lastMessage = Objects.requireNonNull(message, "message");
+		if (listeners.isEmpty()) {
+			return;
+		}
 		if (messagePending.compareAndSet(false, true)) {
-			postEDT(l -> {
+			SwingUtilities.invokeLater(() -> {
 				messagePending.set(false);
-				l.onMessage(context, lastMessage);
+				String currentMessage = lastMessage;
+				dispatchEDT(l -> l.onMessage(context, currentMessage));
 			});
 		}
 	}
@@ -361,16 +379,16 @@ public final class SimulationEngine {
 		// Tracks whether the loop exited due to cancellation, so we can
 		// suppress onDone and take the cancellation-specific path.
 		boolean cancelledCleanly = false;
+		boolean completedNaturally = false;
 
 		try {
 			transition(SimulationState.INITIALIZING, "start");
 			simulation.init(context);
 			transition(SimulationState.READY, "initialized");
 
-			if (!config.autoRun) {
-				// Hold in READY until the user explicitly requests Run.
-				pauseRequested = true;
-			} else {
+			if (config.autoRun
+					&& !stopRequested
+					&& !context.isCancelRequested()) {
 				transition(SimulationState.RUNNING, "auto-run");
 				postEDT(l -> l.onRun(context));
 			}
@@ -396,16 +414,20 @@ public final class SimulationEngine {
 					while (pauseRequested && !stopRequested && !context.isCancelRequested()) {
 						LockSupport.parkNanos(10_000_000L); // 10 ms
 					}
-					if (stopRequested || context.isCancelRequested()) {
+					if (stopRequested) {
 						break;
 					}
-					// Determine whether we are starting fresh (READY) or resuming.
-					if (state == SimulationState.READY) {
-						transition(SimulationState.RUNNING, "run requested");
-						postEDT(l -> l.onRun(context));
-					} else {
-						transition(SimulationState.RUNNING, "resume");
-						postEDT(l -> l.onResume(context));
+					// Let cancellation fall through to the cancellation block so
+					// the simulation hook runs and onDone remains suppressed.
+					if (!context.isCancelRequested()) {
+						// Determine whether we are starting fresh (READY) or resuming.
+						if (state == SimulationState.READY) {
+							transition(SimulationState.RUNNING, "run requested");
+							postEDT(l -> l.onRun(context));
+						} else {
+							transition(SimulationState.RUNNING, "resume");
+							postEDT(l -> l.onResume(context));
+						}
 					}
 				}
 
@@ -415,13 +437,25 @@ public final class SimulationEngine {
 					transition(SimulationState.TERMINATING, "cancel requested");
 					try {
 						simulation.cancel(context);
-					} catch (Exception ignored) { /* best-effort */ }
+					} catch (Throwable ignored) { /* best-effort */ }
 					break;
 				}
 
 				// --- One simulation step ---
 				boolean keepGoing = simulation.step(context);
 				context.incrementStep();
+
+				// A long-running step may observe cancellation internally and return
+				// before control reaches the next loop boundary. Classify that race as
+				// cancellation rather than natural completion.
+				if (context.isCancelRequested()) {
+					cancelledCleanly = true;
+					transition(SimulationState.TERMINATING, "cancel requested");
+					try {
+						simulation.cancel(context);
+					} catch (Throwable ignored) { /* best-effort */ }
+					break;
+				}
 
 				long now = System.nanoTime();
 
@@ -438,6 +472,7 @@ public final class SimulationEngine {
 				}
 
 				if (!keepGoing) {
+					completedNaturally = true;
 					break;
 				}
 
@@ -449,11 +484,13 @@ public final class SimulationEngine {
 
 			// Shutdown is always called, regardless of exit reason, so
 			// simulations can release resources unconditionally.
-			transition(SimulationState.TERMINATING,
-					cancelledCleanly ? "cancelled" : "stop/complete");
+			if (state != SimulationState.TERMINATING) {
+				transition(SimulationState.TERMINATING,
+						cancelledCleanly ? "cancelled" : "stop/complete");
+			}
 			try {
 				simulation.shutdown(context);
-			} catch (Exception ignored) { /* best-effort */ }
+			} catch (Throwable ignored) { /* best-effort */ }
 
 			transition(SimulationState.TERMINATED,
 					cancelledCleanly ? "cancelled" : "done");
@@ -464,10 +501,22 @@ public final class SimulationEngine {
 			if (!cancelledCleanly) {
 				postEDT(l -> l.onDone(context));
 			}
+			CompletionStatus completionStatus = cancelledCleanly
+					? CompletionStatus.CANCELLED
+					: (completedNaturally ? CompletionStatus.SUCCEEDED : CompletionStatus.STOPPED);
+			postEDT(l -> l.onCompleted(context, completionStatus, null));
 
-		} catch (Exception ex) {
-			transition(SimulationState.FAILED, ex.toString());
-			postEDT(l -> l.onFail(context, ex));
+		} catch (Throwable failure) {
+			edu.cnu.mdi.log.Log.getInstance().exception(failure);
+			// Initialization may have acquired resources before failing, and a
+			// step failure must not bypass cleanup. The hook is best-effort here,
+			// just as it is on normal termination.
+			try {
+				simulation.shutdown(context);
+			} catch (Throwable ignored) { /* preserve the original failure */ }
+			transition(SimulationState.FAILED, failure.toString());
+			postEDT(l -> l.onFail(context, failure));
+			postEDT(l -> l.onCompleted(context, CompletionStatus.FAILED, failure));
 		}
 	}
 
@@ -500,6 +549,33 @@ public final class SimulationEngine {
 	 */
 	public SimulationContext getContext() {
 		return context;
+	}
+
+	/**
+	 * Wait for the engine thread to finish.
+	 *
+	 * @param timeoutMillis maximum time to wait; zero waits indefinitely
+	 * @return {@code true} if the thread has finished (or was never started)
+	 * @throws InterruptedException if the waiting thread is interrupted
+	 * @throws IllegalArgumentException if {@code timeoutMillis} is negative
+	 */
+	public boolean awaitTermination(long timeoutMillis) throws InterruptedException {
+		if (timeoutMillis < 0) {
+			throw new IllegalArgumentException("timeoutMillis must be >= 0");
+		}
+		Thread thread = simThread;
+		if (thread == null) {
+			return true;
+		}
+		if (Thread.currentThread() == thread) {
+			return !thread.isAlive();
+		}
+		if (timeoutMillis == 0) {
+			thread.join();
+		} else {
+			thread.join(timeoutMillis);
+		}
+		return !thread.isAlive();
 	}
 
 	// -------------------------------------------------------------------------
@@ -539,6 +615,10 @@ public final class SimulationEngine {
 	private void transition(SimulationState newState, String reason) {
 		SimulationState old = state;
 		state = newState;
+		edu.cnu.mdi.log.Log.getInstance().config(
+				"Simulation " + simulation.getClass().getSimpleName()
+				+ ": " + old + " -> " + newState
+				+ ((reason == null || reason.isBlank()) ? "" : " (" + reason + ")"));
 
 		postEDT(l -> l.onStateChange(context, old, newState, reason));
 
@@ -568,15 +648,17 @@ public final class SimulationEngine {
 		if (listeners.isEmpty()) {
 			return;
 		}
-		SwingUtilities.invokeLater(() -> {
-			for (SimulationListener l : listeners) {
-				try {
-					call.accept(l);
-				} catch (Exception ignored) {
-					// Listener failures are isolated so one bad listener
-					// cannot prevent delivery to the rest.
-				}
+		SwingUtilities.invokeLater(() -> dispatchEDT(call));
+	}
+
+	/** Dispatch one logical event to all listeners. Must run on the EDT. */
+	private void dispatchEDT(java.util.function.Consumer<SimulationListener> call) {
+		for (SimulationListener listener : listeners) {
+			try {
+				call.accept(listener);
+			} catch (Throwable failure) {
+				edu.cnu.mdi.log.Log.getInstance().exception(failure);
 			}
-		});
+		}
 	}
 }
