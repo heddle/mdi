@@ -30,7 +30,7 @@ public final class SimulationEngineConfig {
 	 * {@link SimulationEngine#postProgress(ProgressInfo)} directly for determinate
 	 * progress. Use 0 to disable periodic progress pings. If your simulation is determinate,
 	 * you can set this to a large value (e.g., 1000 ms) to get occasional progress updates
-	 * without flooding the ED, or set to 0 to disable entirely and rely on explicit progress posts.
+	 * without flooding the EDT, or set to 0 to disable entirely and rely on explicit progress posts.
 	 * </p>
 	 */
 	public final int progressIntervalMs;

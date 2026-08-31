@@ -150,6 +150,19 @@ public class IconSimulationControlPanel extends JPanel implements SimulationList
 		setPreferredSize(SwingSizingUtils.preferredSizeAtLeast(this, 300, 1));
 	}
 
+	/**
+	 * Bind this panel to a host: stores the host reference, registers this
+	 * panel as a {@link edu.cnu.mdi.sim.SimulationListener}, and updates the
+	 * UI to reflect the host's current state.
+	 * <p>
+	 * <strong>Note:</strong> this method does not implicitly unbind first.
+	 * Calling it again with a different host while already bound leaves this
+	 * panel registered as a stale listener on the previous host's engine;
+	 * call {@link #unbind()} first if rebinding.
+	 * </p>
+	 *
+	 * @param host the simulation host (non-null)
+	 */
 	@Override
 	public void bind(ISimulationHost host) {
 		this.host = Objects.requireNonNull(host, "host");

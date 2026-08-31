@@ -243,7 +243,12 @@ public final class ImageApproximationProblem implements GAProblem<PolygonChromos
 	 *
 	 * <p>
 	 * This method is safe to call from multiple threads simultaneously because it
-	 * uses only {@link ThreadLocal} buffers and reads immutable fields.
+	 * uses only {@link ThreadLocal} buffers, and its one shared mutable field
+	 * ({@code maxSpanFraction}) is {@code volatile} for safe cross-thread
+	 * visibility. In the current implementation nothing ever writes
+	 * {@code maxSpanFraction} after construction (it stays at its initial
+	 * unconstrained value of {@code 1.0}), so it behaves as an effectively
+	 * immutable configuration value today.
 	 * </p>
 	 *
 	 * @param c the chromosome to evaluate (non-null)

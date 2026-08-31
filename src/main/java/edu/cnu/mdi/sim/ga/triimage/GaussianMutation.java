@@ -97,6 +97,19 @@ public final class GaussianMutation implements MutationOperator<PolygonChromosom
 		return mutateAtRate(individual, rng, effectiveMutationRate);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>Interprets {@code configuredRate} as a direct per-triangle mutation
+	 * probability (finer-grained than the interface's default whole-individual
+	 * gate), then applies this generation's cooling to it. The cooling is
+	 * applied as the dimensionless ratio {@code effectiveMutationRate /
+	 * mutationRate}, which reduces to the cooling schedule's {@code (0.25 +
+	 * 0.75 * cooling)} factor regardless of this instance's own
+	 * {@code mutationRate} — so {@code configuredRate} need not match the
+	 * constructor's {@code mutationRate} for the cooling curve to apply
+	 * correctly.</p>
+	 */
 	@Override
 	public PolygonChromosome mutate(PolygonChromosome individual, Random rng,
 			double configuredRate) {

@@ -52,6 +52,18 @@ public class GeneticAlgorithmSimulation<C extends GASolution<C>> implements Simu
 		this.feedback = feedback == null ? GAFeedback.none() : feedback;
 	}
 
+	/**
+	 * Seeds the RNG, builds the initial population via
+	 * {@link GAProblem#initialPopulation}, evaluates and tracks the best
+	 * individual, and resets the generation counter to zero.
+	 *
+	 * @param ctx the simulation context (unused; present to satisfy
+	 *            {@link Simulation#init})
+	 * @throws IllegalStateException if the problem's initial population is
+	 *                               {@code null} or does not contain exactly
+	 *                               {@link GAConfig#populationSize()}
+	 *                               individuals
+	 */
 	@Override
 	public void init(SimulationContext ctx) {
 		rng = cfg.randomSeed() == 0 ? new Random() : new Random(cfg.randomSeed());
@@ -74,6 +86,37 @@ public class GeneticAlgorithmSimulation<C extends GASolution<C>> implements Simu
 		feedback.refresh();
 	}
 
+	/**
+	 * Advances the GA by one generation: builds an offspring pool via
+	 * selection/crossover/mutation, evaluates it, replaces the population via
+	 * {@link ReplacementOperator#replace}, and re-evaluates the resulting
+	 * generation.
+	 * <p>
+	 * The replaced generation ({@code nextGen}) is always fully re-evaluated
+	 * rather than reusing {@code currentFits}/{@code offFitness} by slot,
+	 * because {@link ReplacementOperator} is explicitly allowed to reorder or
+	 * select individuals from either input in arbitrary ways — fitness values
+	 * cannot safely be reconstructed by positional convention.
+	 * </p>
+	 * <p>
+	 * Returns {@code false} (stopping the simulation) once
+	 * {@link SimulationContext#isCancelRequested()} is {@code true} or
+	 * {@link GAConfig#maxGenerations()} has been reached.
+	 * </p>
+	 *
+	 * @param ctx the simulation context, used to check for cancellation
+	 * @return {@code true} if another generation should run; {@code false} to
+	 *         stop
+	 * @throws NullPointerException if a selection or crossover operator
+	 *                               returns {@code null}, or a mutated child
+	 *                               is {@code null}
+	 * @throws IllegalStateException if the replacement operator's requested
+	 *                               offspring count is out of range, if
+	 *                               crossover produces no children, or if the
+	 *                               replacement operator does not return
+	 *                               exactly {@code popSize} non-null
+	 *                               individuals
+	 */
 	@Override
 	public boolean step(SimulationContext ctx) {
 	    if (ctx.isCancelRequested() || generation >= cfg.maxGenerations())

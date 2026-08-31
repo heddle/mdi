@@ -198,6 +198,126 @@ public class SimulatedAnnealingSimulationTest {
 	}
 
 	@Test
+	public void testDeltaEnergyMoveIsPreparedOnceAndDeltaEIsComputedBeforeApply() {
+		java.util.concurrent.atomic.AtomicInteger prepareCalls = new java.util.concurrent.atomic.AtomicInteger();
+		java.util.concurrent.atomic.AtomicReference<Double> valueSeenByDeltaE =
+				new java.util.concurrent.atomic.AtomicReference<>();
+		java.util.concurrent.atomic.AtomicBoolean energyCalledOnProblem =
+				new java.util.concurrent.atomic.AtomicBoolean(false);
+
+		AnnealingProblem<ValueSolution> problem = new AnnealingProblem<>() {
+			@Override
+			public double energy(ValueSolution solution) {
+				// The DeltaEnergyMove path must never call this -- it uses the
+				// move's own O(1) deltaE instead of a full re-evaluation.
+				energyCalledOnProblem.set(true);
+				return solution.value;
+			}
+
+			@Override
+			public ValueSolution randomSolution(Random rng) {
+				return new ValueSolution(10);
+			}
+
+			@Override
+			public AnnealingMove<ValueSolution> randomMove(Random rng, ValueSolution current) {
+				return new DeltaEnergyMove<ValueSolution>() {
+					private double preparedDelta;
+
+					@Override
+					public void prepare(ValueSolution solution) {
+						prepareCalls.incrementAndGet();
+						preparedDelta = -3.0;
+					}
+
+					@Override
+					public double deltaE(ValueSolution solution) {
+						valueSeenByDeltaE.set(solution.value);
+						return preparedDelta;
+					}
+
+					@Override
+					public void apply(ValueSolution solution) {
+						solution.value += preparedDelta;
+					}
+
+					@Override
+					public void undo(ValueSolution solution) {
+						solution.value -= preparedDelta;
+					}
+				};
+			}
+		};
+
+		SimulatedAnnealingSimulation<ValueSolution> simulation =
+				new SimulatedAnnealingSimulation<>(problem, config(),
+						new GeometricAnnealingSchedule(),
+						(p, rng) -> new InitialTemperature(1, 0, 0, 1));
+		simulation.init(context());
+		// init() legitimately calls problem.energy() once to seed currentE;
+		// reset the flag so the assertion below is specifically about step().
+		energyCalledOnProblem.set(false);
+
+		simulation.step(context());
+
+		assertEquals(1, prepareCalls.get(), "prepare() must be called exactly once per step");
+		assertEquals(10.0, valueSeenByDeltaE.get(),
+				"deltaE() must see the solution's pre-apply value");
+		assertTrue(!energyCalledOnProblem.get(),
+				"the DeltaEnergyMove path in step() must not call problem.energy()");
+		// deltaE = -3 <= 0, so a downhill move is always accepted (Metropolis).
+		assertEquals(7.0, simulation.getState().currentEnergy());
+		assertEquals(7.0, simulation.getBestSolutionCopy().value);
+	}
+
+	@Test
+	public void testRejectedDeltaEnergyMoveIsUndoneAndLeavesEnergyUnchanged() {
+		AnnealingProblem<ValueSolution> problem = new AnnealingProblem<>() {
+			@Override
+			public double energy(ValueSolution solution) {
+				return solution.value;
+			}
+
+			@Override
+			public ValueSolution randomSolution(Random rng) {
+				return new ValueSolution(0);
+			}
+
+			@Override
+			public AnnealingMove<ValueSolution> randomMove(Random rng, ValueSolution current) {
+				return new DeltaEnergyMove<ValueSolution>() {
+					@Override
+					public double deltaE(ValueSolution solution) {
+						return 1000.0; // steep uphill, essentially never accepted
+					}
+
+					@Override
+					public void apply(ValueSolution solution) {
+						solution.value = 1000.0;
+					}
+
+					@Override
+					public void undo(ValueSolution solution) {
+						solution.value = 0.0;
+					}
+				};
+			}
+		};
+
+		// Very low temperature makes exp(-1000/T) underflow to 0: reliably rejected.
+		SimulatedAnnealingSimulation<ValueSolution> simulation =
+				new SimulatedAnnealingSimulation<>(problem, config(),
+						new GeometricAnnealingSchedule(),
+						(p, rng) -> new InitialTemperature(0.001, 0, 0, 1));
+		simulation.init(context());
+
+		simulation.step(context());
+
+		assertEquals(0.0, simulation.getState().currentEnergy());
+		assertEquals(0.0, simulation.getBestSolutionCopy().value);
+	}
+
+	@Test
 	public void testNotificationPolicyRejectsInvalidLimits() {
 		assertThrows(IllegalArgumentException.class,
 				() -> new AnnealingNotificationPolicy(0, 10, 1));

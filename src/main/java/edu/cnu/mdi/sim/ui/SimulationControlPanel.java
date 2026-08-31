@@ -126,6 +126,12 @@ public class SimulationControlPanel extends JPanel implements SimulationListener
 	 * <li>registers this panel as a {@link SimulationListener}</li>
 	 * <li>updates UI to reflect the host's current state</li>
 	 * </ul>
+	 * <p>
+	 * <strong>Note:</strong> unlike {@code TaskControlPanel.bind}, this method
+	 * does not implicitly unbind first. Calling it again with a different host
+	 * while already bound leaves this panel registered as a stale listener on
+	 * the previous host's engine; call {@link #unbind()} first if rebinding.
+	 * </p>
 	 *
 	 * @param host the simulation host (non-null)
 	 */

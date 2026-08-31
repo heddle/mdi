@@ -587,8 +587,8 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	 * code duplication.</p>
 	 *
 	 * <p><strong>Note:</strong> These values are not a conserved Hamiltonian.
-	 * See the class-level javadoc for the full explanation of the force/energy
-	 * mismatch and other non-conservative effects.</p>
+	 * See {@link #computeEnergyInternal()} for the full explanation of the
+	 * force/energy mismatch and other non-conservative effects.</p>
 	 *
 	 * @return an {@link Energy} record for the current node positions and
 	 *         velocities
@@ -604,8 +604,12 @@ public final class NetworkDeclutterSimulation implements Simulation {
 	 * <p>Computes spring pseudo-energy, repulsion pseudo-energy, centering
 	 * potential, and kinetic energy. The repulsion pseudo-energy uses
 	 * {@code strength / sqrt(r² + ε)} while the corresponding integration force
-	 * uses {@code strength / (r² + ε)} — see the class javadoc for why this
-	 * mismatch exists and why it is acceptable for a demo.</p>
+	 * uses {@code strength / (r² + ε)}. Since force is not the exact negative
+	 * gradient of this energy expression, the reported energy is not a
+	 * conserved Hamiltonian — it is a diagnostic/visualization quantity, not a
+	 * physically exact one. This mismatch is intentional and acceptable for a
+	 * decluttering demo, where the goal is a visually stable layout rather
+	 * than physically accurate dynamics.</p>
 	 *
 	 * @return a new {@link Energy} for the current node state
 	 */
@@ -638,7 +642,7 @@ public final class NetworkDeclutterSimulation implements Simulation {
 
 	    // Repulsion pseudo-energy: strength / sqrt(r² + ε)
 	    // (The integration force is strength/(r²+ε), so force ≠ -∇U here;
-	    //  see class javadoc for the full discussion.)
+	    //  see this method's javadoc for the full discussion.)
 	    int n = model.nodes.size();
 	    for (int i = 0; i < n; i++) {
 	        var a = model.nodes.get(i);

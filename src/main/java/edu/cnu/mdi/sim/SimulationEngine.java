@@ -557,6 +557,7 @@ public final class SimulationEngine {
 	 * @param timeoutMillis maximum time to wait; zero waits indefinitely
 	 * @return {@code true} if the thread has finished (or was never started)
 	 * @throws InterruptedException if the waiting thread is interrupted
+	 * @throws IllegalArgumentException if {@code timeoutMillis} is negative
 	 */
 	public boolean awaitTermination(long timeoutMillis) throws InterruptedException {
 		if (timeoutMillis < 0) {
