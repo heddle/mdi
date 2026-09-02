@@ -107,7 +107,12 @@ public final class Desktop extends JDesktopPane {
      */
     private Desktop(Color background, String backgroundImage) {
         setDesktopManager(new GuardedDesktopManager());
-        setDragMode(JDesktopPane.LIVE_DRAG_MODE);
+        // Outline-only drag: LIVE_DRAG_MODE repaints every child view's full
+        // content on every mouse-move while dragging it, which visibly lags
+        // for a content-heavy view (e.g. a detector event display). Dragging
+        // just a rectangle outline, and repainting the real content once on
+        // drop, is the standard fix.
+        setDragMode(JDesktopPane.OUTLINE_DRAG_MODE);
 
         setBackground(background != null
                 ? background
