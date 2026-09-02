@@ -242,6 +242,48 @@ public class FeedbackPane extends TextPaneScrollPane {
     }
 
     /**
+     * Strips a recognized {@code "$mono$"} or {@code "$colorName$"} styling
+     * prefix from a feedback line, returning just the text that {@link
+     * #append(String)} would have rendered -- for callers that want the
+     * same feedback content somewhere that isn't this pane itself (e.g. a
+     * hover popup window), without needing to duplicate this class's own
+     * prefix-parsing rules.
+     * <p>
+     * A tag is only stripped if it matches {@code append(String)}'s own
+     * recognition rules ({@code $mono$} exactly, or {@code $name$} where
+     * {@code name} is a real X11 color); an unrecognized {@code $...$} tag
+     * is left in place, exactly as {@code append(String)} would render it
+     * (visibly, so a malformed tag stays noticeable to the developer)
+     * rather than being silently stripped.
+     * </p>
+     *
+     * @param message the feedback line; {@code null} returns {@code null}
+     * @return the line with any recognized styling prefix removed
+     */
+    public static String stripStyle(String message) {
+        if (message == null) {
+            return null;
+        }
+        if (message.length() >= MONO_PREFIX.length()
+                && message.substring(0, MONO_PREFIX.length()).equalsIgnoreCase(MONO_PREFIX)) {
+            return message.substring(MONO_PREFIX.length());
+        }
+        if (message.startsWith("$")) {
+            int closingDollar = message.indexOf('$', 1);
+            if (closingDollar >= 0) {
+                int nameLen = closingDollar - 1;
+                if (nameLen >= COLOR_NAME_MIN_LEN && nameLen <= COLOR_NAME_MAX_LEN) {
+                    String candidate = message.substring(1, closingDollar).toLowerCase(Locale.ROOT);
+                    if (X11Colors.getX11Color(candidate) != null) {
+                        return message.substring(closingDollar + 1);
+                    }
+                }
+            }
+        }
+        return message;
+    }
+
+    /**
      * Appends a line using the {@link #SMALL_MONO_STYLE} style.
      *
      * @param message the message text (without any styling prefixes)

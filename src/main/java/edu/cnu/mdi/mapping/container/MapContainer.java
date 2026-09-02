@@ -17,7 +17,6 @@ import javax.swing.TransferHandler;
 
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.BaseToolHandler;
-import edu.cnu.mdi.hover.HoverManager;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.mapping.item.MapMilSymbolItem;
@@ -48,7 +47,8 @@ public class MapContainer extends BaseContainer {
 	 */
 	public MapContainer(Rectangle2D.Double worldSystem) {
 		super(worldSystem);
-		HoverManager.getInstance().registerComponent(getComponent(), this);
+		// Hover registration now happens once in BaseContainer's own
+		// constructor; no need to repeat it here.
 		installMilSymbolDropTarget();
 	}
 

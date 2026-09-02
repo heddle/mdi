@@ -1622,15 +1622,14 @@ public class MapView2D extends BaseView {
 	    return text.length() == 0 ? null : text.toString();
 	}
 
-	/** Removes an optional {@code $color$} feedback-pane prefix. */
+	/**
+	 * Removes an optional {@code $mono$}/{@code $color$} feedback-pane
+	 * prefix, delegating to {@link FeedbackPane#stripStyle} for the actual
+	 * (X11-color-validated) parsing rules.
+	 */
 	private static String stripFeedbackStyle(String value) {
-	    if (value != null && value.startsWith("$")) {
-	        int closing = value.indexOf('$', 1);
-	        if (closing > 1) {
-	            return value.substring(closing + 1);
-	        }
-	    }
-	    return value == null ? "" : value;
+	    String stripped = FeedbackPane.stripStyle(value);
+	    return stripped == null ? "" : stripped;
 	}
 
 	/**

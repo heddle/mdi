@@ -2,6 +2,7 @@ package edu.cnu.mdi.feedback;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.Color;
@@ -72,6 +73,25 @@ class FeedbackPaneTest {
 		FeedbackPane pane = new FeedbackPane(Color.white, Color.black, 11);
 		assertDoesNotThrow(() -> pane.append((String) null));
 		assertEquals("", textOf(pane).trim());
+	}
+
+	@Test
+	void stripStyleMatchesWhatAppendWouldHaveRendered() {
+		// stripStyle exists specifically so a caller elsewhere (e.g. a hover
+		// popup) can get the same plain text append(String) renders, without
+		// duplicating its prefix-parsing rules -- so each case here should
+		// mirror the corresponding append(String) test above exactly.
+		assertEquals("hello", FeedbackPane.stripStyle("$red$hello"));
+		assertEquals("hello", FeedbackPane.stripStyle("$RED$hello"));
+		assertEquals("1.234, 5.678", FeedbackPane.stripStyle("$mono$1.234, 5.678"));
+		assertEquals("$notacolor$hello", FeedbackPane.stripStyle("$notacolor$hello"));
+		assertEquals("$$text", FeedbackPane.stripStyle("$$text"));
+		assertEquals("plain feedback", FeedbackPane.stripStyle("plain feedback"));
+	}
+
+	@Test
+	void stripStyleOfNullIsNull() {
+		assertNull(FeedbackPane.stripStyle(null));
 	}
 
 	@Test

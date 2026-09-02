@@ -201,6 +201,17 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
                 setAffineTransforms();
             }
         });
+
+        // Delayed mouse-over ("hover") support: this class already implements
+        // HoverListener and forwards hoverUp/hoverDown to the owning view (see
+        // below) and already unregisters on dispose(), but was never actually
+        // registered with HoverManager -- so no BaseContainer-based view ever
+        // received a hover callback unless it (like MapContainer) redundantly
+        // registered itself too. Registering here, once, makes hover work for
+        // every BaseContainer subclass; MapContainer's own explicit call is a
+        // safe no-op (HoverManager.registerComponent no-ops when a component is
+        // already registered).
+        HoverManager.getInstance().registerComponent(getComponent(), this);
     }
 
     /**
