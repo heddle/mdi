@@ -47,6 +47,12 @@ public final class StartupWindow implements AutoCloseable {
 		window.add(status, BorderLayout.SOUTH);
 		window.pack();
 		window.setLocationRelativeTo(null);
+		// Some callers keep this open past the point their own main window
+		// appears (to stay in front of it, covering that window's own first
+		// layout/paint, until it's actually ready for input) -- a plain JWindow
+		// has no z-order guarantee against a frame shown after it otherwise, so
+		// without this it could end up behind that frame the moment it appears.
+		window.setAlwaysOnTop(true);
 	}
 
 	public void show() { runOnEdt(() -> window.setVisible(true)); }
