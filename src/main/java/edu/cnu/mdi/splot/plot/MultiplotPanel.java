@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.EventQueue;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -19,9 +20,9 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.SwingUtilities;
 
+import edu.cnu.mdi.dialog.FileDialogs;
 import edu.cnu.mdi.splot.io.PlotFileFilter;
 import edu.cnu.mdi.splot.io.PlotIO;
-import edu.cnu.mdi.util.Environment;
 
 /**
  * A Swing panel that hosts multiple {@link PlotPanel}s, showing exactly one at a time.
@@ -450,7 +451,7 @@ public class MultiplotPanel extends JPanel {
 
         try {
             PlotIO.save(canvas, target);
-            updateEnvironmentDataDirectory(target); // update once, after success
+            FileDialogs.rememberDirectory(PlotFileFilter.DIALOG_PURPOSE, target.toPath()); // update once, after success
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Save Plot Failed", JOptionPane.ERROR_MESSAGE);
         }
@@ -468,24 +469,9 @@ public class MultiplotPanel extends JPanel {
         galleryMenu.setVisible(showSinglePlotGallery || entries.size() > 1);
     }
 
+    // Shared with PlotView's own open/save dialogs via PlotFileFilter.DIALOG_PURPOSE (see its own doc).
     private File getInitialChooserDirectory() {
-        Environment env = Environment.getInstance();
-        String dir = env.getDataDirectory();
-        if (dir == null || dir.isBlank()) {
-            return null;
-        }
-        File f = new File(dir);
-        return (f.exists() && f.isDirectory()) ? f : null;
-    }
-
-    private void updateEnvironmentDataDirectory(File chosenFileOrDir) {
-        if (chosenFileOrDir == null) {
-            return;
-        }
-        File dir = chosenFileOrDir.isDirectory() ? chosenFileOrDir : chosenFileOrDir.getParentFile();
-        if (dir != null && dir.exists() && dir.isDirectory()) {
-            Environment.getInstance().setDataDirectory(dir.getAbsolutePath());
-        }
+        return FileDialogs.lastDirectory(PlotFileFilter.DIALOG_PURPOSE).map(Path::toFile).orElse(null);
     }
 
     // ------------------------------------------------------------------------

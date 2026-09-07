@@ -21,6 +21,15 @@ public final class PlotFileFilter extends FileFilter {
     /** Alternate accepted extension (including leading dot). */
     public static final String EXT_ALT = ".splot.json";
 
+    /**
+     * The {@code edu.cnu.mdi.dialog.FileDialogs} directory-history purpose
+     * shared by every plot open/save dialog (both a single {@code PlotView}
+     * and a {@code MultiplotPanel}'s "Save Active Plot As"), so opening and
+     * saving plot files -- from either view -- remember and reuse one
+     * directory rather than each tracking its own.
+     */
+    public static final String DIALOG_PURPOSE = "splot-plot";
+
     @Override
     public boolean accept(File f) {
         if (f == null) {

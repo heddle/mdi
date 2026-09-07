@@ -5,6 +5,7 @@ import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -21,12 +22,12 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.SwingConstants;
 
+import edu.cnu.mdi.dialog.FileDialogs;
 import edu.cnu.mdi.pseudo3D.Histo2DPanel;
 import edu.cnu.mdi.splot.io.PlotFileFilter;
 import edu.cnu.mdi.splot.io.PlotIO;
 import edu.cnu.mdi.splot.io.RecentPlotFiles;
 import edu.cnu.mdi.splot.io.RecentPlotsMenu;
-import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.util.PropertyUtils;
 import edu.cnu.mdi.view.AbstractViewInfo;
 import edu.cnu.mdi.view.BaseView;
@@ -446,9 +447,9 @@ public class PlotView extends BaseView {
 	 * every entry ends with {@code .plot.json} or {@code .splot.json}, so no
 	 * second format check is required here.</p>
 	 *
-	 * <p>The parent directory of the dropped file is recorded in
-	 * {@link edu.cnu.mdi.util.Environment} so that the next "Open" dialog opens
-	 * in the same location.</p>
+	 * <p>The parent directory of the dropped file is remembered (see
+	 * {@link FileDialogs#rememberDirectory}) so that the next "Open" dialog
+	 * opens in the same location.</p>
 	 *
 	 * @param files the accepted dropped files; never {@code null}, never empty
 	 */
@@ -460,31 +461,14 @@ public class PlotView extends BaseView {
 			return;
 		}
 		File file = files.get(0);
-		updateEnvironmentDataDirectory(file);
+		FileDialogs.rememberDirectory(PlotFileFilter.DIALOG_PURPOSE, file.toPath());
 		openPlotFile(file);
 	}
 
-	// Get initial directory for file chooser from Environment
+	// Get initial directory for file chooser -- shared with MultiplotPanel's
+	// own save dialog via PlotFileFilter.DIALOG_PURPOSE (see its own doc).
 	private File getInitialChooserDirectory() {
-		Environment env = Environment.getInstance();
-		String dir = env.getDataDirectory();
-		if (dir == null || dir.isBlank()) {
-			return null;
-		}
-		File f = new File(dir);
-		return (f.exists() && f.isDirectory()) ? f : null;
-	}
-
-	// Update Environment data directory based on chosen file/dir
-	private void updateEnvironmentDataDirectory(File chosenFileOrDir) {
-		if (chosenFileOrDir == null) {
-			return;
-		}
-
-		File dir = chosenFileOrDir.isDirectory() ? chosenFileOrDir : chosenFileOrDir.getParentFile();
-		if (dir != null && dir.exists() && dir.isDirectory()) {
-			Environment.getInstance().setDataDirectory(dir.getAbsolutePath());
-		}
+		return FileDialogs.lastDirectory(PlotFileFilter.DIALOG_PURPOSE).map(Path::toFile).orElse(null);
 	}
 
 	// Open a plot file
@@ -499,7 +483,7 @@ public class PlotView extends BaseView {
 		}
 
 		File selected = fc.getSelectedFile();
-		updateEnvironmentDataDirectory(selected);
+		FileDialogs.rememberDirectory(PlotFileFilter.DIALOG_PURPOSE, selected.toPath());
 		openPlotFile(selected);
 	}
 
@@ -535,7 +519,7 @@ public class PlotView extends BaseView {
 
 			// Track current file + recent list
 			_currentPlotFile = file;
-			updateEnvironmentDataDirectory(file);
+			FileDialogs.rememberDirectory(PlotFileFilter.DIALOG_PURPOSE, file.toPath());
 
 			if (_recentFiles != null) {
 				_recentFiles.add(file);
@@ -573,8 +557,8 @@ public class PlotView extends BaseView {
 
 			target = PlotFileFilter.ensurePlotExtension(fc.getSelectedFile());
 
-			// keep Environment in sync with where the user navigated
-			updateEnvironmentDataDirectory(target);
+			// keep the remembered directory in sync with where the user navigated
+			FileDialogs.rememberDirectory(PlotFileFilter.DIALOG_PURPOSE, target.toPath());
 		}
 
 		// Confirm overwrite if needed
@@ -590,7 +574,7 @@ public class PlotView extends BaseView {
 			PlotIO.save(_plotCanvas, target);
 
 			_currentPlotFile = target;
-			updateEnvironmentDataDirectory(target);
+			FileDialogs.rememberDirectory(PlotFileFilter.DIALOG_PURPOSE, target.toPath());
 
 			if (_recentFiles != null) {
 				_recentFiles.add(target);

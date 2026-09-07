@@ -176,20 +176,27 @@ public final class Environment {
 	}
 
 	/**
-	 * Returns the data directory. this is where
-	 * application data files (e.g., plots) were most recently stored
+	 * Returns the developer-configured default data directory: the initial
+	 * location file dialogs open to before they have any purpose-specific
+	 * history of their own. Defaults to the user's home directory.
+	 * <p>
+	 * This is a single, application-wide default, not a "most recently used"
+	 * location -- {@link edu.cnu.mdi.dialog.FileDialogs} tracks per-purpose
+	 * history itself (persisted across restarts) and does not write back to
+	 * this field, so it stays whatever the developer set it to.
 	 *
-	 * @return the data directory
+	 * @return the default data directory
 	 */
 	public String getDataDirectory() {
 		return dataDirectory;
 	}
 
 	/**
-	 * Sets the data directory.This is where
-	 * application data files (e.g., plots) were most recently stored.
+	 * Sets the developer-configured default data directory (see
+	 * {@link #getDataDirectory()}) -- typically called once at startup, e.g.
+	 * from a command-line argument or environment variable.
 	 *
-	 * @param dataDirectory the data directory to set
+	 * @param dataDirectory the default data directory to set
 	 */
 	public void setDataDirectory(String dataDirectory) {
 		this.dataDirectory = dataDirectory;
