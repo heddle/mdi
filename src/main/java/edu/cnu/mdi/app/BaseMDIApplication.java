@@ -424,10 +424,44 @@ public class BaseMDIApplication extends JFrame {
 		if (applySavedLayout) {
 			Desktop.getInstance().loadConfigurationFile();
 			Desktop.getInstance().configureViews();
-			// Notify developers (and users) when a saved layout is applied so
-			// that "my coded placement is being ignored" confusion is avoided.
-			// The toast dismisses itself after 3 seconds — no user action needed.
-			if (Desktop.getInstance().getSavedProperties() != null) {
+			Properties saved = Desktop.getInstance().getSavedProperties();
+			boolean savedLayoutApplied = saved != null && !saved.isEmpty();
+			if (savedLayoutApplied) {
+				// configureViews() (just above) sets every already-realized
+				// view's bounds directly from its saved, column-0-relative
+				// position -- but each of those views' own realization
+				// (ViewConfiguration#getView(), called earlier while
+				// constructing them) may itself have already called
+				// VirtualView#gotoColumn to ITS OWN saved column as part of
+				// restoring itself, leaving the virtual desktop's own column
+				// bookkeeping stale (pointing at whichever view happened to
+				// realize last, not column 0). Left uncorrected,
+				// defaultLayout's own final gotoColumn call below --
+				// documented to reliably run last and "win" -- trusts that
+				// stale value and re-applies a shift on top of views
+				// configureViews() just positioned correctly, silently
+				// corrupting every one of them by the same stale amount.
+				// Confirmed against a real saved-layout round trip in
+				// mdi_ced. Resyncing here (no view-shifting side effect)
+				// tells the bookkeeping the truth: every view configureViews()
+				// touched is now positioned as column 0.
+				//
+				// Guarded on savedLayoutApplied, not unconditional: on a
+				// fresh install (no saved file), configureViews() is a
+				// no-op and every eager view's own placement legitimately
+				// left the views (and _currentCol) at some nonzero column --
+				// forcing 0 here would desync the bookkeeping in the
+				// OPPOSITE direction, and defaultLayout's own final
+				// gotoColumn(0) would then wrongly no-op instead of
+				// correctly bringing the views (still genuinely elsewhere)
+				// back to column 0.
+				if (vv != null) {
+					vv.syncCurrentColumn(0);
+				}
+				// Notify developers (and users) when a saved layout is
+				// applied so that "my coded placement is being ignored"
+				// confusion is avoided. The toast dismisses itself after 3
+				// seconds — no user action needed.
 				showConfigToast();
 			}
 		}

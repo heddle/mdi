@@ -951,6 +951,40 @@ public class VirtualView extends BaseView
     }
 
     /**
+     * Directly synchronizes this virtual desktop's own notion of "current
+     * column" to {@code col}, <strong>without</strong> shifting any
+     * managed view's bounds -- unlike {@link #gotoColumn(int)}, which
+     * always does.
+     * <p>
+     * Use this only when every managed view's bounds have already been set
+     * to reflect being at {@code col} by some means other than
+     * {@code gotoColumn} -- e.g. {@link edu.cnu.mdi.desktop.Desktop#configureViews()},
+     * which restores each view's saved, column-0-relative bounds by
+     * setting them directly, with no column bookkeeping of its own.
+     * Without a resync afterward, {@link #getCurrentColumn()} still
+     * reports whatever column a view's own individual restoration
+     * happened to leave it at (each realized {@link ViewConfiguration}
+     * with saved layout data calls {@code gotoColumn} to its own saved
+     * column as part of restoring itself) -- stale bookkeeping that a
+     * later, unrelated {@link #gotoColumn(int)} call (e.g. an
+     * application's own default-layout hook, documented to reliably run
+     * last and "win") then trusts, re-applying a shift on top of views
+     * {@code configureViews()} had already positioned correctly and
+     * silently corrupting every one of them by the same stale amount.
+     * Confirmed against a real saved-layout round trip in mdi_ced.
+     * </p>
+     *
+     * @param col the column every managed view's current bounds actually
+     *            reflect; out-of-range values are ignored
+     */
+    public void syncCurrentColumn(int col) {
+        if (col < 0 || col >= _numcol) {
+            return;
+        }
+        _currentCol = col;
+    }
+
+    /**
      * Move a view to a specific virtual cell using a placement constraint,
      * with no additional pixel offsets.
      *
