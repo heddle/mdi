@@ -391,15 +391,52 @@ public class ViewManager implements Iterable<BaseView> {
      * Each newly-realized view's own {@link ViewConfiguration#getView()}
      * call restores its saved position through the exact same path already
      * used when a user manually opens a lazy view that happens to have
-     * saved layout data -- no separate placement logic is needed here.
+     * saved layout data. Two things that path assumes are true only for a
+     * single, user-initiated open are corrected here for the bulk-restore
+     * case:
      * </p>
+     * <ul>
+     *   <li><b>Menu placeholder.</b> Realizing a lazy configuration by
+     *       calling {@code getView()} directly (as opposed to clicking its
+     *       italic placeholder, whose action listener also swaps the
+     *       placeholder for the real menu item) leaves the stale italic
+     *       placeholder in the Views menu next to a second, correct item --
+     *       {@link #ensureRealizedMenuItem} unconditionally appends one the
+     *       moment the view registers itself. Swapped here exactly as the
+     *       placeholder's own listener would.</li>
+     *   <li><b>Virtual-desktop column.</b> Each restored view's placement
+     *       independently navigates to <em>its own</em> saved column --
+     *       correct for a single interactive open, but restoring several
+     *       views at once would leave whichever one finishes last silently
+     *       deciding the startup column, undoing the application's own
+     *       explicit startup placement (e.g. a {@code defaultViewLayout()}
+     *       override that documents relying on running last to "win" the
+     *       same placement race, for exactly this reason). The column
+     *       showing when this method was called is restored via one more
+     *       {@code invokeLater}, which FIFO ordering guarantees runs after
+     *       every placement this method triggered.</li>
+     * </ul>
      */
     public void restorePreviouslyOpenLazyViews() {
+        VirtualView vv = virtualView;
+        int columnBeforeRestore = (vv != null) ? vv.getCurrentColumn() : -1;
+        boolean restoredAny = false;
+
         List<ViewConfiguration<?>> snapshot = new ArrayList<>(configs);
         for (ViewConfiguration<?> config : snapshot) {
-            if (config.lazily && !config.isRealized() && config.wasOpenInSavedLayout()) {
-                config.getView();
+            if (!config.lazily || config.isRealized() || !config.wasOpenInSavedLayout()) {
+                continue;
             }
+            JMenuItem placeholder = lazyMenuItems.get(config);
+            config.getView();
+            if (placeholder != null) {
+                swapPlaceholderForRealItem(config, placeholder);
+            }
+            restoredAny = true;
+        }
+
+        if (restoredAny && vv != null && columnBeforeRestore >= 0) {
+            SwingUtilities.invokeLater(() -> vv.gotoColumn(columnBeforeRestore));
         }
     }
 
