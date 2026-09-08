@@ -331,4 +331,63 @@ public class ViewConfiguration<T extends BaseView> {
             vv.gotoColumn(column);
         }
     }
+
+    // -----------------------------------------------------------------------
+    // Saved-layout probing (without realizing the view)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Returns {@code true} if this still-unrealized lazy configuration's
+     * eventual view was <em>open</em> -- present and visible, not merely
+     * present-but-hidden or iconified-closed -- the last time
+     * {@link edu.cnu.mdi.desktop.Desktop}'s layout was saved.
+     * <p>
+     * Answers without creating the view: the probed property-name prefix is
+     * derived from {@link #getMenuTitle()} via
+     * {@link BaseView#sanitizeForKey}, the exact same transform
+     * {@link BaseView} itself applies to a view's own title when deriving
+     * {@link BaseView#getPropertyName()} -- by this framework's own
+     * convention every registration uses the identical string for both the
+     * menu title and the eventual view's title, so this reliably predicts
+     * the property-name prefix the view would use once realized.
+     * </p>
+     * <p>
+     * Used by {@link ViewManager#restorePreviouslyOpenLazyViews()} to decide
+     * which lazy configurations to eagerly realize at startup. Always
+     * {@code false} once {@link #isRealized()} -- there is nothing left to
+     * probe for.
+     * </p>
+     *
+     * @return {@code true} if the saved layout marks this view as having
+     *         been open (not just present) when it was saved
+     */
+    public boolean wasOpenInSavedLayout() {
+        if (isRealized()) {
+            return false;
+        }
+        return wasOpenInSavedLayout(edu.cnu.mdi.desktop.Desktop.getInstance().getSavedProperties());
+    }
+
+    /**
+     * The {@link #wasOpenInSavedLayout()} decision, but given an explicit
+     * {@link java.util.Properties} instead of fetching
+     * {@link edu.cnu.mdi.desktop.Desktop}'s own -- separated out purely so
+     * this decision logic is unit-testable without the process-wide
+     * {@code Desktop}/{@code Environment} singletons a real saved-layout
+     * file depends on. Package-private: {@link #wasOpenInSavedLayout()} is
+     * the public entry point.
+     *
+     * @param saved the saved-layout properties to check, or {@code null}/empty
+     * @return {@code true} if {@code saved} marks this view as having been open
+     */
+    boolean wasOpenInSavedLayout(java.util.Properties saved) {
+        if (saved == null || saved.isEmpty()) {
+            return false;
+        }
+        String prefix = BaseView.sanitizeForKey(menuTitle);
+        if (!saved.containsKey(prefix + ".x")) {
+            return false;
+        }
+        return Boolean.parseBoolean(saved.getProperty(prefix + ".visible", "false"));
+    }
 }

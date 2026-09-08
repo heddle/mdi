@@ -309,7 +309,11 @@ public class BaseView extends JInternalFrame
      * @param title the view title; may be {@code null}
      * @return a non-empty, XML-safe property-key prefix
      */
-    private static String sanitizeForKey(String title) {
+    // Package-private (not private): ViewConfiguration needs the exact same
+    // transform to predict an unrealized lazy view's eventual property-name
+    // prefix from its (identical, by convention) menu title, without having
+    // to realize the view just to ask it.
+    static String sanitizeForKey(String title) {
         if (title == null || title.isBlank()) {
             return "view";
         }

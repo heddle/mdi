@@ -370,6 +370,39 @@ public class ViewManager implements Iterable<BaseView> {
         }
     }
 
+    /**
+     * Realizes every currently-unrealized lazy configuration that was
+     * <em>open</em> the last time {@link edu.cnu.mdi.desktop.Desktop}'s
+     * layout was saved -- the counterpart to {@code Desktop}'s own
+     * position-only restoration, which can only reposition views the
+     * application already creates on its own; it has no way to reopen an
+     * optional (lazy) view the application doesn't otherwise create.
+     * <p>
+     * Call this once at startup, after the saved layout has already been
+     * loaded (see {@code Desktop#loadConfigurationFile()}, invoked by
+     * {@code BaseMDIApplication#standardVirtualDesktopReady} before it runs
+     * the application's own default-layout hook) so that
+     * {@link ViewConfiguration#wasOpenInSavedLayout()} has saved data to
+     * check against -- calling this before the layout is loaded is a
+     * harmless no-op, not an error, since every probe simply reports
+     * {@code false}.
+     * </p>
+     * <p>
+     * Each newly-realized view's own {@link ViewConfiguration#getView()}
+     * call restores its saved position through the exact same path already
+     * used when a user manually opens a lazy view that happens to have
+     * saved layout data -- no separate placement logic is needed here.
+     * </p>
+     */
+    public void restorePreviouslyOpenLazyViews() {
+        List<ViewConfiguration<?>> snapshot = new ArrayList<>(configs);
+        for (ViewConfiguration<?> config : snapshot) {
+            if (config.lazily && !config.isRealized() && config.wasOpenInSavedLayout()) {
+                config.getView();
+            }
+        }
+    }
+
     // -----------------------------------------------------------------------
     // Virtual-desktop routing
     // -----------------------------------------------------------------------
