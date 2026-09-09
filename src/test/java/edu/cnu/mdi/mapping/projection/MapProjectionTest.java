@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +25,10 @@ public class MapProjectionTest {
         assertRoundTrip(
                 new MollweideProjection(MapTheme.light()),
                 point(-160, -80), point(-70, 0), point(20, 60));
+
+        assertRoundTrip(
+                new EqualEarthProjection(MapTheme.light()),
+                point(-160, -90), point(-70, 0), point(20, 60), point(110, 90));
 
         assertRoundTrip(
                 new OrthographicProjection(0.0, 0.0, MapTheme.light()),
@@ -47,6 +52,11 @@ public class MapProjectionTest {
                 .latLonFromXY(result, new Point2D.Double(3.0, 0.0));
         assertTrue(Double.isNaN(result.x));
         assertTrue(Double.isNaN(result.y));
+
+        EqualEarthProjection equalEarth = new EqualEarthProjection(MapTheme.light());
+        equalEarth.latLonFromXY(result, new Point2D.Double(3.0, 0.0));
+        assertTrue(Double.isNaN(result.x));
+        assertTrue(Double.isNaN(result.y));
     }
 
     @Test
@@ -55,6 +65,7 @@ public class MapProjectionTest {
 
         assertFalse(new MercatorProjection(MapTheme.light()).isPointVisible(nonFinite));
         assertFalse(new MollweideProjection(MapTheme.light()).isPointVisible(nonFinite));
+        assertFalse(new EqualEarthProjection(MapTheme.light()).isPointVisible(nonFinite));
         assertFalse(new LambertEqualAreaProjection(MapTheme.light()).isPointVisible(nonFinite));
     }
 
@@ -83,19 +94,44 @@ public class MapProjectionTest {
                 EProjection.MERCATOR, MapTheme.light(), center);
         MollweideProjection mollweide = (MollweideProjection) ProjectionFactory.create(
                 EProjection.MOLLWEIDE, MapTheme.light(), center);
+        EqualEarthProjection equalEarth = (EqualEarthProjection) ProjectionFactory.create(
+                EProjection.EQUAL_EARTH, MapTheme.light(), center);
 
         assertEquals(center.x, mercator.getCentralLongitude(), TOLERANCE);
         assertEquals(center.x, mollweide.getCentralLongitude(), TOLERANCE);
+        assertEquals(center.x, equalEarth.getCentralLongitude(), TOLERANCE);
     }
 
     @Test
     public void testOnlyFullWidthWrappedProjectionsAreLongitudePeriodic() {
         assertTrue(new MercatorProjection(MapTheme.light()).isLongitudePeriodic());
         assertTrue(new MollweideProjection(MapTheme.light()).isLongitudePeriodic());
+        assertTrue(new EqualEarthProjection(MapTheme.light()).isLongitudePeriodic());
         assertFalse(new OrthographicProjection(0.0, 0.0, MapTheme.light())
                 .isLongitudePeriodic());
         assertFalse(new LambertEqualAreaProjection(0.0, 0.0, MapTheme.light())
                 .isLongitudePeriodic());
+    }
+
+    @Test
+    public void testEqualEarthReferenceValuesAndCurvedDomain() {
+        EqualEarthProjection projection = new EqualEarthProjection(MapTheme.light());
+        projection.setCentralLongitude(0.0);
+        Point2D.Double xy = new Point2D.Double();
+
+        projection.latLonToXY(point(0.0, 0.0), xy);
+        assertEquals(0.0, xy.x, TOLERANCE);
+        assertEquals(0.0, xy.y, TOLERANCE);
+
+        projection.latLonToXY(point(180.0, 0.0), xy);
+        assertEquals(2.0 * Math.sqrt(3.0) * Math.PI / (3.0 * 1.340264),
+                Math.abs(xy.x), TOLERANCE);
+        assertEquals(0.0, xy.y, TOLERANCE);
+
+        Rectangle2D.Double bounds = projection.getXYBounds();
+        assertTrue(projection.isPointOnMap(new Point2D.Double(0.0, bounds.getMaxY())));
+        assertFalse(projection.isPointOnMap(
+                new Point2D.Double(bounds.getMaxX(), bounds.getMaxY())));
     }
 
     @Test

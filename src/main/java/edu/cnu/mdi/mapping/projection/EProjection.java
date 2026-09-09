@@ -51,6 +51,14 @@ public enum EProjection {
     MOLLWEIDE("Mollweide"),
 
     /**
+     * Equal Earth equal-area pseudocylindrical projection.
+     *
+     * <p>Maps the whole globe with straight parallels and curved meridians,
+     * balancing recognizable continental shapes with exact area preservation.</p>
+     */
+    EQUAL_EARTH("Equal Earth"),
+
+    /**
      * Lambert azimuthal equal-area projection (whole globe on a disk).
      *
      * <p>Maps the entire sphere to a disk of radius 2 (for a unit sphere).
@@ -115,6 +123,7 @@ public enum EProjection {
             case MERCATOR       -> "Mercator";
             case ORTHOGRAPHIC   -> "Orthographic";
             case MOLLWEIDE      -> "Mollweide";
+            case EQUAL_EARTH    -> "Equal Earth";
             case LAMBERT_EQUAL_AREA -> "Lambert Equal-Area";
         };
     }

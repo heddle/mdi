@@ -22,6 +22,7 @@ import edu.cnu.mdi.mapping.MapView2D;
 import edu.cnu.mdi.mapping.item.MapMilSymbolItem;
 import edu.cnu.mdi.mapping.milsym.MilSymbolDescriptor;
 import edu.cnu.mdi.mapping.milsym.MilSymbolTransferable;
+import edu.cnu.mdi.mapping.projection.EqualEarthProjection;
 import edu.cnu.mdi.mapping.projection.IMapProjection;
 import edu.cnu.mdi.mapping.projection.LambertEqualAreaProjection;
 import edu.cnu.mdi.mapping.projection.MercatorProjection;
@@ -297,6 +298,11 @@ public class MapContainer extends BaseContainer {
 
 	        case MOLLWEIDE -> {
 	            ((MollweideProjection) mp).setCentralLongitude(ll.x);
+	            projectionChanged = true;
+	        }
+
+	        case EQUAL_EARTH -> {
+	            ((EqualEarthProjection) mp).setCentralLongitude(ll.x);
 	            projectionChanged = true;
 	        }
 

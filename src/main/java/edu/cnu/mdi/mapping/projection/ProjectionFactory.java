@@ -71,7 +71,7 @@ public final class ProjectionFactory {
      *       (latitude, radians).</li>
      *   <li>If {@code center} is {@code null} a projection-specific default
      *       is used (see individual cases below).</li>
-     *   <li>Mercator and Mollweide use only the longitude component of
+     *   <li>Mercator, Mollweide, and Equal Earth use only the longitude component of
      *       {@code center}; the latitude component is ignored.</li>
      * </ul>
      *
@@ -81,6 +81,7 @@ public final class ProjectionFactory {
      *   <li><b>ORTHOGRAPHIC</b> — defaults to (λ = 0°, φ = 50°), a
      *       balanced mid-latitude northern hemisphere view.</li>
      *   <li><b>MOLLWEIDE</b> — defaults to a central longitude of -70°.</li>
+     *   <li><b>EQUAL_EARTH</b> — defaults to a central longitude of -70°.</li>
      *   <li><b>LAMBERT_EQUAL_AREA</b> — defaults to (λ = 0°, φ = 0°),
      *       i.e., centered on the intersection of the equator and prime
      *       meridian.</li>
@@ -120,6 +121,14 @@ public final class ProjectionFactory {
 
             case MOLLWEIDE -> {
                 MollweideProjection projection = new MollweideProjection(theme);
+                if (center != null) {
+                    projection.setCentralLongitude(center.x);
+                }
+                yield projection;
+            }
+
+            case EQUAL_EARTH -> {
+                EqualEarthProjection projection = new EqualEarthProjection(theme);
                 if (center != null) {
                     projection.setCentralLongitude(center.x);
                 }
