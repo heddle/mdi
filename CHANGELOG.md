@@ -13,6 +13,8 @@ git tags.
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-09-15
+
 ### Added
 
 - **"Recent Shapefiles" menu**: a persistent, most-recently-used list of
@@ -20,6 +22,30 @@ git tags.
   populated by both the menu and drag-and-drop, matching sPlot's existing
   "Recent Plots". A file that fails to load, or is later found missing, is
   pruned rather than left as a dead entry.
+- **Equal Earth map projection**, available alongside Mercator,
+  Orthographic, Mollweide, and Lambert Azimuthal Equal-Area projections.
+- Persistent, per-purpose last-directory tracking for file dialogs. The new
+  `FileDialogs.lastDirectory()` and `rememberDirectory()` methods also let
+  custom file choosers share the same remembered locations.
+- Previously open lazy views can now be reopened automatically at startup,
+  with their saved positions and Views-menu state restored.
+- Delayed hover callbacks are now enabled for every `BaseContainer`-based
+  view. `FeedbackPane.stripStyle()` is available for converting styled
+  feedback strings to plain hover-popup text.
+- `PlotView` accepts the `ADDFEEDBACK` property, allowing applications to
+  create plot views without a feedback pane.
+
+### Changed
+
+- MDI child views now use outline-only dragging, improving responsiveness for
+  content-heavy views such as detector displays and maps.
+- `StartupWindow` remains above the application window until explicitly
+  closed.
+- Removed repeated post-show repaint pulses that could freeze the Swing event
+  thread for several seconds in applications with complex virtual desktops.
+- `Environment.dataDirectory` is now strictly an application-configured
+  default; opening or saving files no longer overwrites it with the most
+  recently used directory.
 
 ### Fixed
 
@@ -28,6 +54,20 @@ git tags.
   did nothing. File-drop was never wired up in the first place, and once it
   was, a pre-existing raw AWT drop target for NATO military symbols on the
   same component unconditionally shadowed it. Both are fixed.
+- Saved-layout restoration could shift every view by the stale column of the
+  last view created; virtual-desktop column bookkeeping is now synchronized
+  after applying a saved layout.
+- Restoring lazy views at startup could leave stale italic placeholders in the
+  Views menu and navigate the virtual desktop to the last restored view's
+  column.
+- Moving the mouse over a `PlotView` configured without a feedback pane no
+  longer throws a `NullPointerException`.
+
+### Documentation & Testing
+
+- Added regression tests for shapefile drag-and-drop and recent files,
+  persistent file-dialog directories, saved lazy-view state, desktop drag
+  mode, map projection round trips, and hover feedback.
 
 ## [1.2.2] - 2026-08-31
 
@@ -115,5 +155,6 @@ git tags.
 - Chapters 1–9 of the MDI reference book were independently verified against
   the current source and corrected where they had drifted.
 
-[Unreleased]: https://github.com/heddle/mdi/compare/v1.2.2...develop
+[Unreleased]: https://github.com/heddle/mdi/compare/v1.2.3...develop
+[1.2.3]: https://github.com/heddle/mdi/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/heddle/mdi/compare/v1.2.1...v1.2.2
