@@ -157,7 +157,7 @@ MDI is available on Maven Central:
 <dependency>
     <groupId>io.github.heddle</groupId>
     <artifactId>mdi</artifactId>
-    <version>1.0.0</version>
+    <version>1.2.3</version>
 </dependency>
 ```
 ---
