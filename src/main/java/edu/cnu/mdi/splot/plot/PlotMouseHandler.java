@@ -126,6 +126,10 @@ public class PlotMouseHandler
 		}
 
 		FeedbackPane feedback = plotPanel.getFeedbackPane();
+		// BARE and VERYBARE plot panels intentionally omit the feedback pane.
+		if (feedback == null) {
+			return;
+		}
 		if (canvas.getActiveBounds() == null || canvas.getWorld() == null) {
 			return;
 		}

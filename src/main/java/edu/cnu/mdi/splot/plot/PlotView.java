@@ -66,6 +66,7 @@ public class PlotView extends BaseView {
 
 	protected PlotCanvas _plotCanvas;
 	protected PlotPanel _plotPanel;
+	private final boolean _addFeedback;
 
 
 	// CardLayout components
@@ -111,6 +112,7 @@ public class PlotView extends BaseView {
 	 */
 	public PlotView(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
+		_addFeedback = PropertyUtils.getBoolean(PropertyUtils.fromKeyValues(keyVals), PropertyUtils.ADDFEEDBACK, true);
 
 		// 1. Setup CardLayout deck
 		_cardLayout = new CardLayout();
@@ -305,10 +307,15 @@ public class PlotView extends BaseView {
 	 */
 	private PlotPanel createPlotPanel() {
 		_plotCanvas = new PlotCanvas(null, "Empty Plot", "X Axis", "Y axis");
-		_plotPanel = new PlotPanel(_plotCanvas);
+		_plotPanel = createDecoratedPlotPanel(_plotCanvas);
 
 		_plotPanel.getToolBar().addInfoButton();
 		return _plotPanel;
+	}
+
+	/** Create a panel using this view's configured feedback policy. */
+	protected final PlotPanel createDecoratedPlotPanel(PlotCanvas canvas) {
+		return new PlotPanel(canvas, _addFeedback ? PlotPanel.STANDARD : PlotPanel.BARE);
 	}
 
 	// set up the 2D histogram panel
@@ -504,7 +511,7 @@ public class PlotView extends BaseView {
 
 			// Stand up and install new plot
 			newCanvas.standUp();
-			PlotPanel newPanel = new PlotPanel(newCanvas);
+			PlotPanel newPanel = createDecoratedPlotPanel(newCanvas);
 			setPlotPanel(newPanel);
 
 			// Update edit menu to point at the new canvas
