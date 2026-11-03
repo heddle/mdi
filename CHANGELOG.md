@@ -15,6 +15,17 @@ git tags.
 
 ### Added
 
+- **CSV import and export for sPlot** (`CsvPlotIO`). `PlotView`'s File menu has
+  "Import Data (CSV)..." and "Export Data (CSV)...", and a `.csv` file dropped on
+  a `PlotView` is imported as a new plot. CSV carries data only: curve names,
+  points and optional y errors, plus the plot title and axis labels as
+  `# title:`, `# xlabel:` and `# ylabel:` header comments. Styling, axis limits
+  and fits stay in the `.plot.json` format. Export writes one point per row
+  (`curve,x,y[,e]`) with full numeric precision, so a round trip reproduces the
+  data exactly. Import also accepts a wide layout (`x,curve1,curve2,...`, blank
+  cells meaning no point) and headerless numeric files. Malformed values are
+  rejected with the offending line number. XY plots only; histograms are not
+  supported.
 - `Environment.setConfigurationDirectory(File)` chooses the directory that
   holds the layout configuration file (`~/.<application>.xml`). It defaults to
   the user's home directory, as before; passing `null` restores the default.

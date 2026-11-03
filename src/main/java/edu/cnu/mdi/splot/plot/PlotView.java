@@ -21,9 +21,11 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.SwingConstants;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import edu.cnu.mdi.dialog.FileDialogs;
 import edu.cnu.mdi.pseudo3D.Histo2DPanel;
+import edu.cnu.mdi.splot.io.CsvPlotIO;
 import edu.cnu.mdi.splot.io.PlotFileFilter;
 import edu.cnu.mdi.splot.io.PlotIO;
 import edu.cnu.mdi.splot.io.RecentPlotFiles;
@@ -44,11 +46,12 @@ import edu.cnu.mdi.view.BaseView;
  * </ul>
  *
  * <h2>File drag-and-drop</h2>
- * <p>Drop support for {@code .plot.json} and {@code .splot.json} files is
- * activated in the constructor via
- * {@link BaseView#enableFileDrop(java.util.function.Predicate)}.
- * Subclasses that need to accept additional file types should call
- * {@code enableFileDrop} with a broader predicate and extend
+ * <p>Drop support for {@code .plot.json} and {@code .splot.json} plot files,
+ * and for {@code .csv} data files, is activated in the constructor via
+ * {@link BaseView#enableFileDrop(java.util.function.Predicate)}. A dropped CSV
+ * file is imported as a new plot (see {@link CsvPlotIO}); the File menu also
+ * offers CSV import and export. Subclasses that need to accept additional file
+ * types should call {@code enableFileDrop} with a broader predicate and extend
  * {@link #filesDropped} accordingly.</p>
  *
  * <h2>Plot lifecycle</h2>
@@ -98,8 +101,9 @@ public class PlotView extends BaseView {
 	 *   <li>A {@link CardLayout} deck is created holding the standard plot card
 	 *       ({@link #CARD_PLOT}) and the 2-D histogram card
 	 *       ({@link #CARD_HISTO2D}).</li>
-	 *   <li>File drag-and-drop is enabled for {@code .plot.json} and
-	 *       {@code .splot.json} files via {@link #enableFileDrop(Predicate)}.
+	 *   <li>File drag-and-drop is enabled for {@code .plot.json},
+	 *       {@code .splot.json} and {@code .csv} files via
+	 *       {@link #enableFileDrop(Predicate)}.
 	 *       The handler is installed once on all appropriate surfaces (canvas,
 	 *       viewport, and frame); it does <em>not</em> need to be re-installed
 	 *       when the plot panel is replaced by {@link #setPlotPanel}.</li>
@@ -132,9 +136,7 @@ public class PlotView extends BaseView {
 		// on the canvas, viewport, and view frame, so it covers the full card
 		// deck regardless of which card is currently visible.  There is no need
 		// to re-install the handler when the plot panel is swapped.
-		enableFileDrop(f -> f.isFile()
-				&& (f.getName().toLowerCase().endsWith(".plot.json")
-						|| f.getName().toLowerCase().endsWith(".splot.json")));
+		enableFileDrop(f -> f.isFile() && (PlotFileFilter.isPlotFile(f) || CsvPlotIO.isCsvFile(f)));
 
 		addMenus();
 		// Initial sync of the menu state
@@ -175,6 +177,16 @@ public class PlotView extends BaseView {
 		JMenuItem saveAsItem = new JMenuItem("Save As\u2026");
 		saveAsItem.addActionListener(e -> doSave(true));
 		fileMenu.add(saveAsItem);
+
+		fileMenu.addSeparator();
+
+		JMenuItem importCsvItem = new JMenuItem("Import Data (CSV)\u2026");
+		importCsvItem.addActionListener(e -> doImportCsv());
+		fileMenu.add(importCsvItem);
+
+		JMenuItem exportCsvItem = new JMenuItem("Export Data (CSV)\u2026");
+		exportCsvItem.addActionListener(e -> doExportCsv());
+		fileMenu.add(exportCsvItem);
 
 		// Remove any existing File menu, then add ours
 		JMenu existingFile = findMenu(menuBar, "File");
@@ -451,8 +463,9 @@ public class PlotView extends BaseView {
 	 *
 	 * <p>Only the first file in the list is used; the filter set by
 	 * {@link #enableFileDrop(Predicate)} in the constructor already guarantees
-	 * every entry ends with {@code .plot.json} or {@code .splot.json}, so no
-	 * second format check is required here.</p>
+	 * every entry is a plot file ({@code .plot.json} or {@code .splot.json}) or
+	 * a {@code .csv} data file. A CSV file is imported as a new plot; a plot
+	 * file is opened.</p>
 	 *
 	 * <p>The parent directory of the dropped file is remembered (see
 	 * {@link FileDialogs#rememberDirectory}) so that the next "Open" dialog
@@ -468,6 +481,10 @@ public class PlotView extends BaseView {
 			return;
 		}
 		File file = files.get(0);
+		if (CsvPlotIO.isCsvFile(file)) {
+			importCsv(file);
+			return;
+		}
 		FileDialogs.rememberDirectory(PlotFileFilter.DIALOG_PURPOSE, file.toPath());
 		openPlotFile(file);
 	}
@@ -494,6 +511,32 @@ public class PlotView extends BaseView {
 		openPlotFile(selected);
 	}
 
+	// Retire the current canvas and show the given one, with its edit menu.
+	private void installCanvas(PlotCanvas newCanvas) {
+		// Cleanly retire old canvas
+		if (_plotCanvas != null) {
+			_plotCanvas.shutDown();
+		}
+
+		// Stand up and install new plot
+		newCanvas.standUp();
+		PlotPanel newPanel = createDecoratedPlotPanel(newCanvas);
+		setPlotPanel(newPanel);
+
+		// Update edit menu to point at the new canvas
+		JMenuBar menuBar = getJMenuBar();
+		if (menuBar != null) {
+			JMenu existingEdit = findMenu(menuBar, SplotEditMenu.MENU_TITLE);
+			if (existingEdit != null) {
+				menuBar.remove(existingEdit);
+			}
+			menuBar.add(new SplotEditMenu(newCanvas));
+		}
+
+		revalidate();
+		repaint();
+	}
+
 	// Open the given plot file
 	private void openPlotFile(File file) {
 		if (file == null) {
@@ -502,27 +545,7 @@ public class PlotView extends BaseView {
 
 		try {
 			// Load a fresh canvas on EDT (PlotIO does EDT-safe construction)
-			PlotCanvas newCanvas = PlotIO.loadCanvas(file);
-
-			// Cleanly retire old canvas
-			if (_plotCanvas != null) {
-				_plotCanvas.shutDown();
-			}
-
-			// Stand up and install new plot
-			newCanvas.standUp();
-			PlotPanel newPanel = createDecoratedPlotPanel(newCanvas);
-			setPlotPanel(newPanel);
-
-			// Update edit menu to point at the new canvas
-			JMenuBar menuBar = getJMenuBar();
-			if (menuBar != null) {
-				JMenu existingEdit = findMenu(menuBar, SplotEditMenu.MENU_TITLE);
-				if (existingEdit != null) {
-					menuBar.remove(existingEdit);
-				}
-				menuBar.add(new SplotEditMenu(newCanvas));
-			}
+			installCanvas(PlotIO.loadCanvas(file));
 
 			// Track current file + recent list
 			_currentPlotFile = file;
@@ -532,9 +555,6 @@ public class PlotView extends BaseView {
 				_recentFiles.add(file);
 			}
 			rebuildRecentMenu();
-
-			revalidate();
-			repaint();
 
 		} catch (Exception ex) {
 			JOptionPane.showMessageDialog(this, ex.getMessage(), "Open Plot Failed", JOptionPane.ERROR_MESSAGE);
@@ -590,6 +610,64 @@ public class PlotView extends BaseView {
 
 		} catch (Exception ex) {
 			JOptionPane.showMessageDialog(this, ex.getMessage(), "Save Plot Failed", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	// Directory for CSV dialogs, remembered separately from plot-file dialogs.
+	private File getInitialCsvDirectory() {
+		return FileDialogs.lastDirectory(CsvPlotIO.DIALOG_PURPOSE).map(Path::toFile).orElse(null);
+	}
+
+	// Pick a CSV file and import it as a new plot
+	private void doImportCsv() {
+		JFileChooser fc = new JFileChooser(getInitialCsvDirectory());
+		fc.setFileFilter(new FileNameExtensionFilter("CSV data files (*.csv)", "csv"));
+		fc.setAcceptAllFileFilterUsed(true);
+
+		if (fc.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		importCsv(fc.getSelectedFile());
+	}
+
+	/**
+	 * Import a CSV data file as a new plot, replacing the current one. The new
+	 * plot has no backing plot file, so "Save" asks where to save it.
+	 */
+	private void importCsv(File file) {
+		try {
+			installCanvas(CsvPlotIO.loadCanvas(file));
+			_currentPlotFile = null;
+			FileDialogs.rememberDirectory(CsvPlotIO.DIALOG_PURPOSE, file.toPath());
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Import Data Failed", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	// Export the current plot's curves as CSV
+	private void doExportCsv() {
+		JFileChooser fc = new JFileChooser(getInitialCsvDirectory());
+		fc.setFileFilter(new FileNameExtensionFilter("CSV data files (*.csv)", "csv"));
+		fc.setAcceptAllFileFilterUsed(true);
+
+		if (fc.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) {
+			return;
+		}
+		File target = CsvPlotIO.ensureCsvExtension(fc.getSelectedFile());
+		FileDialogs.rememberDirectory(CsvPlotIO.DIALOG_PURPOSE, target.toPath());
+
+		if (target.exists()) {
+			int ok = JOptionPane.showConfirmDialog(this, "Overwrite existing file?\n" + target.getAbsolutePath(),
+					"Confirm Export", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+			if (ok != JOptionPane.OK_OPTION) {
+				return;
+			}
+		}
+
+		try {
+			CsvPlotIO.save(_plotCanvas, target);
+		} catch (Exception ex) {
+			JOptionPane.showMessageDialog(this, ex.getMessage(), "Export Data Failed", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 

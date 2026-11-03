@@ -56,6 +56,7 @@ The built-in plotting module provides:
 - Thread-safe curve updates  
 - Swing EDT-safe rendering  
 - Curve fitting  
+- Save and open plots as JSON, and import or export XY data as CSV  
 - Lock-free staging queues for background updates  
 - Coalesced repaint events  
 
