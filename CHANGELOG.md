@@ -19,6 +19,12 @@ git tags.
   `batik-codec`). SVG icons are rendered by FlatLaf's `FlatSVGIcon`, which
   uses JSVG. Applications that relied on Batik arriving transitively through
   MDI must now declare it themselves.
+- Dropped the Jackson dependency (`jackson-databind`). The GeoJSON country
+  and city loaders now parse with Gson, which MDI already used elsewhere, so
+  MDI has a single JSON library. Loaded data is unchanged. The loaders now
+  reject trailing content after the JSON document, which Jackson ignored.
+  Applications that relied on Jackson arriving transitively through MDI must
+  now declare it themselves.
 
 ## [1.2.3] - 2026-09-15
 

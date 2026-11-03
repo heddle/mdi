@@ -13,10 +13,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import edu.cnu.mdi.mapping.theme.MapUtils;
+import static edu.cnu.mdi.mapping.loader.GeoJsonSupport.array;
+import static edu.cnu.mdi.mapping.loader.GeoJsonSupport.get;
+import static edu.cnu.mdi.mapping.loader.GeoJsonSupport.isNumber;
+import static edu.cnu.mdi.mapping.loader.GeoJsonSupport.text;
 
 /**
  * Utility for loading country boundary polygons from a GeoJSON
@@ -55,9 +60,8 @@ import edu.cnu.mdi.mapping.theme.MapUtils;
  * {@link CountryFeature}.</p>
  *
  * <h2>Thread safety</h2>
- * <p>This class has no mutable state. The internal {@link ObjectMapper} is
- * thread-safe for reading and may be shared freely. The returned lists are
- * unmodifiable.</p>
+ * <p>This class has no mutable state and may be used freely from multiple
+ * threads. The returned lists are unmodifiable.</p>
  *
  * <p>This class is not instantiable.</p>
  */
@@ -146,17 +150,6 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
     }
 
     // =========================================================================
-    // Internal state
-    // =========================================================================
-
-    /**
-     * Shared, thread-safe Jackson {@link ObjectMapper}. {@code ObjectMapper}
-     * is safe for concurrent reads once configured, and construction is
-     * expensive, so it is reused across calls.
-     */
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
-    // =========================================================================
     // Public load methods
     // =========================================================================
 
@@ -229,18 +222,18 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
      *                     {@code FeatureCollection}
      */
     private static List<CountryFeature> load(BufferedReader reader) throws IOException {
-        JsonNode root = MAPPER.readTree(reader);
-        if (root == null || !"FeatureCollection".equals(root.path("type").asText())) {
+        JsonObject root = GeoJsonSupport.parseRoot(reader);
+        if (root == null || !"FeatureCollection".equals(text(get(root, "type")))) {
             throw new IOException("GeoJSON root is not a FeatureCollection");
         }
 
-        JsonNode featuresNode = root.path("features");
-        if (!featuresNode.isArray()) {
+        JsonElement featuresNode = get(root, "features");
+        if (featuresNode == null || !featuresNode.isJsonArray()) {
             throw new IOException("GeoJSON 'features' is missing or not an array");
         }
 
         List<CountryFeature> result = new ArrayList<>();
-        for (JsonNode featureNode : featuresNode) {
+        for (JsonElement featureNode : featuresNode.getAsJsonArray()) {
             CountryFeature feature = parseFeature(featureNode);
             if (feature != null) {
                 result.add(feature);
@@ -265,25 +258,25 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
      * @param featureNode a single GeoJSON feature node
      * @return parsed {@link CountryFeature}, or {@code null} to skip
      */
-    private static CountryFeature parseFeature(JsonNode featureNode) {
-        JsonNode properties = featureNode.path("properties");
-        String admin = properties.path("ADMIN").asText(null);
-        String isoA3 = properties.path("ISO_A3").asText(null);
+    private static CountryFeature parseFeature(JsonElement featureNode) {
+        JsonElement properties = get(featureNode, "properties");
+        String admin = text(get(properties, "ADMIN"));
+        String isoA3 = text(get(properties, "ISO_A3"));
 
         if (admin == null || isoA3 == null) {
             return null; // required properties missing
         }
 
-        JsonNode geometry = featureNode.path("geometry");
-        String   geomType = geometry.path("type").asText();
-        JsonNode coords   = geometry.path("coordinates");
+        JsonElement geometry = get(featureNode, "geometry");
+        String      geomType = text(get(geometry, "type"));
+        JsonElement coords   = get(geometry, "coordinates");
 
         List<List<Point2D.Double>> polygons = new ArrayList<>();
 
         if ("Polygon".equalsIgnoreCase(geomType)) {
             parsePolygon(coords, polygons);
         } else if ("MultiPolygon".equalsIgnoreCase(geomType)) {
-            for (JsonNode polygonNode : coords) {
+            for (JsonElement polygonNode : array(coords)) {
                 parsePolygon(polygonNode, polygons);
             }
         } else {
@@ -302,19 +295,19 @@ public final class GeoJsonCountryLoader implements ICountryLoader {
      * {@link MapUtils#wrapLongitude(double)}. Malformed coordinates and
      * degenerate rings with fewer than three valid points are skipped.</p>
      *
-     * @param polygonNode JSON node for a single polygon (array of rings)
+     * @param polygonNode JSON element for a single polygon (array of rings)
      * @param out         destination list; rings are appended in order
      */
-    private static void parsePolygon(JsonNode polygonNode, List<List<Point2D.Double>> out) {
-        for (JsonNode ringNode : polygonNode) {
+    private static void parsePolygon(JsonElement polygonNode, List<List<Point2D.Double>> out) {
+        for (JsonElement ringNode : array(polygonNode)) {
             List<Point2D.Double> ring = new ArrayList<>();
-            for (JsonNode coordNode : ringNode) {
-                if (!coordNode.isArray() || coordNode.size() < 2
-                        || !coordNode.get(0).isNumber()
-                        || !coordNode.get(1).isNumber()) continue;
+            for (JsonElement coordNode : array(ringNode)) {
+                if (!coordNode.isJsonArray()) continue;
+                JsonArray pair = coordNode.getAsJsonArray();
+                if (pair.size() < 2 || !isNumber(pair.get(0)) || !isNumber(pair.get(1))) continue;
 
-                double lonDegrees = coordNode.get(0).asDouble();
-                double latDegrees = coordNode.get(1).asDouble();
+                double lonDegrees = pair.get(0).getAsDouble();
+                double latDegrees = pair.get(1).getAsDouble();
                 if (!Double.isFinite(lonDegrees) || !Double.isFinite(latDegrees)
                         || latDegrees < -90.0 || latDegrees > 90.0) continue;
 

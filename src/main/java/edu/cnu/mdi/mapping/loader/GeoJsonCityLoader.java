@@ -12,12 +12,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import edu.cnu.mdi.mapping.projection.IMapProjection;
 import edu.cnu.mdi.mapping.render.CityPointRenderer;
 import edu.cnu.mdi.mapping.theme.MapUtils;
+import static edu.cnu.mdi.mapping.loader.GeoJsonSupport.get;
+import static edu.cnu.mdi.mapping.loader.GeoJsonSupport.isNumber;
+import static edu.cnu.mdi.mapping.loader.GeoJsonSupport.text;
 
 /**
  * Utility for loading city (populated place) point features from a GeoJSON
@@ -64,9 +68,9 @@ import edu.cnu.mdi.mapping.theme.MapUtils;
  * All {@link CityFeature} coordinate accessors return radians.</p>
  *
  * <h2>Thread safety</h2>
- * <p>This class has no mutable state. The shared {@link ObjectMapper} is
- * thread-safe for reading. Both {@link #load(Path)} and
- * {@link #loadFromResource(String)} return unmodifiable lists.</p>
+ * <p>This class has no mutable state and may be used freely from multiple
+ * threads. Both {@link #load(Path)} and {@link #loadFromResource(String)}
+ * return unmodifiable lists.</p>
  *
  * <p>This class is not instantiable.</p>
  */
@@ -187,16 +191,6 @@ public final class GeoJsonCityLoader implements ICityLoader {
     }
 
     // =========================================================================
-    // Internal state
-    // =========================================================================
-
-    /**
-     * Shared, thread-safe Jackson {@link ObjectMapper}. Reused across calls
-     * because construction is expensive.
-     */
-    private static final ObjectMapper MAPPER = new ObjectMapper();
-
-    // =========================================================================
     // Public load methods
     // =========================================================================
 
@@ -260,18 +254,18 @@ public final class GeoJsonCityLoader implements ICityLoader {
      *                     {@code FeatureCollection}
      */
     private static List<CityFeature> load(BufferedReader reader) throws IOException {
-        JsonNode root = MAPPER.readTree(reader);
-        if (root == null || !"FeatureCollection".equals(root.path("type").asText())) {
+        JsonObject root = GeoJsonSupport.parseRoot(reader);
+        if (root == null || !"FeatureCollection".equals(text(get(root, "type")))) {
             throw new IOException("GeoJSON root is not a FeatureCollection");
         }
 
-        JsonNode featuresNode = root.path("features");
-        if (!featuresNode.isArray()) {
+        JsonElement featuresNode = get(root, "features");
+        if (featuresNode == null || !featuresNode.isJsonArray()) {
             throw new IOException("GeoJSON 'features' array missing or not an array");
         }
 
         List<CityFeature> result = new ArrayList<>();
-        for (JsonNode featureNode : featuresNode) {
+        for (JsonElement featureNode : featuresNode.getAsJsonArray()) {
             CityFeature city = parseFeature(featureNode);
             if (city != null) {
                 result.add(city);
@@ -292,22 +286,24 @@ public final class GeoJsonCityLoader implements ICityLoader {
      *       falls outside [-90°, 90°].</li>
      * </ul>
      *
-     * @param featureNode a single GeoJSON feature node
+     * @param featureNode a single GeoJSON feature
      * @return parsed {@link CityFeature}, or {@code null} to skip
      */
-    private static CityFeature parseFeature(JsonNode featureNode) {
-        if (!"Feature".equals(featureNode.path("type").asText())) return null;
+    private static CityFeature parseFeature(JsonElement featureNode) {
+        if (!"Feature".equals(text(get(featureNode, "type")))) return null;
 
-        JsonNode geometry = featureNode.path("geometry");
-        if (!"Point".equalsIgnoreCase(geometry.path("type").asText())) return null;
+        JsonElement geometry = get(featureNode, "geometry");
+        if (!"Point".equalsIgnoreCase(text(get(geometry, "type")))) return null;
 
-        JsonNode coords = geometry.path("coordinates");
-        if (!coords.isArray() || coords.size() < 2) return null;
-        if (!coords.get(0).isNumber() || !coords.get(1).isNumber()) return null;
+        JsonElement coordsNode = get(geometry, "coordinates");
+        if (coordsNode == null || !coordsNode.isJsonArray()) return null;
+        JsonArray coords = coordsNode.getAsJsonArray();
+        if (coords.size() < 2) return null;
+        if (!isNumber(coords.get(0)) || !isNumber(coords.get(1))) return null;
 
         // GeoJSON coordinates are in degrees; convert and wrap longitude.
-        double lonDegrees = coords.get(0).asDouble();
-        double latDegrees = coords.get(1).asDouble();
+        double lonDegrees = coords.get(0).getAsDouble();
+        double latDegrees = coords.get(1).getAsDouble();
         if (!Double.isFinite(lonDegrees) || !Double.isFinite(latDegrees)
                 || latDegrees < -90.0 || latDegrees > 90.0) {
             return null;
@@ -315,11 +311,11 @@ public final class GeoJsonCityLoader implements ICityLoader {
         double lon = MapUtils.lonDegreesToRadians(lonDegrees);
         double lat = Math.toRadians(latDegrees);
 
-        JsonNode props       = featureNode.path("properties");
-        String   name        = nullSafeText(props, "NAME", "name", "Name", "NAMEASCII", "nameascii");
-        String   countryName = nullSafeText(props, "ADM0NAME", "adm0name", "SOV0NAME", "sov0name");
-        long     population  = longFrom(props,  -1L, "POP_MAX", "pop_max", "Pop_Max");
-        int      scalerank   = intFrom(props,   -1,  "SCALERANK", "scalerank", "ScaleRank");
+        JsonElement props       = get(featureNode, "properties");
+        String      name        = nullSafeText(props, "NAME", "name", "Name", "NAMEASCII", "nameascii");
+        String      countryName = nullSafeText(props, "ADM0NAME", "adm0name", "SOV0NAME", "sov0name");
+        long        population  = longFrom(props,  -1L, "POP_MAX", "pop_max", "Pop_Max");
+        int         scalerank   = intFrom(props,   -1,  "SCALERANK", "scalerank", "ScaleRank");
 
         return new CityFeature(name, countryName, lon, lat, population, scalerank);
     }
@@ -333,16 +329,14 @@ public final class GeoJsonCityLoader implements ICityLoader {
      * names, or {@code null} if none of the names are present or all values
      * are empty strings.
      *
-     * @param node   JSON object node containing properties
+     * @param node   JSON object containing properties
      * @param fields property names to try in order
      * @return first non-empty string value, or {@code null}
      */
-    private static String nullSafeText(JsonNode node, String... fields) {
+    private static String nullSafeText(JsonElement node, String... fields) {
         if (node == null || fields == null) return null;
         for (String field : fields) {
-            JsonNode child = node.path(field);
-            if (child.isMissingNode()) continue;
-            String value = child.asText(null);
+            String value = text(get(node, field));
             if (value != null && !value.isEmpty()) return value;
         }
         return null;
@@ -353,16 +347,16 @@ public final class GeoJsonCityLoader implements ICityLoader {
      * {@code defaultValue} if none of the named properties exist or are
      * numeric.
      *
-     * @param node         JSON object node
+     * @param node         JSON object
      * @param defaultValue value returned when no matching field is found
      * @param fields       property names to try in order
      * @return parsed long value, or {@code defaultValue}
      */
-    private static long longFrom(JsonNode node, long defaultValue, String... fields) {
+    private static long longFrom(JsonElement node, long defaultValue, String... fields) {
         if (node == null || fields == null) return defaultValue;
         for (String field : fields) {
-            JsonNode child = node.path(field);
-            if (!child.isMissingNode() && child.isNumber()) return child.asLong(defaultValue);
+            JsonElement child = get(node, field);
+            if (isNumber(child)) return child.getAsLong();
         }
         return defaultValue;
     }
@@ -372,16 +366,16 @@ public final class GeoJsonCityLoader implements ICityLoader {
      * {@code defaultValue} if none of the named properties exist or are
      * numeric.
      *
-     * @param node         JSON object node
+     * @param node         JSON object
      * @param defaultValue value returned when no matching field is found
      * @param fields       property names to try in order
      * @return parsed int value, or {@code defaultValue}
      */
-    private static int intFrom(JsonNode node, int defaultValue, String... fields) {
+    private static int intFrom(JsonElement node, int defaultValue, String... fields) {
         if (node == null || fields == null) return defaultValue;
         for (String field : fields) {
-            JsonNode child = node.path(field);
-            if (!child.isMissingNode() && child.isNumber()) return child.asInt(defaultValue);
+            JsonElement child = get(node, field);
+            if (isNumber(child)) return child.getAsInt();
         }
         return defaultValue;
     }
