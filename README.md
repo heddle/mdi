@@ -14,7 +14,7 @@ MDI is a Java framework for building scientific desktop applications with:
 - Extensible tools and layered drawing  
 - Distribution via Maven Central  
 
-It is built on pure Swing for long-term JVM stability and zero external runtime dependencies.
+It is built on pure Swing for long-term JVM stability, with only a small set of well-established runtime dependencies (listed under [Installation](#installation)).
 
 ---
 
@@ -160,6 +160,15 @@ MDI is available on Maven Central:
     <version>1.2.3</version>
 </dependency>
 ```
+
+Maven pulls in MDI's runtime dependencies automatically:
+
+| Dependency | Used for |
+|---|---|
+| [FlatLaf](https://www.formdev.com/flatlaf/) and `flatlaf-extras` | Look and feel, and SVG icons (rendered through JSVG, which `flatlaf-extras` brings in) |
+| [Apache Commons Math](https://commons.apache.org/proper/commons-math/) | Curve fitting in sPlot |
+| [Gson](https://github.com/google/gson) | JSON handling, including GeoJSON map data |
+
 ---
 
 ## Hello MDI
