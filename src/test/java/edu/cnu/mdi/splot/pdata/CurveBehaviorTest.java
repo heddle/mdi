@@ -16,6 +16,29 @@ import edu.cnu.mdi.splot.fit.CurveDrawingMethod;
 
 class CurveBehaviorTest {
 
+	/**
+	 * Parks the event dispatch thread until the returned latch is released, so
+	 * work queued meanwhile (such as a curve's deferred drain) cannot run.
+	 * EDT events are processed in order, so anything queued after this call
+	 * waits behind the parked task.
+	 */
+	private static CountDownLatch holdEdt() {
+		CountDownLatch release = new CountDownLatch(1);
+		SwingUtilities.invokeLater(() -> {
+			try {
+				release.await(10, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		});
+		return release;
+	}
+
+	/** Returns once every event queued on the EDT before this call has run. */
+	private static void drainEdt() throws Exception {
+		SwingUtilities.invokeAndWait(() -> { });
+	}
+
 	@Test
 	void stripChartScalesSubMillisecondUnitsWithoutInfinity() throws Exception {
 		StripChartCurve[] holder = new StripChartCurve[1];
@@ -62,14 +85,19 @@ class CurveBehaviorTest {
 		});
 		Curve curve = holder[0];
 
-		// Off-EDT: must not throw, and must not apply synchronously.
-		assertDoesNotThrow(() -> curve.add(1.0, 2.0));
-		assertEquals(0, curve.length(), "an off-EDT add must be deferred, not applied immediately");
+		// Off-EDT: must not throw, and must not apply synchronously. The EDT is
+		// held so the queued drain cannot run before the assertion; without
+		// this, an idle EDT could drain between add() and length().
+		CountDownLatch release = holdEdt();
+		try {
+			assertDoesNotThrow(() -> curve.add(1.0, 2.0));
+			assertEquals(0, curve.length(), "an off-EDT add must be deferred, not applied immediately");
+		} finally {
+			release.countDown();
+		}
 
 		// Drive the EDT queue until the deferred drain has run.
-		CountDownLatch latch = new CountDownLatch(1);
-		SwingUtilities.invokeAndWait(() -> SwingUtilities.invokeLater(latch::countDown));
-		latch.await(5, TimeUnit.SECONDS);
+		drainEdt();
 
 		assertEquals(1, curve.length());
 		assertEquals(1.0, curve.xData().get(0));
@@ -88,12 +116,16 @@ class CurveBehaviorTest {
 		});
 		Curve curve = holder[0];
 
-		curve.addAll(new double[] { 1.0, 2.0, 3.0 }, new double[] { 4.0, 5.0, 6.0 });
-		assertEquals(0, curve.length());
+		// Hold the EDT so the queued drain cannot run before the assertion.
+		CountDownLatch release = holdEdt();
+		try {
+			curve.addAll(new double[] { 1.0, 2.0, 3.0 }, new double[] { 4.0, 5.0, 6.0 });
+			assertEquals(0, curve.length());
+		} finally {
+			release.countDown();
+		}
 
-		CountDownLatch latch = new CountDownLatch(1);
-		SwingUtilities.invokeAndWait(() -> SwingUtilities.invokeLater(latch::countDown));
-		latch.await(5, TimeUnit.SECONDS);
+		drainEdt();
 
 		assertEquals(3, curve.length());
 		assertEquals(3.0, curve.xData().get(2));
