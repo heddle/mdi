@@ -13,6 +13,12 @@ git tags.
 
 ## [Unreleased]
 
+### Added
+
+- `Environment.setConfigurationDirectory(File)` chooses the directory that
+  holds the layout configuration file (`~/.<application>.xml`). It defaults to
+  the user's home directory, as before; passing `null` restores the default.
+
 ### Removed
 
 - Dropped the unused Apache Batik dependencies (`batik-transcoder` and

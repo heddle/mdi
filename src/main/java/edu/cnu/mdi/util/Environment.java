@@ -48,6 +48,9 @@ public final class Environment {
 	private final String tempDirectory;
 	private final String classPath;
 	private String dataDirectory;
+
+	// where the layout configuration file lives; null means the home directory
+	private File configurationDirectory;
 	
 	// cached frame size for new frames (updated by BaseMDIApplication)
 	private Dimension frameSize;
@@ -357,17 +360,29 @@ public final class Environment {
 	}
 
 	/**
+	 * Sets the directory in which the configuration file is kept. By default it
+	 * is the user's home directory.
+	 *
+	 * @param directory the directory to use, or {@code null} to restore the
+	 *                  default (the user's home directory)
+	 */
+	public void setConfigurationDirectory(File directory) {
+		configurationDirectory = directory;
+	}
+
+	/**
 	 * Returns the configuration file used by the application. The file name is
 	 * derived from the application name with a {@code .xml} extension. On Unix-like
-	 * systems the file is written as a "dot" file in the user's home directory
-	 * (e.g. {@code ~/.myapp.xml}); on Windows the leading dot is omitted.
+	 * systems the file is written as a "dot" file, by default in the user's home
+	 * directory (e.g. {@code ~/.myapp.xml}); on Windows the leading dot is omitted.
+	 * The directory can be changed with {@link #setConfigurationDirectory(File)}.
 	 *
 	 * @return configuration file, or {@code null} if the application name is
 	 *         unknown
 	 */
 	public File getConfigurationFile() {
 	    String aname = getApplicationName();
-	    if ((homeDirectory == null) || (aname == null)) {
+	    if (aname == null || (configurationDirectory == null && homeDirectory == null)) {
 	        return null;
 	    }
 	    aname = aname.trim();
@@ -383,7 +398,9 @@ public final class Environment {
 
 	    final String baseName = windows ? (aname + ".xml") : ("." + aname + ".xml");
 	    try {
-	        return new File(homeDirectory, baseName);
+	        return (configurationDirectory != null)
+	                ? new File(configurationDirectory, baseName)
+	                : new File(homeDirectory, baseName);
 	    } catch (Exception e) {
 	        LOGGER.log(Level.WARNING, "Could not create configuration file.", e);
 	        return null;
