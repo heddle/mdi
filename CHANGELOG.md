@@ -13,6 +13,13 @@ git tags.
 
 ## [Unreleased]
 
+### Removed
+
+- Dropped the unused Apache Batik dependencies (`batik-transcoder` and
+  `batik-codec`). SVG icons are rendered by FlatLaf's `FlatSVGIcon`, which
+  uses JSVG. Applications that relied on Batik arriving transitively through
+  MDI must now declare it themselves.
+
 ## [1.2.3] - 2026-09-15
 
 ### Added

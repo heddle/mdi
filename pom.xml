@@ -68,20 +68,8 @@
 	</properties>
 
 
-	<!-- Project dependencies: JUnit 5, Commons Math, Batik, Gson -->
+	<!-- Project dependencies: JUnit 5, Commons Math, FlatLaf, Gson, Jackson -->
 	<dependencies>
-		<!-- Apache Batik for svg -->
-		<dependency>
-			<groupId>org.apache.xmlgraphics</groupId>
-			<artifactId>batik-transcoder</artifactId>
-			<version>1.19</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.xmlgraphics</groupId>
-			<artifactId>batik-codec</artifactId>
-			<version>1.19</version>
-		</dependency>
-
 		<!-- Apache Commons Math -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
