@@ -18,7 +18,7 @@ import org.apache.commons.math3.util.Pair;
  * peak with a constant baseline:
  *
  * <pre>
- * y(x) = A * (&Gamma;/2)&sup2; / [(x - x&sub0;)&sup2; + (&Gamma;/2)&sup2;] + B
+ * y(x) = A * (&Gamma;/2)&sup2; / [(x - x₀)&sup2; + (&Gamma;/2)&sup2;] + B
  * </pre>
  *
  * <p>Normalisation</p>

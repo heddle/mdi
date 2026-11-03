@@ -533,9 +533,9 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	}
 
 	/**
-	 * Return whether the focus indicator is drawn when selected.
+	 * Set whether the focus indicator is drawn when selected.
 	 *
-	 * @return {@code true} if the focus indicator is drawn
+	 * @param fillFocus {@code true} to draw the focus indicator
 	 */
 	public void setFillFocus(boolean fillFocus) {
 		_fillFocus = fillFocus;

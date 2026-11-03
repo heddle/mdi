@@ -17,7 +17,7 @@ import edu.cnu.mdi.splot.plot.PlotParameters;
  * Example demonstrating the Lorentzian (Breit-Wigner / Cauchy) fit:
  *
  * <pre>
- * y(x) = A·(&Gamma;/2)&sup2; / [(x&minus;x&sub0;)&sup2; + (&Gamma;/2)&sup2;] + B
+ * y(x) = A·(&Gamma;/2)&sup2; / [(x&minus;x₀)&sup2; + (&Gamma;/2)&sup2;] + B
  * </pre>
  *
  * <p>Synthetic data is generated from a known resonance peak, Gaussian noise

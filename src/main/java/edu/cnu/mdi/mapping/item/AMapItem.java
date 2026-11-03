@@ -69,14 +69,13 @@ public abstract class AMapItem extends AItem {
      * via the active {@link edu.cnu.mdi.mapping.projection.IMapProjection} →
      * device pixels via {@link MapContainer#worldToLocal}.</p>
      *
-     * <p>Returns {@code null} if:
+     * Returns {@code null} if:
      * <ul>
      *   <li>{@code container} is not a {@link MapContainer},</li>
      *   <li>the geographic focus is {@code null}, or</li>
      *   <li>the focus projects to a non-finite coordinate (e.g. behind the
      *       globe in an orthographic projection).</li>
      * </ul>
-     * </p>
      *
      * @param container the container rendering this item
      * @return the device-space focus position, or {@code null}

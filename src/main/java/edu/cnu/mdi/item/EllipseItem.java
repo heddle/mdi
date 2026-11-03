@@ -84,17 +84,13 @@ public class EllipseItem extends PolygonItem {
 
 	/**
 	 * Ellipse-specific reshape: update width/height based on which selection handle
-	 * is dragged.
-	 * <p>
-	 * Handles are:
+	 * is dragged. Handles are:
 	 * <ul>
 	 * <li>0 = top</li>
 	 * <li>1 = right</li>
 	 * <li>2 = bottom</li>
 	 * <li>3 = left</li>
 	 * </ul>
-	 * </p>
-	 * <p>
 	 * Important implementation details for stable dragging after rotation:
 	 * <ul>
 	 * <li>Use the <b>start</b> focus as the center for the entire drag to avoid
@@ -102,7 +98,6 @@ public class EllipseItem extends PolygonItem {
 	 * <li>Project into ellipse-local coordinates using the same <b>bearing
 	 * azimuth</b> convention as {@link WorldGraphicsUtils#project}.</li>
 	 * </ul>
-	 * </p>
 	 */
 	@Override
 	protected void reshape() {
