@@ -320,6 +320,37 @@ public class PathBasedItem extends AItem {
 		scale();
 	}
 
+	@Override
+	public ItemState captureState() {
+		return snapshotState(captureExtra());
+	}
+
+	@Override
+	public void restoreState(ItemState state) {
+		applyState(state);
+		restoreExtra(state.extra());
+	}
+
+	/**
+	 * Item-specific state beyond focus, azimuth, path and style, for undo/redo.
+	 * Subclasses with additional geometry or content override this and
+	 * {@link #restoreExtra(Object)}.
+	 *
+	 * @return immutable state with value equality, or {@code null} if there is
+	 *         none
+	 */
+	protected Object captureExtra() {
+		return null;
+	}
+
+	/**
+	 * Restore the state captured by {@link #captureExtra()}.
+	 *
+	 * @param extra the value {@code captureExtra()} returned
+	 */
+	protected void restoreExtra(Object extra) {
+	}
+
 	// called by the modify method to tell the item to update its focus.
 	// (because the item was dragged.) The default method is the path centroid.
 	@Override

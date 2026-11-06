@@ -34,6 +34,10 @@ public class EllipseItem extends PolygonItem {
 	/** Lower bound on width/height to avoid degeneracy. */
 	private static final double MIN_SIZE = 1.0e-9;
 
+	/** Undo/redo state beyond the common geometry: the ellipse's size. */
+	private record Size(double w, double h) {
+	}
+
 	/** Full width in world units. */
 	private double w;
 
@@ -59,6 +63,19 @@ public class EllipseItem extends PolygonItem {
 		setAzimuth(azimuth);
 		setFocus(center == null ? null : (Point2D.Double) center.clone());
 		rebuildPath();
+	}
+
+	@Override
+	protected Object captureExtra() {
+		return new Size(w, h);
+	}
+
+	@Override
+	protected void restoreExtra(Object extra) {
+		if (extra instanceof Size size) {
+			w = size.w();
+			h = size.h();
+		}
 	}
 
 	/**

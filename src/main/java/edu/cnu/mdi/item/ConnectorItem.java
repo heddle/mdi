@@ -33,6 +33,17 @@ import edu.cnu.mdi.graphics.world.WorldGraphicsUtils;
  */
 public class ConnectorItem extends PolylineItem {
 
+    /**
+     * A connector's geometry is derived from its two endpoint items, so it is
+     * never restored from a snapshot.
+     *
+     * @return {@code null}
+     */
+    @Override
+    public ItemState captureState() {
+        return null;
+    }
+
     // -----------------------------------------------------------------------
     // Endpoint items
     // -----------------------------------------------------------------------

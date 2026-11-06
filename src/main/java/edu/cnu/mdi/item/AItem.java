@@ -1436,6 +1436,73 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	}
 
 	// -----------------------------------------------------------------------
+	// Undo/redo state
+	// -----------------------------------------------------------------------
+
+	/**
+	 * Capture the editable state of this item for undo/redo.
+	 *
+	 * <p>The default returns {@code null}, meaning "this item cannot be restored
+	 * from a snapshot", so interactive edits to it are not recorded and it is
+	 * never put back into a state it did not have. A subclass opts in by
+	 * returning {@link #snapshotState(Object)} and overriding
+	 * {@link #restoreState(ItemState)}; it must capture <em>everything</em> a
+	 * gesture or editor can change. Items whose geometry is stored elsewhere
+	 * (for example geographic coordinates) must not opt in until they capture
+	 * that storage.</p>
+	 *
+	 * @return a snapshot, or {@code null} if this item does not support undo of
+	 *         its edits
+	 */
+	public ItemState captureState() {
+		return null;
+	}
+
+	/**
+	 * Put this item back into a state captured by {@link #captureState()}.
+	 * Only called with snapshots this item produced.
+	 *
+	 * @param state the state to restore
+	 * @throws UnsupportedOperationException if this item does not support
+	 *                                       snapshots
+	 */
+	public void restoreState(ItemState state) {
+		throw new UnsupportedOperationException(getClass().getSimpleName() + " does not support state restore.");
+	}
+
+	/**
+	 * Snapshot the state common to all items (focus, azimuth, path, line and
+	 * style) plus the given item-specific extra. For use by subclasses
+	 * implementing {@link #captureState()}.
+	 *
+	 * @param extra immutable item-specific state with value equality, or
+	 *              {@code null}
+	 * @return the snapshot
+	 */
+	protected final ItemState snapshotState(Object extra) {
+		return new ItemState(_focus, _azimuth, _path, _line, _style, extra);
+	}
+
+	/**
+	 * Apply the common part of a snapshot (focus, azimuth, path, line and style)
+	 * and mark the item dirty. Item-specific extras are the subclass's
+	 * responsibility. For use by subclasses implementing
+	 * {@link #restoreState(ItemState)}.
+	 *
+	 * @param state the snapshot to apply
+	 */
+	protected final void applyState(ItemState state) {
+		setFocus(state.focus());
+		setAzimuth(state.azimuth());
+		_path = state.path();
+		_line = state.line();
+		if (state.style() != null && !state.hasStyle(_style)) {
+			_style = state.style();
+		}
+		setDirty(true);
+	}
+
+	// -----------------------------------------------------------------------
 	// Lifecycle
 	// -----------------------------------------------------------------------
 

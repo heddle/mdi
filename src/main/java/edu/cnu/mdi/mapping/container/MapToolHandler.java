@@ -93,6 +93,7 @@ public class MapToolHandler extends BaseToolHandler {
         item.setDisplayName("GC line");
         item.getStyleSafe().setLineColor(Color.red);
         item.getStyleSafe().setLineWidth(2.0f);
+        recordCreated("Line", item);
 
         mapContainer.setDirty(true);
         mapContainer.refresh();
@@ -118,6 +119,7 @@ public class MapToolHandler extends BaseToolHandler {
         MapPolylineItem item = new MapPolylineItem(
                 mapContainer.getAnnotationLayer(), latLons);
         defaultConfigureItem(item);
+        recordCreated("Polyline", item);
 
         mapContainer.setDirty(true);
         mapContainer.refresh();
@@ -143,6 +145,7 @@ public class MapToolHandler extends BaseToolHandler {
         MapPolygonItem item = new MapPolygonItem(
                 mapContainer.getAnnotationLayer(), latLons);
         defaultConfigureItem(item);
+        recordCreated("Polygon", item);
 
         mapContainer.setDirty(true);
         mapContainer.refresh();
@@ -186,6 +189,7 @@ public class MapToolHandler extends BaseToolHandler {
         item.setRotatable(false);
 
         addTextEditMenuItem(item);
+        recordCreated("Text", item);
 
         mapContainer.setDirty(true);
         mapContainer.refresh();

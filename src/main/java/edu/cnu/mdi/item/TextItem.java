@@ -9,6 +9,7 @@ import java.awt.Rectangle;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.List;
 
 import javax.swing.SwingConstants;
 
@@ -51,6 +52,10 @@ public class TextItem extends RectangleItem implements ITextEditable {
 	private static final float LINESIZE = 1.0f;
 
 	private static final Font _defaultFont = Fonts.plainFontDelta(0);
+
+	/** Undo/redo state beyond the common geometry and style: the text and how it is set. */
+	private record Content(List<String> lines, Font font, int alignment) {
+	}
 
 	private Font     _font      = _defaultFont;
 	private String[] _lines;
@@ -316,6 +321,20 @@ public class TextItem extends RectangleItem implements ITextEditable {
 	// -----------------------------------------------------------------------
 	// Edit dialog
 	// -----------------------------------------------------------------------
+
+	@Override
+	protected Object captureExtra() {
+		return new Content(List.of(_lines), _font, alignment);
+	}
+
+	@Override
+	protected void restoreExtra(Object extra) {
+		if (extra instanceof Content content) {
+			_lines = content.lines().toArray(String[]::new);
+			_font = content.font();
+			alignment = content.alignment();
+		}
+	}
 
 	/** Open the text-edit dialog and rebuild the path at the current azimuth. */
 	public void edit() {

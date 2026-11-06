@@ -209,6 +209,16 @@ public class PointItem extends AItem {
 		_modification.setStartFocusPoint(getFocusPoint(_modification.getContainer()));
 	}
 
+	@Override
+	public ItemState captureState() {
+		return snapshotState(null);
+	}
+
+	@Override
+	public void restoreState(ItemState state) {
+		applyState(state);
+	}
+
 	/**
 	 * A modification such as a drag, resize or rotate is continuing.
 	 */

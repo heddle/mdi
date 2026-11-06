@@ -24,10 +24,15 @@ import java.util.Objects;
 
 import javax.swing.JComponent;
 import javax.swing.SwingUtilities;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEdit;
 
 import edu.cnu.mdi.feedback.FeedbackControl;
 import edu.cnu.mdi.feedback.FeedbackPane;
 import edu.cnu.mdi.graphics.GraphicsUtils;
+import edu.cnu.mdi.graphics.connection.ConnectionManager;
 import edu.cnu.mdi.graphics.drawable.IDrawable;
 import edu.cnu.mdi.graphics.toolbar.AToolBar;
 import edu.cnu.mdi.graphics.toolbar.BaseToolBar;
@@ -37,10 +42,12 @@ import edu.cnu.mdi.hover.HoverInfoWindow;
 import edu.cnu.mdi.hover.HoverListener;
 import edu.cnu.mdi.hover.HoverManager;
 import edu.cnu.mdi.item.AItem;
+import edu.cnu.mdi.item.ConnectorItem;
 import edu.cnu.mdi.item.ItemChangeListener;
 import edu.cnu.mdi.item.ItemChangeType;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.log.Log;
+import edu.cnu.mdi.undo.ItemEdits;
 import edu.cnu.mdi.view.BaseView;
 
 /**
@@ -165,6 +172,26 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
     /** Tool handler for this container. */
     protected BaseToolHandler toolHandler;
 
+    /** The most edits kept in the undo history; older ones are discarded. */
+    public static final int UNDO_LIMIT = 100;
+
+    /** History of undoable edits to this container's items. */
+    private final UndoManager _undoManager = new UndoManager();
+
+    /** True while the history itself is changing items (undo, redo, undoable delete). */
+    private boolean _historyBusy;
+
+    /**
+     * Clears the undo history when an item is deleted other than by the history
+     * itself. A hard delete disposes the item, so any recorded edit that
+     * mentions it could no longer be undone safely.
+     */
+    private final ItemChangeListener _historyWatcher = (layer, item, type) -> {
+        if (type == ItemChangeType.DELETED && !_historyBusy) {
+            _undoManager.discardAllEdits();
+        }
+    };
+
     /**
      * Construct a container with the given initial world system.
      *
@@ -173,6 +200,7 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
      */
     public BaseContainer(Rectangle2D.Double worldSystem) {
 
+        _undoManager.setLimit(UNDO_LIMIT);
         _feedbackControl = new FeedbackControl(this);
 
         resetWorldSystem(worldSystem);
@@ -445,6 +473,8 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 					+ "and must not be passed to addLayer(). Call ignored.");
 			return;
 		}
+
+		layer.addItemChangeListener(_historyWatcher);
 
 		_layers.remove(layer); // deduplicate: remove if already present, then re-add at top
 		_layers.add(layer);
@@ -787,6 +817,156 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 			}
 			layer.deleteSelectedItems(this);
 		}
+	}
+
+	// ------------------------------------------------------------------
+	// Undo / redo
+	// ------------------------------------------------------------------
+
+	/**
+	 * Returns the history of undoable edits (moves, resizes, rotations, style and
+	 * text edits, creations and deletions made through the tool handler). Most
+	 * callers should use {@link #undo()}, {@link #redo()} and
+	 * {@link #recordEdit(UndoableEdit)} instead of driving it directly.
+	 *
+	 * @return the undo manager; never {@code null}
+	 */
+	public UndoManager getUndoManager() {
+		return _undoManager;
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public boolean canUndo() {
+		return _undoManager.canUndo();
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public boolean canRedo() {
+		return _undoManager.canRedo();
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public String getUndoPresentationName() {
+		return _undoManager.getUndoPresentationName();
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public String getRedoPresentationName() {
+		return _undoManager.getRedoPresentationName();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Must be called on the event thread.
+	 * </p>
+	 */
+	@Override
+	public boolean undo() {
+		if (!_undoManager.canUndo()) {
+			return false;
+		}
+		_historyBusy = true;
+		try {
+			_undoManager.undo();
+		} catch (CannotUndoException e) {
+			return false;
+		} finally {
+			_historyBusy = false;
+		}
+		setToolBarState();
+		return true;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * <p>
+	 * Must be called on the event thread.
+	 * </p>
+	 */
+	@Override
+	public boolean redo() {
+		if (!_undoManager.canRedo()) {
+			return false;
+		}
+		_historyBusy = true;
+		try {
+			_undoManager.redo();
+		} catch (CannotRedoException e) {
+			return false;
+		} finally {
+			_historyBusy = false;
+		}
+		setToolBarState();
+		return true;
+	}
+
+	/**
+	 * Adds an edit that has already been carried out to the undo history.
+	 * Ignored while the history itself is undoing or redoing, and for
+	 * {@code null}. Recording a new edit discards any edits that could have been
+	 * redone.
+	 *
+	 * @param edit the completed edit; may be {@code null}
+	 */
+	public void recordEdit(UndoableEdit edit) {
+		if (edit != null && !_historyBusy) {
+			_undoManager.addEdit(edit);
+		}
+	}
+
+	/** Forgets all undo and redo history. */
+	public void clearUndoHistory() {
+		_undoManager.discardAllEdits();
+	}
+
+	/**
+	 * Deletes the selected items like {@link #deleteSelectedItems()}, but
+	 * records the deletion so it can be undone. The deleted items are kept, not
+	 * disposed, until the edit leaves the history.
+	 * <p>
+	 * Connectors, and items with connectors attached, are the exception: the
+	 * connection manager removes a connector for good when its endpoint goes, so
+	 * if any item to be deleted is connected the whole deletion is done the
+	 * ordinary way, which also clears the undo history.
+	 * </p>
+	 */
+	public void deleteSelectedItemsUndoably() {
+		List<AItem> doomed = new ArrayList<>();
+		for (Layer layer : getAllLayers()) {
+			if (!layer.isVisible() || layer.isLocked()) {
+				continue;
+			}
+			for (AItem item : layer.getAllItems()) {
+				if (item.isSelected() && item.isDeletable()) {
+					doomed.add(item);
+				}
+			}
+		}
+		if (doomed.isEmpty()) {
+			return;
+		}
+
+		for (AItem item : doomed) {
+			if (item instanceof ConnectorItem || !ConnectionManager.getInstance().getConnectedItems(item).isEmpty()) {
+				deleteSelectedItems();
+				return;
+			}
+		}
+
+		UndoableEdit edit;
+		_historyBusy = true;
+		try {
+			edit = ItemEdits.delete(this, doomed);
+		} finally {
+			_historyBusy = false;
+		}
+		recordEdit(edit);
+		setToolBarState();
 	}
 
 	/**

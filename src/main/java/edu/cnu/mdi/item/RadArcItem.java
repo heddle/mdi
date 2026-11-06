@@ -9,6 +9,10 @@ import edu.cnu.mdi.util.Point2DSupport;
 
 public class RadArcItem extends PolygonItem {
 
+	/** Undo/redo state beyond the common geometry: the arc's defining points and angle. */
+	private record Arc(Point2D.Double center, Point2D.Double leg, double arcAngle) {
+	}
+
 	private Point2D.Double _center;
 	private Point2D.Double _leg; // endpoint of first radius leg (defines radius + direction)
 
@@ -27,6 +31,20 @@ public class RadArcItem extends PolygonItem {
 		_path = WorldGraphicsUtils.worldPolygonToPath(WorldGraphicsUtils.getRadArcPoints(_center, _leg, _arcAngle));
 		setFocus(_center);
 		setAzimuth(Point2DSupport.azimuth(_center, _leg) - _arcAngle / 2.0);
+	}
+
+	@Override
+	protected Object captureExtra() {
+		return new Arc((Point2D.Double) _center.clone(), (Point2D.Double) _leg.clone(), _arcAngle);
+	}
+
+	@Override
+	protected void restoreExtra(Object extra) {
+		if (extra instanceof Arc arc) {
+			_center = (Point2D.Double) arc.center().clone();
+			_leg = (Point2D.Double) arc.leg().clone();
+			_arcAngle = arc.arcAngle();
+		}
 	}
 
 	@Override

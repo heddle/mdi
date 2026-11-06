@@ -55,6 +55,16 @@ public class LineItem extends AItem {
 	}
 
 
+	@Override
+	public ItemState captureState() {
+		return snapshotState(null);
+	}
+
+	@Override
+	public void restoreState(ItemState state) {
+		applyState(state);
+	}
+
 	/**
 	 * Check whether the (rendered) item contains the given screen point.
 	 *

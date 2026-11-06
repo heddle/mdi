@@ -15,6 +15,27 @@ git tags.
 
 ### Added
 
+- **Undo and redo for item editing** in `BaseContainer`-based views. Cmd/Ctrl+Z
+  undoes and Cmd/Ctrl+Shift+Z (or Ctrl+Y) redoes, and the view's right-click
+  menu gains "Undo"/"Redo" entries labelled with the edit (for example "Undo
+  Move"). Moving, resizing and rotating items (a group drag is one step),
+  restyling them, editing text, creating items with the creation tools, and
+  deleting items are all undoable, up to `BaseContainer.UNDO_LIMIT` (100) steps.
+  A deleted item is kept, not disposed, until its history entry expires, so
+  undoing a deletion restores the very same object. API: `IContainer.canUndo()`,
+  `canRedo()`, `undo()`, `redo()` and the matching presentation names (default
+  methods, so existing implementations are unaffected);
+  `BaseContainer.getUndoManager()`, `recordEdit(UndoableEdit)`,
+  `clearUndoHistory()` and `deleteSelectedItemsUndoably()`;
+  `AItem.captureState()`/`restoreState(ItemState)`, with which an item opts in
+  to having its edits undone (the default is not to, so an item type is never
+  restored incorrectly); `Layer.detach(AItem)`/`reattach(AItem, int)`; and
+  `BaseToolHandler.recordCreated(String, AItem)` for tool handlers that create
+  their own item types. Items that have not opted in, including map items, are
+  not yet undoable when moved, resized or rotated, though creating and deleting
+  them is. Deleting an item that has connectors, or deleting a connector, is done
+  as before and clears the history, as does any deletion made outside it (for
+  example `Layer.remove`), because those dispose the item.
 - **CSV import and export for sPlot** (`CsvPlotIO`). `PlotView`'s File menu has
   "Import Data (CSV)..." and "Export Data (CSV)...", and a `.csv` file dropped on
   a `PlotView` is imported as a new plot. CSV carries data only: curve names,

@@ -22,7 +22,9 @@ import edu.cnu.mdi.graphics.toolbar.GestureContext;
 import edu.cnu.mdi.graphics.toolbar.IToolHandler;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.ItemModification;
+import edu.cnu.mdi.item.ItemState;
 import edu.cnu.mdi.item.TextItem;
+import edu.cnu.mdi.undo.ItemEdits;
 import edu.cnu.mdi.util.PrintUtils;
 import edu.cnu.mdi.util.TakePicture;
 import edu.cnu.mdi.view.BaseView;
@@ -59,6 +61,11 @@ public class BaseToolHandler implements IToolHandler {
 
 	// cached press point for the current drag gesture
 	protected Point dragPressPoint;
+
+	// state of the items in the current drag/resize/rotate gesture before it
+	// changed anything, and the name its undo entry will have
+	private List<ItemState> gestureBefore;
+	private String gestureName;
 
 	/**
 	 * Constructor.
@@ -155,6 +162,7 @@ public class BaseToolHandler implements IToolHandler {
 		modifyItem = null;
 		modifyItems.clear();
 		modifying = false;
+		gestureBefore = null;
 
 		// Cache a defensive copy (Point is mutable)
 		dragPressPoint = (gc.getPressPoint() == null) ? null : new Point(gc.getPressPoint());
@@ -199,6 +207,11 @@ public class BaseToolHandler implements IToolHandler {
 					modifyItems.add(selectedItem);
 				}
 			}
+
+			// Remember how the items were before the gesture moves them, so
+			// the whole gesture becomes one undo step.
+			gestureBefore = ItemEdits.capture(modifyItems);
+			gestureName = editName(primaryModification);
 		}
 
 		for (AItem itemBeingModified : modifyItems) {
@@ -208,6 +221,18 @@ public class BaseToolHandler implements IToolHandler {
 				itemBeingModified.modify();
 			}
 		}
+	}
+
+	/** The undo-menu name for a gesture, from what the primary item is doing. */
+	private static String editName(ItemModification modification) {
+		if (modification == null) {
+			return "Edit";
+		}
+		return switch (modification.getType()) {
+		case DRAG -> "Move";
+		case RESIZE -> "Resize";
+		case ROTATE -> "Rotate";
+		};
 	}
 
 	/** Starts one item modification for the current pointer gesture. */
@@ -239,6 +264,12 @@ public class BaseToolHandler implements IToolHandler {
 	            item.stopModification();
 	        }
 
+	        // A rejected or zero-length gesture leaves the items as they were,
+	        // which changedStates() leaves out, so only real changes are recorded.
+	        if (gestureBefore != null) {
+	            container.recordEdit(ItemEdits.changedStates(gestureName, container, modifyItems, gestureBefore));
+	        }
+
 	        container.setDirty(true);
 	        container.refresh();
 	    }
@@ -247,6 +278,7 @@ public class BaseToolHandler implements IToolHandler {
 	    modifyItems.clear();
 	    modifying = false;
 	    dragPressPoint = null;
+	    gestureBefore = null;
 	}
 	
 	@Override
@@ -377,7 +409,9 @@ public class BaseToolHandler implements IToolHandler {
 
 		if (editableItems.size() == 1 && editableItems.get(0) instanceof TextItem) {
 			TextItem item = (TextItem) editableItems.get(0);
+			List<ItemState> before = ItemEdits.capture(editableItems);
 			item.edit();
+			container.recordEdit(ItemEdits.changedStates("Edit Text", container, editableItems, before));
 			return;
 		}
 
@@ -388,17 +422,19 @@ public class BaseToolHandler implements IToolHandler {
 			return;
 		}
 
+		List<ItemState> before = ItemEdits.capture(editableItems);
 		for (AItem item : editableItems) {
 			item.setStyle(edited.copy()); // avoid shared mutable style objects
 			item.setDirty(true);
 		}
+		container.recordEdit(ItemEdits.changedStates("Style", container, editableItems, before));
 
 		container.refresh();
 	}
 
 	@Override
 	public void delete(GestureContext gc) {
-		container.deleteSelectedItems();
+		container.deleteSelectedItemsUndoably();
 		gc.getToolBar().resetDefaultToggleButton();
 		container.refresh();
 	}
@@ -427,35 +463,35 @@ public class BaseToolHandler implements IToolHandler {
 
 	@Override
 	public void createRectangle(GestureContext gc, Rectangle bounds) {
-		CreationSupport.createRectangleItem(container.getAnnotationLayer(), bounds);
+		recordCreated("Rectangle", CreationSupport.createRectangleItem(container.getAnnotationLayer(), bounds));
 		container.setDirty(true);
 		container.refresh();
 	}
 
 	@Override
 	public void createEllipse(GestureContext gc, Rectangle bounds) {
-		CreationSupport.createEllipseItem(container.getAnnotationLayer(), bounds);
+		recordCreated("Ellipse", CreationSupport.createEllipseItem(container.getAnnotationLayer(), bounds));
 		container.setDirty(true);
 		container.refresh();
 	}
 
 	@Override
 	public void createPolygon(GestureContext gc, Point[] vertices) {
-		CreationSupport.createPolygonItem(container.getAnnotationLayer(), vertices);
+		recordCreated("Polygon", CreationSupport.createPolygonItem(container.getAnnotationLayer(), vertices));
 		container.setDirty(true);
 		container.refresh();
 	}
 
 	@Override
 	public void createPolyline(GestureContext gc, Point[] vertices) {
-		CreationSupport.createPolylineItem(container.getAnnotationLayer(), vertices);
+		recordCreated("Polyline", CreationSupport.createPolylineItem(container.getAnnotationLayer(), vertices));
 		container.setDirty(true);
 		container.refresh();
 	}
 
 	@Override
 	public void createLine(GestureContext gc, Point start, Point end) {
-		CreationSupport.createLineItem(container.getAnnotationLayer(), start, end);
+		recordCreated("Line", CreationSupport.createLineItem(container.getAnnotationLayer(), start, end));
 		container.setDirty(true);
 		container.refresh();
 	}
@@ -466,18 +502,33 @@ public class BaseToolHandler implements IToolHandler {
 	        return;
 	    }
 
-	    CreationSupport.createRadArcItem(
+	    recordCreated("Arc", CreationSupport.createRadArcItem(
 	            container.getAnnotationLayer(),
-	            pp[0], pp[1], pp[2]);
+	            pp[0], pp[1], pp[2]));
 
 	    container.setDirty(true);
 	    container.refresh();
 	}
 	@Override
 	public void createTextItem(GestureContext gc, Point location) {
-		CreationSupport.createTextItem(container.getAnnotationLayer(), location);
+		recordCreated("Text", CreationSupport.createTextItem(container.getAnnotationLayer(), location));
 		container.setDirty(true);
 		container.refresh();
+	}
+
+	/**
+	 * Records the creation of an item by one of the creation tools so it can be
+	 * undone. Subclasses that create their own item types call this after the
+	 * item has been created and configured.
+	 *
+	 * @param what a short name for the kind of item, such as "Line"; shown as
+	 *             "Undo Create Line"
+	 * @param item the new item; {@code null} (a cancelled creation) is ignored
+	 */
+	protected final void recordCreated(String what, AItem item) {
+		if (item != null) {
+			container.recordEdit(ItemEdits.created("Create " + what, container, item));
+		}
 	}
 
 	@Override

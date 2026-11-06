@@ -5,7 +5,10 @@ import java.util.Objects;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 
+import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.view.BaseView;
 
 @SuppressWarnings("serial")
@@ -24,6 +27,53 @@ public class ViewPopupMenu extends JPopupMenu {
         // base view owner
 
     }
+
+	/**
+	 * Puts "Undo" and "Redo" at the top of the menu, labelled with the edit they
+	 * would act on (for example "Undo Move") and enabled only when there is
+	 * something to undo or redo. The labels refresh each time the menu opens.
+	 *
+	 * @param container the container whose history the items drive; must not be
+	 *                  {@code null}
+	 */
+	public void addUndoRedo(IContainer container) {
+		Objects.requireNonNull(container, "container");
+
+		JMenuItem undo = new JMenuItem("Undo");
+		undo.addActionListener(e -> {
+			if (container.undo()) {
+				container.refresh();
+			}
+		});
+		JMenuItem redo = new JMenuItem("Redo");
+		redo.addActionListener(e -> {
+			if (container.redo()) {
+				container.refresh();
+			}
+		});
+
+		insert(undo, 0);
+		insert(redo, 1);
+		insert(new JPopupMenu.Separator(), 2);
+
+		addPopupMenuListener(new PopupMenuListener() {
+			@Override
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+				undo.setText(container.getUndoPresentationName());
+				undo.setEnabled(container.canUndo());
+				redo.setText(container.getRedoPresentationName());
+				redo.setEnabled(container.canRedo());
+			}
+
+			@Override
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+			}
+
+			@Override
+			public void popupMenuCanceled(PopupMenuEvent e) {
+			}
+		});
+	}
 
 	/**
 	 * Adds a view-specific zoom destination to the {@code Quick Zoom} submenu.

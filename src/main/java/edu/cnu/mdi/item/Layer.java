@@ -168,6 +168,59 @@ public class Layer {
     }
 
     /**
+     * Take an item out of this layer <em>without</em> disposing it, so that it can
+     * be put back unchanged with {@link #reattach(AItem, int)}. This is what
+     * undoable deletion uses.
+     * <p>
+     * Unlike {@link #remove(AItem)}, {@link AItem#prepareForRemoval()} is not
+     * called, so the item keeps its geometry, style and layer. The item is
+     * unregistered from the container's feedback control and a
+     * {@link ItemChangeType#DELETED} event is fired. Whoever detaches an item
+     * owns it: it must eventually be reattached or disposed with
+     * {@link AItem#prepareForRemoval()}.
+     * </p>
+     *
+     * @param item the item to detach; if {@code null} or not on this layer the
+     *             call is a no-op
+     * @return the item's position in the layer's draw order, or {@code -1} if it
+     *         was not on this layer
+     */
+    public int detach(AItem item) {
+        if (item == null) return -1;
+        int index;
+        synchronized (this) {
+            index = items.indexOf(item);
+            if (index >= 0) {
+                items.remove(index);
+            }
+        }
+        if (index < 0) return -1;
+        container.getFeedbackControl().removeFeedbackProvider(item);
+        notifyItemChangeListeners(item, ItemChangeType.DELETED);
+        return index;
+    }
+
+    /**
+     * Put an item taken out by {@link #detach(AItem)} back into this layer at the
+     * given position in the draw order, and notify listeners.
+     *
+     * @param item  the item to restore; must still belong to this layer
+     * @param index the position to insert at; clamped to the valid range
+     * @return {@code true} if the item was reinserted; {@code false} if it is
+     *         {@code null}, belongs to another layer, or is already present
+     */
+    public boolean reattach(AItem item, int index) {
+        if (item == null || item.getLayer() != this) return false;
+        synchronized (this) {
+            if (items.contains(item)) return false;
+            items.add(Math.max(0, Math.min(index, items.size())), item);
+        }
+        container.getFeedbackControl().addFeedbackProvider(item);
+        notifyItemChangeListeners(item, ItemChangeType.ADDED);
+        return true;
+    }
+
+    /**
      * Delete all deletable items from this layer, properly detaching each from
      * container-managed services (feedback control, etc.).
      * <p>

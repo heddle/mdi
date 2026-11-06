@@ -397,6 +397,63 @@ public interface IContainer {
 	public double approximateZoomFactor();
 	
 	/**
+	 * Whether there is an edit that {@link #undo()} would reverse. Containers
+	 * without undo support never have one.
+	 *
+	 * @return {@code true} if an edit can be undone
+	 */
+	default boolean canUndo() {
+		return false;
+	}
+
+	/**
+	 * Whether there is an undone edit that {@link #redo()} would reapply.
+	 *
+	 * @return {@code true} if an edit can be redone
+	 */
+	default boolean canRedo() {
+		return false;
+	}
+
+	/**
+	 * Reverse the most recent edit, if any.
+	 *
+	 * @return {@code true} if an edit was undone
+	 */
+	default boolean undo() {
+		return false;
+	}
+
+	/**
+	 * Reapply the most recently undone edit, if any.
+	 *
+	 * @return {@code true} if an edit was redone
+	 */
+	default boolean redo() {
+		return false;
+	}
+
+	/**
+	 * The label for an "Undo" menu item, such as "Undo Move", or just "Undo" when
+	 * there is nothing to undo.
+	 *
+	 * @return the undo label
+	 */
+	default String getUndoPresentationName() {
+		return "Undo";
+	}
+
+	/**
+	 * The label for a "Redo" menu item, such as "Redo Move", or just "Redo" when
+	 * there is nothing to redo.
+	 *
+	 * @return the redo label
+	 */
+	default String getRedoPresentationName() {
+		return "Redo";
+	}
+
+	/**
 	 * Prepare for exiting the application. This is called from the main frame when
 	 * the user tries to exit. It gives the container a chance to do things like
 	 * prompt to save unsaved work or dispose of resources.

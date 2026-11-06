@@ -267,6 +267,7 @@ public class BaseView extends JInternalFrame
             ViewContentBuilder.build(this, cfg);
             installViewPopupTrigger();
             ViewKeyBindings.installDeleteBinding(this);
+            ViewKeyBindings.installUndoBindings(this);
             pack();
         } else {
             FrameConfigurer.applyNoContainerBounds(this, cfg);
@@ -278,6 +279,7 @@ public class BaseView extends JInternalFrame
         }
 
         if (this.container instanceof BaseContainer) {
+            getViewPopupMenu().addUndoRedo(this.container);
             getViewPopupMenu().add(LayerInspectorDialog.createMenuItem(this));
         }
 
@@ -1709,6 +1711,46 @@ public class BaseView extends JInternalFrame
             am.put("mdi.delete", deleteAction);
             im.put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), "mdi.delete");
             im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE,     0), "mdi.delete");
+        }
+
+        /**
+         * Install undo and redo bindings: Cmd/Ctrl+Z undoes, Cmd/Ctrl+Shift+Z and
+         * Ctrl+Y redo. The command key is the platform's menu shortcut key.
+         *
+         * @param view the view on which to install the bindings
+         */
+        static void installUndoBindings(BaseView view) {
+            JComponent target = view.getRootPane();
+            InputMap  im = target.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+            ActionMap am = target.getActionMap();
+
+            int menuMask;
+            try {
+                menuMask = java.awt.Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+            } catch (java.awt.HeadlessException e) {
+                menuMask = java.awt.event.InputEvent.CTRL_DOWN_MASK;
+            }
+
+            am.put("mdi.undo", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (view.container != null && view.container.undo()) {
+                        view.container.refresh();
+                    }
+                }
+            });
+            am.put("mdi.redo", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (view.container != null && view.container.redo()) {
+                        view.container.refresh();
+                    }
+                }
+            });
+
+            im.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, menuMask), "mdi.undo");
+            im.put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, menuMask | java.awt.event.InputEvent.SHIFT_DOWN_MASK), "mdi.redo");
+            im.put(KeyStroke.getKeyStroke(KeyEvent.VK_Y, java.awt.event.InputEvent.CTRL_DOWN_MASK), "mdi.redo");
         }
     }
 
