@@ -31,9 +31,11 @@ git tags.
   to having its edits undone (the default is not to, so an item type is never
   restored incorrectly); `Layer.detach(AItem)`/`reattach(AItem, int)`; and
   `BaseToolHandler.recordCreated(String, AItem)` for tool handlers that create
-  their own item types. Items that have not opted in, including map items, are
-  not yet undoable when moved, resized or rotated, though creating and deleting
-  them is. Deleting an item that has connectors, or deleting a connector, is done
+  their own item types. Map items are undoable too: lines, polylines, polygons,
+  points, military symbols and text labels can be moved, resized and rotated
+  (and have their style, text, location edits and placement undone) like any
+  other item. Items of a custom class that has not opted in are not yet undoable
+  when moved, resized or rotated, though creating and deleting them is. Deleting an item that has connectors, or deleting a connector, is done
   as before and clears the history, as does any deletion made outside it (for
   example `Layer.remove`), because those dispose the item.
 - **CSV import and export for sPlot** (`CsvPlotIO`). `PlotView`'s File menu has

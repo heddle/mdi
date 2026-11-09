@@ -14,6 +14,7 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.graphics.SymbolDraw;
 import edu.cnu.mdi.graphics.style.SymbolType;
 import edu.cnu.mdi.item.ItemModification;
+import edu.cnu.mdi.item.ItemState;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.mapping.container.MapContainer;
 
@@ -359,6 +360,50 @@ public class MapPointItem extends AMapItem {
      * @param yAlignment vertical alignment constant from {@link SwingUtilities}
      */
     public void setAlignmentV(int yAlignment) { _yAlignment = yAlignment; }
+
+    // -------------------------------------------------------------------------
+    // Undo / redo
+    // -------------------------------------------------------------------------
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The location is the focus, which the snapshot already holds; the extra
+     * state is the icon alignment.</p>
+     */
+    @Override
+    public ItemState captureState() {
+        return snapshotState(captureExtra());
+    }
+
+    @Override
+    public void restoreState(ItemState state) {
+        applyState(state);
+        restoreExtra(state.extra());
+    }
+
+    /**
+     * State beyond the location, for undo/redo. Subclasses that add state
+     * override this and {@link #restoreExtra(Object)}, wrapping this value.
+     *
+     * @return immutable state with value equality
+     */
+    protected Object captureExtra() {
+        return List.of(_xAlignment, _yAlignment);
+    }
+
+    /**
+     * Restores the state captured by {@link #captureExtra()}.
+     *
+     * @param extra the value {@code captureExtra()} returned
+     */
+    protected void restoreExtra(Object extra) {
+        if (extra instanceof List<?> alignment && alignment.size() == 2
+                && alignment.get(0) instanceof Integer x && alignment.get(1) instanceof Integer y) {
+            _xAlignment = x;
+            _yAlignment = y;
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Private alignment helpers

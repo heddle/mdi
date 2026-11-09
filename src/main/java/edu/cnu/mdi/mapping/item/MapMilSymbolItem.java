@@ -13,12 +13,15 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
+import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.item.ItemState;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.mapping.milsym.MilSymbolDescriptor;
 import edu.cnu.mdi.mapping.util.GeoUtils;
 import edu.cnu.mdi.mapping.util.LatLongEditorDialog;
 import edu.cnu.mdi.mapping.util.UTMCoordinate;
+import edu.cnu.mdi.undo.ItemEdits;
 
 /**
  * Map-native military symbol item.
@@ -105,6 +108,20 @@ public class MapMilSymbolItem extends MapPointItem {
      */
     public int getDrawSize() {
         return drawSize;
+    }
+
+    /** {@inheritDoc} Adds the draw size to the point item's state. */
+    @Override
+    protected Object captureExtra() {
+        return List.of(super.captureExtra(), drawSize);
+    }
+
+    @Override
+    protected void restoreExtra(Object extra) {
+        if (extra instanceof List<?> parts && parts.size() == 2 && parts.get(1) instanceof Integer size) {
+            super.restoreExtra(parts.get(0));
+            drawSize = size;
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -217,9 +234,13 @@ public class MapMilSymbolItem extends MapPointItem {
             return;  // user cancelled — leave item unchanged
         }
 
+        ItemState before = captureState();
         setFocus(result);
         setDirty(true);
 
+        if (container instanceof BaseContainer bc) {
+            bc.recordEdit(ItemEdits.changedStates("Move", bc, List.of(this), java.util.Collections.singletonList(before)));
+        }
         if (container != null) {
             container.refresh();
         }

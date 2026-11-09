@@ -129,18 +129,20 @@ class MapUndoTest {
 	}
 
 	@Test
-	void mapItemGeometryIsNotSnapshottedSoItsEditsAreNotRecorded() {
+	void mapItemGeometryIsSnapshottedSoItsEditsAreRecorded() {
 		MapContainer c = newContainer();
 		onEdt(() -> {
 			MapToolHandler handler = new MapToolHandler(c);
 			handler.createLine(null, new Point(100, 100), new Point(400, 200));
 			AItem line = c.getAnnotationLayer().getAllItems().get(0);
 
-			assertNull(line.captureState());
+			assertNotNull(line.captureState());
 			var items = List.of(line);
 			var before = ItemEdits.capture(items);
-			assertNull(before.get(0));
-			assertNull(ItemEdits.changedStates("Move", c, items, before));
+			assertNull(ItemEdits.changedStates("Move", c, items, before), "nothing changed yet");
+
+			line.translateWorld(0.1, 0.05);
+			assertNotNull(ItemEdits.changedStates("Move", c, items, before));
 		});
 	}
 }

@@ -16,6 +16,7 @@ import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.dialog.TextEditDialog;
 import edu.cnu.mdi.item.ITextEditable;
 import edu.cnu.mdi.item.ItemModification;
+import edu.cnu.mdi.item.ItemState;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.item.ResizePolicy;
 import edu.cnu.mdi.mapping.container.MapContainer;
@@ -360,6 +361,32 @@ public class MapTextItem extends AMapItem implements ITextEditable {
      */
     public String getText() {
         return (_lines == null || _lines.length == 0) ? "" : String.join("\n", _lines);
+    }
+
+    /** The label's content, for undo/redo. */
+    private record Content(List<String> lines, Font font, int alignment) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>The anchor is the focus, which the snapshot already holds; the extra
+     * state is the text, font and alignment.</p>
+     */
+    @Override
+    public ItemState captureState() {
+        List<String> lines = (_lines == null) ? List.of() : List.of(_lines);
+        return snapshotState(new Content(lines, _font, _alignment));
+    }
+
+    @Override
+    public void restoreState(ItemState state) {
+        applyState(state);
+        if (state.extra() instanceof Content content) {
+            _lines = content.lines().toArray(String[]::new);
+            _font = content.font();
+            _alignment = content.alignment();
+        }
     }
 
     /**

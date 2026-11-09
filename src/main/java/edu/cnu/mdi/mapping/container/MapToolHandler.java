@@ -19,6 +19,7 @@ import edu.cnu.mdi.mapping.item.MapPolygonItem;
 import edu.cnu.mdi.mapping.item.MapPolylineItem;
 import edu.cnu.mdi.mapping.item.MapTextItem;
 import edu.cnu.mdi.swing.WindowPlacement;
+import edu.cnu.mdi.undo.ItemEdits;
 import edu.cnu.mdi.ui.fonts.Fonts;
 import edu.cnu.mdi.util.UnicodeUtils;
 
@@ -243,8 +244,11 @@ public class MapToolHandler extends BaseToolHandler {
             WindowPlacement.centerComponent(d);
             d.setVisible(true);
             if (!d.isCancelled()) {
+                var items = java.util.List.of(item);
+                var before = ItemEdits.capture(items);
                 d.updateTextItem(item);
                 item.setDirty(true);
+                mapContainer.recordEdit(ItemEdits.changedStates("Edit Text", mapContainer, items, before));
                 mapContainer.refresh();
             }
         });

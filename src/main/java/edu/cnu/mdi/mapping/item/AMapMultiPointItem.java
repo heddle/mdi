@@ -5,10 +5,12 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.item.ItemState;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.mapping.MapConstants;
 import edu.cnu.mdi.mapping.container.MapContainer;
@@ -114,6 +116,51 @@ public abstract class AMapMultiPointItem extends AMapItem {
 
     /** @return number of vertices (≥ 2) */
     public int getVertexCount() { return _latLons.length; }
+
+    // -------------------------------------------------------------------------
+    // Undo / redo
+    // -------------------------------------------------------------------------
+
+    /**
+     * The vertices as a flat list {@code lon0, lat0, lon1, lat1, ...} in radians,
+     * for undo/redo. A list of {@code Double} compares by value, which is how an
+     * edit that changed nothing is recognised.
+     */
+    private record Vertices(List<Double> coordinates) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Captures every vertex, which is all a drag or a vertex resize changes;
+     * the focus is derived from them.</p>
+     */
+    @Override
+    public ItemState captureState() {
+        if (_latLons == null) return null;
+        List<Double> flat = new ArrayList<>(_latLons.length * 2);
+        for (Point2D.Double ll : _latLons) {
+            flat.add(ll.x);
+            flat.add(ll.y);
+        }
+        return snapshotState(new Vertices(List.copyOf(flat)));
+    }
+
+    @Override
+    public void restoreState(ItemState state) {
+        applyState(state);
+        if (state.extra() instanceof Vertices v) {
+            List<Double> flat = v.coordinates();
+            Point2D.Double[] restored = new Point2D.Double[flat.size() / 2];
+            for (int i = 0; i < restored.length; i++) {
+                restored[i] = new Point2D.Double(flat.get(2 * i), flat.get(2 * i + 1));
+            }
+            _latLons = restored;
+            // The focus was restored with the rest of the state; only the cached
+            // projection of the old vertices needs to be dropped.
+            setDirty(true);
+        }
+    }
 
     // -------------------------------------------------------------------------
     // Abstract — subclass supplies drawing and shape building

@@ -10,6 +10,7 @@ import java.util.List;
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.item.AItem;
 import edu.cnu.mdi.item.ItemModification;
+import edu.cnu.mdi.item.ItemState;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.mapping.MapConstants;
 import edu.cnu.mdi.mapping.container.MapContainer;
@@ -205,6 +206,38 @@ public class MapLineItem extends AMapItem {
     public void setEndLatLon(Point2D.Double endLatLon) {
         _endLatLon = copy(endLatLon);
         geometryChanged();
+    }
+
+    // -------------------------------------------------------------------------
+    // Undo / redo
+    // -------------------------------------------------------------------------
+
+    /** The two geographic endpoints, in radians, for undo/redo. */
+    private record Ends(double startLon, double startLat, double endLon, double endLat) {
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Captures both geographic endpoints, which is all a drag, a resize or a
+     * rotate changes; the focus is derived from them.</p>
+     */
+    @Override
+    public ItemState captureState() {
+        if (_startLatLon == null || _endLatLon == null) return null;
+        return snapshotState(new Ends(_startLatLon.x, _startLatLon.y, _endLatLon.x, _endLatLon.y));
+    }
+
+    @Override
+    public void restoreState(ItemState state) {
+        applyState(state);
+        if (state.extra() instanceof Ends ends) {
+            _startLatLon = new Point2D.Double(ends.startLon(), ends.startLat());
+            _endLatLon = new Point2D.Double(ends.endLon(), ends.endLat());
+            // The focus was restored with the rest of the state; only the cached
+            // projection of the old endpoints needs to be dropped.
+            setDirty(true);
+        }
     }
 
     // -------------------------------------------------------------------------

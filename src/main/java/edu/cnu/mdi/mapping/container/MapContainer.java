@@ -28,6 +28,7 @@ import edu.cnu.mdi.mapping.projection.LambertEqualAreaProjection;
 import edu.cnu.mdi.mapping.projection.MercatorProjection;
 import edu.cnu.mdi.mapping.projection.MollweideProjection;
 import edu.cnu.mdi.mapping.projection.OrthographicProjection;
+import edu.cnu.mdi.undo.ItemEdits;
 import edu.cnu.mdi.util.UnicodeUtils;
 
 /**
@@ -200,7 +201,8 @@ public class MapContainer extends BaseContainer {
 
 		ImageIcon icon = descriptor.getIcon();
 		Layer layer = getAnnotationLayer();
-		new MapMilSymbolItem(layer, latLon, descriptor, icon);
+		MapMilSymbolItem symbol = new MapMilSymbolItem(layer, latLon, descriptor, icon);
+		recordEdit(ItemEdits.created("Create Symbol", this, symbol));
 
 		setDirty(true);
 		refresh();
