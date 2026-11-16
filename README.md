@@ -1,4 +1,4 @@
-# MDI – Multiple Document Interface for Scientific Applications
+# MDI – Multi-Document Interface for Scientific Applications
 
 ![Maven Central](https://img.shields.io/maven-central/v/io.github.heddle/mdi)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -12,6 +12,7 @@ MDI is a Java framework for building scientific desktop applications with:
 - Simulation engines  
 - Multi-view modular architecture  
 - Extensible tools and layered drawing  
+- Undo and redo for supported item edits  
 - Distribution via Maven Central  
 
 It is built on pure Swing for long-term JVM stability, with only a small set of well-established runtime dependencies (listed under [Installation](#installation)).
@@ -49,7 +50,7 @@ Each window (“view”) operates independently while sharing:
 
 ---
 
-### Integrated Plotting (splot)
+### Integrated Plotting (sPlot)
 
 The built-in plotting module provides:
 
@@ -150,6 +151,23 @@ This makes it easy to build:
 
 ---
 
+### Undo and Redo
+
+MDI supports undo and redo for common item-editing operations, including movement,
+resizing, rotation, styling, and text changes. A completed gesture is recorded as a
+single edit rather than a sequence of mouse movements.
+
+The implementation uses Swing's undo infrastructure, with a separate edit history
+for each container. Standard item classes provide state snapshots; custom items
+can participate by implementing `captureState()` and `restoreState(ItemState)`.
+
+Undo and redo are available through keyboard shortcuts and popup-menu commands.
+Undoable creation and deletion are also supported, with restrictions for connectors
+and items with attached connectors. Not every custom operation is automatically
+undoable; application-specific tools must record appropriate edits.
+
+---
+
 ## Installation
 
 MDI is available on Maven Central:
@@ -188,47 +206,46 @@ This example demonstrates:
 
 public class HelloMDI extends BaseMDIApplication {
 
-	private final DrawingView drawingView; //only view
+    private final DrawingView drawingView; // only view
 
-	public HelloMDI(Object... keyVals) {
-		super(keyVals);
-		// set to a fraction of screen
-		Dimension d = WindowPlacement.screenFraction(0.4);
-		
-		// specify (bitwise) what will be on the toolbar
-		long toolBits = ToolBits.STATUS | ToolBits.DRAWINGTOOLS | ToolBits.ZOOMTOOLS | ToolBits.PAN;
-		
-		drawingView = new DrawingView(
-				PropertyUtils.WORLDSYSTEM, new Rectangle2D.Double(0, 0, d.width, d.height),
-				PropertyUtils.WIDTH, d.width,
-				PropertyUtils.HEIGHT, d.height,
-				PropertyUtils.TOOLBARBITS, toolBits,
-				PropertyUtils.VISIBLE, true,
-				PropertyUtils.BACKGROUND, Color.white,
-				PropertyUtils.INFOBUTTON, true,
-				PropertyUtils.TITLE,"Drawing View");
-	}
-	
+    public HelloMDI(Object... keyVals) {
+        super(keyVals);
+        // Set to a fraction of screen.
+        Dimension d = WindowPlacement.screenFraction(0.4);
+
+        // Specify (bitwise) what will be on the toolbar.
+        long toolBits = ToolBits.STATUS | ToolBits.DRAWINGTOOLS
+                | ToolBits.ZOOMTOOLS | ToolBits.PAN;
+
+        drawingView = new DrawingView(
+                PropertyUtils.WORLDSYSTEM, new Rectangle2D.Double(0, 0, d.width, d.height),
+                PropertyUtils.WIDTH, d.width,
+                PropertyUtils.HEIGHT, d.height,
+                PropertyUtils.TOOLBARBITS, toolBits,
+                PropertyUtils.VISIBLE, true,
+                PropertyUtils.BACKGROUND, Color.white,
+                PropertyUtils.INFOBUTTON, true,
+                PropertyUtils.TITLE, "Drawing View");
+    }
+
     // Runs once after the outer frame is showing and Swing layout has stabilized.
-	@Override
-	protected void onVirtualDesktopReady() {
-		// desktop ready, safe to apply default placements and add content.
-		drawingView.center();
+    @Override
+    protected void onVirtualDesktopReady() {
+        // Desktop ready: safe to apply default placements and add content.
+        drawingView.center();
 
-		//lets add some initial content to the drawing view
-		Layer layer = drawingView.getContainer().getAnnotationLayer();
-		CreationSupport.createRectangleItem(layer, new Rectangle(50, 50, 100, 100));
-	}
+        // Add some initial content to the drawing view.
+        Layer layer = drawingView.getContainer().getAnnotationLayer();
+        CreationSupport.createRectangleItem(layer, new Rectangle(50, 50, 100, 100));
+    }
 
-	// Main method to launch the application.
-	public static void main(String[] args) {
-	    BaseMDIApplication.launch(() ->
-	        new HelloMDI(
-	            PropertyUtils.TITLE, "Hello MDI",
-	            PropertyUtils.FRACTION, 0.8
-	        )
-	    );
-	}
+    // Main method to launch the application.
+    public static void main(String[] args) {
+        BaseMDIApplication.launch(() ->
+                new HelloMDI(
+                        PropertyUtils.TITLE, "Hello MDI",
+                        PropertyUtils.FRACTION, 0.8));
+    }
 }
 ```
 ---
@@ -237,11 +254,11 @@ public class HelloMDI extends BaseMDIApplication {
 
 The repository includes a full-featured `DemoApp` showcasing:
 
-- DrawingView
-- PlotView (splot integration)
-- Network layout demo
+- DrawingView and interactive item editing
+- PlotView (sPlot integration)
+- Network layout and optimization demos
 - Traveling Salesperson simulation
-- 2D map view
+- Interactive 2D geographic mapping
 - Simulation framework examples
 
 To run the demo from the project source:
