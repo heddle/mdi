@@ -1,4 +1,4 @@
-# MDI – Modular Desktop Interface for Scientific Applications
+# MDI – Multiple Document Interface for Scientific Applications
 
 ![Maven Central](https://img.shields.io/maven-central/v/io.github.heddle/mdi)
 ![License](https://img.shields.io/badge/license-MIT-blue)
