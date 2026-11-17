@@ -336,17 +336,63 @@ public class TextItem extends RectangleItem implements ITextEditable {
 		}
 	}
 
-	/** Open the text-edit dialog and rebuild the path at the current azimuth. */
+	/**
+	 * Open the text-edit dialog and apply the result.
+	 *
+	 * <p>A box the user has resized keeps its size when only the style changed;
+	 * see {@link #rebuildBoxAfterEdit(int[], int[], boolean)}.</p>
+	 */
 	public void edit() {
 		TextEditDialog dialog = new TextEditDialog(this);
 		WindowPlacement.centerComponent(dialog);
 		dialog.setVisible(true);
 		if (dialog.isCancelled()) return;
 
+		int[] boxBefore = getPathScreenSize(getContainer(), _path);
+		int[] naturalBefore = naturalScreenSize();
+		String textBefore = getText();
+		Font fontBefore = _font;
+
 		dialog.updateTextItem(this);
-		setPath(getRotatedPoints(getAzimuth()));
-		geometryChanged();
+
+		boolean contentChanged = !textBefore.equals(getText()) || !fontBefore.equals(_font);
+		rebuildBoxAfterEdit(boxBefore, naturalBefore, contentChanged);
 		getContainer().refresh();
+	}
+
+	/**
+	 * Rebuild the box after an edit, keeping a size the user chose.
+	 *
+	 * <ul>
+	 * <li>If only the style changed, the box is left exactly as it was.</li>
+	 * <li>If the text or font changed and the box was still the natural size of
+	 * the old content, it is refitted to the new content.</li>
+	 * <li>If the text or font changed and the box had been resized, it keeps its
+	 * size but grows if the new content would not fit.</li>
+	 * </ul>
+	 *
+	 * @param boxBefore      the screen size of the box before the edit
+	 * @param naturalBefore  the natural screen size of the old content
+	 * @param contentChanged whether the text or font changed
+	 */
+	void rebuildBoxAfterEdit(int[] boxBefore, int[] naturalBefore, boolean contentChanged) {
+		int width = boxBefore[0];
+		int height = boxBefore[1];
+		if (contentChanged) {
+			int[] natural = naturalScreenSize();
+			boolean userResized = Math.abs(width - naturalBefore[0]) > 1 || Math.abs(height - naturalBefore[1]) > 1;
+			width = userResized ? Math.max(width, natural[0]) : natural[0];
+			height = userResized ? Math.max(height, natural[1]) : natural[1];
+		}
+		setPath(getRotatedPoints(getAzimuth(), width, height));
+		geometryChanged();
+	}
+
+	/** The screen size the current text and font need, with margins. */
+	private int[] naturalScreenSize() {
+		FontMetrics fm = getContainer().getComponent().getFontMetrics(_font);
+		Rectangle r = TextUtils.textBounds(getText(), fm, MARGIN, MARGIN, MARGIN, MARGIN, LINESIZE);
+		return new int[] { r.width, r.height };
 	}
 
 	// -----------------------------------------------------------------------

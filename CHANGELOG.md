@@ -53,6 +53,14 @@ git tags.
   holds the layout configuration file (`~/.<application>.xml`). It defaults to
   the user's home directory, as before; passing `null` restores the default.
 
+### Fixed
+
+- Editing a text item (`TextItem`) through its edit dialog no longer snaps a
+  resized box back to the text's natural size. Changing only colors keeps the
+  box exactly as it was; changing the text or font keeps a resized box's size
+  (growing it only if the new text would not fit), and still refits a box that
+  was never resized.
+
 ### Removed
 
 - Dropped the unused Apache Batik dependencies (`batik-transcoder` and
