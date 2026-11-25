@@ -35,6 +35,12 @@ if ! git diff-index --quiet HEAD --; then
   exit 1
 fi
 
+# The changelog must already have a section for this release
+if ! grep -q "^## \[$RELEASE_VERSION\]" CHANGELOG.md; then
+  echo "ERROR: CHANGELOG.md has no '## [$RELEASE_VERSION]' section. Add it and commit first."
+  exit 1
+fi
+
 # Confirm
 echo "====================================="
 echo "Releasing version: $RELEASE_VERSION"
@@ -62,7 +68,7 @@ echo "Tagging release..."
 git tag -a v$RELEASE_VERSION -m "$RELEASE_VERSION"
 
 echo "Building and deploying to Sonatype..."
-mvn clean deploy
+mvn clean deploy -Prelease
 
 echo "Bumping to next snapshot version..."
 mvn versions:set -DnewVersion=$NEXT_SNAPSHOT -DgenerateBackupPoms=false

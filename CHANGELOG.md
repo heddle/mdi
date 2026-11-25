@@ -13,6 +13,8 @@ git tags.
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-11-25
+
 ### Added
 
 - A [compatibility policy](COMPATIBILITY.md): what is public API, what each kind
