@@ -168,6 +168,13 @@ undoable; application-specific tools must record appropriate edits.
 
 ---
 
+## Compatibility
+
+[COMPATIBILITY.md](COMPATIBILITY.md) sets out what is public API, what each kind
+of release may change, and what your subclasses can rely on.
+
+---
+
 ## Installation
 
 MDI is available on Maven Central:

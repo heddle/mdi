@@ -13,6 +13,13 @@ git tags.
 
 ## [Unreleased]
 
+### Added
+
+- A [compatibility policy](COMPATIBILITY.md): what is public API, what each kind
+  of release may change, and what subclasses can rely on. The build now checks
+  the public and protected API against the last release (japicmp) and fails on
+  an incompatible change.
+
 ### Fixed
 
 - Undo and redo now report what they changed to a layer's

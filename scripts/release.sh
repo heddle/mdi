@@ -79,4 +79,6 @@ git push --tags
 echo
 echo "Release process complete."
 echo "Now log into Sonatype and Close/Release the staging repository."
+echo "Once it is on Maven Central, set api.baseline.version in pom.xml to $RELEASE_VERSION"
+echo "so the build checks compatibility against it (see COMPATIBILITY.md)."
 echo
