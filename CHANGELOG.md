@@ -13,6 +13,21 @@ git tags.
 
 ## [Unreleased]
 
+### Fixed
+
+- Undo and redo now report what they changed to a layer's
+  `ItemChangeListener`s: `MOVED`, `RESIZED` or `ROTATED` for a gesture, and
+  `MODIFIED` for style and text edits, once every item has been restored. In
+  1.2.4 they changed items silently, so an application that kept its own data in
+  step with its items (such as the n-body demo) disagreed with the canvas after
+  an undo. `ItemEdits.changedStates` has a new overload taking the
+  `ItemChangeType` to report.
+- Note for subclasses: a subclass of an undoable item inherits undo support. If
+  it has editable state of its own, add it to `captureState()`/`restoreState`, or
+  return `null` from `captureState()` to opt out.
+
+## [1.2.4] - 2026-11-18
+
 ### Added
 
 - **Undo and redo for item editing** in `BaseContainer`-based views. Cmd/Ctrl+Z

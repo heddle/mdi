@@ -21,6 +21,7 @@ import edu.cnu.mdi.graphics.style.ui.StyleEditorDialog;
 import edu.cnu.mdi.graphics.toolbar.GestureContext;
 import edu.cnu.mdi.graphics.toolbar.IToolHandler;
 import edu.cnu.mdi.item.AItem;
+import edu.cnu.mdi.item.ItemChangeType;
 import edu.cnu.mdi.item.ItemModification;
 import edu.cnu.mdi.item.ItemState;
 import edu.cnu.mdi.item.TextItem;
@@ -66,6 +67,7 @@ public class BaseToolHandler implements IToolHandler {
 	// changed anything, and the name its undo entry will have
 	private List<ItemState> gestureBefore;
 	private String gestureName;
+	private ItemChangeType gestureChange;
 
 	/**
 	 * Constructor.
@@ -212,6 +214,7 @@ public class BaseToolHandler implements IToolHandler {
 			// the whole gesture becomes one undo step.
 			gestureBefore = ItemEdits.capture(modifyItems);
 			gestureName = editName(primaryModification);
+			gestureChange = changeType(primaryModification);
 		}
 
 		for (AItem itemBeingModified : modifyItems) {
@@ -232,6 +235,18 @@ public class BaseToolHandler implements IToolHandler {
 		case DRAG -> "Move";
 		case RESIZE -> "Resize";
 		case ROTATE -> "Rotate";
+		};
+	}
+
+	/** What undoing or redoing a gesture reports to layer listeners. */
+	private static ItemChangeType changeType(ItemModification modification) {
+		if (modification == null) {
+			return ItemChangeType.MODIFIED;
+		}
+		return switch (modification.getType()) {
+		case DRAG -> ItemChangeType.MOVED;
+		case RESIZE -> ItemChangeType.RESIZED;
+		case ROTATE -> ItemChangeType.ROTATED;
 		};
 	}
 
@@ -267,7 +282,8 @@ public class BaseToolHandler implements IToolHandler {
 	        // A rejected or zero-length gesture leaves the items as they were,
 	        // which changedStates() leaves out, so only real changes are recorded.
 	        if (gestureBefore != null) {
-	            container.recordEdit(ItemEdits.changedStates(gestureName, container, modifyItems, gestureBefore));
+	            container.recordEdit(ItemEdits.changedStates(gestureName, container, modifyItems, gestureBefore,
+	                    gestureChange));
 	        }
 
 	        container.setDirty(true);

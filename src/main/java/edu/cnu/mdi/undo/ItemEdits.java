@@ -11,6 +11,7 @@ import javax.swing.undo.UndoableEdit;
 
 import edu.cnu.mdi.container.IContainer;
 import edu.cnu.mdi.item.AItem;
+import edu.cnu.mdi.item.ItemChangeType;
 import edu.cnu.mdi.item.ItemState;
 import edu.cnu.mdi.item.Layer;
 
@@ -19,6 +20,15 @@ import edu.cnu.mdi.item.Layer;
  * items' state (move, resize, rotate, restyle, edit text), creating an item,
  * and deleting items. Each is a {@link javax.swing.undo.UndoableEdit} for a
  * {@link javax.swing.undo.UndoManager}.
+ *
+ * <h2>Listeners hear about undo and redo</h2>
+ * <p>Every edit reports what it did to the layer's
+ * {@link edu.cnu.mdi.item.ItemChangeListener}s, so an application that keeps its
+ * own data in step with its items stays in step. Undoing or redoing a state
+ * change reports the edit's {@link ItemChangeType} for each item, after all of
+ * them have been restored: {@code MOVED}, {@code RESIZED} or {@code ROTATED}
+ * for a gesture, and {@code MODIFIED} otherwise. Removing and restoring items
+ * report {@code DELETED} and {@code ADDED}.</p>
  *
  * <h2>Deletion keeps the item alive</h2>
  * <p>Undoable deletion takes an item out of its layer
@@ -69,6 +79,24 @@ public final class ItemEdits {
 	 */
 	public static UndoableEdit changedStates(String name, IContainer container, List<? extends AItem> items,
 			List<ItemState> before) {
+		return changedStates(name, container, items, before, ItemChangeType.MODIFIED);
+	}
+
+	/**
+	 * Like {@link #changedStates(String, IContainer, List, List)}, naming the
+	 * kind of change that undo and redo report to the layer's listeners.
+	 *
+	 * @param name      the edit's name as shown in an Undo menu, such as "Move"
+	 * @param container the container to repaint after undo/redo
+	 * @param items     the items, in the same order as {@code before}
+	 * @param before    the states captured earlier with {@link #capture}
+	 * @param change    what to report for each item, such as
+	 *                  {@link ItemChangeType#MOVED}
+	 * @return the edit, or {@code null} if nothing changed
+	 */
+	public static UndoableEdit changedStates(String name, IContainer container, List<? extends AItem> items,
+			List<ItemState> before, ItemChangeType change) {
+		Objects.requireNonNull(change, "change");
 		Objects.requireNonNull(items, "items");
 		Objects.requireNonNull(before, "before");
 		if (before.size() != items.size()) {
@@ -88,7 +116,7 @@ public final class ItemEdits {
 				now.add(a);
 			}
 		}
-		return changed.isEmpty() ? null : new StateChange(name, container, changed, was, now);
+		return changed.isEmpty() ? null : new StateChange(name, container, changed, was, now, change);
 	}
 
 	private static final class StateChange extends AbstractUndoableEdit {
@@ -99,14 +127,16 @@ public final class ItemEdits {
 		private final transient List<AItem> items;
 		private final transient List<ItemState> before;
 		private final transient List<ItemState> after;
+		private final ItemChangeType change;
 
 		StateChange(String name, IContainer container, List<AItem> items, List<ItemState> before,
-				List<ItemState> after) {
+				List<ItemState> after, ItemChangeType change) {
 			this.name = name;
 			this.container = container;
 			this.items = items;
 			this.before = before;
 			this.after = after;
+			this.change = change;
 		}
 
 		@Override
@@ -124,6 +154,14 @@ public final class ItemEdits {
 		private void apply(List<ItemState> states) {
 			for (int i = 0; i < items.size(); i++) {
 				items.get(i).restoreState(states.get(i));
+			}
+			// Tell listeners only once every item is back, so none of them sees a
+			// half-undone group.
+			for (AItem item : items) {
+				Layer layer = item.getLayer();
+				if (layer != null) {
+					layer.notifyItemChangeListeners(item, change);
+				}
 			}
 			refresh(container);
 		}

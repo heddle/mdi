@@ -1451,6 +1451,14 @@ public abstract class AItem implements IDrawable, IFeedbackProvider {
 	 * (for example geographic coordinates) must not opt in until they capture
 	 * that storage.</p>
 	 *
+	 * <p><strong>Subclasses inherit the choice.</strong> A subclass of an item
+	 * that has opted in (a {@code PointItem} or {@code RectangleItem}, say) is
+	 * undoable too, but only the inherited state is captured. If it has editable
+	 * state of its own, it must add it to the snapshot, or return {@code null}
+	 * here to opt out. An application that mirrors item state elsewhere should
+	 * listen for the changes that undo and redo report; see
+	 * {@link edu.cnu.mdi.undo.ItemEdits}.</p>
+	 *
 	 * @return a snapshot, or {@code null} if this item does not support undo of
 	 *         its edits
 	 */

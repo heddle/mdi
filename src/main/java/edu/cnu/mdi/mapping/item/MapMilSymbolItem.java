@@ -15,6 +15,7 @@ import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.container.BaseContainer;
 import edu.cnu.mdi.container.IContainer;
+import edu.cnu.mdi.item.ItemChangeType;
 import edu.cnu.mdi.item.ItemState;
 import edu.cnu.mdi.item.Layer;
 import edu.cnu.mdi.mapping.milsym.MilSymbolDescriptor;
@@ -239,7 +240,8 @@ public class MapMilSymbolItem extends MapPointItem {
         setDirty(true);
 
         if (container instanceof BaseContainer bc) {
-            bc.recordEdit(ItemEdits.changedStates("Move", bc, List.of(this), java.util.Collections.singletonList(before)));
+            bc.recordEdit(ItemEdits.changedStates("Move", bc, List.of(this),
+                    java.util.Collections.singletonList(before), ItemChangeType.MOVED));
         }
         if (container != null) {
             container.refresh();
