@@ -13,6 +13,36 @@ git tags.
 
 ## [Unreleased]
 
+### Added
+
+- **Save Image…** in every view's popup menu. It saves a PNG file or copies to
+  the clipboard, at 1, 2 or 4 times the size on screen, of either the content
+  area or the entire view (title bar, menus, toolbar and side panels). Larger
+  images are painted again, not enlarged, and the file records a matching
+  resolution so that it pastes at its original size. Pictures, terrain shading
+  and OpenGL (MDI-3D) scenes gain no detail. API: `BaseView.saveImage()`,
+  `BaseView.addViewPopupTrigger(Component)` and
+  `GraphicsUtils.getComponentImage(Component, int)`.
+- The popup menu now also opens on plot views, the log view and the JSON view.
+
+### Changed
+
+- Note for subclasses: every view's popup menu gains the "Save Image…" item. A
+  `PlotView`'s menu is now shown (right-click the plot), and holds that item and
+  whatever you add to it; the undo and layer items it held, never visible, are
+  gone.
+- The camera button, and everything else that calls
+  `TakePicture.takePicture(Component)`, shows the new dialog.
+
+### Fixed
+
+- A canvas in a scroll pane no longer paints outside the visible area.
+  `BaseContainer.clipBounds` now narrows the current clip instead of replacing
+  it.
+- Saving an image over a larger file no longer leaves the end of the old file
+  behind.
+- A failure to save an image is reported, not only logged.
+
 ## [1.2.5] - 2026-11-25
 
 ### Added

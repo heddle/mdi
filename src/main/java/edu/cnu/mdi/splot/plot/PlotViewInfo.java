@@ -18,7 +18,7 @@ public class PlotViewInfo extends AbstractViewInfo {
 	public String getPurpose() {
 		return "This view is designed to display 2D plots of datasets. It provides a simple interface for "
 				+ "visualizing data points, " +
-		       "with support for saving (plot file or PNG), printing, zooming, panning, and interactive feedback. "
+		       "with support for saving (plot file or PNG image), printing, zooming, panning, and interactive feedback. "
 		       + "The plot can be customized with titles and axis labels. "
 		       +" There is extensive editing support through the edit menu.";
 	}
@@ -30,7 +30,8 @@ public class PlotViewInfo extends AbstractViewInfo {
 				"Use the Toolbar to zoom, pan, and reset the view.",
 				"Hover over data points to see details in the feedback pane.",
 				"Use the Edit menu to add titles, axis labels, and customize the plot appearance.",
-				"To save a plot, use the File menu. You can save as a plot file (for later editing) or as a PNG image.",
+				"To save a plot for later editing, use the File menu.",
+				"To save a picture of it, right-click the plot and choose Save Image\u2026, or use the camera button.",
 				"To open a saved plot file, simply drag-and-drop it into the plot area."
 				);
 	}

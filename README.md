@@ -50,6 +50,16 @@ Each window (“view”) operates independently while sharing:
 
 ---
 
+### Images of Views
+
+Right-click a view and choose **Save Image…** to save a PNG file or copy the
+picture to the clipboard, at 1, 2 or 4 times its size on screen. Capture just
+the content, or the entire view with its toolbar and side panels. Lines and
+text are drawn again at the larger size; pictures, terrain shading and 3D
+scenes are only enlarged.
+
+---
+
 ### Integrated Plotting (sPlot)
 
 The built-in plotting module provides:
