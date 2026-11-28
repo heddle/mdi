@@ -27,6 +27,11 @@ git tags.
 
 ### Changed
 
+- The demo map keeps the Mercator projection in proportion instead of
+  stretching it to fill the window, so the highest latitudes are out of view
+  until you zoom out or make the window taller. Its box zoom now keeps the
+  proportions too.
+- The network declutter demo shows six lines of feedback under its plots.
 - Note for subclasses: every view's popup menu gains the "Save Image…" item. A
   `PlotView`'s menu is now shown (right-click the plot), and holds that item and
   whatever you add to it; the undo and layer items it held, never visible, are
