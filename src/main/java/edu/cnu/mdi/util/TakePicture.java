@@ -10,53 +10,48 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriter;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataNode;
 import javax.imageio.stream.ImageOutputStream;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import edu.cnu.mdi.dialog.DialogUtils;
 import edu.cnu.mdi.graphics.GraphicsUtils;
+import edu.cnu.mdi.view.BaseView;
 
 /**
- * Utility for capturing a Swing {@link Component} as an image and either saving it as a
- * PNG file or copying it to the system clipboard.
+ * Saves a Swing {@link Component} as an image, to a PNG file or the system
+ * clipboard.
  *
- * <h2>Design notes</h2>
+ * <p>{@link #takePicture(Component)} is the single entry point: the toolbar
+ * camera button, plot and histogram panels, {@link BaseView#saveImage()} and
+ * MDI-3D's Image menu all use it. It asks what to capture and at what size:</p>
  * <ul>
- *   <li>This class is deliberately agnostic about what kind of component it is given — it
- *       used to special-case {@code PlotPanel} internally, which silently broke plot capture
- *       (it dropped the title, legend, and axis labels down to just the inner canvas, undoing
- *       work the caller had already done correctly). That knowledge now lives where it
- *       belongs: on the view itself, via {@link edu.cnu.mdi.view.BaseView#getImageComponent()}.
- *       Callers should pass {@code view.getImageComponent()} rather than an arbitrary
- *       component plucked from the view's internals.</li>
- *   <li>{@link #takePicture(Component)} is the single entry point every existing caller
- *       already uses (the standard MDI toolbar's camera button, plot/histogram panels, and
- *       any custom "Save Image" action). It first asks the user to choose Save to File,
- *       Copy to Clipboard, or Cancel via {@link DialogUtils#yesNoDialog}, then performs
- *       whichever the user picked. This means every existing call site gets clipboard
- *       support automatically — no new menu item, toolbar button, or icon is needed
- *       anywhere.</li>
- *   <li>The file-save path writes <strong>PNG</strong> data. The chosen output filename is
- *       therefore forced to end with <code>.png</code> (case-insensitive) to avoid
- *       mismatches such as saving PNG data to <code>picture.jpg</code> or an extensionless
- *       file. Writing is performed via the configured PNG writer exposed by
- *       {@link Environment#getPngWriter()}. Access is synchronized and the writer's
- *       output is cleared after each capture. If the target file exists, the user is
- *       prompted to confirm overwrite.</li>
- *   <li>The clipboard path places the captured image on the system clipboard using the
- *       standard AWT {@code DataFlavor.imageFlavor} transfer, which is platform-independent:
- *       it works the same way on Windows, macOS, and Linux (with a running display server)
- *       because it goes through {@link Toolkit}'s clipboard, not any OS-specific API. It is
- *       also exposed directly as {@link #copyToClipboard(Component)}, for callers that want
- *       clipboard-only behavior without the Save/Copy/Cancel prompt.</li>
+ *   <li><b>Area:</b> the component itself ("Content only") or, when it sits
+ *       inside a {@link BaseView}, the whole internal frame with its title bar,
+ *       menus, toolbar and side panels ("Entire view").</li>
+ *   <li><b>Size:</b> 1, 2 or 4 times the size on screen. The component is
+ *       painted again at that size (see
+ *       {@link GraphicsUtils#getComponentImage(Component, int)}).</li>
+ *   <li><b>Destination:</b> a PNG file or the clipboard.</li>
  * </ul>
+ *
+ * <p>A PNG saved at 2 or 4 times records 2 or 4 times the resolution programs
+ * otherwise assume (72 dots per inch on macOS, 96 elsewhere), so that those
+ * which honor it show the picture at the same size as one saved at 1 time. The
+ * clipboard carries only pixels.</p>
  */
 public final class TakePicture {
 
@@ -66,73 +61,128 @@ public final class TakePicture {
 	private static final String OPTION_CLIPBOARD = "Copy to Clipboard";
 	private static final String OPTION_CANCEL = "Cancel";
 
+	/** The last choices, offered again for the rest of the session. */
+	private static boolean lastEntireView;
+	private static int lastScale = 2;
+
 	private TakePicture() {
 	}
 
 	/**
-	 * Captures the provided component as an image, first asking the user whether to save it
-	 * as a PNG file or copy it to the system clipboard.
+	 * Asks what to capture, at what size and where to put it, then does so.
 	 *
-	 * <p>This is the method every existing caller in the framework already uses (the
-	 * standard toolbar camera button, plot and histogram panels, and MDI-3D's Image menu),
-	 * so adding clipboard support here makes it available everywhere at once.</p>
+	 * <p>If the user chooses a file, a file chooser follows; the name is given a
+	 * {@code .png} extension and an existing file is replaced only after
+	 * confirmation. Failures are logged and reported in a dialog.</p>
 	 *
-	 * <p><strong>Save to File:</strong> the save dialog is parented to the window containing
-	 * {@code canvas} (if any). The selected file is forced to end with <code>.png</code>
-	 * (case-insensitive); if it already exists, the user is asked to confirm overwrite. If
-	 * the user cancels the dialog, this method returns without writing a file.</p>
+	 * <p>Call on the event dispatch thread.</p>
 	 *
-	 * <p><strong>Copy to Clipboard:</strong> delegates to {@link #copyToClipboard(Component)}.</p>
-	 *
-	 * <p><strong>Error handling:</strong> Exceptions during capture, writing, or clipboard
-	 * access are recorded through the platform logger.</p>
-	 *
-	 * @param canvas the component to capture; if {@code null}, nothing is done
+	 * @param canvas the component to capture; if {@code null} or of zero size and
+	 *               outside any view, nothing is done
 	 */
 	public static void takePicture(Component canvas) {
 		if (canvas == null) {
 			return;
 		}
 
-		int choice = DialogUtils.yesNoDialog(
-				"Save this image to a file, or copy it to the clipboard?",
-				OPTION_SAVE, OPTION_CLIPBOARD, OPTION_CANCEL);
-
-		if (choice != 0 && choice != 1) {
-			return; // cancelled, or the dialog was closed without a selection (-1)
-		}
-
-		if (choice == 1) {
-			copyToClipboard(canvas);
+		Component view = (canvas instanceof BaseView) ? canvas
+				: SwingUtilities.getAncestorOfClass(BaseView.class, canvas);
+		SaveImagePanel panel = new SaveImagePanel(canvas == view ? null : canvas, view,
+				lastEntireView, lastScale);
+		if (panel.area() == null) {
 			return;
 		}
 
-		try {
-			// Only proceed if we have a writer configured.
-			if (Environment.getInstance().getPngWriter() == null) {
-				return;
-			}
+		JOptionPane pane = new JOptionPane(panel, JOptionPane.PLAIN_MESSAGE);
+		pane.setOptions(new Object[] { OPTION_SAVE, OPTION_CLIPBOARD, OPTION_CANCEL });
+		pane.setInitialValue(OPTION_SAVE);
+		JDialog dialog = pane.createDialog(SwingUtilities.getWindowAncestor(canvas), "Save Image");
+		dialog.setVisible(true);
+		Object choice = pane.getValue();
+		dialog.dispose();
 
-			File file = getSavePngFile(canvas);
+		if (!OPTION_SAVE.equals(choice) && !OPTION_CLIPBOARD.equals(choice)) {
+			return; // cancelled, or the dialog was closed
+		}
+
+		Component area = panel.area();
+		int scale = panel.scale();
+		if (panel.hasAreaChoice()) {
+			lastEntireView = (area == view);
+		}
+		lastScale = scale;
+
+		File file = null;
+		if (OPTION_SAVE.equals(choice)) {
+			file = getSavePngFile(canvas);
 			if (file == null) {
 				return; // user cancelled
 			}
+		}
 
-			BufferedImage bi = GraphicsUtils.getComponentImage(canvas);
-
-			var writer = Environment.getInstance().getPngWriter();
-			synchronized (writer) {
-				try (ImageOutputStream ios = ImageIO.createImageOutputStream(file)) {
-					writer.setOutput(ios);
-					writer.write(bi);
-				} finally {
-					writer.setOutput(null);
-				}
+		try {
+			BufferedImage image = GraphicsUtils.getComponentImage(area, scale);
+			if (file == null) {
+				copyToClipboard(image);
+			} else {
+				writePng(image, file, scale == 1 ? 0 : assumedDpi() * scale);
 			}
 		}
-		catch (Exception e) {
+		catch (Exception | OutOfMemoryError e) {
 			LOGGER.log(Level.WARNING, "Unable to save component image.", e);
+			JOptionPane.showMessageDialog(SwingUtilities.getWindowAncestor(canvas),
+					"The image could not be saved. See the log for details.", "Save Image",
+					JOptionPane.ERROR_MESSAGE);
 		}
+	}
+
+	/**
+	 * Writes {@code image} to {@code file} as a PNG, replacing any file there.
+	 *
+	 * @param dpi the resolution to record, or 0 to record none
+	 */
+	static void writePng(BufferedImage image, File file, int dpi) throws IOException {
+		ImageWriter writer = ImageIO.getImageWritersByFormatName("png").next();
+		try {
+			IIOMetadata metadata = null;
+			if (dpi > 0) {
+				metadata = writer.getDefaultImageMetadata(
+						ImageTypeSpecifier.createFromRenderedImage(image), null);
+				String format = "javax_imageio_png_1.0";
+				IIOMetadataNode size = new IIOMetadataNode("pHYs");
+				String perMeter = Long.toString(Math.round(dpi / 0.0254));
+				size.setAttribute("pixelsPerUnitXAxis", perMeter);
+				size.setAttribute("pixelsPerUnitYAxis", perMeter);
+				size.setAttribute("unitSpecifier", "meter");
+				IIOMetadataNode root = new IIOMetadataNode(format);
+				root.appendChild(size);
+				metadata.mergeTree(format, root);
+			}
+
+			// An image stream does not truncate: a longer old file would keep its tail.
+			Files.deleteIfExists(file.toPath());
+			try (ImageOutputStream ios = ImageIO.createImageOutputStream(file)) {
+				if (ios == null) {
+					throw new IOException("Cannot write to " + file);
+				}
+				writer.setOutput(ios);
+				writer.write(null, new IIOImage(image, null, metadata), null);
+			}
+		}
+		finally {
+			writer.dispose();
+		}
+	}
+
+	// What programs assume for a picture that records no resolution, which is how
+	// a picture at screen size is saved. Not the monitor's own figure.
+	private static int assumedDpi() {
+		return System.getProperty("os.name", "").startsWith("Mac") ? 72 : 96;
+	}
+
+	private static void copyToClipboard(BufferedImage image) {
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		clipboard.setContents(new TransferableImage(image), null);
 	}
 
 	/**
@@ -140,8 +190,8 @@ public final class TakePicture {
 	 * ready to paste into any application that accepts a pasted image (an email, a document,
 	 * an image editor, a chat window, ...) — with no Save/Copy/Cancel prompt.
 	 *
-	 * <p>Most callers should use {@link #takePicture(Component)} instead, so the user gets a
-	 * choice; call this directly only when clipboard-only behavior is specifically wanted
+	 * <p>The image is the size of the component on screen. Most callers should use
+	 * {@link #takePicture(Component)} instead, so the user gets a choice; call this directly only when clipboard-only behavior is specifically wanted
 	 * (for example, a dedicated "Copy Image" keyboard shortcut).</p>
 	 *
 	 * <p>This uses the standard AWT image transfer ({@link DataFlavor#imageFlavor} via
@@ -162,9 +212,7 @@ public final class TakePicture {
 		}
 
 		try {
-			BufferedImage bi = GraphicsUtils.getComponentImage(canvas);
-			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-			clipboard.setContents(new TransferableImage(bi), null);
+			copyToClipboard(GraphicsUtils.getComponentImage(canvas));
 		}
 		catch (Exception e) {
 			LOGGER.log(Level.WARNING, "Unable to copy component image to clipboard.", e);
@@ -221,7 +269,7 @@ public final class TakePicture {
 		chooser.setSelectedFile(null);
 		chooser.setFileFilter(filter);
 
-		java.awt.Window owner = javax.swing.SwingUtilities.getWindowAncestor(canvas);
+		java.awt.Window owner = SwingUtilities.getWindowAncestor(canvas);
 		int returnVal = chooser.showSaveDialog(owner);
 		if (returnVal != JFileChooser.APPROVE_OPTION) {
 			return null;

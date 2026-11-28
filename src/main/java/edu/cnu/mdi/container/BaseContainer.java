@@ -361,13 +361,14 @@ public class BaseContainer extends JComponent implements IContainer, ItemChangeL
 	}
 
 	/**
-	 * Clip graphics context to container bounds.
+	 * Clip graphics context to container bounds. A clip already in force, such as
+	 * a scroll pane's, is kept: the result is the intersection.
 	 *
 	 * @param g graphics context
 	 */
 	public void clipBounds(Graphics g) {
 		Rectangle b = getBounds();
-		g.setClip(0, 0, b.width, b.height);
+		g.clipRect(0, 0, b.width, b.height);
 	}
 
 	/**

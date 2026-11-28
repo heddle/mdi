@@ -27,6 +27,7 @@ import javax.swing.JInternalFrame;
 import javax.swing.SwingUtilities;
 
 import edu.cnu.mdi.graphics.style.LineStyle;
+import javax.swing.RepaintManager;
 
 /**
  * Static utility methods for general-purpose 2D graphics operations.
@@ -513,6 +514,52 @@ public final class GraphicsUtils {
         return image;
     }
     
+    /**
+     * Render {@code c} at {@code scale} times its size.
+     * <p>
+     * The component is painted again through a scaled graphics context, so
+     * lines and text gain real detail rather than being an enlarged copy.
+     * Raster content (pictures, terrain shading) gains no more than its source
+     * holds. Anything the component does not paint is white.
+     * </p>
+     * <p>
+     * Call on the event dispatch thread. A {@code BaseContainer} whose view is
+     * out of sight paints nothing.
+     * </p>
+     *
+     * @param c     the component to render
+     * @param scale pixels per component unit, at least 1
+     * @return an image {@code scale} times the size of {@code c}, or
+     *         {@code null} if {@code c} is {@code null} or has zero size
+     * @throws IllegalArgumentException if {@code scale} is less than 1
+     */
+    public static BufferedImage getComponentImage(Component c, int scale) {
+        if (scale < 1) {
+            throw new IllegalArgumentException("scale must be at least 1: " + scale);
+        }
+        if (c == null) return null;
+        Dimension size = c.getSize();
+        if (size.width < 1 || size.height < 1) return null;
+        BufferedImage image = new BufferedImage(Math.multiplyExact(size.width, scale),
+                Math.multiplyExact(size.height, scale), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = image.createGraphics();
+
+        // An off-screen buffer at screen resolution would defeat the scaling.
+        RepaintManager manager = RepaintManager.currentManager(c);
+        boolean doubleBuffered = manager.isDoubleBufferingEnabled();
+        manager.setDoubleBufferingEnabled(false);
+        try {
+            g2.setColor(Color.WHITE);
+            g2.fillRect(0, 0, image.getWidth(), image.getHeight());
+            g2.scale(scale, scale);
+            c.paint(g2);
+        } finally {
+            manager.setDoubleBufferingEnabled(doubleBuffered);
+            g2.dispose();
+        }
+        return image;
+    }
+
     /**
      * Draws a simple one-pixel 3D border around a rectangle using brighter and
      * darker variants of the graphics context's current color.
