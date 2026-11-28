@@ -26,6 +26,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Predicate;
 
@@ -38,6 +39,7 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -65,6 +67,7 @@ import edu.cnu.mdi.swing.SwingSizingUtils;
 import edu.cnu.mdi.transfer.FileDropHandler;
 import edu.cnu.mdi.transfer.IFileDropHandler;
 import edu.cnu.mdi.ui.menu.ViewPopupMenu;
+import edu.cnu.mdi.util.TakePicture;
 import edu.cnu.mdi.util.Environment;
 import edu.cnu.mdi.util.PropertyUtils;
 
@@ -182,6 +185,17 @@ public class BaseView extends JInternalFrame
     /** Right-click popup menu for this view. */
     protected final ViewPopupMenu viewPopupMenu;
 
+    /** Shows the view popup for components given to {@link #addViewPopupTrigger}. */
+    private final MouseListener viewPopupListener = new MouseAdapter() {
+        private void maybeShow(MouseEvent e) {
+            if (e.isPopupTrigger()) {
+                getViewPopupMenu().show(e.getComponent(), e.getX(), e.getY());
+            }
+        }
+        @Override public void mousePressed (MouseEvent e) { maybeShow(e); }
+        @Override public void mouseReleased(MouseEvent e) { maybeShow(e); }
+    };
+
     /** Optional toolbar (present only when toolbar bits were specified). */
     private BaseToolBar toolBar;
 
@@ -282,6 +296,9 @@ public class BaseView extends JInternalFrame
             getViewPopupMenu().addUndoRedo(this.container);
             getViewPopupMenu().add(LayerInspectorDialog.createMenuItem(this));
         }
+        JMenuItem saveImage = new JMenuItem("Save Image\u2026");
+        saveImage.addActionListener(e -> saveImage());
+        getViewPopupMenu().add(saveImage);
 
         // Defer setVisible to avoid flicker / z-order issues during startup.
         if (cfg.visible) {
@@ -598,6 +615,23 @@ public class BaseView extends JInternalFrame
      */
     public ViewPopupMenu getViewPopupMenu() {
         return viewPopupMenu;
+    }
+
+    /**
+     * Show this view's popup menu on a right-click (the platform's popup
+     * gesture) on {@code target}.
+     *
+     * <p>A container-backed view already does this for its canvas. Use this for
+     * other content: a view without a container, or one that shows its own
+     * component in place of the canvas. Calling it again for the same component
+     * has no further effect.</p>
+     *
+     * @param target the component to watch; must not be {@code null}
+     */
+    protected void addViewPopupTrigger(Component target) {
+        Objects.requireNonNull(target, "target");
+        target.removeMouseListener(viewPopupListener);
+        target.addMouseListener(viewPopupListener);
     }
 
     /**
@@ -989,6 +1023,24 @@ public class BaseView extends JInternalFrame
      */
     public Component getImageComponent() {
         return (container != null) ? container.getComponent() : this;
+    }
+
+    /**
+     * Ask the user what to capture, at what size and where to put it, then save
+     * an image of this view to a PNG file or the clipboard. This is the "Save
+     * Image…" item of the view's popup menu.
+     *
+     * <p>The content area offered is {@link #getImageComponent()}; the user may
+     * also choose the entire view.</p>
+     *
+     * @see edu.cnu.mdi.util.TakePicture#takePicture(Component)
+     */
+    public void saveImage() {
+        Component content = getImageComponent();
+        // A view that replaced its canvas has no content area to offer.
+        boolean shown = content != null && content.getWidth() > 0 && content.getHeight() > 0
+                && SwingUtilities.isDescendingFrom(content, this);
+        TakePicture.takePicture(shown ? content : this);
     }
 
     // -----------------------------------------------------------------------

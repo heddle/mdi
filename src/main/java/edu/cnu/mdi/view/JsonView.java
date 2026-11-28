@@ -1,11 +1,16 @@
 package edu.cnu.mdi.view;
 
+import java.awt.Container;
+import java.awt.Component;
 import java.awt.BorderLayout;
 import java.io.File;
 import java.util.List;
 
+import javax.swing.AbstractButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JTree;
+import javax.swing.text.JTextComponent;
 
 import edu.cnu.mdi.json.JsonSplitPane;
 import edu.cnu.mdi.util.PropertyUtils;
@@ -108,6 +113,7 @@ public class JsonView extends BaseView {
         
        
         add(splitPane);
+        addPopupTriggers(splitPane);
 
         // Accept .json files dropped anywhere on the view frame.
         // For container-less views the frame-level fallback in enableFileDrop
@@ -184,4 +190,20 @@ public class JsonView extends BaseView {
     public AbstractViewInfo getViewInfo() {
         return new JsonViewInfo();
     }
+
+    // The view popup on the text and background; the tree has its own popup,
+    // and buttons and the search field are left alone.
+    private void addPopupTriggers(Component c) {
+        if (c instanceof JTree || c instanceof AbstractButton
+                || (c instanceof JTextComponent text && text.isEditable())) {
+            return;
+        }
+        addViewPopupTrigger(c);
+        if (c instanceof Container parent) {
+            for (Component child : parent.getComponents()) {
+                addPopupTriggers(child);
+            }
+        }
+    }
+
 }

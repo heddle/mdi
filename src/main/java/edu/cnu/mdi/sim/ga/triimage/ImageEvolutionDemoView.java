@@ -154,6 +154,11 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 		// panel so we have full control over the three-region layout.
 		evolutionPanel = new ImageEvolutionPanel(targetImage);
 		installCenterPanel(evolutionPanel);
+		getViewPopupMenu().removeAll();
+		JMenuItem saveImage = new JMenuItem("Save Image\u2026");
+		saveImage.addActionListener(e -> saveImage());
+		getViewPopupMenu().add(saveImage);
+		addViewPopupTrigger(evolutionPanel);
 		enableFileDrop(ImageFilters.isActualImage);
 		// The custom panel fills the left side of the diagnostics split pane. Give
 		// it the same framework handler so drops are accepted over the images, not
@@ -167,6 +172,12 @@ public class ImageEvolutionDemoView extends SimulationView implements IImageEvol
 
 		pack();
 		startSimulation();
+	}
+
+	/** The images, which replace the container's canvas. */
+	@Override
+	public java.awt.Component getImageComponent() {
+		return evolutionPanel;
 	}
 
 	// -------------------------------------------------------------------------

@@ -22,7 +22,10 @@ public class LogView extends BaseView {
 				PropertyUtils.HEIGHT, height, 
 				PropertyUtils.VISIBLE, visible,
 				PropertyUtils.USECONTAINER, false);
-		add(new LogPane());
+		LogPane log = new LogPane();
+		add(log);
+		addViewPopupTrigger(log.getViewport().getView());
+		addViewPopupTrigger(log.getViewport());
 	}
 
 }

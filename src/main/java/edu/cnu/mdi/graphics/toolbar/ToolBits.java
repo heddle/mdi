@@ -216,7 +216,7 @@ public final class ToolBits {
 		m.put(ZOOMIN,     "Zoom in by a fixed amount");
 		m.put(ZOOMOUT,    "Zoom out by a fixed amount");
 		m.put(RESETZOOM,  "Restore zoom to default");
-		m.put(CAMERA,     "Snapshot of the current canvas as a png image");
+		m.put(CAMERA,     "Save or copy an image");
 		m.put(PRINTER,    "Print the current canvas");
 		m.put(RADARC,     "Create a radarc item");
 		m.put(MAGNIFY,    "Magnify area under mouse cursor");

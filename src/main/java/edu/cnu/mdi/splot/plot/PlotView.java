@@ -1,5 +1,6 @@
 package edu.cnu.mdi.splot.plot;
 
+import java.awt.Container;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.prefs.Preferences;
 
+import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -117,6 +119,13 @@ public class PlotView extends BaseView {
 	public PlotView(Object... keyVals) {
 		super(PropertyUtils.fromKeyValues(keyVals));
 		_addFeedback = PropertyUtils.getBoolean(PropertyUtils.fromKeyValues(keyVals), PropertyUtils.ADDFEEDBACK, true);
+
+		// The undo and layer items act on a container that plots do not use, and
+		// the popup trigger the base class installed is on a canvas that is not shown.
+		getViewPopupMenu().removeAll();
+		JMenuItem saveImage = new JMenuItem("Save Image\u2026");
+		saveImage.addActionListener(e -> saveImage());
+		getViewPopupMenu().add(saveImage);
 
 		// 1. Setup CardLayout deck
 		_cardLayout = new CardLayout();
@@ -322,12 +331,32 @@ public class PlotView extends BaseView {
 		_plotPanel = createDecoratedPlotPanel(_plotCanvas);
 
 		_plotPanel.getToolBar().addInfoButton();
+		addPlotPopupTriggers(_plotPanel);
 		return _plotPanel;
 	}
 
 	/** Create a panel using this view's configured feedback policy. */
 	protected final PlotPanel createDecoratedPlotPanel(PlotCanvas canvas) {
 		return new PlotPanel(canvas, _addFeedback ? PlotPanel.STANDARD : PlotPanel.BARE);
+	}
+
+	// Right-click on the plot or around it (title and axis labels).
+	private void addPlotPopupTriggers(PlotPanel panel) {
+		addViewPopupTrigger(panel);
+		addViewPopupTrigger(panel.getPlotCanvas());
+	}
+
+	// Everything in the 2D histogram card except its toolbar buttons.
+	private void addHistoPopupTriggers(Component c) {
+		if (c instanceof AbstractButton) {
+			return;
+		}
+		addViewPopupTrigger(c);
+		if (c instanceof Container parent) {
+			for (Component child : parent.getComponents()) {
+				addHistoPopupTriggers(child);
+			}
+		}
 	}
 
 	// set up the 2D histogram panel
@@ -345,6 +374,7 @@ public class PlotView extends BaseView {
 			createHistoPlaceholder(); // empty placeholder
 		}
 	    _cardDeck.add(_histoPanel, CARD_HISTO2D);
+		addHistoPopupTriggers(_histoPanel);
 
 	}
 
@@ -384,6 +414,7 @@ public class PlotView extends BaseView {
 		_plotPanel = plotPanel;
 		_plotPanel.getToolBar().addInfoButton();
 		_plotCanvas = plotPanel.getPlotCanvas();
+		addPlotPopupTriggers(_plotPanel);
 
 		_cardDeck.add(_plotPanel, CARD_PLOT);
 
